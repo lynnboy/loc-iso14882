@@ -35,9 +35,10 @@
 
 [rule member-declarator [:zh_CN] 成员声明符 ]
     [| declarator [~:opt virt-specifier-seq] [~:opt pure-specifier] ]
+    [| declarator requires-clause ]
     [| declarator [~:opt brace-or-equal-initializer] ]
     [| [~:opt identifier] [~:opt attribute-specifier-seq]
-        [`:] constant-expression ]
+        [`:] constant-expression [~:opt brace-or-equal-initializer] ]
 [rule:end]
 
 [rule virt-specifier-seq [:zh_CN] 虚说明符序列 ]
@@ -206,9 +207,9 @@ later redeclared with an [~enum-specifier].
 [enter:note]
 [:en]
 A single name can denote several function members provided their types are
-sufficiently different (Clause [#over]).
+sufficiently different ([#over]).
 [:zh_CN]
-一个名字可以代表多个函数成员，只要它们的类型有足够的区别（第 [#over] 条）。
+一个名字可以代表多个函数成员，只要它们的类型有足够的区别（[#over]）。
 [exit:note]
 
 [para]
@@ -254,6 +255,36 @@ struct S {
                     // [|:zh_CN] OK：[~花括号或等号初始化式]
   virtual T f = 0;  // [:en] OK: [~pure-specifier]
                     // [|:zh_CN] OK：[~纯说明符]
+};
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+In a [~member-declarator] for a bit-field, the [~constant-expression] is parsed
+as the longest sequence of tokens that could syntactically form a
+[~constant-expression].
+[:zh_CN]
+在位字段的[~成员声明符]中，其[~常量表达式]按照可以在语法上构成一个[~常量表达式]
+的最长几号序列进行解析。
+
+[enter:example]
+[codeblock]
+int a;
+const int b = 0;
+struct S {
+  int x1 : 8 = 42;               // [:en] OK, [`"= 42"] is [~brace-or-equal-initializer]
+                                 // [|:zh_CN] OK，[`"= 42"] 是[~花括号或等号初始化式]
+  int x2 : 8 { 42 };             // [:en] OK, [`"{ 42 }"] is [~brace-or-equal-initializer]
+                                 // [|:zh_CN] OK，[`"{ 42 }"] 是[~花括号或等号初始化式]
+  int y1 : true ? 8 : a = 42;    // [:en] OK, [~brace-or-equal-initializer] is absent
+                                 // [|:zh_CN] OK，没有[~花括号或等号初始化式]
+  int y2 : true ? 8 : b = 42;    // [:en] error: cannot assign to [`const int]
+                                 // [|:zh_CN] 错误：无法向 [`const int] 赋值
+  int y3 : (true ? 8 : b) = 42;  // [:en] OK, [`"= 42"] is [~brace-or-equal-initializer]
+                                 // [|:zh_CN] OK，[`"= 42"] 是[~花括号或等号初始化式]
+  int z : 1 || new int { 0 };    // [:en] OK, [~brace-or-equal-initializer] is absent
+                                 // [|:zh_CN] OK，没有[~花括号或等号初始化式]
 };
 [codeblock:end]
 [exit:example]
@@ -432,20 +463,20 @@ the [`tword] member of the [`right] subtree of [`s].
 [:en]
 [%layout[!class object]]
 Non-static data members of a (non-union) class with the same access control
-(Clause [#class.access]) are allocated so that later members have higher
-addresses within a class object.
+([#class.access]) are allocated so that later members have higher addresses
+within a class object.
 [:zh_CN]
 [%布局[!类对象]]
-对于某个（非联合）类的一组具有相同访问控制（第 [#class.access] 章）的非静态数据
-成员所进行的分配，将使得在一个类对象之中，处于后面的成员具有更高地址。
+对于某个（非联合）类的一组具有相同访问控制（[#class.access]）的非静态数据成员所
+进行的分配，将使得在一个类对象之中，处于后面的成员具有更高地址。
 
 [:en]
 [%allocation[!unspecified]]
 The order of allocation of non-static data members with different access control
-is unspecified (Clause [#class.access]).
+is unspecified ([#class.access]).
 [:zh_CN]
 [%分配[!未指明的]]
-具有不同访问控制的非静态数据成员的分配顺序是未指明的（第 [#class.access] 章）。
+具有不同访问控制的非静态数据成员的分配顺序是未指明的（[#class.access]）。
 
 [:en]
 Implementation alignment requirements might cause two adjacent members not to be
@@ -514,15 +545,15 @@ every non-static data member of class [`T] shall have a name different from
 
 [para]
 [:en]
-The [+common initial sequence] of two standard-layout struct (Clause [#class])
-types is the longest sequence of non-static data members and bit-fields in
-declaration order, starting with the first such entity in each of the structs,
-such that corresponding entities have layout-compatible types and either neither
-entity is a bit-field or both are bit-fields with the same width.
+The [+common initial sequence] of two standard-layout struct ([#class]) types is
+the longest sequence of non-static data members and bit-fields in declaration
+order, starting with the first such entity in each of the structs, such that
+corresponding entities have layout-compatible types and either neither entity is
+a bit-field or both are bit-fields with the same width.
 [:zh_CN]
-两个标准布局结构（第 [#class] 章）类型类型的[+共同起始序列]，是非静态数据成员和
-位字段依照声明顺序的最长序列，开始于每个结构中的第一个这种实体，并且对应的实体
-具有布局兼容的类型，且要么都不是位字段要么都是具有相同宽度的位字段。
+两个标准布局结构（[#class]）类型类型的[+共同起始序列]，是非静态数据成员和位字段
+依照声明顺序的最长序列，开始于每个结构中的第一个这种实体，并且对应的实体具有布局
+兼容的类型，且要么都不是位字段要么都是具有相同宽度的位字段。
 
 [enter:example]
 [codeblock]
@@ -553,12 +584,12 @@ The common initial sequence of [`A] and [`E] is empty.
 
 [para]
 [:en]
-Two standard-layout struct (Clause [#class]) types are [+layout-compatible
-classes[%layout-compatible[!class]]] if their common initial sequence comprises
-all members and bit-fields of both classes ([#basic.types]).
+Two standard-layout struct ([#class]) types are [+layout-compatible classes
+[%layout-compatible[!class]]] if their common initial sequence comprises all
+members and bit-fields of both classes ([#basic.types]).
 [:zh_CN]
-当两个标准布局结构（第 [#class] 章）类型的共同起始序列包含两个类的所有成员和位
-字段时，它们为[+布局兼容的类[%布局兼容[!～的类]]]（[#basic.types]）。
+当两个标准布局结构（[#class]）类型的共同起始序列包含两个类的所有成员和位字段时，
+它们为[+布局兼容的类[%布局兼容[!～的类]]]（[#basic.types]）。
 
 [para]
 [:en]
