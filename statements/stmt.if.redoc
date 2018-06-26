@@ -1,0 +1,165 @@
+[section#stmt.if
+    [:en] The [`if] statement
+    [:zh_CN] [`if] 语句
+
+[%  [:en] statement[![`if]]
+    [:zh_CN] 语句[![`if]] ]
+]
+
+[para]
+[:en]
+If the condition ([#stmt.select]) yields [`true] the first substatement is
+executed.
+[:zh_CN]
+如果其条件（[#stmt.select]）产生 [`true] 则执行第一个子语句。
+
+[:en]
+If the [`else] part of the selection statement is present and the condition
+yields [`false], the second substatement is executed.
+[:zh_CN]
+如果选择语句的 [`else] 部分存在且其条件产生 [`false]，则执行第二个子语句。
+
+[:en]
+If the first substatement is reached via a label, the condition is not evaluated
+and the second substatement is not executed.
+[:zh_CN]
+当通过标号到达第一个子语句时，其条件不进行求值，且不执行第二个子语句。
+
+[:en]
+In the second form of [`if] statement (the one including [`else]), if the first
+substatement is also an [`if] statement then that inner [`if] statement shall
+contain an [`else] part.[#:note#fn:$section.1]
+[:zh_CN]
+在 [`if] 语句的第二种形式（包含 [`else] 的那种）中，如果其第一个子语句也是 [`if]
+语句，则这个内部的 [`if] 语句应当包含 [`else] 部分。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en]
+In other words, the [`else] is associated with the nearest un-elsed [`if].
+[:zh_CN]
+换句话说，[`else] 与最接近的不带 else 的 [`if] 相关联。
+[note:end]
+
+[para]
+[:en]
+If the [`if] statement is of the form [`if constexpr], the value of the
+condition shall be a contextually converted constant expression of type [`bool]
+([#expr.const]); this form is called a [+constexpr if] statement.
+[:zh_CN]
+如果 [`if] 语句的形式为 [`if constexpr]，则条件的值应当按语境转换为类型 [`bool]
+的常量表达式（[#expr.const]）；这种形式被称为 [+constexpr if] 语句。
+
+[:en]
+If the value of the converted condition is [`false], the first substatement is a
+[+discarded statement], otherwise the second substatement, if present, is a
+discarded statement.
+[:zh_CN]
+如果转换后的条件的值为 [`false]，则其第一个子语句为[+弃用语句]，否则，其第二个
+子语句（如果有）为弃用语句。
+
+[:en]
+During the instantation of an enclosing templated entity (Clause [#temp]), if
+the condition is not value-dependent after its instantiation, the discarded
+substatement (if any) is not instantiated.
+[:zh_CN]
+在外围模板化实体（第 [#temp] 章）的实例化过程中，如果条件在实例化之后并非是值
+待决的，则弃用语句（如果有）并不会实例化。
+
+[enter:note]
+[:en]
+Odr-uses ([#basic.def.odr]) in a discarded statement do not require an entity to
+be defined.
+[:zh_CN]
+在弃用语句中进行的 ODR 式使用（[#basic.def.odr]）并不要求实体被定义。
+[exit:note]
+
+[:en]
+A [`case] or [`default] label appearing within such an [`if] statement shall be
+associated with a [`switch] statement ([#stmt.switch]) within the same [`if]
+statement.
+[:zh_CN]
+出现于这种 [`if] 语句中的 [`case] 或 [`default] 标号，应当和处于相同 [`if] 语句
+中的 [`switch] 语句（[#stmt.switch]）向关联。
+
+[:en]
+A label ([#stmt.label]) declared in a substatement of a constexpr if statement
+shall only be referred to by a statement ([#stmt.goto]) in the same
+substatement.
+[:zh_CN]
+声明于 constexpr if 语句的某个子语句之内的标号（[#stmt.label]），只能由处于相同
+子语句中的语句所涉指（[#stmt.goto]）。
+
+[enter:example]
+[codeblock]
+template<typename T, typename ... Rest> void g(T&& p, Rest&& ...rs) {
+  // [:en] ... handle [`p]
+  // [|:zh_CN] …… 处理 [`p]
+
+  if constexpr (sizeof...(rs) > 0)
+    g(rs...);       // [:en] never instantiated with an empty argument list.
+                    // [|:zh_CN] 肯定不会以空的实参列表来实例化
+}
+
+extern int x;       // [:en] no definition of [`x] required
+                    // [|:zh_CN] 不需要 [`x] 的定义式
+
+int f() {
+  if constexpr (true)
+    return 0;
+  else if (x)
+    return x;
+  else
+    return -x;
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+An [`if] statement of the form
+[:zh_CN]
+以下形式的 [`if] 语句
+
+[syntax:explanation]
+[`if] [`:opt constexpr] [`(] [~init-statement] [~condition] [`)] [~statement]
+[syntax:end]
+
+[:en@~]
+is equivalent to
+[:zh_CN@~]
+等价于
+
+[syntax:explanation@indented]
+[`{]
+    [~init-statement]
+    [`if] [`:opt constexpr] [`(] [~condition] [`)] [~statement]
+[`}]
+[syntax:end]
+
+[:en@~]
+and an [`if] statement of the form
+[:zh_CN@~]
+而以下形式的 [`if] 语句
+
+[syntax:explanation]
+[`if] [`:opt constexpr] [`(] [~init-statement] [~condition] [`)] [~statement]
+    [`else] [~statement]
+[syntax:end]
+
+[:en@~]
+is equivalent to
+[:zh_CN@~]
+等价于
+
+[syntax:explanation@indented]
+[`{]
+    [~init-statement]
+    [`if] [`:opt constexpr] [`(] [~condition] [`)] [~statement] [`else] [~statement]
+[`}]
+[syntax:end]
+
+[:en@~]
+except that names declared in the [~init-statement] are in the same declarative
+region as those declared in the [~condition].
+[:zh_CN@~]
+其区别是，声明于[~初始化语句]中的名字与声明于[~条件]中的名字处于相同的声明区中。

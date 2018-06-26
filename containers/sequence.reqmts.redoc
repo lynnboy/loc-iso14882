@@ -1,0 +1,601 @@
+[section#sequence.reqmts
+    [:en] Sequence containers
+    [:zh_CN] 序列容器
+]
+
+[para]
+[:en] A sequence container organizes a finite set of objects, all of the same
+type, into a strictly linear arrangement.
+[:zh_CN] 序列容器组织有限的一组对象，它们全部具有相同类型，并按严格的线性排布。
+
+[:en] The library provides four basic kinds of sequence containers: [`vector],
+[`forward_list], [`list], and [`deque].
+[:zh_CN] 程序库提供了四种基本序列容器：[`vector]，[`forward_list]，[`list]，和
+[`deque]。
+
+[:en] In addition, [`array] is provided as a sequence container which provides
+limited sequence operations because it has a fixed number of elements.
+[:zh_CN] 此外，[`array] 也作为序列容器提供，但具有有限的序列操作，因为它具有固定
+数量的元素。
+
+[:en] The library also provides container adaptors that make it easy to
+construct abstract data types, such as [`stack]s or [`queue]s, out of the basic
+sequence container kinds (or out of other kinds of sequence containers that the
+user might define).
+[:zh_CN] 程序库还提供了容器适配器，以便从基本序列容器的种类（或者从用户可能定义
+的序列容器）构造如 [`stack] 和 [`queue] 这样的抽象数据类型。
+
+[para]
+[:en] The sequence containers offer the programmer different complexity
+trade-offs and should be used accordingly.
+[:zh_CN] 各个序列容器为程序员提供了不同复杂度之间的权衡，最好据此恰当地使用。
+
+[:en] [`vector] or [`array] is the type of sequence container that should be
+used by default.
+[:zh_CN] [`vector] 或 [`array] 是最好作为默认使用的序列容器类型。
+
+[:en] [`list] or [`forward_list] should be used when there are frequent
+insertions and deletions from the middle of the sequence.
+[:zh_CN] [`list] 或 [`forward_list] 应当在经常于序列中间进行插入和删除的情况下
+使用。
+
+[:en] [`deque] is the data structure of choice when most insertions and
+deletions take place at the beginning or at the end of the sequence.
+[:zh_CN] [`deque] 是在当大多数插入和删除发生于序列的开头或尾部时所选择的数据结构
+。
+
+[para]
+[:en] In Tables [#tab:containers.sequence.requirements] and
+[#tab:containers.sequence.optional], [`X] denotes a sequence container class,
+[`a] denotes a value of type [`X] containing elements of type [`T], [`u] denotes
+the name of a variable being declared, [`A] denotes [`X::allocator_type] if the
+[~qualified-id] [`X::allocator_type] is valid and denotes a type
+([#temp.deduct]) and [`std::allocator<T>] if it doesn[=']t, [`i] and [`j] denote
+iterators satisfying input iterator requirements and refer to elements
+implicitly convertible to [`value_type], [``[i, j)] denotes a valid range, [`il]
+designates an object of type [`initializer_list<value_type>], [`n] denotes a
+value of type [`X::size_type], [`p] denotes a valid const iterator to [`a], [`q]
+denotes a valid dereferenceable const iterator to [`a], [``[q1, q2)] denotes a
+valid range of const iterators in [`a], [`t] denotes an lvalue or a const rvalue
+of [`X::value_type], and [`rv] denotes a non-const rvalue of [`X::value_type].
+[:zh_CN] 在表 [#tab:containers.sequence.requirements] 和
+[#tab:containers.sequence.optional] 中，[`X] 代表序列容器类，[`a] 代表 [`X] 类型
+的值，并包含 [`T] 类型的元素，[`u] 代表所声明的变量的名字，当[~限定标识]
+[`X::allocator_type] 有效并代表某个类型（[#temp.deduct]）时 [`A] 代表
+[`X::allocator_type]，否则 [`A] 代表 [`std::allocator<T>]，[`i] 和 [`j] 代表
+满足输入迭代器需求的迭代器，并指代可以隐式转换为 [`value_type] 的元素，
+[``[i, j)] 代表有效的范围，[`il] 代表 [`initializer_list<value_type>] 类型的对象
+，[`n] 代表 [`X::size_type] 类型的值，[`p] 代表 [`a] 中的有效 const 迭代器，[`q]
+代表 [`a] 中的有效可解引用的 const 迭代器，[``[q1, q2)] 代表 [`a] 中的 const
+迭代器的有效范围，[`t] 代表 [`X::value_type] 的左值或 const 右值，而 [`rv] 代表
+[`X::value_type] 的非 const 右值。
+
+[:en] [`Args] denotes a template parameter pack; [`args] denotes a function
+parameter pack with the pattern [`Args&&].
+[:zh_CN] [`Args] 代表模板形参包组；[`args] 代表模式为 [`Args&&] 的函数形参包组。
+
+[para]
+[:en] The complexities of the expressions are sequence dependent.
+[:zh_CN] 各表达式的复杂度依赖于其序列。
+
+[table:grid#tab:containers.sequence.requirements
+    [:en] Sequence container requirements (in addition to container)
+    [:zh_CN] 序列容器（除容器以外）的规定
+
+    [|@code
+        [:en] Expression
+        [:zh_CN] 表达式
+    ]
+    [|@code
+        [:en] Return type
+        [:zh_CN] 返回类型
+    ]
+    [
+        [:en] Assertion/note [br] pre-/post-condition
+        [:zh_CN] 断言/注解 [br] 前/后条件
+    ]
+]
+
+[|] X(n, t) [br] X u(n, t);
+[|]
+[|] [para:requires]
+    [:en] [`T] shall be [`CopyInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`CopyInsertable]。
+
+    [para:postconditions] [`distance(begin(), end()) == n]
+
+    [para]
+    [:en] Constructs a sequence container with [`n] copies of [`t]
+    [:zh_CN] 构造具有 [`n] 个 [`t] 的副本的序列容器
+[-]
+[|] X(i, j) [br] X u(i, j);
+[|]
+[|] [para:requires]
+    [:en] [`T] shall be [`EmplaceConstructible] into [`X] from [`*i].
+    [:zh_CN] [`T] 应当为以 [`*i] 向 [`X] 中 [`EmplaceConstructible]。
+
+    [:en] For [`vector], if the iterator does not meet the forward iterator
+    requirements ([#forward.iterators]), [`T] shall also be [`MoveInsertable]
+    into [`X].
+    [:zh_CN] 对于 [`vector]，如果迭代器不满足前向迭代器的规定
+    （[#forward.iterators]），则 [`T] 也应当为向 [`X] 中 [`MoveInsertable]。
+
+    [:en] Each iterator in the range [=range(i,j)] shall be dereferenced exactly
+    once.
+    [:zh_CN] 范围 [=range(i,j)] 中的每个迭代器都应当可以恰好进行一次解引用。
+
+    [para:postconditions] [`distance(begin(), end()) == distance(i, j)]
+
+    [para]
+    [:en] Constructs a sequence container equal to the range [``[i, j)]
+    [:zh_CN] 构造等于范围 [``[i, j)] 的一个序列容器
+[-]
+[|] X(il);
+[|]
+[|] [:en] Equivalent to [`X(il.begin(), il.end())]
+    [:zh_CN] 等价于 [`X(il.begin(), il.end())]
+[-]
+[|] a = il
+[|] X&
+[|] [para:requires]
+    [:en] [`T] is [`CopyInsertable] into [`X] and [`CopyAssignable].
+    [:zh_CN] [`T] 为向 [`X] 中 [`CopyInsertable]，且为 [`CopyAssignable]。
+
+    [:en] Assigns the range [=range(il.begin(),il.end())] into [`a].
+    [:zh_CN] 将范围 [=range(il.begin(),il.end())] 赋值到 [`a] 中。
+
+    [:en] All existing elements of [`a] are either assigned to or destroyed.
+    [:zh_CN] [`a] 的所有现存元素要么被赋值要么被销毁。
+
+    [para:returns]
+    [:en] [`*this].
+    [:zh_CN] [`*this]。
+[-]
+[|] a.emplace(p, args)
+[|] iterator
+[|] [para:requires]
+    [:en] [`T] is [`EmplaceConstructible] into [`X] from [`args].
+    [:zh_CN] [`T] 为以 [`args] 向 [`X] 中 [`EmplaceConstructible]。
+
+    [:en] For [`vector] and [`deque], [`T] is also [`MoveInsertable] into [`X]
+    and [`MoveAssignable].
+    [:zh_CN] 对于 [`vector] 和 [`deque]，[`T] 也为向 [`X] 中 [`MoveInsertable]
+    和 [`MoveAssignable]。
+
+    [para:effects]
+    [:en] Inserts an object of type [`T] constructed with
+    [`std::forward<Args>(args)...] before [`p].
+    [:zh_CN] 在 [`p] 之前插入一个以 [`std::forward<Args>(args)...] 构造的 [`T]
+    类型的对象。
+[-]
+[|] a.insert(p,t)
+[|] iterator
+[|] [para:requires]
+    [:en] [`T] shall be [`CopyInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`CopyInsertable]。
+
+    [:en] For [`vector] and [`deque], [`T] shall also be [`CopyAssignable].
+    [:zh_CN] 对于 [`vector] 和 [`deque]，[`T] 应当也为 [`CopyAssignable]。
+
+    [para:effects]
+    [:en] Inserts a copy of [`t] before [`p].
+    [:zh_CN] 在 [`p] 之前插入 [`t] 的一个副本。
+[-]
+[|] a.insert(p,rv)
+[|] iterator
+[|] [para:requires]
+    [:en] [`T] shall be [`MoveInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`MoveInsertable]。
+
+    [:en] For [`vector] and [`deque], [`T] shall also be [`MoveAssignable].
+    [:zh_CN] 对于 [`vector] 和 [`deque]，[`T] 应当也为 [`MoveAssignable]。
+
+    [para:effects]
+    [:en] Inserts a copy of [`rv] before [`p].
+    [:zh_CN] 在 [`p] 之前插入 [`rv] 的一个副本。
+[-]
+[|] a.insert(p,n,t)
+[|] iterator
+[|] [para:requires]
+    [:en] [`T] shall be [`CopyInsertable] into [`X] and [`CopyAssignable].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`CopyInsertable] 且为 [`CopyAssignable]。
+
+    [para]
+    [:en] Inserts [`n] copies of [`t] before [`p].
+    [:zh_CN] 在 [`p] 之前插入 [`n] 个 [`t] 的副本。
+[-]
+[|] a.insert(p,i,j)
+[|] iterator
+[|] [para:requires]
+    [:en] [`T] shall be [`EmplaceConstructible] into [`X] from [`*i].
+    [:zh_CN] [`T] 应当为以 [`*i] 向 [`X] 中 [`EmplaceConstructible]。
+
+    [:en] For [`vector] and [`deque], [`T] shall also be [`MoveInsertable] into
+    [`X], [`MoveConstructible], [`MoveAssignable], and swappable
+    ([#swappable.requirements]).
+    [:zh_CN] 对于 [`vector] 和 [`deque]，[`T] 应当也为向 [`X] 中
+    [`MoveInsertable]，[`MoveConstructible]，[`MoveAssignable]，以及可交换的
+    （[#swappable.requirements]）。
+
+    [:en] Each iterator in the range [=range(i,j)] shall be dereferenced exactly
+    once.
+    [:zh_CN] 范围 [=range(i,j)] 中的每个迭代器都应当恰好进行一次解引用。
+
+    [para:requires]
+    [:en] [`i] and [`j] are not iterators into [`a].
+    [:zh_CN] [`i] 和 [`j] 不是 [`a] 中的迭代器。
+
+    [para]
+    [:en] Inserts copies of elements in [``[i, j)] before [`p]
+    [:zh_CN] 在 [`p] 之前插入 [``[i, j)] 中的元素的副本
+[-]
+[|] a.insert(p, il);
+[|] iterator
+[|] [`a.insert(p, il.begin(), il.end())].
+[-]
+[|] a.erase(q)
+[|] iterator
+[|] [para:requires]
+    [:en] For [`vector] and [`deque], [`T] shall be [`MoveAssignable].
+    [:zh_CN] 对于 [`vector] 和 [`deque]，[`T] 应当为 [`MoveAssignable]。
+
+    [para:effects]
+    [:en] Erases the element pointed to by [`q]
+    [:zh_CN] 清除由 [`q] 所指向的元素
+[-]
+[|] a.erase(q1,q2)
+[|] iterator
+[|] [para:requires]
+    [:en] For [`vector] and [`deque], [`T] shall be [`MoveAssignable].
+    [:zh_CN] 对于 [`vector] 和 [`deque]，[`T] 应当为 [`MoveAssignable]。
+
+    [para:effects]
+    [:en] Erases the elements in the range [``[q1, q2)].
+    [:zh_CN] 清除范围 [``[q1, q2)] 中的元素。
+[-]
+[|] a.clear()
+[|] void
+[|] [:en] Destroys all elements in [`a].
+    [:zh_CN] 销毁 [`a] 中的所有元素。
+
+    [:en] Invalidates all references, pointers, and iterators referring to the
+    elements of [`a] and may invalidate the past-the-end iterator.
+    [:zh_CN] 无效化指代 [`a] 中的元素的所有引用、指针和迭代器，并可能无效化越过
+    末尾迭代器。
+
+    [para:postconditions]
+    [:en] [`a.empty()] returns [`true].
+    [:zh_CN] [`a.empty()] 返回 [`true]。
+
+    [para:complexity]
+    [:en] Linear.
+    [:zh_CN] 线性。
+[-]
+[|] a.assign(i,j)
+[|] void
+[|] [para:requires]
+    [:en] [`T] shall be [`EmplaceConstructible] into [`X] from [`*i] and
+    assignable from [`*i].
+    [:zh_CN] [`T] 应当为以 [`*i] 向 [`X] 中 [`EmplaceConstructible]，并且可以以
+    [`*i] 进行赋值。
+
+    [:en] For [`vector], if the iterator does not meet the forward iterator
+    requirements ([#forward.iterators]), [`T] shall also be [`MoveInsertable]
+    into [`X].
+    [:zh_CN] 对于 [`vector]，如果迭代器不满足前向迭代器的规定
+    （[#forward.iterators]），则 [`T] 还应当为向 [`X] 中 [`MoveInsertable]。
+
+    [para]
+    [:en] Each iterator in the range [=range(i,j)] shall be dereferenced exactly
+    once.
+    [:zh_CN] 范围 [=range(i,j)] 中的每个迭代器都应当恰好进行一次解引用。
+
+    [para:requires]
+    [:en] [`i], [`j] are not iterators into [`a].
+    [:zh_CN] [`i] 和 [`j] 不是 [`a] 中的迭代器。
+
+    [para]
+    [:en] Replaces elements in [`a] with a copy of [``[i, j)].
+    [:zh_CN] 将 [`a] 中的元素替换为 [``[i, j)] 的副本。
+
+    [para]
+    [:en] Invalidates all references, pointers and iterators referring to the
+    elements of [`a].
+    [:zh_CN] 无效化指代 [`a] 中的元素的所有引用、指针和迭代器。
+
+    [:en] For [`vector] and [`deque], also invalidates the past-the-end
+    iterator.
+    [:zh_CN] 对于 [`vector] 和 [`deque]，同样会无效化其越过末尾迭代器。
+[-]
+[|] a.assign(il)
+[|] void
+[|] [`a.assign(il.begin(), il.end())].
+[-]
+[|] a.assign(n,t)
+[|] void
+[|] [para:requires]
+    [:en] [`T] shall be [`CopyInsertable] into [`X] and [`CopyAssignable].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`CopyInsertable]，并且为 [`CopyAssignable]。
+
+    [para:requires]
+    [:en] [`t] is not a reference into [`a].
+    [:zh_CN] [`t] 不是 [`a] 中的引用。
+
+    [para]
+    [:en] Replaces elements in [`a] with [`n] copies of [`t].
+    [:zh_CN] 将 [`a] 中的元素替换为 [`n] 个 [`t] 的副本。
+
+    [para]
+    [:en] Invalidates all references, pointers and iterators referring to the
+    elements of [`a].
+    [:zh_CN] 无效化指代 [`a] 中的元素的所有引用、指针和迭代器。
+
+    [:en] For [`vector] and [`deque], also invalidates the past-the-end
+    iterator.
+    [:zh_CN] 对于 [`vector] 和 [`deque]，同样会无效化其越过末尾迭代器。
+[-]
+[table:end]
+
+[para]
+[:en] The iterator returned from [`a.insert(p, t)] points to the copy of [`t]
+inserted into [`a].
+[:zh_CN] [`a.insert(p, t)] 所返回的迭代器指向插入到 [`a] 中的 [`t] 的副本。
+
+[para]
+[:en] The iterator returned from [`a.insert(p, rv)] points to the copy of [`rv]
+inserted into [`a].
+[:zh_CN] [`a.insert(p, rv)] 所返回的迭代器指向插入到 [`a] 中的 [`rv] 的副本。
+
+[para]
+[:en] The iterator returned from [`a.insert(p, n, t)] points to the copy of the
+first element inserted into [`a], or [`p] if [`n == 0].
+[:zh_CN] [`a.insert(p, n, t)] 所返回的迭代器指向插入到 [`a] 中的第一个元素的副本
+，或者当 [`n == 0] 时为 [`p]。
+
+[para]
+[:en] The iterator returned from [`a.insert(p, i, j)] points to the copy of the
+first element inserted into [`a], or [`p] if [`i == j].
+[:zh_CN] [`a.insert(p, i, j)] 所返回的迭代器指向插入到 [`a] 中的第一个元素的副本
+，或者当 [`i == j] 时为 [`p]。
+
+[para]
+[:en] The iterator returned from [`a.insert(p, il)] points to the copy of the
+first element inserted into [`a], or [`p] if [`il] is empty.
+[:zh_CN] [`a.insert(p, il)] 所返回的迭代器指向插入到 [`a] 中的第一个元素的副本
+，或者当 [`il] 为空时为 [`p]。
+
+[para]
+[:en] The iterator returned from [`a.emplace(p, args)] points to the new element
+constructed from [`args] into [`a].
+[:zh_CN] [`a.emplace(p, args)] 所返回的迭代器指向在 [`a] 中以 [`args] 构造的新
+元素。
+
+[para]
+[:en] The iterator returned from [`a.erase(q)] points to the element immediately
+following [`q] prior to the element being erased.
+[:zh_CN] [`a.erase(q)] 所返回的迭代器指向进行清除前紧跟 [`q] 之后的元素。
+
+[:en] If no such element exists, [`a.end()] is returned.
+[:zh_CN] 如果不存在这中元素，则返回 [`a.end()]。
+
+[para]
+[:en] The iterator returned by [`a.erase(q1, q2)] points to the element pointed
+to by [`q2] prior to any elements being erased.
+[:zh_CN] [`a.erase(q1, q2)] 所返回的迭代器指向进行清除前紧跟 [`q2] 之后的元素。
+
+[:en] If no such element exists, [`a.end()] is returned.
+[:zh_CN] 如果不存在这中元素，则返回 [`a.end()]。
+
+[para]
+[:en] For every sequence container defined in this Clause and in Clause
+[#strings]:
+[:zh_CN] 对于本章和第 [#strings] 章中所定义的每种序列容器：
+
+[list]
+[item]
+[:en] If the constructor
+[:zh_CN] 如果构造函数
+
+[codeblock:notation]
+template <class InputIterator>
+  X(InputIterator first, InputIterator last,
+    const allocator_type& alloc = allocator_type())
+[codeblock:end]
+
+[:en@~] is called with a type [`InputIterator] that does not qualify as an input
+iterator, then the constructor shall not participate in overload resolution.
+[:zh_CN@~] 以并未描述为输入迭代器的 [`InputIterator] 类型进行了调用，则这个构造
+函数不能参与重载决议。
+
+[item]
+[:en] If the member functions of the forms:
+[:zh_CN] 如果以下形式的成员函数：
+
+[codeblock:notation [!:var return-type F] ]
+template <class InputIterator>
+  [*return-type] [$F](const_iterator p,
+                InputIterator first, InputIterator last);       // [:en] such as [`insert()]
+                                                                // [|:zh_CN] 比如 [`insert()]
+
+template <class InputIterator>
+  [*return-type] [$F](InputIterator first, InputIterator last);       // [:en] such as [`append()], [`assign()]
+                                                                      // [|:zh_CN] 比如 [`append()]，[`assign()]
+
+template <class InputIterator>
+  [*return-type] [$F](const_iterator i1, const_iterator i2,
+                InputIterator first, InputIterator last);       // [:en] such as [`replace()]
+                                                                // [|:zh_CN] 比如 [`replace()]
+[codeblock:end]
+
+[:en@~] are called with a type [`InputIterator] that does not qualify as an
+input iterator, then these functions shall not participate in overload
+resolution.
+[:zh_CN@~] 以并未描述为输入迭代器的 [`InputIterator] 类型进行了调用，则这些函数
+不能参与重载决议。
+[list:end]
+
+[para]
+[:en] A deduction guide for a sequence container shall not participate in
+overload resolution if it has an [`InputIterator] template parameter and a type
+that does not qualify as an input iterator is deduced for that parameter, or if
+it has an [`Allocator] template parameter and a type that does not qualify as an
+allocator is deduced for that parameter.
+[:zh_CN] 对于序列容器的推断指导，如果它具有一个 [`InputIterator] 模板形参，而
+为该形参所推断的类型无法作为输入迭代器，或者它具有一个 [`Allocator] 模板形参，而
+为该形参所推断的类型无法作为分配器，则它不能参与重载决议。
+
+[para]
+[:en] Table [#tab:containers.sequence.optional] lists operations that are
+provided for some types of sequence containers but not others.
+[:zh_CN] 表 [#tab:containers.sequence.optional] 列出了为一些类型的序列容器提供，
+但未对其他容器提供的操作。
+
+[:en] An implementation shall provide these operations for all container types
+shown in the ["container] column, and shall implement them so as to take
+amortized constant time.
+[:zh_CN] 实现应当为“容器”列中给出的所有容器类型提供这些操作，并且应当将它们实现
+为具有摊销常量时间。
+
+[table:grid#tab:containers.sequence.optional
+    [:en] Optional sequence container operations
+    [:zh_CN] 可选的序列容器操作
+
+    [|@code
+        [:en] Expression
+        [:zh_CN] 表达式
+    ]
+    [|
+        [:en] Return type
+        [:zh_CN] 返回类型
+    ]
+    [|
+        [:en] Operational semantics
+        [:zh_CN] 操作性语义
+    ]
+    [|
+        [:en] Container
+        [:zh_CN] 容器
+    ]
+]
+
+[|] a.front()
+[|] [:en] [`reference]; [`const_reference] for constant [`a]
+    [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]
+[|] [`*a.begin()]
+[|] [`basic_string], [`array], [`deque], [`forward_list], [`list], [`vector]
+[-]
+[|] a.back()
+[|] [:en] [`reference]; [`const_reference] for constant [`a]
+    [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]
+[|] [`{ auto tmp = a.end();] [br]
+    [`    --tmp;] [br]
+    [`    return *tmp; }]
+[|] [`basic_string], [`array], [`deque], [`list], [`vector]
+[-]
+[|] a.emplace_front(args)
+[|] [`reference]
+[|] [:en] Prepends an object of type [`T] constructed with
+    [`std::forward<Args>(args)...].
+    [:zh_CN] 在前面添加一个以 [`std::forward<Args>(args)...] 构造的 [`T] 类型的
+    对象。
+
+    [para:requires]
+    [:en] [`T] shall be [`EmplaceConstructible] into [`X] from [`args].
+    [:zh_CN] [`T] 应当为以 [`args] 向 [`X] 中 [`EmplaceConstructible]。
+[|] [`deque], [`forward_list], [`list]
+[-]
+[|] a.emplace_back(args)
+[|] [`reference]
+[|] [:en] Appends an object of type [`T] constructed with
+    [`std::forward<Args>(args)...].
+    [:zh_CN] 追加一个以 [`std::forward<Args>(args)...] 构造的 [`T] 类型的对象。
+
+    [para:requires]
+    [:en] [`T] shall be [`EmplaceConstructible] into [`X] from [`args].
+    [:zh_CN] [`T] 应当为以 [`args] 向 [`X] 中 [`EmplaceConstructible]。
+
+    [:en] For [`vector], [`T] shall also be [`MoveInsertable] into [`X].
+    [:zh_CN] 对于 [`vector]，[`T] 还应当为向 [`X] 中 [`MoveInsertable]。
+[|] [`deque], [`list], [`vector]
+[-]
+[|] a.push_front(t)
+[|] [`void]
+[|] [:en] Prepends a copy of [`t].
+    [:zh_CN] 在前面添加一个 [`t] 的副本。
+
+    [para:requires]
+    [:en] [`T] shall be [`CopyInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`CopyInsertable]。
+[|] [`deque], [`forward_list], [`list]
+[-]
+[|] a.push_front(rv)
+[|] [`void]
+[|] [:en] Prepends a copy of [`rv].
+    [:zh_CN] 在前面添加一个 [`rv] 的副本。
+
+    [para:requires]
+    [:en] [`T] shall be [`MoveInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`MoveInsertable]。
+[|] [`deque], [`forward_list], [`list]
+[-]
+[|] a.push_back(t)
+[|] [`void]
+[|] [:en] Appends a copy of [`t].
+    [:zh_CN] 追加一个 [`t] 的副本。
+
+    [para:requires]
+    [:en] [`T] shall be [`CopyInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`CopyInsertable]。
+[|] [`basic_string], [`deque], [`list], [`vector]
+[-]
+[|] a.push_back(rv)
+[|] [`void]
+[|] [:en] Appends a copy of [`rv].
+    [:zh_CN] 追加一个 [`rv] 的副本。
+
+    [para:requires]
+    [:en] [`T] shall be [`MoveInsertable] into [`X].
+    [:zh_CN] [`T] 应当为向 [`X] 中 [`MoveInsertable]。
+[|] [`basic_string], [`deque], [`list], [`vector]
+[-]
+[|] a.pop_front()
+[|] [`void]
+[|] [:en] Destroys the first element.
+    [:zh_CN] 销毁第一个元素。
+
+    [para:requires]
+    [:en] [`a.empty()] shall be [`false].
+    [:zh_CN] [`a.empty()] 应当为 [`false]。
+[|] [`deque], [`forward_list], [`list]
+[-]
+[|] a.pop_back()
+[|] [`void]
+[|] [:en] Destroys the last element.
+    [:zh_CN] 销毁最后一个元素。
+
+    [para:requires]
+    [:en] [`a.empty()] shall be [`false].
+    [:zh_CN] [`a.empty()] 应当为 [`false]。
+[|] [`basic_string], [`deque], [`list], [`vector]
+[-]
+[|] a[n]
+[|] [:en] [`reference]; [`const_reference] for constant [`a]
+    [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]
+[|] [`*(a.begin() + n)]
+[|] [`basic_string], [`array], [`deque], [`vector]
+[-]
+[|] a.at(n)
+[|] [:en] [`reference]; [`const_reference] for constant [`a]
+    [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]
+[|] [`*(a.begin() + n)]
+[|] [`basic_string], [`array], [`deque], [`vector]
+[-]
+[table:end]
+
+[para]
+[:en] The member function [`at()] provides bounds-checked access to container
+elements.
+[:zh_CN] 成员函数 [`at()] 提供了带有边界检查的容器元素访问。
+
+[:en] [`at()] throws [`out_of_range] if [`n >= a.size()].
+[:zh_CN] 当 [`n >= a.size()] 时 [`at()] 抛出 [`out_of_range]。

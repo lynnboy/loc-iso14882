@@ -1,0 +1,91 @@
+[section#fs.path.factory
+    [:en] [`path] factory functions
+    [:zh_CN] [`path] 工厂函数
+]
+
+[%@library u8path]
+[codeblock:declaration]
+template <class Source>
+  path u8path(const Source& source);
+template <class InputIterator>
+  path u8path(InputIterator first, InputIterator last);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The [`source] and [=range(first,last)] sequences are UTF-8 encoded.
+[:zh_CN] 序列 [`source] 和 [=range(first,last)] 均以 UTF-8 编码。
+
+[:en] The value type of [`Source] and [`InputIterator] is [`char].
+[:zh_CN] [`Source] 和 [`InputIterator] 的值类型均为 [`char]。
+
+[para:returns]
+[list]
+[item]
+[:en] If [`value_type] is [`char] and the current native narrow encoding
+([#fs.def.native.encode]) is UTF-8, return [`path(source)] or
+[`path(first, last)]; otherwise,
+[:zh_CN] 若 [`value_type] 为 [`char] 且当前的本地窄字符编码
+（[#fs.def.native.encode]）为 UTF-8，则返回 [`path(source)] 或
+[`path(first, last)]；否则，
+
+[item]
+[:en] if [`value_type] is [`wchar_t] and the native wide encoding is UTF-16, or
+if [`value_type] is [`char16_t] or [`char32_t], convert [`source] or
+[=range(first,last)] to a temporary, [`tmp], of type [`string_type] and return
+[`path(tmp)]; otherwise,
+[:zh_CN] 若 [`value_type] 为 [`wchar_t] 且当前的本地宽字符编码为 UTF-16，或者若
+[`value_type] 为 [`char16_t] 或 [`char32_t]，则将 [`source] 或
+[=range(first,last)] 转换为一个 [`string_type] 类型的临时对象 [`tmp]，并返回
+[`path(tmp)]；否则，
+
+[item]
+[:en] convert [`source] or [=range(first,last)] to a temporary, [`tmp], of type
+[`u32string] and return [`path(tmp)].
+[:zh_CN] 将 [`source] 或 [=range(first,last)] 转换为一个 [`u32string] 类型的临时
+对象 [`tmp]，并返回 [`path(tmp)]。
+[list:end]
+
+[para:remarks]
+[:en] Argument format conversion ([#fs.path.fmt.cvt]) applies to the arguments
+for these functions.
+[:zh_CN] 对这些函数的实参实施实参格式转换（[#fs.path.fmt.cvt]）。
+
+[:en] How Unicode encoding conversions are performed is unspecified.
+[:zh_CN] 如何实施 Unicode 编码转换是未指明的。
+
+[para]
+[enter:example]
+[:en] A string is to be read from a database that is encoded in UTF-8, and used
+to create a directory using the native encoding for filenames:
+[:zh_CN] 从数据库中读取一个以 UTF-8 编码的字符串，并使用文件名的本地编码以之创建
+一个目录：
+
+[codeblock]
+namespace fs = std::filesystem;
+std::string utf8_string = read_utf8_data();
+fs::create_directory(fs::u8path(utf8_string));
+[codeblock:end]
+
+[para:~]
+[:en] For POSIX-based operating systems with the native narrow encoding set
+to UTF-8, no encoding or type conversion occurs.
+[:zh_CN] 对于将本地窄字符编码设置为 UTF-8 的基于 POSIX 的操作系统，不进行任何
+编码或类型转换。
+
+[para:~]
+[:en] For POSIX-based operating systems with the native narrow encoding not set
+to UTF-8, a conversion to UTF-32 occurs, followed by a conversion to the current
+native narrow encoding.
+[:zh_CN] 对于未将本地窄字符编码设置为 UTF-8 的基于 POSIX 的操作系统，进行向
+UTF-32 的转换，然后进行向当本地窄字符编码的转换。
+
+[:en] Some Unicode characters may have no native character set representation.
+[:zh_CN] 某些 Unicode 字符可能没有本地字符集的表示。
+
+[para:~]
+[:en] For Windows-based operating systems a conversion from UTF-8 to UTF-16
+occurs.
+[:zh_CN] 对于基于 Windows 的操作系统，进行从 UTF-8 到 UTF-16 的转换。
+[exit:example]
+[exit:description]

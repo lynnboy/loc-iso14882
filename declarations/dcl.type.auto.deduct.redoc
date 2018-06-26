@@ -1,0 +1,187 @@
+[section#dcl.type.auto.deduct
+    [:en] Placeholder type deduction
+    [:zh_CN] 占位符类型的推断
+[%  [:en] deduction[!placeholder type]
+    [:zh_CN] 推断[!占位符类型～] ]
+]
+
+[para]
+[:en]
+[+Placeholder type deduction[%placeholder type deduction]] is the process by
+which a type containing a placeholder type is replaced by a deduced type.
+[:zh_CN]
+[+占位符类型推断]是将包含占位符类型的类型替换为所推断的类型的过程。
+
+[para]
+[:en]
+A type [`T] containing a placeholder type, and a corresponding initializer [`e],
+are determined as follows:
+[:zh_CN]
+包含占位符类型的类型，及其相应的初始化式 [`e]，按如下方式确定：
+
+[list]
+[item]
+[:en]
+for a non-discarded [`return] statement that occurs in a function declared with
+a return type that contains a placeholder type, [`T] is the declared return type
+and [`e] is the operand of the [`return] statement.
+[:zh_CN]
+对于出现于所声明的返回类型包含占位符类型的函数之中的非弃用 [`return] 语句，[`T]
+为所声明的返回类型，而 [`e] 为 [`return] 语句的操作数。
+
+[:en]
+If the [`return] statement has no operand, then [`e] is [`void()];
+[:zh_CN]
+如果 [`return] 语句没有操作数，则 [`e] 为 [`void()]；
+
+[item]
+[:en]
+for a variable declared with a type that contains a placeholder type, [`T] is
+the declared type of the variable and [`e] is the initializer.
+[:zh_CN]
+对于所声明的类型包含占位符类型的变量，[`T] 为变量所声明的类型，而 [`e] 为其
+初始化式。
+
+[:en]
+If the initialization is direct-list-initialization, the initializer shall be a
+[~braced-init-list] containing only a single [~assignment-expression] and [`e]
+is the [~assignment-expression];
+[:zh_CN]
+当其初始化是直接列表初始化时，其初始化式应当为只包含一个[~初始化式子句]的
+[~花括号初始化列表]，而 [`e] 为其[~赋值表达式]；
+
+[item]
+[:en]
+for a non-type template parameter declared with a type that contains a
+placeholder type, [`T] is the declared type of the non-type template parameter
+and [`e] is the corresponding template argument.
+[:zh_CN]
+对于所声明的类型包含占位符类型的非类型模板形参，[`T] 为该非类型模板形参所声明的
+类型，而 [`e] 为其对应的模板实参。
+[list:end]
+
+[:en]
+In the case of a [`return] statement with no operand or with an operand of type
+[`void], [`T] shall be either [`decltype(auto)] or [$cv] [`auto].
+[:zh_CN]
+在没有操作数或操作数类型为 [`void] 的 [`return] 语句的情况中，[`T] 应当要么为
+[`decltype(auto)] 要么为 [$cv] [`auto]。
+
+[para]
+[:en]
+If the deduction is for a [`return] statement and [`e] is a [~braced-init-list]
+([#dcl.init.list]), the program is ill-formed.
+[:zh_CN]
+当对 [`return] 语句进行推断时 [`e] 为[~花括号初始化列表]（[#dcl.init.list]），
+则程序非良构。
+
+[para]
+[:en]
+If the placeholder is the [`auto] [~type-specifier], the deduced type [`T][$']
+replacing [`T] is determined using the rules for template argument deduction.
+[:zh_CN]
+当占位符为[~类型说明符] [`auto] 时，用以替换 [`T] 的推断类型 [`T][$']，通过使用
+模板实参推断的规则来确定。
+
+[:en]
+Obtain [`P] from [`T] by replacing the occurrences of [`auto] with either a new
+invented type template parameter [`U] or, if the initialization is
+copy-list-initialization, with [`std::initializer_list<U>].
+[:zh_CN]
+令 [`P] 为把 [`T] 中出现的 [`auto] 都替换为某个新的虚构类型模板形参 [`U]，或者
+当其初始化是复制列表初始化时，替换为 [`std::initializer_list<U>]，所获得的类型。
+
+[:en]
+Deduce a value for [`U] using the rules of template argument deduction from a
+function call ([#temp.deduct.call]), where [`P] is a function template parameter
+type and the corresponding argument is [`e].
+[:zh_CN]
+使用从函数调用中进行模板实参推断（[#temp.deduct.call]）的规则对 [`U] 的值进行
+推断，其中 [`P] 为函数模板形参类型，而其对应实参为 [`e]。
+
+[:en]
+If the deduction fails, the declaration is ill-formed.
+[:zh_CN]
+若推断失败，则该声明式非良构。
+
+[:en]
+Otherwise, [`T][$'] is obtained by substituting the deduced [`U] into [`P].
+[:zh_CN]
+否则，[`T][$'] 就是将 [`P] 代换为所推断的 [`U] 而获得的类型。
+
+[enter:example]
+[codeblock]
+auto x1 = { 1, 2 };             // [:en] [`decltype(x1)] is [`std::initializer_list<int>]
+                                // [|:zh_CN] [`decltype(x1)] 为 [`std::initializer_list<int>]
+auto x2 = { 1, 2.0 };           // [:en] error: cannot deduce element type
+                                // [|:zh_CN] 错误，无法推断元素类型
+auto x3{ 1, 2 };                // [:en] error: not a single element
+                                // [|:zh_CN] 错误，不是单个元素
+auto x4 = { 3 };                // [:en] [`decltype(x4)] is [`std::initializer_list<int>]
+                                // [|:zh_CN] [`decltype(x4)] 为 [`std::initializer_list<int>]
+auto x5{ 3 };                   // [:en] [`decltype(x5)] is [`int]
+                                // [|:zh_CN] [`decltype(x5)] 为 [`int]
+[codeblock:end]
+[exit:example]
+
+[para:~]
+[enter:example]
+[codeblock]
+const auto &i = expr;
+[codeblock:end]
+
+[:en]
+The type of [`i] is the deduced type of the parameter [`u] in the call
+[`f(expr)] of the following invented function template:
+[:zh_CN]
+[`i] 的类型是对如下虚构的函数模板的调用 [`f(expr)] 中对形参 [`u] 推断出的类型：
+
+[codeblock]
+template <class U> void f(const U& u);
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+If the placeholder is the [`decltype(auto)] [~type-specifier], [`T] shall be the
+placeholder alone.
+[:zh_CN]
+若占位符是[~类型说明符] [`decltype(auto)]，则 [`T] 应当就是占位符自身。
+
+[:en]
+The type deduced for [`T] is determined as described in [#dcl.type.simple], as
+though [`e] had been the operand of the [`decltype].
+[:zh_CN]
+为 [`T] 所推断的类型，如同将 [`e] 作为 [`decltype] 的操作数那样，根据
+[#dcl.type.simple] 中的说明进行确定。
+
+[enter:example]
+[codeblock]
+int i;
+int&& f();
+auto           x2a(i);          // [:en] [`decltype(x2a)] is [`int]
+                                // [|:zh_CN] [`decltype(x2a)] 为 [`int]
+decltype(auto) x2d(i);          // [:en] [`decltype(x2d)] is [`int]
+                                // [|:zh_CN] [`decltype(x2d)] 为 [`int]
+auto           x3a = i;         // [:en] [`decltype(x3a)] is [`int]
+                                // [|:zh_CN] [`decltype(x3a)] 为 [`int]
+decltype(auto) x3d = i;         // [:en] [`decltype(x3d)] is [`int]
+                                // [|:zh_CN] [`decltype(x3d)] 为 [`int]
+auto           x4a = (i);       // [:en] [`decltype(x4a)] is [`int]
+                                // [|:zh_CN] [`decltype(x4a)] 为 [`int]
+decltype(auto) x4d = (i);       // [:en] [`decltype(x4d)] is [`int&]
+                                // [|:zh_CN] [`decltype(x4d)] 为 [`int&]
+auto           x5a = f();       // [:en] [`decltype(x5a)] is [`int]
+                                // [|:zh_CN] [`decltype(x5a)] 为 [`int]
+decltype(auto) x5d = f();       // [:en] [`decltype(x5d)] is [`int&&]
+                                // [|:zh_CN] [`decltype(x5d)] 为 [`int&&]
+auto           x6a = { 1, 2 };  // [:en] [`decltype(x6a)] is [`std::initializer_list<int>]
+                                // [|:zh_CN] [`decltype(x6a)] 为 [`std::initializer_list<int>]
+decltype(auto) x6d = { 1, 2 };  // [:en] error, [`{ 1, 2 }] is not an expression
+                                // [|:zh_CN] 错误，[`{ 1, 2 }] 不是表达式
+auto          *x7a = &i;        // [:en] [`decltype(x7a)] is [`int*]
+                                // [|:zh_CN] [`decltype(x7a)] 为 [`int*]
+decltype(auto)*x7d = &i;        // [:en] error, declared type is not plain [`decltype(auto)]
+                                // [|:zh_CN] 错误，所声明的类型不是单纯的 [`decltype(auto)]
+[codeblock:end]
+[exit:example]

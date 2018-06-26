@@ -1,0 +1,160 @@
+[section#fs.path.construct
+    [:en] [`path] constructors
+    [:zh_CN] [`path] 构造函数
+]
+
+[%@library path[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+path() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs an object of class [`path].
+[:zh_CN] 构造类 [`path] 的对象。
+
+[para:postconditions]
+[:en] [`empty() == true].
+[:zh_CN] [`empty() == true]。
+[exit:description]
+
+[%@library path[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+path(const path& p);
+path(path&& p) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs an object of class [`path] having the same pathname in the
+native and generic formats, respectively, as the original value of [`p].
+[:zh_CN] 构造类 [`path] 的对象，使其所具有的本地和通用格式的路径名分别于 [`p]
+的原值相同。
+
+[:en] In the second form, [`p] is left in a valid but unspecified state.
+[:zh_CN] 第二种形式中，[`p] 将遗留处于某个有效但未指明的状态。
+[exit:description]
+
+[%@library path[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+path(string_type&& source, format fmt = auto_format);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs an object of class [`path] for which the pathname in the
+detected-format of [`source] has the original value of [`source]
+([#fs.path.fmt.cvt]), converting format if required ([#fs.path.fmt.cvt]).
+[:zh_CN] 构造类 [`path] 的对象，使其路径名以 [`source] 的检测格式表示时为
+[`source] 的原值（[#fs.path.fmt.cvt]），当需要时进行格式转换
+（[#fs.path.fmt.cvt]）。
+[exit:description]
+
+[%@library path[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class Source>
+  path(const Source& source, format fmt = auto_format);
+template <class InputIterator>
+  path(InputIterator first, InputIterator last, format fmt = auto_format);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Let [`s] be the effective range of [`source] ([#fs.path.req]) or the range
+[=range(first,last)], with the encoding converted if required ([#fs.path.cvt]).
+[:zh_CN] 令 [`s] 为 [`source] 的有效范围（[#fs.path.req]），或者范围
+[=range(first,last)]，当需要时进行编码转换（[#fs.path.cvt]）。
+
+[:en] Finds the detected-format of [`s] ([#fs.path.fmt.cvt]) and constructs an
+object of class [`path] for which the pathname in that format is [`s].
+[:zh_CN] 找出 [`s] 的检测格式（[#fs.path.fmt.cvt]），并构造类 [`path] 的对象使
+其在该格式中的路径名为 [`s]。
+[exit:description]
+
+[%@library path[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class Source>
+  path(const Source& source, const locale& loc, format fmt = auto_format);
+template <class InputIterator>
+  path(InputIterator first, InputIterator last, const locale& loc, format fmt = auto_format);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The value type of [`Source] and [`InputIterator] is [`char].
+[:zh_CN] [`Source] 和 [`InputIterator] 的值类型都为 [`char]。
+
+[para:effects]
+[:en] Let [`s] be the effective range of [`source] or the range
+[=range(first,last)], after converting the encoding as follows:
+[:zh_CN] 令 [`s] 为 [`source] 的有效范围，或者范围 [=range(first,last)]，并进行
+如下编码转换：
+
+[list]
+[item]
+[:en] If [`value_type] is [`wchar_t], converts to the native wide encoding
+([#fs.def.native.encode]) using the [`codecvt<wchar_t, char, mbstate_t>] facet
+of [`loc].
+[:zh_CN] 若 [`value_type] 为 [`wchar_t]，则使用 [`loc] 的
+[`codecvt<wchar_t, char, mbstate_t>] 刻面将其转换为本地宽字符编码
+（[#fs.def.native.encode]）。
+[item]
+[:en] Otherwise a conversion is performed using the
+[`codecvt<wchar_t, char, mbstate_t>] facet of [`loc], and then a second
+conversion to the current narrow encoding.
+[:zh_CN] 否则使用 [`loc] 的 [`codecvt<wchar_t, char, mbstate_t>] 刻面进行转换，
+然后进行向当前窄字符编码的第二次转换。
+[list:end]
+
+[para]
+[:en] Finds the detected-format of [`s] ([#fs.path.fmt.cvt]) and constructs an
+object of class [`path] for which the pathname in that format is [`s].
+[:zh_CN] 找出 [`s] 的检测格式（[#fs.path.fmt.cvt]），并构造类 [`path] 的对象使
+其在该格式中的路径名为 [`s]。
+
+[enter:example]
+[:en] A string is to be read from a database that is encoded in ISO/IEC 8859-1,
+and used to create a directory:
+[:zh_CN] 从一个数据库中读取一个以 ISO/IEC 8859-1 编码的字符串，并用其创建一个
+目录：
+
+[codeblock]
+namespace fs = std::filesystem;
+std::string latin1_string = read_latin1_data();
+codecvt_8859_1<wchar_t> latin1_facet;
+std::locale latin1_locale(std::locale(), latin1_facet);
+fs::create_directory(fs::path(latin1_string, latin1_locale));
+[codeblock:end]
+
+[:en] For POSIX-based operating systems, the path is constructed by first using
+[`latin1_facet] to convert ISO/IEC 8859-1 encoded [`latin1_string] to a wide
+character string in the native wide encoding ([#fs.def.native.encode]).
+[:zh_CN] 对于基于 POSIX 的操作系统，这个 [`path] 的构造，首先使用
+[`latin1_facet] 将以 ISO/IEC 8859-1 编码的 [`latin1_string] 转换为以本地宽字符
+编码的宽字符串（[#fs.def.native.encode]）。
+
+[:en] The resulting wide string is then converted to a narrow character pathname
+string in the current native narrow encoding.
+[:zh_CN] 随后将这个结果宽字符串转换为以当前窄字符编码的窄字符路径名字符串。
+
+[:en] If the native wide encoding is UTF-16 or UTF-32, and the current native
+narrow encoding is UTF-8, all of the characters in the ISO/IEC 8859-1 character
+set will be converted to their Unicode representation, but for other native
+narrow encodings some characters may have no representation.
+[:zh_CN] 如果本地宽字符编码为 UTF-16 或 UTF-32，且当前窄字符编码为 UTF-8，则
+ISO/IEC 8859-1 字符集中的所有字符都将被转换为其 Unicode 表示，但在其他窄字符编码
+中，某些字符可能没有表示。
+
+[para:~]
+[:en] For Windows-based operating systems, the path is constructed by using
+[`latin1_facet] to convert ISO/IEC 8859-1 encoded [`latin1_string] to a UTF-16
+encoded wide character pathname string.
+[:zh_CN] 对于基于 Windows 的操作系统，这个 [`path] 的构造，使用 [`latin1_facet]
+将以 ISO/IEC 8859-1 编码的 [`latin1_string] 转换为以 UTF-16 编码的宽字符路径
+字符串。
+
+[:en] All of the characters in the ISO/IEC 8859-1 character set will be
+converted to their Unicode representation.
+[:zh_CN] ISO/IEC 8859-1 字符集中的所有字符都将被转换为其 Unicode 表示。
+[exit:example]
+[exit:description]

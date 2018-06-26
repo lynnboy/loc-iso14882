@@ -1,0 +1,525 @@
+[section#class.copy.assign
+    [:en] Copy/move assignment operator
+    [:zh_CN] 复制/移动赋值运算符
+]
+
+[%:begin#assignment.operator.copy
+    [:en] assignment operator[!copy]
+    [:zh_CN] 赋值运算符[!复制～]
+]
+[%:begin#assignment.operator.move
+    [:en] assignment operator[!move]
+    [:zh_CN] 赋值运算符[!移动～]
+]
+[para]
+[:en]
+[%special member function[%assignment operator]]
+[%copy[!class object][%assignment operator[!copy]]]
+[%move[!class object][%assignment operator[!move]]]
+[%operator[!copy assignment][%assignment operator[!copy]]]
+[%operator[!move assignment][%assignment operator[!move]]]
+A user-declared [+copy[%]] assignment operator [`X::operator=] is a non-static
+non-template member function of class [`X] with exactly one parameter of type
+[`X], [`X&], [`const X&], [`volatile X&] or [`const volatile X&].
+[#:note#fn:$section.1]
+[:zh_CN]
+[%特殊成员函数[%赋值运算符]]
+[%复制[!类对象][%赋值运算符[!复制～]]]
+[%移动[!类对象][%赋值运算符[!移动～]]]
+[%运算符[!复制赋值～][%赋值运算符[!复制～]]]
+[%运算符[!移动赋值～][%赋值运算符[!移动～]]]
+用户声明的[+复制[%]]赋值运算符 [`X::operator=] 是类 [`X] 中的恰好带有一个类型为
+[`X]，[`X&]，[`const X&]，[`volatile X&] 或 [`const volatile X&] 的形参的非静态
+非模板成员函数。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en]
+Because a template assignment operator or an assignment operator taking an
+rvalue reference parameter is never a copy assignment operator, the presence of
+such an assignment operator does not suppress the implicit declaration of a copy
+assignment operator.
+[:zh_CN]
+因为模板赋值运算符或者带有右值引用形参的赋值运算符从来不是复制赋值运算符，出现
+这种赋值运算符并不会抑制复制赋值运算符的隐式声明。
+
+[:en]
+Such assignment operators participate in overload resolution with other
+assignment operators, including copy assignment operators, and, if selected,
+will be used to assign an object.
+[:zh_CN]
+这种赋值运算符参与其他赋值运算符（包括复制赋值运算符）的重载决议，并且如果它被
+选择，就将被用于对对象赋值。
+[note:end]
+
+[enter:note]
+[:en]
+An overloaded assignment operator must be declared to have only one parameter;
+see [#over.ass].
+[:zh_CN]
+重载的赋值运算符必须被声明为仅有一个形参；参见 [#over.ass]。
+[exit:note]
+
+[enter:note]
+[:en]
+More than one form of copy assignment operator may be declared for a class.
+[:zh_CN]
+可以为类声明多种形式的复制赋值运算符。
+[exit:note]
+
+[enter:note]
+[:en]
+If a class [`X] only has a copy assignment operator with a parameter of type
+[`X&], an expression of type const [`X] cannot be assigned to an object of type
+[`X].
+[:zh_CN]
+若类 [`X] 仅有形参类型为 [`X&] 的复制赋值运算符，则类型为 [`const X</code] 的
+表达式不能被赋值给类型 [`X] 的对象。
+
+[enter:example]
+[codeblock]
+struct X {
+  X();
+  X& operator=(X&);
+};
+const X cx;
+X x;
+void f() {
+  x = cx;           // [:en] error: [`X::operator=(X&)] cannot assign [`cx] into [`x]
+                    // [|:zh_CN] 错误：[`X::operator=(X&)] 不能把 [`cx] 赋值给 [`x]
+}
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[:en]
+[%assignment operator[!copy[!implicitly declared]]]
+If the class definition does not explicitly declare a copy assignment operator,
+one is declared [+implicitly[%]].
+[:zh_CN]
+[%赋值运算符[!复制～[!隐式声明的]]]
+若类定义式中并未明确声明复制赋值运算符，则将[+隐式[%]]声明一个复制赋值运算符。
+
+[:en]
+If the class definition declares a move constructor or move assignment operator,
+the implicitly declared copy assignment operator is defined as deleted;
+otherwise, it is defined as defaulted ([#dcl.fct.def]).
+[:zh_CN]
+若类定义式中声明了一个移动构造函数或移动赋值运算符，则隐式声明的复制赋值运算符被
+定义为弃置的；否则它被定义为预置的（[#dcl.fct.def]）。
+
+[:en]
+The latter case is deprecated if the class has a user-declared copy constructor
+or a user-declared destructor.
+[:zh_CN]
+当类带有用户声明的复制构造函数或用户声明的析构函数时，后一种情况是被摒弃的。
+
+[:en]
+The implicitly-declared copy assignment operator for a class [`X] will have the
+form
+[:zh_CN]
+为类 [`X] 所隐式声明的复制赋值运算符的形式为
+
+[codeblock:notation]
+X& X::operator=(const X&)
+[codeblock:end]
+
+[:en@~]
+if
+[:zh_CN@~]
+其条件为
+
+[list]
+[item]
+[:en] each direct base class [`B] of [`X] has a copy assignment operator whose
+parameter is of type [`const B&], [`const volatile B&] or [`B], and
+[:zh_CN] [`X] 的每个直接基类 [`B] 均带有形参类型为 [`const B&]，[`const volatile
+B&] 或 [`B] 的复制赋值运算符，并且
+
+[item]
+[:en] for all the non-static data members of [`X] that are of a class type [`M]
+(or array thereof), each such class type has a copy assignment operator whose
+parameter is of type [`const M&], [`const volatile M&] or [`M].
+[#:note#fn:$section.2]
+[:zh_CN] 对于 [`X] 的所有类类型 [`M]（或其数组）的非静态数据成员，每个这样的类
+类型均带有形参类型为 [`const M&]，[`const volatile M&] 或 [`M] 的复制赋值运算符。
+[#:note#fn:$section.2]
+
+[note:foot#fn:$section.2]
+[:en]
+This implies that the reference parameter of the implicitly-declared copy
+assignment operator cannot bind to a [`volatile] lvalue; see [#diff.special].
+[:zh_CN]
+这意味着隐式声明的复制赋值运算符的引用形参不能绑定到 [`volatile] 左值；参见
+[#diff.special]。
+[note:end]
+[list:end]
+
+[:en]
+Otherwise, the implicitly-declared copy assignment operator will have the form
+[:zh_CN]
+否则，隐式声明的复制赋值运算符的形式为
+
+[codeblock:notation]
+X& X::operator=(X&)
+[codeblock:end]
+
+[para]
+[:en]
+A user-declared move assignment operator [`X::operator=] is a non-static
+non-template member function of class [`X] with exactly one parameter of type
+[`X&&], [`const X&&], [`volatile X&&], or [`const volatile X&&].
+[:zh_CN]
+用户声明的移动赋值运算符 [`X::operator=] 是类 [`X] 的恰好带有一个类型为 [`X&&]，
+[`const X&&]，[`volatile X&&] 或 [`const volatile X&&] 的形参的非静态非模板成员
+函数。
+
+[enter:note]
+[:en]
+An overloaded assignment operator must be declared to have only one parameter;
+see [#over.ass].
+[:zh_CN]
+重载的赋值运算符必须被声明为仅有一个形参；参见 [#over.ass]。
+[exit:note]
+
+[enter:note]
+[:en]
+More than one form of move assignment operator may be declared for a class.
+[:zh_CN]
+可以为类声明多种形式的移动赋值运算符。
+[exit:note]
+
+[para]
+[:en]
+[%assignment operator[!move[!implicitly declared]]]
+If the definition of a class [`X] does not explicitly declare a move assignment
+operator, one will be implicitly declared as defaulted if and only if
+[:zh_CN]
+[%赋值运算符[!移动～[!隐式声明的]]]
+若类定义式中并未明确声明移动赋值运算符，则当且仅当满足如下条件时将隐式声明一个
+预置的移动赋值运算符。
+
+[list]
+[item]
+[:en@~] [`X] does not have a user-declared copy constructor,
+[:zh_CN@~] [`X] 不带有用户声明的复制构造函数，
+
+[item]
+[:en@~] [`X] does not have a user-declared move constructor,
+[:zh_CN@~] [`X] 不带有用户声明的移动构造函数，
+
+[item]
+[:en@~] [`X] does not have a user-declared copy assignment operator, and
+[:zh_CN@~] [`X] 不带有用户声明的复制赋值运算符，并且
+
+[item]
+[:en@~] [`X] does not have a user-declared destructor.
+[:zh_CN@~] [`X] 不带有用户声明的析构函数。
+[list:end]
+
+[enter:example]
+[:en]
+The class definition
+[:zh_CN]
+类定义式
+
+[codeblock]
+struct S {
+  int a;
+  S& operator=(const S&) = default;
+};
+[codeblock:end]
+
+[:en@~]
+will not have a default move assignment operator implicitly declared because the
+copy assignment operator has been user-declared.
+[:zh_CN@~]
+不会有隐式声明的预置移动赋值运算符，这是因为复制赋值运算符已经由用户声明。
+
+[:en]
+The move assignment operator may be explicitly defaulted.
+[:zh_CN]
+可以显式预置移动赋值运算符。
+
+[codeblock]
+struct S {
+  int a;
+  S& operator=(const S&) = default;
+  S& operator=(S&&) = default;
+};
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+The implicitly-declared move assignment operator for a class [`X] will have the
+form
+[:zh_CN]
+为类 [`X] 隐式声明的移动赋值运算符的形式为
+
+[codeblock:notation]
+X& X::operator=(X&&);
+[codeblock:end]
+
+[para]
+[:en]
+The implicitly-declared copy/move assignment operator for class [`X] has the
+return type [`X&]; it returns the object for which the assignment operator is
+invoked, that is, the object assigned to.
+[:zh_CN]
+为类 [`X] 隐式声明的复制/移动赋值运算符的返回类型为 [`X&]；它返回调用了该赋值
+运算符的对象，也就是被赋值的对象。
+
+[:en]
+An implicitly-declared copy/move assignment operator is an [`inline public]
+member of its class.
+[:zh_CN]
+隐式声明的复制/移动赋值运算符是其类的 [`inline public] 成员。
+
+[para]
+[:en]
+A defaulted copy/move assignment operator for class [`X] is defined as deleted
+if [`X] has:
+[:zh_CN]
+当类 [`X] 具有以下各项时，[`X] 的预置的复制/移动赋值运算符被定义为弃置的：
+
+[list]
+[item]
+[:en@~] a variant member with a non-trivial corresponding assignment operator
+and [`X] is a union-like class, or
+[:zh_CN@~] 带有非平凡的对应赋值运算符的可变成员，且 [`X] 是类似联合的类，或者
+
+[item]
+[:en@~] a non-static data member of [`const] non-class type (or array thereof),
+or
+[:zh_CN@~] [`const] 非类类型（或其数组）的非静态数据成员，或者
+
+[item]
+[:en@~] a non-static data member of reference type, or
+[:zh_CN@~] 引用类型的非静态数据成员，或者
+
+[item]
+[:en@~] a direct non-static data member of class type [`M] (or array thereof) or
+a direct base class [`M] that cannot be copied/moved because overload resolution
+([#over.match]), as applied to [`M][=']s corresponding assignment operator,
+results in an ambiguity or a function that is deleted or inaccessible from the
+defaulted assignment operator.
+[:zh_CN] 类类型 [`M]（或其数组）的直接非静态数据成员，或者直接基类 [`M]，由于对
+[`M] 的对应赋值运算符进行重载决议（[#over.match]）的结果有歧义，或者是被弃置的
+或在这个预置赋值运算符中无法访问的函数，而无法被复制或移动。
+[list:end]
+
+[:en]
+A defaulted move assignment operator that is defined as deleted is ignored by
+overload resolution ([#over.match], [#over.over]).
+[:zh_CN]
+被定义为弃置的预置移动赋值运算符，在重载决议中被忽略（[#over.match]，
+[#over.over]）。
+
+[para]
+[:en]
+[%assignment operator[!copy[!hidden]]]
+[%assignment operator[!move[!hidden]]]
+Because a copy/move assignment operator is implicitly declared for a class if
+not declared by the user, a base class copy/move assignment operator is always
+hidden by the corresponding assignment operator of a derived class
+([#over.ass]).
+[:zh_CN]
+[%赋值运算符[!复制～[!隐藏]]]
+[%赋值运算符[!移动～[!隐藏]]]
+由于如果用户不为类声明复制/移动赋值运算符那么就会隐式声明一个，基类的复制/移动
+赋值运算符总是被派生类的对应赋值运算符所隐藏（[#over.ass]）。
+
+[:en]
+A [~using-declaration] ([#namespace.udecl]) that brings in from a base class an
+assignment operator with a parameter type that could be that of a copy/move
+assignment operator for the derived class is not considered an explicit
+declaration of such an operator and does not suppress the implicit declaration
+of the derived class operator; the operator introduced by the
+[~using-declaration] is hidden by the implicitly-declared operator in the
+derived class.
+[:zh_CN]
+若一个 [~using-声明式]（[#namespace.udecl]）从基类引入赋值运算符，且其形参类型是
+派生类的复制/移动赋值运算符的形参类型，则它并不被当作对这种运算符的显式声明式，
+并且并不会抑制派生类的运算符的隐式声明式；由该 [~using-声明式]所引入的运算符被
+派生类中隐式声明的运算符所隐藏。
+
+[para]
+[:en]
+[%assignment operator[!copy[!trivial]]]
+[%assignment operator[!move[!trivial]]]
+A copy/move assignment operator for class [`X] is trivial if it is not
+user-provided and if
+[:zh_CN]
+[%赋值运算符[!复制～[!平凡的～]]]
+[%赋值运算符[!移动～[!平凡的～]]]
+当类 [`X] 的复制/移动赋值运算符不是用户提供的，并且满足如下条件时，它是平凡的：
+
+[list]
+[item]
+[:en@~] class [`X] has no virtual functions ([#class.virtual]) and no virtual
+base classes ([#class.mi]), and
+[:zh_CN@~] 类 [`X] 没有虚函数（[#class.virtual]）也没有虚基类（[#class.mi]），
+并且
+
+[item]
+[:en@~] the assignment operator selected to copy/move each direct base class
+subobject is trivial, and
+[:zh_CN@~] 所选择用于复制/移动每个直接基类子对象的赋值运算符是平凡的，并且
+
+[item]
+[:en@~] for each non-static data member of [`X] that is of class type (or array
+thereof), the assignment operator selected to copy/move that member is trivial;
+[:zh_CN@~] 对于 [`X] 的每个类类型（或其数组）的非静态数据成员，所选择用于复制/
+移动该成员的赋值运算符是平凡的；
+[list:end]
+
+[:en@~]
+[%assignment operator[!move[!non-trivial]]]
+otherwise the copy/move assignment operator is [+non-trivial
+[%assignment operator[!copy[!non-trivial]]]].
+[:zh_CN@~] 
+[%赋值运算符[!移动～[!非平凡的]]]
+否则该复制/移动赋值运算符是[+非平凡的[%赋值运算符[!复制～[!非平凡的]]]]。
+
+[para]
+[:en]
+[%assignment operator[!copy[!implicitly defined]]]
+[%assignment operator[!move[!implicitly defined]]]
+A copy/move assignment operator for a class [`X] that is defaulted and not
+defined as deleted is [+implicitly defined[%]] when it is odr-used
+([#basic.def.odr]) (e.g., when it is selected by overload resolution to assign
+to an object of its class type) or when it is explicitly defaulted after its
+first declaration.
+[:zh_CN]
+[%赋值运算符[!复制～[!隐式定义的～]]]
+[%赋值运算符[!移动～[!隐式定义的～]]]
+当预置的且并未被定义为弃置的复制/移动赋值运算符被 ODR 式使用（[#basic.def.odr]）
+（比如当它被重载决议选择用以对其类类型的对象进行赋值），或者当在其首个声明式之后
+被显式预置时，它将被[+隐式定义[%]]。
+
+[:en]
+The implicitly-defined copy/move assignment operator is [`constexpr] if
+[:zh_CN]
+符合以下条件时，隐式定义的复制/移动赋值运算符是 [`constexpr] 的：
+
+[list]
+[item]
+[:en@~] [`X] is a literal type, and
+[:zh_CN@~] [`X] 是字面量类型，并且
+
+[item]
+[:en@~] the assignment operator selected to copy/move each direct base class
+subobject is a constexpr function, and
+[:zh_CN@~] 所选择用于复制/移动每个基类子对象的赋值运算符是 constexpr 函数，并且
+
+[item]
+[:en@~] for each non-static data member of [`X] that is of class type (or array
+thereof), the assignment operator selected to copy/move that member is a
+constexpr function.
+[:zh_CN@~] 对于 [`X] 的每个类类型（或其数组）的非静态数据成员，所选择用于复制/
+移动该成员的赋值运算符是 constexpr 的。
+[list:end]
+
+[para]
+[:en]
+Before the defaulted copy/move assignment operator for a class is implicitly
+defined, all non-user-provided copy/move assignment operators for its direct
+base classes and its non-static data members shall have been implicitly defined.
+[:zh_CN]
+在对某个类的预置复制/移动赋值运算符进行隐式定义之前，它的所有直接基类和非静态
+数据成员的非用户提供的复制/移动赋值运算符都应当是已经被隐式定义的。
+
+[enter:note]
+[:en]
+An implicitly-declared copy/move assignment operator has an implied exception
+specification ([#except.spec]).
+[:zh_CN]
+隐式声明的复制/移动赋值运算符带有隐含的异常说明（[#except.spec]）。
+[exit:note]
+
+[para]
+[:en]
+The implicitly-defined copy/move assignment operator for a non-union class [`X]
+performs memberwise copy/move assignment of its subobjects.
+[:zh_CN]
+非联合类 [`X] 隐式定义的复制/移动赋值运算符实施其子对象的逐成员复制/移动。
+
+[:en]
+The direct base classes of [`X] are assigned first, in the order of their
+declaration in the [~base-specifier-list], and then the immediate non-static
+data members of [`X] are assigned, in the order in which they were declared in
+the class definition.
+[:zh_CN]
+[`X] 的直接基类首先按照它们在[~基说明符列表]中的声明顺序进行赋值，然后对 [`X] 的
+直接非静态数据成员，按照它们在类定义式中的声明顺序进行赋值。
+
+[:en]
+Let [`x] be either the parameter of the function or, for the move operator, an
+xvalue referring to the parameter.
+[:zh_CN]
+令 [`x] 为函数的形参，或对于移动运算符为一个指代其形参的临限值。
+
+[:en]
+Each subobject is assigned in the manner appropriate to its type:
+[:zh_CN]
+每个子对象按照与其类型相适应的方式进行赋值：
+
+[list]
+[item]
+[:en@~]
+if the subobject is of class type, as if by a call to [`operator=] with the
+subobject as the object expression and the corresponding subobject of [`x] as a
+single function argument (as if by explicit qualification; that is, ignoring any
+possible virtual overriding functions in more derived classes);
+[:zh_CN@~]
+若该子对象为类类型，则如同以该子对象为对象表达式并以 [`x] 的对应子对象作为单个
+函数实参，调用 [`operator=]（如同被显式限定一样；就是说，忽略在更加派生的类中
+任何可能的虚覆盖函数）；
+
+[item]
+[:en@~]
+if the subobject is an array, each element is assigned, in the manner
+appropriate to the element type;
+[:zh_CN@~]
+若该子对象是数组，则以与元素类型相适应的方式对每个元素赋值；
+
+[item]
+[:en@~]
+if the subobject is of scalar type, the built-in assignment operator is used.
+[:zh_CN@~]
+若该子对象是标量类型，则使用内建的赋值运算符。
+[list:end]
+
+[:en]
+[%assignment operator[!copy[!virtual bases and]]]
+It is unspecified whether subobjects representing virtual base classes are
+assigned more than once by the implicitly-defined copy/move assignment operator.
+[:zh_CN]
+[%赋值运算符[!复制～[!虚基类与～]]]
+用以表示虚基类的子对象是否会被隐式定义的复制赋值运算符进行多次赋值是未指明的。
+
+[enter:example]
+[codeblock]
+struct V { };
+struct A : virtual V { };
+struct B : virtual V { };
+struct C : B, A { };
+[codeblock:end]
+
+[:en]
+It is unspecified whether the virtual base class subobject [`V] is assigned
+twice by the implicitly-defined copy/move assignment operator for [`C].
+[:zh_CN]
+虚基类子对象 [`V] 是否会被 [`C] 的隐式定义的复制赋值运算符赋值两次是未指明的。
+[exit:example]
+
+[para]
+[:en]
+The implicitly-defined copy assignment operator for a union [`X] copies the
+object representation ([#basic.types]) of [`X].
+[:zh_CN]
+联合 [`X] 隐式定义的复制赋值运算符对 [`X] 的对象表示（[#basic.types]）进行复制。
+
+[%:end#assignment.operator.move]
+[%:end#assignment.operator.copy]

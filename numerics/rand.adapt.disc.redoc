@@ -1,0 +1,130 @@
+[/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% discard_block_engine engine adaptor:
+/]
+
+[section#rand.adapt.disc
+    [:en] Class template [`discard_block_engine]
+    [:zh_CN] 类模板 [`discard_block_engine]
+]
+
+[%@library discard_block_engine]
+[%[:en]random number engine adaptor[![`discard_block_engine]]
+  [:zh_CN]随机数引擎适配器[![`discard_block_engine]]]
+
+[para]
+[:en] A [`discard_block_engine] random number engine adaptor produces random
+numbers selected from those produced by some base engine [$e].
+[:zh_CN] [`discard_block_engine] 随机数引擎适配器产生从某个基础引擎 [$e] 所产生
+的随机数中选取的随机数。
+
+[:en] The state
+[%[`discard_block_engine][!state]]
+[%state[![`discard_block_engine]]]
+[`x][$_i] of a [`discard_block_engine] engine adaptor object [`x] consists of
+the state [`e][$_i] of its base engine [`e] and an additional integer [$n].
+[:zh_CN] [`discard_block_engine] 引擎适配器对象 [`x] 的状态
+[%[`discard_block_engine][!state]]
+[%state[![`discard_block_engine]]]
+[`x][$_i] 由其基础引擎 [`e] 的状态和一个额外的整数 [$n] 构成。
+
+[:en] The size of the state is the size of [$e][=']s state plus 1.
+[:zh_CN] 其状态的大小为 [$e] 的状态的大小加 1。
+
+[para]
+[:en] The transition algorithm
+[%[`discard_block_engine][!transition algorithm]]
+[%transition algorithm[![`discard_block_engine]]]
+discards all but [$r > 0] values from each block of [$p \geq r] values
+delivered by [$e].
+[:zh_CN] 其转移算法
+[%[`discard_block_engine][!转移算法]]
+[%转移算法[![`discard_block_engine]]]
+从 [$e] 提供的每 [$p] 个值的区块中丢弃其余仅保留 [$r] 个值
+（[$r > 0]，[$p \geq r]）。
+
+[:en] The state transition is performed as follows:
+[:zh_CN] 状态迁移按如下进行：
+
+[:en] If [$n \geq r], advance the state of [`e] from [`e][$_i] to
+[`e][$_{i+p-r}] and set [$n] to 0.
+[:zh_CN] 若 [$n \geq r]，则将 [`e] 的状态从 [`e][$_i] 推进到 [`e][$_{i+p-r}]，
+并将 [$n] 设值为 0。
+
+[:en] In any case, then increment [$n] and advance [`e][=']s then-current state
+[`e][$_j] to [`e][$_{j+1}].
+[:zh_CN] 任何情况下，随后递增 [$n]，并将 [`e] 的当前状态从 [`e][$_j] 推进到
+[`e][$_{j+1}]。
+
+[para]
+[:en] The generation algorithm
+[%[`discard_block_engine][!generation algorithm]]
+[%generation algorithm[![`discard_block_engine]]]
+yields the value returned by the last invocation of [`e()] while advancing
+[`e][=']s state as described above.
+[:zh_CN] 其生成算法
+[%[`discard_block_engine][!生成算法]]
+[%生成算法[![`discard_block_engine]]]
+产生对 [`e] 的状态按上述进行推进时的最后一次 [`e()] 的调用所返回的值。
+
+[codeblock:synopsis]
+template<class Engine, size_t p, size_t r>
+  class discard_block_engine {
+  public:
+    // [:en] types
+    // [|:zh_CN] 类型
+    using result_type = typename Engine::result_type;
+
+    // [:en] engine characteristics
+    // [|:zh_CN] 引擎的特性
+    static constexpr size_t block_size = p;
+    static constexpr size_t used_block = r;
+    static constexpr result_type min() { return Engine::min(); }
+    static constexpr result_type max() { return Engine::max(); }
+
+    // [:en] constructors and seeding functions
+    // [|:zh_CN] 构造函数和播种函数
+    discard_block_engine();
+    explicit discard_block_engine(const Engine& e);
+    explicit discard_block_engine(Engine&& e);
+    explicit discard_block_engine(result_type s);
+    template<class Sseq> explicit discard_block_engine(Sseq& q);
+    void seed();
+    void seed(result_type s);
+    template<class Sseq> void seed(Sseq& q);
+
+    // [:en] generating functions
+    // [|:zh_CN] 生成函数
+    result_type operator()();
+    void discard(unsigned long long z);
+
+    // [:en] property functions
+    // [|:zh_CN] 属性函数
+    const Engine& base() const noexcept { return e; };
+
+  private:
+    Engine e;   // [=Expos]
+    int n;      // [=Expos]
+  };
+[codeblock:end]
+
+[para]
+[:en] The following relations shall hold: [`0 < r] and [`r <= p].
+[:zh_CN] 应当满足下列关系：[`0 < r] 且 [`r <= p]。
+
+[para]
+[:en] The textual representation
+[%[`discard_block_engine][!textual representation]]
+[%textual representation[![`discard_block_engine]]]
+consists of the textual representation of [`e] followed by the value of [`n].
+[:zh_CN] 其文本表示
+[%[`discard_block_engine][!文本表示]]
+[%文本表示[![`discard_block_engine]]]
+由 [`e] 的文本表示之后跟着 [`n] 的值构成。
+
+[para]
+[%@library discard_block_engine[![:en]constructor][:zh_CN]构造函数]
+[:en] In addition to its behavior pursuant to section [#rand.req.adapt], each
+constructor that is not a copy constructor sets [`n] to 0.
+[:zh_CN] 除了小节 [#rand.req.adapt] 中所述的行为之外，各个并非复制构造函数的
+构造函数还将 [`n] 设值为 0。

@@ -1,0 +1,109 @@
+[section#re.regiter.incr
+    [:en] [`regex_iterator] increment
+    [:zh_CN] [`regex_iterator] 增量
+]
+
+[%@library regex_iterator[!operator++]]
+[%@library operator++[!regex_iterator]]
+[codeblock:declaration]
+regex_iterator& operator++();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a local variable [`start] of type [`BidirectionalIterator] and
+initializes it with the value of [`match`[0`].second].
+[:zh_CN] 构造一个 [`BidirectionalIterator] 类型的局部变量 [`start]，并以
+[`match`[0`].second] 的值对其初始化。
+
+[para]
+[:en] If the iterator holds a zero-length match and [`start == end] the operator
+sets [`*this] to the end-of-sequence iterator and returns [`*this].
+[:zh_CN] 如果该迭代器持有一个零长匹配，且 [`start == end]，则该运算符将 [`*this]
+设值为末尾迭代器并返回 [`*this]。
+
+[para]
+[%@library match_not_null]
+[%@library match_continuous]
+[:en] Otherwise, if the iterator holds a zero-length match, the operator calls:
+[:zh_CN] 否则，如果该迭代器持有一个零长匹配，则该运算符调用：
+
+[codeblock:notation]
+regex_search(start, end, match, *pregex,
+             flags | regex_constants::match_not_null | regex_constants::match_continuous)
+[codeblock:end]
+
+[:en] If the call returns [`true] the operator returns [`*this].
+[:zh_CN] 若该调用返回 [`true] 则运算符返回 [`*this]。
+
+[:en] Otherwise the operator increments [`start] and continues as if the most
+recent match was not a zero-length match.
+[:zh_CN] 否则该运算符增加 [`start]，并以如同其最近匹配并非零长匹配一样继续迭代。
+
+[para]
+[%@library match_prev_avail]
+[:en] If the most recent match was not a zero-length match, the operator sets
+[`flags] to [`flags | regex_constants::match_prev_avail] and calls
+[`regex_search(start, end, match, *pregex, flags)].
+[:zh_CN] 如果最近一次匹配并非零长匹配，则该运算符将 [`flags] 设置为
+[`flags | regex_constants::match_prev_avail]，并调用
+[`regex_search(start, end, match, *pregex, flags)]。
+
+[:en] If the call returns [`false] the iterator sets [`*this] to the
+end-of-sequence iterator.
+[:zh_CN] 若该调用返回 [`false]，则该运算符将 [`*this] 设值为末尾迭代器。
+
+[:en] The iterator then returns [`*this].
+[:zh_CN] 然后迭代器返回 [`*this]。
+
+[para]
+[:en] In all cases in which the call to [`regex_search] returns [`true],
+[`match.prefix().first] shall be equal to the previous value of
+[`match`[0`].second], and for each index [`i] in the half-open range
+[``[0, match.size())] for which [`match`[i`].matched] is [`true],
+[`match.position(i)] shall return [`distance(begin, match`[i`].first)].
+[:zh_CN] 无论何种情况只要对 [`regex_search] 的调用返回了 [`true]，则
+[`match.prefix().first] 应当等于 [`match`[0`].second] 之前的值，且对半开范围
+[``[0, match.size())] 中每个使得 [`match`[i`].matched] 为 [`true] 的 [`i]，
+[`match.position(i)] 都应当返回 [`distance(begin, match`[i`].first)]。
+
+[para]
+[enter:note]
+[:en] This means that [`match.position(i)] gives the offset from the beginning
+of the target sequence, which is often not the same as the offset from the
+sequence passed in the call to [`regex_search].
+[:zh_CN] 这意味着，[`match.position(i)] 给出的是从目标序列的开始算起的偏移值，而
+它通常与从调用 [`regex_search] 时所传递的序列的开始算起的偏移值并不相同。
+[exit:note]
+
+[para]
+[:en] It is unspecified how the implementation makes these adjustments.
+[:zh_CN] 实现如何做出这些调整是未指明的。
+
+[para]
+[enter:note]
+[:en] This means that a compiler may call an implementation-specific search
+function, in which case a user-defined specialization of [`regex_search] will
+not be called.
+[:zh_CN] 这意味着编译器可以调用某个特定于实现的搜索函数，这种情况下由用户定义的
+[`regex_search] 的特例就不会被调用。
+[exit:note]
+[exit:description]
+
+[%@library regex_iterator[!operator++]]
+[%@library operator++[!regex_iterator]]
+[codeblock:declaration]
+regex_iterator operator++(int);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by:
+[:zh_CN] 如同执行：
+
+[codeblock:notation]
+regex_iterator tmp = *this;
+++(*this);
+return tmp;
+[codeblock:end]
+[exit:description]

@@ -1,0 +1,157 @@
+[/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% independent_bits_engine engine adaptor:
+/]
+
+[section#rand.adapt.ibits
+    [:en] Class template [`independent_bits_engine]
+    [:zh_CN] 类模板 [`independent_bits_engine]
+]
+
+[%@library independent_bits_engine]
+[%[:en] random number engine adaptor[![`independent_bits_engine]]
+  [:zh_CN] 随机数引擎适配器[![`independent_bits_engine]]]
+
+[para]
+[:en] An [`independent_bits_engine] random number engine adaptor combines random
+numbers that are produced by some base engine [$e], so as to produce random
+numbers with a specified number of bits [$w].
+[:zh_CN] [`independent_bits_engine] 随机数引擎适配器将某个基础引擎 [$e] 所产生的
+随机数合并起来，以产生具有指定位数 [$w] 的随机数。
+
+[:en] The state
+[%[`independent_bits_engine][!state]]
+[%state[![`independent_bits_engine]]]
+[`x][$_i] of an [`independent_bits_engine] engine adaptor object [`x] consists
+of the state [`e][$_i] of its base engine [`e]; the size of the state is the
+size of [$e][=']s state.
+[:zh_CN] [`independent_bits_engine] 引擎适配器对象 [`x] 的状态
+[%[`independent_bits_engine][!state]]
+[%state[![`independent_bits_engine]]]
+[`x][$_i] 由其基础引擎 [`e] 的状态 [`e][$_i] 构成；其状态的大小为 [$e] 的状态的
+大小。
+
+[para]
+[:en] The transition and generation algorithms are described in terms of the
+following integral constants:
+[:zh_CN] 其迁移和生成算法基于下述的整型常量进行描述：
+
+[list:ol@arparen]
+[item]
+[:en] Let [$R = [`e.max() - e.min() + 1]] and
+[$m = \left\lfloor \log_2 R \right\rfloor].
+[:zh_CN] 令 [$R = [`e.max() - e.min() + 1]] 以及
+[$m = \left\lfloor \log_2 R \right\rfloor]。
+[item]
+[:en] With [$n] as determined below,
+let [$w_0 = \left\lfloor w / n \right\rfloor], [$n_0 = n - w \bmod n],
+[$y_0 = 2^{w_0} \left\lfloor R / 2^{w_0} \right\rfloor], and
+[$y_1 = 2^{w_0 + 1} \left\lfloor R / 2^{w_0 + 1} \right\rfloor].
+[:zh_CN] [$n] 以如下方式确定，
+令 [$w_0 = \left\lfloor w / n \right\rfloor]，[$n_0 = n - w \bmod n]，
+[$y_0 = 2^{w_0} \left\lfloor R / 2^{w_0} \right\rfloor]，以及
+[$y_1 = 2^{w_0 + 1} \left\lfloor R / 2^{w_0 + 1} \right\rfloor]。
+[item]
+[:en] Let [$n = \left\lceil w / m \right\rceil] if and only if the relation
+[$R - y_0 \leq \left\lfloor y_0 / n \right\rfloor] holds as a result.
+[:zh_CN] 令 [$n = \left\lceil w / m \right\rceil] 当且仅当满足关系
+[$R - y_0 \leq \left\lfloor y_0 / n \right\rfloor]，为其结果。
+
+[:en] Otherwise let [$n = 1 + \left\lceil w / m \right\rceil].
+[:zh_CN] 否则令 [$n = 1 + \left\lceil w / m \right\rceil]。
+[list:end]
+
+[enter:note]
+[:en] The relation [$w = n_0 w_0 + (n - n_0)(w_0 + 1)] always holds.
+[:zh_CN] 总是满足关系 [$w = n_0 w_0 + (n - n_0)(w_0 + 1)]。
+[exit:note]
+
+[para]
+[:en] The transition algorithm
+[%[`independent_bits_engine][!transition algorithm]]
+[%transition algorithm[![`independent_bits_engine]]]
+is carried out by invoking [`e()] as often as needed to obtain [$n_0] values
+less than [$y_0 + [`e.min()]] and [$n - n_0] values less than
+[$y_1 + [`e.min()]].
+[:zh_CN] 其转移算法
+[%[`independent_bits_engine][!转移算法]]
+[%转移算法[![`independent_bits_engine]]]
+按需多次调用 [`e()] 以获得 [$n_0] 个小于 [$y_0 + [`e.min()]] 的值和 [$n - n_0]
+个小于 [$y_1 + [`e.min()]] 的值。
+
+[para]
+[:en] The generation algorithm
+[%[`independent_bits_engine][!generation algorithm]]
+[%generation algorithm[![`independent_bits_engine]]]
+uses the values produced while advancing the state as described above to yield a
+quantity [$S] obtained as if by the following algorithm:
+[:zh_CN] 其生成算法
+[%[`independent_bits_engine][!生成算法]]
+[%生成算法[![`independent_bits_engine]]]
+利用上述推进状态之中所获得的值以产生一个量 [$S]，如同按以下算法所得：
+
+[codeblock:notation]
+[$S] = 0;
+for ([$k] = 0; [$k \neq n_0]; [$k] += 1)  {
+ do [$u] = e() - e.min(); while ([$u \ge y_0]);
+ [$S] = [$2^{w_0} \cdot S + u \bmod 2^{w_0}];
+}
+for ([$k] = [$n_0]; [$k \neq n]; [$k] += [$1])  {
+ do [$u] = e() - e.min(); while ([$u \ge y_1]);
+ [$S] = [$2^{w_0 + 1} \cdot S + u \bmod 2^{w_0 + 1}];
+}
+[codeblock:end]
+
+[codeblock:synopsis]
+template<class Engine, size_t w, class UIntType>
+  class independent_bits_engine {
+  public:
+    // [:en] types
+    // [|:zh_CN] 类型
+    using result_type = UIntType;
+
+    // [:en] engine characteristics
+    // [|:zh_CN] 引擎的特性
+    static constexpr result_type min() { return 0; }
+    static constexpr result_type max() { return [$2^w - 1]; }
+
+    // [:en] constructors and seeding functions
+    // [|:zh_CN] 构造函数和播种函数
+    independent_bits_engine();
+    explicit independent_bits_engine(const Engine& e);
+    explicit independent_bits_engine(Engine&& e);
+    explicit independent_bits_engine(result_type s);
+    template<class Sseq> explicit independent_bits_engine(Sseq& q);
+    void seed();
+    void seed(result_type s);
+    template<class Sseq> void seed(Sseq& q);
+
+    // [:en] generating functions
+    // [|:zh_CN] 生成函数
+    result_type operator()();
+    void discard(unsigned long long z);
+
+    // [:en] property functions
+    // [|:zh_CN] 属性函数
+    const Engine& base() const noexcept { return e; };
+
+  private:
+    Engine e;   // [=Expos]
+  };
+[codeblock:end]
+
+[para]
+[:en] The following relations shall hold: [`0 < w] and
+[`w <= numeric_limits<result_type>::digits].
+[:zh_CN] 应当满足如下关系：[`0 < w] 以及
+[`w <= numeric_limits<result_type>::digits]。
+
+[para]
+[:en] The textual representation
+[%[`independent_bits_engine][!textual representation]]
+[%textual representation[![`independent_bits_engine]]]
+consists of the textual representation of [`e].
+[:zh_CN] 其文本表示
+[%[`independent_bits_engine][!文本表示]]
+[%文本表示[![`independent_bits_engine]]]
+由 [`e] 的文本表示构成。

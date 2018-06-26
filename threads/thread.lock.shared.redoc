@@ -1,0 +1,109 @@
+[section#thread.lock.shared
+    [:en] Class template [`shared_lock]
+    [:zh_CN] 类模板 [`shared_lock]
+]
+
+[%@library shared_lock]
+[codeblock:synopsis]
+namespace std {
+  template <class Mutex>
+  class shared_lock {
+  public:
+    using mutex_type = Mutex;
+
+    // [:en] [#thread.lock.shared.cons], construct/copy/destroy
+    // [|:zh_CN] [#thread.lock.shared.cons]，构造/复制/销毁
+    shared_lock() noexcept;
+    explicit shared_lock(mutex_type& m);  // [:en] blocking
+                                          // [|:zh_CN] 阻塞
+    shared_lock(mutex_type& m, defer_lock_t) noexcept;
+    shared_lock(mutex_type& m, try_to_lock_t);
+    shared_lock(mutex_type& m, adopt_lock_t);
+    template <class Clock, class Duration>
+      shared_lock(mutex_type& m,
+                  const chrono::time_point<Clock, Duration>& abs_time);
+    template <class Rep, class Period>
+      shared_lock(mutex_type& m,
+                const chrono::duration<Rep, Period>& rel_time);
+    ~shared_lock();
+
+    shared_lock(const shared_lock&) = delete;
+    shared_lock& operator=(const shared_lock&) = delete;
+
+    shared_lock(shared_lock&& u) noexcept;
+    shared_lock& operator=(shared_lock&& u) noexcept;
+
+    // [:en] [#thread.lock.shared.locking], locking
+    // [|:zh_CN] [#thread.lock.shared.locking]，锁定
+    void lock();  // [:en] blocking
+                  // [|:zh_CN] 阻塞
+    bool try_lock();
+    template <class Rep, class Period>
+      bool try_lock_for(const chrono::duration<Rep, Period>& rel_time);
+    template <class Clock, class Duration>
+      bool try_lock_until(const chrono::time_point<Clock, Duration>& abs_time);
+    void unlock();
+
+    // [:en] [#thread.lock.shared.mod], modifiers
+    // [:zh_CN] [#thread.lock.shared.mod]，改动函数
+    void swap(shared_lock& u) noexcept;
+    mutex_type* release() noexcept;
+
+    // [:en] [#thread.lock.shared.obs], observers
+    // [|:zh_CN] [#thread.lock.shared.obs]，探查函数
+    bool owns_lock() const noexcept;
+    explicit operator bool () const noexcept;
+    mutex_type* mutex() const noexcept;
+
+  private:
+    mutex_type* pm; // [=Expos]
+    bool owns;      // [=Expos]
+  };
+
+  template<class Mutex> shared_lock(shared_lock<Mutex>) -> shared_lock<Mutex>;
+
+  template <class Mutex>
+    void swap(shared_lock<Mutex>& x, shared_lock<Mutex>& y) noexcept;
+}
+[codeblock:end]
+
+[para]
+[:en] An object of type [`shared_lock] controls the shared ownership of a
+lockable object within a scope.
+[:zh_CN] [`shared_lock] 类型的对象在一个作用域中控制一个可锁定对象的共享所有权。
+
+[:en] Shared ownership of the lockable object may be acquired at construction or
+after construction, and may be transferred, after acquisition, to another
+[`shared_lock] object.
+[:zh_CN] 可锁定对象的共享所有权，可以在构造时或者构造之后获得，并且可以在获得
+之后被转移给其他的 [`shared_lock] 对象。
+
+[:en] Objects of type [`shared_lock] are not copyable but are movable.
+[:zh_CN] [`shared_lock] 类型的对象不可复制但可移动。
+
+[:en] The behavior of a program is undefined if the contained pointer [`pm] is
+not null and the lockable object pointed to by [`pm] does not exist for the
+entire remaining lifetime ([#basic.life]) of the [`shared_lock] object.
+[:zh_CN] 如果所包含的指针 [`pm] 非空值且由 [`pm] 所指向的可锁定对象不在
+[`shared_lock] 的整个生存期（[#basic.life]）中存在，则程序的行为是未定义的。
+
+[:en] The supplied [`Mutex] type shall meet the shared mutex requirements
+([#thread.sharedtimedmutex.requirements]).
+[:zh_CN] 所提供的 [`Mutex] 类型应当满足共享互斥体规定
+（[#thread.sharedtimedmutex.requirements]）。
+
+[para]
+[enter:note]
+[:en] [`shared_lock<Mutex>] meets the [`TimedLockable] requirements
+（[#thread.req.lockable.timed]).
+[:zh_CN] [`shared_lock<Mutex>] 满足 [`TimedLockable] 规定
+（[#thread.req.lockable.timed]）。
+[exit:note]
+
+[include thread.lock.shared.cons]
+
+[include thread.lock.shared.locking]
+
+[include thread.lock.shared.mod]
+
+[include thread.lock.shared.obs]

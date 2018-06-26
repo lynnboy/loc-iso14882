@@ -1,0 +1,79 @@
+[section#mem.poly.allocator.class
+    [:en] Class template [`polymorphic_allocator]
+    [:zh_CN] 类模板 [`polymorphic_allocator]
+]
+
+[para]
+[:en] A specialization of class template [`pmr::polymorphic_allocator] conforms
+to the [`Allocator] requirements ([#allocator.requirements]).
+[:zh_CN] 类模板 [`pmr::polymorphic_allocator] 的特例符合 [`Allocator] 的规定
+（[#allocator.requirements]）。
+
+[:en] Constructed with different memory resources, different instances of the
+same specialization of [`pmr::polymorphic_allocator] can exhibit entirely
+different allocation behavior.
+[:zh_CN] 由于可以由不同的内存资源进行构造，所以 [`pmr::polymorphic_allocator] 的
+相同特例的不同实例，也可能展现出完全不同的分配行为。
+
+[:en] This runtime polymorphism allows objects that use [`polymorphic_allocator]
+to behave as if they used different allocator types at run time even though they
+use the same static allocator type.
+[:zh_CN] 这种运行时多态，允许使用 [`polymorphic_allocator] 的对象的行为如同它们
+在运行时使用了不同的分配器类型，即便它们使用的是相同的静态分配器类型。
+
+[%@library polymorphic_allocator]
+[codeblock:synopsis]
+template <class Tp>
+class polymorphic_allocator {
+  memory_resource* memory_rsrc; // [=Expos]
+
+public:
+  using value_type = Tp;
+
+  // [:en] [#mem.poly.allocator.ctor], constructors
+  // [:zh_CN] [#mem.poly.allocator.ctor]，构造函数
+  polymorphic_allocator() noexcept;
+  polymorphic_allocator(memory_resource* r);
+
+  polymorphic_allocator(const polymorphic_allocator& other) = default;
+
+  template <class U>
+    polymorphic_allocator(const polymorphic_allocator<U>& other) noexcept;
+
+  polymorphic_allocator&
+    operator=(const polymorphic_allocator& rhs) = delete;
+
+  // [:en] [#mem.poly.allocator.mem], member functions
+  // [:zh_CN] [#mem.poly.allocator.mem]，成员函数
+  Tp* allocate(size_t n);
+  void deallocate(Tp* p, size_t n);
+
+  template <class T, class... Args>
+  void construct(T* p, Args&&... args);
+
+  template <class T1, class T2, class... Args1, class... Args2>
+    void construct(pair<T1,T2>* p, piecewise_construct_t,
+                   tuple<Args1...> x, tuple<Args2...> y);
+  template <class T1, class T2>
+    void construct(pair<T1,T2>* p);
+  template <class T1, class T2, class U, class V>
+    void construct(pair<T1,T2>* p, U&& x, V&& y);
+  template <class T1, class T2, class U, class V>
+    void construct(pair<T1,T2>* p, const pair<U, V>& pr);
+  template <class T1, class T2, class U, class V>
+    void construct(pair<T1,T2>* p, pair<U, V>&& pr);
+
+  template <class T>
+    void destroy(T* p);
+
+  polymorphic_allocator select_on_container_copy_construction() const;
+
+  memory_resource* resource() const;
+};
+[codeblock:end]
+
+[include mem.poly.allocator.ctor]
+
+[include mem.poly.allocator.mem]
+
+[include mem.poly.allocator.eq]

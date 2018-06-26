@@ -1,0 +1,70 @@
+[section#diff.cpp03.language.support
+    [:en] Clause [#language.support]: language support library
+    [:zh_CN] 第 [#language.support] 章：语言支持库
+]
+
+[para:~] [#new.delete.single]
+[=Change]
+[:en] Linking [`new] and [`delete] operators.
+[:zh_CN] 连接 [`new] 和 [`delete] 运算符。
+
+[=Rationale]
+[:en] The two throwing single-object signatures of [`operator new] and
+[`operator delete] are now specified to form the base functionality for
+the other operators.
+[:zh_CN] [`operator new] 和 [`operator delete] 的两个有抛出的单对象签名，现在被
+指定为构成其他运算符的基础功能。
+
+[:en] This clarifies that replacing just these two signatures changes others,
+even if they are not explicitly changed.
+[:zh_CN] 这厘清了仅替换这两个签名就会改变其他的运算符，即便它们并未被明确改变。
+
+[=Effect]
+[:en] Valid [=CppIII] code that replaces global [`new] or [`delete] operators
+may execute differently in this International Standard.
+[:zh_CN] 替换了全局 [`new] 和 [`delete] 运算符的有效 [=CppIII] 代码在本国际标准
+中可能具有不同的执行。
+
+[:en] For example, the following program should write [`"custom deallocation"]
+twice, once for the single-object delete and once for the array delete.
+[:zh_CN] 例如，以下程序应当两次写出 [`"custom deallocation"]，一次为单对象删除，
+一次为数组删除。
+
+[codeblock]
+#include <cstdio>
+#include <cstdlib>
+#include <new>
+
+void* operator new(std::size_t size) throw(std::bad_alloc) {
+  return std::malloc(size);
+}
+
+void operator delete(void* ptr) throw() {
+  std::puts("custom deallocation");
+  std::free(ptr);
+}
+
+int main() {
+  int* i = new int;
+  delete i;                     // [:en] single-object delete
+                                // [|:zh_CN] 但对象删除
+  int* a = new int[3];
+  delete [] a;                  // [:en] array delete
+                                // [|:zh_CN] 数组删除
+}
+[codeblock:end]
+
+[para:~] [#new.delete.single]
+[=Change]
+[:en] [`operator new] may throw exceptions other than [`std::bad_alloc].
+[:zh_CN] [`operator new] 可能抛出 [`std::bad_alloc] 以外的异常。
+
+[=Rationale]
+[:en] Consistent application of [`noexcept].
+[:zh_CN] 统一地应用 [`noexcept]。
+
+[=Effect]
+[:en] Valid [=CppIII] code that assumes that global [`operator new] only
+throws [`std::bad_alloc] may execute differently in this International Standard.
+[:zh_CN] 假定全局 [`operator new] 仅能抛出 [`std::bad_alloc] 的有效 [=CppIII]
+代码在本国际标准中可能有不同执行。

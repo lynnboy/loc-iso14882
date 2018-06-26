@@ -1,0 +1,95 @@
+[section#thread.lock.guard
+    [:en] Class template [`lock_guard]
+    [:zh_CN] 类模板 [`lock_guard]
+]
+
+[%@library lock_guard]
+[codeblock:synopsis]
+namespace std {
+  template <class Mutex>
+  class lock_guard {
+  public:
+    using mutex_type = Mutex;
+
+    explicit lock_guard(mutex_type& m);
+    lock_guard(mutex_type& m, adopt_lock_t);
+    ~lock_guard();
+
+    lock_guard(const lock_guard&) = delete;
+    lock_guard& operator=(const lock_guard&) = delete;
+
+  private:
+    mutex_type& pm; // [=Expos]
+  };
+
+  template<class Mutex> lock_guard(lock_guard<Mutex>) -> lock_guard<Mutex>;
+}
+[codeblock:end]
+
+[para]
+[:en] An object of type [`lock_guard] controls the ownership of a lockable
+object within a scope.
+[:zh_CN] [`lock_guard] 类型的对象在一个作用域中控制某个可锁定对象的所有权。
+
+[:en] A [`lock_guard] object maintains ownership of a lockable object throughout
+the [`lock_guard] object[=']s lifetime ([#basic.life]).
+[:zh_CN] [`lock_guard] 对象在其整个生存期（[#basic.life]）中维护可锁定对象的
+所有权。
+
+[:en] The behavior of a program is undefined if the lockable object referenced
+by [`pm] does not exist for the entire lifetime of the [`lock_guard] object.
+[:zh_CN] 如果由 [`pm] 所引用的可锁定对象不在 [`lock_guard] 的整个生存期中存在，
+则程序的行为是未定义的。
+
+[:en] The supplied [`Mutex] type shall meet the [`BasicLockable] requirements
+([#thread.req.lockable.basic]).
+[:zh_CN] 所提供的 [`Mutex] 类型应当满足 [`BasicLockable] 规定
+（[#thread.req.lockable.basic]）。
+
+[%@library lock_guard[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+explicit lock_guard(mutex_type& m);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] If [`mutex_type] is not a recursive mutex, the calling thread does not own
+the mutex [`m].
+[:zh_CN] 若 [`mutex_type] 不是递归互斥体，则调用线程不能拥有互斥体 [`m]。
+
+[para:effects]
+[:en] As if by [`m.lock()].
+[:zh_CN] 如同执行 [`m.lock()]。
+
+[para:postconditions]
+[`&pm == &m]
+[exit:description]
+
+[%@library lock_guard[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+lock_guard(mutex_type& m, adopt_lock_t);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The calling thread owns the mutex [`m].
+[:zh_CN] 调用方线程拥有互斥体 [`m]。
+
+[para:postconditions]
+[`&pm == &m]
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library lock_guard[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~lock_guard();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`pm.unlock()].
+[:zh_CN] 如同执行 [`pm.unlock()]。
+[exit:description]

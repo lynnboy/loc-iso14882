@@ -1,0 +1,141 @@
+[section#thread.timedmutex.requirements
+    [:en] Timed mutex types
+    [:zh_CN] 定时互斥体类型
+]
+
+[para]
+[:en] The [+timed mutex types] are the standard library types [`timed_mutex],
+[`recursive_timed_mutex], and [`shared_timed_mutex].
+[:zh_CN] [+定时互斥体类型]包括标准库类型 [`timed_mutex]、
+[`recursive_timed_mutex] 和 [`shared_timed_mutex]。
+
+[:en] They shall meet the requirements set out below.
+[:zh_CN] 它们都应当满足下文所设立的规定。
+
+[:en] In this description, [`m] denotes an object of a mutex type, [`rel_time]
+denotes an object of an instantiation of [`duration] ([#time.duration]), and
+[`abs_time] denotes an object of an instantiation of [`time_point]
+([#time.point]).
+[:zh_CN] 这里的描述中，[`m] 代表某种互斥体类型的对象，[`rel_time] 代表
+[`duration] 的某个实例的对象（[#time.duration]），而 [`abs_time] 代表
+[`time_point] 的某个实例的对象（[#time.point]）。
+
+[para]
+[:en] The timed mutex types shall meet the [`TimedLockable] requirements
+([#thread.req.lockable.timed]).
+[:zh_CN] 定时互斥体类型应当满足 [`TimedLockable] 规定
+（[#thread.req.lockable.timed]）。
+
+[para]
+[:en] The expression [`m.try_lock_for(rel_time)] shall be well-formed and have
+the following semantics:
+[:zh_CN] 表达式 [`m.try_lock_for(rel_time)] 应当良构并具有下列语义：
+
+[enter:description]
+[para:requires]
+[:en] If [`m] is of type [`timed_mutex] or [`shared_timed_mutex], the calling
+thread does not own the mutex.
+[:zh_CN] 若 [`m] 的类型为 [`timed_mutex] 或 [`shared_timed_mutex]，则调用方线程
+并不拥有该互斥体。
+
+[para:effects]
+[:en] The function attempts to obtain ownership of the mutex within the relative
+timeout ([#thread.req.timing]) specified by [`rel_time].
+[:zh_CN] 该函数尝试在由 [`rel_time] 所指定的相对超时（[#thread.req.timing]）之内
+获取该互斥体的所有权。
+
+[:en] If the time specified by [`rel_time] is less than or equal to
+[`rel_time.zero()], the function attempts to obtain ownership without blocking
+(as if by calling [`try_lock()]).
+[:zh_CN] 如果由 [`rel_time] 所指定的时间小于或等于 [`rel_time.zero()]，则该函数
+尝试获取所有权而不造成阻塞（如同调用 [`try_lock()]）。
+
+[:en] The function shall return within the timeout specified by [`rel_time] only
+if it has obtained ownership of the mutex object.
+[:zh_CN] 仅当函数已经获取到互斥体对象的所有权时，它才能在由 [`rel_time] 所指定
+的超时之内返回。
+
+[enter:note]
+[:en] As with [`try_lock()], there is no guarantee that ownership will be
+obtained if the lock is available, but implementations are expected to make a
+strong effort to do so.
+[:zh_CN] 与 [`try_lock()] 相同，不保证在可以锁定时能够获得所有权，但期待各实现
+尽其所能做到如此。
+[exit:note]
+
+[para:returntype]
+[:en] [`bool].
+[:zh_CN] [`bool]。
+
+[para:returns]
+[:en] [`true] if ownership was obtained, otherwise [`false].
+[:zh_CN] 如果获取到了所有权则返回 [`true]，否则返回 [`false]。
+
+[para:sync]
+[:en] If [`try_lock_for()] returns [`true], prior [`unlock()] operations on the
+same object [+synchronize with[%]] ([#intro.multithread]) this operation.
+[:zh_CN] 如果 [`try_lock_for()] 返回了 [`true]，则之前在同一个对象上的
+[`unlock()] 操作应当[+同步于[%]]（[#intro.multithread]）这个操作。
+
+[para:throws]
+[:en] Timeout-related exceptions ([#thread.req.timing]).
+[:zh_CN] 超时相关异常（[#thread.req.timing]）。
+[exit:description]
+
+[para]
+[:en] The expression [`m.try_lock_until(abs_time)] shall be well-formed and have
+the following semantics:
+[:zh_CN] 表达式 [`m.try_lock_until(abs_time)] 应当良构并具有下列语义：
+
+[enter:description]
+[para:requires]
+[:en] If [`m] is of type [`timed_mutex] or [`shared_timed_mutex], the calling
+thread does not own the mutex.
+[:zh_CN] 若 [`m] 的类型为 [`timed_mutex] 或 [`shared_timed_mutex]，则调用方线程
+并不拥有该互斥体。
+
+[para:effects]
+[:en] The function attempts to obtain ownership of the mutex.
+[:zh_CN] 该函数尝试获取该互斥体的所有权。
+
+[:en] If [`abs_time] has already passed, the function attempts to obtain
+ownership without blocking (as if by calling [`try_lock()]).
+[:zh_CN] 如果已经超过了 [`abs_time]，则该函数尝试获取所有权而不造成阻塞（如同
+调用 [`try_lock()]）。
+
+[:en] The function shall return before the absolute timeout
+([#thread.req.timing]) specified by [`abs_time] only if it has obtained
+ownership of the mutex object.
+[:zh_CN] 仅当函数已经获取到互斥体对象的所有权时，它才能在由 [`abs_time] 所指定
+的绝对超时（[#thread.req.timing]）之前返回。
+
+[enter:note]
+[:en] As with [`try_lock()], there is no guarantee that ownership will be
+obtained if the lock is available, but implementations are expected to make a
+strong effort to do so.
+[:zh_CN] 与 [`try_lock()] 相同，不保证在可以锁定时能够获得所有权，但期待各实现
+尽其所能做到如此。
+[exit:note]
+
+[para:returntype]
+[:en] [`bool].
+[:zh_CN] [`bool]。
+
+[para:returns]
+[:en] [`true] if ownership was obtained, otherwise [`false].
+[:zh_CN] 如果获取到了所有权则返回 [`true]，否则返回 [`false]。
+
+[para:sync]
+[:en] If [`try_lock_until()] returns [`true], prior [`unlock()] operations on
+the same object [+synchronize with[%]] ([#intro.multithread]) this operation.
+[:zh_CN] 如果 [`try_lock_until()] 返回了 [`true]，则之前在同一个对象上的
+[`unlock()] 操作应当[+同步于[%]]（[#intro.multithread]）这个操作。
+
+[para:throws]
+[:en] Timeout-related exceptions ([#thread.req.timing]).
+[:zh_CN] 超时相关异常（[#thread.req.timing]）。
+[exit:description]
+
+[include thread.timedmutex.class]
+
+[include thread.timedmutex.recursive]

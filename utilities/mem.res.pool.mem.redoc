@@ -1,0 +1,149 @@
+[section#mem.res.pool.mem
+    [:en] Pool resource members
+    [:zh_CN] 池化资源类的成员
+]
+
+[%@library release[!synchronized_pool_resource]]
+[%@library synchronized_pool_resource[!release]]
+[%@library release[!unsynchronized_pool_resource]]
+[%@library unsynchronized_pool_resource[!release]]
+[codeblock:declaration]
+void release();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Calls [`upstream_resource()->deallocate()] as necessary to release all
+allocated memory.
+[:zh_CN] 按需调用 [`upstream_resource()->deallocate()] 以释放所有已分配的内存。
+
+[enter:note]
+[:en] The memory is released back to [`upstream_resource()] even if
+[`deallocate] has not been called for some of the allocated blocks.
+[:zh_CN] 内存被释放回 [`upstream_resource()]，即便某些已分配的内存块尚未对其调用
+[`deallocate] 也是如此。
+[exit:note]
+[exit:description]
+
+[%@library upstream_resource[!synchronized_pool_resource]]
+[%@library synchronized_pool_resource[!upstream_resource]]
+[%@library upstream_resource[!unsynchronized_pool_resource]]
+[%@library unsynchronized_pool_resource[!upstream_resource]]
+[codeblock:declaration]
+memory_resource* upstream_resource() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] The value of the [`upstream] argument provided to the constructor of this
+object.
+[:zh_CN] 提供给这个对象的构造函数的 [`upstream] 实参的值。
+[exit:description]
+
+[%@library options[!synchronized_pool_resource]]
+[%@library synchronized_pool_resource[!options]]
+[%@library options[!unsynchronized_pool_resource]]
+[%@library unsynchronized_pool_resource[!options]]
+[codeblock:declaration]
+pool_options options() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] The options that control the pooling behavior of this resource.
+[:zh_CN] 控制这个资源的池化行为的各选项。
+
+[:en] The values in the returned struct may differ from those supplied to the
+pool resource constructor in that values of zero will be replaced with
+[%@impldef default configuration of a pool] implementation-defined defaults, and
+sizes may be rounded to unspecified granularity.
+[:zh_CN] 所返回的结构中的值可能与提供给池化资源构造函数的值有所不同，其中零值将
+被替换为某个[%@impldef 内存池的默认配置]由实现定义的默认值，而大小值也可能根据
+某个未指明的粒度进行舍入。
+[exit:description]
+
+[%@library do_allocate[!synchronized_pool_resource]]
+[%@library synchronized_pool_resource[!do_allocate]]
+[%@library do_allocate[!unsynchronized_pool_resource]]
+[%@library unsynchronized_pool_resource[!do_allocate]]
+[codeblock:declaration]
+void* do_allocate(size_t bytes, size_t alignment) override;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A pointer to allocated storage ([#basic.stc.dynamic.deallocation]) with
+a size of at least [`bytes].
+[:zh_CN] 指向具有至少 [`bytes] 的大小的已分配存储
+（[#basic.stc.dynamic.deallocation]）的指针。
+
+[:en] The size and alignment of the allocated memory shall meet the requirements
+for a class derived from [`memory_resource] ([#mem.res]).
+[:zh_CN] 已分配的内存的大小和对齐应当可以满足针对派生于 [`memory_resource] 的类
+的规定（[#mem.res]）。
+
+[para:effects]
+[:en] If the pool selected for a block of size [`bytes] is unable to satisfy the
+memory request from its own internal data structures, it will call
+[`upstream_resource()->allocate()] to obtain more memory.
+[:zh_CN] 当为内存块大小 [`bytes] 所选择的内存池无法以其自身的内部数据结构来满足
+内存请求时，它将调用 [`upstream_resource()->allocate()] 以获取更多的内存。
+
+[:en] If [`bytes] is larger than that which the largest pool can handle, then
+memory will be allocated using [`upstream_resource()->allocate()].
+[:zh_CN] 当 [`bytes] 比最大的内存池所能处理的更大时，将会通过
+[`upstream_resource()->allocate()] 来分配内存。
+
+[para:throws]
+[:en] Nothing unless [`upstream_resource()->allocate()] throws.
+[:zh_CN] 无，除非 [`upstream_resource()->allocate()] 抛出了异常。
+[exit:description]
+
+[%@library do_deallocate[!synchronized_pool_resource]]
+[%@library synchronized_pool_resource[!do_deallocate]]
+[%@library do_deallocate[!unsynchronized_pool_resource]]
+[%@library unsynchronized_pool_resource[!do_deallocate]]
+[codeblock:declaration]
+void do_deallocate(void* p, size_t bytes, size_t alignment) override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Returns the memory at [`p] to the pool.
+[:zh_CN] 将 [`p] 指向的内存返还给内存池。
+
+[:en] It is unspecified if, or under what circumstances, this operation will
+result in a call to [`upstream_resource()->deallocate()].
+[:zh_CN] 这个操作是否调用，或何种情况下调用 [`upstream_resource()->deallocate()]
+是未指明的。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library do_is_equal[!synchronized_pool_resource]]
+[%@library synchronized_pool_resource[!do_is_equal]]
+[codeblock:declaration]
+bool synchronized_pool_resource::do_is_equal(
+  const memory_resource& other) const noexcept override;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`this == dynamic_cast<const synchronized_pool_resource*>(&other)].
+[:zh_CN] [`this == dynamic_cast<const synchronized_pool_resource*>(&other)]。
+[exit:description]
+
+[%@library do_is_equal[!unsynchronized_pool_resource]]
+[%@library unsynchronized_pool_resource[!do_is_equal]]
+[codeblock:declaration]
+bool unsynchronized_pool_resource::do_is_equal(
+  const memory_resource& other) const noexcept override;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`this == dynamic_cast<const unsynchronized_pool_resource*>(&other)].
+[:zh_CN] [`this == dynamic_cast<const unsynchronized_pool_resource*>(&other)]。
+[exit:description]

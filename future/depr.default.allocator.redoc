@@ -1,0 +1,132 @@
+[section#depr.default.allocator
+    [:en] The default allocator
+    [:zh_CN] 默认分配器
+]
+
+[para]
+[:en] The following members and explicit class template specialization are
+defined in addition to those specified in [#default.allocator]:
+[:zh_CN] 除了在 [#default.allocator] 中所指定的之外，还定义了下列成员和显式
+类模板特化式：
+
+[%@library allocator]
+[codeblock:synopsis]
+namespace std {
+  // [:en] specialize for [`void]:
+  // [|:zh_CN] 针对 [`void] 特化：
+  template <> class allocator<void> {
+  public:
+    using value_type    = void;
+    using pointer       = void*;
+    using const_pointer = const void*;
+    // [:en] reference-to-[`void] members are impossible.
+	// [|:zh_CN] 到 [`void] 的引用的成员不可能存在。
+
+    template <class U> struct rebind { using other = allocator<U>; };
+  };
+
+  template <class T> class allocator {
+   public:
+    using size_type       = size_t;
+    using difference_type = ptrdiff_t;
+    using pointer         = T*;
+    using const_pointer   = const T*;
+    using reference       = T&;
+    using const_reference = const T&;
+    template <class U> struct rebind { using other = allocator<U>; };
+
+    T* address(T& x) const noexcept;
+    const T* address(const T& x) const noexcept;
+
+    T* allocate(size_t n, const void* hint);
+
+    template<class U, class... Args>
+      void construct(U* p, Args&&... args);
+    template <class U>
+      void destroy(U* p);
+
+    size_t max_size() const noexcept;
+  };
+}
+[codeblock:end]
+
+[%@library address[!allocator]]
+[%@library allocator[!address]]
+[codeblock:declaration]
+T* address(T& x) const noexcept;
+const T* address(const T& x) const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`addressof(x)].
+[:zh_CN] [`addressof(x)]。
+[exit:description]
+
+[%@library allocate[!allocator]]
+[%@library allocator[!allocate]]
+[codeblock:declaration]
+T* allocate(size_t n, const void* hint);
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A pointer to the initial element of an array of storage of size
+[`n * sizeof(T)], aligned appropriately for objects of type [`T].
+[:zh_CN] 指向某个具有大小为 [`n * sizeof(T)] 并为 [`T] 类型的对象适当对齐的存储
+的数组的首元素的指针。
+
+[:en] It is [%@impldef support for over-aligned types] implementation-defined
+whether over-aligned types are supported ([#basic.align]).
+[:zh_CN] 是否支持过量对齐类型（[#basic.align]）是[%@impldef 支持过量对齐类型]
+由实现定义的。
+
+[para:remarks]
+[:en] The storage is obtained by calling [`::operator new(std::size_t)]
+([#new.delete]), but it is unspecified when or how often this function is
+called.
+[:zh_CN] 其存储是通过调用 [`::operator new(std::size_t)]（[#new.delete]）分配的，
+但何时及多频繁调用该函数则是未指明的。
+
+[para:throws]
+[:en] [`bad_alloc] if the storage cannot be obtained.
+[:zh_CN] 如果无法获得存储则抛出 [`bad_alloc]。
+[exit:description]
+
+[%@library construct[!allocator]]
+[%@library allocator[!construct]]
+[codeblock:declaration]
+template <class U, class... Args>
+  void construct(U* p, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by: [`::new((void *)p) U(std::forward<Args>(args)...);]
+[:zh_CN] 如同执行：[`::new((void *)p) U(std::forward<Args>(args)...);]
+[exit:description]
+
+[%@library destroy[!allocator]]
+[%@library allocator[!destroy]]
+[codeblock:declaration]
+template <class U>
+  void destroy(U* p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`p->~U()].
+[:zh_CN] 如同执行 [`p->~U()]。
+[exit:description]
+
+[%@library max_size[!allocator]]
+[%@library allocator[!max_size]]
+[codeblock:declaration]
+size_t max_size() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] The largest value [$N] for which the call [`allocate(N, 0)] might succeed.
+[:zh_CN] 能够使得调用 [`allocate(N, 0)] 成功的最大的 [$N] 值。
+[exit:description]

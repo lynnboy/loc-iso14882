@@ -1,0 +1,181 @@
+[section#any.cons
+    [:en] Construction and destruction
+    [:zh_CN] 构造与销毁
+]
+
+[%@library any[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr any() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:postconditions]
+[:en] [`has_value()] is [`false].
+[:zh_CN] [`has_value()] 为 [`false]。
+[exit:description]
+
+[%@library any[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+any(const any& other);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`other.has_value()] is [`false], constructs an object that has no
+value.
+[:zh_CN] 如果 [`other.has_value()] 为 [`false]，则构造一个不包含值的对象。
+
+[:en] Otherwise, equivalent to [`any(in_place<T>, any_cast<const T&>(other))]
+where [`T] is the type of the contained object.
+[:zh_CN] 否则，等价于 [`any(in_place<T>, any_cast<const T&>(other))]，其中 [`T]
+为所包含的对象的类型。
+
+[para:throws]
+[:en] Any exceptions arising from calling the selected constructor for the
+contained value.
+[:zh_CN] 在调用为所包含的值所选择的构造函数的过程中所抛出的任何异常。
+[exit:description]
+
+[%@library any[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+any(any&& other) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`other.has_value()] is [`false], constructs an object that has no
+value.
+[:zh_CN] 如果 [`other.has_value()] 为 [`false]，则构造一个不包含值的对象。
+
+[:en] Otherwise, constructs an object of type [`any] that contains either the
+contained object of [`other], or contains an object of the same type constructed
+from the contained object of [`other] considering that contained object as an
+rvalue.
+[:zh_CN] 否则，构造一个 [`any] 类型的对象，它要么包含 [`other] 所包含的对象，
+要么包含由 [`other] 所包含的对象（将这个包含的对象当做是右值）而构造的一个相同
+类型的对象。
+
+[para:postconditions]
+[:en] [`other] is left in a valid but otherwise unspecified state.
+[:zh_CN] [`other] 将处于某个有效但未指明的状态。
+[exit:description]
+
+[%@library any[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class T>
+  any(T&& value);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:requires]
+[:en] [`VT] shall satisfy the [`CopyConstructible] requirements.
+[:zh_CN] [`VT] 应当符合 [`CopyConstructible] 的规定。
+
+[para:effects]
+[:en] Constructs an object of type [`any] that contains an object of type [`VT]
+direct-initialized with [`std::forward<T>(value)].
+[:zh_CN] 构造一个 [`any] 类型的对象，使其包含一个以
+[`std::forward<T>(value)] 进行直接初始化的 [`VT] 对象。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`VT] is not the same type as [`any], [`VT] is not a specialization of
+[`in_place_type_t], and [`is_copy_constructible_v<VT>] is [`true].
+[:zh_CN] 除非 [`VT] 和 [`any] 是不同类型，[`VT] 不是 [`in_place_type_t] 的特例，
+并且 [`is_copy_constructible_v<VT>] 为 [`true]，否则这个构造函数不能参与重载决议
+。
+
+[para:throws]
+[:en] Any exception thrown by the selected constructor of [`VT].
+[:zh_CN] 由所选择的 [`VT] 的构造函数所抛出的任何异常。
+[exit:description]
+
+[%@library any[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class T, class... Args>
+  explicit any(in_place_type_t<T>, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:requires]
+[:en] [`VT] shall satisfy the [`CopyConstructible] requirements.
+[:zh_CN] [`VT] 应当符合 [`CopyConstructible] 的规定。
+
+[para:effects]
+[:en] Initializes the contained value as if direct-non-list-initializing an
+object of type [`VT] with the arguments [`std::forward<Args>(args)...].
+[:zh_CN] 如同以 [`std::forward<Args>(args)...] 对一个 [`VT] 类型的对象进行直接
+非列表初始化一样初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`*this] contains a value of type [`VT].
+[:zh_CN] [`*this] 包含一个 [`VT] 类型的值。
+
+[para:throws]
+[:en] Any exception thrown by the selected constructor of [`VT].
+[:zh_CN] 由所选择的 [`VT] 的构造函数所抛出的任何异常。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_copy_constructible_v<VT>] is [`true] and [`is_constructible_v<VT, Args...>]
+is [`true].
+[:en] 除非 [`is_copy_constructible_v<VT>] 为 [`true] 并且
+[`is_constructible_v<VT, Args...>] 为 [`true]，否则这个构造函数不能参与重载决议。
+[exit:description]
+
+[%@library any[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class T, class U, class... Args>
+  explicit any(in_place_type_t<T>, initializer_list<U> il, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:requires]
+[:en] [`VT] shall satisfy the [`CopyConstructible] requirements.
+[:zh_CN] [`VT] 应当符合 [`CopyConstructible] 的规定。
+
+[para:effects]
+[:en] Initializes the contained value as if direct-non-list-initializing an
+object of type [`VT] with the arguments [`il, std::forward<Args>(args)...].
+[:zh_CN] 如同以 [`il, std::forward<Args>(args)...] 对一个 [`VT] 类型的对象进行
+直接非列表初始化一样初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`*this] contains a value.
+[:zh_CN] [`*this] 包含值。
+
+[para:throws]
+[:en] Any exception thrown by the selected constructor of [`VT].
+[:zh_CN] 由所选择的 [`VT] 的构造函数所抛出的任何异常。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_copy_constructible_v<VT>] is [`true] and
+[`is_constructible_v<VT, initializer_list<U>&, Args...>] is [`true].
+[:en] 除非 [`is_copy_constructible_v<VT>] 为 [`true] 且
+[`is_constructible_v<VT, initializer_list<U>&, Args...>] 为 [`true]，否则这个
+构造函数不能参与重载决议。
+[exit:description]
+
+[%@library any[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~any();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`reset()].
+[:zh_CN] 如同执行 [`reset()]。
+[exit:description]

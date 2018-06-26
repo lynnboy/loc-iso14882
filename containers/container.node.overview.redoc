@@ -1,0 +1,105 @@
+[section#container.node.overview
+    [:en] [`node_handle] overview
+    [:zh_CN] [`node_handle] 概述
+]
+
+[para]
+[:en] A [+node handle[%]] is an object that accepts ownership of a single
+element from an associative container ([#associative.reqmts]) or an unordered
+associative container ([#unord.req]).
+[:zh_CN] [+节点句柄[%]]是可以接受关联容器（[#associative.reqmts]）或无序关联容器
+（[#unord.req]）的单个元素的所有权的对象。
+
+[:en] It may be used to transfer that ownership to another container with
+compatible nodes.
+[:zh_CN] 它可被用于将所有权传递给具有兼容节点的其他容器。
+
+[:en] Containers with compatible nodes have the same node handle type.
+[:zh_CN] 具有兼容节点的容器具有相同的节点句柄类型。
+
+[:en] Elements may be transferred in either direction between container types in
+the same row of Table [#tab:containers.node.compat].
+[:zh_CN] 表 [#tab:containers.node.compat] 的同一行中的各容器类型之间，可以以任意
+方向传递其元素。
+
+[table:listing@fill=row@shape=?x2@border=row@code#tab:containers.node.compat]
+[|] map<K, T, C1, A>                [|] map<K, T, C2, A>
+[|] map<K, T, C1, A>                [|] multimap<K, T, C2, A>
+[|] set<K, C1, A>                   [|] set<K, C2, A>
+[|] set<K, C1, A>                   [|] multiset<K, C2, A>
+[|] unordered_map<K, T, H1, E1, A>  [|] unordered_map<K, T, H2, E2, A>
+[|] unordered_map<K, T, H1, E1, A>  [|] unordered_multimap<K, T, H2, E2, A>
+[|] unordered_set<K, H1, E1, A>     [|] unordered_set<K, H2, E2, A>
+[|] unordered_set<K, H1, E1, A>     [|] unordered_multiset<K, H2, E2, A>
+[table:end]
+
+[para]
+[:en] If a node handle is not empty, then it contains an allocator that is equal
+to the allocator of the container when the element was extracted.
+[:zh_CN] 当节点句柄非空时，它所包含的分配器和被其抽取元素的容器的分配器相等。
+
+[:en] If a node handle is empty, it contains no allocator.
+[:zh_CN] 当节点句柄为空时，它不包含分配器。
+
+[para]
+[:en] Class [`[*node_handle]] is for exposition only.
+[:zh_CN] 类 [`[*node_handle]] 仅用于阐释。
+
+[:en] An implementation is permitted to provide equivalent functionality without
+providing a class with this name.
+[:zh_CN] 允许实现提供等价的功能但不提供具有这个名字的类。
+
+[para]
+[:en] If a user-defined specialization of [`pair] exists for
+[`pair<const Key, T>] or [`pair<Key, T>], where [`Key] is the container[=']s
+[`key_type] and [`T] is the container[=']s [`mapped_type], the behavior of
+operations involving node handles is undefined.
+[:zh_CN] 如果存在 [`pair] 的用户定义的针对 [`pair<const Key, T>] 或
+[`pair<Key, T>] 的特化式，其中 [`Key] 为容器的 [`key_type]，而 [`T] 为容器的
+[`mapped_type]，则涉及节点句柄的操作的行为是未定义的。
+
+[codeblock:synopsis [!:mark UnSpec SeeBelow] [!:var node_handle] ]
+template<[=UnSpec]>
+  class [*node_handle] {
+  public:
+    // [:en] These type declarations are described in Tables [#tab:containers.associative.requirements] and [#tab:HashRequirements]
+    // [|:zh_CN] 这些类型声明式在表 [#tab:containers.associative.requirements] 和表 [#tab:HashRequirements] 中说明
+    using value_type     = [=SeeBelow];   // [:en] not present for map containers
+                                          // [|:zh_CN] 映射容器中不存在
+    using key_type       = [=SeeBelow];   // [:en] not present for set containers
+                                          // [|:zh_CN] 集合容器中不存在
+    using mapped_type    = [=SeeBelow];   // [:en] not present for set containers
+                                          // [|:zh_CN] 集合容器中不存在
+    using allocator_type = [=SeeBelow];
+  
+  private:
+    using container_node_type = [=UnSpec];
+    using ator_traits = allocator_traits<allocator_type>;
+  
+    typename ator_traits::rebind_traits<container_node_type>::pointer ptr_;
+    optional<allocator_type> alloc_;
+  
+  public:
+    constexpr [*node_handle]() noexcept : ptr_(), alloc_() {}
+    ~[*node_handle]();
+    [*node_handle]([*node_handle]&&) noexcept;
+    [*node_handle]& operator=([*node_handle]&&);
+    value_type& value() const;          // [:en] not present for map containers
+                                        // [|:zh_CN] 映射容器中不存在
+    key_type& key() const;              // [:en] not present for set containers
+                                        // [|:zh_CN] 集合容器中不存在
+    mapped_type& mapped() const;        // [:en] not present for set containers
+                                        // [|:zh_CN] 集合容器中不存在
+    allocator_type get_allocator() const;
+    explicit operator bool() const noexcept;
+    bool empty() const noexcept;
+
+    void swap([*node_handle]&)
+      noexcept(ator_traits::propagate_on_container_swap::value ||
+               ator_traits::is_always_equal::value);
+
+    friend void swap([*node_handle]& x, [*node_handle]& y) noexcept(noexcept(x.swap(y))) {
+      x.swap(y);
+    }
+};
+[codeblock:end]

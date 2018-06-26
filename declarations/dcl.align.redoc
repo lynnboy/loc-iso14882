@@ -1,0 +1,166 @@
+[section#dcl.align
+    [:en] Alignment specifier
+    [:zh_CN] 对齐说明符
+
+[%  [:en] attribute[!alignment]
+    [:zh_CN] 特性标注[!对齐] ]
+]
+
+[para]
+[:en]
+An [~alignment-specifier] may be applied to a variable or to a class data
+member, but it shall not be applied to a bit-field, a function parameter, or an
+[~exception-declaration] ([#except.handle]).
+[:zh_CN]
+可以对变量或者类数据成员施加[~对齐说明符]，但它不能施加于位字段，函数形参，或者
+[~异常声明式]（[#except.handle]）上。
+
+[:en]
+An [~alignment-specifier] may also be applied to the declaration or definition
+of a class (in an [~elaborated-type-specifier] ([#dcl.type.elab]) or
+[~class-head] (Clause [#class]), respectively) and to the declaration or
+definition of an enumeration (in an [~opaque-enum-declaration] or [~enum-head],
+respectively ([#dcl.enum])).
+[:zh_CN]
+[~对齐说明符]还可以施加于类的声明式或定义式上（分别在[~详述类型说明符]
+（[#dcl.type.elab]），或[~类头]（第 [#class] 章）中），或者施加于枚举的声明式或
+定义式上（分别在[~笼统枚举声明式]或[~枚举头]中）。
+
+[:en]
+An [~alignment-specifier] with an ellipsis is a pack expansion
+([#temp.variadic]).
+[:zh_CN]
+带有省略号的[~对齐说明符]是包组展开式（[#temp.variadic]）。
+
+[para]
+[:en]
+When the [~alignment-specifier] is of the form
+[`alignas(] [~constant-expression] [`)]:
+[:zh_CN]
+当[~对齐说明符]的形式为“[`alignas(] [~赋值表达式] [`)]”时：
+
+[list]
+[item]
+[:en]
+the [~constant-expression] shall be an integral constant expression
+[:zh_CN]
+该[~赋值表达式]应当为整型常量表达式
+
+[item]
+[:en]
+if the constant expression does not evaluate to an alignment value
+([#basic.align]), or evaluates to an extended alignment and the implementation
+does not support that alignment in the context of the declaration, the program
+is ill-formed
+[:zh_CN]
+若常量表达式不能被求值为一个对齐值（[#basic.align]），或者被求值为某个扩展对齐，
+而实现在该声明式的语境中不支持该对齐，则程序非良构
+[list:end]
+
+[para]
+[:en]
+An [~alignment-specifier] of the form [`alignas(] [~type-id] [`)] has the same
+effect as [`alignas(alignof(] [~type-id] [`))] ([#expr.alignof]).
+[:zh_CN]
+形式为“[`alignas(] [~类型标识] [`)]”的[~对齐说明符]的效果与
+“[`alignas(alignof(] [~类型标识] [`))]”相同（[#expr.alignof]）。
+
+[para]
+[:en]
+The alignment requirement of an entity is the strictest nonzero alignment
+specified by its [~alignment-specifier]s, if any; otherwise, the
+[~alignment-specifier]s have no effect.
+[:zh_CN]
+一个实体的对齐要求，是其各个[~对齐说明符]中所指定的最严格的非零的对齐（如果有）；
+否则，[~对齐说明符]均没有效果。
+
+[para]
+[:en]
+The combined effect of all [~alignment-specifier]s in a declaration shall not
+specify an alignment that is less strict than the alignment that would be
+required for the entity being declared if all [~alignment-specifier]s
+appertaining to that entity were omitted.
+[:zh_CN]
+一个声明式中的所有[~对齐说明符]的组合效果所指定的对齐，不能比所声明的实体的所有
+[~对齐说明符]（包括其他声明式中的）都被忽略时所要求的对齐更弱。
+
+[enter:example]
+[codeblock]
+struct alignas(8) S {};
+struct alignas(1) U {
+  S s;
+};  // [:en] error: [`U] specifies an alignment that is less strict than if the [`alignas(1)] were omitted.
+    // [|:zh_CN] 错误：[`U] 所指定的对齐弱于当忽略 [`alignas(1)] 时的对齐
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+If the defining declaration of an entity has an [~alignment-specifier], any
+non-defining declaration of that entity shall either specify equivalent
+alignment or have no [~alignment-specifier].
+[:zh_CN]
+若对某个对象进行定义的声明式带有[~对齐说明符]，则该实体的任何不进行定义的声明式
+应当要么指定等价的对齐要么没有[~对齐说明符]。
+
+[:en]
+Conversely, if any declaration of an entity has an [~alignment-specifier], every
+defining declaration of that entity shall specify an equivalent alignment.
+[:zh_CN]
+反之，如果某个实体的任何声明式带有[~对齐说明符]，则定义该实体的每个声明式都应当
+指定等价的对齐。
+
+[:en]
+No diagnostic is required if declarations of an entity have different
+[~alignment-specifier]s in different translation units.
+[:zh_CN]
+若实体在不同的翻译单元中的声明式具有不同的[~对齐说明符]，则无须进行诊断。
+
+[enter:example]
+[codeblock]
+// [:en] Translation unit #1:
+// [|:zh_CN] 翻译单元 #1：
+struct S { int x; } s, p = &s;
+
+// [:en] Translation unit #2:
+// [|:zh_CN] 翻译单元 #2：
+struct alignas(16) S;           // [:en] error: definition of [`S] lacks alignment, no diagnostic required
+                                // [|:zh_CN] 错误：[`S] 的定义式缺少对齐，无须诊断
+extern S* p;
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:example]
+[:en]
+An aligned buffer with an alignment requirement of [`A] and holding [`N]
+elements of type [`T] can be declared as:
+[:zh_CN]
+带有 [`A] 的对齐要求并持有 [`N] 个元素的对齐的缓冲区可以如下声明：
+
+[codeblock]
+alignas(T) alignas(A) T buffer[N];
+[codeblock:end]
+
+[:en]
+Specifying [`alignas(T)] ensures that the final requested alignment will not be
+weaker than [`alignof(T)], and therefore the program will not be ill-formed.
+[:zh_CN]
+指定 [`alignas(T)] 保证最终所要求的对齐将不会弱于 [`alignof(T)]，并因此程序不会
+是非良构的。
+[exit:example]
+
+[para]
+[enter:example]
+[codeblock]
+alignas(double) void f();                           // [:en] error: alignment applied to function
+                                                    // [|:zh_CN] 错误：对函数应用对齐
+alignas(double) unsigned char c[sizeof(double)];    // [:en] array of characters, suitably aligned for a [`double]
+                                                    // [|:zh_CN] 字符数组，其对齐适合一个 [`double]
+extern unsigned char c[sizeof(double)];             // [:en] no [`alignas] necessary
+                                                    // [|:zh_CN] 不需要 [`alignas]
+alignas(float)
+  extern unsigned char c[sizeof(double)];           // [:en] error: different alignment in declaration
+                                                    // [|:zh_CN] 错误：声明式中不同的对齐
+[codeblock:end]
+[exit:example]

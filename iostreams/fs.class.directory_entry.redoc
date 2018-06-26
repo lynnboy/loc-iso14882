@@ -1,0 +1,165 @@
+[section#fs.class.directory_entry
+    [:en] Class [`directory_entry]
+    [:zh_CN] 类 [`directory_entry]
+]
+
+[%@library directory_entry]
+[codeblock:synopsis]
+namespace std::filesystem {
+  class directory_entry {
+  public:
+    // [:en] [#fs.dir.entry.cons], constructors and destructor
+    // [|:zh_CN] [#fs.dir.entry.cons]，构造函数和析构函数
+    directory_entry() noexcept = default;
+    directory_entry(const directory_entry&) = default;
+    directory_entry(directory_entry&&) noexcept = default;
+    explicit directory_entry(const path& p);
+    directory_entry(const path& p, error_code& ec);
+    ~directory_entry();
+
+    // [:en] assignments:
+    // [|:zh_CN] 赋值：
+    directory_entry& operator=(const directory_entry&) = default;
+    directory_entry& operator=(directory_entry&&) noexcept = default;
+
+    // [:en] [#fs.dir.entry.mods], modifiers
+    // [|:zh_CN] [#fs.dir.entry.mods]，改动函数
+    void assign(const path& p);
+    void assign(const path& p, error_code& ec);
+    void replace_filename(const path& p);
+    void replace_filename(const path& p, error_code& ec);
+    void refresh();
+    void refresh(error_code& ec) noexcept;
+
+    // [:en] [#fs.dir.entry.obs], observers
+    // [|:zh_CN] [#fs.dir.entry.obs]，探查函数
+    const path& path() const noexcept;
+    operator const path&() const noexcept;
+    bool exists() const;
+    bool exists(error_code& ec) const noexcept;
+    bool is_block_file() const;
+    bool is_block_file(error_code& ec) const noexcept;
+    bool is_character_file() const;
+    bool is_character_file(error_code& ec) const noexcept;
+    bool is_directory() const;
+    bool is_directory(error_code& ec) const noexcept;
+    bool is_fifo() const;
+    bool is_fifo(error_code& ec) const noexcept;
+    bool is_other() const;
+    bool is_other(error_code& ec) const noexcept;
+    bool is_regular_file() const;
+    bool is_regular_file(error_code& ec) const noexcept;
+    bool is_socket() const;
+    bool is_socket(error_code& ec) const noexcept;
+    bool is_symlink() const;
+    bool is_symlink(error_code& ec) const noexcept;
+    uintmax_t file_size() const;
+    uintmax_t file_size(error_code& ec) const noexcept;
+    uintmax_t hard_link_count() const;
+    uintmax_t hard_link_count(error_code& ec) const noexcept;
+    file_time_type last_write_time() const;
+    file_time_type last_write_time(error_code& ec) const noexcept;
+    file_status status() const;
+    file_status status(error_code& ec) const noexcept;
+    file_status symlink_status() const;
+    file_status symlink_status(error_code& ec) const noexcept;
+
+    bool operator< (const directory_entry& rhs) const noexcept;
+    bool operator==(const directory_entry& rhs) const noexcept;
+    bool operator!=(const directory_entry& rhs) const noexcept;
+    bool operator<=(const directory_entry& rhs) const noexcept;
+    bool operator> (const directory_entry& rhs) const noexcept;
+    bool operator>=(const directory_entry& rhs) const noexcept;
+
+  private:
+    path pathobject;                 // [=Expos]
+    friend class directory_iterator; // [=Expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en]
+[%file attributes]
+A [`directory_entry] object stores a [`path] object and may store additional
+objects for file attributes such as hard link count, status, symlink status,
+file size, and last write time.
+[:zh_CN]
+[%文件属性]
+[`directory_entry] 文件存储一个 [`path] 对象，以及可能存储有关文件属性的其他对象，
+诸如硬链接计数、状态、符号连接状态、文件大小以及最后写入时间等。
+
+[para]
+[:en] Implementations are encouraged to store such additional file attributes
+during directory iteration if their values are available and storing the values
+would allow the implementation to eliminate file system accesses by
+[`directory_entry] observer functions ([#fs.op.funcs]).
+[:zh_CN] 鼓励各实现在对目录的迭代过程中保存这些额外信息，只要当时这些信息可用，
+并且这些信息的存储可以让实现消除由 [`directory_entry] 的探查函数所进行的文件系统
+访问（[#fs.op.funcs]）。
+
+[:en] Such stored file attribute values are said to be
+[+cached[%file attributes[!cached]]].
+[:zh_CN] 称以这种方式存储的文件属性值被[+缓存[%文件属性[!缓存]]]。
+
+[para]
+[enter:note]
+[:en] For purposes of exposition, class [`directory_iterator]
+([#fs.class.directory_iterator]) is shown above as a friend of class
+[`directory_entry].
+[:zh_CN] 为进行阐释，上面将类 [`directory_iterator]
+（[#fs.class.directory_iterator]）作为类 [`directory_entry] 的友元类展示。
+
+[:en] Friendship allows the [`directory_iterator] implementation to cache
+already available attribute values directly into a [`directory_entry] object
+without the cost of an unneeded call to [`refresh()].
+[:zh_CN] 其友元关系使得 [`directory_iterator] 的实现可以将已经变得可用的属性值
+直接缓存到 [`directory_entry] 对象之中而不必负担一次不必要的对 [`refresh()] 的
+调用。
+[exit:note]
+
+[para]
+[enter:example]
+[codeblock]
+using namespace std::filesystem;
+
+// [:en] use possibly cached last write time to minimize disk accesses
+// [|:zh_CN] 使用可能缓存的最近写入时间来尽量减少磁盘访问
+for (auto&& x : directory_iterator("."))
+{
+  std::cout << x.path() << " " << x.last_write_time() << std::endl;
+}
+
+// [:en] call [`refresh()] to refresh a stale cache
+// [|:zh_CN] 调用 [`refresh()] 来刷新过期的缓存
+for (auto&& x : directory_iterator("."))
+{
+  lengthy_function(x.path());  // [:en] cache becomes stale
+                               // [|:zh_CN] 缓存过期
+  x.refresh();
+  std::cout << x.path() << " " << x.last_write_time() << std::endl;
+}
+[codeblock:end]
+
+[:en] On implementations that do not cache the last write time, both loops will
+result in a potentially expensive call to the
+[`std::filesystem::last_write_time] function.
+[:zh_CN] 在并不缓存最近写入时间的实现中，两次循环都会导致对
+[`std::filesystem::last_write_time] 函数进行潜在昂贵的调用。
+
+[:en] On implementations that do cache the last write time, the first loop will
+use the cached value and so will not result in a potentially expensive call
+to the [`std::filesystem::last_write_time] function.
+[:zh_CN] 在缓存最近写入时间的实现中，第一个循环将使用缓存的值，因而不会导致对
+[`std::filesystem::last_write_time] 函数进行潜在昂贵的调用。
+
+[:en] The code is portable to any implementation, regardless of whether or not
+it employs caching.
+[:zh_CN] 这份代码可以移植到任何实现，无论其是否进行缓存。
+[exit:example]
+
+[include fs.dir.entry.cons]
+
+[include fs.dir.entry.mods]
+
+[include fs.dir.entry.obs]

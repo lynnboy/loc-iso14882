@@ -1,0 +1,260 @@
+[section#utility.syn
+	[:en] Header [`<utility>] synopsis
+	[:zh_CN] 头文件 [`<utility>] 纲要
+]
+
+[%[`<utility>] [@utility]]
+[%@library <utility> [@utility]]
+[%@library rel_ops]
+
+[codeblock:synopsis [!:mark SeeBelow UnSpec] ]
+#include <initializer_list>     // [:en] see [#initializer_list.syn]
+                                // [|:zh_CN] 参见 [#initializer_list.syn]
+
+namespace std {
+  // [:en] [#operators], operators
+  // [|:zh_CN] [#operators]，运算符
+  namespace rel_ops {
+    template<class T> bool operator!=(const T&, const T&);
+    template<class T> bool operator> (const T&, const T&);
+    template<class T> bool operator<=(const T&, const T&);
+    template<class T> bool operator>=(const T&, const T&);
+  }
+
+  // [:en] [#utility.swap], swap
+  // [|:zh_CN] [#utility.swap]，swap
+  template <class T>
+    void swap(T& a, T& b) noexcept([=SeeBelow]);
+  template <class T, size_t N>
+    void swap(T (&a)[N], T (&b)[N]) noexcept(is_nothrow_swappable_v<T>);
+
+  // [:en] [#utility.exchange], exchange
+  // [|:zh_CN] [#utility.exchange]，exchange
+  template <class T, class U=T>
+    T exchange(T& obj, U&& new_val);
+
+  // [:en] [#forward], forward/move
+  // [|:zh_CN] [#forward]，forward/move
+  template <class T>
+    constexpr T&& forward(remove_reference_t<T>& t) noexcept;
+  template <class T>
+    constexpr T&& forward(remove_reference_t<T>&& t) noexcept;
+  template <class T>
+    constexpr remove_reference_t<T>&& move(T&&) noexcept;
+  template <class T>
+    constexpr conditional_t<
+        !is_nothrow_move_constructible_v<T> && is_copy_constructible_v<T>, const T&, T&&>
+      move_if_noexcept(T& x) noexcept;
+
+  // [:en] [#utility.as_const], [`as_const]
+  // [|:zh_CN] [#utility.as_const]，[`as_const]
+  template <class T>
+    constexpr add_const_t<T>& as_const(T& t) noexcept;
+  template <class T>
+    void as_const(const T&&) = delete;
+
+  // [:en] [#declval], declval
+  // [|:zh_CN] [#declval]，declval
+  template <class T>
+    add_rvalue_reference_t<T> declval() noexcept;  // [:en] as unevaluated operand
+                                                   // [|:zh_CN] 作为免求值操作数
+
+[%@library index_sequence]
+[%@library make_index_sequence]
+[%@library index_sequence_for]
+  // [:en] [#intseq], Compile-time integer sequences
+  // [|:zh_CN] [#intseq]，编译期整数序列
+  template<class T, T...>
+    struct integer_sequence;
+  template<size_t... I>
+    using index_sequence = integer_sequence<size_t, I...>;
+
+  template<class T, T N>
+    using make_integer_sequence = integer_sequence<T, [=SeeBelow]>;
+  template<size_t N>
+    using make_index_sequence = make_integer_sequence<size_t, N>;
+
+  template<class... T>
+    using index_sequence_for = make_index_sequence<sizeof...(T)>;
+
+  // [:en] [#pairs], class template [`pair]
+  // [|:zh_CN] [#pairs]，类模板 [`pair]
+  template <class T1, class T2>
+    struct pair;
+
+  // [:en] [#pairs.spec], pair specialized algorithms
+  // [|:zh_CN] [#pairs.spec]，对 pair 特化的算法
+  template <class T1, class T2>
+    constexpr bool operator==(const pair<T1, T2>&, const pair<T1, T2>&);
+  template <class T1, class T2>
+    constexpr bool operator< (const pair<T1, T2>&, const pair<T1, T2>&);
+  template <class T1, class T2>
+    constexpr bool operator!=(const pair<T1, T2>&, const pair<T1, T2>&);
+  template <class T1, class T2>
+    constexpr bool operator> (const pair<T1, T2>&, const pair<T1, T2>&);
+  template <class T1, class T2>
+    constexpr bool operator>=(const pair<T1, T2>&, const pair<T1, T2>&);
+  template <class T1, class T2>
+    constexpr bool operator<=(const pair<T1, T2>&, const pair<T1, T2>&);
+
+  template <class T1, class T2>
+    void swap(pair<T1, T2>& x, pair<T1, T2>& y) noexcept(noexcept(x.swap(y)));
+
+  template <class T1, class T2>
+    constexpr [=SeeBelow] make_pair(T1&&, T2&&);
+
+  // [:en] [#pair.astuple], tuple-like access to pair
+  // [|:zh_CN] [#pair.astuple]，tuple 式的 pair 访问
+  template <class T> class tuple_size;
+  template <size_t I, class T> class tuple_element;
+
+  template <class T1, class T2> struct tuple_size<pair<T1, T2>>;
+  template <class T1, class T2> struct tuple_element<0, pair<T1, T2>>;
+  template <class T1, class T2> struct tuple_element<1, pair<T1, T2>>;
+
+  template<size_t I, class T1, class T2>
+    constexpr tuple_element_t<I, pair<T1, T2>>& get(pair<T1, T2>&) noexcept;
+  template<size_t I, class T1, class T2>
+    constexpr tuple_element_t<I, pair<T1, T2>>&& get(pair<T1, T2>&&) noexcept;
+  template<size_t I, class T1, class T2>
+    constexpr const tuple_element_t<I, pair<T1, T2>>& get(const pair<T1, T2>&) noexcept;
+  template<size_t I, class T1, class T2>
+    constexpr const tuple_element_t<I, pair<T1, T2>>&& get(const pair<T1, T2>&&) noexcept;
+  template <class T1, class T2>
+    constexpr T1& get(pair<T1, T2>& p) noexcept;
+  template <class T1, class T2>
+    constexpr const T1& get(const pair<T1, T2>& p) noexcept;
+  template <class T1, class T2>
+    constexpr T1&& get(pair<T1, T2>&& p) noexcept;
+  template <class T1, class T2>
+    constexpr const T1&& get(const pair<T1, T2>&& p) noexcept;
+  template <class T2, class T1>
+    constexpr T2& get(pair<T1, T2>& p) noexcept;
+  template <class T2, class T1>
+    constexpr const T2& get(const pair<T1, T2>& p) noexcept;
+  template <class T2, class T1>
+    constexpr T2&& get(pair<T1, T2>&& p) noexcept;
+  template <class T2, class T1>
+    constexpr const T2&& get(const pair<T1, T2>&& p) noexcept;
+
+  // [:en] [#pair.piecewise], pair piecewise construction
+  // [|:zh_CN] [#pair.piecewise]，pair 逐段构造
+  struct piecewise_construct_t {
+    explicit piecewise_construct_t() = default;
+  };
+  inline constexpr piecewise_construct_t piecewise_construct{};
+  template <class... Types> class tuple;        // [:en] defined in [`<tuple>] ([#tuple.syn])
+                                                // [|:zh_CN] 定义于 [`<tuple>]（[#tuple.syn]）
+
+  // [:en] in-place construction
+  // [|:zh_CN] 就地构造
+  struct in_place_t {
+    explicit in_place_t() = default;
+  };
+  inline constexpr in_place_t in_place{};
+  template <class T>
+    struct in_place_type_t {
+      explicit in_place_type_t() = default;
+    };
+  template <class T> inline constexpr in_place_type_t<T> in_place_type{};
+  template <size_t I>
+    struct in_place_index_t {
+      explicit in_place_index_t() = default;
+    };
+  template <size_t I> inline constexpr in_place_index_t<I> in_place_index{};
+
+[%@library chars_format]
+[%@library scientific[!chars_format]]
+[%@library chars_format[!scientific]]
+[%@library fixed[!chars_format]]
+[%@library chars_format[!fixed]]
+[%@library hex[!chars_format]]
+[%@library chars_format[!hex]]
+[%@library general[!chars_format]]
+[%@library chars_format[!general]]
+  // [:en] floating-point format for primitive numerical conversion
+  // [|:zh_CN] 基础数值转换的浮点格式
+  enum class chars_format {
+    scientific = [=UnSpec],
+    fixed = [=UnSpec],
+    hex = [=UnSpec],
+    general = fixed | scientific
+  };
+
+[%@library to_chars_result]
+[%@library ptr[!to_chars_result]]
+[%@library to_chars_result[!ptr]]
+[%@library ec[!to_chars_result]]
+[%@library to_chars_result[!ec]]
+  // [:en] [#utility.to.chars], primitive numerical output conversion
+  // [|:zh_CN] [#utility.to.chars]，基础数值输出转换
+  struct to_chars_result {
+    char* ptr;
+    error_code ec;
+  };
+
+  to_chars_result to_chars(char* first, char* last, [=SeeBelow] value, int base = 10);
+
+  to_chars_result to_chars(char* first, char* last, float value);
+  to_chars_result to_chars(char* first, char* last, double value);
+  to_chars_result to_chars(char* first, char* last, long double value);
+
+  to_chars_result to_chars(char* first, char* last, float value,
+                           chars_format fmt);
+  to_chars_result to_chars(char* first, char* last, double value,
+                           chars_format fmt);
+  to_chars_result to_chars(char* first, char* last, long double value,
+                           chars_format fmt);
+
+  to_chars_result to_chars(char* first, char* last, float value,
+                           chars_format fmt, int precision);
+  to_chars_result to_chars(char* first, char* last, double value,
+                           chars_format fmt, int precision);
+  to_chars_result to_chars(char* first, char* last, long double value,
+                           chars_format fmt, int precision);
+
+[%@library from_chars_result]
+[%@library ptr[!from_chars_result]]
+[%@library from_chars_result[!ptr]]
+[%@library ec[!from_chars_result]]
+[%@library from_chars_result[!ec]]
+  // [:en] [#utility.from.chars], primitive numerical input conversion
+  // [|:zh_CN] [#utility.from.chars]，基础数值输入转换
+  struct from_chars_result {
+    const char* ptr;
+    error_code ec;
+  };
+
+  from_chars_result from_chars(const char* first, const char* last,
+                               [=SeeBelow]& value, int base = 10);
+
+  from_chars_result from_chars(const char* first, const char* last, float& value,
+                               chars_format fmt = chars_format::general);
+  from_chars_result from_chars(const char* first, const char* last, double& value,
+                               chars_format fmt = chars_format::general);
+  from_chars_result from_chars(const char* first, const char* last, long double& value,
+                               chars_format fmt = chars_format::general);
+}
+[codeblock:end]
+
+[para]
+[:en]
+The header [`<utility>] defines several types and function templates that are
+described in this Clause.
+[:zh_CN]
+头文件 [`<utility>] 定义了本章中描述的一些类型和函数模板。
+
+[:en]
+It also defines the template [`pair] and various function templates that operate
+on [`pair] objects.
+[:zh_CN]
+它还定义了模板 [`pair] 以及用于操作 [`pair] 对象的多种函数模板。
+
+[para]
+[:en]
+The type [`chars_format] is a bitmask type ([#bitmask.types]) with elements
+[`scientific], [`fixed], and [`hex].
+[:zh]
+类型 [`chars_format] 是一种掩码类型（[#bitmask.types]），其元素包括
+[`scientific]，[`fixed]，和 [`hex]。
+

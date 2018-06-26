@@ -1,0 +1,192 @@
+[section#futures.state
+    [:en] Shared state
+    [:zh_CN] 共享状态
+]
+
+[para]
+[:en] Many of the classes introduced in this subclause use some state to
+communicate results.
+[:zh_CN] 本子条款中所引入的许多类都使用某种状态来传递其结果。
+
+[:en]
+[%shared state[%future[!shared state]]]
+This [+shared state[%future[!shared state]]] consists of some state information
+and some (possibly not yet evaluated) [+result[%]], which can be a (possibly
+void) value or an exception.
+[:zh_CN]
+[%共享状态[%未来值[!共享状态]]]
+这种[+共享状态[%未来值[!共享状态]]]由某种状态信息和某种（可能尚未求值的）
+[+结果[%]]（是一个（可能为 [`void] 的）值或者一个异常）构成。
+
+[enter:note]
+[:en] Futures, promises, and tasks defined in this clause reference such shared
+state.
+[:zh_CN] 本章中所定义的未来值、承诺值和任务中都指代这样的共享状态。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] The result can be any kind of object including a function to compute that
+result, as used by [`async] when [`policy] is [`launch::deferred].
+[:zh_CN] 结果可以使任何种类的对象，包括用于计算该结果的函数（如当 [`policy] 为
+[`launch::deferred] 时由 [`async] 所用的函数）。
+[exit:note]
+
+[para]
+[:en] An [+asynchronous return object] is an object that reads results from a
+shared state.
+[:zh_CN] [+异步返回对象]是从共享状态中读取结果的对象。
+
+[:en] A [+waiting function] of an asynchronous return object is one that
+potentially blocks to wait for the shared state to be made ready.
+[:zh_CN] 异步返回对象的[+等待函数]是潜在会阻塞与等待其共享状态的就绪的函数。
+
+[:en] If a waiting function can return before the state is made ready because of
+a timeout ([#thread.req.lockable]), then it is a [+timed waiting function[%]],
+otherwise it is a [+non-timed waiting function[%]].
+[:zh_CN] 如果等待函数可以因为超时（[#thread.req.lockable]）而在状态就绪之前就
+返回，则称其为[+定时等待函数[%]]，否则为[+非定时等待函数[%]]。
+
+[para]
+[:en] An [+asynchronous provider] is an object that provides a result to a
+shared state.
+[:zh_CN] [+异步提供者]是为共享状态提供结果的对象。
+
+[:en] The result of a shared state is set by respective functions on the
+asynchronous provider.
+[:zh_CN] 共享状态的结果是由异步提供者的相应函数设置的。
+
+[enter:note]
+[:en] Such as promises or tasks.
+[:zh_CN] 例如承诺或者任务。
+[exit:note]
+
+[:en] The means of setting the result of a shared state is specified in the
+description of those classes and functions that create such a state object.
+[:zh_CN] 对各个创建这种状态对象的类或函数，在其说明中都指定了向共享状态设置结果
+的含义。
+
+[para]
+[:en] When an asynchronous return object or an asynchronous provider is said to
+release its shared state, it means:
+[:zh_CN] 异步返回对象或者异步提供者的所谓释放其共享状态，其含义为：
+
+[list]
+[item]
+[:en] if the return object or provider holds the last reference to its shared
+state, the shared state is destroyed; and
+[:zh_CN] 如果该返回对象或提供者持有最后一个对其共享状态的引用，则该共享状态被
+销毁；以及
+
+[item]
+[:en] the return object or provider gives up its reference to its shared state;
+and
+[:zh_CN] 返回对象或提供者放弃其对共享状态的引用；以及
+
+[item]
+[:en] these actions will not block for the shared state to become ready, except
+that it may block if all of the following are true: the shared state was created
+by a call to [`std::async], the shared state is not yet ready, and this was the
+last reference to the shared state.
+[:zh_CN] 这些动作不会阻塞以等待共享状态就绪，但可能会阻塞以等待以下各项均为真：
+该共享状态是由对 [`std::async] 的调用所创建的，该共享状态尚未就绪，并且其具有到
+该共享状态的最后一个引用。
+[list:end]
+
+[para]
+[:en] When an asynchronous provider is said to make its shared state ready, it
+means:
+[:zh_CN] 异步提供者使其共享状态就绪，其含义是：
+
+[list]
+[item]
+[:en] first, the provider marks its shared state as ready; and
+[:zh_CN] 首先，该提供者标记其共享状态为就绪；以及
+
+[item]
+[:en] second, the provider unblocks any execution agents waiting for its shared
+state to become ready.
+[:zh_CN] 其次，该提供者使等待其共享状态就绪的所有执行代理接触阻塞。
+[list:end]
+
+[para]
+[:en] When an asynchronous provider is said to abandon its shared state, it
+means:
+[:zh_CN] 异步提供者放弃其共享状态，其含义是：
+
+[list]
+[item]
+[:en] first, if that state is not ready, the provider
+[:zh_CN] 首先，如果该状态尚未就绪，则提供者
+
+[list]
+[item]
+[:en@~] stores an exception object of type [`future_error] with an error condition
+of [`broken_promise] within its shared state; and then
+[:zh_CN@~] 将一个带有 [`broken_promise] 错误条件的 [`future_error] 类型的异常对象
+存储到其共享状态之中；然后
+
+[item]
+[:en@~] makes its shared state ready;
+[:zh_CN@~] 使其共享状态就绪；
+[list:end]
+
+[item]
+[:en] second, the provider releases its shared state.
+[:zh_CN] 其次，该提供者释放其共享状态。
+[list:end]
+
+[para]
+[:en] A shared state is [+ready] only if it holds a value or an exception ready
+for retrieval.
+[:zh_CN] 仅当共享状态持有役准备好被获取的值或者异常时，称其[+就绪]。
+
+[:en] Waiting for a shared state to become ready may invoke code to compute the
+result on the waiting thread if so specified in the description of the class or
+function that creates the state object.
+[:zh_CN] 等待共享状态就绪，可能要在等待方线程中执行用以计算结果的代码，这要根据
+创建该状态对象的类或函数的描述中有此说明。
+
+[para]
+[:en] Calls to functions that successfully set the stored result of a shared
+state synchronize with ([#intro.multithread]) calls to functions successfully
+detecting the ready state resulting from that setting.
+[:zh_CN] 对成功设置某个共享状态所存储的结果的函数的调用，同步于
+（[#intro.multithread]）对成功检测到这次设置所产生的就绪状态的函数的调用。
+
+[:en] The storage of the result (whether normal or exceptional) into the shared
+state synchronizes with ([#intro.multithread]) the successful return from a call
+to a waiting function on the shared state.
+[:zh_CN] 将（无论正常还是异常）结果存储到共享状态的操作，同步于
+（[#intro.multithread]）从等待该共享状态的函数的调用成功返回。
+
+[para]
+[:en] Some functions (e.g., [`promise::set_value_at_thread_exit]) delay making
+the shared state ready until the calling thread exits.
+[:zh_CN] 某些函数（比如 [`promise::set_value_at_thread_exit]）会使设置共享状态
+就绪延迟到调用方线程退出时进行。
+
+[:en] The destruction of each of that thread[=']s objects with thread storage
+duration ([#basic.stc.thread]) is sequenced before making that shared state
+ready.
+[:zh_CN] 该线程带有线程存储期（[#basic.stc.thread]）的每个对象的销毁，都按顺序
+早于设置该共享状态就绪。
+
+[para]
+[:en] Access to the result of the same shared state may conflict
+([#intro.multithread]).
+[:zh_CN] 访问同一个共享状态的结果可能会发生冲突（[#intro.multithread]）。
+
+[enter:note]
+[:en] This explicitly specifies that the result of the shared state is visible
+in the objects that reference this state in the sense of data race avoidance
+([#res.on.data.races]).
+[:zh_CN] 这明确指定了，在进行数据竞争免除的情况下，共享状态的结果才在引用该共享
+状态的对象之中可见。
+
+[:en] For example, concurrent accesses through references returned by
+[`shared_future::get()] ([#futures.shared_future]) must either use read-only
+operations or provide additional synchronization.
+[:zh_CN] 例如，通过由 [`shared_future::get()]（[#futures.shared_future]）所返回
+的引用进行并发访问，必须使用只读操作，或者提供额外的同步。
+[exit:note]

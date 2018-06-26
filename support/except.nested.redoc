@@ -1,0 +1,153 @@
+[section#except.nested
+    [`nested_exception]
+]
+
+[%@library nested_exception]
+[codeblock:synopsis]
+namespace std {
+  class nested_exception {
+  public:
+    nested_exception() noexcept;
+    nested_exception(const nested_exception&) noexcept = default;
+    nested_exception& operator=(const nested_exception&) noexcept = default;
+    virtual ~nested_exception() = default;
+
+    // [:en] access functions
+    // [|:zh_CN] 访问函数
+    [[noreturn]] void rethrow_nested() const;
+    exception_ptr nested_ptr() const noexcept;
+  };
+
+  template<class T> [[noreturn]] void throw_with_nested(T&& t);
+  template <class E> void rethrow_if_nested(const E& e);
+}
+[codeblock:end]
+
+[para]
+[:en]
+The class [`nested_exception] is designed for use as a mixin through multiple
+inheritance.
+[:zh_CN]
+类 [`nested_exception] 被设计为通过多继承而使用的混入类。
+
+[:en]
+It captures the currently handled exception and stores it for later use.
+[:zh_CN]
+它捕获当前被处理的异常并将其保存，以便随后使用。
+
+[para]
+[enter:note]
+[:en]
+[`nested_exception] has a virtual destructor to make it a polymorphic class.
+[:zh_CN]
+[`nested_exception] 具有虚析构函数，使其成为多态类。
+
+[:en]
+Its presence can be tested for with [`dynamic_cast].
+[:zh_CN]
+可以用 [`dynamic_cast] 来测试其存在性。
+[exit:note]
+
+[%@library nested_exception[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+nested_exception() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en]
+The constructor calls [`current_exception()] and stores the returned value.
+[:zh_CN]
+该构造函数调用 [`current_exception()] 并保存其返回值。
+[exit:description]
+
+[%@library rethrow_nested[!nested_exception]]
+[%@library nested_exception[!rethrow_nested]]
+[codeblock:declaration]
+[[noreturn]] void rethrow_nested() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en]
+If [`nested_ptr()] returns a null pointer, the function calls
+[`std::terminate()].
+[:zh_CN]
+若 [`nested_ptr()] 返回空指针，则该函数调用 [`std::terminate()]。
+
+[:en]
+Otherwise, it throws the stored exception captured by [`*this].
+[:zh_CN]
+否则，它抛出由 [`*this] 捕获并保存的异常。
+[exit:description]
+
+[%@library nested_ptr[!nested_exception]]
+[%@library nested_exception[!nested_ptr]]
+[codeblock:declaration]
+exception_ptr nested_ptr() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en]
+The stored exception captured by this [`nested_exception] object.
+[:zh_CN]
+由这个 [`nested_exception] 对象所捕获并存储的异常。
+[exit:description]
+
+[%@library throw_with_nested[!nested_exception]]
+[%@library nested_exception[!throw_with_nested]]
+[codeblock:declaration]
+template <class T> [[noreturn]] void throw_with_nested(T&& t);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en]
+Let [`U] be [`decay_t<T>].
+[:zh_CN]
+另 [`U] 为 [`decay_t<T>]。
+
+[para:requires]
+[:en]
+[`U] shall be [`CopyConstructible].
+[:zh_CN]
+[`U] 应当为 [`CopyConstructible]。
+
+[para:throws]
+[:en]
+if [`is_class_v<U> && !is_final_v<U> && !is_base_of_v<nested_exception, U>] is
+[`true], an exception of unspecified type that is publicly derived from both
+[`U] and [`nested_exception] and constructed from [`std::forward<T>(t)],
+otherwise [`std::forward<T>(t)].
+[:zh_CN]
+若 [`is_class_v<U> && !is_final_v<U> && !is_base_of_v<nested_exception, U>] 为
+[`true]，则为某个具有同时公用派生自 [`U] 和 [`nested_exception] 的未指明类型的，
+并从 [`std::forward<T>(t)] 所构造的异常，否则为 [`std::forward<T>(t)]。
+[exit:description]
+
+[%@library rethrow_if_nested[!nested_exception]]
+[%@library nested_exception[!rethrow_if_nested]]
+[codeblock:declaration]
+template <class E> void rethrow_if_nested(const E& e);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en]
+If [`E] is not a polymorphic class type, or if [`nested_exception] is an
+inaccessible or ambiguous base class of [`E], there is no effect.
+[:zh_CN]
+如果 [`E] 不是多态类类型，或者 [`nested_exception] 是 [`E] 的不可访问或有歧义的
+基类，则没有效果。
+
+[:en]
+Otherwise, performs:
+[:zh_CN]
+否则，执行：
+
+[codeblock:notation]
+if (auto p = dynamic_cast<const nested_exception*>(addressof(e)))
+  p->rethrow_nested();
+[codeblock:end]
+[exit:description]

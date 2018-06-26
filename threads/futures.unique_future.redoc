@@ -1,0 +1,352 @@
+[section#futures.unique_future
+    [:en] Class template [`future]
+    [:zh_CN] 类模板 [`future]
+]
+
+[para]
+[:en] The class template [`future] defines a type for asynchronous return
+objects which do not share their shared state with other asynchronous return
+objects.
+[:zh_CN] 类模板 [`future] 为异步返回对象定义了一种类型，它并不与其他异步返回对象
+共享其共享状态。
+
+[:en] A default-constructed [`future] object has no shared state.
+[:zh_CN] 默认构造的 [`future] 对象没有共享状态。
+
+[:en] A [`future] object with shared state can be created by functions on
+asynchronous providers ([#futures.state]) or by the move constructor and shares
+its shared state with the original asynchronous provider.
+[:zh_CN] 带有共享状态的 [`future] 对象，可由异步提供者（[#futures.state]）上的
+函数创建，或者由移动构造函数创建并共享原来的异步提供者的共享状态。
+
+[:en] The result (value or exception) of a [`future] object can be set by
+calling a respective function on an object that shares the same shared state.
+[:zh_CN] [`future] 对象的结果（值或异常）可以通过在共享相同的共享状态的对象上
+调用相应的函数来进行设置。
+
+[para]
+[enter:note]
+[:en] Member functions of [`future] do not synchronize with themselves or with
+member functions of [`shared_future].
+[:zh_CN] [`future] 的各成员函数各自互相之间或者与 [`shared_future] 的成员函数
+之间并不进行同步。
+[exit:note]
+
+[para]
+[:en] The effect of calling any member function other than the destructor, the
+move-assignment operator, [`share], or [`valid] on a [`future] object for which
+[`valid() == false] is undefined.
+[:zh_CN] 对于 [`valid() == false] 的 [`future] 对象，调用除了析构函数、移动赋值
+运算符、[`share] 或 [`valid] 之外的任何成员函数的效果是未定义的。
+
+[enter:note]
+[:en] It is valid to move from a future object for which [`valid() == false].
+[:zh_CN] 从 [`valid() == false] 的 [`future] 对象进行移动是有效的。
+[exit:note]
+
+[enter:note]
+[:en] Implementations are encouraged to detect this case and throw an object of
+type [`future_error] with an error condition of [`future_errc::no_state].
+[:zh_CN] 鼓励各实现检查这种情况，并抛出带有 [`future_errc::no_state] 错误条件的
+[`future_error] 类型的对象；
+[exit:note]
+
+[%@library future]
+[codeblock:synopsis [!:mark SeeBelow] ]
+namespace std {
+  template <class R>
+  class future {
+  public:
+    future() noexcept;
+    future(future&&) noexcept;
+    future(const future& rhs) = delete;
+    ~future();
+    future& operator=(const future& rhs) = delete;
+    future& operator=(future&&) noexcept;
+    shared_future<R> share() noexcept;
+
+    // [:en] retrieving the value
+    // [|:zh_CN] 获取值
+    [=SeeBelow] get();
+
+    // [:en] functions to check state
+    // [|:zh_CN] 检查状态的函数
+    bool valid() const noexcept;
+
+    void wait() const;
+    template <class Rep, class Period>
+      future_status wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+    template <class Clock, class Duration>
+      future_status wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The implementation shall provide the template [`future] and two
+specializations, [`future<R&>] and [`future<void>].
+[:zh_CN] 实现应当提供模板 [`future] 及其两个特化式 [`future<R&>] 和
+[`future<void>]。
+
+[:en] These differ only in the return type and return value of the member
+function [`get], as set out in its description, below.
+[:zh_CN] 它们仅在成员函数 [`get] 的返回类型和返回值上有所区别，如下文中它的说明
+所示。
+
+[%@library future[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+future() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs an [+empty[%empty [`future] object]] [`future] object that does
+not refer to a shared state.
+[:zh_CN] 构造一个[+空[%空 [`future] 对象]] [`future] 对象，它不指代任何共享状态。
+
+[para:postconditions]
+[:en] [`valid() == false].
+[:zh_CN] [`valid() == false]。
+[exit:description]
+
+[%@library future[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+future(future&& rhs) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Move constructs a [`future] object that refers to the shared state that
+was originally referred to by [`rhs] (if any).
+[:zh_CN] 移动构造一个 [`future] 对象，使其指代由 [`rhs] 原来所指代的共享状态
+（如果有）。
+
+[para:postconditions]
+[list]
+[item]
+[:en] [`valid()] returns the same value as [`rhs.valid()] prior to the
+constructor invocation.
+[:zh_CN] [`valid()] 返回 [`rhs.valid()] 在构造函数调用前的值。
+[item]
+[:en] [`rhs.valid() == false].
+[:zh_CN] [`rhs.valid() == false]。
+[list:end]
+[exit:description]
+
+[%@library future[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~future();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[list]
+[item]
+[:en] Releases any shared state ([#futures.state]);
+[:zh_CN] 释放任何共享状态（[#futures.state]）；
+[item]
+[:en] destroys [`*this].
+[:zh_CN] 销毁 [`*this]。
+[list:end]
+[exit:description]
+
+[%@library operator=[!future]]
+[%@library future[!operator=]]
+[codeblock:declaration]
+future& operator=(future&& rhs) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[list]
+[item]
+[:en] Releases any shared state ([#futures.state]);
+[:zh_CN] 释放任何共享状态（[#futures.state]）；
+[item]
+[:en] move assigns the contents of [`rhs] to [`*this].
+[:zh_CN] 将 [`rhs] 的内容移动赋值给 [`*this]。
+[list:end]
+
+[para:postconditions]
+[list]
+[item]
+[:en] [`valid()] returns the same value as [`rhs.valid()] prior to the
+assignment.
+[:zh_CN] [`valid()] 返回 [`rhs.valid()] 在赋值前的值。
+[item]
+[:en] [`rhs.valid() == false].
+[:zh_CN] [`rhs.valid() == false]。
+[list:end]
+[exit:description]
+
+[%@library share[!future]]
+[%@library future[!share]]
+[codeblock:declaration]
+shared_future<R> share() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`shared_future<R>(std::move(*this))].
+[:zh_CN] [`shared_future<R>(std::move(*this))]。
+
+[para:postconditions]
+[:en] [`valid() == false].
+[:zh_CN] [`valid() == false]。
+[exit:description]
+
+[%@library get[!future]]
+[%@library future[!get]]
+[codeblock:declaration]
+R future::get();
+R& future<R&>::get();
+void future<void>::get();
+[codeblock:end]
+
+[enter:description]
+[para]
+[enter:note]
+[:en] As described above, the template and its two required specializations
+differ only in the return type and return value of the member function [`get].
+[:zh_CN] 如上所述，该模板及其两个要求的特化式仅在成员函数 [`get] 的返回类型和
+返回值上有所区别。
+[exit:note]
+
+[para:effects]
+[list]
+[item]
+[:en] [`wait()]s until the shared state is ready, then retrieves the value
+stored in the shared state;
+[:zh_CN] [`wait()] 等待直到共享状态就绪，然后获取共享状态中所存储的值；
+[item]
+[:en] releases any shared state ([#futures.state]).
+[:zh_CN] 释放任何共享状态（[#futures.state]）。
+[list:end]
+
+[para:returns]
+[list]
+[item]
+[:en] [`future::get()] returns the value [`v] stored in the object[=']s shared
+state as [`std::move(v)].
+[:zh_CN] [`future::get()] 以 [`std::move(v)] 返回对象的共享状态中存储的值 [`v]。
+
+[item]
+[:en] [`future<R&>::get()] returns the reference stored as value in the
+object[=']s shared state.
+[:zh_CN] [`future<R&>::get()] 返回对象的共享状态中以值的形式所存储的引用。
+
+[item]
+[:en] [`future<void>::get()] returns nothing.
+[:zh_CN] [`future<void>::get()] 不返回值。
+[list:end]
+
+[para:throws]
+[:en] the stored exception, if an exception was stored in the shared state.
+[:zh_CN] 如果共享状态中存储了异常，则抛出所存储的异常。
+
+[para:postconditions]
+[:en] [`valid() == false].
+[:zh_CN] [`valid() == false]。
+[exit:description]
+
+[%@library valid[!future]]
+[%@library future[!valid]]
+[codeblock:declaration]
+bool valid() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`true] only if [`*this] refers to a shared state.
+[:zh_CN] 仅当 [`*this] 指代了共享状态时返回 [`true]。
+[exit:description]
+
+[%@library wait[!future]]
+[%@library future[!wait]]
+[codeblock:declaration]
+void wait() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Blocks until the shared state is ready.
+[:zh_CN] 阻塞直到共享状态就绪。
+[exit:description]
+
+[%@library wait_for[!future]]
+[%@library future[!wait_for]]
+[codeblock:declaration]
+template <class Rep, class Period>
+  future_status wait_for(const chrono::duration<Rep, Period>& rel_time) const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] None if the shared state contains a deferred function ([#futures.async]),
+otherwise blocks until the shared state is ready or until the relative timeout
+([#thread.req.timing]) specified by [`rel_time] has expired.
+[:zh_CN] 如果共享状态中存储了延迟函数（[#futures.async]）则没有效果，否则阻塞
+直到共享状态就绪或者直到超过由 [`rel_time] 所指定的相对超时
+（[#thread.req.timing]）。
+
+[para:returns]
+[list]
+[item]
+[:en] [`future_status::deferred] if the shared state contains a deferred
+function.
+[:zh_CN] 如果共享状态中存储了延迟函数则返回 [`future_status::deferred]。
+
+[item]
+[:en] [`future_status::ready] if the shared state is ready.
+[:zh_CN] 如果共享状态就绪则返回 [`future_status::ready]。
+
+[item]
+[:en] [`future_status::timeout] if the function is returning because the
+relative timeout ([#thread.req.timing]) specified by [`rel_time] has expired.
+[:zh_CN] 如果函数由于超过由 [`rel_time] 所指定的相对超时（[#thread.req.timing]）
+而返回，则返回 [`future_status::timeout]。
+[list:end]
+
+[para:throws]
+[:en] timeout-related exceptions ([#thread.req.timing]).
+[:zh_CN] 超时相关异常（[#thread.req.timing]）。
+[exit:description]
+
+[%@library wait_until[!future]]
+[%@library future[!wait_until]]
+[codeblock:declaration]
+template <class Clock, class Duration>
+  future_status wait_until(const chrono::time_point<Clock, Duration>& abs_time) const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] None if the shared state contains a deferred function ([#futures.async]),
+otherwise blocks until the shared state is ready or until the absolute timeout
+([#thread.req.timing]) specified by [`abs_time] has expired.
+[:zh_CN] 如果共享状态中存储了延迟函数（[#futures.async]）则没有效果，否则阻塞
+直到共享状态就绪或者直到超过由 [`abs_time] 所指定的绝对超时
+（[#thread.req.timing]）。
+
+[para:returns]
+[list]
+[item]
+[:en] [`future_status::deferred] if the shared state contains a deferred
+function.
+[:zh_CN] 如果共享状态中存储了延迟函数则返回 [`future_status::deferred]。
+
+[item]
+[:en] [`future_status::ready] if the shared state is ready.
+[:zh_CN] 如果共享状态就绪则返回 [`future_status::ready]。
+
+[item]
+[:en] [`future_status::timeout] if the function is returning because the
+absolute timeout ([#thread.req.timing]) specified by [`abs_time] has expired.
+[:zh_CN] 如果函数由于超过由 [`abs_time] 所指定的绝对超时（[#thread.req.timing]）
+而返回，则返回 [`future_status::timeout]。
+[list:end]
+
+[para:throws]
+[:en] timeout-related exceptions ([#thread.req.timing]).
+[:zh_CN] 超时相关异常（[#thread.req.timing]）。
+[exit:description]

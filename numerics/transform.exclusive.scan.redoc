@@ -1,0 +1,96 @@
+[section#transform.exclusive.scan
+    [:en] Transform exclusive scan
+    [:zh_CN] 变换排除扫描
+]
+
+[%@library transform_exclusive_scan]
+[codeblock:declaration]
+template<class InputIterator, class OutputIterator, class T,
+         class BinaryOperation, class UnaryOperation>
+  OutputIterator transform_exclusive_scan(InputIterator first, InputIterator last,
+                                          OutputIterator result,
+                                          T init,
+                                          BinaryOperation binary_op,
+                                          UnaryOperation unary_op);
+template<class ExecutionPolicy,
+         class ForwardIterator1, class ForwardIterator2, class T,
+         class BinaryOperation, class UnaryOperation>
+  ForwardIterator2 transform_exclusive_scan(ExecutionPolicy&& exec,
+                                            ForwardIterator1 first, ForwardIterator1 last,
+                                            ForwardIterator2 result,
+                                            T init,
+                                            BinaryOperation binary_op,
+                                            UnaryOperation unary_op);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[list]
+[item]
+[:en] [`T] shall be [`MoveConstructible] (Table [#tab:moveconstructible]).
+[:zh_CN] [`T] 应当为 [`MoveConstructible]（表 [#tab:moveconstructible]）。
+
+[item]
+[:en] All of
+[:zh_CN] 以下各项
+[list]
+[item]
+[:en@~] [`binary_op(init, init)],
+[:zh_CN@~] [`binary_op(init, init)]，
+[item]
+[:en@~] [`binary_op(init, unary_op(*first))], and
+[:zh_CN@~] [`binary_op(init, unary_op(*first))]，以及
+[item]
+[:en@~] [`binary_op(unary_op(*first), unary_op(*first))]
+[:zh_CN@~] [`binary_op(unary_op(*first), unary_op(*first))]
+[list:end]
+[:en@~] shall be convertible to [`T].
+[:zh_CN@~] 都应当可以转换为 [`T]。
+
+[item]
+[:en] Neither [`unary_op] nor [`binary_op] shall invalidate iterators or
+subranges, or modify elements in the ranges [=crange(first,last)] or
+[=crange(result,result + (last - first))].
+[:zh_CN] [`unary_op] 和 [`binary_op] 在范围 [=crange(first,last)] 或
+[=crange(result,result + (last - first))] 中都既不能无效化任何迭代器或子范围，也
+不能改动任何元素。
+[list:end]
+
+[para:effects]
+[:en] For each integer [`K] in [=range(0,last - first)] assigns through
+[`result + K] the value of:
+[:zh_CN] 对于 [=range(0,last - first)] 中的每个整数 [`K]，将以下值经由
+[`result + K] 进行赋值：
+
+[codeblock:notation]
+[*GENERALIZED_NONCOMMUTATIVE_SUM](
+    binary_op, init,
+    unary_op(*(first + 0)), unary_op(*(first + 1)), ..., unary_op(*(first + K - 1)))
+[codeblock:end]
+
+[para:returns]
+[:en] The end of the resulting range beginning at [`result].
+[:zh_CN] 其所产生的由 [`result] 开始的范围的末尾。
+
+[para:complexity]
+[:en] [$[=O]([`last - first])] applications each of [`unary_op] and [`binary_op].
+[:zh_CN] [`unary_op] 和 [`binary_op] 各进行 [$[=O]([`last - first])] 次运用。
+
+[para:remarks]
+[:en] [`result] may be equal to [`first].
+[:zh_CN] [`result] 有可能等于 [`first]。
+
+[para]
+[enter:note]
+[:en] The difference between [`transform_exclusive_scan] and
+[`transform_inclusive_scan] is that [`transform_exclusive_scan] excludes the
+[`i]th input element from the [`i]th sum.
+[:zh_CN] [`transform_exclusive_scan] 和 [`transform_exclusive_scan] 之间的差别
+在于，[`transform_exclusive_scan] 在其第 [`i] 次求和中不包括第 [`i] 个输入元素。
+
+[:en] If [`binary_op] is not mathematically associative, the behavior of
+[`transform_exclusive_scan] may be nondeterministic.
+[:zh_CN] 当 [`binary_op] 不具有数学可结合性时，[`transform_exclusive_scan] 的
+行为可能具有不确定性。
+[exit:note]
+[exit:description]

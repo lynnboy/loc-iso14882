@@ -1,0 +1,192 @@
+[section#fs.op.status
+    [:en] Status
+    [:zh_CN] 状态
+]
+
+[%@library status]
+[codeblock:declaration]
+file_status status(const path& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if:
+[:zh_CN] 如同执行：
+
+[codeblock:notation [!:var implementation-supplied-message] ]
+error_code ec;
+file_status result = status(p, ec);
+if (result.type() == file_type::none)
+  throw filesystem_error([*implementation-supplied-message], p, ec);
+return result;
+[codeblock:end]
+
+[para:returns]
+[:en] See above.
+[:zh_CN] 如上。
+
+[para:throws]
+[:en] [`filesystem_error].
+[:zh_CN] [`filesystem_error]。
+
+[enter:note]
+[:en] [`result] values of [`file_status(file_type::not_found)] and
+[`file_status(file_type::unknown)] are not considered failures and do not cause
+an exception to be thrown.
+[:zh_CN] [`file_status(file_type::not_found)] 和
+[`file_status(file_type::unknown)] 的 [`result] 值，不被当做故障，并且不会导致
+抛出异常。
+[exit:note]
+[exit:description]
+
+[%@library status]
+[codeblock:declaration]
+file_status status(const path& p, error_code& ec) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If possible, determines the attributes of the file [`p] resolves to, as if
+by using POSIX [`stat()] to obtain a POSIX [`struct stat].
+[:zh_CN] 如果可能，则如同通过使用 POSIX 的 [`stat()] 获得一个 POSIX 的
+[`struct stat] 来确定文件 [`p] 的各属性。
+
+[:en] If, during attribute determination, the underlying file system API reports
+an error, sets [`ec] to indicate the specific error reported.
+[:zh_CN] 当属性的确定过程中，底层文件系统 API 报告了错误，则设置 [`ec] 以标明该
+特定错误。
+
+[:en] Otherwise, [`ec.clear()].
+[:zh_CN] 否则，执行 [`ec.clear()]。
+
+[enter:note]
+[:en] This allows users to inspect the specifics of underlying API errors even
+when the value returned by [`status()] is not [`file_status(file_type::none)].
+[:zh_CN] 这样做允许用户在 [`status()] 所返回的并不是
+[`file_status(file_type::none)] 时也能检查底层 API 的特定错误。
+[exit:note]
+
+[para]
+[:en] Let [`prms] denote the result of [`(m & perms::mask)], where [`m] is
+determined as if by converting the [`st_mode] member of the obtained
+[`struct stat] to the type [`perms].
+[:zh_CN] 令 [`prms] 代表 [`(m & perms::mask)] 的结果，其中 [`m] 是如同通过将所
+获得的 [`struct stat] 的成员 [`st_mode] 转换为类型 [`perms] 而确定的。
+
+[para:returns]
+[list]
+[item]
+[:en] If [`ec != error_code()]:
+[:zh_CN] 如果 [`ec != error_code()]，则：
+
+[list]
+[item]
+[:en] If the specific error indicates that [`p] cannot be resolved because some
+element of the path does not exist, returns
+[`file_status(file_type::not_found)].
+[:zh_CN] 若该特定错误标明 [`p] 由于其路径中的某些元素不存在而无法解析，则返回
+[`file_status(file_type::not_found)]。
+
+[item]
+[:en] Otherwise, if the specific error indicates that [`p] can be resolved but
+the attributes cannot be determined, returns [`file_status(file_type::unknown)].
+[:zh_CN] 否则，若该特定错误标明 [`p] 可以解析但无法确定其属性，则返回
+[`file_status(file_type::unknown)]。
+
+[item]
+[:en] Otherwise, returns [`file_status(file_type::none)].
+[:zh_CN] 否则，返回 [`file_status(file_type::none)]。
+[list:end]
+
+[enter:note]
+[:en] These semantics distinguish between [`p] being known not to exist, [`p]
+existing but not being able to determine its attributes, and there being an
+error that prevents even knowing if [`p] exists.
+[:zh_CN] 这些语义中对可知 [`p] 不存在，[`p] 存在但无法确定其属性，以及出现错误且
+妨碍确定 [`p] 是否存在的各种情况加以区分，
+
+[:en] These distinctions are important to some use cases.
+[:zh_CN] 这些区分对于某些用例是重要的。
+[exit:note]
+
+[item]
+[:en] Otherwise,
+[:zh_CN] 否则，
+
+[list]
+[item]
+[:en] If the attributes indicate a regular file, as if by POSIX [`S_ISREG],
+returns [`file_status(file_type::regular, prms)].
+[:zh_CN] 若属性标明其为常规文件（如同通过 POSIX 的 [`S_ISREG]），则返回
+[`file_status(file_type::regular, prms)]。
+
+[enter:note]
+[:en] [`file_type::regular] implies appropriate [`<fstream>] operations would
+succeed, assuming no hardware, permission, access, or file system race errors.
+[:zh_CN] [`file_type::regular] 意味着适当的 [`<fstream>] 操作可以成功，假定
+不发生硬件错误，权限错误，访问错误，或者文件系统竞争错误。
+
+[:en] Lack of [`file_type::regular] does not necessarily imply [`<fstream>]
+operations would fail on a directory.
+[:zh_CN] 缺乏 [`file_type::regular] 并不一定意味着对目录进行的 [`<fstream>] 操作
+将会失败。
+[exit:note]
+
+[item]
+[:en] Otherwise, if the attributes indicate a directory, as if by POSIX
+[`S_ISDIR], returns [`file_status(file_type::directory, prms)].
+[:zh_CN] 否则，若属性标明其为目录（如同通过 POSIX 的 [`S_ISDIR]），则返回
+[`file_status(file_type::directory, prms)]。
+
+[enter:note]
+[:en] [`file_type::directory] implies that calling [`directory_iterator(p)]
+would succeed.
+[:zh_CN] [`file_type::directory] 意味着调用 [`directory_iterator(p)] 可以成功。
+[exit:note]
+
+[item]
+[:en] Otherwise, if the attributes indicate a block special file, as if by POSIX
+[`S_ISBLK], returns [`file_status(file_type::block, prms)].
+[:zh_CN] 否则，若属性标明其为块特殊文件（如同通过 POSIX 的 [`S_ISBLK]），则返回
+[`file_status(file_type::block, prms)]。
+
+[item]
+[:en] Otherwise, if the attributes indicate a character special file, as if by
+POSIX [`S_ISCHR], returns [`file_status(file_type::character, prms)].
+[:zh_CN] 否则，若属性标明其为字符特殊文件（如同通过 POSIX 的 [`S_ISCHR]），则
+返回 [`file_status(file_type::character, prms)]。
+
+[item]
+[:en] Otherwise, if the attributes indicate a fifo or pipe file, as if by POSIX
+[`S_ISFIFO], returns [`file_status(file_type::fifo, prms)].
+[:zh_CN] 否则，若属性标明其为 FIFO 或管道文件（如同通过 POSIX 的 [`S_ISFIFO]），
+则返回 [`file_status(file_type::fifo, prms)]。
+
+[item]
+[:en] Otherwise, if the attributes indicate a socket, as if by POSIX
+[`S_ISSOCK], returns [`file_status(file_type::socket, prms)].
+[:zh_CN] 否则，若属性标明其为套接字（如同通过 POSIX 的 [`S_ISSOCK]），则返回
+[`file_status(file_type::socket, prms)]。
+
+[item]
+[:en] Otherwise, if the attributes indicate an implementation-defined file type
+([#fs.enum.file_type]), returns [`file_status(file_type::[*A], prms)], where
+[`[*A]] is the constant for the [%@impldef file type of the file argument of
+[`filesystem::status]] implementation-defined file type.
+[:zh_CN] 否则，若属性标明其为某种由实现定义的文件类型（[#fs.enum.file_type]），
+则返回 [`file_status(file_type::[*A], prms)]，其中 [`[*A]] 为一个针对该
+[%@impldef [`filesystem::status] 的文件实参的文件类型]由实现定义的文件类型的
+常量。
+
+[item]
+[:en] Otherwise, returns [`file_status(file_type::unknown, prms)].
+[:zh_CN] 否则，返回 [`file_status(file_type::unknown, prms)]。
+[list:end]
+[list:end]
+
+[para:remarks]
+[:en] If a symbolic link is encountered during pathname resolution, pathname
+resolution continues using the contents of the symbolic link.
+[:zh_CN] 如果在路径名解析过程中遇到了符号连接，则使用该符号连接的内容继续进行
+路径名解析。
+[exit:description]

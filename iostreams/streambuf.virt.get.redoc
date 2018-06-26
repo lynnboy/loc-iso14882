@@ -1,0 +1,206 @@
+[section#streambuf.virt.get
+    [:en] Get area
+    [:zh_CN] 获取区
+]
+
+[%@library showmanyc[!basic_streambuf]]
+[%@library basic_streambuf[!showmanyc]]
+[codeblock:declaration]
+streamsize showmanyc();[#:note#fn:$section.1]
+[codeblock:end]
+
+[note:foot#fn.section.1]
+[:en] The morphemes of [`showmanyc] are ["es-how-many-see], not ["show-manic].
+[:zh_CN] [`showmanyc] 的各词素为“S·how·many·C”，而不是“show·manic”。
+[note:end]
+
+[enter:description]
+[para:returns]
+[:en] An estimate of the number of characters available in the sequence, or -1.
+[:zh_CN] 对序列中的有效字符数的估计值，或者为 -1。
+
+[:en] If it returns a positive value, then successive calls to [`underflow()]
+will not return [`traits::eof()] until at least that number of characters have
+been extracted from the stream.
+[:zh_CN] 若其返回正数值，则直到从流中至少抽取了这个数量的字符之前，连续调用
+[`underflow()] 都不会返回 [`traits::eof()]。
+
+[:en] If [`showmanyc()] returns -1, then calls to [`underflow()] or [`uflow()]
+will fail.[#:note#fn:$section.2]
+[:zh_CN] 若 [`showmanyc()] 返回 -1，则对 [`underflow()] 或 [`uflow()] 的调用将会
+失败。[#:note#fn:$section.2]
+
+[note:foot#fn.section.2]
+[:en] [`underflow] or [`uflow] might fail by throwing an exception prematurely.
+[:zero] [`underflow] 或 [`uflow] 可能会贸然地抛出异常而失败。
+
+[:en] The intention is not only that the calls will not return [`eof()] but that
+they will return ["immediately].
+[:zh_CN] 其意图是这些调用不仅不会返回 [`eof()]，而且它们会“立即返回”。
+[note:end]
+
+[para:default]
+[:en] Returns zero.
+[:zh_CN] 返回零。
+
+[para:remarks]
+[:en] Uses [`traits::eof()].
+[:zh_CN] 利用了 [`traits::eof()]。
+[exit:description]
+
+[%@library xsgetn[!basic_streambuf]]
+[%@library basic_streambuf[!xsgetn]]
+[codeblock:declaration]
+streamsize xsgetn(char_type* s, streamsize n);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Assigns up to [`n] characters to successive elements of the array whose
+first element is designated by [`s].
+[:zh_CN] 向以 [`s] 代表其首个元素的数组中的连续元素进行至多 [`n] 个字符的赋值。
+
+[:en] The characters assigned are read from the input sequence as if by repeated
+calls to [`sbumpc()].
+[:zh_CN] 所赋予的各字符，是以如同重复调用 [`sbumpc()] 的方式从输入序列中读取的。
+
+[:en] Assigning stops when either [`n] characters have been assigned or a call
+to [`sbumpc()] would return [`traits::eof()].
+[:zh_CN] 一旦已有 [`n] 个字符被赋值，或者对 [`sbumpc()] 的调用返回了
+[`traits::eof()]，就停止赋值。
+
+[para:returns]
+[:en] The number of characters assigned.[#:note#fn:$section.3]
+[:zh_CN] 所赋值的字符数。[#:note#fn:$section.3]
+
+[note:foot#fn.section.3]
+[:en] Classes derived from [`basic_streambuf] can provide more efficient ways to
+implement [`xsgetn()] and [`xsputn()] by overriding these definitions from the
+base class.
+[:zh_CN] 派生于 [`basic_streambuf] 的类可以通过覆盖基类中的 [`xsgetn()] 和
+[`xsputn()] 的定义，从而提供更加高效的实现方式。
+[note:end]
+
+[para:remarks]
+[:en] Uses [`traits::eof()].
+[:zh_CN] 利用了 [`traits::eof()]。
+[exit:description]
+
+[%@library underflow[!basic_streambuf]]
+[%@library basic_streambuf[!underflow]]
+[codeblock:declaration]
+int_type underflow();
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] The public members of [`basic_streambuf] call this virtual function only
+if [`gptr()] is null or [`gptr() >= egptr()]
+[:zh_CN] 仅当 [`gptr()] 为空值或者 [`gptr() >= egptr()] 时，[`basic_streambuf]
+的公开成员会调用这个虚函数。
+
+[para:returns]
+[:en] [`traits::to_int_type(c)], where [`c] is the first [em character] of the
+[+pending sequence[%]], without moving the input sequence position past it.
+[:zh_CN] [`traits::to_int_type(c)]，其中 [`c] 为[+待定序列[%]]的第一个[em 字符]，
+输入序列的位置移动不会超过它。
+
+[:en] If the pending sequence is null then the function returns [`traits::eof()]
+to indicate failure.
+[:zh_CN] 当待定序列为空时，函数返回 [`traits::eof()] 以标明发生故障。
+
+[para]
+[:en] The [+pending sequence[%]] of characters is defined as the concatenation
+of
+[:zh_CN] 其字符[+待定序列[%]]定义为如下的拼接：
+[list]
+[item]
+[:en@~] the empty sequence if [`gptr()] is null, otherwise the characters in
+[=range(gptr(),egptr())], followed by
+[:zh_CN@~] 当 [`gptr()] 为空值时为空序列，否则为 [=range(gptr(),egptr())] 中的
+字符，之后跟着
+[item]
+[:en@~] some (possibly empty) sequence of characters read from the input
+sequence.
+[:zh_CN@~] 从输入序列读取到的（可能为空的）字符序列。
+[list:end]
+
+[para]
+[:en] The [+result character[%]] is the first character of the pending sequence
+if it is non-empty, otherwise the next character that would be read from the
+input sequence.
+[:zh_CN] 其[+结果字符[%]]，当待定序列不为空时为其首个字符，否则为从输入序列中
+将读取到的下一个字符。
+
+[para]
+[:en] The [+backup sequence[%]] is the empty sequence if [`eback()] is null,
+otherwise the characters in [=range(eback(),gptr())].
+[:zh_CN] 其[+后备序列[%]]，当 [`eback()] 为空值时为空序列，否则为
+[=range(eback(),gptr())] 中的字符。
+
+[para:effects]
+[:en] The function sets up the [`gptr()] and [`egptr()] such that if the pending
+sequence is non-empty, then [`egptr()] is non-null and the characters in
+[=range(gptr(),egptr()] are the characters in the pending sequence, otherwise
+either [`gptr()] is null or [`gptr() ==  egptr()].
+[:zh_CN] 该函数设定 [`gptr()] 和 [`egptr()]，使得若待定序列不为空，则 [`egptr()]
+非空值，且 [=range(gptr(),egptr()] 中的各字符即为待定序列中的字符，否则，或者
+[`gptr()] 为空值，或者 [`gptr() ==  egptr()]。
+
+[para]
+[:en] If [`eback()] and [`gptr()] are non-null then the function is not
+constrained as to their contents, but the ["usual backup condition] is that
+either
+[:zh_CN] 如果 [`eback()] 和 [`gptr()] 均非空值，则该函数不为它们的内容所限，而是
+如下任一种“常规后备条件”：
+
+[list]
+[item]
+[:en@~] the backup sequence contains at least [`gptr() - eback()] characters, in
+which case the characters in [=range(eback(),gptr())] agree with the last
+[`gptr() - eback()] characters of the backup sequence, or
+[:zh_CN@~] 其后备序列至少包含 [`gptr() - eback()] 个字符，这种情况下
+[=range(eback(),gptr())] 中的各字符与后备序列的最后 [`gptr() - eback()] 个字符
+相一致，或者
+[item]
+[:en@~] the characters in [=range(gptr() - n,gptr())] agree with the backup
+sequence (where [`n] is the length of the backup sequence).
+[:zh_CN@~] [=range(gptr() - n,gptr())] 中的各字符与后备序列相一致（其中 [`n] 为
+后备序列的长度）。
+[list:end]
+
+[para:default]
+[:en] Returns [`traits::eof()].
+[:zh_CN] 返回 [`traits::eof()]。
+[exit:description]
+
+[%@library uflow[!basic_streambuf]]
+[%@library basic_streambuf[!uflow]]
+[codeblock:declaration]
+int_type uflow();
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The constraints are the same as for [`underflow()], except that the result
+character shall be transferred from the pending sequence to the backup sequence,
+and the pending sequence shall not be empty before the transfer.
+[:zh_CN] 其约束条件与 [`underflow()] 相同，但其结果字符应当从待定序列迁移到后备
+序列中，且待定序列在进行迁移前不能为空。
+
+[para:default]
+[:en] Calls [`underflow()].
+[:zh_CN] 调用 [`underflow()]。
+
+[:en] If [`underflow()] returns [`traits::eof()], returns [`traits::eof()].
+[:zh_CN] 若 [`underflow()] 返回 [`traits::eof()] 则返回 [`traits::eof()]。
+
+[:en] Otherwise, returns the value of [`traits::to_int_type(*gptr())] and
+increment the value of the next pointer for the input sequence.
+[:zh_CN] 否则，返回 [`traits::to_int_type(*gptr())] 的值并增加输入序列的后继指针
+的值。
+
+[para:returns]
+[:en] [`traits::eof()] to indicate failure.
+[:zh_CN] [`traits::eof()] 以标明故障。
+[exit:description]

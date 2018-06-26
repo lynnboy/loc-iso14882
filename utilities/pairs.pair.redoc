@@ -1,0 +1,378 @@
+[section#pairs.pair
+    [:en] Class template [`pair]
+    [:zh_CN] 类模板 [`pair]
+]
+
+[%@library pair]
+[codeblock:synopsis [!:mark EXPLICIT SeeBelow] ]
+namespace std {
+  template <class T1, class T2>
+    struct pair {
+      using first_type  = T1;
+      using second_type = T2;
+
+      T1 first;
+      T2 second;
+
+      pair(const pair&) = default;
+      pair(pair&&) = default;
+      [=EXPLICIT] constexpr pair();
+      [=EXPLICIT] constexpr pair(const T1& x, const T2& y);
+      template<class U1, class U2> [=EXPLICIT] constexpr pair(U1&& x, U2&& y);
+      template<class U1, class U2> [=EXPLICIT] constexpr pair(const pair<U1, U2>& p);
+      template<class U1, class U2> [=EXPLICIT] constexpr pair(pair<U1, U2>&& p);
+      template <class... Args1, class... Args2>
+        pair(piecewise_construct_t, tuple<Args1...> first_args, tuple<Args2...> second_args);
+
+      pair& operator=(const pair& p);
+      template<class U1, class U2> pair& operator=(const pair<U1, U2>& p);
+      pair& operator=(pair&& p) noexcept([=SeeBelow]);
+      template<class U1, class U2> pair& operator=(pair<U1, U2>&& p);
+
+      void swap(pair& p) noexcept([=SeeBelow]);
+    };
+
+  template<class T1, class T2>
+    pair(T1, T2) -> pair<T1, T2>;
+}
+[codeblock:end]
+
+[para]
+[:en]
+Constructors and member functions of [`pair] shall not throw exceptions unless
+one of the element-wise operations specified to be called for that operation
+throws an exception.
+[:zh_CN]
+[`pair] 的构造函数和成员函数不能抛出异常，除非该操作所指定要调用的按元素操作抛出
+了异常。
+
+[para]
+[:en]
+The defaulted move and copy constructor, respectively, of [`pair] shall be a
+constexpr function if and only if all required element-wise initializations for
+copy and move, respectively, would satisfy the requirements for a constexpr
+function.
+[:zh_CN]
+[`pair] 的预置移动和复制构造函数，当且仅当其对应的所有需要的按元素复制或移动
+初始化分别能够符合 constexpr 函数的规定时，它是 constexpr 函数。
+
+[:en]
+The destructor of [`pair] shall be a trivial destructor if
+[`(is_trivially_destructible_v<T1> && is_trivially_destructible_v<T2>)] is
+[`true].
+[:zh_CN]
+当 [`(is_trivially_destructible_v<T1> && is_trivially_destructible_v<T2>)] 为
+[`true] 时，[`pair] 的析构函数应当是平凡的析构函数。
+
+[%@library pair[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:synopsis [!:mark EXPLICIT] ]
+[=EXPLICIT] constexpr pair();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Value-initializes [`first] and [`second].
+[:zh_CN] 值初始化 [`first] 和 [`second]。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_default_constructible_v<first_type>] is [`true] and
+[`is_default_constructible_v<second_type>] is [`true].
+[:zh_CN] 除非 [`is_default_constructible_v<first_type>] 为 [`true] 并且
+[`is_default_constructible_v<second_type>] 为 [`true]，否则这个构造函数不能参与
+重载决议。
+
+[enter:note]
+[:en] This behavior can be implemented by a constructor template with default
+template arguments.
+[:zh_CN] 这种行为可以利用带有默认模板实参的构造函数模板予以实现。
+[exit:note]
+
+[:en] The constructor is explicit if and only if either [`first_type] or
+[`second_type] is not implicitly default-constructible.
+[:zh_CN] 当且仅当 [`first_type] 或者 [`second_type] 都不能隐式默认转换时，这个
+构造函数是显式的。
+
+[enter:note]
+[:en] This behavior can be implemented with a trait that checks whether a
+[`const first_type&] or a [`const second_type&] can be initialized with [`{}].
+[:zh_CN] 这种行为可以利用一个特征来检查 [`const first_type&] 或者
+[`const second_type&] 是否可以由 [`{}] 进行初始化来予以实现。
+[exit:note]
+[exit:description]
+
+[%@library pair[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:synopsis [!:mark EXPLICIT] ]
+[=EXPLICIT] constexpr pair(const T1& x, const T2& y);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`first] with [`x] and [`second] with [`y].
+[:zh_CN] 以 [`x] 初始化 [`first]，并以 [`y] 初始化 [`second]。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_copy_constructible_v<first_type>] is [`true] and
+[`is_copy_constructible_v<second_type>] is [`true].
+[:zh_CN] 除非 [`is_copy_constructible_v<first_type>] 为 [`true] 并且
+[`is_copy_constructible_v<second_type>] 为 [`true]，否则这个构造函数不能参与
+重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<const first_type&, first_type>] is [`false] or
+[`is_convertible_v<const second_type&, second_type>] is [`false].
+[:zh_CN] 当且仅当 [`is_convertible_v<const first_type&, first_type>] 为 [`false]
+或者 [`is_convertible_v<const second_type&, second_type>] 为 [`false] 时，这个
+构造函数是显式的。
+[exit:description]
+
+[%@library pair[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:synopsis [!:mark EXPLICIT] ]
+template<class U1, class U2> [=EXPLICIT] constexpr pair(U1&& x, U2&& y);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`first] with [`std::forward<U1>(x)] and [`second] with
+[`std::forward<U2>(y)].
+[:zh_CN] 以 [`std::forward<U1>(x)] 初始化 [`first]，并以 [`std::forward<U2>(y)]
+初始化 [`second]。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_constructible_v<first_type, U1&&>] is [`true] and
+[`is_constructible_v<second_type, U2&&>] is [`true].
+[:zh_CN] 除非 [`is_constructible_v<first_type, U1&&>] 为 [`true] 并且
+[`is_constructible_v<second_type, U2&&>] 为 [`true]，否则这个构造函数不能参与
+重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<U1&&, first_type>] is [`false] or
+[`is_convertible_v<U2&&, second_type>] is [`false].
+[:zh_CN] 当且仅当 [`is_convertible_v<U1&&, first_type>] 为 [`false] 或者
+[`is_convertible_v<U2&&, second_type>] 为 [`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library pair[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:synopsis [!:mark EXPLICIT] ]
+template<class U1, class U2> [=EXPLICIT] constexpr pair(const pair<U1, U2>& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes members from the corresponding members of the argument.
+[:zh_CN] 以实参的对应成员初始化其成员。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_constructible_v<first_type, const U1&>] is [`true] and
+[`is_constructible_v<second_type, const U2&>] is [`true].
+[:zh_CN] 除非 [`is_constructible_v<first_type, const U1&>] 为 [`true] 并且
+[`is_constructible_v<second_type, const U2&>] 为 [`true]，否则这个构造函数不能
+参与重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<const U1&, first_type>] is [`false] or
+[`is_convertible_v<const U2&, second_type>] is [`false].
+[:zh_CN] 当且仅当 [`is_convertible_v<const U1&, first_type>] 为 [`false] 或者
+[`is_convertible_v<const U2&, second_type>] 为 [`false] 时，这个构造函数是显式的
+。
+[exit:description]
+
+[%@library pair[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:synopsis [!:mark EXPLICIT] ]
+template<class U1, class U2> [=EXPLICIT] constexpr pair(pair<U1, U2>&& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`first] with [`std::forward<U1>(p.first)] and [`second] with
+[`std::forward<U2>(p.second)].
+[:zh_CN] 以 [`std::forward<U1>(p.first)] 初始化 [`first]，并以
+[`std::forward<U2>(p.second)] 初始化 [`second]。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_constructible_v<first_type, U1&&>] is [`true] and
+[`is_constructible_v<second_type, U2&&>] is [`true].
+[:zh_CN] 除非 [`is_constructible_v<first_type, U1&&>] 为 [`true] 并且
+[`is_constructible_v<second_type, U2&&>] 为 [`true]，否则这个构造函数不能参与
+重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<U1&&, first_type>] is [`false] or
+[`is_convertible_v<U2&&, second_type>] is [`false].
+[:zh_CN] 当且仅当 [`is_convertible_v<U1&&, first_type>] 为 [`false] 或者
+[`is_convertible_v<U2&&, second_type>] 为 [`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library pair[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class... Args1, class... Args2>
+  pair(piecewise_construct_t, tuple<Args1...> first_args, tuple<Args2...> second_args);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`is_constructible_v<first_type, Args1&&...>] is [`true] and
+[`is_constructible_v<second_type, Args2&&...>] is [`true].
+[:zh_CN] [`is_constructible_v<first_type, Args1&&...>] 为 [`true] 并且
+[`is_constructible_v<second_type, Args2&&...>] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [`first] with arguments of types [`Args1...] obtained by
+forwarding the elements of [`first_args] and initializes [`second] with
+arguments of types [`Args2...] obtained by forwarding the elements of
+[`second_args].
+[:zh_CN] 通过转发 [`first_args] 的元素获得 [`Args1...] 的各类型的实参并以之
+初始化 [`first]，并且通过转发 [`second_args] 的元素获得 [`Args2...] 的各类型的
+实参并以之初始化 [`second]。
+
+[:en]
+(Here, forwarding an element [`x] of type [`U] within a [`tuple] object means
+calling [`std::forward<U>(x)].)
+[:zh_CN]
+（此处，转发一个 [`tuple] 对象中类型 [`U] 的元素 [`x] 的意思是调用
+[`std::forward<U>(x)]。）
+
+[:en]
+This form of construction, whereby constructor arguments for [`first] and
+[`second] are each provided in a separate [`tuple] object, is called
+[+piecewise construction].
+[:zh_CN]
+这种形式的构造，其中为 [`first] 和 [`second] 提供的构造函数实参是以各自独立的
+[`tuple] 对象提供的，称之为[+逐段构造]。
+[exit:description]
+
+[%@library operator=[!pair]]
+[%@library pair[!operator=]]
+[codeblock:declaration]
+pair& operator=(const pair& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Assigns [`p.first] to [`first] and [`p.second] to [`second].
+[:zh_CN] 赋值 [`p.first] 给 [`first]，并赋值 [`p.second] 给 [`second]。
+
+[para:remarks]
+[:en] This operator shall be defined as deleted unless
+[`is_copy_assignable_v<first_type>] is [`true] and
+[`is_copy_assignable_v<second_type>] is [`true].
+[:zh_CN] 除非 [`is_copy_assignable_v<first_type>] 为 [`true] 并且
+[`is_copy_assignable_v<second_type>] 为 [`true]，否则这个运算符应当定义为弃置的。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[exit:description]
+
+[%@library operator=[!pair]]
+[%@library pair[!operator=]]
+[codeblock:declaration]
+template<class U1, class U2> pair& operator=(const pair<U1, U2>& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Assigns [`p.first] to [`first] and [`p.second] to [`second].
+[:zh_CN] 赋值 [`p.first] 给 [`first]，并赋值 [`p.second] 给 [`second]。
+
+[para:remarks]
+[:en] This operator shall not participate in overload resolution unless
+[`is_assignable_v<first_type&, const U1&>] is [`true] and
+[`is_assignable_v<second_type&, const U2&>] is [`true].
+[:zh_CN] 除非 [`is_assignable_v<first_type&, const U1&>] 为 [`true] 并且
+[`is_assignable_v<second_type&, const U2&>] 为 [`true]，否则这个运算符不能参与
+重载决议。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[exit:description]
+
+[%@library operator=[!pair]]
+[%@library pair[!operator=]]
+[codeblock:declaration [!:mark SeeBelow] ]
+pair& operator=(pair&& p) noexcept([=SeeBelow]);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Assigns to [`first] with [`std::forward<first_type>(p.first)] and to
+[`second] with [`std::forward<second_type>(p.second)].
+[:zh_CN] 以 [`std::forward<first_type>(p.first)] 对 [`first] 赋值，并以
+[`std::forward<second_type>(p.second)] 对 [`second] 赋值。
+
+[para:remarks]
+[:en] This operator shall be defined as deleted unless
+[`is_move_assignable_v<first_type>] is [`true] and
+[`is_move_assignable_v<second_type>] is [`true].
+[:zh_CN] 除非 [`is_move_assignable_v<first_type>] 为 [`true] 并且
+[`is_move_assignable_v<second_type>] 为 [`true]，否则这个运算符应当定义为弃置的。
+
+[para:remarks]
+[:en] The expression inside [`noexcept] is equivalent to:
+[:zh_CN] [`noexcept] 中的表达式等价于：
+
+[codeblock:notation]
+is_nothrow_move_assignable_v<T1> && is_nothrow_move_assignable_v<T2>
+[codeblock:end]
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[exit:description]
+
+[%@library operator=[!pair]]
+[%@library pair[!operator=]]
+[codeblock:declaration]
+template<class U1, class U2> pair& operator=(pair<U1, U2>&& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Assigns to [`first] with [`std::forward<U1>(p.first)] and to [`second]
+with [`std::forward<U2>(p.second)].
+[:zh_CN] 以 [`std::forward<U1>(p.first)] 对 [`first] 赋值，并以
+[`std::forward<U2>(p.second)] 对 [`second] 赋值。
+
+[para:remarks]
+[:en] This operator shall not participate in overload resolution unless
+[`is_assignable_v<first_type&, U1&&>] is [`true] and
+[`is_assignable_v<second_type&, U2&&>] is [`true].
+[:zh_CN] 除非 [`is_assignable_v<first_type&, U1&&>] 为 [`true] 并且
+[`is_assignable_v<second_type&, U2&&>] 为 [`true]，否则这个运算符不能参与重载
+决议。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[exit:description]
+
+[%@library swap[!pair]]
+[%@library pair[!swap]]
+[codeblock:declaration [!:mark SeeBelow] ]
+void swap(pair& p) noexcept([=SeeBelow]);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`first] shall be swappable with ([#swappable.requirements]) [`p.first]
+and [`second] shall be swappable with [`p.second].
+[:zh_CN] [`first] 应当能够与 [`p.first] 互相交换（[#swappable.requirements]），
+并且 [`second] 应当能够与 [`p.second] 互相交换。
+
+[para:effects]
+[:en] Swaps [`first] with [`p.first] and [`second] with [`p.second].
+[:zh_CN] 交换 [`first] 与 [`p.first]，并交换 [`second] 与 [`p.second]。
+
+[para:remarks]
+[:en] The expression inside [`noexcept] is equivalent to:
+[:zh_CN] [`noexcept] 中的表达式等价于：
+
+[codeblock:notation]
+is_nothrow_swappable_v<first_type> && is_nothrow_swappable_v<second_type>
+[codeblock:end]
+[exit:description]

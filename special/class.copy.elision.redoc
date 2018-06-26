@@ -1,0 +1,295 @@
+[section#class.copy.elision
+    [:en] Copy/move elision
+    [:zh_CN] 复制/移动的消除
+]
+
+[para]
+[:en]
+[%temporary[!elimination of]]
+[%elision[!copy constructor][% constructor[!copy[!elision]]]]
+[%elision[!move constructor][% constructor[!move[!elision]]]]
+[%constructor[!copy[!elision]]]
+[%constructor[!move[!elision]]]
+When certain criteria are met, an implementation is allowed to omit the
+copy/move construction of a class object, even if the constructor selected for
+the copy/move operation and/or the destructor for the object have
+[%side effects] side effects.
+[:zh_CN]
+[%临时对象[!～的消除]]
+[%消除[!复制构造函数][% 构造函数[!复制～[!消除]]]]
+[%消除[!移动构造函数][% 构造函数[!移动～[!消除]]]]
+[%构造函数[!复制～[!消除]]]
+[%构造函数[!移动～[!消除]]]
+当满足特定的准则时，即使为复制/移动操作所选择的构造函数和/或析构函数带有
+[%副作用]副作用，仍然允许实现省略类对象的复制/移动构造过程。
+
+[:en]
+In such cases, the implementation treats the source and target of the omitted
+copy/move operation as simply two different ways of referring to the same
+object.
+[:zh_CN]
+在这种情况下，实现只是把被省略的复制/移动操作的源和目标对象简单地当作指代相同
+对象的两个不同方式。
+
+[:en]
+If the first parameter of the selected constructor is an rvalue reference to the
+object[=']s type, the destruction of that object occurs when the target would
+have been destroyed; otherwise, the destruction occurs at the later of the times
+when the two objects would have been destroyed without the optimization.
+[#:note#fn:$section.1]
+[:zh_CN]
+若所选择的构造函数的第一个形参是该对象类型的右值引用，则该对象的销毁将发生于目标
+对象将被销毁的时刻；否则，其销毁发生于这两个对象在未优化时将被销毁的最晚时刻。
+[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en]
+Because only one object is destroyed instead of two, and one copy/move
+constructor is not executed, there is still one object destroyed for each one
+constructed.
+[:zh_CN]
+因为只有一个对象而不是两个被销毁，而一个复制/移动构造函数并未被执行，所以对每个
+被构造的对象仍然只有一个对象被销毁。
+[note:end]
+
+[:en]
+This elision of copy/move operations, called
+[%@defn copy elision[%constructor[!copy[!elision]]]]
+[%@defn elision[!copy][%constructor[!copy[!elision]]]]
+[%@defn constructor[!copy[!elision]]] [%@defn constructor[!move[!elision]]]
+[+copy elision[%]], is permitted in the following circumstances (which may be
+combined to eliminate multiple copies):
+[:zh_CN]
+这种对复制/移动操作的消除（被称为
+[%@defn 副本消除[%构造函数[!复制～[!消除]]]]
+[%@defn 消除[!副本～][%构造函数[!复制～[!消除]]]]
+[%@defn 构造函数[!复制～[!消除]]] [%@defn 构造函数[!移动～[!消除]]]
+[+副本消除[%]]），允许在如下情况下进行（它们可以组合起来以消除多份副本）：
+
+[list]
+[item]
+[:en]
+in a [`return] statement in a function with a class return type, when the
+[~expression] is the name of a non-volatile automatic object (other than a
+function parameter or a variable introduced by the [~exception-declaration] of a
+[~handler] ([#except.handle])) with the same type (ignoring cv-qualification) as
+the function return type, the copy/move operation can be omitted by constructing
+the automatic object directly into the function call[=']s return object
+[:zh_CN]
+在返回类类型的函数的 [`return] 语句中，若其[~表达式]是（除函数形参或者由
+[~处理器]的[~异常声明式]（[#except.handle]）所引入的变量之外的）非 volatile 自动
+对象的名字，且它带有与函数返回类型相同的类型（忽略 cv 限定性），则其复制/移动
+操作可以通过将该自动对象直接构造到该函数的返回值中而省略掉
+
+[item]
+[:en]
+in a [~throw-expression] ([#expr.throw]), when the operand is the name of a
+non-volatile automatic object (other than a function or catch-clause parameter)
+whose scope does not extend beyond the end of the innermost enclosing
+[~try-block] (if there is one), the copy/move operation from the operand to the
+exception object ([#except.throw]) can be omitted by constructing the automatic
+object directly into the exception object
+[:zh_CN]
+在 [~throw-表达式]（[#expr.throw]）中，若其操作数是（除函数或 catch 子句的形参外
+）非 volatile 自动对象的名字，且它的作用域不超过其最内层外围 [~try-块]（如果有）
+的末尾，则从该操作数向异常对象（[#except.throw]）的复制/移动操作可以通过将该自动
+对象直接构造到该异常对象中而省略掉
+
+[item]
+[:en]
+when the [~exception-declaration] of an exception handler (Clause [#except])
+declares an object of the same type (except for cv-qualification) as the
+exception object ([#except.throw]), the copy operation can be omitted by
+treating the [~exception-declaration] as an alias for the exception object if
+the meaning of the program will be unchanged except for the execution of
+constructors and destructors for the object declared by the
+[~exception-declaration].
+[:zh_CN]
+当某个异常处理器的[~异常声明式]（第 [#except] 章）声明了与异常对象
+（[#except.throw]）（除 cv 限定性之外）类型相同的对象时，如果除了由[~异常声明式]
+所声明的对象的构造函数和析构函数的执行之外不改变程序的含义，则其复制/移动操作
+可以通过把该[~异常声明式]当作是异常对象的别名而省略掉。
+
+[enter:note]
+[:en]
+There cannot be a move from the exception object because it is always an lvalue.
+[:zh_CN]
+不可能从异常对象进行移动，这是因为它总是左值。
+[exit:note]
+[list:end]
+
+[:en]
+Copy elision is required where an expression is evaluated in a context requiring
+a constant expression ([#expr.const]) and in constant initialization
+([#basic.start.static]).
+[:zh_CN]
+在需要常量表达式的语境中（[#expr.const]）以及常量初始化（[#basic.start.static]）
+之中对表达式求值时，要求实施副本消除。
+
+[enter:note]
+[:en]
+Copy elision might not be performed if the same expression is evaluated in
+another context.
+[:zh_CN]
+同样的表达式在别的语境中求值并不一定会实施副本消除。
+[exit:note]
+
+[para]
+[enter:example]
+[codeblock]
+class Thing {
+public:
+  Thing();
+  ~Thing();
+  Thing(const Thing&);
+};
+
+Thing f() {
+  Thing t;
+  return t;
+}
+
+Thing t2 = f();
+
+struct A {
+  void *p;
+  constexpr A(): p(this) {}
+};
+
+constexpr A g() {
+  A a;
+  return a;
+}
+
+constexpr A a;          // [:en] well-formed, [`a.p] points to [`a]
+                        // [|:zh_CN] 良构，[`a.p] 指向 [`a]
+constexpr A b = g();    // [:en] well-formed, [`b.p] points to [`b]
+                        // [|:zh_CN] 良构，[`b.p] 指向 [`b]
+
+void g() {
+  A c = g();            // [:en] well-formed, [`c.p] may point to [`c] or to an ephemeral temporary
+                        // [|:zh_CN] 良构，[`c.p] 可能指向 [`c] 或者某个短暂的临时对象
+}
+[codeblock:end]
+
+[:en]
+Here the criteria for elision can eliminate the copying of the local automatic
+object [`t] into the result object for the function call [`f()], which is the
+global object [`t2].
+[:zh_CN]
+此处消除的判别准则允许将局部自动对象 [`t] 的复制消除为函数调用 [`f()] 的结果对象
+，亦即全局对象 [`t2]。
+
+[:en]
+Effectively, the construction of the local object [`t] can be viewed as directly
+initializing the global object [`t2], and that object[=']s destruction will
+occur at program exit.
+[:zh_CN]
+局部对象 [`t] 的构造过程可以有效地看作是直接对全局对象 [`t2] 进行初始化，而该
+对象的析构将发生于程序退出之时。
+
+[:en]
+Adding a move constructor to [`Thing] has the same effect, but it is the move
+construction from the local automatic object to [`t2] that is elided.
+[:zh_CN]
+为 [`Thing] 添加移动构造函数效果相同，但所消除的将是从局部自动对象向 [`t2] 的
+移动构造。
+[exit:example]
+
+[para]
+[:en]
+In the following copy-initialization contexts, a move operation might be used
+instead of a copy operation:
+[:zh_CN]
+以下各种复制初始化语境中，可以换用移动操作而不是复制操作：
+
+[list]
+[item]
+[:en]
+If the [~expression] in a [`return] statement ([#stmt.return]) is a (possibly
+parenthesized) [~id-expression] that names an object with automatic storage
+duration declared in the body or [~parameter-declaration-clause] of the
+innermost enclosing function or [~lambda-expression], or
+[:zh_CN]
+当 [`return] 语句（[#stmt.return]）的[~表达式]是（可能带有括号的）[~标识表达式]，
+并指名其最内层外围函数或[~lambda-表达式]的函数体或[~形参声明子句]所声明的具有
+自动存储期的对象时，或者
+
+[item]
+[:en]
+if the operand of a [~throw-expression] ([#expr.throw]) is the name of a
+non-volatile automatic object (other than a function or catch-clause parameter)
+whose scope does not extend beyond the end of the innermost enclosing
+[~try-block] (if there is one),
+[:zh_CN]
+当 [~throw-表达式]（[#expr.throw]）的操作数所指名的是某个（并非函数或捕获子句的
+形参的）非 volatile 自动对象，且其作用域并不扩展超过其最内层外围 [~try-块]（如果
+有的话）时，
+[list:end]
+
+[:en]
+overload resolution to select the constructor for the copy is first performed as
+if the object were designated by an rvalue.
+[:zh_CN]
+首先按照如同该对象是被右值所代表那样实施重载决议以选择复制所需的构造函数。
+
+[:en]
+If the first overload resolution fails or was not performed, or if the type of
+the first parameter of the selected constructor is not an rvalue reference to
+the object[=']s type (possibly cv-qualified), overload resolution is performed
+again, considering the object as an lvalue.
+[:zh_CN]
+若第一次重载决议失败或者未进行，或者若被选择的构造函数的第一个形参的类型并不是
+该对象的（可能被 cv 限定的）类型的右值引用，则把该对象作为左值再次实施重载决议。
+
+[enter:note]
+[:en]
+This two-stage overload resolution must be performed regardless of whether copy
+elision will occur.
+[:zh_CN]
+无论是否发生副本消除都要进行这种两阶段重载决议。
+
+[:en]
+It determines the constructor to be called if elision is not performed, and the
+selected constructor must be accessible even if the call is elided.
+[:zh_CN]
+它确定了不实施消除时所调用的构造函数，且被选择的构造函数即使在其调用被消除时也
+应当是可访问的。
+[exit:note]
+
+[para]
+[enter:example]
+[codeblock]
+class Thing {
+public:
+  Thing();
+  ~Thing();
+  Thing(Thing&&);
+private:
+  Thing(const Thing&);
+};
+
+Thing f(bool b) {
+  Thing t;
+  if (b)
+    throw t;            // [:en] OK: [`Thing(Thing&&)] used (or elided) to throw [`t]
+                        // [|:zh_CN] OK：使用（或消除了）[`Thing(Thing&&)] 以抛出 [`t]
+  return t;             // [:en] OK: [`Thing(Thing&&)] used (or elided) to return [`t]
+                        // [|:zh_CN] OK：使用（或消除了）[`Thing(Thing&&)] 以返回 [`t]
+}
+
+Thing t2 = f(false);    // [:en] OK: no extra copy/move performed, [`t2] constructed by call to [`f]
+                        // [|:zh_CN] OK：并未进行额外的复制/移动，由对 [`f] 的调用来构造 [`t2]
+
+struct Weird {
+  Weird();
+  Weird(Weird&);
+};
+
+Weird g() {
+  Weird w;
+  return w;             // [:en] OK: first overload resolution fails, second overload resolution selects [`Weird(Weird&)]
+                        // [|:zh_CN] OK：第一次重载决议失败，第二次重载决议选择了 [`Weird(Weird&)]
+}
+[codeblock:end]
+[exit:example]

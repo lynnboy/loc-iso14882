@@ -1,0 +1,111 @@
+[section#expr.prim.this
+    [:en] This
+    [:zh_CN] this
+]
+
+[para]
+[%[`this]]
+[:en]
+The keyword [`this] names a pointer to the object for which a non-static member
+function ([#class.this]) is invoked or a non-static data member[=']s initializer
+([#class.mem]) is evaluated.
+[:zh_CN]
+关键字 [`this] 命名了一个指针，指向用以调用非静态成员函数的对象（[#class.this]）
+，或者指向对其执行某个非静态数据成员的初始化式（[#class.mem]）的对象。
+
+[para]
+[:en]
+If a declaration declares a member function or member function template of a
+class [`X], the expression [`this] is a prvalue of type ["pointer to
+[~cv-qualifier-seq] [`X]] between the optional [~cv-qualifier-seq] and the end of
+the [~function-definition], [~member-declarator], or [~declarator].
+[:zh_CN]
+如果某个声明式声明了类 [`X] 的成员函数或成员函数模板，则表达式 [`this]，位于其
+可选的 [~cv-限定符序列]，与[~函数定义式]、[~成员声明符]或[~声明符]的结尾之间时，
+是“[~cv-限定符序列] [`X] 的指针”类型的纯右值。
+
+[:en]
+It shall not appear before the optional [~cv-qualifier-seq] and it shall not
+appear within the declaration of a static member function (although its type and
+value category are defined within a static member function as they are within a
+non-static member function).
+[:zh_CN]
+它不应出现于其可选的 [~cv-限定符序列]之前，而且它还不能出现于某个静态成员函数的
+声明式之内（虽然在静态成员函数中它的类型和值的类别，是与在非静态成员函数之中一样
+是有定义的）。
+
+[enter:note]
+[:en]
+This is because declaration matching does not occur until the complete
+declarator is known.
+[:zh_CN]
+这是因为直到了解了完整的声明符后才会进行声明式的匹配。
+[exit:note]
+
+[:en]
+Unlike the object expression in other contexts, [`*this] is not required to be
+of complete type for purposes of class member access ([#expr.ref]) outside the
+member function body.
+[:zh_CN]
+与对象表达式在其他语境下的情况不同，[`*this] 在成员函数体之外用于进行类成员访问
+（[#expr.ref]）时，并不需要具有完整类型。
+
+[enter:note]
+[:en]
+Only class members declared prior to the declaration are visible.
+[:zh_CN]
+只有在该声明式之前声明的类成员是可见的。
+[exit:note]
+
+[enter:example]
+[codeblock]
+struct A {
+  char g();
+  template<class T> auto f(T t) -> decltype(t + g())
+    { return t + g(); }
+};
+template auto A::f(int t) -> decltype(t + g());
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+Otherwise, if a [~member-declarator] declares a non-static data member
+([#class.mem]) of a class [`X], the expression [`this] is a prvalue of type
+["pointer to [`X]] within the optional default member initializer
+([#class.mem]).
+[:zh_CN]
+否则，如果某个[~成员声明符]声明了类 [`X] 的非静态数据成员（[#class.mem]），则
+表达式 [`this]，位于其可选的默认成员初始化式（[#class.mem]）之中时，是“[`X] 的
+指针”类型的纯右值。
+
+[:en]
+It shall not appear elsewhere in the [~member-declarator].
+[:zh_CN]
+它不应出现于这个[~成员声明符]的其他地方。
+
+[para]
+[:en]
+The expression [`this] shall not appear in any other context.
+[:zh_CN]
+表达式 [`this] 不应出现于其他任何语境之中。
+
+[enter:example]
+[codeblock]
+class Outer {
+  int a[sizeof(*this)];               // [:en] error: not inside a member function
+                                      // [|:zh_CN] 错误：并非位于成员函数中
+  unsigned int sz = sizeof(*this);    // [:en] OK: in default member initializer
+                                      // [|:zh_CN] OK：位于默认成员初始化式中
+
+  void f() {
+    int b[sizeof(*this)];             // OK
+
+    struct Inner {
+      int c[sizeof(*this)];           // [:en] error: not inside a member function of [`Inner]
+                                      // [|:zh_CN] 错误：并未位于 [`Inner] 的成员函数中
+    };
+  }
+};
+[codeblock:end]
+[exit:example]

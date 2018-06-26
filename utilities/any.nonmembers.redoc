@@ -1,0 +1,153 @@
+[section#any.nonmembers
+    [:en] Non-member functions
+    [:zh_CN] 非成员函数
+]
+
+[%@library swap[!any]]
+[codeblock:declaration]
+void swap(any& x, any& y) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`x.swap(y)].
+[:zh_CN] 如同执行 [`x.swap(y)]。
+[exit:description]
+
+[%@library make_any]
+[codeblock:declaration]
+template <class T, class... Args>
+  any make_any(Args&& ...args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[`return any(in_place_type<T>, std::forward<Args>(args)...);]
+[:zh_CN] 等价于：
+[`return any(in_place_type<T>, std::forward<Args>(args)...);]
+[exit:description]
+
+[%@library make_any]
+[codeblock:declaration]
+template <class T, class U, class... Args>
+  any make_any(initializer_list<U> il, Args&& ...args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[`return any(in_place_type<T>, il, std::forward<Args>(args)...);]
+[:zh_CN] 等价于：
+[`return any(in_place_type<T>, il, std::forward<Args>(args)...);]
+[exit:description]
+
+[%@library any_cast]
+[codeblock:declaration]
+template<class T>
+  T any_cast(const any& operand);
+template<class T>
+  T any_cast(any& operand);
+template<class T>
+  T any_cast(any&& operand);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`U] be the type [`remove_cv_t<remove_reference_t<ValueType>>].
+[:zh_CN] 令 [`U] 为类型 [`remove_cv_t<remove_reference_t<ValueType>>]。
+
+[para:requires]
+[:en] For the first overload, [`is_constructible_v<ValueType, const U&>] is
+[`true].
+[:zh_CN] 对于第一种重载，[`is_constructible_v<ValueType, const U&>] 为 [`true]。
+
+[:en] For the second overload, [`is_constructible_v<ValueType, U&>] is [`true].
+[:zh_CN] 对于第二种重载，[`is_constructible_v<ValueType, U&>] 为 [`true]。
+
+[:en] For the third overload, [`is_constructible_v<ValueType, U>] is [`true].
+[:zh_CN] 对于第三种重载，[`is_constructible_v<ValueType, U>] 为 [`true]。
+
+[:en] Otherwise the program is ill-formed.
+[:zh_CN] 否则程序非良构。
+
+[para:returns]
+[:en] For the first and second overload,
+[`static_cast<ValueType>(*any_cast<U>(&operand))].
+[:zh_CN] 对于第一和第二种重载，
+[`static_cast<ValueType>(*any_cast<U>(&operand))]。
+
+[:en] For the third overload,
+[`static_cast<ValueType>(std::move(*any_cast<U>(&operand)))].
+[:zh_CN] 对于第三种重载，
+[`static_cast<ValueType>(std::move(*any_cast<U>(&operand)))]。
+
+[para:throws]
+[:en] [`bad_any_cast] if [`operand.type() != typeid(remove_reference_t<T>)].
+[:zh_CN] 当 [`operand.type() != typeid(remove_reference_t<T>)] 时抛出
+[`bad_any_cast]。
+
+[para]
+[enter:example]
+[codeblock]
+any x(5);                                   // [:en] [`x] holds [`int]
+                                            // [|:zh_CN] [`x] 持有 [`int]
+assert(any_cast<int>(x) == 5);              // [:en] cast to value
+                                            // [|:zh_CN] 强制转换为值
+any_cast<int&>(x) = 10;                     // [:en] cast to reference
+                                            // [|:zh_CN] 强制转换为引用
+assert(any_cast<int>(x) == 10);
+
+x = "Meow";                                 // [:en] [`x] holds [`const char*]
+                                            // [|:zh_CN] [`x] 持有 [`const char*]
+assert(strcmp(any_cast<const char*>(x), "Meow") == 0);
+any_cast<const char*&>(x) = "Harry";
+assert(strcmp(any_cast<const char*>(x), "Harry") == 0);
+
+x = string("Meow");                         // [:en] [`x] holds [`string]
+                                            // [|:zh_CN] [`x] 持有 [`string]
+string s, s2("Jane");
+s = move(any_cast<string&>(x));             // [:en] move from [`any]
+                                            // [|:zh_CN] 从 [`any] 中移动
+assert(s == "Meow");
+any_cast<string&>(x) = move(s2);            // [:en] move to [`any]
+                                            // [|:zh_CN] 移动到 [`any] 中
+assert(any_cast<const string&>(x) == "Jane");
+
+string cat("Meow");
+const any y(cat);                           // [:en] [`const y] holds [`string]
+                                            // [|:zh_CN] [`const y] 持有 [`string]
+assert(any_cast<const string&>(y) == cat);
+
+any_cast<string&>(y);                       // [:en] error; cannot
+                                            // [|:zh_CN] 错误；无法
+                                            // [:en@~] [`any_cast] away const
+                                            // [|:zh_CN@~] [`any_cast] 掉 const
+[codeblock:end]
+[exit:example]
+[exit:description]
+
+[%@library any_cast]
+[codeblock:declaration]
+template<class T>
+  const T* any_cast(const any* operand) noexcept;
+template<class T>
+  T* any_cast(any* operand) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] If [`operand != nullptr && operand->type() == typeid(T)],
+a pointer to the object contained by [`operand]; otherwise, [`nullptr].
+[:zh_CN] 当 [`operand != nullptr && operand->type() == typeid(T)] 时，
+为指向 [`operand] 所包含的对象的指针；否则为 [`nullptr]。
+
+[para]
+[enter:example]
+[codeblock]
+bool is_string(const any& operand) {
+  return any_cast<string>(&operand) != nullptr;
+}
+[codeblock:end]
+[exit:example]
+[exit:description]

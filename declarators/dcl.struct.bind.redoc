@@ -1,0 +1,198 @@
+[section:chapter#dcl.struct.bind
+    [:en] Structured binding declarations
+    [:zh_CN] 结构化绑定声明式
+[:en]
+[%structured binding declaration]
+[%declaration[!structured binding][%structured binding declaration]]
+[:zh_CN]
+[%结构化绑定声明式]
+[%声明式[!结构化绑定～][%结构化绑定声明式]]
+]
+
+[para]
+[:en]
+A structured binding declaration introduces the [~identifier]s [`v][$_0],
+[`v][$_1], [`v][$_2], ... of the [~identifier-list] as names
+([#basic.scope.declarative]), called [+structured binding]s.
+[:zh_CN]
+结构化绑定声明式，将[~标识符列表]中的各[~标识符] [`v][$_0]，[`v][$_1]，
+[`v][$_2]，…… 作为名字引入（[#basic.scope.declarative]），称其为[+结构化绑定]。
+
+[:en]
+Let [$cv] denote the [~cv-qualifier]s in the [~decl-specifier-seq].
+[:zh_CN]
+令 [$cv] 代表[~声明说明符序列]中的 [~cv-限定符]。
+
+[:en]
+First, a variable with a unique name [`e] is introduced.
+[:zh_CN]
+首先，引入一个具有唯一名字 [`e] 的变量。
+
+[:en]
+If the [~assignment-expression] in the [~initializer] has array type [`A] and no
+[~ref-qualifier] is present, [`e] has type [$cv] [`A] and each element is
+copy-initialized or direct-initialized from the corresponding element of the
+[~assignment-expression] as specified by the form of the [~initializer].
+[:zh_CN]
+如果[~初始化式]中的[~赋值表达式]具有数组类型[`A]，且没有[~引用限定符]，则 [`e]
+的类型为 [$cv] [`A]，其各个元素，由[~赋值表达式]中的对应元素，根据该[~初始化式]
+的形式进行复制初始化或者直接初始化。
+
+[:en]
+Otherwise, [`e] is defined as-if by
+[:zh_CN]
+否则，[`e] 就如同被定义为
+
+[syntax:explanation]
+[~:opt attribute-specifier-seq] [~decl-specifier-seq] [~:opt ref-qualifier]
+    [`e] [~initializer] [`;]
+[syntax:end]
+
+[:en@~]
+where the declaration is never interpreted as a function declaration and the
+parts of the declaration other than the [~declarator-id] are taken from the
+corresponding structured binding declaration.
+[:zh_CN@~]
+这个声明式不会被解释为函数声明式，声明式中除了[~声明符标识]之外的部分都来自于其
+所对应的结构化绑定声明式。
+
+[:en]
+The type of the [~id-expression] [`e] is called [`E].
+[:zh_CN]
+令[~标识表达式] [`e] 的类型为 [`E]。
+
+[enter:note]
+[:en]
+[`E] is never a reference type (Clause [#expr]).
+[:zh_CN]
+[`E] 不可能是引用类型（第 [#expr] 章）。
+[exit:note]
+
+[para]
+[:en]
+If [`E] is an array type with element type [`T], the number of elements in the
+[~identifier-list] shall be equal to the number of elements of [`E].
+[:zh_CN]
+如果 [`E] 是元素类型为 [`T] 的数组类型，则[~表示符列表]中的元素个数应当等于 [`E]
+的元素个数。
+
+[:en]
+Each [`v][$_i] is the name of an lvalue that refers to the element [$i] of the
+array and whose type is [`T]; the referenced type is [`T].
+[:zh_CN]
+各个 [`v][$_i] 为指代数组的第 [$i] 个元素（其类型为 [`T]）的左值的名字；被引用
+的类型为 [`T]。
+
+[enter:note]
+[:en]
+The top-level cv-qualifiers of [`T] are [$cv].
+[:zh_CN]
+[`T] 的顶层 cv 限定符为 [$cv]。
+[exit:note]
+
+[enter:example]
+[codeblock]
+  auto f() -> int(&)[2];
+  auto [ x, y ] = f();          // [:en] [`x] and [`y] refer to elements in a copy of the array return value
+                                // [|:zh_CN] [`x] 和 [`y] 指代数组返回值的副本中的元素
+  auto& [ xr, yr ] = f();       // [:en] [`xr] and [`yr] refer to elements in the array referred to by [`f][=']s return value
+                                // [|:zh_CN] [`x] 和 [`y] 指代 [`f] 的返回值所指代的数组中的元素
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+Otherwise, if the [~qualified-id] [`std::tuple_size<E>] names a complete type,
+the expression [`std::tuple_size<E>::value] shall be a well-formed integral
+constant expression and the number of elements in the [~identifier-list] shall
+be equal to the value of that expression.
+[:zh_CN]
+否则，若[~限定标识] [`std::tuple_size<E>] 指名一个完整类型，则表达式
+[`std::tuple_size<E>::value] 应当是良构的整形常量表达式，且[~标识符列表]中的元素
+个数应当等于这个表达式的值。
+
+[:en]
+The [~unqualified-id] [`get] is looked up in the scope of [`E] by class member
+access lookup ([#basic.lookup.classref]), and if that finds at least one
+declaration, the initializer is [`e.get<i>()].
+[:zh_CN]
+在 [`E] 的作用域中用类成员访问查找（[#basic.lookup.classref]）寻找[~未限定标识]
+[`get]，若找到了至少一个声明式，则其初始化式为 [`e.get<i>()]。
+
+[:en]
+Otherwise, the initializer is [`get<i>(e)], where [`get] is looked up in the
+associated namespaces ([#basic.lookup.argdep]).
+[:zh_CN]
+否则，其初始化式为 [`get<i>(e)]，其中 [`get] 在关联命名空间之中查找
+（[#basic.lookup.argdep]）。
+
+[:en]
+In either case, [`get<i>] is interpreted as a [~template-id].
+[:zh_CN]
+这些情况中，[`get<i>]都被解释为[~模板标识]。
+
+[enter:note]
+[:en]
+Ordinary unqualified lookup ([#basic.lookup.unqual]) is not performed.
+[:zh_CN]
+并不进行常规的未限定查找（[#basic.lookup.unqual]）。
+[exit:note]
+
+[:en]
+In either case, [`e] is an lvalue if the type of the entity [`e] is an lvalue
+reference and an xvalue otherwise.
+[:zh_CN]
+这些情况中，若实体 [`e] 的类型为左值引用，则 [`e] 是左值，否则它是临限值。
+
+[:en]
+Given the type [`T][$_i] designated by [`std::tuple_element<i, E>::type], each
+[`v][$_i] is a variable of type ["reference to [`T][$_i]] initialized with the
+initializer, where the reference is an lvalue reference if the initializer is
+an lvalue and an rvalue reference otherwise; the referenced type is [`T][$_i].
+[:zh_CN]
+令类型 [`T][$_i] 为由 [`std::tuple_element<i, E>::type] 所代表的类型，则各个
+[`v][$_i] 均为“[`T][$_i] 的引用”类型的变量，并以其初始化式所初始化，若初始化式是
+左值则引用为左值引用，否则为右值引用；被引用的类型为 [`T][$_i]。
+
+[para]
+[:en]
+Otherwise, all of [`E][=']s non-static data members shall be public direct
+members of [`E] or of the same unambiguous public base class of [`E], [`E] shall
+not have an anonymous union member, and the number of elements in the
+[~identifier-list] shall be equal to the number of non-static data members of
+[`E].
+[:zh_CN]
+否则，[`E] 的每个非静态数据成员都应当是 [`E]，或者 [`E] 的同一个无歧义的公用基类
+的公用直接成员，[`E] 不能带有匿名联合成员，而且[~标识符列表]中的元素个数应当等于
+[`E] 的非静态数据成员的个数。
+
+[:en]
+Designating the non-static data members of [`E] as [`m][_0], [`m][_1], [`m][_2],
+... (in declaration order), each [`v][$_i] is the name of an lvalue that refers
+to the member [`m][$_i] of [`e] and whose type is [$cv] [`T][$_i], where
+[`T][$_i] is the declared type of that member; the referenced type is
+[$cv] [`T][$_i].
+[:zh_CN]
+令 [`m][_0]，[`m][_1]，[`m][_2]，……（以声明顺序）代表 [`E] 的各个非静态数据成员，
+则每个 [`v][$_i] 均为指代 [`e] 的成员 [`m][$_i]（其类型为 [$cv] [`T][$_i]）的
+左值的名字，其中 [`T][$_i] 为该成员的声明类型；被引用的类型为 [$cv] [`T][$_i]。
+
+[:en]
+The lvalue is a bit-field if that member is a bit-field.
+[:zh_CN]
+当成员是位字段时该左值也是位字段。
+
+[enter:example]
+[codeblock]
+struct S { int x1 : 2; volatile double y1; };
+S f();
+const auto [ x, y ] = f();
+[codeblock:end]
+
+[:en]
+The type of the [~id-expression] [`x] is ["[`const int]], the type of the
+[~id-expression] [`y] is ["[`const volatile double]].
+[:zh_CN]
+[~标识表达式] [`x] 的类型为“[`const int]”，[~标识表达式] [`y] 的类型为“[`const
+volatile double]”。
+[exit:example]

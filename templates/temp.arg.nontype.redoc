@@ -1,0 +1,173 @@
+[section#temp.arg.nontype
+    [:en] Template non-type arguments
+    [:zh_CN] 模板的非类型实参
+]
+
+[para]
+[:en]
+If the type of a [~template-parameter] contains a placeholder type
+([#dcl.spec.auto], [#temp.param]), the deduced parameter type is determined
+from the type of the [~template-argument] by placeholder type deduction
+([#dcl.type.auto.deduct]).
+[:zh_CN]
+如果[~模板形参]的类型中包含占位符类型（[#dcl.spec.auto]，[#temp.param]），则通过
+占位符类型推断（[#dcl.type.auto.deduct]）由其[~模板实参]的类型确定所推断的形参
+类型。
+
+[:en]
+If a deduced parameter type is not permitted for a [~template-parameter]
+declaration ([#temp.param]), the program is ill-formed.
+[:zh_CN]
+如果一个[~模板形参]的声明式（[#temp.param]）不允许出现推断的形参类型，则程序
+非良构
+
+[para]
+[:en]
+A [~template-argument] for a non-type [~template-parameter] shall be a converted
+constant expression ([#expr.const]) of the type of the [~template-parameter].
+[:zh_CN]
+非类型[~模板形参]的[~模板实参]应当是该[~模板形参]类型的经转换常量表达式
+（[#expr.const]）。
+
+[:en]
+For a non-type [~template-parameter] of reference or pointer type, the value of
+the constant expression shall not refer to (or for a pointer type, shall not be
+the address of):
+[:zh_CN]
+对于引用或指针类型的非类型[~模板形参实参]，常量表达式的值不能指代（或若为指针
+类型，不能是以下各项的地址）：
+
+[list]
+[item]
+[:en@~] a subobject ([#intro.object]),
+[:zh_CN@~] 子对象（[#intro.object]），
+[item]
+[:en@~] a temporary object ([#class.temporary]),
+[:zh_CN@~] 临时对象（[#class.temporary]），
+[item]
+[:en@~] a string literal ([#lex.string]),
+[:zh_CN@~] 字符串字面量（[#lex.string]），
+[item]
+[:en@~] the result of a [`typeid] expression ([#expr.typeid]), or
+[:zh_CN@~] [`typeid] 表达式的结果（[#expr.typeid]），或者
+[item]
+[:en@~] a predefined [`__func__] variable ([#dcl.fct.def.general]).
+[:zh_CN@~] 预定义的 [`__func__] 变量（[#dcl.fct.def.general]）。
+[list:end]
+
+[enter:note]
+[:en]
+If the [~template-argument] represents a set of overloaded functions (or a
+pointer or member pointer to such), the matching function is selected from the
+set ([#over.over]).
+[:zh_CN]
+若[~模板实参]代表一组重载函数的集合（或指向它们的指针或成员指针），则从集合中
+选择其所匹配的函数（[#over.over]）。
+[exit:note]
+
+[para]
+[enter:example]
+[codeblock]
+template<const int* pci> struct X { /* ... */ };
+int ai[10];
+X<ai> xi;                       // [:en] array to pointer and qualification conversions
+                                // [|:zh_CN] 数组向指针转换和限定性转换
+
+struct Y { /* ... */ };
+template<const Y& b> struct Z { /* ... */ };
+Y y;
+Z<y> z;                         // [:en] no conversion, but note extra cv-qualification
+                                // [|:zh_CN] 无须转换，但注意额外的 cv 限定性
+
+template<int (&pa)[5]> struct W { /* ... */ };
+int b[5];
+W<b> w;                         // [:en] no conversion
+                                // [|:zh_CN] 无须转换
+
+void f(char);
+void f(int);
+
+template<void (*pf)(int)> struct A { /* ... */ };
+
+A<&f> a;                        // [:en] selects [`f(int)]
+                                // [|:zh_CN] 选择了 [`f(int)]
+
+template<auto n> struct B { /* ... */ };
+B<5> b1;                        // [:en] OK: template parameter type is [`int]
+                                // [|:zh_CN] OK：模板形参的类型为 [`int]
+B<'a'> b2;                      // [:en] OK: template parameter type is [`char]
+                                // [|:zh_CN] OK：模板形参的类型为 [`char]
+B<2.5> b3;                      // [:en] error: template parameter type cannot be [`double]
+                                // [|:zh_CN] 错误：模板形参类型不能为 [`double]
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:note]
+[:en] A string literal ([#lex.string]) is not an acceptable
+[~template-argument].
+[:zh_CN]
+字符串字面量（[#lex.string]）不是可接受的[~模板实参]。
+
+[enter:example]
+[codeblock]
+template<class T, const char* p> class X {
+  /* ... */
+};
+
+X<int, "Studebaker"> x1;        // [:en] error: string literal as [~template-argument]
+                                // [|:zh_CN] 错误：字符串字面量用作[~模板实参]
+
+const char p[] = "Vivisectionist";
+X<int,p> x2;                    // OK
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[enter:note]
+[:en]
+The address of an array element or non-static data member is not an acceptable
+[~template-argument].
+[:zh_CN]
+数组元素或非静态数据成员的地址不是可接受的[~模板实参]。
+
+[enter:example]
+[codeblock]
+template<int* p> class X { };
+
+int a[10];
+struct S { int m; static int s; } s;
+
+X<&a[2]> x3;                    // [:en] error: address of array element
+                                // [|:zh_CN] 错误：数组元素的地址
+X<&s.m> x4;                     // [:en] error: address of non-static member
+                                // [|:zh_CN] 错误：非静态成员的地址
+X<&s.s> x5;                     // [:en] OK: address of static member
+                                // [|:zh_CN] OK：静态成员的地址
+X<&S::s> x6;                    // [:en] OK: address of static member
+                                // [|:zh_CN] OK：静态成员的地址
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[enter:note]
+[:en]
+A temporary object is not an acceptable [~template-argument] when the
+corresponding [~template-parameter] has reference type.
+[:zh_CN]
+当对应的[~模板形参]为引用类型时， 临时对象不是可接受的[~模板实参]。
+
+[enter:example]
+[codeblock]
+template<const int& CRI> struct B { /* ... */ };
+
+B<1> b2;                        // [:en] error: temporary would be required for template argument
+                                // [|:zh_CN] 错误：需要为模板实参创建临时对象
+
+int c = 1;
+B<c> b1;                        // OK
+[codeblock:end]
+[exit:example]
+[exit:note]

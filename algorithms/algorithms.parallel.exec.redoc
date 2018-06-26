@@ -1,0 +1,258 @@
+[section#algorithms.parallel.exec
+    [:en] Effect of execution policies on algorithm execution
+    [:zh_CN] 各执行策略在算法的执行上的效果
+]
+
+[para]
+[:en] Parallel algorithms have template parameters named [`ExecutionPolicy]
+([#execpol]) which describe the manner in which the execution of these
+algorithms may be parallelized and the manner in which they apply the element
+access functions.
+[:zh_CN] 并行算法带有名为 [`ExecutionPolicy] 的模板形参（[#execpol]），用以说明
+这些算法的执行进行并行化的方式，以及它们运用成员访问函数的方式。
+
+[para]
+[:en]
+Unless otherwise stated, implementations may make arbitrary copies of elements
+(with type [`T]) from sequences where [`is_trivially_copy_constructible_v<T>]
+and [`is_trivially_destructible_v<T>] are [`true].
+[:zh_CN] 除非另行说明，否则当 [`is_trivially_copy_constructible_v<T>] 和
+[`is_trivially_destructible_v<T>] 为 [`true] 时，实现可以对序列中的（[`T] 类型
+的）元素任意进行复制。
+
+[enter:note]
+[:en] This implies that user-supplied function objects should not rely on object
+identity of arguments for such input sequences.
+[:zh_CN] 这意味着用户为这种输入序列所提供的函数对象不能依赖于其实参的同一性。
+
+[:en] Users for whom the object identity of the arguments to these function
+objects is important should consider using a wrapping iterator that returns a
+non-copied implementation object such as [`reference_wrapper<T>] ([#refwrap])
+or some equivalent solution.
+[:zh_CN] 认为这些函数对象的实参的对象同一性有重要意义的用户，可以考虑使用一种
+如 [`reference_wrapper<T>]（[#refwrap]）这样的可以返回未发生复制的实现对象的包装
+迭代器，或某种等价的解决方案。
+[exit:note]
+
+[para]
+[:en] The invocations of element access functions in parallel algorithms invoked
+with an execution policy object of type [`execution::sequenced_policy] all occur
+in the calling thread of execution.
+[:zh_CN] 在以 [`execution::sequenced_policy] 类型的执行策略对象调用的并行算法中，
+对成员访问函数的调用都发生于调用方执行线程之中。
+
+[enter:note]
+[:en] The invocations are not interleaved; see [#intro.execution].
+[:zh_CN] 这些调用不会交错执行；参见 [#intro.execution]。
+[exit:note]
+
+[para]
+[:en] The invocations of element access functions in parallel algorithms invoked
+with an execution policy object of type [`execution::parallel_policy] are
+permitted to execute in either the invoking thread of execution or in a thread
+of execution implicitly created by the library to support parallel algorithm
+execution.
+[:zh_CN] 在以 [`execution::parallel_policy] 类型的执行策略对象调用的并行算法中，
+对成员访问函数的调用，既允许在调用方执行线程之中执行，也允许在由程序库所隐含创建
+的用以支持并行算法的执行的执行线程中执行。
+
+[:en] If the threads of execution created by [`thread] ([#thread.thread.class])
+provide concurrent forward progress guarantees ([#intro.progress]), then
+a thread of execution implicitly created by the library will provide parallel
+forward progress guarantees; otherwise, the provided forward progress guarantee
+is [%@impldef forward progress guarantees for implicit threads of parallel
+algorithms (if not defined for [`thread])] implementation-defined.
+[:zh_CN] 如果由 [`thread]（[#thread.thread.class]）所创建的执行线程提供了并发
+向前进展保证（[#intro.progress]），则由程序库所隐含创建的执行线程将提供并行向前
+进展保证；否则其所提供的向前进展保证是[%@impldef （当 [`thread] 未予定义时）并行
+算法的隐含线程的向前进展保证]由实现定义的。
+
+[:en] Any such invocations executing in the same thread of execution are
+indeterminately sequenced with respect to each other.
+[:zh_CN] 在同一个执行线程中所执行的任何这种调用，其互相之间是未定顺序的。
+
+[enter:note]
+[:en] It is the caller[=']s responsibility to ensure that the invocation does
+not introduce data races or deadlocks.
+[:zh_CN] 调用方有责任确保其调用不会引入数据竞争或死锁。
+[exit:note]
+
+[enter:example]
+[codeblock]
+int a[] = {0,1};
+std::vector<int> v;
+std::for_each(std::execution::par, std::begin(a), std::end(a), [&](int i) {
+  v.push_back(i*2+1); // [:en] incorrect: data race
+                      // [|:zh_CN] 不正确：数据竞争
+});
+[codeblock:end]
+
+[:en] The program above has a data race because of the unsynchronized access to
+the container [`v].
+[:zh_CN] 上面的程序中，由于对容器 [`v] 的未同步访问而有一个数据竞争。
+[exit:example]
+
+[enter:example]
+[codeblock]
+std::atomic<int> x{0};
+int a[] = {1,2};
+std::for_each(std::execution::par, std::begin(a), std::end(a), [&](int) {
+  x.fetch_add(1, std::memory_order_relaxed);
+  // [:en] spin wait for another iteration to change the value of [`x]
+  // [|:zh_CN] 自旋等待另一次重复中改变 [`x] 的值
+  while (x.load(std::memory_order_relaxed) == 1) { } // [:en] incorrect: assumes execution order
+                                                     // [|:zh_CN] 不正确：假定了执行顺序
+});
+[codeblock:end]
+
+[:en] The above example depends on the order of execution of the iterations, and
+will not terminate if both iterations are executed sequentially on the same
+thread of execution.
+[:zh_CN] 上面的示例依赖于各次重复之间的执行顺序，且当两次重复都是在同一个执行
+线程中顺序执行的，它将不会终止。
+[exit:example]
+
+[enter:example]
+[codeblock]
+int x = 0;
+std::mutex m;
+int a[] = {1,2};
+std::for_each(std::execution::par, std::begin(a), std::end(a), [&](int) {
+  std::lock_guard<mutex> guard(m);
+  ++x;
+});
+[codeblock:end]
+
+[:en] The above example synchronizes access to object [`x] ensuring that it is
+incremented correctly.
+[:zh_CN] 上面的示例对对象 [`x] 的访问进行了同步，以确保它能够正确进行自增。
+[exit:example]
+
+[para]
+[:en] The invocations of element access functions in parallel algorithms invoked
+with an execution policy of type [`execution::parallel_unsequenced_policy] are
+permitted to execute in an unordered fashion in unspecified threads of
+execution, and unsequenced with respect to one another within each thread of
+execution.
+[:zh_CN] 在以 [`execution::parallel_unsequenced_policy] 类型的执行策略对象调用的
+并行算法中，对成员访问函数的调用，允许在一组未指明的执行线程中以无序方式执行，
+并且在每个执行线程之内互相之间也是无顺序的。
+
+[:en] These threads of execution are either the invoking thread of execution or
+threads of execution implicitly created by the library; the latter will provide
+weakly parallel forward progress guarantees.
+[:zh_CN] 这些执行线程既可以为调用方执行线程，也可以为由程序库所隐含创建的执行
+线程；后者将提供弱并行向前进展保证。
+
+[enter:note]
+[:en] This means that multiple function object invocations may be interleaved on
+a single thread of execution, which overrides the usual guarantee from
+[#intro.execution] that function executions do not interleave with one another.
+[:zh_CN] 这意味着对函数对象的对此调用可能在单个执行线程之中被交错执行，而这推翻
+了 [#intro.execution] 中的函数执行互相之间不会交错执行的常规保证。
+[exit:note]
+
+[:en] Since [`execution::parallel_unsequenced_policy] allows the execution of
+element access functions to be interleaved on a single thread of execution,
+blocking synchronization, including the use of mutexes, risks deadlock.
+[:zh_CN] 由于 [`execution::parallel_unsequenced_policy] 允许对成员访问函数的执行
+在单个执行线程中交错执行，因此有阻塞的同步操作，包括使用互斥体，具有死锁的风险。
+
+[:en] Thus, the synchronization with [`execution::parallel_unsequenced_policy]
+is restricted as follows:
+[:zh_CN] 从而，对 [`execution::parallel_unsequenced_policy] 下的同步操作有如下
+限制条件：
+
+[:en] A standard library function is [+vectorization-unsafe] if it is specified
+to synchronize with another function invocation, or another function invocation
+is specified to synchronize with it, and if it is not a memory allocation or
+deallocation function.
+[:zh_CN] 如果某个标准程序库函数被指定为同步于另一个函数调用，或者另一个函数调用
+被指定为同步于它，且它并不是内存分配或回收函数，则它是[+向量化不安全]的函数。
+
+[:en] Vectorization-unsafe standard library functions may not be invoked by user
+code called from [`execution::parallel_unsequenced_policy] algorithms.
+[:zh_CN] 非向量化安全的标准程序库函数不能从
+[`execution::parallel_unsequenced_policy] 算法所调用的用户代码中进行调用。
+
+[enter:note]
+[:en] Implementations must ensure that internal synchronization inside standard
+library functions does not prevent forward progress when those functions are
+executed by threads of execution with weakly parallel forward progress
+guarantees.
+[:zh_CN] 各实现必须确保标准程序库函数之内的内部同步操作，在这些函数被具有弱并行
+向前进展保证的执行线程所执行时，不会妨碍其向前进展。
+[exit:note]
+
+[enter:example]
+[codeblock]
+int x = 0;
+std::mutex m;
+int a[] = {1,2};
+std::for_each(std::execution::par_unseq, std::begin(a), std::end(a), [&](int) {
+  std::lock_guard<mutex> guard(m); // [:en] incorrect: [`lock_guard] constructor calls [`m.lock()]
+                                   // [|:zh_CN] 不正确：[`lock_guard] 的构造函数调用了 [`m.lock()]
+  ++x;
+});
+[codeblock:end]
+
+[:en] The above program may result in two consecutive calls to [`m.lock()] on
+the same thread of execution (which may deadlock), because the applications of
+the function object are not guaranteed to run on different threads of execution.
+[:zh_CN] 上面的程序可能导致在同一个执行线程上对 [`m.lock()] 的两次连续调用（这
+将会死锁），这是因为对函数对象的运用并不保证会在不同的执行线程上运行。
+[exit:example]
+
+[enter:note]
+[:en] The semantics of the [`execution::parallel_policy] or the
+[`execution::parallel_unsequenced_policy] invocation allow the implementation to
+fall back to sequential execution if the system cannot parallelize an algorithm
+invocation due to lack of resources.
+[:zh_CN] [`execution::parallel_policy] 或
+[`execution::parallel_unsequenced_policy] 下调用的语义，允许实现在系统由于缺乏
+资源而无法并行化算法的执行时回退为顺序执行。
+[exit:note]
+
+[para]
+[:en] If an invocation of a parallel algorithm uses threads of execution
+implicitly created by the library, then the invoking thread of execution will
+either
+[:zh_CN] 当对并行算法的调用使用了由程序库所隐含创建的执行线程时，其调用方执行
+线程，可以
+
+[list]
+[item]
+[:en@~] temporarily block with forward progress guarantee delegation
+([#intro.progress]) on the completion of these library-managed threads of
+execution, or
+[:zh_CN@~] 临时地带有向前进展保证委托地阻塞（[#intro.progress]）于这些由程序库所
+管理的执行线程的完成，或者
+
+[item]
+[:en@~] eventually execute an element access function;
+[:zh_CN@~] 终将执行某个成员访问函数；
+[list:end]
+
+[:en@~] the thread of execution will continue to do so until the algorithm is
+finished.
+[:zh_CN@~] 这个执行线程将在该算法完成前持续如此作为。
+
+[enter:note]
+[:en] In blocking with forward progress guarantee delegation in this context,
+a thread of execution created by the library is considered to have finished
+execution as soon as it has finished the execution of the particular element
+access function that the invoking thread of execution logically depends on.
+[:zh_CN] 这种语境下的带有向前进展保证委托地阻塞之中，某个由程序库所创建的执行
+线程，一旦其完成了对由调用方执行线程逻辑上所依赖的特定的元素访问函数的执行，则它
+即被认为完成了执行。
+[exit:note]
+
+[para]
+[:en] The semantics of parallel algorithms invoked with an execution policy
+object of [%@impldef additional execution policies supported by parallel
+algorithms] implementation-defined type are [%@impldef semantics of parallel
+algorithms invoked with implementation-defined execution policies]
+implementation-defined.
+[:zh_CN] 以[%@impldef 各并行算法所支持的额外的执行策略]由实现定义的类型的执行
+策略对象所调用的并行算法的语义是[%@impldef 以由实现定义的执行策略调用的并行算法
+的语义]由实现定义的。

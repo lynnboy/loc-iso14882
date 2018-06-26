@@ -1,0 +1,298 @@
+[section#futures.task.members
+    [:en] [`packaged_task] member functions
+    [:zh_CN] [`packaged_task] 成员函数
+]
+
+[%@library packaged_task[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+packaged_task() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a [`packaged_task] object with no shared state and no stored
+task.
+[:zh_CN] 构造 [`packaged_task] 的对象使其没有共享状态且没有存储的任务。
+[exit:description]
+
+[%@library packaged_task[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class F>
+  packaged_task(F&& f);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`[*INVOKE]<R>(f, t1, t2, ..., tN)], where [`t1, t2, ..., tN] are values
+of the corresponding types in [`ArgTypes...], shall be a valid expression.
+[:zh_CN] [`[*INVOKE]<R>(f, t1, t2, ..., tN)] 应当为有效表达式，其中
+[`t1, t2, ..., tN] 分别是 [`ArgTypes...] 中的对应类型的值。
+
+[:en] Invoking a copy of [`f] shall behave the same as invoking [`f].
+[:zh_CN] 调用 [`f] 的副本的行为应当与调用 [`f] 相同。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution if
+[`decay_t<F>] is the same type as [`packaged_task<R(ArgTypes...)>].
+[:zh_CN] 如果 [`decay_t<F>] 与 [`packaged_task<R(ArgTypes...)>] 类型相同，则
+这个构造函数不能参与重载决议。
+
+[para:effects]
+[:en] Constructs a new [`packaged_task] object with a shared state and
+initializes the object[=']s stored task with [`std::forward<F>(f)].
+[:zh_CN] 构造带有一个共享状态的新的 [`packaged_task] 对象，并以
+[`std::forward<F>(f)] 初始化该对象所存储的任务。
+
+[para:throws]
+[list]
+[item]
+[:en] Any exceptions thrown by the copy or move constructor of [`f].
+[:zh_CN] 由 [`f] 的复制或移动构造函数所抛出的任何异常。
+[item]
+[:en] For the first version, [`bad_alloc] if memory for the internal data
+structures could not be allocated.
+[:zh_CN] 对于第一种版本，当无法为内部数据结构分配内存时抛出 [`bad_alloc]。
+[item]
+[:en] For the second version, any exceptions thrown by
+[`allocator_traits<Allocator>::template rebind_traits<[*unspecified]>::allocate].
+[:zh_CN] 对于第二种版本，抛出由
+[`allocator_traits<Allocator>::template rebind_traits<[*unspecified]>::allocate]
+所抛出的任何异常。
+[list:end]
+[exit:description]
+
+[%@library packaged_task[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+packaged_task(packaged_task&& rhs) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a new [`packaged_task] object and transfers ownership of
+[`rhs][=']s shared state to [`*this], leaving [`rhs] with no shared state.
+[:zh_CN] 构造新的 [`packaged_task] 对象，并将 [`rhs] 的共享状态转移给 [`*this]，
+遗留的 [`rhs] 没有共享状态。
+
+[:en] Moves the stored task from [`rhs] to [`*this].
+[:zh_CN] 将存储的任务从 [`rhs] 移动给 [`*this]。
+
+[para:postconditions]
+[:en] [`rhs] has no shared state.
+[:zh_CN] [`rhs] 没有共享状态。
+[exit:description]
+
+[%@library operator=[!packaged_task]]
+[%@library packaged_task[!operator=]]
+[codeblock:declaration]
+packaged_task& operator=(packaged_task&& rhs) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[list]
+[item]
+[:en] Releases any shared state ([#futures.state]);
+[:zh_CN] 释放任何共享状态（[#futures.state]）；
+[item]
+[:en] calls [`packaged_task(std::move(rhs)).swap(*this)].
+[:zh_CN] 调用 [`packaged_task(std::move(rhs)).swap(*this)]。
+[list:end]
+[exit:description]
+
+[%@library packaged_task[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~packaged_task();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Abandons any shared state ([#futures.state]).
+[:zh_CN] 放弃任何共享状态（[#futures.state]）。
+[exit:description]
+
+[%@library swap[!packaged_task]]
+[%@library packaged_task[!swap]]
+[codeblock:declaration]
+void swap(packaged_task& other) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Exchanges the shared states and stored tasks of [`*this] and [`other].
+[:zh_CN] 交换 [`*this] 和 [`other] 的共享状态和存储的任务。
+
+[para:postconditions]
+[:en] [`*this] has the same shared state and stored task (if any) as [`other]
+prior to the call to [`swap].
+[:zh_CN] [`*this] 具有与调用 [`swap] 之前 [`other] 相同的共享状态和存储的任务
+（如果有）。
+
+[:en] [`other] has the same shared state and stored task (if any) as [`*this]
+prior to the call to [`swap].
+[:zh_CN] [`other] 具有与调用 [`swap] 之前 [`*this] 相同的共享状态和存储的任务
+（如果有）。
+[exit:description]
+
+[%@library valid[!packaged_task]]
+[%@library packaged_task[!valid]]
+[codeblock:declaration]
+bool valid() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`true] only if [`*this] has a shared state.
+[:zh_CN] 仅当 [`*this] 又共享状态时为 [`true]。
+[exit:description]
+
+[%@library get_future[!packaged_task]]
+[%@library packaged_task[!get_future]]
+[codeblock:declaration]
+future<R> get_future();
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A [`future] object that shares the same shared state as [`*this].
+[:zh_CN] 一个与 [`*this] 共享相同的共享状态的 [`future] 对象。
+
+[para:throws]
+[:en] a [`future_error] object if an error occurs.
+[:zh_CN] 当发生错误时抛出 [`future_error] 对象。
+
+[para:errors]
+[list]
+[item]
+[:en] [`future_already_retrieved] if [`get_future] has already been called on
+a [`packaged_task] object with the same shared state as [`*this].
+[:zh_CN] [`future_already_retrieved]，如果已经在某个具有与 [`*this] 相同共享对象
+的 [`packaged_task] 对象上调用过 [`get_future]。
+
+[item]
+[:en] [`no_state] if [`*this] has no shared state.
+[:zh_CN] [`no_state]，[`*this] 没有共享状态。
+[list:end]
+[exit:description]
+
+[%@library operator()[!packaged_task]]
+[%@library packaged_task[!operator()]]
+[codeblock:declaration]
+void operator()(ArgTypes... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`[*INVOKE]<R>(f, t1, t2, ..., tN)], where [`f] is the stored
+task of [`*this] and [`t1, t2, ..., tN] are the values in [`args...].
+[:zh_CN] 如同执行 [`[*INVOKE]<R>(f, t1, t2, ..., tN)]，其中 [`f] 为 [`*this] 所
+存储的任务，而 [`t1, t2, ..., tN] 为 [`args...] 中的值。
+
+[:en] If the task returns normally, the return value is stored as the
+asynchronous result in the shared state of [`*this], otherwise the exception
+thrown by the task is stored.
+[:zh_CN] 如果任务正常返回，则其返回值作为异步结果存储到 [`*this] 的共享状态之中，
+否则存储的是该任务所抛出的异常。
+
+[:en] The shared state of [`*this] is made ready, and any threads blocked in a
+function waiting for the shared state of [`*this] to become ready are unblocked.
+[:zh_CN] 将 [`*this] 的共享状态设为就绪，并使任何在等待 [`*this] 的共享状态就绪
+的函数中阻塞的线程全部取消阻塞。
+
+[para:throws]
+[:en] a [`future_error] exception object if there is no shared state or the
+stored task has already been invoked.
+[:zh_CN] 如果没有共享状态或者所存储的任务已经调用过则抛出一个 [`future_error]
+异常对象。
+
+[para:errors]
+[list]
+[item]
+[:en] [`promise_already_satisfied] if the stored task has already been invoked.
+[:zh_CN] [`promise_already_satisfied]，所存储的任务已经调用过。
+[item]
+[:en] [`no_state] if [`*this] has no shared state.
+[:zh_CN] [`no_state]，[`*this] 没有共享状态。
+[list:end]
+[exit:description]
+
+[%@library make_ready_at_thread_exit[!packaged_task]]
+[%@library packaged_task[!make_ready_at_thread_exit]]
+[codeblock:declaration]
+void make_ready_at_thread_exit(ArgTypes... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`[*INVOKE]<R>(f, t1, t2, ..., tN)], where [`f] is the stored
+task and [`t1, t2, ..., tN] are the values in [`args...].
+[:zh_CN] 如同执行 [`[*INVOKE]<R>(f, t1, t2, ..., tN)]，其中 [`f] 为所存储的任务，
+而 [`t1, t2, ..., tN] 为 [`args...] 中的值。
+
+[:en] If the task returns normally, the return value is stored as the
+asynchronous result in the shared state of [`*this], otherwise the exception
+thrown by the task is stored.
+[:zh_CN] 如果任务正常返回，则其返回值作为异步结果存储到 [`*this] 的共享状态之中，
+否则存储的是该任务所抛出的异常。
+
+[:en] In either case, this shall be done without making that state ready
+([#futures.state]) immediately.
+[:zh_CN] 无论哪种情况，都应当不会立即将其状态设为就绪（[#futures.state]）。
+
+[:en] Schedules the shared state to be made ready when the current thread exits,
+after all objects of thread storage duration associated with the current thread
+have been destroyed.
+[:zh_CN] 调度在当前线程退出时，与当前线程关联的具有线程存储期的所有对象销毁之后，
+设置其共享状态为就绪。
+
+[para:throws]
+[:en] [`future_error] if an error condition occurs.
+[:zh_CN] 当发生错误条件时抛出 [`future_error]。
+
+[para:errors]
+[list]
+[item]
+[:en] [`promise_already_satisfied] if the stored task has already been invoked.
+[:zh_CN] [`promise_already_satisfied]，所存储的任务已经调用过。
+[item]
+[:en] [`no_state] if [`*this] has no shared state.
+[:zh_CN] [`no_state]，[`*this] 没有共享状态。
+[list:end]
+[exit:description]
+
+[%@library reset[!packaged_task]]
+[%@library packaged_task[!reset]]
+[codeblock:declaration]
+void reset();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if [`*this = packaged_task(std::move(f))], where [`f] is the task
+stored in [`*this].
+[:zh_CN] 如同执行 [`*this = packaged_task(std::move(f))]，其中 [`f] 为 [`*this]
+中所存储的任务。
+
+[enter:note]
+[:en] This constructs a new shared state for [`*this].
+[:zh_CN] 这样会为 [`*this] 构造一个新的共享状态。
+
+[:en] The old state is abandoned ([#futures.state]).
+[:zh_CN] 旧的状态则被放弃（[#futures.state]）。
+[exit:note]
+
+[para:throws]
+[list]
+[item]
+[:en] [`bad_alloc] if memory for the new shared state could not be allocated.
+[:zh_CN] 当无法为新共享状态分配内存时抛出 [`bad_alloc]。
+[item]
+[:en] any exceptions thrown by the move constructor of the task stored in the
+shared state.
+[:zh_CN] 由共享状态中所存储的任务的移动构造函数所抛出的任何异常。
+[item]
+[:en] [`future_error] with an error condition of [`no_state] if [`*this] has no
+shared state.
+[:zh_CN] 如果 [`*this] 没有共享状态则抛出具有 [`no_state] 错误条件的
+[`future_error]。
+[list:end]
+[exit:description]

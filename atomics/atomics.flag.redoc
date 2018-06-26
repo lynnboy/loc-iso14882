@@ -1,0 +1,140 @@
+[section#atomics.flag
+    [:en] Flag type and operations
+    [:zh_CN] 标记类型及其操作
+]
+
+[codeblock:synopsis [!:mark SeeBelow] ]
+namespace std {
+  struct atomic_flag {
+    bool test_and_set(memory_order = memory_order_seq_cst) volatile noexcept;
+    bool test_and_set(memory_order = memory_order_seq_cst) noexcept;
+    void clear(memory_order = memory_order_seq_cst) volatile noexcept;
+    void clear(memory_order = memory_order_seq_cst) noexcept;
+
+    atomic_flag() noexcept = default;
+    atomic_flag(const atomic_flag&) = delete;
+    atomic_flag& operator=(const atomic_flag&) = delete;
+    atomic_flag& operator=(const atomic_flag&) volatile = delete;
+  };
+
+  bool atomic_flag_test_and_set(volatile atomic_flag*) noexcept;
+  bool atomic_flag_test_and_set(atomic_flag*) noexcept;
+  bool atomic_flag_test_and_set_explicit(volatile atomic_flag*, memory_order) noexcept;
+  bool atomic_flag_test_and_set_explicit(atomic_flag*, memory_order) noexcept;
+  void atomic_flag_clear(volatile atomic_flag*) noexcept;
+  void atomic_flag_clear(atomic_flag*) noexcept;
+  void atomic_flag_clear_explicit(volatile atomic_flag*, memory_order) noexcept;
+  void atomic_flag_clear_explicit(atomic_flag*, memory_order) noexcept;
+
+  #define ATOMIC_FLAG_INIT [=SeeBelow]
+}
+[codeblock:end]
+
+[para]
+[:en] The [`atomic_flag] type provides the classic test-and-set functionality.
+[:zh_CN] [`atomic_flag] 类型提供经典的测试并设值功能。
+
+[:en] It has two states, set and clear.
+[:zh_CN] 它有两个状态，已设值和清除。
+
+[para]
+[:en] Operations on an object of type [`atomic_flag] shall be lock-free.
+[:zh_CN] 对 [`atomic_flag] 类型的对象的操作应当是无锁的。
+
+[enter:note]
+[:en] Hence the operations should also be address-free.
+[:zh_CN] 因而这些操作应当为地址自由的。
+[exit:note]
+
+[para]
+[:en] The [`atomic_flag] type is a standard-layout struct.
+[:zh_CN] [`atomic_flag] 类型是标准布局结构。
+
+[:en] It has a trivial default constructor and a trivial destructor.
+[:zh_CN] 它具有平凡的构造函数和平凡的析构函数。
+
+[para]
+[:en] The macro [`ATOMIC_FLAG_INIT] shall be defined in such a way that it can
+be used to initialize an object of type [`atomic_flag] to the clear state.
+[:zh_CN] 宏 [`ATOMIC_FLAG_INIT] 应当被定义为使其可以用于将 [`atomic_flag] 类型的
+对象初始化为清除状态。
+
+[:en] The macro can be used in the form:
+[:zh_CN] 该宏可以按一下形式使用：
+
+[codeblock:notation]
+atomic_flag guard = ATOMIC_FLAG_INIT;
+[codeblock:end]
+
+[:en] It is unspecified whether the macro can be used in other initialization
+contexts.
+[:zh_CN] 这个宏是否可以用在其他初始化语境中是未指明的。
+
+[:en] For a complete static-duration object, that initialization shall be
+static.
+[:zh_CN] 对于完全的静态存储期对象，这个初始化应当是静态的。
+
+[:en] Unless initialized with [`ATOMIC_FLAG_INIT], it is unspecified whether an
+[`atomic_flag] object has an initial state of set or clear.
+[:zh_CN] 除非以 [`ATOMIC_FLAG_INIT] 进行了初始化，否则 [`atomic_flag] 对象所具有
+的初始状态是已设值状态还是清除状态是未指明的。
+
+[%@library atomic_flag_test_and_set]
+[%@library atomic_flag_test_and_set_explicit]
+[%@library test_and_set[!atomic_flag]]
+[%@library atomic_flag[!test_and_set]]
+[codeblock:declaration]
+bool atomic_flag_test_and_set(volatile atomic_flag* object) noexcept;
+bool atomic_flag_test_and_set(atomic_flag* object) noexcept;
+bool atomic_flag_test_and_set_explicit(volatile atomic_flag* object, memory_order order) noexcept;
+bool atomic_flag_test_and_set_explicit(atomic_flag* object, memory_order order) noexcept;
+bool atomic_flag::test_and_set(memory_order order = memory_order_seq_cst) volatile noexcept;
+bool atomic_flag::test_and_set(memory_order order = memory_order_seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Atomically sets the value pointed to by [`object] or by [`this] to
+[`true].
+[:zh_CN] 原子地将由 [`object] 或 [`this] 所指向的值设置为 [`true]。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] These operations are atomic read-modify-write operations
+([#intro.multithread]).
+[:zh_CN] 这些操作是原子性读-改-写操作（[#intro.multithread]）。
+
+[para:returns]
+[:en] Atomically, the value of the object immediately before the effects.
+[:zh_CN] 原子地返回紧接其效果生效前对象的值。
+[exit:description]
+
+[%@library atomic_flag_clear]
+[%@library atomic_flag_clear_explicit]
+[%@library clear[!atomic_flag]]
+[%@library atomic_flag[!clear]]
+[codeblock:declaration]
+void atomic_flag_clear(volatile atomic_flag* object) noexcept;
+void atomic_flag_clear(atomic_flag* object) noexcept;
+void atomic_flag_clear_explicit(volatile atomic_flag* object, memory_order order) noexcept;
+void atomic_flag_clear_explicit(atomic_flag* object, memory_order order) noexcept;
+void atomic_flag::clear(memory_order order = memory_order_seq_cst) volatile noexcept;
+void atomic_flag::clear(memory_order order = memory_order_seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The [`order] argument shall not be [`memory_order_consume],
+[`memory_order_acquire], nor [`memory_order_acq_rel].
+[:zh_CN] 实参 [`order] 不能为 [`memory_order_consume]、[`memory_order_acquire]
+或 [`memory_order_acq_rel]。
+
+[para:effects]
+[:en] Atomically sets the value pointed to by [`object] or by [`this] to
+[`false].
+[:zh_CN] 原子地将由 [`object] 或 [`this] 所指向的值设置为 [`false]。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+[exit:description]

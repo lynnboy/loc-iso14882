@@ -1,0 +1,77 @@
+[section#thread.condition.nonmember
+    [:en] Non-member functions
+    [:zh_CN] 非成员函数
+]
+
+[%@library notify_all_at_thread_exit]
+[codeblock:declaration]
+void notify_all_at_thread_exit(condition_variable& cond, unique_lock<mutex> lk);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`lk] is locked by the calling thread and either
+[:zh_CN] [`lk] 被调用方线程锁定，并且
+
+[list]
+[item]
+[:en] no other thread is waiting on [`cond], or
+[:zh_CN] 没有其他线程正在等待 [`cond]，或者
+[item]
+[:en] [`lk.mutex()] returns the same value for each of the lock arguments
+supplied by all concurrently waiting (via [`wait], [`wait_for], or
+[`wait_until]) threads.
+[:zh_CN] [`lk.mutex()] 返回的值对于由每个（通过 [`wait]、[`wait_for] 或
+[`wait_until]）进行并发等待的线程所提供的锁实参，都是相同的值。
+[list:end]
+
+[para:effects]
+[:en] Transfers ownership of the lock associated with [`lk] into internal
+storage and schedules [`cond] to be notified when the current thread exits,
+after all objects of thread storage duration associated with the current thread
+have been destroyed.
+[:zh_CN] 将与 [`lk] 关联的锁的所有权转移到内部存储中，并调度 [`cond] 使其在当前
+线程退出时，在于当前线程关联的所有具有线程存储期的对象被销毁之后进行通知。
+
+[:en] This notification shall be as if:
+[:zh_CN] 这种通知应当如同：
+
+[codeblock:notation]
+lk.unlock();
+cond.notify_all();
+[codeblock:end]
+
+[para:sync]
+[:en] The implied [`lk.unlock()] call is sequenced after the destruction of all
+objects with thread storage duration associated with the current thread.
+[:zh_CN] 其所隐含的 [`lk.unlock()] 调用按顺序晚于与当前线程关联的所有具有线程
+存储期的对象的销毁。
+
+[para]
+[enter:note]
+[:en] The supplied lock will be held until the thread exits, and care must be
+taken to ensure that this does not cause deadlock due to lock ordering issues.
+[:zh_CN] 所提供的锁将被一直持有直到线程退出，必须更加小心地确保这样做不会引发
+由于锁定顺序问题而导致的死锁。
+
+[:en] After calling [`notify_all_at_thread_exit] it is recommended that the
+thread should be exited as soon as possible, and that no blocking or
+time-consuming tasks are run on that thread.
+[:zh_CN] 调用 [`notify_all_at_thread_exit] 之后，建议尽快使线程退出，并且不要在
+该线程中运行会发生阻塞或者耗费时间的任务。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] It is the user[=']s responsibility to ensure that waiting threads do not
+erroneously assume that the thread has finished if they experience spurious
+wakeups.
+[:zh_CN] 用户有责任保证，当等待线程发生假性唤醒时不会错误地假定该线程已经完成。
+
+[:en] This typically requires that the condition being waited for is satisfied
+while holding the lock on [`lk], and that this lock is not released and
+reacquired prior to calling [`notify_all_at_thread_exit].
+[:zh_CN] 这通常要求所等待的条件是在持有 [`lk] 的锁时得以满足的，并且这个锁并未
+在调用 [`notify_all_at_thread_exit] 之前被释放并重新获得过。
+[exit:note]
+[exit:description]

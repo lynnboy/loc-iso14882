@@ -1,0 +1,163 @@
+[section#quoted.manip
+    [:en] Quoted manipulators
+    [:zh_CN] 引号操作符
+]
+
+[para]
+[enter:note]
+[:en] Quoted manipulators provide string insertion and extraction of quoted
+strings (for example, XML and CSV formats).
+[:zh_CN] 引号操作符提供带引号字符串的字符串插入和抽取操作（例如 XML 和 CSV 等
+格式。）
+
+[:en] Quoted manipulators are useful in ensuring that the content of a string
+with embedded spaces remains unchanged if inserted and then extracted via stream
+I/O.
+[:zh_CN] 使用引号操作符可以保证带有内嵌空格的字符串的内容，在通过流 I/O 插入随后
+抽取后保持不变。
+[exit:note]
+
+[%@library quoted]
+[codeblock:declaration [!:mark UnSpec] ]
+template <class charT>
+  [=UnSpec] quoted(const charT* s, charT delim = charT('"'), charT escape = charT('\\'));
+template <class charT, class traits, class Allocator>
+  [=UnSpec] quoted(const basic_string<charT, traits, Allocator>& s,
+                      charT delim = charT('"'), charT escape = charT('\\'));
+template <class charT, class traits>
+  [=UnSpec] quoted(basic_string_view<charT, traits> s,
+                      charT delim = charT('"'), charT escape = charT('\\'));
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] An object of unspecified type such that if [`out] is an instance of
+[`basic_ostream] with member type [`char_type] the same as [`charT] and with
+member type [`traits_type], which in the second and third forms is the same as
+[`traits], then the expression [`out << quoted(s, delim, escape)] behaves as a
+formatted output function ([#ostream.formatted.reqmts]) of [`out].
+[:zh_CN] 一个未指明类型的对象，如果 [`out] 为 [`basic_ostream] 的实例，其成员
+类型 [`char_type] 与 [`charT] 相同，且成员类型 [`traits_type] 在第二和第三种形式
+中与 [`traits] 相同，则表达式 [`out << quoted(s, delim, escape)] 的行为如同对
+[`out] 的格式化输出函数（[#ostream.formatted.reqmts]）。
+
+[:en] This forms a character sequence [`seq], initially consisting of the
+following elements:
+[:zh_CN] 这构成了一个字符序列 [`seq]，最初由以下元素构成：
+
+[list]
+[item]
+[:en] [`delim].
+[:zh_CN] [`delim]。
+
+[item]
+[:en] Each character in [`s].
+[:zh_CN] [`s] 中的每个字符。
+
+[:en] If the character to be output is equal to [`escape] or [`delim], as
+determined by [`traits_type::eq], first output [`escape].
+[:zh_CN] 若所要输出的字符等于 [`escape] 或 [`delim]（由 [`traits_type::eq]
+判定），则先输出 [`escape]。
+
+[item]
+[:en] [`delim].
+[:zh_CN] [`delim]。
+[list:end]
+
+[:en] Let [`x] be the number of elements initially in [`seq].
+[:zh_CN] 令 [`x] 为 [`seq] 最初的元素数量。
+
+[:en] Then padding is determined for [`seq] as described in
+[#ostream.formatted.reqmts], [`seq] is inserted as if by calling
+[`out.rdbuf()->sputn(seq, n)], where [`n] is the larger of [`out.width()] and
+[`x], and [`out.width(0)] is called.
+[:zh_CN] 然后根据 [#ostream.formatted.reqmts] 中所述为 [`seq] 确定其填充，并以
+如同调用 [`out.rdbuf()->sputn(seq, n)] 的方式插入 [`seq]，其中 [`n] 为
+[`out.width()] 和 [`x] 的较大值，然后调用 [`out.width(0)]。
+
+[:en] The expression [`out << quoted(s, delim, escape)] shall have type
+[`basic_ostream<charT, traits>&] and value [`out].
+[:zh_CN] 表达式 [`out << quoted(s, delim, escape)] 的类型应当为
+[`basic_ostream<charT, traits>&] 且其值应当为 [`out]。
+[exit:description]
+
+[%@library quoted]
+[codeblock:declaration [!:mark UnSpec] ]
+template <class charT, class traits, class Allocator>
+  [=UnSpec] quoted(basic_string<charT, traits, Allocator>& s,
+                      charT delim = charT('"'), charT escape = charT('\\'));
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] An object of unspecified type such that:
+[:zh_CN] 一个未指明类型的对象，使得：
+
+[list]
+[item]
+[:en] If [`in] is an instance of [`basic_istream] with member types [`char_type]
+and [`traits_type] the same as [`charT] and [`traits], respectively, then the
+expression [`in >> quoted(s, delim, escape)] behaves as if it extracts the
+following characters from [`in] using
+[`operator>>(basic_istream<charT, traits>&, charT&)] ([#istream.extractors])
+which may throw [`ios_base::failure] ([#ios::failure]):
+[:zh_CN] 如果 [`in] 为 [`basic_istream] 的实例，其成员类型 [`char_type] 和
+[`traits_type] 分别与 [`charT] 和 [`traits] 相同，则表达式
+[`in >> quoted(s, delim, escape)] 的行为如同使用
+[`operator>>(basic_istream<charT, traits>&, charT&)]（[#istream.extractors]）从
+[`in] 抽取以下字符，其中可能会抛出 [`ios_base::failure]（[#ios::failure]）：
+
+[list]
+[item]
+[:en] If the first character extracted is equal to [`delim], as determined by
+[`traits_type::eq], then:
+[:zh_CN] 如果抽取到的第一个字符等于 [`delim]（由 [`traits_type::eq] 判定），则：
+
+[list]
+[item]
+[:en] Turn off the [`skipws] flag.
+[:zh_CN] 关闭 [`skipws] 标记。
+[item]
+[:] [`s.clear()]
+[item]
+[:en] Until an unescaped [`delim] character is reached or [`!in], extract
+characters from [`in] and append them to [`s], except that if an [`escape] is
+reached, ignore it and append the next character to [`s].
+[:zh_CN] 直到遇到一个未转义的 [`delim] 字符或者 [`!in] 之前，持续从 [`in] 中抽取
+字符并将其追加给 [`s]，但若遇到了一个 [`escape]，则将其忽略并将下一个字符追加给
+[`s]。
+[item]
+[:en] Discard the final [`delim] character.
+[:zh_CN] 丢弃最后的 [`delim] 字符。
+[item]
+[:en] Restore the [`skipws] flag to its original value.
+[:zh_CN] 恢复 [`skipws] 标记为其原来的值。
+[list:end]
+
+[item]
+[:en] Otherwise, [`in >> s].
+[:zh_CN] 否则，[`in >> s]。
+[list:end]
+
+[item]
+[:en] If [`out] is an instance of [`basic_ostream] with member types
+[`char_type] and [`traits_type] the same as [`charT] and [`traits],
+respectively, then the expression [`out << quoted(s, delim, escape)] behaves as
+specified for the [`const basic_string<charT, traits, Allocator>&] overload of
+the [`quoted] function.
+[:zh_CN] 如果 [`out] 为 [`basic_ostream] 的实例，其成员类型 [`char_type] 和
+[`traits_type] 分别与 [`charT] 和 [`traits] 相同，则表达式
+[`out << quoted(s, delim, escape)] 的行为与为 [`quoted] 函数针对
+[`const basic_string<charT, traits, Allocator>&] 的重载所指定的行为相同。
+[list:end]
+
+[:en] The expression [`in >> quoted(s, delim, escape)] shall have type
+[`basic_istream<charT, traits>&] and value [`in].
+[:zh_CN] 表达式 [`in >> quoted(s, delim, escape)] 的类型应当为
+[`basic_istream<charT, traits>&] 且其值应当为 [`in]。
+
+[:en] The expression [`out << quoted(s, delim, escape)] shall have type
+[`basic_ostream<charT, traits>&] and value [`out].
+[:zh_CN] 表达式 [`out << quoted(s, delim, escape)] 的类型应当为
+[`basic_ostream<charT, traits>&] 且其值应当为 [`out]。
+[exit:description]

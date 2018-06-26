@@ -1,0 +1,247 @@
+[section#futures.async
+    [:en] Function template [`async]
+    [:zh_CN] 函数模板 [`async]
+]
+
+[para]
+[:en] The function template [`async] provides a mechanism to launch a function
+potentially in a new thread and provides the result of the function in a
+[`future] object with which it shares a shared state.
+[:zh_CN] 函数模板 [`async] 提供一种机制以潜在在新线程中启动一个函数，并以一个
+[`future] 对象来提供该函数的结果，通过它来共享状态。
+
+[%@library async]
+[codeblock:declaration]
+template <class F, class... Args>
+  future<invoke_result_t<decay_t<F>, decay_t<Args>...>>
+    async(F&& f, Args&&... args);
+template <class F, class... Args>
+  future<invoke_result_t<decay_t<F>, decay_t<Args>...>>
+    async(launch policy, F&& f, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`F] and each [`Ti] in [`Args] shall satisfy the [`MoveConstructible]
+requirements, and
+[:zh_CN] [`F] 和 [`Args] 中的每个 [`Ti] 都应当满足 [`MoveConstructible] 规定，
+并且
+
+[codeblock:notation]
+[*INVOKE]([*DECAY_COPY](std::forward<F>(f)),
+       [*DECAY_COPY](std::forward<Args>(args))...)     // [:en] see [#func.require], [#thread.thread.constr]
+                                                       // [|:zh_CN] 参见 [#func.require]，[#thread.thread.constr]
+[codeblock:end]
+
+[:en@~] shall be a valid expression.
+[:zh_CN@~] 应当是有效的表达式。
+
+[para:effects]
+[:en] The first function behaves the same as a call to the second function with
+a [`policy] argument of [`launch::async | launch::deferred] and the same
+arguments for [`F] and [`Args].
+[:zh_CN] 第一个函数的行为与以 [`launch::async | launch::deferred] 作为 [`policy]
+实参并以相同的 [`F] 和 [`Args] 实参来调用第二个函数的行为相同。
+
+[:en] The second function creates a shared state that is associated with the
+returned [`future] object.
+[:zh_CN] 第二个函数创建一个与所返回的 [`future] 对象关联的共享状态。
+
+[:en] The further behavior of the second function depends on the [`policy]
+argument as follows (if more than one of these conditions applies, the
+implementation may choose any of the corresponding policies):
+[:zh_CN] 第二个函数的其他行为取决于 [`policy] 实参，如下（如果这些条件中有多个
+适用，则实现可以选择对应的任何策略）：
+
+[list]
+[item]
+[:en] If [`launch::async] is set in [`policy], calls
+[`[*INVOKE]([*DECAY_COPY](std::forward<F>(f)), [*DECAY_COPY](std::forward<Args>(args))...)]
+([#func.require], [#thread.thread.constr]) as if in a new thread of execution
+represented by a [`thread] object with the calls to [`[*DECAY_COPY]()] being
+evaluated in the thread that called [`async].
+[:zh_CN] 如果 [`policy] 中设置了 [`launch::async]，则如同在由一个 [`thread] 对象
+所表示的新执行线程中调用
+[`[*INVOKE]([*DECAY_COPY](std::forward<F>(f)), [*DECAY_COPY](std::forward<Args>(args))...)]
+（[#func.require]，[#thread.thread.constr]），其中对 [`[*DECAY_COPY]()] 的求值
+在调用了 [`async] 的线程中求值。
+
+[:en] Any return value is stored as the result in the shared state.
+[:zh_CN] 返回值被作为结果存储到其共享状态中。
+
+[:en] Any exception propagated from the execution of
+[`[*INVOKE]([*DECAY_COPY](std::forward<F>(f)), [*DECAY_COPY](std::forward<Args>(args))...)]
+is stored as the exceptional result in the shared state.
+[:zh_CN] 从
+[`[*INVOKE]([*DECAY_COPY](std::forward<F>(f)), [*DECAY_COPY](std::forward<Args>(args))...)]
+的执行中传播出来的异常作为异常结果存储到其共享状态中。
+
+[:en] The [`thread] object is stored in the shared state and affects the
+behavior of any asynchronous return objects that reference that state.
+[:zh_CN] 该 [`thread] 对象被存储到共享状态中，并将对任何引用了这个状态的异步返回
+对象造成影响。
+
+[item]
+[:en] If [`launch::deferred] is set in [`policy], stores
+[`[*DECAY_COPY](std::forward<F>(f))] and
+[`[*DECAY_COPY](std::forward<Args>(args))...] in the shared state.
+[:zh_CN] 如果 [`policy] 中设置了 [`launch::deferred]，则将
+[`[*DECAY_COPY](std::forward<F>(f))] 和
+[`[*DECAY_COPY](std::forward<Args>(args))...] 存储到共享状态中。
+
+[:en] These copies of [`f] and [`args] constitute a [+deferred function].
+[:zh_CN] 这些 [`f] 和 [`args] 的副本构成一个[+延迟函数]。
+
+[:en] Invocation of the deferred function evaluates
+[`[*INVOKE](std::move(g), std::move(xyz))] where [`g] is the stored value of
+[`[*DECAY_COPY](std::forward<F>(f))] and [`xyz] is the stored copy of
+[`[*DECAY_COPY](std::forward<Args>(args))...].
+[:zh_CN] 对延时函数的调用将求值 [`[*INVOKE](std::move(g), std::move(xyz))]，其中
+[`g] 为所存储的 [`[*DECAY_COPY](std::forward<F>(f))] 的副本而 [`xyz] 为所存储的
+[`[*DECAY_COPY](std::forward<Args>(args))...] 的副本。
+
+[:en] Any return value is stored as the result in the shared state.
+[:zh_CN] 返回值被作为结果存储到其共享状态中。
+
+[:en] Any exception propagated from the execution of the deferred function is
+stored as the exceptional result in the shared state.
+[:zh_CN] 从延迟函数的执行中传播出来的异常作为异常结果存储到其共享状态中。
+
+[:en] The shared state is not made ready until the function has completed.
+[:zh_CN] 直到该函数完成前共享状态都不会被设为就绪。
+
+[:en] The first call to a non-timed waiting function ([#futures.state]) on an
+asynchronous return object referring to this shared state shall invoke the
+deferred function in the thread that called the waiting function.
+[:zh_CN] 对指代这个共享状态的异步返回对象首次调用非定时等待函数
+（[#futures.state]），应当在调用该等待函数的线程中调用延迟函数。
+
+[:en] Once evaluation of [`[*INVOKE](std::move(g), std::move(xyz))] begins, the
+function is no longer considered deferred.
+[:zh_CN] 一旦对 [`[*INVOKE](std::move(g), std::move(xyz))] 的求值开始，该函数就
+不再被认为是延迟的。
+
+[enter:note]
+[:en] If this policy is specified together with other policies, such as when
+using a [`policy] value of [`launch::async | launch::deferred], implementations
+should defer invocation or the selection of the policy when no more concurrency
+can be effectively exploited.
+[:zh_CN] 如果这个策略是与其他策略一起指定的，比如使用 [`policy] 值
+[`launch::async | launch::deferred]，则实现应当在无法有效启动更多并发执行时进行
+延迟调用或者所选择的策略。
+[exit:note]
+
+[item]
+[:en] If no value is set in the launch policy, or a value is set that is neither
+specified in this International Standard nor by the implementation, the behavior
+is undefined.
+[:zh_CN] 如果启动策略中没有设置任何值，或者设置的值并非本国际标准或者实现自己所
+指定的，则其行为是未定义的。
+[list:end]
+
+[para:returns]
+[:en] An object of type [`future<invoke_result_t<decay_t<F>, decay_t<Args>...>>]
+that refers to the shared state created by this call to [`async].
+[:zh_CN] [`future<invoke_result_t<decay_t<F>, decay_t<Args>...>>] 类型的对象，
+指代由这次对 [`async] 的调用所创建的共享状态。
+
+[enter:note]
+[:en] If a future obtained from [`async] is moved outside the local scope, other
+code that uses the future must be aware that the future[=']s destructor may
+block for the shared state to become ready.
+[:zh_CN] 如果将从 [`async] 获得的 [`future] 移动出局部作用域，则使用该 [`future]
+的其他代码必须被警告，这个 [`future] 的析构函数可能发生阻塞以等待其共享状态就绪。
+[exit:note]
+
+[para:sync]
+[:en] Regardless of the provided [`policy] argument,
+[:zh_CN] 无论所提供的 [`policy] 实参是什么，均有
+
+[list]
+[item]
+[:en] the invocation of [`async] synchronizes with ([#intro.multithread]) the
+invocation of [`f].
+[:zh_CN] [`async] 的调用同步于（[#intro.multithread]）[`f] 的调用。
+
+[enter:note]
+[:en] This statement applies even when the corresponding [`future] object is
+moved to another thread.
+[:zh_CN] 这句话即便当相应的 [`future] 对象被移动到其他线程也适用。
+[exit:note]
+
+[:en]; and
+[:zh_CN]；并且
+
+[item]
+[:en] the completion of the function [`f] is sequenced before
+([#intro.multithread]) the shared state is made ready.
+[:zh_CN] 函数 [`f] 的完成按顺序早于（[#intro.multithread]）共享状态被设为就绪。
+
+[enter:note]
+[:en] [`f] might not be called at all, so its completion might never happen.
+[:zh_CN] [`f] 可能完全不会被调用，因此可能永远不会完成。
+[exit:note]
+[list:end]
+
+[:en] If the implementation chooses the [`launch::async] policy,
+[:zh_CN] 如果实现选择了 [`launch::async] 策略，则有
+
+[list]
+[item]
+[:en] a call to a waiting function on an asynchronous return object that shares
+the shared state created by this [`async] call shall block until the associated
+thread has completed, as if joined, or else time out ([#thread.thread.member]);
+[:zh_CN] 在共享了这次 [`async] 调用所创建的共享状态的异步返回对象上调用等待函数，
+应当阻塞直到其关联的线程完成（如同进行合并），或者发生超时
+（[#thread.thread.member]）；
+
+[item]
+[:en] the associated thread completion synchronizes with ([#intro.multithread])
+the return from the first function that successfully detects the ready status of
+the shared state or with the return from the last function that releases the
+shared state, whichever happens first.
+[:zh_CN] 其所关联的线程的完成，同步于（[#intro.multithread]）第一个成功检测到
+其共享状态的就绪状态的函数返回，或者同步于最后一次释放共享状态的函数的返回，
+以首先发生者为准。
+[list:end]
+
+[para:throws]
+[:en] [`system_error] if [`policy == launch::async] and the implementation is
+unable to start a new thread, or [`std::bad_alloc] if memory for the internal
+data structures could not be allocated.
+[:zh_CN] 如果 [`policy == launch::async] 且实现无法启动新线程时抛出
+[`system_error]，或者无法为内部数据结构分配内存时抛出 [`std::bad_alloc]。
+
+[para:errors]
+[list]
+[item]
+[:en] [`resource_unavailable_try_again] [=--] if [`policy == launch::async] and
+the system is unable to start a new thread.
+[:zh_CN] [`resource_unavailable_try_again] [=--] [`policy == launch::async] 并且
+系统无法启动新线程。
+[list:end]
+[exit:description]
+
+[para]
+[enter:example]
+[codeblock]
+int work1(int value);
+int work2(int value);
+int work(int value) {
+  auto handle = std::async([=]{ return work2(value); });
+  int tmp = work1(value);
+  return tmp + handle.get();    // #1
+}
+[codeblock:end]
+
+[enter:note]
+[:en] Line #1 might not result in concurrency because the [`async] call uses the
+default policy, which may use [`launch::deferred], in which case the lambda
+might not be invoked until the [`get()] call; in that case, [`work1] and
+[`work2] are called on the same thread and there is no concurrency.
+[:zh_CN] 代码行 #1 可能不会导致并发执行，因为 [`async] 调用使用了默认策略，它
+可能使用 [`launch::deferred]，这种情况下 lambda 可能直到 [`get()] 的调用之前都
+不会执行；这种情况下，[`work1] 和 [`work2] 都是在相同的线程上调用的，并且没有
+并发。
+[exit:note]
+[exit:example]

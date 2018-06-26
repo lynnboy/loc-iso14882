@@ -1,0 +1,90 @@
+[section#ptr.launder
+    [:en] Pointer optimization barrier
+    [:zh_CN] 指针优化屏障
+]
+
+[%@library launder]
+[codeblock:declaration]
+template <class T> constexpr T* launder(T* p) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en]
+[`p] represents the address [$A] of a byte in memory.
+[:zh_CN]
+[`p] 表示内存中某个字节的地址 [$A]。
+
+[:en]
+An object [$X] that is within its lifetime ([#basic.life]) and whose type is
+similar ([#conv.qual]) to [`T] is located at the address [$A].
+[:zh_CN]
+某个处于生存期（[#basic.life]）之内的，并具有与 [`T] 相似的类型（[#conv.qual]）
+的对象，位于地址 [$A]。
+
+[:en]
+All bytes of storage that would be reachable through the result are reachable
+through [`p] (see below).
+[:zh_CN]
+能够通过其结果可达的存储字节，都应当能够通过 [`p] 可达（见下文）。
+
+[para:returns]
+[:en]
+A value of type [`T *] that points to [`X].
+[:zh_CN]
+一个 [`T *] 类型的指向 [`X] 的值。
+
+[para:remarks]
+[:en]
+An invocation of this function may be used in a core constant expression
+whenever the value of its argument may be used in a core constant expression.
+[:zh_CN]
+只要这个函数的实参可以被用在核心常量表达式之中，则对这个函数的调用就可以用在核心
+常量表达式中。
+
+[:en]
+A byte of storage is reachable through a pointer value that points to an object
+[$Y] if it is within the storage occupied by [$Y], an object that is
+pointer-interconvertible with [$Y], or the immediately-enclosing array object if
+[$Y] is an array element.
+[:zh_CN]
+如果某个存储字节处于对象 [$Y]，与 [$Y] 指针可相互转化的对象，或当 [$Y] 为数组
+元素时其直接外围数组对象所占据的存储中，则它可以通过指向对象 [$Y] 的指针值可达。
+
+[:en]
+The program is ill-formed if [`T] is a function type or [$cv] [`void].
+[:zh_CN]
+如果 [`T] 为函数类型或 [$cv] [`void]，则程序非良构。
+
+[para]
+[enter:note]
+[:en]
+If a new object is created in storage occupied by an existing object of the same
+type, a pointer to the original object can be used to refer to the new object
+unless the type contains [`const] or reference members; in the latter cases,
+this function can be used to obtain a usable pointer to the new object.
+[:zh_CN]
+如果在相同类型的现存对象所占据的存储中创建了一个新对象，则指向原对象的指针可以被
+用于指代新对象，除非该类型包含 [`const] 或引用成员；后一种情况下，可以使用本函数
+来获得新对象的可用指针。
+
+[:en]
+See [#basic.life].
+[:zh_CN]
+参见 [#basic.life]。
+[exit:note]
+
+[para]
+[enter:example]
+[codeblock]
+struct X { const int n; };
+X *p = new X{3};
+const int a = p->n;
+new (p) X{5};                       // [:en] [`p] does not point to new object ([#basic.life]) because [`X::n] is [`const]
+                                    // [|:zh_CN] [`p] 并未指向新对象（[#basic.life]），因为 [`X::n] 为 [`const]
+const int b = p->n;                 // [:en] undefined behavior
+                                    // [|:zh_CN] 未定义的行为
+const int c = std::launder(p)->n;   // OK
+[codeblock:end]
+[exit:example]
+[exit:description]

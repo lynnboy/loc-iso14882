@@ -1,0 +1,152 @@
+[section#ostream
+    [:en] Class template [`basic_ostream]
+    [:zh_CN] 类模板 [`basic_ostream]
+]
+
+[%@library basic_ostream]
+[codeblock:synopsis]
+namespace std {
+  template <class charT, class traits = char_traits<charT>>
+  class basic_ostream : virtual public basic_ios<charT, traits> {
+  public:
+    // [:en] types (inherited from [`basic_ios] ([#ios])):
+    // [|:zh_CN] 类型（继承于 [`basic_ios]（[#ios]））：
+    using char_type   = charT;
+    using int_type    = typename traits::int_type;
+    using pos_type    = typename traits::pos_type;
+    using off_type    = typename traits::off_type;
+    using traits_type = traits;
+
+    // [:en] [#ostream.cons], constructor/destructor
+    // [|:zh_CN] [#ostream.cons]，构造函数/析构函数
+    explicit basic_ostream(basic_streambuf<char_type, traits>* sb);
+    virtual ~basic_ostream();
+
+    // [:en] [#ostream::sentry], prefix/suffix
+    // [|:zh_CN] [#ostream::sentry]，前缀/后缀
+    class sentry;
+
+    // [:en] [#ostream.formatted], formatted output
+    // [|:zh_CN] [#ostream.formatted]，格式化输出
+    basic_ostream<charT, traits>&
+      operator<<(basic_ostream<charT, traits>& (*pf)(basic_ostream<charT, traits>&));
+    basic_ostream<charT, traits>&
+      operator<<(basic_ios<charT, traits>& (*pf)(basic_ios<charT, traits>&));
+    basic_ostream<charT, traits>&
+      operator<<(ios_base& (*pf)(ios_base&));
+
+    basic_ostream<charT, traits>& operator<<(bool n);
+    basic_ostream<charT, traits>& operator<<(short n);
+    basic_ostream<charT, traits>& operator<<(unsigned short n);
+    basic_ostream<charT, traits>& operator<<(int n);
+    basic_ostream<charT, traits>& operator<<(unsigned int n);
+    basic_ostream<charT, traits>& operator<<(long n);
+    basic_ostream<charT, traits>& operator<<(unsigned long n);
+    basic_ostream<charT, traits>& operator<<(long long n);
+    basic_ostream<charT, traits>& operator<<(unsigned long long n);
+    basic_ostream<charT, traits>& operator<<(float f);
+    basic_ostream<charT, traits>& operator<<(double f);
+    basic_ostream<charT, traits>& operator<<(long double f);
+
+    basic_ostream<charT, traits>& operator<<(const void* p);
+    basic_ostream<charT, traits>& operator<<(nullptr_t);
+    basic_ostream<charT, traits>& operator<<(basic_streambuf<char_type, traits>* sb);
+
+    // [:en] [#ostream.unformatted], unformatted output
+    // [|:zh_CN] [#ostream.unformatted]，无格式输出
+    basic_ostream<charT, traits>& put(char_type c);
+    basic_ostream<charT, traits>& write(const char_type* s, streamsize n);
+
+    basic_ostream<charT, traits>& flush();
+
+    // [:en] [#ostream.seeks], seeks
+    // [|:zh_CN] [#ostream.seeks]，定位
+    pos_type tellp();
+    basic_ostream<charT, traits>& seekp(pos_type);
+    basic_ostream<charT, traits>& seekp(off_type, ios_base::seekdir);
+
+  protected:
+    // [:en] [#ostream.cons], copy/move constructor
+    // [|:zh_CN] [#ostream.cons]，复制/移动构造函数
+    basic_ostream(const basic_ostream& rhs) = delete;
+    basic_ostream(basic_ostream&& rhs);
+
+    // [:en] [#ostream.assign], assign and swap
+    // [|:zh_CN] [#ostream.assign]，赋值与交换
+    basic_ostream& operator=(const basic_ostream& rhs) = delete;
+    basic_ostream& operator=(basic_ostream&& rhs);
+    void swap(basic_ostream& rhs);
+  };
+
+  // [:en] [#ostream.inserters.character], character inserters
+  // [|:zh_CN] [#ostream.inserters.character]，字符插入符
+  template<class charT, class traits>
+    basic_ostream<charT, traits>& operator<<(basic_ostream<charT, traits>&, charT);
+  template<class charT, class traits>
+    basic_ostream<charT, traits>& operator<<(basic_ostream<charT, traits>&, char);
+  template<class traits>
+    basic_ostream<char, traits>& operator<<(basic_ostream<char, traits>&, char);
+
+  template<class traits>
+    basic_ostream<char, traits>& operator<<(basic_ostream<char, traits>&, signed char);
+  template<class traits>
+    basic_ostream<char, traits>& operator<<(basic_ostream<char, traits>&, unsigned char);
+
+  template<class charT, class traits>
+    basic_ostream<charT, traits>& operator<<(basic_ostream<charT, traits>&, const charT*);
+  template<class charT, class traits>
+    basic_ostream<charT, traits>& operator<<(basic_ostream<charT, traits>&, const char*);
+  template<class traits>
+    basic_ostream<char, traits>& operator<<(basic_ostream<char, traits>&, const char*);
+
+  template<class traits>
+    basic_ostream<char, traits>& operator<<(basic_ostream<char, traits>&, const signed char*);
+  template<class traits>
+    basic_ostream<char, traits>& operator<<(basic_ostream<char, traits>&, const unsigned char*);
+}
+[codeblock:end]
+
+[para]
+[:en] The class template [`basic_ostream] defines a number of member function
+signatures that assist in formatting and writing output to output sequences
+controlled by a stream buffer.
+[:zh_CN] 类模板 [`basic_ostream] 定义了一些成员函数签名，以帮助对向流缓冲区所
+掌控的输出序列进行格式化并写入输出数据。
+
+[para]
+[:en] Two groups of member function signatures share common properties: the
+[+formatted output functions[%]] (or [+inserters[%]]) and the [+unformatted
+output functions[%]].
+[:zh_CN] 两组成员函数签名各自具有共通的属性：[+格式化输出函数[%]]（或
+[+插入符[%]]），以及[+无格式输出函数[%]]。
+
+[:en] Both groups of output functions generate (or [+insert[%]]) output
+[+characters[%]] by actions equivalent to calling [`rdbuf()->sputc(int_type)].
+[:zh_CN] 这两组输出函数生成（或[+插入[%]]）其输出[+字符[%]]，都以等价于调用
+[`rdbuf()->sputc(int_type)] 的动作来达成的。
+
+[:en] They may use other public members of [`basic_ostream] except that they
+shall not invoke any virtual members of [`rdbuf()] except [`overflow()],
+[`xsputn()], and [`sync()].
+[:zh_CN] 它们可以使用 [`basic_ostream] 的其他公开成员，但它们不能调用 [`rdbuf()]
+的除了 [`overflow()]、[`xsputn()] 和 [`sync()] 之外的虚成员函数。
+
+[para]
+[:en] If one of these called functions throws an exception, then unless
+explicitly noted otherwise, the output function sets [`badbit] in error state.
+[:zh_CN] 当其所调用的函数之一抛出了异常时，除非另行明确指定，否则该输出函数将在
+错误状态中设置 [`badbit]。
+
+[:en] If [`badbit] is on in [`exceptions()], the output function rethrows the
+exception without completing its actions, otherwise it does not throw anything
+and treat as an error.
+[:zh_CN] 若 [`exceptions()] 中打开了 [`badbit]，则输出函数重新抛出异常而并不完成
+其动作，否则它不抛出任何异常并将之当做错误来处理。
+
+[include ostream.cons]
+
+[include ostream.assign]
+
+[include ostream::sentry]
+
+[include ostream.seeks]

@@ -1,0 +1,231 @@
+[section#thread.mutex.requirements.mutex
+    [:en] Mutex types
+    [:zh_CN] 互斥体类型
+]
+
+[para]
+[:en] The [+mutex types] are the standard library types [`mutex],
+[`recursive_mutex], [`timed_mutex], [`recursive_timed_mutex], [`shared_mutex],
+and [`shared_timed_mutex].
+[:zh_CN] [+互斥体类型]包括标准库类型 [`mutex]、[`recursive_mutex]、
+[`timed_mutex]、[`recursive_timed_mutex]、[`shared_mutex] 和
+[`shared_timed_mutex]。
+
+[:en] They shall meet the requirements set out in this section.
+[:zh_CN] 它们都应当满足本小节中所设立的规定。
+
+[:en] In this description, [`m] denotes an object of a mutex type.
+[:zh_CN] 这里的描述中，[`m] 代表某种互斥体类型的对象。
+
+[para]
+[:en] The mutex types shall meet the [`Lockable] requirements
+([#thread.req.lockable.req]).
+[:zh_CN] 互斥体类型应当满足 [`Lockable] 规定（[#thread.req.lockable.req]）。
+
+[para]
+[:en] The mutex types shall be [`DefaultConstructible] and [`Destructible].
+[:zh_CN] 互斥体类型应当为 [`DefaultConstructible] 和 [`Destructible]。
+
+[:en] If initialization of an object of a mutex type fails, an exception of type
+[`system_error] shall be thrown.
+[:zh_CN] 当互斥体类型的对象初始化失败时，应当抛出 [`system_error] 类型的异常。
+
+[:en] The mutex types shall not be copyable or movable.
+[:zh_CN] 互斥体类型不能是可复制或可移动的。
+
+[para]
+[:en] The error conditions for error codes, if any, reported by member functions
+of the mutex types shall be:
+[:zh_CN] 由互斥体类型的成员函数所报告的各错误代码的错误条件（如果有）应当为：
+
+[list]
+[item]
+[:en] [`resource_unavailable_try_again] [=--] if any native handle type
+manipulated is not available.
+[:zh_CN] [`resource_unavailable_try_again] [=--] 有任何其所操作的本机句柄类型
+不可用。
+[item]
+[:en] [`operation_not_permitted] [=--] if the thread does not have the privilege
+to perform the operation.
+[:zh_CN] [`operation_not_permitted] [=--] 线程无法获得实施操作的权限。
+[item]
+[:en] [`invalid_argument] [=--] if any native handle type manipulated as part of
+mutex construction is incorrect.
+[:zh_CN] [`invalid_argument] [=--] 有任何在互斥体的构造之中其所操作的本机句柄
+类型是不正确的。
+[list:end]
+
+[para]
+[:en] The implementation shall provide lock and unlock operations, as described
+below.
+[:zh_CN] 实现应当根据如下所述提供锁定和解锁操作。
+
+[:en] For purposes of determining the existence of a data race, these behave as
+atomic operations ([#intro.multithread]).
+[:zh_CN] 当确定是否存在数据竞争时，可将这些行为当做原子性操作
+（[#intro.multithread]）。
+
+[:en] The lock and unlock operations on a single mutex shall appear to occur in
+a single total order.
+[:zh_CN] 在单个互斥体上进行的锁定和解锁操作，应当表现为单个全序。
+
+[enter:note]
+[:en] This can be viewed as the modification order ([#intro.multithread]) of the
+mutex.
+[:zh_CN] 可将其看做是该互斥体的改动顺序（[#intro.multithread]）。
+[exit:note]
+
+[enter:note]
+[:en] Construction and destruction of an object of a mutex type need not be
+thread-safe; other synchronization should be used to ensure that mutex objects
+are initialized and visible to other threads.
+[:zh_CN] 互斥体类型对象的构造和销毁，并不一定线程安全；应当使用其他的同步来保证
+互斥体对象的初始化并对其他线程可见。
+
+[para]
+[:en] The expression [`m.lock()] shall be well-formed and have the following
+semantics:
+[:zh_CN] 表达式 [`m.lock()] 应当良构并具有下列语义：
+
+[enter:description]
+[para:requires]
+[:en] If [`m] is of type [`mutex], [`timed_mutex], [`shared_mutex], or
+[`shared_timed_mutex], the calling thread does not own the mutex.
+[:zh_CN] 若 [`m] 的类型为 [`mutex]、[`timed_mutex]、[`shared_mutex] 或
+[`shared_timed_mutex]，则调用方线程并不拥有该互斥体。
+
+[para:effects]
+[:en] Blocks the calling thread until ownership of the mutex can be obtained for
+the calling thread.
+[:zh_CN] 阻塞调用方线程直到该互斥体的所有权可以被调用方线程获得。
+
+[para:postconditions]
+[:en] The calling thread owns the mutex.
+[:zh_CN] 调用方线程拥有该互斥体。
+
+[para:returntype]
+[:en] [`void].
+[:zh_CN] [`void]。
+
+[para:sync]
+[:en] Prior [`unlock()] operations on the same object shall
+[+synchronize with[%]] ([#intro.multithread]) this operation.
+[:zh_CN] 之前在相同对象上的 [`unlock()] 操作应当[+同步于[%]]
+（[#intro.multithread]）这个操作。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时抛出 [`system_error]（[#thread.req.exception]）。
+
+[para:errors]
+[list]
+[item]
+[:en] [`operation_not_permitted] [=--] if the thread does not have the privilege
+to perform the operation.
+[:zh_CN] [`operation_not_permitted] [=--] 该线程没有实施该操作的权限。
+
+[item]
+[:en] [`resource_deadlock_would_occur] [=--] if the implementation detects that
+a deadlock would occur.
+[:zh_CN] [`resource_deadlock_would_occur] [=--] 实现检测到可能发生了死锁。
+[list:end]
+[exit:description]
+
+[para]
+[:en] The expression [`m.try_lock()] shall be well-formed and have the following
+semantics:
+[:zh_CN] 表达式 [`m.try_lock()] 应当良构并具有下列语义：
+
+[enter:description]
+[para:requires]
+[:en] If [`m] is of type [`mutex], [`timed_mutex], [`shared_mutex], or
+[`shared_timed_mutex], the calling thread does not own the mutex.
+[:zh_CN] 若 [`m] 的类型为 [`mutex]、[`timed_mutex]、[`shared_mutex] 或
+[`shared_timed_mutex]，则调用方线程并不拥有该互斥体。
+
+[para:effects]
+[:en] Attempts to obtain ownership of the mutex for the calling thread without
+blocking.
+[:zh_CN] 尝试为调用方线程获取该互斥体的所有权而不发生阻塞。
+
+[:en] If ownership is not obtained, there is no effect and [`try_lock()]
+immediately returns.
+[:zh_CN] 如果未能获取所有权，则没有效果，且 [`try_lock()] 立即返回。
+
+[:en] An implementation may fail to obtain the lock even if it is not held by
+any other thread.
+[:zh_CN] 即便没有被其他线程持有，实现也可能在获取锁时失败。
+
+[enter:note]
+[:en] This spurious failure is normally uncommon, but allows interesting
+implementations based on a simple compare and exchange (Clause [#atomics]).
+[:zh_CN] 这种假性失败一般来说较为罕见，但这样做允许采用基于一次简单的比较并交换
+（第 [#atomics] 章）的实现。
+[exit:note]
+
+[:en] An implementation should ensure that [`try_lock()] does not consistently
+return [`false] in the absence of contending mutex acquisitions.
+[:zh_CN] 实现应当保证在没有竞争的互斥体获取时，[`try_lock()] 不会持续返回
+[`false]。
+
+[para:returntype]
+[:en] [`bool].
+[:zh_CN] [`bool]。
+
+[para:returns]
+[:en] [`true] if ownership of the mutex was obtained for the calling thread,
+otherwise [`false].
+[:zh_CN] 如果为调用方线程获取到了互斥体的所有权则返回 [`true]，否则返回
+[`false]。
+
+[para:sync]
+[:en] If [`try_lock()] returns [`true], prior [`unlock()] operations on the same
+object [+synchronize with[%]] ([#intro.multithread]) this operation.
+[:zh_CN] 如果 [`try_lock()] 返回了 [`true]，则之前在同一个对象上的 [`unlock()]
+操作应当[+同步于[%]]（[#intro.multithread]）这个操作。
+
+[enter:note]
+[:en] Since [`lock()] does not synchronize with a failed subsequent
+[`try_lock()], the visibility rules are weak enough that little would be known
+about the state after a failure, even in the absence of spurious failures.
+[:zh_CN] 由于 [`lock()] 并不同步于失败的后续 [`try_lock()]，因此可见性规则足以
+弱到在失败之后很难了解其状态，即便没有发生假性失败也是如此。
+[exit:note]
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[para]
+[:en] The expression [`m.unlock()] shall be well-formed and have the following
+semantics:
+[:zh_CN] 表达式 [`m.unlock()] 应当良构并具有下列语义：
+
+[enter:description]
+[para:requires]
+[:en] The calling thread shall own the mutex.
+[:zh_CN] 调用方线程应当拥有该互斥体。
+
+[para:effects]
+[:en] Releases the calling thread[=']s ownership of the mutex.
+[:zh_CN] 释放调用方线程对该互斥体的所有权。
+
+[para:returntype]
+[:en] [`void].
+[:zh_CN] [`void]。
+
+[para:sync]
+[:en] This operation synchronizes with ([#intro.multithread]) subsequent lock
+operations that obtain ownership on the same object.
+[:zh_CN] 该操作同步于（[#intro.multithread]）其后在相同对象上获取所有权的
+[`lock] 操作。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[include thread.mutex.class]
+
+[include thread.mutex.recursive]

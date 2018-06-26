@@ -1,0 +1,97 @@
+[section#future.syn
+    [:en] Header [`<future>] synopsis
+    [:zh_CN] 头文件 [`<future>] 纲要
+]
+
+[% [`<future>][@future]]
+[%@library <future>[@future]]
+[codeblock:synopsis [!:mark ImpDef UnSpec ]]
+namespace std {
+  enum class future_errc {
+    broken_promise = [=ImpDef],
+    future_already_retrieved = [=ImpDef],
+    promise_already_satisfied = [=ImpDef],
+    no_state = [=ImpDef]
+  };
+
+  enum class launch : [=UnSpec] {
+    async = [=UnSpec],
+    deferred = [=UnSpec],
+    [=ImpDef]
+  };
+
+  enum class future_status {
+    ready,
+    timeout,
+    deferred
+  };
+
+  template <> struct is_error_code_enum<future_errc> : public true_type { };
+  error_code make_error_code(future_errc e) noexcept;
+  error_condition make_error_condition(future_errc e) noexcept;
+
+  const error_category& future_category() noexcept;
+
+  class future_error;
+
+  template <class R> class promise;
+  template <class R> class promise<R&>;
+  template <> class promise<void>;
+
+  template <class R>
+    void swap(promise<R>& x, promise<R>& y) noexcept;
+
+  template <class R, class Alloc>
+    struct uses_allocator<promise<R>, Alloc>;
+
+  template <class R> class future;
+  template <class R> class future<R&>;
+  template <> class future<void>;
+
+  template <class R> class shared_future;
+  template <class R> class shared_future<R&>;
+  template <> class shared_future<void>;
+
+  template <class> class packaged_task;   // [:en] not defined
+                                          // [|:zh_CN] 未予定义
+  template <class R, class... ArgTypes>
+    class packaged_task<R(ArgTypes...)>;
+
+  template <class R, class... ArgTypes>
+    void swap(packaged_task<R(ArgTypes...)>&, packaged_task<R(ArgTypes...)>&) noexcept;
+
+  template <class R, class Alloc>
+    struct uses_allocator<packaged_task<R>, Alloc>;
+
+  template <class F, class... Args>
+    future<invoke_result_t<decay_t<F>, decay_t<Args>...>>
+    async(F&& f, Args&&... args);
+  template <class F, class... Args>
+    future<invoke_result_t<decay_t<F>, decay_t<Args>...>>
+    async(launch policy, F&& f, Args&&... args);
+}
+[codeblock:end]
+
+[para]
+[:en] The [`enum] type [`launch] is a bitmask type ([#bitmask.types]) with
+elements [`launch::async] and [`launch::deferred].
+[:zh_CN] [`enum] 类型 [`launch] 是一种位掩码类型（[#bitmask.types]），带有元素
+[`launch::async] 和 [`launch::deferred]。
+
+[enter:note]
+[:en] Implementations can provide bitmasks to specify restrictions on task
+interaction by functions launched by [`async()] applicable to a corresponding
+subset of available launch policies.
+[:zh_CN] 各实现可以提供位掩码，以指定对由 [`async()] 所启动的函数的任务交互，
+施加可用的启动策略的某个对应子集的限制。
+
+[:en] Implementations can extend the behavior of the first overload of
+[`async()] by adding their extensions to the launch policy under the ["as if]
+rule.
+[:zh_CN] 各实现可以在“如同”原则之下，通过添加其各自对启动策略的扩展，来扩展
+[`async()] 的第一种重载的行为。
+[exit:note]
+
+[para]
+[:en] The enum values of [`future_errc] are distinct and not zero.
+[:zh_CN] [`future_errc] 的各枚举值互相区别且不为零。

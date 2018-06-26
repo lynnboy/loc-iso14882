@@ -1,0 +1,42 @@
+[section#diff.cpp14.special
+    [:en] Clause [#special]: special member functions
+    [:zh_CN] 第 [#special] 章：特殊成员函数
+]
+
+[para:~] [#class.inhctor.init]
+[=Change]
+[:en] Inheriting a constructor no longer injects a constructor into the derived
+class.
+[:zh_CN] 继承构造函数时不再向派生类中注入构造函数。
+
+[=Rationale]
+[:en] Better interaction with other language features.
+[:zh_CN] 与其他的语言功能更好的交互。
+
+[=Effect]
+[:en] Valid [=CppXIV] code that uses inheriting constructors may not be valid
+or may have different semantics.
+[:zh_CN] 使用继承构造函数的有效的 [=CppXIV] 代码可能无效或者具有不同语义。
+
+[:en] A [~using-declaration] that names a constructor now makes the
+corresponding base class constructors visible to initializations of the derived
+class rather than declaring additional derived class constructors.
+[:zh_CN] 提名构造函数的 [~using-声明式] 现在会使其对应的基类构造函数对派生类的
+初始化可见，而不是声明额外的派生类构造函数。
+
+[codeblock]
+struct A {
+  template<typename T> A(T, typename T::type = 0);
+  A(int);
+};
+struct B : A {
+  using A::A;
+  B(int);
+};
+B b(42L); // [:en] now calls [`B(int)], used to call [`B<long>(long)],
+          // [|:zh_CN] 现在调用的是 [`B(int)]，以前调用的是 [`B<long>(long)]，
+          // [:en@~] which called [`A(int)] due to substitution failure
+          // [|:zh_CN@~] 而它则会因为 [`A<long>(long)] 中的替换失败
+          // [:en@~] in [`A<long>(long)].
+          // [|:zh_CN@~] 而调用 [`A(int)]。
+[codeblock:end]

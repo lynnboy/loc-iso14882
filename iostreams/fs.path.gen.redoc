@@ -1,0 +1,167 @@
+[section#fs.path.gen
+    [:en] [`path] generation
+    [:zh_CN] [`path] 生成
+]
+
+[%@library lexically_normal[!path]]
+[%@library path[!lexically_normal]]
+[codeblock:declaration]
+path lexically_normal() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A path whose pathname in the generic format is the normal form
+([#fs.def.normal.form]) of the pathname in the generic format of [`*this].
+[:zh_CN] 一个 [`path]，其通用格式的路径名为 [`*this] 的通用格式路径名的正规形式
+（[#fs.def.normal.form]）。
+
+[para]
+[enter:example]
+[codeblock]
+assert(path("foo/./bar/..").lexically_normal() == "foo/");
+assert(path("foo/.///bar/../").lexically_normal() == "foo/");
+[codeblock:end]
+
+[:en] The above assertions will succeed.
+[:zh_CN] 以上断言会成功。
+
+[:en] On Windows, the returned path[=']s [~directory-separator] characters will
+be backslashes rather than slashes, but that does not affect [`path] equality.
+[:zh_CN] 在 Windows 上，其返回的 [`path] 的[~目录分隔符]字符为反斜杠而不是斜杠，
+但这并不影响 [`path] 的相等性。
+[exit:example]
+[exit:description]
+
+[%@library lexically_relative[!path]]
+[%@library path[!lexically_relative]]
+[codeblock:declaration]
+path lexically_relative(const path& base) const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`*this] made relative to [`base].
+[:zh_CN] [`*this] 相对于 [`base] 的结果。
+
+[:en] Does not resolve ([#fs.def.pathres]) symlinks.
+[:zh_CN] 并不解析（[#fs.def.pathres]）符号连接。
+
+[:en] Does not first normalize ([#fs.def.normal.form]) [`*this] or [`base].
+[:zh_CN] 并不会先对 [`*this] 或 [`base] 进行正规化（[#fs.def.normal.form]）。
+
+[para:effects]
+[:en] If [`root_name() != base.root_name()] is [`true] or
+[`is_absolute() != base.is_absolute()] is [`true] or
+[`!has_root_directory() && base.has_root_directory()] is [`true], returns
+[`path()].
+[:zh_CN] 如果 [`root_name() != base.root_name()] 为 [`true] 或
+[`is_absolute() != base.is_absolute()] 为 [`true] 或
+[`!has_root_directory() && base.has_root_directory()] 为 [`true]，则返回
+[`path()]。
+
+[:en] Determines the first mismatched element of [`*this] and [`base] as if by:
+[:zh_CN] 如同通过以下方式确定 [`*this] 和 [`base] 的第一个不匹配元素：
+
+[codeblock:notation]
+auto [a, b] = mismatch(begin(), end(), base.begin(), base.end());
+[codeblock:end]
+
+[:en] Then,
+[:zh_CN] 然后，
+
+[list]
+[item]
+[:en] if [`a == end()] and [`b == base.end()], returns [`path(".")]; otherwise
+[:zh_CN] 若 [`a == end()] 且 [`b == base.end()]，则返回 [`path(".")]；否则
+
+[item]
+[:en] let [`n] be the number of [~filename] elements in [=range(b,base.end())]
+that are not [~dot] or [~dot-dot] minus the number that are [~dot-dot].
+[:zh_CN] 令 [`n] 为在 [=range(b,base.end())] 中除了[~点]和[~点点]之外的[~文件名]
+元素的数量减去[~点点]的数量。
+
+[:en] If [`n<0], returns [`path()]; otherwise
+[:zh_CN] 若 [`n<0]，则返回 [`path()]；否则
+
+[item]
+[:en] returns an object of class [`path] that is default-constructed, followed
+by
+[:zh_CN] 返回一个类 [`path] 的对象，它被默认构造，然后
+
+[list]
+[item]
+[:en] application of [`operator/=(path(".."))] [`n] times, and then
+[:zh_CN] [`n] 次运用 [`operator/=(path(".."))]，然后
+[item]
+[:en] application of [`operator/=] for each element in [=range(a,end())].
+[:zh_CN] 对 [=range(a,end())] 中的每个元素运用 [`operator/=]。
+[list:end]
+[list:end]
+
+[para]
+[enter:example]
+[codeblock]
+assert(path("/a/d").lexically_relative("/a/b/c") == "../../d");
+assert(path("/a/b/c").lexically_relative("/a/d") == "../b/c");
+assert(path("a/b/c").lexically_relative("a") == "b/c");
+assert(path("a/b/c").lexically_relative("a/b/c/x/y") == "../..");
+assert(path("a/b/c").lexically_relative("a/b/c") == ".");
+assert(path("a/b").lexically_relative("c/d") == "../../a/b");
+[codeblock:end]
+
+[:en] The above assertions will succeed.
+[:zh_CN] 以上断言会成功。
+
+[:en] On Windows, the returned path[=']s [~directory-separator] characters will
+be backslashes rather than slashes, but that does not affect [`path] equality.
+[:zh_CN] 在 Windows 上，其返回的 [`path] 的[~目录分隔符]字符为反斜杠而不是斜杠，
+但这并不影响 [`path] 的相等性。
+[exit:example]
+
+[para]
+[enter:note]
+[:en] If symlink following semantics are desired, use the operational function
+[`relative()].
+[:zh_CN] 如果需要符号连接跟随语义，则应当使用函数 [`relative()]。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] If normalization ([#fs.def.normal.form]) is needed to ensure consistent
+matching of elements, apply [`lexically_normal()] to [`*this], [`base], or both.
+[:zh_CN] 如果需要进行正规化（[#fs.def.normal.form]）以确保元素匹配的一致性，则
+应当对 [`*this]，[`base] 或二者同时运用 [`lexically_normal()]。
+[exit:note]
+[exit:description]
+
+[%@library lexically_proximate[!path]]
+[%@library path[!lexically_proximate]]
+[codeblock:declaration]
+path lexically_proximate(const path& base) const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] If the value of [`lexically_relative(base)] is not an empty path, return
+it.
+[:zh_CN] 如果 [`lexically_relative(base)] 的值不是空路径，则将其返回。
+
+[:en] Otherwise return [`*this].
+[:zh_CN] 否则返回 [`*this]。
+
+[para]
+[enter:note]
+[:en] If symlink following semantics are desired, use the operational function
+[`proximate()].
+[:zh_CN] 如果需要符号连接跟随语义，则应当使用函数 [`proximate()]。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] If normalization ([#fs.def.normal.form]) is needed to ensure consistent
+matching of elements, apply [`lexically_normal()] to [`*this], [`base], or both.
+[:zh_CN] 如果需要进行正规化（[#fs.def.normal.form]）以确保元素匹配的一致性，则
+应当对 [`*this]，[`base] 或二者同时运用 [`lexically_normal()]。
+[exit:note]
+[exit:description]

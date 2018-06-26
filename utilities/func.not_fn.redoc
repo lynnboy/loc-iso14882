@@ -1,0 +1,110 @@
+[section#func.not_fn
+    [:en] Function template [`not_fn]
+    [:zh_CN] 函数模板 [`not_fn]
+]
+
+[%@library not_fn]
+[codeblock:declaration [!:mark UnSpec] ]
+template <class F> [=UnSpec] not_fn(F&& f);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`return [*call_wrapper](std::forward<F>(f));] where
+[`[*call_wrapper]] is an exposition only class defined as follows:
+[:zh_CN] 等价于 [`return [*call_wrapper](std::forward<F>(f));]，其中
+[`[*call_wrapper]] 是一个如下定义的仅用于解释的类：
+
+[codeblock:notation [!:var call_wrapper] ]
+class [*call_wrapper] {
+  using FD = decay_t<F>;
+  FD fd;
+
+  explicit [*call_wrapper](F&& f);
+
+public:
+  [*call_wrapper]([*call_wrapper]&&) = default;
+  [*call_wrapper](const [*call_wrapper]&) = default;
+
+  template<class... Args>
+    auto operator()(Args&&...) &
+      -> decltype(!declval<invoke_result_t<FD&, Args...>>());
+
+  template<class... Args>
+    auto operator()(Args&&...) const&
+      -> decltype(!declval<invoke_result_t<const FD&, Args...>>());
+
+  template<class... Args>
+    auto operator()(Args&&...) &&
+      -> decltype(!declval<invoke_result_t<FD, Args...>>());
+
+  template<class... Args>
+    auto operator()(Args&&...) const&&
+      -> decltype(!declval<invoke_result_t<const FD, Args...>>());
+};
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration [!:var call_wrapper] ]
+explicit [*call_wrapper](F&& f);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`FD] shall satisfy the requirements of [`MoveConstructible].
+[:zh_CN] [`FD] 应当满足 [`MoveConstructible] 的规定。
+
+[:en] [`is_constructible_v<FD, F>] shall be [`true].
+[:zh_CN] [`is_constructible_v<FD, F>] 应当为 [`true]。
+
+[:en] [`fd] shall be a callable object ([#func.def]).
+[:zh_CN] [`fd] 应当为可调用对象（[#func.def]）。
+
+[para:effects]
+[:en] Initializes [`fd] from [`std::forward<F>(f)].
+[:zh_CN] 以 [`std::forward<F>(f)] 初始化 [`fd]。
+
+[para:throws]
+[:en] Any exception thrown by construction of [`fd].
+[:zh_CN] 任何由 [`fd] 的构造中所抛出的异常。
+[exit:description]
+
+[codeblock:declaration]
+template<class... Args>
+  auto operator()(Args&&... args) &
+    -> decltype(!declval<invoke_result_t<FD&, Args...>>());
+template<class... Args>
+  auto operator()(Args&&... args) const&
+    -> decltype(!declval<invoke_result_t<const FD&, Args...>>());
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation [!:var INVOKE] ]
+return ![*INVOKE](fd, std::forward<Args>(args)...);              // [:en] see [#func.require]
+                                                                 // [|:zh_CN] 参见 [#func.require]
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+template<class... Args>
+  auto operator()(Args&&... args) &&
+    -> decltype(!declval<result_of_t<FD, Args...>>());
+template<class... Args>
+  auto operator()(Args&&... args) const&&
+    -> decltype(!declval<result_of_t<const FD, Args...>>());
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation [!:var INVOKE] ]
+return ![*INVOKE](std::move(fd), std::forward<Args>(args)...);   // [:en] see [#func.require]
+                                                                 // [|:zh_CN] 参见 [#func.require]
+[codeblock:end]
+[exit:description]

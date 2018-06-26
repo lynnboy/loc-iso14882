@@ -1,0 +1,366 @@
+[section#variant.ctor
+    [:en] Constructors
+    [:zh_CN] 构造函数
+]
+
+[para]
+[:en] In the descriptions that follow, let [$i] be in the range
+[=range(0,sizeof...(Types)], and [`T][$_i] be the [$i][^th] type in
+[`Types...].
+[:zh_CN] 在以下说明中，令 [$i] 在范围 [=range(0,sizeof...(Types)] 中取值，并令
+[`T][$_i] 为 [`Types...] 中的第 [$i] 个类型。
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark SeeBelow] ]
+constexpr variant() noexcept([=SeeBelow]);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a [`variant] holding a value-initialized value of type
+[`T][_0].
+[:zh_CN] 构造一个 [`variant] 并持有一个经过值初始化的 [`T][_0] 类型的值。
+
+[para:postconditions]
+[:en] [`valueless_by_exception()] is [`false] and [`index()] is [`0].
+[:zh_CN] [`valueless_by_exception()] 为 [`false] 并且 [`index()] 且 [`0]。
+
+[para:throws]
+[:en] Any exception thrown by the value-initialization of [`T][_0].
+[:zh_CN] 由 [`T][_0] 的值初始化所抛出的任何异常。
+
+[para:remarks]
+[:en] This function shall be [`constexpr] if and only if the
+value-initialization of the alternative type [`T][_0] would satisfy the
+requirements for a constexpr function.
+[:zh_CN] 当且仅当候选类型 [`T][_0] 的值初始化能够满足对 constexpr 函数的要求时，
+这个函数应当是 [`constexpr] 函数。
+
+[:en] The expression inside [`noexcept] is equivalent to
+[`is_nothrow_default_constructible_v<T][_0][`>].
+[:zh_CN] [`noexcept] 中的表达式等价于
+[`is_nothrow_default_constructible_v<T][_0][`>]。
+
+[:en] This function shall not participate in overload resolution unless
+[`is_default_constructible_v<T][_0][`>] is [`true].
+[:zh_CN] 除非 [`is_default_constructible_v<T][_0][`>] 为 [`true]，否则这个函数
+不能参与重载决议。
+
+[enter:note]
+[:en] See also class [`monostate].
+[:zh_CN] 另见类 [`monostate]。
+[exit:note]
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+variant(const variant& w);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`w] holds a value, initializes the [`variant] to hold the same
+alternative as [`w] and direct-initializes the contained value with
+[`get<j>(w)], where [`j] is [`w.index()].
+[:zh_CN] 如果 [`w] 持有值，则将 [`variant] 初始化为持有与 [`w] 相同的候选类型，
+并以 [`get<j>(w)] 直接初始化其所包含的值，其中 [`j] 为 [`w.index()]。
+
+[:en] Otherwise, initializes the [`variant] to not hold a value.
+[:zh_CN] 否则，将 [`variant] 初始化为不持有值。
+
+[para:throws]
+[:en] Any exception thrown by direct-initializing any [`T][$_i] for all [$i].
+[:zh_CN] 对于所有 [$i]，由 [`T][$_i] 的直接初始化所抛出的任何异常。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[`is_copy_constructible_v<T[$_i]>] is [`true] for all [$i].
+[:zh_CN] 除非 [`is_copy_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]，
+否则这个函数不能参与重载决议。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark SeeBelow] ]
+variant(variant&& w) noexcept([=SeeBelow]);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`w] holds a value, initializes the [`variant] to hold the same
+alternative as [`w] and direct-initializes the contained value with
+[`get<j>(std::move(w))], where [`j] is [`w.index()].
+[:zh_CN] 如果 [`w] 持有值，则将 [`variant] 初始化为持有与 [`w] 相同的候选类型，
+并以 [`get<j>(std::move(w))] 直接初始化其所包含的值，其中 [`j] 为 [`w.index()]。
+
+[:en] Otherwise, initializes the [`variant] to not hold a value.
+[:zh_CN] 否则，将 [`variant] 初始化为不持有值。
+
+[para:throws]
+[:en] Any exception thrown by move-constructing any [`T][$_i] for all [$i].
+[:zh_CN] 对于所有 [$i]，由 [`T][$_i] 的移动构造所抛出的任何异常。
+
+[para:remarks]
+[:en] The expression inside [`noexcept] is equivalent to the logical AND of
+[`is_nothrow_move_constructible_v<T[$_i]>] for all [$i].
+[:zh_CN] [`noexcept] 中的表达式等价于
+[`is_nothrow_default_constructible_v<T[$_i]>] 对于所有 [$i] 的逻辑与。
+
+[:en] This function shall not participate in overload resolution unless
+[`is_move_constructible_v<T[$_i]>] is [`true] for all [$i].
+[:zh_CN] 除非 [`is_move_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]，
+否则这个函数不能参与重载决议。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark SeeBelow] ]
+template <class T> constexpr variant(T&& t) noexcept([=SeeBelow]);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`T][$_j] be a type that is determined as follows: build an
+imaginary function [`[*FUN](T[$_i])] for each alternative type [`T][$_i].
+[:zh_CN] 令 [`T][$_j] 为这样所确定的类型：为每个候选类型 [`T][$_i] 构建一个
+虚构的函数 [`[*FUN](T[$_i])]。
+
+[:en] The overload [`[*FUN](T[$_j])] selected by overload resolution for the
+expression [`[*FUN](std::forward<T>(t))] defines the alternative [`T][$_j]
+which is the type of the contained value after construction.
+[:zh_CN] 由对表达式 [`[*FUN](std::forward<T>(t))] 所进行的重载决议所选择的重载
+[`[*FUN](T[$_j])]，定义了候选类型 [`T][$_j]，是构造之后所包含的值的类型。
+
+[para:effects]
+[:en] Initializes [`*this] to hold the alternative type [`T][$_j] and
+direct-initializes the contained value as if direct-non-list-initializing it
+with [`std::forward<T>(t)].
+[:zh_CN] 初始化 [`*this] 以持有候选类型 [`T][$_j]，并如同以
+[`std::forward<T>(t)] 进行直接非列表初始化一样直接初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`holds_alternative<T[$_j]>(*this)] is [`true].
+[:zh_CN] [`holds_alternative<T[$_j]>(*this)] 为 [`true]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the selected alternative
+[`T][$_j].
+[:zh_CN] 由所选择的候选 [`T][$_j] 的初始化所抛出的任何异常。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[`is_same_v<decay_t<T>, variant>] is [`false], unless [`decay_t<T>] is neither
+a specialization of [`in_place_type_t] nor a specialization of
+[`in_place_index_t], unless [`is_constructible_v<T[$_j], T>] is [`true], and
+unless the expression [`[*FUN](std::forward<T>(t))] (with [`[*FUN]] being
+the above-mentioned set of imaginary functions) is well formed.
+[:zh_CN] 除非 [`is_same_v<decay_t<T>, variant>] 为 [`false]，除非 [`decay_t<T>]
+既不是 [`in_place_type_t] 的特例也不是 [`in_place_index_t] 的特例，除非
+[`is_constructible_v<T[$_j], T>] 为 [`true]，并且除非
+[`[*FUN](std::forward<T>(t))]（其中 [`[*FUN]] 为上述的虚构的函数集合）是良构的，
+否则这个函数不能参与重载决议。
+
+[para]
+[enter:note]
+[codeblock]
+variant<string, string> v("abc");
+[codeblock:end]
+
+[:en] is ill-formed, as both alternative types have an equally viable
+constructor for the argument.
+[:zh_CN] 非良构，因为两个候选类型对这个形参都有同样可行的构造函数。
+[exit:note]
+
+[para]
+[:en] The expression inside [`noexcept] is equivalent to
+[`is_nothrow_constructible_v<T[$_j], T>].
+[:zh_CN] [`noexcept] 中的表达式等价于
+[`is_nothrow_constructible_v<T[$_j], T>]。
+
+[:en] If [`T][$_j][=']s selected constructor is a constexpr constructor, this
+constructor shall be a constexpr constructor.
+[:zh_CN] 如果所选择的 [`T][$_j] 的构造函数是 constexpr 构造函数，这个构造函数
+就应当为 constexpr 构造函数。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class T, class... Args> constexpr explicit variant(in_place_type_t<T>, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the contained value as if direct-non-list-initializing an
+object of type [`T] with the arguments [`std::forward<Args>(args)...].
+[:zh_CN] 如同以实参 [`std::forward<Args>(args)...] 进行直接非列表初始化一个 [`T]
+类型的对象一样初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`holds_alternative<T>(*this)] is [`true].
+[:zh_CN] [`holds_alternative<T>(*this)] 为 [`true]。
+
+[para:throws]
+[:en] Any exception thrown by calling the selected constructor of [`T].
+[:zh_CN] 由对所选择的 [`T] 的构造函数的调用所抛出的任何异常。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless there is
+exactly one occurrence of [`T] in [`Types...] and
+[`is_constructible_v<T, Args...>] is [`true].
+[:zh_CN] 除非 [`Types...] 中 [`T] 恰好出现一次，且
+[`is_constructible_v<T, Args...>] 为 [`true]，否则这个函数不能参与重载决议。
+
+[:en] If [`T][=']s selected constructor is a constexpr constructor, this
+constructor shall be a constexpr constructor.
+[:zh_CN] 如果所选择的 [`T] 的构造函数是 constexpr 构造函数，这个构造函数就应当为
+constexpr 构造函数。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class T, class U, class... Args>
+  constexpr explicit variant(in_place_type_t<T>, initializer_list<U> il, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the contained value as if direct-non-list-initializing an
+object of type [`T] with the arguments [`il, std::forward<Args>(args)...].
+[:zh_CN] 如同以实参 [`il, std::forward<Args>(args)...] 进行直接非列表初始化一个
+[`T] 类型的对象一样初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`holds_alternative<T>(*this)] is [`true].
+[:zh_CN] [`holds_alternative<T>(*this)] 为 [`true]。
+
+[para:throws]
+[:en] Any exception thrown by calling the selected constructor of [`T].
+[:zh_CN] 由对所选择的 [`T] 的构造函数的调用所抛出的任何异常。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless there is
+exactly one occurrence of [`T] in [`Types...] and
+[`is_constructible_v<T, initializer_list<U>&, Args...>] is [`true].
+[:zh_CN] 除非 [`Types...] 中 [`T] 恰好出现一次，且
+[`is_constructible_v<T, initializer_list<U>&, Args...>] 为 [`true]，否则这个函数
+不能参与重载决议。
+
+[:en] If [`T][=']s selected constructor is a constexpr constructor, this
+constructor shall be a constexpr constructor.
+[:zh_CN] 如果所选择的 [`T] 的构造函数是 constexpr 构造函数，这个构造函数就应当为
+constexpr 构造函数。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <size_t I, class... Args> constexpr explicit variant(in_place_index_t<I>, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the contained value as if direct-non-list-initializing an
+object of type [`T][$_I] with the arguments [`std::forward<Args>(args)...].
+[:zh_CN] 如同以实参 [`std::forward<Args>(args)...] 进行直接非列表初始化一个
+[`T][$_I] 类型的对象一样初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`index()] is [`I].
+[:zh_CN] [`index()] 为 [`I]。
+
+[para:throws]
+[:en] Any exception thrown by calling the selected constructor of [`T][$_I].
+[:zh_CN] 由对所选择的 [`T][$_I] 的构造函数的调用所抛出的任何异常。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非满足如下条件，否则这个函数不能参与重载决议：
+
+[list]
+[item]
+[:en@~] [`I] is less than [`sizeof...(Types)] and
+[:zh_CN@~] [`I] 小于 [`sizeof...(Types)]，并且
+
+[item]
+[:en@~] [`is_constructible_v<T[$_I], Args...>] is [`true].
+[:zh_CN@~] [`is_constructible_v<T[$_I], Args...>] 为 [`true]。
+[list:end]
+
+[:en] If [`T][$_I][=']s selected constructor is a [`constexpr] constructor,
+this constructor shall be a constexpr constructor.
+[:zh_CN] 如果所选择的 [`T][$_I] 的构造函数是 [`constexpr] 构造函数，这个构造函数
+就应当为 constexpr 构造函数。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <size_t I, class U, class... Args>
+  constexpr explicit variant(in_place_index_t<I>, initializer_list<U> il, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the contained value as if direct-non-list-initializing an
+object of type [`T][$_I] with the arguments [`il, std::forward<Args>(args)...].
+[:zh_CN] 如同以实参 [`il, std::forward<Args>(args)...] 进行直接非列表初始化一个
+[`T][$_I] 类型的对象一样初始化其所包含的值。
+
+[para:postconditions]
+[:en] [`index()] is [`I].
+[:zh_CN] [`index()] 为 [`I]。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非满足如下条件，否则这个函数不能参与重载决议：
+
+[list]
+[item]
+[:en@~] [`I] is less than [`sizeof...(Types)] and
+[:zh_CN@~] [`I] 小于 [`sizeof...(Types)]，并且
+
+[item]
+[:en@~] [`is_constructible_v<T[$_I], initializer_list<U>&, Args...>] is [`true].
+[:zh_CN@~] [`is_constructible_v<T[$_I], initializer_list<U>&, Args...>] 为
+[`true]。
+[list:end]
+
+[:en] If [`T][$_I][=']s selected constructor is a [`constexpr] constructor,
+this constructor shall be a constexpr constructor.
+[:zh_CN] 如果所选择的 [`T][$_I] 的构造函数是 [`constexpr] 构造函数，这个构造函数
+就应当为 constexpr 构造函数。
+[exit:description]
+
+[%@library variant[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+// [:en] allocator-extended constructors
+// [:zh_CN] 为分配器扩展的构造函数
+template <class Alloc>
+  variant(allocator_arg_t, const Alloc& a);
+template <class Alloc>
+  variant(allocator_arg_t, const Alloc& a, const variant& v);
+template <class Alloc>
+  variant(allocator_arg_t, const Alloc& a, variant&& v);
+template <class Alloc, class T>
+  variant(allocator_arg_t, const Alloc& a, T&& t);
+template <class Alloc, class T, class... Args>
+  variant(allocator_arg_t, const Alloc& a, in_place_type_t<T>, Args&&... args);
+template <class Alloc, class T, class U, class... Args>
+  variant(allocator_arg_t, const Alloc& a, in_place_type_t<T>,
+          initializer_list<U> il, Args&&... args);
+template <class Alloc, size_t I, class... Args>
+  variant(allocator_arg_t, const Alloc& a, in_place_index_t<I>, Args&&... args);
+template <class Alloc, size_t I, class U, class... Args>
+  variant(allocator_arg_t, const Alloc& a, in_place_index_t<I>,
+          initializer_list<U> il, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`Alloc] shall meet the requirements for an Allocator
+([#allocator.requirements]).
+[:zh_CN] [`Alloc] 应当满足对分配器的规定（[#allocator.requirements]）。
+
+[para:effects]
+[:en] Equivalent to the preceding constructors except that the contained value
+is constructed with uses-allocator construction
+([#allocator.uses.construction]).
+[:zh_CN] 等价于上述各构造函数，但其所包含的值是以带有分配器构造的方式构造的
+（[#allocator.uses.construction]）。
+[exit:description]

@@ -1,0 +1,358 @@
+[section#cpp.cond
+    [:en] Conditional inclusion
+    [:zh_CN] 条件包含
+
+[%[:en] preprocessing directive[!conditional inclusion]
+  [:zh_CN] 预处理指令[!条件包含～] ]
+[%[:en] inclusion[!conditional]
+    [%preprocessing directive[! conditional inclusion]]
+  [:zh_CN] 包含[!条件～]
+    [%预处理指令[!条件包含～]] ]
+]
+
+[%[`defined]]
+[syntax:explanation]
+[rule defined-macro-expression [:zh_CN] 已定义宏表达式 ]
+    [| [`defined] identifier ]
+    [| [`defined] [`(] identifier [`)] ]
+[rule:end]
+
+[rule h-preprocessing-token [:zh_CN] h-预处理记号 ]
+    [|:descriptive
+        [:en] any [~preprocessing-token] other than [`>]
+        [:zh_CN] 除 [`>] 之外的任何[~预处理记号]
+    ]
+[rule:end]
+
+[rule h-pp-tokens [:zh_CN] h-预处理记号序列 ]
+    [| h-preprocessing-token ]
+    [| h-pp-tokens h-preprocessing-token ]
+[rule:end]
+
+[rule has-include-expression [:zh_CN] 可包含表达式 ]
+    [| [`__has_include] [`(] [`<] h-char-sequence [`>] [`)] ]
+    [| [`__has_include] [`(] [`"] q-char-sequence [`"] [`)] ]
+    [| [`__has_include] [`(] string-literal [`)] ]
+    [| [`__has_include] [`(] [`<] h-pp-tokens [`>] [`)] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+The expression that controls conditional inclusion shall be an integral constant
+expression except that identifiers (including those lexically identical to
+keywords) are interpreted as described below[#:note#fn:$section.1] and it may
+contain zero or more [~defined-macro-expression]s and/or
+[~has-include-expression]s as unary operator expressions.
+[:zh_CN]
+控制条件包含的表达式应当为整型常量表达式，但标识符（包括在词法上等同于关键字的）
+按照下文所述进行解释[#:note#fn:$section.1]，且它可以包含零个或多个作为一元运算符
+表达式的[~已定义宏表达式]和/或[~可包含表达式]。
+
+[note:foot#fn:$section.1]
+[:en]
+Because the controlling constant expression is evaluated during translation
+phase 4, all identifiers either are or are not macro names [=--] there simply
+are no keywords, enumeration constants, etc.
+[:zh_CN]
+因为其控制常量表达式在翻译阶段 4 中求值，所以其所有标识符要么是要么不是宏名——
+其中没有关键字，枚举常量等事物。
+[note:end]
+
+[para]
+[:en]
+A [~defined-macro-expression] evaluates to [`1] if the identifier is currently
+defined as a macro name (that is, if it is predefined or if it has been the
+subject of a [`#define] preprocessing directive without an intervening [`#undef]
+directive with the same subject identifier), [`0] if it is not.
+[:zh_CN@~]
+[~已定义宏表达式]，若其标识符当前已被定义为一个宏名（就是说，若它是预定义的，
+或者若它曾属于某个 [`#define] 预处理指令，且未遇到带有相同标识符的交错进来的
+[`#undef] 指令），则求值为 [`1]，否则为 [`0]。
+
+[para]
+[:en]
+The third and fourth forms of [~has-include-expression] are considered only if
+neither of the first or second forms matches, in which case the preprocessing
+tokens are processed just as in normal text.
+[:zh_CN]
+[~可包含表达式]的第三和第四种形式，只有当第一和第二种形式都无法匹配时才会考虑，
+这种情况下其中的预处理记号被当做普通的文本来处理。
+
+[para]
+[:en]
+The header or source file identified by the parenthesized preprocessing token
+sequence in each contained [~has-include-expression] is searched for as if that
+preprocessing token sequence were the [~pp-tokens] in a [`#include] directive,
+except that no further macro expansion is performed.
+[:zh_CN]
+各个[~可包含表达式]中的带括号的预处理记号序列所指定的头文件或源文件，是将这个
+预处理记号序列当成是一个 [`#include] 指令中的[~预处理记号序列]来搜索的，但不会
+进行进一步的宏展开。
+
+[:en]
+If such a directive would not satisfy the syntactic requirements of a
+[`#include] directive, the program is ill-formed.
+[:zh_CN]
+如果这个指令不符合 [`#include] 指令的语法要求，则程序非良构。
+
+[:en]
+The [~has-include-expression] evaluates to [`1] if the search for the source
+file succeeds, and to [`0] if the search fails.
+[:zh_CN]
+如果对源文件的搜索成功，则[~可包含表达式]求值为 [`1]，如果搜索失败则为 [`0]。
+
+[para]
+[:en]
+The [`#ifdef] and [`#ifndef] directives, and the [`defined] conditional
+inclusion operator, shall treat [`__has_include] as if it were the name of a
+defined macro.
+[:zh_CN]
+[`#ifdef] 和 [`#ifndef] 指令以及 [`defined] 条件包含运算符，将 [`__has_include]
+当做如同是一个已定义的宏的名字。
+
+[:en]
+The identifier [`__has_include] shall not appear in any context not mentioned in
+this section.
+[:zh_CN]
+本章节中未提及的任何其他语境都不能出现标识符 [`__has_include]。
+
+[para]
+[:en]
+Each preprocessing token that remains (in the list of preprocessing tokens that
+will become the controlling expression) after all macro replacements have
+occurred shall be in the lexical form of a token ([#lex.token]).
+[:zh_CN]
+进行了所有宏替换后，仍（在控制表达式的预处理记号列表之中）保留下来的每个预处理
+记号，应当具有记号的词法形式（[#lex.token]）。
+
+[para]
+[:en]
+Preprocessing directives of the forms
+[:zh_CN]
+如下形式的预处理指令
+
+[syntax:explanation]
+[rule@aligned ]
+[%[`#if]]
+    [| [`#] [`if]       constant-expression new-line [~:opt group] ]
+[%[`#elif]]
+    [| [`#] [`elif]     constant-expression new-line [~:opt group] ]
+[rule:end]
+[syntax:end]
+
+[:en@~]
+check whether the controlling constant expression evaluates to nonzero.
+[:zh_CN@~]
+检查其控制常量表达式求值是否非零。
+
+[para]
+[:en]
+Prior to evaluation, macro invocations in the list of preprocessing tokens that
+will become the controlling constant expression are replaced (except for those
+macro names modified by the [`defined] unary operator), just as in normal text.
+[:zh_CN]
+在求值之前，在将要成为控制常量表达式的预处理记号的列表中（除了被一元运算符
+[`defined] 修饰的宏名之外）的宏调用，将如同普通文本中一样进行替换。
+
+[:en]
+If the token [`defined] is generated as a result of this replacement process or
+use of the [`defined] unary operator does not match one of the two specified
+forms prior to macro replacement, the behavior is undefined.
+[:zh_CN]
+若此替换过程的结果产生了记号 [`defined]，或者其所使用的一元运算符 [`defined] 在
+宏替换之前并不与所指定的两种形式相匹配，则其行为是未定义的。
+
+[:en]
+After all replacements due to macro expansion and evaluation of
+[~defined-macro-expression]s and [~has-include-expression]s have been performed,
+all remaining identifiers and keywords, except for [`true] and [`false], are
+replaced with the [~pp-number] [`0], and then each preprocessing token is
+converted into a token.
+[:zh_CN]
+在进行所有的宏扩展和对[~已定义宏表达式]和[~可包含表达式]的求值所导致的替换之后，
+所有余下的除 [`true] 和 [`false] 之外的标识符和关键字均被替换为[~预处理数字]
+[`0]，随即每个预处理记号均被转换为一个记号。
+
+[enter:note]
+[:en]
+An alternative token ([#lex.digraph]) is not an identifier, even when its
+spelling consists entirely of letters and underscores.
+[:zh_CN]
+代用记号（[#lex.digraph]）并不是标识符，即使其拼写完全由字母和下划线组成。
+
+[:en]
+Therefore it is not subject to this replacement.
+[:zh_CN]
+因此它不参与这项替换。
+[exit:note]
+
+[para]
+[:en]
+The resulting tokens comprise the controlling constant expression which is
+evaluated according to the rules of [#expr.const] using arithmetic that has at
+least the ranges specified in [#support.limits].
+[:zh_CN]
+所产生的记号构成了控制常量表达式，根据 [#expr.const] 的规则，使用至少如
+[#support.limits] 中指定的算术计算范围来对其进行求值。
+
+[:en]
+For the purposes of this token conversion and evaluation all signed and unsigned
+integer types act as if they have the same representation as, respectively,
+[`intmax_t] or [`uintmax_t] ([#cstdint]).
+[:zh_CN]
+进行这种记号转换和求值时，所有有符号和无符号整数类型的行为将如同它们分别具有与
+[`intmax_t] 和 [`uintmax_t]（[#cstdint]）相同的表示。
+
+[enter:note]
+[:en]
+Thus on an implementation where [`std::numeric_limits<int>::max()] is [`0x7FFF]
+and [`std::numeric_limits<unsigned int>::max()] is [`0xFFFF], the integer
+literal [`0x8000] is signed and positive within a [`#if] expression even though
+it is unsigned in translation phase 7 ([#lex.phases]).
+[:zh_CN]
+因此，如果某个实现中 [`std::numeric_limits<int>::max()] 为 [`0x7FFF] 而
+[`std::numeric_limits<unsigned int>::max()] 为 [`0xFFFF]，则即使在翻译阶段 7
+（[#lex.phases]）中整数字面量 [`0x8000] 是无符号的，它在 [`#if] 表达式中也是
+有符号且为正的。
+[exit:note]
+
+[:en]
+This includes interpreting character literals, which may involve converting
+escape sequences into execution character set members.
+[:zh_CN]
+其中包括了对字符字面量的解释，还可能涉及将转义序列转换为执行字符集的成员。
+
+[:en]
+Whether the numeric value for these character literals matches the value
+obtained when an identical character literal occurs in an expression (other than
+within a [`#if] or [`#elif] directive) is [%@impldef numeric values of character
+literals in [`#if] directives] implementation-defined.
+[:zh_CN]
+这些字符字面量的数值是否与当在（并非 [`#if] 或 [`#elif] 指令中的）表达式中出现
+相同的字符字面量时所获取的值相匹配是[%@impldef [`#if] 指令中的字符字面量的数值]
+由实现定义的。
+
+[enter:note]
+[:en]
+Thus, the constant expression in the following [`#if] directive and [`if]
+statement is not guaranteed to evaluate to the same value in these two contexts.
+[:zh_CN]
+因此，如下的 [`#if] 指令和 [`if] 语句中的常量表达式并不保证在这两个语境中求得
+相同的值。
+
+[codeblock]
+#if 'z' - 'a' == 25
+if ('z' - 'a' == 25)
+[codeblock:end]
+[exit:note]
+
+[:en]
+Also, whether a single-character character literal may have a negative value is
+[%@impldef negative value of character literal in preprocessor]
+implementation-defined.
+[:zh_CN]
+另外，单字符的字符字面量是否能具有负值是[%@impldef 预处理器中字符字面量的负值]
+由实现定义的。
+
+[:en]
+Each subexpression with type [`bool] is subjected to integral promotion before
+processing continues.
+[:zh_CN]
+在继续处理前每个类型为 [`bool] 的子表达式将进行整型提升。
+
+[para]
+[:en]
+Preprocessing directives of the forms
+[:zh_CN]
+如下形式的预处理指令
+
+[syntax:explanation]
+[rule@aligned ]
+[%[`#ifdef]]
+    [| [`#] [`ifdef]    identifier new-line [~:opt group] ]
+[%[`#ifndef]]
+    [| [`#] [`ifndef]   identifier new-line [~:opt group] ]
+[rule:end]
+[syntax:end]
+
+[:en@~]
+check whether the identifier is or is not currently defined as a macro name.
+[:zh_CN@~]
+检查该标识符当前是否被定义为宏名。
+
+[:en]
+Their conditions are equivalent to [`#if defined] [~identifier] and [`#if
+!defined] [~identifier] respectively.
+[:zh_CN]
+它们的条件分别等价于“[`#if defined] [~标识符]”和“[`#if !defined] [~标识符]”。
+
+[para]
+[:en]
+Each directive[=']s condition is checked in order.
+[:zh_CN]
+按顺序对每个指令的条件进行检查。
+
+[:en]
+If it evaluates to false (zero), the group that it controls is skipped:
+directives are processed only through the name that determines the directive in
+order to keep track of the level of nested conditionals; the rest of the
+directives[='] preprocessing tokens are ignored, as are the other preprocessing
+tokens in the group.
+[:zh_CN]
+若它求值为假（零），则跳过它所控制的组：随即为了跟踪条件的嵌套层次，仅处理用以
+确定指令的名字；如同该组之中的其他预处理记号一样忽略这些指令余下的预处理记号。
+
+[:en]
+Only the first group whose control condition evaluates to true (nonzero) is
+processed; any following groups are skipped and their controlling directives
+are processed as if they were in a group that is skipped.
+[:zh_CN]
+只有第一个控制条件求值为真（非零）的组才会被处理；其后的各个组都被逃过，它们的
+控制指令被当做如同处于一个被跳过的组之内一样处理。
+
+[:en]
+If none of the conditions evaluates to true, and there is a [`#else] [%[`#else]]
+directive, the group controlled by the [`#else] is processed; lacking a [`#else]
+directive, all the groups until the [`#endif] [%[`#endif]] are skipped.
+[#:note#fn:$section.2]
+[:zh_CN]
+若条件求值均不为真，而其中有一个 [`#else] [%[`#else]] 指令，则处理被该 [`#else]
+控制的组；若缺少 [`#else] 指令，则直到 [`#endif] [%[`#endif]] 的所有组均被跳过。
+[#:note#fn:$section.2]
+
+[note:foot#fn:$section.2]
+[:en]
+As indicated by the syntax, a preprocessing token shall not follow a [`#else] or
+[`#endif] directive before the terminating new-line character.
+[:zh_CN]
+正如在语法中指出的，不能在 [`#else] 或 [`#endif] 指令的终结换行字符之前跟有预
+处理记号。
+
+[:en]
+However, comments may appear anywhere in a source file, including within a
+preprocessing directive.
+[:zh_CN]
+然而，注释可以在源文件的任意位置出现，包括在预处理指令之中。
+[note:end]
+
+[enter:example]
+[:en]
+This demonstrates a way to include a library [`optional] facility only if it is
+available:
+[:zh_CN]
+下面展示了只有在程序库的 [`optional] 设施可用时才对其包含的一种方式：
+
+[codeblock]
+#if __has_include(<optional>)
+#  include <optional>
+#  define have_optional 1
+#elif __has_include(<experimental/optional>)
+#  include <experimental/optional>
+#  define have_optional 1
+#  define experimental_optional 1
+#else
+#  define have_optional 0
+#endif
+[codeblock:end]
+[exit:example]

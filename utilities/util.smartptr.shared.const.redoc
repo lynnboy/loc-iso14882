@@ -1,0 +1,311 @@
+[section#util.smartptr.shared.const
+    [:en] [`shared_ptr] constructors
+    [:zh_CN] [`shared_ptr] 的构造函数
+]
+
+[para]
+[:en] In the constructor definitions below, enables [`shared_from_this] with
+[`p], for a pointer [`p] of type [`Y*], means that if [`Y] has an unambiguous
+and accessible base class that is a specialization of [`enable_shared_from_this]
+([#util.smartptr.enab]), then [`remove_cv_t<Y>*] shall be implicitly convertible
+to [`T*] and the constructor evaluates the statement:
+[:zh_CN] 在下列的构造函数定义中，所谓从 [`Y*] 类型的指针 [`p] 启用
+[`shared_from_this] 的含义是，若 [`Y] 具有一个无歧义且可访问的基类是
+[`enable_shared_from_this]（[#util.smartptr.enab]）的特例，则 [`remove_cv_t<Y>*]
+应当可以隐式转换为 [`T*]，并且该构造函数将执行以下语句：
+
+[codeblock:notation]
+if (p != nullptr && p->weak_this.expired())
+  p->weak_this = shared_ptr<remove_cv_t<Y>>(*this, const_cast<remove_cv_t<Y>*>(p));
+[codeblock:end]
+
+[:en] The assignment to the [`weak_this] member is not atomic and conflicts with
+any potentially concurrent access to the same object ([#intro.multithread]).
+[:zh_CN] 对成员 [`weak_ptr] 的赋值并不是原子性的，并且与对相同对象的潜在的并发
+访问之间有冲突（[#intro.multithread]）。
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr shared_ptr() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs an empty [`shared_ptr] object.
+[:zh_CN] 构造一个空的 [`shared_ptr] 对象。
+
+[para:postconditions]
+[:en] [`use_count() == 0 && get() == nullptr].
+[:zh_CN] [`use_count() == 0 && get() == nullptr]。
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class Y> explicit shared_ptr(Y* p);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`Y] shall be a complete type.
+[:zh_CN] [`Y] 应当为完整类型。
+
+[:en] The expression [`delete`[`] p], when [`T] is an array type, or
+[`delete p], when [`T] is not an array type, shall have well-defined behavior,
+and shall not throw exceptions.
+[:zh_CN] 当 [`T] 为数组类型时的表达式 [`delete`[`] p]，或者当 [`T] 不是数组类型
+时的表达式 [`delete p]，应当具有恰当定义的行为，且不能抛出异常。
+
+[para:effects]
+[:en] When [`T] is not an array type, constructs a [`shared_ptr] object that
+owns the pointer [`p].
+[:zh_CN] 当 [`T] 不是数组类型时，构造一个拥有指针 [`p] 的 [`shared_ptr] 对象。
+
+[:en] Otherwise, constructs a [`shared_ptr] that owns [`p] and a deleter of an
+unspecified type that calls [`delete`[`] p].
+[:zh_CN] 否则，构造一个拥有 [`p] 和一个将会调用 [`delete`[`] p] 的某个未指明类型
+的删除器的 [`shared_ptr]。
+
+[:en] When [`T] is not an array type, enables [`shared_from_this] with [`p].
+[:zh_CN] 当 [`T] 不是数组类型时，从 [`p] 启用 [`shared_from_this]。
+
+[:en] If an exception is thrown, [`delete p] is called when [`T] is not an array
+type, [`delete`[`] p] otherwise.
+[:zh_CN] 如果抛出了异常，则当 [`T] 不是数组类型时将调用 [`delete p]，否则将调用
+[`delete`[`] p]。
+
+[para:postconditions]
+[:en] [`use_count() == 1 && get() == p].
+[:zh_CN] [`use_count() == 1 && get() == p]。
+
+[para:throws]
+[:en] [`bad_alloc], or an [%@impldef exception type when [`shared_ptr]
+constructor fails] implementation-defined exception when a resource other than
+memory could not be obtained.
+[:zh_CN] [`bad_alloc]，或者当无法获得内存之外的资源时抛出某个 [%@impldef 当
+[`shared_ptr] 的构造函数失败时抛出的异常类型] 由实现定义的异常。
+
+[para:remarks]
+[:en] When [`T] is an array type, this constructor shall not participate in
+overload resolution unless the expression [`delete`[`] p] is well-formed and
+either [`T] is [`U`[N`]] and [`Y(*)`[N`]] is convertible to [`T*], or [`T] is
+[`U`[`]] and [`Y(*)`[`]] is convertible to [`T*].
+[:zh_CN] 当 [`T] 为数组类型时，除非表达式 [`delete`[`] p] 良构且要么 [`T] 为
+[`U`[N`]] 并且 [`Y(*)`[N`]] 可以转换为 [`T*]，要么 [`T] 为 [`U`[`]] 且
+[`Y(*)`[`]] 可以转换为 [`T*]，否则这个构造函数不能参与重载决议。
+
+[:en] When [`T] is not an array type, this constructor shall not participate in
+overload resolution unless the expression [`delete p] is well-formed and [`Y*]
+is convertible to [`T*].
+[:en] 当 [`T] 不是数组类型时，除非表达式 [`delete p] 良构且 [`Y*] 可以转换为
+[`T*]，否则这个构造函数不能参与重载决议。
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class Y, class D> shared_ptr(Y* p, D d);
+template<class Y, class D, class A> shared_ptr(Y* p, D d, A a);
+template <class D> shared_ptr(nullptr_t p, D d);
+template <class D, class A> shared_ptr(nullptr_t p, D d, A a);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] Construction of [`d] and a deleter of type [`D] initialized with
+[`std::move(d)] shall not throw exceptions.
+[:zh_CN] [`d] 和以 [`std::move(d)] 所初始化的 [`D] 类型的一个删除器的构造过程
+不能抛出异常。
+
+[:en] The expression [`d(p)] shall have well defined behavior, and shall not
+throw exceptions.
+[:zh_CN] 表达式 [`d(p)] 应当具有恰当定义的行为，且不能抛出异常。
+
+[:en] [`A] shall be an allocator ([#allocator.requirements]).
+[:zh_CN] [`A] 应当为分配器（[#allocator.requirements]）。
+
+[para:effects]
+[:en] Constructs a [`shared_ptr] object that owns the object [`p] and the
+deleter [`d].
+[:zh_CN] 构造一个拥有对象 [`p] 和删除器 [`d] 的 [`shared_ptr] 对象。
+
+[:en] When [`T] is not an array type, the first and second constructors enable
+[`shared_from_this] with [`p].
+[:zh_CN] 当 [`T] 不是数组类型时，第一个和第二个构造函数从 [`p] 启用
+[`shared_from_this]。
+
+[:en] The second and fourth constructors shall use a copy of [`a] to allocate
+memory for internal use.
+[:zh_CN] 第二个和第四个构造函数应当使用 [`a] 的副本来为其内部使用进行内存分配。
+
+[:en] If an exception is thrown, [`d(p)] is called.
+[:zh_CN] 当抛出了异常时，将调用 [`d(p)]。
+
+[para:postconditions]
+[:en] [`use_count() == 1 && get() == p].
+[:zh_CN] [`use_count() == 1 && get() == p]。
+
+[para:throws]
+[:en] [`bad_alloc], or an [%@impldef exception type when [`shared_ptr]
+constructor fails] implementation-defined exception when a resource other than
+memory could not be obtained.
+[:zh_CN] [`bad_alloc]，或者当无法获得内存之外的资源时抛出某个 [%@impldef 当
+[`shared_ptr] 的构造函数失败时抛出的异常类型] 由实现定义的异常。
+
+[para:remarks]
+[:en] When [`T] is an array type, this constructor shall not participate in
+overload resolution unless [`is_move_constructible_v<D>] is [`true], the
+expression [`d(p)] is well-formed, and either [`T] is [`U`[N`]] and [`Y(*)`[N`]]
+is convertible to [`T*], or [`T] is [`U`[`]] and [`Y(*)`[`]] is convertible to
+[`T*].
+[:zh_CN] 当 [`T] 为数组类型时，除非 [`is_move_constructible_v<D>] 为 [`true]，
+表达式 [`d(p)] 良构，而且要么 [`T] 为 [`U`[N`]] 并且 [`Y(*)`[N`]] 可以转换为
+[`T*]，要么 [`T] 为 [`U`[`]] 且 [`Y(*)`[`]] 可以转换为 [`T*]，否则这个构造函数
+不能参与重载决议。
+
+[:en] When [`T] is not an array type, this constructor shall not participate in
+overload resolution unless [`is_move_constructible_v<D>] is [`true], the
+expression [`d(p)] is well-formed, and [`Y*] is convertible to [`T*].
+[:en] 当 [`T] 不是数组类型时，除非 [`is_move_constructible_v<D>] 为 [`true]，
+表达式 [`d(p)] 良构且 [`Y*] 可以转换为 [`T*]，否则这个构造函数不能参与重载决议。
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class Y> shared_ptr(const shared_ptr<Y>& r, element_type* p) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a [`shared_ptr] instance that stores [`p] and shares ownership
+with [`r].
+[:zh_CN] 构造一个存储了 [`p] 并且与 [`r] 共享所有权的 [`shared_ptr] 的实例。
+
+[para:postconditions]
+[:en] [`get() == p && use_count() == r.use_count()].
+[:zh_CN] [`get() == p && use_count() == r.use_count()]。
+
+[para]
+[enter:note]
+[:en] To avoid the possibility of a dangling pointer, the user of this
+constructor must ensure that [`p] remains valid at least until the ownership
+group of [`r] is destroyed.
+[:zh_CN] 为避免可能的悬挂指针，这个构造函数的用户必须保证 [`p] 持续有效，至少
+维持到 [`r] 的所有权组被销毁之时。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] This constructor allows creation of an empty [`shared_ptr] instance with a
+non-null stored pointer.
+[:zh_CN] 这个构造函数允许创建带有非空的存储指针的空 [`shared_ptr] 实例。
+[exit:note]
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+shared_ptr(const shared_ptr& r) noexcept;
+template<class Y> shared_ptr(const shared_ptr<Y>& r) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] The second constructor shall not participate in overload resolution unless
+[`Y*] is compatible with [`T*].
+[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，否则第二个构造函数不能参与重载决议。
+
+[para:effects]
+[:en] If [`r] is empty, constructs an empty [`shared_ptr] object; otherwise,
+constructs a [`shared_ptr] object that shares ownership with [`r].
+[:zh_CN] 若 [`r] 为空，则构造一个空 [`shared_ptr] 对象；否则，构造一个与 [`r]
+共享所有权的 [`shared_ptr] 对象。
+
+[para:postconditions]
+[:en] [`get() == r.get() && use_count() == r.use_count()].
+[:zh_CN] [`get() == r.get() && use_count() == r.use_count()]。
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+shared_ptr(shared_ptr&& r) noexcept;
+template<class Y> shared_ptr(shared_ptr<Y>&& r) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] The second constructor shall not participate in overload resolution unless
+[`Y*] is compatible with [`T*].
+[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，否则第二个构造函数不能参与重载决议。
+
+[para:effects]
+[:en] Move constructs a [`shared_ptr] instance from [`r].
+[:zh_CN] 以 [`r] 移动构造一个 [`shared_ptr] 实例。
+
+[para:postconditions]
+[:en] [`*this] shall contain the old value of [`r].
+[:zh_CN] [`*this] 应当包含 [`r] 的原值。
+
+[:en] [`r] shall be empty.
+[:zh_CN] [`r] 应当为空。
+
+[:en] [`r.get() == nullptr].
+[:zh_CN] [`r.get() == nullptr]。
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[%@library weak_ptr]
+[codeblock:declaration]
+template<class Y> explicit shared_ptr(const weak_ptr<Y>& r);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a [`shared_ptr] object that shares ownership with [`r] and
+stores a copy of the pointer stored in [`r].
+[:zh_CN] 构造一个与 [`r] 共享所有权的 [`shared_ptr] 对象，并保存 [`r] 所保存的
+指针的副本。
+
+[:en] If an exception is thrown, the constructor has no effect.
+[:zh_CN] 如果抛出了异常，则该构造函数没有效果。
+
+[para:postconditions]
+[:en] [`use_count() == r.use_count()].
+[:zh_CN] [`use_count() == r.use_count()]。
+
+[para:throws]
+[:en] [`bad_weak_ptr] when [`r.expired()].
+[:zh_CN] 当 [`r.expired()] 时抛出 [`bad_weak_ptr]。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless [`Y*]
+is compatible with [`T*].
+[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，否则这个构造函数不能参与重载决议。
+[exit:description]
+
+[%@library shared_ptr[![:en]constructor[:zh_CN]构造函数]]
+[%@library unique_ptr]
+[codeblock:declaration]
+template <class Y, class D> shared_ptr(unique_ptr<Y, D>&& r);
+[codeblock:end]
+
+[enter:description]
+[para:remark]
+[:en] This constructor shall not participate in overload resolution unless [`Y*]
+is compatible with [`T*] and [`unique_ptr<Y, D>::pointer] is convertible to
+[`element_type*].
+[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，且 [`unique_ptr<Y, D>::pointer] 可以转换为
+[`element_type*]，否则这个构造函数不能成员重载决议。
+
+[para:effects]
+[:en] If [`r.get() == nullptr], equivalent to [`shared_ptr()].
+[:zh_CN] 当 [`r.get() == nullptr] 时，等价于 [`shared_ptr()]。
+
+[:en] Otherwise, if [`D] is not a reference type, equivalent to
+[`shared_ptr(r.release(), r.get_deleter())].
+[:zh_CN] 否则，当 [`D] 不是引用类型时，等价于 [`shared_ptr(r.release(),
+r.get_deleter())]。
+
+[:en] Otherwise, equivalent to [`shared_ptr(r.release(), ref(r.get_deleter()))].
+[:zh_CN] 否则，等价于 [`shared_ptr(r.release(), ref(r.get_deleter()))]。
+
+[:en] If an exception is thrown, the constructor has no effect.
+[:zh_CN] 如果抛出了异常，则该构造函数没有效果。
+[exit:description]

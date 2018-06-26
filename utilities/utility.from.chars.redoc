@@ -1,0 +1,141 @@
+[section#utility.from.chars
+    [:en] Primitive numeric input conversion
+    [:zh_CN] 基础数值输入转换
+]
+
+[para]
+[:en]
+All functions named [`from_chars] analyze the string [=range(first,last)] for a
+pattern, where [=range(first,last)] is required to be a valid range.
+[:zh_CN]
+名为 [`from_chars] 的每个函数都分析字符串 [=range(first,last)] 以识别一个模式，
+要求 [=range(first,last)] 是一个有效的范围。
+
+[:en]
+If no characters match the pattern, [`value] is unmodified, the member [`ptr] of
+the return value is [`first] and the member [`ec] is equal to
+[`errc::invalid_argument].
+[:zh_CN]
+如果没有与模式匹配的字符，则 [`value] 不会改动，返回值的成员 [`ptr] 为 [`first]，
+而成员 [`ec] 等于 [`errc::invalid_argument]。
+
+[:en]
+Otherwise, the characters matching the pattern are interpreted as a
+representation of a value of the type of [`value].
+[:zh_CN]
+否则，与模式匹配的各个字符被解释为对某个 [`value] 的类型的值的表示。
+
+[:en]
+The member [`ptr] of the return value points to the first character not matching
+the pattern, or has the value [`last] if all characters match.
+[:zh_CN]
+返回值的成员 [`ptr] 指向未能与模式相匹配的第一个字符，或者当所有字符都匹配时值为
+[`last]。
+
+[:en]
+If the parsed value is not in the range representable by the type of [`value],
+[`value] is unmodified and the member [`ec] of the return value is equal to
+[`errc::result_out_of_range].
+[:zh_CN]
+如果所解析的值不在 [`value] 的类型的可表示范围之内，则不会改动 [`value]，且返回
+值的成员 [`ec] 等于 [`errc::result_out_of_range]。
+
+[:en]
+Otherwise, [`value] is set to the parsed value and the member [`ec] is set such
+that the conversion to [`bool] yields [`false].
+[:zh_CN]
+否则，[`value] 被设置为所解析的值，而成员 [`ec] 则被设置为转换为 [`bool] 后将
+产生 [`false]。
+
+[%@library from_chars]
+[codeblock:declaration [!:mark SeeBelow] ]
+from_chars_result from_chars(const char* first, const char* last,
+                             [=SeeBelow]& value, int base = 10);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`base] has a value between 2 and 36 (inclusive).
+[:zh_CN] [`base] 的值在 2 到 36 之间（含边界）。
+
+[para:effects]
+[:en] The pattern is the expected form of the subject sequence in the [`"C"]
+locale for the given nonzero base, as described for [`strtol], except that no
+[`"0x"] or [`"0X"] prefix shall appear if the value of [`base] is 16, and except
+that a minus sign is the only sign that may appear, and only if [`value] has a
+signed type.
+[:zh_CN] 所用模式为在 [`"C"] 地域中根据给定非零基数的预期序列形式，如 [`strtol]
+的说明，但当 [`base] 为 16 时不能出现 [`"0x"] 或 [`"0X"] 前缀，而且只有负号可以
+作为符号出现且仅当 [`value] 具有有符号类型时才允许出现符号。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+
+[para:remarks]
+[:en] The implementation shall provide overloads for all signed and unsigned
+integer types and [`char] as the referenced type of the parameter [`value].
+[:zh_CN] 实现应当为所有有符号和无符号整数类型和 [`char] 作为形参 [`value] 的被
+引用类型提供重载。
+[exit:description]
+
+[%@library from_chars]
+[codeblock:declaration]
+from_chars_result from_chars(const char* first, const char* last, float& value,
+                             chars_format fmt = chars_format::general);
+from_chars_result from_chars(const char* first, const char* last, double& value,
+                             chars_format fmt = chars_format::general);
+from_chars_result from_chars(const char* first, const char* last, long double& value,
+                             chars_format fmt = chars_format::general);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`fmt] has the value of one of the enumerators of [`chars_format].
+[:zh_CN] [`fmt] 的值为 [`chars_format] 的枚举符之一。
+
+[para:effects]
+[:en] The pattern is the expected form of the subject sequence in the [`"C"]
+locale, as described for [`strtod], except that
+[:zh_CN] 所用模式为在 [`"C"] 地域中的预期序列形式，如 [`strtod] 的说明，但有以下
+不同：
+
+[list]
+[item]
+[:en] the only sign that may appear is a minus sign;
+[:zh_CN] 仅允许负号作为符号出现；
+[item]
+[:en] if [`fmt] has [`chars_format::scientific] set but not
+[`chars_format::fixed], the otherwise optional exponent part shall appear;
+[:zh_CN] 当 [`fmt] 设置了 [`chars_format::scientific] 但未设置
+[`chars_format::fixed] 时，本可以省略的指数部分应当出现；
+[item]
+[:en] if [`fmt] has [`chars_format::fixed] set but not
+[`chars_format::scientific], the optional exponent part shall not appear; and
+[:zh_CN] 当 [`fmt] 设置了 [`chars_format::fixed] 但未设置
+[`chars_format::scientific] 时，可选的指数部分不能出现；以及
+[item]
+[:en] if [`fmt] is [`chars_format::hex], the prefix [`"0x"] or [`"0X"] is
+assumed.
+[:zh_CN] 当 [`fmt] 为 [`chars_format::hex] 时，假定带有前缀 [`"0x"] 或 [`"0X"]。
+
+[enter:example]
+[:en] The string [`0x123] is parsed to have the value [`0] with remaining
+characters [`x123].
+[:zh_CN] 字符串 [`0x123] 被解析为值 [`0]，剩下的字符有 [`x123]。
+[exit:example]
+[list:end]
+
+[:en] In any case, the resulting [`value] is one of at most two floating-point
+values closest to the value of the string matching the pattern.
+[:zh_CN] 无论哪种情况，结果的 [`value] 是与模式相匹配的字符串的值的至多两个
+最接近的值之一。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[para:xref]
+[:en] ISO C 7.22.1.3, ISO C 7.22.1.4.
+[:zh_CN] ISO C 7.22.1.3，ISO C 7.22.1.4。

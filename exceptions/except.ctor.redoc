@@ -1,0 +1,142 @@
+[section#except.ctor
+    [:en] Constructors and destructors
+    [:zh_CN] 构造函数和析构函数
+
+[:en]
+[%exception handling[!constructors and destructors]]
+[%constructor[!exception handling]
+    [%exception handling[!constructors and destructors]]]
+[%destructor[!exception handling]
+    [%exception handling[!constructors and destructors]]]
+[:zh_CN]
+[%异常处理[!构造函数和析构函数]]
+[%构造函数[!异常处理][%异常处理[!构造函数和析构函数]]]
+[%析构函数[!异常处理][%异常处理[!构造函数和析构函数]]]
+]
+
+[para]
+[:en]
+[%unwinding[!stack]]
+As control passes from the point where an exception is thrown to a handler,
+destructors are invoked by a process, specified in this section, called
+[+stack unwinding].
+[:zh_CN]
+[%解退[!栈～]]
+当控制从抛出异常之处传递到处理器时，根据本小结指定的过程调用析构函数，称之为
+[+栈解退]。
+
+[para]
+[:en]
+The destructor is invoked for each automatic object of class type constructed,
+but not yet destroyed, since the try block was entered.
+[:zh_CN]
+调用进入 try 块以来所创建且尚未销毁的所有类类型的自动对象的析构函数。
+
+[:en]
+If an exception is thrown during the destruction of temporaries or local
+variables for a [`return] statement ([#stmt.return]), the destructor for the
+returned object (if any) is also invoked.
+[:zh_CN]
+如果某个 [`return] 语句（[#stmt.return]）的临时对象或局部变量，其销毁过程中抛出
+了异常，则也调用被返回的对象（如果有）的析构函数。
+
+[:en]
+The objects are destroyed in the reverse order of the completion of their
+construction.
+[:zh_CN]
+对象以它们构造完成的相反顺序销毁。
+
+[enter:example]
+[codeblock]
+struct A { };
+
+struct Y { ~Y() noexcept(false) { throw 0; } };
+
+A f() {
+  try {
+    A a;
+    Y y;
+    A b;
+    return {};      // #1
+  } catch (...) {
+  }
+  return {};        // #2
+}
+[codeblock:end]
+
+[:en]
+At #1, the returned object of type [`A] is constructed.
+[:zh_CN]
+在 #1 处，构造了 [`A] 类型的返回对象。
+
+[:en]
+Then, the local variable [`b] is destroyed ([#stmt.jump]).
+[:zh_CN]
+然后销毁局部变量 [`b]（[#stmt.jump]）。
+
+[:en]
+Next, the local variable [`y] is destroyed, causing stack unwinding, resulting
+in the destruction of the returned object, followed by the destruction of the
+local variable [`a].
+[:zh_CN]
+接下来销毁局部变量 [`y]，引发了栈解退，并导致所返回的对象的销毁，再跟着销毁局部
+变量 [`a]。
+
+[:en]
+Finally, the returned object is constructed again at #2.
+[:zh_CN]
+最后，在 #2 处再次构造被返回的对象。
+[exit:example]
+
+[para]
+[:en]
+If the initialization or destruction of an object other than by delegating
+constructor is terminated by an exception, the destructor is invoked for each of
+the object[=']s direct subobjects and, for a complete object, virtual base class
+subobjects, whose initialization has completed ([#dcl.init]) and whose
+destructor has not yet begun execution, except that in the case of destruction,
+the variant members of a union-like class are not destroyed.
+[:zh_CN]
+当某个对象除了委派构造函数以外的初始化或者销毁过程以异常终止时，该对象的每个直接
+子对象，以及完整对象的情况中其每个虚基类子对象，若其初始化已经完成（[#dcl.init]）
+且其析构函数尚未开始执行，则调用其析构函数，但在进行销毁的情况下，类似联合的类的
+可变成员不进行销毁。
+
+[:en]
+The subobjects are destroyed in the reverse order of the completion of their
+construction.
+[:zh_CN]
+这些子对象以它们构造完成的相反顺序销毁。
+
+[:en]
+Such destruction is sequenced before entering a handler of the
+[~function-try-block] of the constructor or destructor, if any.
+[:zh_CN]
+这种销毁过程按顺序早于构造函数或析构函数的[~函数-try-块]的处理器（如果有）的进入
+。
+
+[para]
+[:en]
+If the [~compound-statement] of the [~function-body] of a delegating constructor
+for an object exits via an exception, the object[=']s destructor is invoked.
+[:zh_CN]
+当某个对象的委派构造函数的[~函数体]的[~组合语句]以异常退出时，调用该对象的析构
+函数。
+
+[:en]
+Such destruction is sequenced before entering a handler of the
+[~function-try-block] of a delegating constructor for that object, if any.
+[:zh_CN]
+这种销毁过程按顺序早于该对象的委派构造函数的[~函数-try-块]的处理器（如果有）的
+进入。
+
+[para]
+[enter:note]
+[:en]
+If the object was allocated by a [~new-expression] ([#expr.new]), the matching
+deallocation function ([#basic.stc.dynamic.deallocation]), if any, is called to
+free the storage occupied by the object.
+[:zh_CN]
+若对象是由 [~new-表达式]分配的（[#expr.new]），则要调用匹配的回收配函数
+（[#basic.stc.dynamic.deallocation]）（如果有）以释放该对象所占据的存储。
+[exit:note]

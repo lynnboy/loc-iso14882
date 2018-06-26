@@ -1,0 +1,128 @@
+[section#adjacent.difference
+    [:en] Adjacent difference
+    [:zh_CN] 临差
+]
+
+[%@library adjacent_difference]
+[codeblock:declaration]
+template <class InputIterator, class OutputIterator>
+  OutputIterator
+    adjacent_difference(InputIterator first, InputIterator last,
+                        OutputIterator result);
+template <class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
+  ForwardIterator2
+    adjacent_difference(ExecutionPolicy&& exec,
+                        ForwardIterator1 first, ForwardIterator1 last,
+                        ForwardIterator2 result);
+
+template <class InputIterator, class OutputIterator, class BinaryOperation>
+  OutputIterator
+    adjacent_difference(InputIterator first, InputIterator last,
+                        OutputIterator result,
+                        BinaryOperation binary_op);
+template <class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
+          class BinaryOperation>
+  ForwardIterator2
+    adjacent_difference(ExecutionPolicy&& exec,
+                        ForwardIterator1 first, ForwardIterator1 last,
+                        ForwardIterator2 result,
+                        BinaryOperation binary_op);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[list]
+[item]
+[:en] For the overloads with no [`ExecutionPolicy], [`InputIterator][=']s value
+type shall be [`MoveAssignable] (Table [#tab:moveassignable]) and shall be
+constructible from the type of [`*first].
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，[`InputIterator] 的值类型应当为
+[`MoveAssignable]（表 [#tab:moveassignable]），并且 [`*first] 的类型应当可以转换
+为该值类型。
+
+[:en] [`acc] (defined below) shall be writable to the [`result] output iterator.
+[:zh_CN] [`acc]（定义如下）应当可以向输出迭代器 [`result] 写出。
+
+[:en] The result of the expression [`val - acc] or [`binary_op(val, acc)] shall
+be writable to the [`result] output iterator.
+[:zh_CN] 表达式 [`val - acc] 或 [`binary_op(val, acc)] 的结果应当可以向输出
+迭代器 [`result] 写出。
+
+[item]
+[:en] For the overloads with an [`ExecutionPolicy], the value type of
+[`ForwardIterator1] shall be [`CopyConstructible] (Table
+[#tab:copyconstructible]) from the expression [`*first - *first] or
+[`binary_op(*first, *first)], and assignable to the value type of
+[`ForwardIterator2].
+[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，[`ForwardIterator1] 的值类型应当为
+从表达式 [`*first - *first] 或 [`binary_op(*first, *first)] [`CopyConstructible]
+（表 [#tab:copyconstructible]），并且可以向 [`ForwardIterator2] 的值类型赋值。
+
+[item]
+[:en] For all overloads, in the ranges [=crange(first,last)] and
+[=crange(result,result + (last - first))], [`binary_op] shall neither modify
+elements nor invalidate iterators or subranges.[#:note#fn:$section.1]
+[:zh_CN] 对于所有重载，在范围 [=crange(first,last)] 和
+[=crange(result,result + (last - first))] 之中，[`binary_op] 既不能改动任何元素，
+也不能使任何迭代器或子范围失效。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en] The use of fully closed ranges is intentional.
+[:zh_CN] 特意使用全闭合范围。
+[note:end]
+[list:end]
+
+[para:effects]
+[:en] For the overloads with no [`ExecutionPolicy] and a non-empty range, the
+function creates an accumulator [`acc] whose type is [`InputIterator][=']s
+value type, initializes it with [`*first], and assigns the result to [`*result].
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 而带有一个非空范围的重载，函数创建一个
+累加数 [`acc]，其类型为 [`InputIterator] 的值类型，以 [`*first] 对其初始化，并将
+其结果赋值给 [`*result]。
+
+[:en] For every iterator [`i] in [=range(first + 1,last)] in order, creates an
+object [`val] whose type is [`InputIterator][=']s value type, initializes it
+with [`*i], computes [`val - acc] or [`binary_op(val, acc)], assigns the result
+to [`*(result + (i - first))], and move assigns from [`val] to [`acc].
+[:zh_CN] 对于 [=range(first + 1,last)] 中的每个迭代器 [`i]，依序创建对象 [`val]，
+其类型为 [`InputIterator] 的值类型，以 [`*i] 对其初始化，计算 [`val - acc] 或者
+[`binary_op(val, acc)]，将其结果赋值给 [`*(result + (i - first))]，并将 [`val]
+移动赋值给 [`acc]。
+
+[para]
+[:en] For the overloads with an [`ExecutionPolicy] and a non-empty range, first
+the function creates an object whose type is [`ForwardIterator1][=']s value
+type, initializes it with [`*first], and assigns the result to [`*result].
+[:zh_CN] 对于带有 [`ExecutionPolicy] 而带有一个非空范围的重载，函数首先创建一个
+类型为 [`ForwardIterator1] 的值类型的对象，以 [`*first] 对其初始化，并将其结果
+赋值给 [`*result]。
+
+[:en] Then for every [`d] in [=crange(1,last - first - 1)], creates an object
+[`val] whose type is [`ForwardIterator1][=']s value type, initializes it with
+[`*(first + d) - *(first + d - 1)] or
+[`binary_op(*(first + d), *(first + d - 1))], and assigns the result to
+[`*(result + d)].
+[:zh_CN] 对于 [=crange(1,last - first - 1)] 中的每个 [`d]，创建对象 [`val]，
+其类型为 [`ForwardIterator1] 的值类型，以 [`*(first + d) - *(first + d - 1)]
+或者 [`binary_op(*(first + d), *(first + d - 1))] 对其初始化，并将其结果赋值给
+[`*(result + d)]。
+
+[para:returns]
+[:en] [`result + (last - first)].
+[:zh_CN] [`result + (last - first)]。
+
+[para:complexity]
+[:en] Exactly [`(last - first) - 1] applications of the binary operation.
+[:zh_CN]恰好 [`(last - first) - 1] 次运用二元运算。
+
+[para:remarks]
+[:en] For the overloads with no [`ExecutionPolicy], [`result] may be equal to
+[`first].
+[:en] 对于不带有 [`ExecutionPolicy] 的重载，[`result] 有可能等于 [`first]。
+
+[:en] For the overloads with an [`ExecutionPolicy], the ranges
+[=range(first,last)] and [=range(result,result + (last - first))] shall not
+overlap.
+[:en] 对于带有 [`ExecutionPolicy] 的重载，范围 [=range(first,last)] 和
+[=range(result,result + (last - first))] 不能重叠。
+[exit:description]

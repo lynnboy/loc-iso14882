@@ -1,0 +1,96 @@
+[section#thread.timedmutex.recursive
+    [:en] Class [`recursive_timed_mutex]
+    [:zh_CN] 类 [`recursive_timed_mutex]
+]
+
+[%@library recursive_timed_mutex]
+[codeblock:synopsis [!:mark ImpDef] ]
+namespace std {
+  class recursive_timed_mutex {
+  public:
+    recursive_timed_mutex();
+    ~recursive_timed_mutex();
+
+    recursive_timed_mutex(const recursive_timed_mutex&) = delete;
+    recursive_timed_mutex& operator=(const recursive_timed_mutex&) = delete;
+
+    void lock();  // [:en] blocking
+                  // [|:zh_CN] 阻塞
+    bool try_lock() noexcept;
+    template <class Rep, class Period>
+      bool try_lock_for(const chrono::duration<Rep, Period>& rel_time);
+    template <class Clock, class Duration>
+      bool try_lock_until(const chrono::time_point<Clock, Duration>& abs_time);
+    void unlock();
+
+    using native_handle_type = [=ImpDef]; // [:en] See [#thread.req.native]
+                                          // [|:zh_CN] 参见 [#thread.req.native]
+    native_handle_type native_handle();                // [:en] See [#thread.req.native]
+                                                       // [|:zh_CN] 参见 [#thread.req.native]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The class [`recursive_timed_mutex] provides a recursive mutex with
+exclusive ownership semantics.
+[:zh_CN] 类 [`recursive_timed_mutex] 提供一种带有互斥所有权语义的递归互斥体。
+
+[:en] If one thread owns a [`recursive_timed_mutex] object, attempts by another
+thread to acquire ownership of that object will fail (for [`try_lock()]) or
+block (for [`lock()], [`try_lock_for()], and [`try_lock_until()]) until the
+owning thread has completely released ownership or the call to [`try_lock_for()]
+or [`try_lock_until()] times out (having failed to obtain ownership).
+[:zh_CN] 当一个线程拥有一个 [`recursive_timed_mutex] 对象时，其他线程尝试获取该
+对象的所有权将会失败（对于 [`try_lock()]），或者阻塞直到拥有方线程完全释放了
+所有权（对于 [`lock()]、[`try_lock_for()] 和 [`try_lock_until()]），或者对
+[`try_lock_for()] 或 [`try_lock_until()] 的调用超时（且获取所有权失败）。
+
+[para]
+[:en] The class [`recursive_timed_mutex] shall satisfy all of the timed mutex
+requirements ([#thread.timedmutex.requirements]).
+[:zh_CN] 类 [`recursive_timed_mutex] 应当满足所有的定时互斥体规定
+（[#thread.timedmutex.requirements]）。
+
+[:en] It shall be a standard-layout class (Clause [#class]).
+[:zh_CN] 它应当是标准布局类（第 [#class] 章）。
+
+[para]
+[:en] A thread that owns a [`recursive_timed_mutex] object may acquire
+additional levels of ownership by calling [`lock()], [`try_lock()],
+[`try_lock_for()], or [`try_lock_until()] on that object.
+
+[:en] It is unspecified how many levels of ownership may be acquired by a single
+thread.
+[:zh_CN] 一个线程可以获取多少级别的所有权是未指明的。
+
+[:en] If a thread has already acquired the maximum level of ownership for a
+[`recursive_timed_mutex] object, additional calls to [`try_lock()],
+[`try_lock_for()], or [`try_lock_until()] shall fail, and additional calls to
+[`lock()] shall throw an exception of type [`system_error].
+[:zh_CN] 如果线程已经获取了一个 [`recursive_timed_mutex] 对象的最大级别的所有权，
+则再次调用 [`try_lock()]、[`try_lock_for()] 或 [`try_lock_until()] 应当失败，而
+再次调用 [`lock()] 应当抛出 [`system_error] 类型的异常。
+
+[:en] A thread shall call [`unlock()] once for each level of ownership acquired
+by calls to [`lock()], [`try_lock()], [`try_lock_for()], and
+[`try_lock_until()].
+[:zh_CN] 线程应当为通过 [`lock()]、[`try_lock()]、[`try_lock_for()] 和
+[`try_lock_until()] 所获取的每个级别的所有权都进行一次 [`unlock()] 调用。
+
+[:en] Only when all levels of ownership have been released may ownership of the
+object be acquired by another thread.
+[:zh_CN] 只有当对该对象的所有级别的所有权都被释放后，其他线程才能获得其所有权。
+
+[para]
+[:en] The behavior of a program is undefined if:
+[:zh_CN] 以下情况下程序的行为未定义：
+
+[list]
+[item]
+[:en] it destroys a [`recursive_timed_mutex] object owned by any thread, or
+[:zh_CN] 销毁某个被任何线程拥有的 [`recursive_timed_mutex] 对象，或者
+[item]
+[:en] a thread terminates while owning a [`recursive_timed_mutex] object.
+[:zh_CN] 线程在拥有某个 [`recursive_timed_mutex] 对象时终止。
+[list:end]

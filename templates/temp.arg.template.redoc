@@ -1,0 +1,195 @@
+[section#temp.arg.template
+    [:en] Template template arguments
+    [:zh_CN] 模板的模板实参
+]
+
+[para]
+[:en]
+A [~template-argument] for a template [~template-parameter] shall be the name of
+a class template or an alias template, expressed as [~id-expression].
+[:zh_CN]
+模板[~模板形参]的[~模板实参]应当为类模板或别名模板的名字，表示为[~标识表达式]。
+
+[:en]
+When the [~template-argument] names a class template, only primary class
+templates are considered when matching the template template argument with the
+corresponding parameter; partial specializations are not considered even if
+their parameter lists match that of the template template parameter.
+[:zh_CN]
+若[~模板实参]指名类模板，则将模板模板实参与其对应形参进行匹配时只考虑主类模板；
+即使部分特化式的形参列表与其模板模板形参匹配也不会被考虑。
+
+[para]
+[:en]
+Any partial specializations ([#temp.class.spec]) associated with the primary
+class template or primary variable template are considered when a specialization
+based on the template [~template-parameter] is instantiated.
+[:zh_CN]
+当基于模板[~模板形参]对某个特例进行实例化时，与主类模板相关联的任何部分特化式
+都要考虑（[#temp.class.spec]）。
+
+[:en]
+If a specialization is not visible at the point of instantiation, and it would
+have been selected had it been visible, the program is ill-formed, no diagnostic
+required.
+[:zh_CN]
+如果某个特化式在实例化点不可见，而假若它可见就会选择它，则程序是非良构的，无须
+诊断。
+
+[enter:example]
+[codeblock]
+template<class T> class A {     // [:en] primary template
+                                // [|:zh_CN] 主模板
+  int x;
+};
+template<class T> class A<T*> { // [:en] partial specialization
+                                // [|:zh_CN] 部分特化式
+  long x;
+};
+template<template<class U> class V> class C {
+  V<int>  y;
+  V<int*> z;
+};
+C<A> c;             // [:en] [`V<int>] within [`C<A>] uses the primary template, so [`c.y.x] has type [`int]
+                    // [|:zh_CN] [`C<A>] 中的 [`V<int>] 使用了主模板，故 [`c.y.x] 类型为 [`int]
+                    // [:en] [`V<int*>] within [`C<A>] uses the partial specialization, so [`c.z.x] has type [`long]
+                    // [|:zh_CN] [`C<A>] 中的 [`V<int*>] 使用了部分特化式，故 [`c.x.x] 类型为 [`long]
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A [~template-argument] matches a template [~template-parameter] [`P] when [`P]
+is at least as specialized as the [~template-argument] [`A].
+[:zh_CN]
+如果模板[~模板形参] [`P] 至少和[~模板实参] [`A] 一样特殊，则 [`A] 与 [`P] 相匹配
+。
+
+[:en]
+If [`P] contains a parameter pack, then [`A] also matches [`P] if each of
+[`A][=']s template parameters matches the corresponding template parameter in
+the [~template-parameter-list] of [`P]. 
+[:zh_CN]
+当 [`P] 包含形参包组时，如果 [`A] 的每个模板形参都与 [`P] 的[~模板形参列表]中的
+对应模板形参相匹配，则 [`A] 也与 [`P] 相匹配。
+
+[:en]
+Two template parameters match if they are of the same kind (type, non-type,
+template), for non-type [~template-parameter]s, their types are equivalent
+([#temp.over.link]), and for template [~template-parameter]s, each of their
+corresponding [~template-parameter]s matches, recursively.
+[:zh_CN]
+当两个模板形参具有相同种类（类型、非类型或模板），且对于非类型[~模板形参]它们的
+类型等价（[#temp.over.link]），以及对于模板[~模板形参]它们的每个对应[~模板形参]
+都递归地相匹配时，它们相匹配。
+
+[:en]
+When [`P][=']s [~template-parameter-list] contains a template parameter pack
+([#temp.variadic]), the template parameter pack will match zero or more template
+parameters or template parameter packs in the [~template-parameter-list] of [`A]
+with the same type and form as the template parameter pack in [`P] (ignoring
+whether those template parameters are template parameter packs).
+[:zh_CN]
+若 [`P] 的[~模板形参列表]包含模板形参包组（[#temp.variadic]），则该模板形参包组
+将与 [`A] 的[~模板形参列表]中，与 [`P] 中的模板形参包组类型和形式相同的零个或
+多个模板形参或模板形参包组相匹配（忽略这些模板形参是否为模板形参包组）。
+
+[para:~]
+[enter:example]
+[codeblock]
+template<class T> class A { /* ... */ };
+template<class T, class U = T> class B { /* ... */ };
+template<class ... Types> class C { /* ... */ };
+template<auto n> class D { /* ... */ };
+template<template<class> class P> class X { /* ... */ };
+template<template<class ...> class Q> class Y { /* ... */ };
+template<template<int> class R> class Z { /* ... */ };
+
+X<A> xa;            // OK
+X<B> xb;            // OK
+X<C> xc;            // OK
+Y<A> ya;            // OK
+Y<B> yb;            // OK
+Y<C> yc;            // OK
+Z<D> zd;            // OK
+[codeblock:end]
+[exit:example]
+
+[para:~]
+[enter:example]
+[codeblock]
+template <class T> struct eval;
+
+template <template <class, class...> class TT, class T1, class... Rest>
+struct eval<TT<T1, Rest...>> { };
+
+template <class T1> struct A;
+template <class T1, class T2> struct B;
+template <int N> struct C;
+template <class T1, int N> struct D;
+template <class T1, class T2, int N = 17> struct E;
+
+eval<A<int>> eA;                // [:en] OK: matches partial specialization of [`eval]
+                                // [|:zh_CN] OK：匹配 [`eval] 的部分特化式
+eval<B<int, float>> eB;         // [:en] OK: matches partial specialization of [`eval]
+                                // [|:zh_CN] OK：匹配 [`eval] 的部分特化式
+eval<C<17>> eC;                 // [:en] error: [`C] does not match [`TT] in partial specialization
+                                // [|:zh_CN] 错误：[`C] 并不与部分特化式中的 [`TT] 相匹配
+eval<D<int, 17>> eD;            // [:en] error: [`D] does not match [`TT] in partial specialization
+                                // [|:zh_CN] 错误：[`D] 并不与部分特化式中的 [`TT] 相匹配
+eval<E<int, float>> eE;         // [:en] error: [`E] does not match [`TT] in partial specialization
+                                // [|:zh_CN] 错误：[`E] 并不与部分特化式中的 [`TT] 相匹配
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A template [~template-parameter] [`P] is at least as specialized as a template
+[~template-argument] [`A] if, given the following rewrite to two function
+templates, the function template corresponding to [`P] is at least as
+specialized as the function template corresponding to [`A] according to the
+partial ordering rules for function templates ([#temp.func.order]).
+[:zh_CN]
+对于模板[~模板形参] [`P] 和模板[~模板实参] [`A]，若将它们重写为如下的两个函数
+模板时，根据函数模板的偏序规则（[#temp.func.order]），对应于 [`P] 的函数模板
+至少和对应于 [`A] 的函数模板一样特殊，则 [`P] 至少和 [`A] 一样特殊。
+
+[:en]
+Given an invented class template [`X] with the template parameter list of
+[`A] (including default arguments):
+[:zh_CN]
+设一个虚构的类模板 [`X] 带有 [`A] 的模板形参列表（包括其默认实参）：
+
+[list]
+[item]
+[:en]
+Each of the two function templates has the same template parameters,
+respectively, as [`P] or [`A].
+[:zh_CN]
+两个函数模板都分别与 [`P] 和 [`A] 带有相同的模板形参，
+
+[item]
+[:en]
+Each function template has a single function parameter whose type is a
+specialization of [`X] with template arguments corresponding to the template
+parameters from the respective function template where, for each template
+parameter [`PP] in the template parameter list of the function template,
+a corresponding template argument [`AA] is formed.
+[:zh_CN]
+两个函数模板各有一个函数形参，类型为 [`X] 的特例，其各模板实参对应于该函数模板的
+各相应模板形参，其中，对于函数模板的模板形参列表中的每个模板形参 [`PP]，构成一个
+相应的模板实参 [`AA]。
+
+[:en]
+If [`PP] declares a parameter pack, then [`AA] is the pack expansion [`PP...]
+([#temp.variadic]); otherwise, [`AA] is the [~id-expression] [`PP].
+[:zh_CN]
+当 [`PP] 声明的是形参包组时，[`AA] 为包组展开 [`PP...]（[#temp.variadic]）；否则
+，[`AA] 为[~标识表达式] [`PP]。
+[list:end]
+
+[:en]
+If the rewrite produces an invalid type, then [`P] is not at least as
+specialized as [`A].
+[:zh_CN]
+如果这种重写产生了无效的类型，则 [`P] 并非至少和 [`A] 一样特殊。

@@ -1,0 +1,152 @@
+[section#basic.start.static
+    [:en] Static initialization
+    [:zh_CN] 静态初始化
+]
+
+[para]
+[:en]
+[%initialization] [%initialization[!static and thread]]
+Variables with static storage duration are initialized as a consequence of
+program initiation.
+[:zh_CN]
+[%初始化] [%初始化[!静态和线程～]]
+具有静态存储期的变量的初始化，是程序启动的结果。
+
+[:en]
+Variables with thread storage duration are initialized as a consequence of
+thread execution.
+[:zh_CN]
+具有线程存储期的非局部变量的初始化，是线程执行的结果。
+
+[:en]
+Within each of these phases of initiation, initialization occurs as follows.
+[:zh_CN]
+这些启动阶段中，都将按照如下来进行初始化。
+
+[para]
+[:en]
+[%initialization[![`static] object]]
+[%initialization[!constant]]
+A [+constant initializer] for a variable or temporary object [`o] is an
+initializer whose full-expression is a constant expression, except that if [`o]
+is an object, such an initializer may also invoke constexpr constructors for
+[`o] and its subobjects even if those objects are of non-literal class types.
+[:zh_CN]
+[%初始化[![`static] 对象]]
+[%初始化[!常量～]]
+作为变量或临时对象 [`o] 的[+常量初始化式]的表达式，是其全表达式为常量表达式的
+初始化式，但当 [`o] 为对象时，这个初始化式也可以调用 [`o] 及其子对象的 constexpr
+构造函数，即便这些对象并不是非字面量类类型。
+
+[enter:note]
+[:en]
+Such a class may have a non-trivial destructor.
+[:zh_CN]
+这样的类可能带有非平凡的析构函数。
+[exit:note]
+
+[:en]
+[%initialization[!constant]]
+[+Constant initialization[%constant initialization]] is performed if a variable
+or temporary object with static or thread storage duration is initialized by a
+constant initializer for the entity.
+[:zh_CN]
+[%初始化[!常量～]]
+如果具有静态或线程存储期的变量或临时对象，是以该实体的常量初始化式来进行初始化的
+，则对其实施[+常量初始化]。
+
+[:en]
+[%initialization[!runtime]]
+If constant initialization is not performed, a variable with static storage
+duration ([#basic.stc.static]) or thread storage duration ([#basic.stc.thread])
+is zero-initialized ([#dcl.init]).
+[:zh_CN]
+[%初始化[!运行时～]]
+若未进行常量初始化，则具有静态存储期（[#basic.stc.static]）或线程存储期
+（[#basic.stc.thread]）的变量进行零初始化（[#dcl.init]）。
+
+[:en]
+Together, zero-initialization and constant initialization are called [+static
+initialization]; [%initialization[!dynamic]] all other initialization is
+[+dynamic initialization].
+[:zh_CN]
+零初始化和常量初始化统称为[+静态初始化]；[%初始化[!动态～]]所有其他初始化都是
+[+动态初始化]。
+
+[:en]
+All static initialization strongly happens before ([#intro.races]) any dynamic
+initialization.
+[:zh_CN]
+所有的静态初始化均强发生早于（[#intro.races]）任何的动态初始化。
+
+[enter:note]
+[:en]
+The dynamic initialization of non-local variables is described in
+[#basic.start.dynamic]; that of local static variables is described in
+[#stmt.dcl].
+[:zh_CN]
+非局部变量的动态初始化在 [#basic.start.dynamic] 中描述；局部静态变量的动态初始化
+在 [#stmt.dcl] 中描述。
+[exit:note]
+
+[para]
+An implementation is permitted to perform the initialization of a variable with
+static or thread storage duration as a static initialization even if such
+initialization is not required to be done statically, provided that
+[:zh_CN]
+如下情况下，允许实现把具有静态或线程存储期的变量的初始化，当作静态初始化实施，
+即使该初始化并不必静态进行：
+
+[list]
+[item]
+[:en]
+the dynamic version of the initialization does not change the value of any other
+object of static or thread storage duration prior to its initialization, and
+[:zh_CN]
+该初始化的动态版本不改变任何在其初始化之前的其他静态或线程存储期的对象的值，并且
+
+[item]
+[:en]
+the static version of the initialization produces the same value in the
+initialized variable as would be produced by the dynamic initialization if all
+variables not required to be initialized statically were initialized
+dynamically.
+[:zh_CN]
+该初始化的静态版本在所初始化的变量中产生的值，与当不需静态地初始化的所有变量都
+动态地进行初始化时，由动态初始化产生的值相同。
+[list:end]
+
+[enter:note]
+[:en]
+As a consequence, if the initialization of an object [`obj1] refers to an object
+[`obj2] of namespace scope potentially requiring dynamic initialization and
+defined later in the same translation unit, it is unspecified whether the value
+of [`obj2] used will be the value of the fully initialized [`obj2] (because
+[`obj2] was statically initialized) or will be the value of [`obj2] merely
+zero-initialized.
+[:zh_CN]
+其结论是，若对象 [`obj1] 的初始化涉及到某个命名空间作用域对象 [`obj2]，它潜在地
+需要动态初始化，且在相同翻译单元中的后面才被定义，则其所使用的 [`obj2] 的值是
+[`obj2] 初始化完全进行后的值（由于 [`obj2] 被静态初始化），还是 [`obj2] 只不过被
+零初始化后的值是未指明的。
+
+[:en]
+For example,
+[:zh_CN]
+例如，
+
+[codeblock]
+inline double fd() { return 1.0; }
+extern double d1;
+double d2 = d1;     // [:en] unspecified:
+                    // [|:zh_CN] 未指明的：
+                    // [:en@~] may be statically initialized to [`0.0] or
+                    // [|:zh_CN@~] 当 [`d1] 被动态初始化时，
+                    // [:en@~] dynamically initialized to [`0.0] if [`d1] is
+                    // [|:zh_CN@~] 可能被静态初始化为 [`0.0]
+                    // [:en@~] dynamically initialized, or [`1.0] otherwise
+                    // [|:zh_CN@~] 否则被静态初始化为 [`1.0]
+double d1 = fd();   // [:en] may be initialized statically or dynamically to [`1.0]
+                    // [|:zh_CN] 可能被静态或动态初始化为 [`1.0]
+[codeblock:end]
+[exit:note]

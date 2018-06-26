@@ -1,0 +1,332 @@
+[section#tuple.cnstr
+    [:en] Construction
+    [:zh_CN] 构造
+]
+
+[para]
+[:en]
+For each [`tuple] constructor, an exception is thrown only if the construction
+of one of the types in [`Types] throws an exception.
+[:zh_CN]
+对于各个 [`tuple] 构造函数，仅当 [`Types] 中的一个类型的构造抛出异常时，它才抛出
+异常。
+
+[para]
+[:en]
+The defaulted move and copy constructor, respectively, of [`tuple] shall be a
+constexpr function if and only if all required element-wise initializations for
+copy and move, respectively, would satisfy the requirements for a constexpr
+function.
+[:zh_CN]
+[`tuple] 的预置移动和复制构造函数，当且仅当其对应的所有需要的按元素复制或移动
+初始化能够符合 constexpr 函数的规定，则它是 constexpr 函数。
+
+[:en]
+The defaulted move and copy constructor of [`tuple<>] shall be constexpr
+functions.
+[:zh_CN]
+[`tuple<>] 的预置移动和复制构造函数应当是 constexpr 函数。
+
+[para]
+[:en]
+The destructor of tuple shall be a trivial destructor if
+[`(is_trivially_destructible_v<Types> && ...)] is [`true].
+[:zh_CN]
+当 [`(is_trivially_destructible_v<Types> && ...)] 为 [`true] 时，[`tuple] 的析构
+函数应当是平凡的析构函数。
+
+[para]
+[:en]
+In the constructor descriptions that follow, let [$i] be in the range
+[=range(0,sizeof...(Types))] in order, [$[`T]_i] be the [$i][^th] type in
+[`Types], and [$[`U]_i] be the [$i][^th] type in a template parameter pack named
+[`UTypes], where indexing is zero-based.
+[:zh_CN]
+下文对构造函数的描述中，令 [$i] 在范围 [=range(0,sizeof...(Types))] 中依序取值，
+[$[`T]_i] 为 [`Types] 中的第 [$i] 个类型，而 [$[`U]_i] 为名为 [`UTypes] 的模板
+形参包组中的第 [$i] 个类型，其中的索引基于零。
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark EXPLICIT] ]
+[=EXPLICIT] constexpr tuple();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Value initializes each element.
+[:zh_CN] 值初始化其每个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`is_default_constructible_v<T[$_i]>] is [`true] for all [$i].
+[:zh_CN] 除非 [`is_default_constructible_v<T[$_i]>] 对于所有 [$i] 为 [`true]，
+否则这个构造函数不能参与重载决议。
+
+[enter:note]
+[:en] This behavior can be implemented by a constructor template with default
+template arguments.
+[:zh_CN] 这种行为可以由带有默认模板实参的构造函数模板来予以实现。
+[exit:note]
+
+[:en] The constructor is explicit if and only if [$[`T]_i] is not implicitly
+default-constructible for at least one [$i].
+[:zh_CN] 当且仅当 [$[`T]_i] 对于至少一个 [$i] 并非是可以隐式默认构造时，这个
+构造函数是显式的。
+
+[enter:note]
+[:en] This behavior can be implemented with a trait that checks whether a
+[`const T[$_i]&] can be initialized with [`{}].
+[:zh_CN] 这种行为可以利用一个特征来检查各个 [`const T[$_i]&] 是否可以由 [`{}]
+进行初始化来予以实现。
+[exit:note]
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark EXPLICIT] ]
+[=EXPLICIT] constexpr tuple(const Types&...);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes each element with the value of the corresponding parameter.
+[:zh_CN] 以对应形参的值初始化其每个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`sizeof...(Types) >= 1] and [`is_copy_constructible_v<T[$_i]>] is [`true] for
+all [$i].
+[:zh_CN] 除非 [`sizeof...(Types) >= 1] 并且 [`is_copy_constructible_v<T[$_i]>]
+对于所有 [$i] 均为 [`true]，否则这个构造函数不能参与重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<const T[$_i]&, T[$_i]>] is [`false] for at least one [$i].
+[:zh_CN] 当且仅当 [`is_convertible_v<const T[$_i]&, T[$_i]>] 对于至少一个 [$i]
+为 [`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template <class... UTypes> [=EXPLICIT] constexpr tuple(UTypes&&... u);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the elements in the tuple with the corresponding value in
+[`std::forward<UTypes>(u)].
+[:zh_CN] 以 [`std::forward<UTypes>(u)] 中的对应值初始化元组中的各个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`sizeof...(Types) == sizeof...(UTypes)] and [`sizeof...(Types) >= 1] and
+[`is_constructible_v<T[$_i], U[$_i]&&>] is [`true] for all [$i].
+[:zh_CN] 除非 [`sizeof...(Types) == sizeof...(UTypes)] 并且
+[`sizeof...(Types) >= 1]，并且 [`is_constructible_v<T[$_i], U[$_i]&&>] 对于所有
+[$i] 均为 [`true]，否则这个构造函数不能参与重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<U[$_i]&&, T[$_i]>] is [`false] for at least one [$i].
+[:zh_CN] 当且仅当 [`is_convertible_v<U[$_i]&&, T[$_i]>] 对于至少一个 [$i] 为
+[`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+tuple(const tuple& u) = default;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`is_copy_constructible_v<T[$_i]>] is [`true] for all [$i].
+[:zh_CN] [`is_copy_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]。
+
+[para:effects]
+[:en] Initializes each element of [`*this] with the corresponding element of
+[`u].
+[:zh_CN] 以 [`u] 的对应元素初始化 [`*this] 的每个元素。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+tuple(tuple&& u) = default;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`is_move_constructible_v<T[$_i]>] is [`true] for all [$i].
+[:zh_CN] [`is_move_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]。
+
+[para:effects]
+[:en] For all [$i], initializes the [$i][^th] element of [`*this] with
+[`std::forward<T[$_i]>(get<[$i]>(u))].
+[:zh_CN] 对于所有 [$i]，以 [`std::forward<T[$_i]>(get<[$i]>(u))] 初始化 [`*this]
+的第 [$i] 个元素。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark EXPLICIT] ]
+template <class... UTypes> [=EXPLICIT] constexpr tuple(const tuple<UTypes...>& u);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes each element of [`*this] with the corresponding element of
+[`u].
+[:zh_CN] 以 [`u] 的对应元素初始化 [`*this] 的各个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[:zh_CN] 除非符合以下条件，否则这个构造函数不能参与重载决议：
+
+[list]
+[item]
+[:en@~] [`sizeof...(Types) == sizeof...(UTypes)] and
+[:zh_CN@~] [`sizeof...(Types) == sizeof...(UTypes)] 并且
+[item]
+[:en@~] [`is_constructible_v<T[$_i], const U[$_i]&>] is [`true] for all
+[$i], and
+[:zh_CN@~] [`is_constructible_v<T[$_i], const U[$_i]&>] 对于所有 [$i] 均为
+[`true]，并且
+[item]
+[:en@~] [`sizeof...(Types) != 1], or (when [`Types...] expands to [`T] and
+[`UTypes...] expands to [`U]) [`!is_convertible_v<const tuple<U>&, T> &&
+!is_constructible_v<T, const tuple<U>&> && !is_same_v<T, U>] is [`true].
+[:zh_CN@~] [`sizeof...(Types) != 1]，或者（当 [`Types...] 展开为 [`T] 且
+[`UTypes...] 展开为 [`U] 时）[`!is_convertible_v<const tuple<U>&, T> &&
+!is_constructible_v<T, const tuple<U>&> && !is_same_v<T, U>] 为 [`true]。
+[list:end]
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<const U[$_i]&, T[$_i]>] is [`false] for at least one [$i].
+[:zh_CN] 当且仅当 [`is_convertible_v<const U[$_i]&, T[$_i]>] 对于至少一个 [$i]
+为 [`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark EXPLICIT] ]
+template <class... UTypes> [=EXPLICIT] constexpr tuple(tuple<UTypes...>&& u);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] For all [$i], initializes the [$i][^th] element of [`*this] with
+[`std::forward<U[$_i]>(get<[$i]>(u))].
+[:zh_CN] 对于所有 [$i]，以 [`std::forward<U[$_i]>(get<[$i]>(u))] 初始化 [`*this]
+的第 [$i] 个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[:zh_CN] 除非符合以下条件，否则这个构造函数不能参与重载决议：
+
+[list]
+[item]
+[:en@~] [`sizeof...(Types) == sizeof...(UTypes)], and
+[:zh_CN@~] [`sizeof...(Types) == sizeof...(UTypes)]，并且
+[item]
+[:en@~] [`is_constructible_v<T[$_i], U[$_i]&&>] is [`true] for all [$i], and
+[:zh_CN@~] [`is_constructible_v<T[$_i], U[$_i]&&>] 对于所有 [$i] 均为 [`true]，
+并且
+[item]
+[:en@~] [`sizeof...(Types) != 1], or (when [`Types...] expands to [`T] and
+[`UTypes...] expands to [`U]) [`!is_convertible_v<tuple<U>, T> &&
+!is_constructible_v<T, tuple<U>> && !is_same_v<T, U>] is [`true].
+[:zh_CN@~] [`sizeof...(Types) != 1]，或者（当 [`Types...] 展开为 [`T] 且
+[`UTypes...] 展开为 [`U] 时）[`!is_convertible_v<tuple<U>, T> &&
+!is_constructible_v<T, tuple<U>> && !is_same_v<T, U>] 为 [`true]。
+[list:end]
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<U[$_i]&&, T[$_i]>] is [`false] for at least one [$i].
+[:zh_CN] 当且仅当 [`is_convertible_v<U[$_i]&&, T[$_i]>] 对于至少一个 [$i] 为
+[`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[%@library pair]
+[codeblock:declaration [!:mark EXPLICIT] ]
+template <class U1, class U2> [=EXPLICIT] constexpr tuple(const pair<U1, U2>& u);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] initializes the first element with [`u.first] and the second element with
+[`u.second].
+[:zh_CN] 以 [`u.first] 初始化第一个元素，并以 [`u.second] 初始化第二个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`sizeof...(Types) == 2], [`is_constructible_v<T[_0], const U1&>] is [`true] and
+[`is_constructible_v<T[_1], const U2&>] is [`true].
+[:zh_CN] 除非 [`sizeof...(Types) == 2]，
+[`is_constructible_v<T[_0], const U1&>] 为 [`true] 并且
+[`is_constructible_v<T[_1], const U2&>] 为 [`true]，否则这个构造函数不能参与
+重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<const U1&, T[_0]>] is [`false] or
+[`is_convertible_v<const U2&, T[_1]>] is [`false].
+[:zh_CN] 当且仅当 [`is_convertible_v<const U1&, T[_0]>] 为 [`false] 或者
+[`is_convertible_v<const U2&, T[_1]>] 为 [`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[%@library pair]
+[codeblock:declaration [!:mark EXPLICIT] ]
+template <class U1, class U2> [=EXPLICIT] constexpr tuple(pair<U1, U2>&& u);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] initializes the first element with [`std::forward<U1>(u.first)] and the
+second element with [`std::forward<U2>(u.second)].
+[:zh_CN] 以 [`std::forward<U1>(u.first)] 初始化第一个元素，并以
+[`std::forward<U2>(u.second)] 初始化第二个元素。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[`sizeof...(Types) == 2], [`is_constructible_v<T[_0], U1&&>] is [`true] and
+[`is_constructible_v<T[_1], U2&&>] is [`true].
+[:zh_CN] 除非 [`sizeof...(Types) == 2]，[`is_constructible_v<T[_0], U1&&>] 为
+[`true] 并且 [`is_constructible_v<T[_1], U2&&>] 为 [`true]，否则这个构造函数不能
+参与重载决议。
+
+[:en] The constructor is explicit if and only if
+[`is_convertible_v<U1&&, T[_0]>] is [`false] or
+[`is_convertible_v<U2&&, T[_1]>] is [`false].
+[:zh_CN] 当且仅当 [`is_convertible_v<U1&&, T[_0]>] 为 [`false] 或者
+[`is_convertible_v<U2&&, T[_1]>] 为 [`false] 时，这个构造函数是显式的。
+[exit:description]
+
+[%@library tuple[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration [!:mark EXPLICIT] ]
+template <class Alloc>
+  tuple(allocator_arg_t, const Alloc& a);
+template <class Alloc>
+  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, const Types&...);
+template <class Alloc, class... UTypes>
+  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, UTypes&&...);
+template <class Alloc>
+  tuple(allocator_arg_t, const Alloc& a, const tuple&);
+template <class Alloc>
+  tuple(allocator_arg_t, const Alloc& a, tuple&&);
+template <class Alloc, class... UTypes>
+  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, const tuple<UTypes...>&);
+template <class Alloc, class... UTypes>
+  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, tuple<UTypes...>&&);
+template <class Alloc, class U1, class U2>
+  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, const pair<U1, U2>&);
+template <class Alloc, class U1, class U2>
+  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&&);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`Alloc] shall meet the requirements for an [`Allocator]
+([#allocator.requirements]).
+[:zh_CN] [`Alloc] 应当符合 [`Allocator] 的规定（[#allocator.requirements]）。
+
+[para:effects]
+[:en] Equivalent to the preceding constructors except that each element is
+constructed with uses-allocator construction ([#allocator.uses.construction]).
+[:zh_CN] 等价于之前的构造函数，但其各个元素的构造均为应用分配器的构造
+（[#allocator.uses.construction]）。
+[exit:description]

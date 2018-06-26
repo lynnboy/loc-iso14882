@@ -1,0 +1,182 @@
+[section#diff.basic
+    [:en] Clause [#basic]: basic concepts
+    [:zh_CN] 第 [#basic] 章：基本概念
+]
+
+[para:~] [#basic.def]
+
+[=Change]
+[:en] [=Cpp] does not have ["tentative definitions] as in C. [br]
+[:zh_CN] [=Cpp] 并没有 C 中的“试探性定义式”。 [br]
+
+[:en] E.g., at file scope,
+[:zh_CN] 例如，文件作用域中，
+
+[codeblock]
+int i;
+int i;
+[codeblock:end]
+
+[:en@~] is valid in C, invalid in [=Cpp].
+[:zh_CN@~] 在 C 中有效，在 [=Cpp] 中无效。
+
+[:en] This makes it impossible to define mutually referential file-local static
+objects, if initializers are restricted to the syntactic forms of C.
+[:zh_CN] 如果限制为使用 C 的语法形式的初始化式，则这样就使得定义互相引用的局部于
+文件的静态对象变得不可能。
+
+[:en] For example,
+[:zh_CN] 例如，
+
+[codeblock]
+struct X { int i; struct X* next; };
+
+static struct X a;
+static struct X b = { 0, &a };
+static struct X a = { 1, &b };
+[codeblock:end]
+
+[=Rationale]
+[:en] This avoids having different initialization rules for fundamental types
+and user-defined types.
+[:zh_CN] 这样做避免使基础类型和用户定义的类型具有不同的初始化规则。
+
+[=Effect]
+[:en] Change to semantics of well-defined feature.
+[:zh_CN] 改变了有良好定义的功能特性的语义。
+
+[=Difficulty]
+[:en] Semantic transformation.
+[:zh_CN] 语义转换。
+
+[:en] In [=Cpp], the initializer for one of a set of mutually-referential
+file-local static objects must invoke a function call to achieve the
+initialization.
+[:zh_CN] 在 [=Cpp] 中，一组互相引用的局部于文件的静态对象之一的初始化式，必须
+调用一个函数来达成其初始化。
+
+[=HowWide]
+[:en] Seldom.
+[:zh_CN] 少见。
+
+[para:~] [#basic.scope]
+
+[=Change]
+[:en] A [`struct] is a scope in [=Cpp], not in C.
+[:zh_CN] [`struct] 在 [=Cpp] 中是一个作用域，在 C 中则不是。
+
+[=Rationale]
+[:en] Class scope is crucial to [=Cpp], and a struct is a class.
+[:zh_CN] 类作用域对 [=Cpp] 很关键，而结构也是类。
+
+[=Effect]
+[:en] Change to semantics of well-defined feature.
+[:zh_CN] 改变了有良好定义的功能特性的语义。
+
+[=Difficulty]
+[:en] Semantic transformation.
+[:zh_CN] 语义转换。
+
+[=HowWide]
+[:en] C programs use [`struct] extremely frequently, but the change is only
+noticeable when [`struct], enumeration, or enumerator names are referred to
+outside the [`struct].
+[:zh_CN] C 程序使用 [`struct] 极为频繁，但这种改变只有在 [`struct] 以外涉指
+[`struct]、枚举或枚举符的名字时才会被注意到。
+
+[:en] The latter is probably rare.
+[:zh_CN] 后者可能很罕见。
+
+[para:~]
+[:en] [#basic.link] [=`[]also [#dcl.type][=`]]
+[:zh_CN] [#basic.link] [=`[]令有 [#dcl.type][=`]]
+
+[=Change]
+[:en] A name of file scope that is explicitly declared [`const], and not
+explicitly declared [`extern], has internal linkage, while in C it would have
+external linkage.
+[:zh_CN] 文件作用域中被明确声明为 [`const] 但未明确声明为 [`extern] 的名字具有
+内部连接，而在 C 中它具有外部连接。
+
+[=Rationale]
+[:en] Because [`const] objects may be used as values during translation in
+[=Cpp], this feature urges programmers to provide an explicit initializer
+for each [`const] object.
+[:zh_CN] 因为在 [=Cpp] 的翻译过程中可以将 [`const] 对象作为值来使用，这项功能
+要求程序员为每个 [`const] 对象提供显式的初始化式。
+
+[:en] This feature allows the user to put [`const] objects in source files that
+are included in more than one translation unit.
+[:zh_CN] 这项功能允许用户将 [`const] 对象放入可能被多个翻译单元所包含的源文件中。
+
+[=Effect]
+[:en] Change to semantics of well-defined feature.
+[:zh_CN] 改变了有良好定义的功能特性的语义。
+
+[=Difficulty]
+[:en] Semantic transformation.
+[:zh_CN] 语义转换。
+
+[=HowWide]
+[:en] Seldom.
+[:zh_CN] 少见。
+
+[para:~] [#basic.start.main]
+
+[=Change]
+[:en] The [`main] function cannot be called recursively and cannot have its
+address taken.
+[:zh_CN] 不能递归调用 [`main] 函数，且不能获取其地址。
+
+[=Rationale]
+[:en] The [`main] function may require special actions.
+[:zh_CN] [`main] 函数需要进行一些特殊的动作。
+
+[=Effect]
+[:en] Deletion of semantically well-defined feature.
+[:zh_CN] 删除了有良好定义语义的功能特性。
+
+[=Difficulty]
+[:en] Trivial: create an intermediary function such as [`mymain(argc, argv)].
+[:zh_CN] 平常的：创建一个中间函数，比如 [`mymain(argc, argv)]。
+
+[=HowWide]
+[:en] Seldom.
+[:zh_CN] 少见。
+
+[para:~] [#basic.types]
+
+[=Change]
+[:en] C allows ["compatible types] in several places, [=Cpp] does not. [br]
+[:zh_CN] C 在一些地方允许“兼容类型”，而 [=Cpp] 不允许。 [br]
+
+[:en] For example, otherwise-identical [`struct] types with different tag names
+are ["compatible] in C but are distinctly different types in [=Cpp].
+[:zh_CN] 例如，其他方面都相同但带有不同标签名的 [`struct] 类型在 C 中“兼容”，但
+在 [=Cpp] 中则是互相独立的不同类型。
+
+[=Rationale]
+[:en] Stricter type checking is essential for [=Cpp].
+[:zh_CN] 更严格的类型检查是 [=Cpp] 的基础。
+
+[=Effect]
+[:en] Deletion of semantically well-defined feature.
+[:zh_CN] 删除了有良好定义语义的功能特性。
+
+[=Difficulty]
+[:en] Semantic transformation.
+[:zh_CN] 语义转换。
+
+[:en] The ["typesafe linkage] mechanism will find many, but not all, of such
+problems.
+[:zh_CN] 使用“类型安全连接”机制可以找到许多（但并非全部）这种问题。
+
+[:en] Those problems not found by typesafe linkage will continue to function
+properly, according to the ["layout compatibility rules] of this International
+Standard.
+[:zh_CN] 未能由类型安全连接所找到的问题，根据本国际标准的“布局兼容性规则”，能够
+继续正常工作。
+
+[=HowWide]
+[:en] Common.
+[:zh_CN] 常见。

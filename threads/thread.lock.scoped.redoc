@@ -1,0 +1,111 @@
+[section#thread.lock.scoped
+    [:en] Class template [`scoped_lock]
+    [:zh_CN] 类模板 [`scoped_lock]
+]
+
+[%@library scoped_lock]
+[codeblock:synopsis]
+namespace std {
+  template <class... MutexTypes>
+  class scoped_lock {
+  public:
+    using mutex_type = Mutex;  // [:en] If [`MutexTypes...] consists of the single type [`Mutex]
+                               // [|:zh_CN] 当 [`MutexTypes...] 由单个类型 [`Mutex] 构成时
+
+    explicit scoped_lock(MutexTypes&... m);
+    explicit scoped_lock(MutexTypes&... m, adopt_lock_t);
+    ~scoped_lock();
+
+    scoped_lock(const scoped_lock&) = delete;
+    scoped_lock& operator=(const scoped_lock&) = delete;
+
+  private:
+    tuple<MutexTypes&...> pm; // [=Expos]
+  };
+
+  template<class... MutexTypes>
+    scoped_lock(scoped_lock<MutexTypes...>) -> scoped_lock<MutexTypes...>;
+}
+[codeblock:end]
+
+[para]
+[:en] An object of type [`scoped_lock] controls the ownership of lockable
+objects within a scope.
+[:zh_CN] [`scoped_lock] 类型的对象在一个作用域中控制多个可锁定对象的所有权。
+
+[:en] A [`scoped_lock] object maintains ownership of lockable objects throughout
+the [`scoped_lock] object[=']s lifetime ([#basic.life]).
+[:zh_CN] [`scoped_lock] 对象在其整个生存期（[#basic.life]）中维护这些可锁定对象
+的所有权。
+
+[:en] The behavior of a program is undefined if the lockable objects referenced
+by [`pm] do not exist for the entire lifetime of the [`scoped_lock] object.
+[:zh_CN] 如果由 [`pm] 所引用的可锁定对象不在 [`scoped_lock] 的整个生存期中存在，
+则程序的行为是未定义的。
+
+[:en] When [`sizeof...(MutexTypes)] is [`1], the supplied [`Mutex] type shall
+meet the [`BasicLockable] requirements ([#thread.req.lockable.basic]).
+[:zh_CN] 当 [`sizeof...(MutexTypes)] 为 [`1] 时，所提供的 [`Mutex] 类型应当满足
+[`BasicLockable] 规定（[#thread.req.lockable.basic]）。
+
+[:en] Otherwise, each of the mutex types shall meet the [`Lockable] requirements
+([#thread.req.lockable.req]).
+[:zh_CN] 否则，其中每个互斥体类型都应当满足 [`Lockable] 规定
+（[#thread.req.lockable.req]）。
+
+[%@library scoped_lock[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+explicit scoped_lock(MutexTypes&... m);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] If a [`MutexTypes] is not a recursive mutex, the calling thread does not
+own the corresponding mutex element of [`m].
+[:zh_CN] 若 [`MutexTypes] 不是递归互斥体，则调用线程不能拥有 [`m] 中的对应互斥体
+元素。
+
+[para:effects]
+[:en] Initializes [`pm] with [`tie(m...)].
+[:zh_CN] 以 [`tie(m...)] 初始化 [`pm]。
+
+[:en] Then if [`sizeof...(MutexTypes)] is [`0], no effects.
+[:zh_CN] 然后，若 [`sizeof...(MutexTypes)] 为 [`0]，则没有效果。
+
+[:en] Otherwise if [`sizeof...(MutexTypes)] is [`1], then [`m.lock()].
+[:zh_CN] 否则若 [`sizeof...(MutexTypes)] 为 [`1]，则执行 [`m.lock()]。
+
+[:en] Otherwise, [`lock(m...)].
+[:zh_CN] 否则，执行 [`lock(m...)]。
+[exit:description]
+
+[%@library scoped_lock[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+explicit scoped_lock(MutexTypes&... m, adopt_lock_t);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The calling thread owns all the mutexes in [`m].
+[:zh_CN] 调用方线程拥有 [`m] 中的所有互斥体。
+
+[para:effects]
+[:en] Initializes [`pm] with [`tie(m...)].
+[:zh_CN] 以 [`tie(m...)] 初始化 [`pm]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library scoped_lock[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~scoped_lock();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] For all [`i] in [=range(0,sizeof...(MutexTypes))], [`get<i>(pm).unlock()].
+[:zh_CN] 对 [=range(0,sizeof...(MutexTypes))] 中的每个 [`i]，执行
+[`get<i>(pm).unlock()]。
+[exit:description]

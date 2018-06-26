@@ -1,0 +1,129 @@
+[section#iterator.traits
+    [:en] Iterator traits
+    [:zh_CN] 迭代器特征
+]
+
+[para]
+[%@library iterator_traits]
+[:en] To implement algorithms only in terms of iterators, it is often necessary
+to determine the value and difference types that correspond to a particular
+iterator type.
+[:zh_CN] 如果只依据迭代器来实现算法，通常需要确定对应于特定迭代器类型的值和差
+类型。
+
+[:en] Accordingly, it is required that if [`Iterator] is the type of an
+iterator, the types
+[:zh_CN] 据此，如果 [`Iterator] 为迭代器的类型，则要求类型
+
+[codeblock:notation]
+iterator_traits<Iterator>::difference_type
+iterator_traits<Iterator>::value_type
+iterator_traits<Iterator>::iterator_category
+[codeblock:end]
+
+[:en@~] be defined as the iterator[=']s difference type, value type and iterator
+category, respectively.
+[:zh_CN@~] 分别被定义为该迭代器的差类型、值类型和迭代器类别。
+
+[:en] In addition, the types
+[:zh_CN] 此外，类型
+
+[codeblock:notation]
+iterator_traits<Iterator>::reference
+iterator_traits<Iterator>::pointer
+[codeblock:end]
+
+[:en@~] shall be defined as the iterator[=']s reference and pointer types, that
+is, for an iterator object [`a], the same type as the type of [`*a] and [`a->],
+respectively.
+[:zh_CN@~] 应当分别被定义为该迭代器的引用和指针类型，就是说，对于迭代器对象 [`a]
+，它们分别于 [`*a] 和 [`a->] 的类型相同。
+
+[:en] In the case of an output iterator, the types
+[:zh_CN] 对于输出迭代器的情况，类型
+
+[codeblock:notation]
+iterator_traits<Iterator>::difference_type
+iterator_traits<Iterator>::value_type
+iterator_traits<Iterator>::reference
+iterator_traits<Iterator>::pointer
+[codeblock:end]
+
+[:en@~] may be defined as [`void].
+[:zh_CN@~] 可以被定义为 [`void]。
+
+[para]
+[:en] If [`Iterator] has valid ([#temp.deduct]) member types [`difference_type],
+[`value_type], [`pointer], [`reference], and [`iterator_category],
+[`iterator_traits<Iterator>] shall have the following as publicly accessible
+members:
+[:zh_CN] 如果 [`Iterator] 具有有效（[#temp.deduct]）的成员类型
+[`difference_type]，[`value_type]，[`pointer]，[`reference]，和
+[`iterator_category]，则 [`iterator_traits<Iterator>] 应当具有下列公用可访问成员
+：
+
+[codeblock:notation]
+  using difference_type   = typename Iterator::difference_type;
+  using value_type        = typename Iterator::value_type;
+  using pointer           = typename Iterator::pointer;
+  using reference         = typename Iterator::reference;
+  using iterator_category = typename Iterator::iterator_category;
+[codeblock:end]
+
+[:en] Otherwise, [`iterator_traits<Iterator>] shall have no members by any of
+the above names.
+[:zh_CN] 否则，[`iterator_traits<Iterator>] 应当没有具有以上任何名字的成员。
+
+[para]
+[:en] It is specialized for pointers as
+[:zh_CN] 它为指针进行特化为
+
+[codeblock:synopsis]
+namespace std {
+  template<class T> struct iterator_traits<T*> {
+    using difference_type   = ptrdiff_t;
+    using value_type        = T;
+    using pointer           = T*;
+    using reference         = T&;
+    using iterator_category = random_access_iterator_tag;
+  };
+}
+[codeblock:end]
+
+[:en@~] and for pointers to const as
+[:zh_CN@~] 而为 const 的指针特化为
+
+[codeblock:synopsis]
+namespace std {
+  template<class T> struct iterator_traits<const T*> {
+    using difference_type   = ptrdiff_t;
+    using value_type        = T;
+    using pointer           = const T*;
+    using reference         = const T&;
+    using iterator_category = random_access_iterator_tag;
+  };
+}
+[codeblock:end]
+
+[para]
+[enter:example]
+[:en] To implement a generic [`reverse] function, a [=Cpp] program can do the
+following:
+[:zh_CN] 为实现通用的 [`reverse] 函数，[=Cpp] 程序可以这样做：
+
+[codeblock]
+template <class BidirectionalIterator>
+void reverse(BidirectionalIterator first, BidirectionalIterator last) {
+  typename iterator_traits<BidirectionalIterator>::difference_type n =
+    distance(first, last);
+  --n;
+  while(n > 0) {
+    typename iterator_traits<BidirectionalIterator>::value_type
+     tmp = *first;
+    *first++ = *--last;
+    *last = tmp;
+    n -= 2;
+  }
+}
+[codeblock:end]
+[exit:example]

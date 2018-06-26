@@ -1,0 +1,81 @@
+[section#thread.lock.algorithm
+    [:en] Generic locking algorithms
+    [:zh_CN] 通用锁定算法
+]
+
+[%@library try_lock]
+[codeblock:declaration]
+template <class L1, class L2, class... L3> int try_lock(L1&, L2&, L3&...);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] Each template parameter type shall meet the [`Lockable] requirements.
+[:zh_CN] 每个模板形参类型都应当满足 [`Lockable] 规定。
+
+[enter:note]
+[:en] The [`unique_lock] class template meets these requirements when suitably
+instantiated.
+[:zh_CN] [`unique_lock] 类模板在适当实例化后可以满足这些规定。
+[exit:note]
+
+[para:effects]
+[:en] Calls [`try_lock()] for each argument in order beginning with the first
+until all arguments have been processed or a call to [`try_lock()] fails, either
+by returning [`false] or by throwing an exception.
+[:zh_CN] 从第一个开始依序为每个实参调用 [`try_lock()]，直到所有实参都被处理，或
+某次 [`try_lock()] 调用由于返回 [`false] 或抛出异常而失败。
+
+[:en] If a call to [`try_lock()] fails, [`unlock()] shall be called for all
+prior arguments and there shall be no further calls to [`try_lock()].
+[:zh_CN] 如果某次调用 [`try_lock()] 失败，则应当对之前的所有实参调用 [`unlock()]
+并且应当不再继续调用 [`try_lock()]。
+
+[para:returns]
+[:en] [`-1] if all calls to [`try_lock()] returned [`true], otherwise a
+zero-based index value that indicates the argument for which [`try_lock()]
+returned [`false].
+[:zh_CN] 如果所有对 [`try_lock()] 的调用都返回 [`true] 则返回 [`-1]，否则返回
+标明调用 [`try_lock()] 返回了 [`false] 的实参的以基于零的索引值。
+[exit:description]
+
+[%@library lock]
+[codeblock:declaration]
+template <class L1, class L2, class... L3> void lock(L1&, L2&, L3&...);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] Each template parameter type shall meet the [`Lockable] requirements,
+[:zh_CN] 每个模板形参类型都应当满足 [`Lockable] 规定。
+
+[enter:note]
+[:en] The [`unique_lock] class template meets these requirements when suitably
+instantiated.
+[:zh_CN] [`unique_lock] 类模板在适当实例化后可以满足这些规定。
+[exit:note]
+
+[para:effects]
+[:en] All arguments are locked via a sequence of calls to [`lock()],
+[`try_lock()], or [`unlock()] on each argument.
+[:zh_CN] 所有实参都通过对每个实参进行的一系列 [`lock()]，[`try_lock()]，或
+[`unlock()] 的调用而被锁定。
+
+[:en] The sequence of calls shall not result in deadlock, but is otherwise
+unspecified.
+[:zh_CN] 这个调用序列不能导致死锁，此外都是未指明的。
+
+[enter:note]
+[:en] A deadlock avoidance algorithm such as try-and-back-off must be used, but
+the specific algorithm is not specified to avoid over-constraining
+implementations.
+[:zh_CN] 必须使用某种诸如“尝试和回退（try-and-back-off）”之类的避免死锁的算法，
+但并不指明具体的算法以避免对实现过于限定。
+[exit:note]
+
+[:en] If a call to [`lock()] or [`try_lock()] throws an exception, [`unlock()]
+shall be called for any argument that had been locked by a call to [`lock()] or
+[`try_lock()].
+[:zh_CN] 如果某次调用 [`lock()] 或 [`try_lock()] 抛出了异常，则应当对已经通过
+调用 [`lock()] 或 [`try_lock()] 进行锁定的所有实参调用 [`unlock()]。
+[exit:description]

@@ -1,0 +1,386 @@
+[section#intro.object
+    [:en] The [=Cpp] object model
+    [:zh_CN] [=Cpp] 对象模型
+]
+
+[%:begin#object.model
+    [:en] object model
+    [:zh_CN] 对象模型
+]
+
+[para]
+[:en]
+The constructs in a [=Cpp] program create, destroy, refer to, access, and
+manipulate objects.
+[:zh_CN]
+[=Cpp] 程序中的各种语言构造，创建、销毁、涉指、访问并操作对象。
+
+[:en]
+An [+object] is created by a definition ([#basic.def]), by a [~new-expression]
+([#expr.new]), when implicitly changing the active member of a union
+([#class.union]), or when a temporary object is created ([#conv.rval],
+[#class.temporary]).
+[:zh_CN]
+[+对象]是通过定义式创建（[#basic.def]），通过 [~new-表达式]创建（[#expr.new]），
+当改变联合的活跃成员时隐式创建（[#class.union]），或者当创建临时对象时创建的
+（[#conv.rval]，[#class.temporary]）。
+
+[:en]
+An object occupies a region of storage in its period of construction
+([#class.cdtor]), throughout its lifetime ([#basic.life]), and in its period of
+destruction ([#class.cdtor]).
+[:zh_CN]
+在对象的创建期间（[#class.cdtor]），其整个生存期期间（[#basic.life]），以及其
+销毁期间（[#class.cdtor]），对象占据一块存储区域。
+
+[enter:note]
+[:en]
+A function is not an object, regardless of whether or not it occupies storage
+in the way that objects do.
+[:zh_CN]
+无论是否像对象那样占据存储，函数都不是对象。
+[exit:note]
+
+[:en]
+The properties of an object are determined when the object is created.
+[:zh_CN]
+对象创建时确定了该对象的各种属性。
+
+[:en]
+An object can have a name (Clause [#basic]).
+[:zh_CN]
+对象可以有名字（第 [#basic] 章）。
+
+[:en]
+An object has a storage duration ([#basic.stc]) which influences its lifetime
+([#basic.life]).
+[:zh_CN]
+对象具有存储期（[#basic.stc]），并影响它的生存期（[#basic.life]）。
+
+[:en]
+An object has a type ([#basic.types]).
+[:zh_CN]
+对象具有一个类型（[#basic.types]）。
+
+[:en]
+Some objects are polymorphic ([#class.virtual]);
+[:zh_CN]
+一些对象是多态的（[#class.virtual]）；
+
+[:en@~]
+the implementation generates information associated with each such object that
+makes it possible to determine that object[=']s type during program execution.
+[:zh_CN@~]
+实现为每个这种对象生成与其关联的信息，以便在程序运行时能够判定该对象的类型。
+
+[:en]
+For other objects, the interpretation of the values found therein is determined
+by the type of the [~expression]s (Clause [#expr]) used to access them.
+[:zh_CN]
+对于其他对象，如何判读其中的值是根据用于访问它们的[~表达式]（第 [#expr] 章）
+的类型来决定的。
+
+[para]
+[:en]
+[%subobject]
+Objects can contain other objects, called [+subobjects [%subobject]].
+[:zh_CN]
+[%子对象]
+对象可以包含其他对象，它们被称为[+子对象]。
+
+[:en]
+A subobject can be a [+member subobject] ([#class.mem]), a [+base class
+subobject] (Clause [#class.derived]), or an array element.
+[:zh_CN]
+子对象可以是[+成员子对象]（[#class.mem]），[+基类子对象]
+（第 [#class.derived] 章），或数组元素。
+
+[:en]
+[%object [!complete]]
+An object that is not a subobject of any other object is called a [+complete
+object].
+[:zh_CN]
+[%对象 [!完整～]]
+不是任何其他对象的子对象的对象被称为[+完整对象]。
+
+[:en]
+If an object is created in storage associated with a member subobject or array
+element [$e] (which may or may not be within its lifetime), the created object
+is a subobject of [$e][=']s containing object if:
+[:zh_CN]
+如果对象是创建在同某个成员子对象或数组元素 [$e]（其可能处于或可能不处于生存期
+之中）所关联的存储之中的，则以下情况下所创建的对象是包含 [$e] 的对象的子对象：
+
+[list:ul]
+
+[item]
+[:en]
+the lifetime of [$e][=']s containing object has begun and not ended, and
+[:zh_CN]
+包含 [$e] 的对象的生存期已开始且未结束，并且
+
+[item]
+[:en]
+the storage for the new object exactly overlays the storage location associated
+with [$e], and
+[:zh_CN]
+新对象的存储和 [$e] 所关联的存储位置严格重合，并且
+
+[item]
+[:en]
+the new object is of the same type as [$e] (ignoring cv-qualification).
+[:zh_CN]
+新对象具有和 [$e] 相同的类型（忽略 cv 限定性）。
+
+[list:end]
+
+[enter:note]
+[:en]
+If the subobject contains a reference member or a [`const] subobject, the name
+of the original subobject cannot be used to access the new object
+([#basic.life]).
+[:zh_CN]
+若该子对象包含了引用成员或 [`const] 子对象，则不能用原来的子对象的名字来访问这个
+新对象（[#basic.life]）。
+[exit:note]
+
+[enter:example]
+[codeblock]
+struct X { const int n; };
+union U { X x; float f; };
+void tong() {
+  U u = {{ 1 }};
+  u.f = 5.f;                          // [:en] OK, creates new subobject of [`u] ([#class.union])
+                                      // [|:zh_CN] OK，创建了 [`u] 的新子对象（[#class.union]）
+  X *p = new (&u.x) X {2};            // [:en] OK, creates new subobject of [`u]
+                                      // [|:zh_CN] OK，创建了 [`u] 的新子对象
+  assert(p->n == 2);                  // OK
+  assert(*std::launder(&u.x.n) == 2); // OK
+  assert(u.x.n == 2);                 // [:en] undefined behavior, [`u.x] does not name new subobject
+                                      // [|:zh_CN] 未定义行为，[`u.x] 并不指名新的子对象
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+[%object[!providing storage for]]
+If a complete object is created ([#expr.new]) in storage associated with another
+object [$e] of type ["array of [$N] [`unsigned char]] or of type ["array of [$N]
+[`std::byte]] ([#cstddef.syn]), that array [+provides storage] for the created
+object if:
+[:zh_CN]
+[%对象[!为～提供存储]]
+如果一个完整对象是创建在另一个类型为“[`unsigned char] 的 [$N] 元素数组”或类型为
+“[`std::byte] 的 [$N] 元素数组”（[#cstddef.syn]）的对象 [$e] 所关联的存储之中，
+则以下情况下称这个数组为所创建的对象[+提供存储]：
+
+[list:ul]
+
+[item]
+[:en]
+the lifetime of [$e] has begun and not ended, and
+[:zh_CN]
+[$e] 的生存期已开始且未结束，并且
+
+[item]
+[:en]
+the storage for the new object fits entirely within [$e], and
+[:zh_CN]
+新对象的存储完全置于 [$e] 之中，并且
+
+[item]
+[:en]
+there is no smaller array object that satisfies these constraints.
+[:zh_CN]
+不存在满足这些约束的更小的数组对象。
+
+[list:end]
+
+[enter:note]
+[:en]
+If that portion of the array previously provided storage for another object, the
+lifetime of that object ends because its storage was reused ([#basic.life]).
+[:zh_CN]
+如果数组的这个部分曾经为另一个对象提供存储，则那个对象的生存期结束，因为其存储
+已经被重用了（[#basic.life]）。
+[exit:note]
+
+[enter:example]
+[codeblock]
+template<typename ...T>
+struct AlignedUnion {
+  alignas(T...) unsigned char data[max(sizeof(T)...)];
+};
+int f() {
+  AlignedUnion<int, char> au;
+  int *p = new (au.data) int;     // [:en] OK, [`au.data] provides storage
+                                  // [|:zh_CN] OK，[`au.data] 提供存储
+  char *c = new (au.data) char(); // [:en] OK, ends lifetime of [`*p]
+                                  // [|:zh_CN] OK，[`*p] 的生存期结束
+  char *d = new (au.data + 1) char();
+  return *c + *d; // OK
+}
+
+struct A { unsigned char a[32]; };
+struct B { unsigned char b[16]; };
+A a;
+B *b = new (a.a + 8) B;      // [:en] [`a.a] provides storage for [`*b]
+                             // [|:zh_CN] [`a.a] 为 [`*b] 提供存储
+int *p = new (b->b + 4) int; // [:en] [`b->b] provides storage for [`*p]
+                             // [|:zh_CN] [`b->b] 为 [`*p] 提供存储
+                             // [:en] [`a.a] does not provide storage for [`*p] (directly),
+                             // [|:zh_CN] [`a.a] 并不（直接）为 [`*p] 提供存储，
+                             // [:en@~] but [`*p] is nested within [`a] (see below)
+                             // [|:zh_CN@~] 但 [`*p] 嵌套于 [`a] 之中（见下文）
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+[%object[!nested within]]
+An object [$a] is [+nested within] another object [$b] if:
+[:zh_CN]
+[%对象[!嵌套于～之中]]
+以下情况称对象 [$a] [+嵌套于[%嵌套于～之中]]另一个对象 [$b] 之中：
+
+[list:ul]
+
+[item]
+[:en]
+[$a] is a subobject of [$b], or
+[:zh_CN]
+[$a] 是 [$b] 的子对象，或者
+
+[item]
+[:en]
+[$b] provides storage for [$a], or
+[:zh_CN]
+[$b] 为 [$a] 提供存储，或者
+
+[item]
+[:en]
+there exists an object [$c] where [$a] is nested within [$c], and [$c] is nested
+within [$b].
+[:zh_CN]
+存在某个对象 [$c]，使得 [$a] 嵌套于 [$c] 之中，而 [$c] 嵌套于 [$b] 之中。
+
+[list:end]
+
+[para]
+[:en]
+For every object [`x], there is some object called the [+complete object of]
+[`x], determined as follows:
+[:zh_CN]
+对于任意对象 [`x]，都存在被称为 [`x] [+的完整对象[%～的完整对象]]的对象，判定
+如下：
+
+[list:ul]
+
+[item]
+[:en]
+If [`x] is a complete object, then the complete object of [`x] is itself.
+[:zh_CN]
+如果 [`x] 是完整对象，则 [`x] 的完整对象就是其自身。
+
+[item]
+[:en]
+Otherwise, the complete object of [`x] is the complete object of the (unique)
+object that contains [`x].
+[:zh_CN]
+否则，[`x] 的完整对象是包含 [`x] 的（唯一）对象的完整对象。
+
+[list:end]
+
+[para]
+[:en]
+If a complete object, a data member ([#class.mem]), or an array element is of
+class type, its type is considered the [+most derived class], to distinguish it
+from the class type of any base class subobject;
+[:zh_CN]
+如果完整对象、数据成员（[#class.mem]）或数组元素具有类类型，那么它的类型被称为
+[+全派生类]，以区别于任何基类子对象的类类型；
+
+[:en@~]
+an object of a most derived class type or of a non-class type is called a
+[+most derived object].
+[:zh_CN@~]
+全派生类类型的，或非类类型的对象被称为[+全派生对象]。
+
+[para]
+[:en]
+[%most derived object [!bit-field]]
+Unless it is a bit-field ([#class.bit]), a most derived object shall have a
+nonzero size and shall occupy one or more bytes of storage.
+[:zh_CN]
+[%全派生对象 [!位字段]]
+除非作为位字段（[#class.bit]），否则全派生对象的大小不应为零，并应当占据
+一个或多个字节的存储。
+
+[:en]
+Base class subobjects may have zero size.
+[:zh_CN]
+基类子对象的大小可以为零。
+
+[:en]
+An object of trivially copyable or standard-layout type ([#basic.types]) shall
+occupy contiguous bytes of storage.
+[:zh_CN]
+可平凡复制的或标准布局类型（[#basic.types]）的对象应该占据连续字节的存储。
+
+[para]
+[:en]
+[% most derived object [! bit-field]]
+[% most derived object [! zero size subobject]]
+Unless an object is a bit-field or a base class subobject of zero size, the
+address of that object is the address of the first byte it occupies.
+[:zh_CN]
+[% 全派生对象 [! 位字段]]
+[% 全派生对象 [! 零大小子对象]]
+除非某个对象是位字段或者是零大小的基类子对象，否则该对象的地址就是它所占据的
+第一个字节的地址。
+
+[:en]
+Two objects [$a] and [$b] with overlapping lifetimes that are not bit-fields may
+have the same address if one is nested within the other, or if at least one is
+a base class subobject of zero size and they are of different types;
+[:zh_CN]
+对于不是位字段的两个生存期重叠的对象 [$a] 和 [$b]，若其中之一嵌套于另一个之中，
+或者若其中至少有一个是大小为零的基类子对象而它们类型不同，则它们可以具有相同的
+地址；
+
+[:en@~]
+otherwise, they shall have distinct addresses.[#:note#fn:$section.1]
+[:zh_CN@~]
+否则，它们应当具有各自独立的地址。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en]
+Under the ["as-if] rule an implementation is allowed to store two objects at
+the same machine address or not store an object at all if the program cannot
+observe the difference ([#intro.execution]).
+[:zh_CN]
+根据“如同”规则，如果程序无法察觉其区别，那就允许实现将两个对象存储到同一个机器
+地址，或者并不真正存储某个对象（[#intro.execution]）。
+[note:end]
+
+[para:~]
+[enter:example]
+[codeblock]
+static const char test1 = 'x';
+static const char test2 = 'x';
+const bool b = &test1 != &test2;      // [:en] always [`true]
+                                      // [|:zh_CN] 永远为 [`true]
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:note]
+[:en]
+[=Cpp] provides a variety of fundamental types and several ways of composing
+new types from existing types ([#basic.types]).
+[:zh_CN]
+[=Cpp] 提供多种基础类型，以及几种用已有类型组成新类型的途径（[#basic.types]）。
+[exit:note]
+
+[%:end#object.model]

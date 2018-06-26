@@ -1,0 +1,116 @@
+[section#support.signal
+    [:en] Signal handlers
+    [:zh_CN] 信号处理器
+]
+
+[para]
+[:en]
+A call to the function [`signal] synchronizes with any resulting invocation of
+the signal handler so installed.
+[:zh_CN]
+对函数 [`signal] 的调用同步于其所导致的对任何由其所安装的信号处理器的调用。
+
+[para]
+[:en]
+A [+plain lock-free atomic operation] is an invocation of a function [`f] from
+Clause [#atomics], such that:
+[:zh_CN]
+[+普通无锁原子性操作]是对第 [#atomics] 章中的函数 [`f] 的调用，其中：
+
+[list]
+[item]
+[:en] [`f] is the function [`atomic_is_lock_free()], or
+[:zh_CN] [`f] 是函数 [`atomic_is_lock_free()]，或者
+
+[item]
+[:en] [`f] is the member function [`is_lock_free()], or
+[:zh_CN] [`f] 是成员函数 [`is_lock_free()]，或者
+
+[item]
+[:en] [`f] is a non-static member function invoked on an object [`A], such that
+[`A.is_lock_free()] yields [`true], or
+[:zh_CN] [`f] 是在对象 [`A] 上调用的非静态成员函数函数，其中
+[`A.is_lock_free()] 产生 [`true]，或者
+
+[item]
+[:en] [`f] is a non-member function, and for every pointer-to-atomic argument
+[`A] passed to [`f], [`atomic_is_lock_free(A)] yields [`true].
+[:zh_CN] [`f] 是非成员函数，且对于传递给 [`f] 的每个指向原子对象的指针实参 [`A]，
+[`atomic_is_lock_free(A)] 都产生 [`true]。
+[list:end]
+
+[para]
+[:en]
+[%signal-safe[!evaluation][%evaluation[!signal-safe]]]
+An evaluation is [+signal-safe[%evaluation[!signal-safe]]] unless it includes
+one of the following:
+[:zh_CN]
+[%信号安全[!求值][%求值[!信号安全]]]
+除非一项求值包含以下各项之一，否则它是[+信号安全的[%求值[!信号安全]]]：
+
+[list]
+[item]
+[:en] a call to any standard library function, except for plain lock-free atomic
+operations and functions explicitly identified as signal-safe.
+[:zh_CN] 调用除了普通无锁原子性操作和被明确标示为信号安全的函数之外的任何标准
+程序库函数。
+
+[enter:note]
+[:en] This implicitly excludes the use of [`new] and [`delete] expressions
+that rely on a library-provided memory allocator.
+[:zh_CN] 这隐含地排除了 [`new] 和 [`delete] 表达式的使用，它们依赖于程序库提供的
+内存分配器。
+[exit:note]
+
+[item]
+[:en] an access to an object with thread storage duration;
+[:zh_CN] 访问具有线程存储期的对象；
+
+[item]
+[:en] a [`dynamic_cast] expression;
+[:zh_CN] [`dynamic_cast] 表达式；
+
+[item]
+[:en] throwing of an exception;
+[:zh_CN] 抛出异常；
+
+[item]
+[:en] control entering a [~try-block] or [~function-try-block];
+[:zh_CN] 控制进入某个 [~try-块]或[~函数-try-块]；
+
+[item]
+[:en] initialization of variable with static storage duration requiring dynamic
+initialization ([#basic.start.dynamic], [#stmt.dcl])[#:note#fn:$section.1]; or
+[:zh_CN] 对具有静态存储期并要求动态初始化的变量进行初始化
+（[#basic.start.dynamic]，[#stmt.dcl]）[#:note#fn:$section.1]；或者
+
+[note:foot#fn:$section.1]
+[:en] Such initialization might occur because it is the first odr-use
+([#basic.def.odr]) of that variable.
+[:zh_CN] 发生这种初始化可能由于它是该变量的首次 ODR 式使用（[#basic.def.odr]）。
+[note:end]
+
+[item]
+[:en] waiting for the completion of the initialization of a variable with static
+storage duration ([#stmt.dcl]).
+[:zh_CN] 等待某个具有静态存储期的变量的初始化完成（[#stmt.dcl]）。
+[list:end]
+
+[:en] A signal handler invocation has undefined behavior if it includes an
+evaluation that is not signal-safe.
+[:zh_CN] 如果对信号处理器的调用中包含了并非信号安全的求值，则其具有未定义的行为。
+
+[para]
+[:en]
+[%signal-safe[![`signal]]]
+The function [`signal] is signal-safe if it is invoked with the first argument
+equal to the signal number corresponding to the signal that caused the
+invocation of the handler.
+[:zh_CN]
+[%信号安全[![`signal]]]
+函数 [`signal]，当其调用的第一个实参是等于对应于导致该处理器的调用的信号的信号值
+时，是信号安全的（[#csignal.syn]）。
+
+[para:xref]
+[:en] ISO C 7.14.
+[:zh_CN] ISO C 7.14。

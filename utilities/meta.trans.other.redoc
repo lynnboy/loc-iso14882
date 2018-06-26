@@ -1,0 +1,357 @@
+[section#meta.trans.other
+    [:en] Other transformations
+    [:zh_CN] 其他变换
+]
+
+[table:listing#tab:type-traits.other
+    [:en] Other transformations
+    [:zh_CN] 其他变换
+    [|@code
+        [:en] Template
+        [:zh_CN] 模板
+    ]
+    [|
+        [:en] Comments
+        [:zh_CN] 注释
+    ]
+]
+
+[%@library aligned_storage]
+[|]
+template <size_t Len, [br]
+size_t Align [br]
+= [*default-alignment]> [br]
+struct aligned_storage;
+[|] [:en] The value of [*default-alignment] shall be the most stringent
+    alignment requirement for any [=Cpp] object type whose size is no greater
+    than [`Len] ([#basic.types]).
+    [:zh_CN] [*default-alignment] 的值应当为大小不大于 [`Len] 的任意 [=Cpp] 对象
+    类型中最严格的对齐要求（[#basic.types]）。
+
+    [:en] The member typedef [`type] shall be a POD type suitable for use as
+    uninitialized storage for any object whose size is at most [`Len] and whose
+    alignment is a divisor of [`Align].
+    [:zh_CN] 成员 typedef [`type] 应当为适合用作其大小最大为 [`Len] 且其对齐能够
+    整除 [`Align] 的任意对象的未初始化存储的 POD 类型。
+
+    [para:requires]
+    [:en] [`Len] shall not be zero.
+    [:zh_CN] [`Len] 不能为零。
+
+    [:en] [`Align] shall be equal to [`alignof(T)] for some type [`T] or to
+    [*default-alignment].
+    [:zh_CN] [`Align] 应当对某类型 [`T] 等于 [`alignof(T)] 或者等于
+    [*default-alignment]。
+[-]
+
+[%@library aligned_union]
+[|]
+template <std::size_t Len, [br]
+class... Types> [br]
+struct aligned_union;
+[|] [:en] At least one type is provided.
+    [:zh_CN] 应当至少提供一个类型。
+[|] [:en] The member typedef [`type] shall be a POD type suitable for use as
+    uninitialized storage for any object whose type is listed in [`Types];
+    its size shall be at least [`Len].
+    [:zh_CN] 成员 typedef [`type] 应当为适合用作在 [`Types] 中列出的任意类型的
+    未初始化存储的 POD 类型；其大小至少为 [`Len]。
+
+    [:en] The static member [`alignment_value] shall be an integral constant of
+    type [`size_t] whose value is the strictest alignment of all types listed in
+    [`Types].
+    [:zh_CN] 静态成员 [`alignment_value] 应当为 [`size_t] 类型的整型常量，其值为
+    在 [`Types] 中列出的所有类型中最严格的对齐。
+
+    [para:requires]
+    [:en] At least one type is provided.
+    [:zh_CN] 应当至少提供一个类型。
+[-]
+
+[%@library decay]
+[|]
+template <class T> [br]
+struct decay;
+[|] [:en] Let [`U] be [`remove_reference_t<T>].
+    [:zh_CN] 令 [`U] 为 [`remove_reference_t<T>]。
+
+    [:en] If [`is_array_v<U>] is [`true], the member typedef [`type] shall equal
+    [`remove_extent_t<U>*].
+    [:zh_CN] 若 [`is_array_v<U>] 为 [`true]，则成员 typedef [`type] 应当等于
+    [`remove_extent_t<U>*]。
+
+    [:en] If [`is_function_v<U>] is [`true], the member typedef [`type] shall
+    equal [`add_pointer_t<U>].
+    [:zh_CN] 若 [`is_function_v<U>] 为 [`true]，则成员 typedef [`type] 应当等于
+    [`add_pointer_t<U>]。
+
+    [:en] Otherwise the member typedef [`type] equals [`remove_cv_t<U>].
+    [:zh_CN] 否则成员 typedef [`type] 等于 [`remove_cv_t<U>]。
+
+    [enter:note]
+    [:en] This behavior is similar to the lvalue-to-rvalue ([#conv.lval]),
+    array-to-pointer ([#conv.array]), and function-to-pointer ([#conv.func])
+    conversions applied when an lvalue expression is used as an rvalue, but also
+    strips [$cv]-qualifiers from class types in order to more closely model
+    by-value argument passing.
+    [:zh_CN] 这个行为与当左值表达式被用作右值时所施加的左值向右值
+    （[#conv.lval]）、数组向指针（[#conv.array]）和函数向指针（[#conv.func]）
+    转换相似，但还剥除了类类型的 [$cv] 限定符，以更加符合对按值传递实参的情形。
+    [exit:note]
+[-]
+
+[%@library enable_if]
+[|]
+template <bool B, class T = void> struct enable_if;
+[|] [:en] If [`B] is [`true], the member typedef [`type] shall equal [`T];
+    otherwise, there shall be no member [`type].
+    [:zh_CN] 若 [`B] 为 [`true]，则成员 typedef [`type] 应当等于 [`T]；否则，
+    不应当具有成员 typedef [`type]。
+[-]
+
+[|]
+template <bool B, class T, class F> struct conditional;
+[|] [:en] If [`B] is [`true], the member typedef [`type] shall equal [`T].
+    [:zh_CN] 若 [`B] 为 [`true]，则成员 typedef [`type] 应当等于 [`T]。
+
+    [:en] If [`B] is [`false], the member typedef [`type] shall equal [`F].
+    [:zh_CN] 若 [`B] 为 [`false]，则成员 typedef [`type] 应当等于 [`F]。
+[-]
+
+[|]
+template <class... T> struct common_type;
+[|] [:en] Unless this trait is specialized (as specified in Note B, below), the
+    member [`type] shall be defined or omitted as specified in Note A, below.
+    [:zh_CN] 除非这个特征被（如表后注释 A 所述）特化，否则成员 [`type] 应当按
+    表后注释 A 所述进行定义或省略。
+
+    [:en] If it is omitted, there shall be no member [`type].
+    [:zh_CN] 若它被省略，则不应当存在成员 [`type]。
+
+    [:en] Each type in the parameter pack [`T] shall be complete, [$cv] [`void],
+    or an array of unknown bound.
+    [:zh_CN] 形参包组 [`T] 中的每个类型都应当是完整的，或 [$cv] [`void]，或为
+    未知边界的数组。
+[-]
+
+[%@library underlying_type]
+[|]
+template <class T> [br]
+struct underlying_type;
+[|] [:en] The member typedef [`type] names the underlying type of [`T].
+    [:zh_CN] 成员 typedef [`type] 指名 [`T] 的底层类型。
+
+    [para:requires]
+    [:en] [`T] shall be a complete enumeration type ([#dcl.enum])
+    [:zh_CN] [`T] 应当是完整的枚举类型（[#dcl.enum]）
+[-]
+
+[|]
+template <class Fn, [br]
+class... ArgTypes>
+struct invoke_result;
+[|] [:en] If the expression [`[*INVOKE](declval<Fn>(), declval<ArgTypes>()...)]
+    is well formed when treated as an unevaluated operand (Clause [#expr]), the
+    member typedef [`type] names the type
+    [`decltype([*INVOKE](declval<Fn>(), declval<ArgTypes>()...))]; otherwise,
+    there shall be no member [`type].
+    [:zh_CN] 如果表达式 [`[*INVOKE](declval<Fn>(), declval<ArgTypes>()...)] 被
+    当作免求值操作数（第 [#expr] 章）时是良构的，则成员 typedef [`type] 指名类型
+    [`decltype([*INVOKE](declval<Fn>(), declval<ArgTypes>()...))]；否则，不应当
+    存在成员 [`type]。
+
+    [:en] Access checking is performed as if in a context unrelated to [`Fn] and
+    [`ArgTypes].
+    [:zh_CN] 如同在与 [`Fn] 和 [`ArgTypes] 无关的语境中那样进行访问检查。
+
+    [:en] Only the validity of the immediate context of the expression is
+    considered.
+    [:zh_CN] 仅考察表达式的直接语境的有效性。
+
+    [enter:note]
+    [:en] The compilation of the expression can result in side effects such as
+    the instantiation of class template specializations and function template
+    specializations, the generation of implicitly-defined functions, and so on.
+    [:zh_CN] 对表达式进行编译可能造成的副作用包括对类模板特例和函数模板特例的
+    实例化，生成隐式定义的函数，等等。
+
+    [:en] Such side effects are not in the ["immediate context] and can result
+    in the program being ill-formed.
+    [:zh_CN] 这种副作用并不在其“直接语境”中，且可能导致程序非良构。
+    [exit:note]
+
+    [para:requires]
+    [:en] [`Fn] and all types in the parameter pack [`ArgTypes] shall be
+    complete types, [$cv] [`void], or arrays of unknown bound.
+    [:zh_CN] [`Fn] 和形参包组 [`ArgTypes] 中的所有类型都应当是完整类型，
+    [$cv] [`void]，或者未知边界的数组。
+[-]
+[table:end]
+
+[%@library aligned_storage]
+[para]
+[enter:note]
+[:en] A typical implementation would define [`aligned_storage] as:
+[:zh_CN] 一种典型的实现可能将 [`aligned_storage] 定义为：
+
+[codeblock]
+template <size_t Len, size_t Alignment>
+struct aligned_storage {
+  typedef struct {
+    alignas(Alignment) unsigned char __data[Len];
+  } type;
+};
+[codeblock:end]
+[exit:note]
+
+[para]
+[:en] It is [%@impldef support for extended alignment] implementation-defined
+whether any extended alignment is supported ([#basic.align]).
+[:zh_CN] 是否支持任何扩充对齐（[#basic.align]）是[%@impldef 对扩充对齐的支持]
+由实现定义的。
+
+[%@library common_type]
+[para]
+[:en] Note A: For the [`common_type] trait applied to a parameter pack [`T] of
+types, the member [`type] shall be either defined or not present as follows:
+[:zh_CN] 注解 A：对于应用于类型的形参包组 [`T] 的 [`common_type]，其成员 [`type]
+应当以如下方式定义或忽略：
+
+[list]
+[item]
+[:en] If [`sizeof...(T)] is zero, there shall be no member [`type].
+[:zh_CN] 若 [`sizeof...(T)] 为零，则不应当存在成员 [`type]。
+
+[item]
+[:en] If [`sizeof...(T)] is one, let [`T0] denote the sole type constituting the
+pack [`T].
+[:zh_CN] 若 [`sizeof...(T)] 为一，令 [`T0] 代表构成包组 [`T] 的唯一类型。
+
+[:en] The member [~typedef-name] [`type] shall denote the same type, if any, as
+[`common_type_t<T0, T0>]; otherwise there shall be no member [`type].
+[:zh_CN] 成员 [~typedef-名] [`type] 应当代表与 [`common_type_t<T0, T0>] 相同的
+类型（如果有）；否则不应当存在成员 [`type]。
+
+[item]
+[:en] If [`sizeof...(T)] is two, let the first and second types constituting
+[`T] be denoted by [`T1] and [`T2], respectively, and let [`D1] and [`D2] denote
+the same type as [`decay_t<T1>] and [`decay_t<T2>], respectively.
+[:zh_CN] 若 [`sizeof...(T)] 为二，令构成 [`T] 的第一个和第二个类型分别由 [`T1]
+和 [`T2] 来代表，并令 [`D1] 和 [`D2] 分别代表 [`decay_t<T1>] 和 [`decay_t<T2>]
+的相同类型。
+
+[list]
+[item]
+[:en] If [`is_same_v<T1, D1>] is [`false] or [`is_same_v<T2, D2>] is [`false],
+let [`C] denote the same type, if any, as [`common_type_t<D1, D2>].
+[:zh_CN] 若 [`is_same_v<T1, D1>] 为 [`false] 或者 [`is_same_v<T2, D2>] 为
+[`false]，则令 [`C] 代表与 [`common_type_t<D1, D2>] 的相同类型（如果有）。
+[item]
+[:en] Otherwise, let [`C] denote the same type, if any, as
+[:zh_CN] 否则，令 [`C] 代表与如下相同的类型（如果有）
+[codeblock:notation]
+decay_t<decltype(false ? declval<D1>() : declval<D2>())>
+[codeblock:end]
+
+[enter:note]
+[:en] This will not apply if there is a specialization [`common_type<D1, D2>].
+[:zh_CN] 如果有 [`common_type<D1, D2>] 的特例，则这条不适用。
+[exit:note]
+[list:end]
+
+[:en] In either case, the member [~typedef-name] [`type] shall denote the same
+type, if any, as [`C].
+[:zh_CN] 无论哪种情况，成员 [~typedef-名] [`type] 都应当代表与 [`C] 相同的类型
+（如果有）。
+
+[:en] Otherwise, there shall be no member [`type].
+[:zh_CN] 否则，就不能有 [`type] 成员。
+
+[item]
+[:en] If [`sizeof...(T)] is greater than two, let [`T1], [`T2], and [`R],
+respectively, denote the first, second, and (pack of) remaining types
+constituting [`T].
+[:zh_CN] 若 [`sizeof...(T)] 大于二，令 [`T1]，[`T2]，和 [`R] 分别代表构成 [`T]
+的第一个，第二个，以及剩余类型（的包组）。
+
+[:en] Let [`C] denote the same type, if any, as [`common_type_t<T1, T2>].
+[:zh_CN] 令 [`C] 代表与 [`common_type_t<T1, T2>] 的相同类型（如果有）。
+
+[:en] If there is such a type [`C], the member [~typedef-name] [`type] shall
+denote the same type, if any, as [`common_type_t<C, R...>].
+[:zh_CN] 如果存在这种类型 [`C]，则成员 [~typedef-名] [`type] 应当代表
+[`common_type_t<C, R...>] 的相同类型（如果有）。
+
+[:en] Otherwise, there shall be no member [`type].
+[:zh_CN] 否则，不应当存在成员类型 [`type]。
+[list:end]
+
+[para]
+[:en] Note B: Notwithstanding the provisions of [#meta.type.synop], and
+pursuant to [#namespace.std], a program may specialize [`common_type<T1, T2>]
+for types [`T1] and [`T2] such that [`is_same_v<T1, decay_t<T1>>] and
+[`is_same_v<T2, decay_t<T2>>] are each [`true].
+[:zh_CN] 注解 B：无论 [#meta.type.synop] 如何规定，根据 [#namespace.std]，程序都
+可以为类型 [`T1] 和 [`T2] 来特化 [`common_type<T1, T2>]，以使得
+[`is_same_v<T1, decay_t<T1>>] 和 [`is_same_v<T2, decay_t<T2>>] 均为 [`true]。
+
+[enter:note]
+[:en] Such specializations are needed when only explicit conversions are desired
+between the template arguments.
+[:zh_CN] 仅当在模板实参之间需要进行显式转换时，这种特化式才是必要的。
+[exit:note]
+
+[:en]
+Such a specialization need not have a member named [`type], but if it does, that
+member shall be a [~typedef-name] for an accessible and unambiguous
+cv-unqualified non-reference type [`C] to which each of the types [`T1] and
+[`T2] is explicitly convertible.
+[:zh_CN]
+这种特化式并不需要带有名为 [`type] 的成员，但若它有，则该成员应当是对某个可访问
+且无歧义的 cv 未限定的非引用类型 [`C] 的 [~typedef-名]，且 [`T1] 和 [`T2] 都应当
+能够显示转换为这个类型。
+
+[:en]
+Moreover, [`common_type_t<T1, T2>] shall denote the same type, if any, as does
+[`common_type_t<T2, T1>].
+[:zh_CN]
+此外 [`common_type_t<T1, T2>] 应当代表与 [`common_type_t<T2, T1>] 相同的类型
+（如果有）。
+
+[:en]
+No diagnostic is required for a violation of this Note[=']s rules.
+[:zh_CN]
+违反这条注解的规则不需要进行诊断。
+
+[para]
+[enter:example]
+[:en] Given these definitions:
+[:zh_CN] 给定以下定义式：
+
+[codeblock]
+using PF1 = bool  (&)();
+using PF2 = short (*)(long);
+
+struct S {
+  operator PF2() const;
+  double operator()(char, int&);
+  void fn(long) const;
+  char data;
+};
+
+using PMF = void (S::*)(long) const;
+using PMD = char  S::*;
+[codeblock:end]
+
+[:en@~] the following assertions will hold:
+[:zh_CN@~] 下列断言均成立：
+
+[codeblock]
+static_assert(is_same_v<invoke_result_t<S, int>, short>);
+static_assert(is_same_v<invoke_result_t<S&, unsigned char, int&>, double>);
+static_assert(is_same_v<invoke_result_t<PF1>, bool>);
+static_assert(is_same_v<invoke_result_t<PMF, unique_ptr<S>, int>, void>);
+static_assert(is_same_v<invoke_result_t<PMD, S>, char&&>);
+static_assert(is_same_v<invoke_result_t<PMD, const S*>, const char&>);
+[codeblock:end]
+[exit:example]

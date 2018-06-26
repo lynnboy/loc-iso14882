@@ -1,0 +1,177 @@
+[section#utility.to.chars
+    [:en] Primitive numeric output conversion
+    [:zh_CN] 基础数值输出转换
+]
+
+[para]
+[:en]
+All functions named [`to_chars] convert [`value] into a character string by
+successively filling the range [=range(first,last)], where [=range(first,last)]
+is required to be a valid range.
+[:zh_CN]
+名为 [`to_chars] 的每个函数都将 [`value] 转换为一个字符串，它对范围
+[=range(first,last)] 进行填充，要求 [=range(first,last)] 是一个有效的范围。
+
+[:en]
+If the member [`ec] of the return value is such that the value, when converted
+to [`bool], is [`false], the conversion was successful and the member [`ptr] is
+the one-past-the-end pointer of the characters written.
+[:zh_CN]
+如果返回值的成员 [`ec] 转换为 [`bool] 后为 [`false]，则转换成功，且其成员 [`ptr]
+为越过所写入的字符末尾的指针。
+
+[:en]
+Otherwise, the member [`ec] has the value [`errc::value_too_large], the member
+[`ptr] has the value [`last], and the contents of the range [=range(first,last)]
+are unspecified.
+[:zh_CN]
+否则，成员 [`ec] 的值为 [`errc::value_too_large]，[`ptr] 的值为 [`last]，而范围
+[=range(first,last)] 的内容则是未指定的。
+
+[para]
+[:en]
+The functions that take a floating-point [`value] but not a [`precision]
+parameter ensure that the string representation consists of the smallest number
+of characters such that there is at least one digit before the radix point (if
+present) and parsing the representation using the corresponding [`from_chars]
+function recovers [`value] exactly.
+[:zh_CN]
+接受浮点的 [`value] 但没有 [`precision] 参数的函数，确保字符串表示由满足如下条件
+的最少数量的字符构成：小数点（如果有）之前至少有一个数字，并且用对应的
+[`from_chars] 函数来解析这个表示时能够精确恢复 [`value]。
+
+[enter:note]
+[:en]
+This guarantee applies only if [`to_chars] and [`from_chars] are executed on the
+same implementation.
+[:zh_CN]
+这项保证只适用于在同一个实现上执行的 [`to_chars] 和 [`from_chars]。
+[exit:note]
+
+[para]
+[:en]
+The functions taking a [`chars_format] parameter determine the conversion
+specifier for [`printf] as follows:
+[:zh_CN]
+接受 [`chars_format] 形参的函数以如下方式确定 [`printf] 的转换说明符：
+
+[:en]
+The conversion specifier is [`f] if [`fmt] is [`chars_format::fixed], [`e] if
+[`fmt] is [`chars_format::scientific], [`a] (without leading [`"0x"] in the
+result) if [`fmt] is [`chars_format::hex], and [`g] if [`fmt] is
+[`chars_format::general].
+[:zh_CN]
+当 [`fmt] 为 [`chars_format::fixed] 时，转换说明符为 [`f]，当 [`fmt] 为
+[`chars_format::scientific] 时则为 [`e]，当 [`fmt] 为 [`chars_format::has] 时
+则为 [`a]（其结果中没有前导的 [`"0x"]），而当 [`fmt] 为 [`chars_format::general]
+时则为 [`g]。
+
+[%@library to_chars]
+[codeblock:declaration [!:mark SeeBelow] ]
+to_chars_result to_chars(char* first, char* last, [=SeeBelow] value, int base = 10);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`base] has a value between 2 and 36 (inclusive).
+[:zh_CN] [`base] 的值在 2 到 36 之间（含边界）。
+
+[para:effects]
+[:en] The value of [`value] is converted to a string of digits in the given base
+(with no redundant leading zeroes).
+[:zh_CN] [`value] 的值被转换为给定基数的数字串（没有冗余的前导零数字）。
+
+[:en] Digits in the range 10..35 (inclusive) are represented as lowercase
+characters [`a]..[`z].
+[:zh_CN] 从 10 到 35（含边界）的数字由从 [`a] 到 [`z] 的小写字符表示。
+
+[:en] If [`value] is less than zero, the representation starts with a minus
+sign.
+[:zh_CN] 如果 [`value] 小于零，则其表示以负号开始。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+
+[para:remarks]
+[:en] The implementation shall provide overloads for all signed and unsigned
+integer types and [`char] as the type of the parameter [`value].
+[:zh_CN] 实现应当为所有有符号和无符号整数类型和 [`char] 作为形参 [`value] 的类型
+提供重载。
+[exit:description]
+
+[%@library to_chars]
+[codeblock:declaration]
+to_chars_result to_chars(char* first, char* last, float value);
+to_chars_result to_chars(char* first, char* last, double value);
+to_chars_result to_chars(char* first, char* last, long double value);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] [`value] is converted to a string in the style of [`printf] in the [`"C"]
+locale.
+[:zh_CN] 按照 [`printf] 在 [`"C"] 地域中的风格将 [`value] 转换为一个字符串。
+
+[:en] The conversion specifier is [`f] or [`e], chosen according to the
+requirement for a shortest representation (see above); a tie is resolved in
+favor of [`f].
+[:zh_CN] 转换说明符为 [`f] 或者 [`e]，根据最短表示的规定进行选择（见上文）；二者
+长度相同时选择 [`f]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library to_chars]
+[codeblock:declaration]
+to_chars_result to_chars(char* first, char* last, float value, chars_format fmt);
+to_chars_result to_chars(char* first, char* last, double value, chars_format fmt);
+to_chars_result to_chars(char* first, char* last, long double value, chars_format fmt);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`fmt] has the value of one of the enumerators of [`chars_format].
+[:zh_CN] [`fmt] 的值为 [`chars_format] 的枚举符之一。
+
+[para:effects]
+[:en] [`value] is converted to a string in the style of [`printf] in the [`"C"]
+locale.
+[:zh_CN] 按照 [`printf] 在 [`"C"] 地域中的风格将 [`value] 转换为一个字符串。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library to_chars]
+[codeblock:declaration]
+to_chars_result to_chars(char* first, char* last, float value,
+                         chars_format fmt, int precision);
+to_chars_result to_chars(char* first, char* last, double value,
+                         chars_format fmt, int precision);
+to_chars_result to_chars(char* first, char* last, long double value,
+                         chars_format fmt, int precision);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`fmt] has the value of one of the enumerators of [`chars_format].
+[:zh_CN] [`fmt] 的值为 [`chars_format] 的枚举符之一。
+
+[para:effects]
+[:en] [`value] is converted to a string in the style of [`printf] in the [`"C"]
+locale with the given precision.
+[:zh_CN] 按照 [`printf] 在 [`"C"] 地域中的风格，以给定的精度将 [`value] 转换为
+一个字符串。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[para:xref]
+[:en] ISO C 7.21.6.1.
+[:zh_CN] ISO C 7.21.6.1。

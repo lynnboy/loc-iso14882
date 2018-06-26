@@ -1,0 +1,230 @@
+[/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% mersenne_twister_engine engine:
+/]
+
+[section#rand.eng.mers
+    [:en] Class template [`mersenne_twister_engine]
+    [:zh_CN] 类模板 [`mersenne_twister_engine]
+]
+
+[%@library mersenne_twister_engine]
+[%[:en]random number engine[![`mersenne_twister_engine]]
+  [:zh_CN]随机数引擎[![`mersenne_twister_engine]]]
+
+[para]
+[:en] A [`mersenne_twister_engine] random number engine[#:note#fn:$section.1]
+produces unsigned integer random numbers in the closed interval [$0,2^w-1].
+[:zh_CN] [`mersenne_twister_engine] 随机数引擎[#:note#fn:$section.1]产生闭区间
+[$0,2^w-1] 之中的无符号整数的随机数。
+
+[note:foot#fn:$section.1]
+[:en] The name of this engine refers, in part, to a property of its period:
+[:zh_CN] 这个引擎的名字部分地体现了其周期的一项性质：
+
+[:en] For properly-selected values of the parameters, the period is closely
+related to a large Mersenne prime number.
+[:zh_CN] 对于适当挑选的一组形参值，其周期与某个大的梅森素数密切相关。
+[note:end]
+
+[:en] The
+[%[`mersenne_twister_engine][!state]]
+[%state[![`mersenne_twister_engine]]]
+state [`x][$_i] of a [`mersenne_twister_engine] object [`x] is of size [$n]
+and consists of a sequence [$X] of [$n] values of the type delivered by [`x];
+all subscripts applied to [$X] are to be taken modulo [$n].
+[:zh_CN] [`mersenne_twister_engine] 对象 [`x] 的状态
+[%[`mersenne_twister_engine][!状态]]
+[%状态[![`mersenne_twister_engine]]]
+[`x][$_i] 大小为 [$n]，并由一个具有 [$n] 个值的序列 [$x] 构成，各值具有由 [`x]
+所给出的类型；对 [$x] 进行的所有下标操作均按 [$n] 取模。
+
+[para]
+[:en] The transition algorithm
+[%[`mersenne_twister_engine][!transition algorithm]]
+[%transition algorithm[![`mersenne_twister_engine]]]
+employs a twisted generalized feedback shift register defined by shift values
+[$n] and [$m], a twist value [$r], and a conditional xor-mask [$a].
+[:zh_CN] 其转移算法
+[%[`mersenne_twister_engine][!转移算法]]
+[%转移算法[![`mersenne_twister_engine]]]
+利用了一个由移位值 [$n] 和 [$m]，扭曲值 [$r]，和条件亦或掩码 [$a] 所定义的
+扭曲广义反馈移位寄存器。
+
+[:en] To improve the uniformity of the result, the bits of the raw shift
+register are additionally [+tempered] ([em i.e.], scrambled) according to a
+bit-scrambling matrix defined by values [$u], [$d], [$s], [$b], [$t], [$c], and
+[$l].
+[:zh_CN] 为改进结果的均匀性，还在原始的移位寄存器的各个位上，基于由一组值
+[$u]、[$d]、[$s]、[$b]、[$t]、[$c] 和 [$l] 所定义的位置乱矩阵
+进行了调和（比如进行
+置乱）。
+
+[:en] The state transition is performed as follows:
+[:zh_CN] 其状态转移如下进行：
+
+[list:ol@arparen]
+[item]
+[:en] Concatenate the upper [$w-r] bits of [$X_{i-n}] with the lower [$r] bits
+of [$X_{i+1-n}] to obtain an unsigned integer value [$Y].
+[:zh_CN] 将 [$X_{i-n}] 的高 [$w-r] 位和 [$X_{i+1-n}] 的低 [$r] 位拼接起来得到
+无符号整数值 [$Y]。
+[item]
+[:en] With [$\alpha = a \cdot (Y [=bitand] 1)], set [$X_i] to
+[$X_{i+m-n} [=xor] (Y [=rshift] 1) [=xor] \alpha].
+[:zh_CN] 令 [$\alpha = a \cdot (Y [=bitand] 1)]，将 [$X_i] 设值为
+[$X_{i+m-n} [=xor] (Y [=rshift] 1) [=xor] \alpha]。
+[list:end]
+
+[:en] The sequence [$X] is initialized with the help of an initialization
+multiplier [$f].
+[:zh_CN] 序列 [$X] 初始化时借助于一个初始化乘数 [$f]。
+
+[para]
+[:en] The generation algorithm
+[%[`mersenne_twister_engine][!generation algorithm]]
+[%generation algorithm[![`mersenne_twister_engine]]]
+determines the unsigned integer values [$z_1], [$z_2], [$z_3], [$z_4] as
+follows, then delivers [$z_4] as its result:
+[:zh_CN] 其生成算法
+[%[`mersenne_twister_engine][!生成算法]]
+[%生成算法[![`mersenne_twister_engine]]]
+以如下方式确定无符号整数值 [$z_1]、[$z_2]、[$z_3] 和 [$z_4]，然后以 [$z_4] 为其
+结果：
+
+[list:ol@arparen]
+[item]
+[:en] Let [$z_1 = X_i [=xor] \bigl(( X_i [=rshift] u ) [=bitand] d\bigr)].
+[:zh_CN] 令 [$z_1 = X_i [=xor] \bigl(( X_i [=rshift] u ) [=bitand] d\bigr)]。
+[item]
+[:en] Let [$z_2 = z_1 [=xor] \bigl( (z_1 [=lshift(w)] s) [=bitand] b \bigr)].
+[:zh_CN] 令 [$z_2 = z_1 [=xor] \bigl( (z_1 [=lshift(w)] s) [=bitand] b \bigr)]。
+[item]
+[:en] Let [$z_3 = z_2 [=xor] \bigl( (z_2 [=lshift(w)] t) [=bitand] c \bigr)].
+[:zh_CN] 令 [$z_3 = z_2 [=xor] \bigl( (z_2 [=lshift(w)] t) [=bitand] c \bigr)]。
+[item]
+[:en] Let [$z_4 = z_3 [=xor] ( z_3 [=rshift] \ell )].
+[:zh_CN] 令 [$z_4 = z_3 [=xor] ( z_3 [=rshift] \ell )]。
+[list:end]
+
+[codeblock:synopsis]
+template<class UIntType, size_t w, size_t n, size_t m, size_t r,
+         UIntType a, size_t u, UIntType d, size_t s,
+         UIntType b, size_t t,
+         UIntType c, size_t l, UIntType f>
+  class mersenne_twister_engine {
+  public:
+    // [:en] types
+    // [|:zh_CN] 类型
+    using result_type = UIntType;
+
+    // [:en] engine characteristics
+    // [|:zh_CN] 引擎的特性
+    static constexpr size_t word_size = w;
+    static constexpr size_t state_size = n;
+    static constexpr size_t shift_size = m;
+    static constexpr size_t mask_bits = r;
+    static constexpr UIntType xor_mask = a;
+    static constexpr size_t tempering_u = u;
+    static constexpr UIntType tempering_d = d;
+    static constexpr size_t tempering_s = s;
+    static constexpr UIntType tempering_b = b;
+    static constexpr size_t tempering_t = t;
+    static constexpr UIntType tempering_c = c;
+    static constexpr size_t tempering_l = l;
+    static constexpr UIntType initialization_multiplier = f;
+    static constexpr result_type min() { return 0; }
+    static constexpr result_type max() { return  [$2^w - 1]; }
+    static constexpr result_type default_seed = 5489u;
+
+    // [:en] constructors and seeding functions
+    // [|:zh_CN] 构造函数和播种函数
+    explicit mersenne_twister_engine(result_type value = default_seed);
+    template<class Sseq> explicit mersenne_twister_engine(Sseq& q);
+    void seed(result_type value = default_seed);
+    template<class Sseq> void seed(Sseq& q);
+
+    // [:en] generating functions
+    // [|:zh_CN] 生成函数
+    result_type operator()();
+    void discard(unsigned long long z);
+  };
+[codeblock:end]
+
+[para]
+[:en] The following relations shall hold: [`0 < m], [`m <= n], [`2u < w],
+[`r <= w], [`u <= w], [`s <= w], [`t <= w], [`l <= w],
+[`w <= numeric_limits<UIntType>::digits], [`a <= (1u<<w) - 1u],
+[`b <= (1u<<w) - 1u], [`c <= (1u<<w) - 1u], [`d <= (1u<<w) - 1u], and
+[`f <= (1u<<w) - 1u].
+[:zh_CN] 下列关系应当满足：[`0 < m]，[`m <= n]，[`2u < w]，[`r <= w]，[`u <= w]，
+[`s <= w]，[`t <= w]，[`l <= w]，[`w <= numeric_limits<UIntType>::digits]，
+[`a <= (1u<<w) - 1u]，[`b <= (1u<<w) - 1u]，[`c <= (1u<<w) - 1u]，
+[`d <= (1u<<w) - 1u]，以及 [`f <= (1u<<w) - 1u]。
+
+[para]
+[:en] The textual representation
+[%[`mersenne_twister_engine][!textual representation]]
+of [`x][$_i] consists of the values of [$X_i-n, \ldots, X_{i-1}], in that order.
+[:zh_CN]
+[%[`mersenne_twister_engine][!文本表示]]
+[`x][$_i] 的文本表示由 [$X_{i-n}, \ldots, X_{i-1}] 各值依序构成。
+
+[%@library mersenne_twister_engine[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+explicit mersenne_twister_engine(result_type value = default_seed);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a [`mersenne_twister_engine] object.
+[:zh_CN] 构造一个 [`mersenne_twister_engine] 对象。
+
+[:en] Sets [$X_{-n}] to [$[`value] \bmod 2^w].
+[:zh_CN] 将 [$X_{-n}] 设值为 [$[`value] \bmod 2^w]。
+
+[:en] Then, iteratively for [$i = 1\!-\!n,\ldots,-1], sets [$X_i] to
+[:zh_CN] 然后, 对于每个 [$i = 1\!-\!n,\ldots,-1]，将 [$X_i] 设值为
+
+[math]
+ \bigl[f \cdot
+       \bigl(X_{i-1} [=xor] \bigl(X_{i-1} [=rshift] (w-2)\bigr)
+       \bigr)
+       + i \bmod n
+ \bigr] \bmod 2^w
+[math:end]
+
+[:en@~].
+[:zh_CN@~]。
+
+[para:complexity]
+[:en] [$[=O(n)]].
+[:zh_CN] [$[=O(n)]]。
+[exit:description]
+
+[%@library mersenne_twister_engine[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class Sseq> explicit mersenne_twister_engine(Sseq& q);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs a [`mersenne_twister_engine] object.
+[:zh_CN] 构造一个 [`mersenne_twister_engine] 对象。
+
+[:en] With [$k = \left\lceil w / 32 \right\rceil] and [$a] an array (or
+equivalent) of length [$n \cdot k], invokes
+[`q.generate([$a+0], [$a+n \cdot k])] and then, iteratively for
+[$i = -n,\ldots,-1], sets [$X_i] to
+[$\left(\sum_{j=0}^{k-1}a_{k(i+n)+j} \cdot 2^{32j} \right) \bmod 2^w].
+[:zh_CN] 设 [$k = \left\lceil w / 32 \right\rceil] 且 [$a] 为长度为 [$n \cdot k]
+的数组（或等价物），其将调用
+[`q.generate([$a+0], [$a+n \cdot k])]，并随后对每个 [$i = -n,\ldots,-1]，
+将 [$X_i] 设值为
+[$\left(\sum_{j=0}^{k-1}a_{k(i+n)+j} \cdot 2^{32j} \right) \bmod 2^w]。
+
+[:en] Finally, if the most significant [$w - r] bits of [$X_{-n}] are zero, and
+if each of the other resulting [$X_i] is 0, changes [$X_{-n}] to [$2^{{w-1}].
+[:zh_CN] 最后，若 [$X_{-n}] 的 [$w - r] 个最高有效位均为零，且所产生的其他每个
+[$X_i] 均为 0，则将 [$X_{-n}] 改为 [$2^{{w-1}]。
+[exit:description]

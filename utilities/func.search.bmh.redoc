@@ -1,0 +1,124 @@
+[section#func.search.bmh
+    [:en] Class template [`boyer_moore_horspool_searcher]
+    [:zh_CN] 类模板 [`boyer_moore_horspool_searcher]
+]
+
+[%@library boyer_moore_horspool_searcher]
+[codeblock:synopsis]
+template <class RandomAccessIterator1,
+          class Hash = hash<typename iterator_traits<RandomAccessIterator1>::value_type>,
+          class BinaryPredicate = equal_to<>>
+  class boyer_moore_horspool_searcher {
+  public:
+    boyer_moore_horspool_searcher(RandomAccessIterator1 pat_first,
+                                  RandomAccessIterator1 pat_last,
+                                  Hash hf = Hash(),
+                                  BinaryPredicate pred = BinaryPredicate());
+
+    template <class RandomAccessIterator2>
+      pair<RandomAccessIterator2, RandomAccessIterator2>
+        operator()(RandomAccessIterator2 first, RandomAccessIterator2 last) const;
+
+  private:
+    RandomAccessIterator1 pat_first_;   // [=Expos]
+    RandomAccessIterator1 pat_last_;    // [=Expos]
+    Hash hash_;                         // [=Expos] 
+    BinaryPredicate pred_;              // [=Expos]
+  };
+[codeblock:end]
+
+[%@library boyer_moore_horspool_searcher[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+boyer_moore_horspool_searcher(RandomAccessIterator1 pat_first,
+                              RandomAccessIterator1 pat_last,
+                              Hash hf = Hash(),
+                              BinaryPredicate pred = BinaryPredicate());
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The value type of [`RandomAccessIterator1] shall meet the
+[`DefaultConstructible], [`CopyConstructible], and [`CopyAssignable]
+requirements.
+[:zh_CN] [`RandomAccessIterator1] 的值类型应当满足 [`DefaultConstructible]，
+[`CopyConstructible]，以及 [`CopyAssignable] 的规定。
+
+[para:requires]
+[:en] For any two values [`A] and [`B] of the type
+[`iterator_traits<RandomAccessIterator1>::value_type], if [`pred(A, B) == true],
+then [`hf(A) == hf(B)] shall be [`true].
+[:zh_CN] 对于任意两个 [`iterator_traits<RandomAccessIterator1>::value_type] 类型
+的值 [`A] 和 [`B]，若 [`pred(A, B) == true]，则 [`hf(A) == hf(B)] 应当为
+[`true]。
+
+[para:effects]
+[:en] Constructs a [`boyer_moore_horspool_searcher] object, initializing
+[`pat_first_] with [`pat_first], [`pat_last_] with [`pat_last], [`hash_] with
+[`hf], and [`pred_] with [`pred].
+[:zh_CN] 构造一个 [`boyer_moore_horspool_searcher] 对象，以 [`pat_first] 初始化
+[`pat_first_]，以 [`pat_last] 初始化 [`pat_last_]，以 [`hf] 初始化 [`hash_]，
+并以 [`pred] 初始化 [`pred_]。
+
+[para:throws]
+[:en] Any exception thrown by the copy constructor of [`RandomAccessIterator1],
+or by the default constructor, copy constructor, or the copy assignment operator
+of the value type of [`RandomAccessIterator1] or the copy constructor or
+[`operator()] of [`BinaryPredicate] or [`Hash].
+[:zh_CN] 由 [`RandomAccessIterator1] 的复制构造函数，或由
+[`RandomAccessIterator1] 的值类型的默认构造函数、复制构造函数或复制赋值运算符，
+或由 [`BinaryPredicate] 或 [`Hash] 的复制构造函数或 [`operator()] 所抛出的任何
+异常。
+
+[:en] May throw [`bad_alloc] if additional memory needed for internal data
+structures cannot be allocated.
+[:zh_CN] 当无法分配器内部数据结构所需要的额外内存时，可能抛出 [`bad_alloc]。
+[exit:description]
+
+[%@library operator()[!boyer_moore_horspool_searcher]]
+[%@library boyer_moore_horspool_searcher[!operator()]]
+[codeblock:declaration]
+template <class RandomAccessIterator2>
+  pair<RandomAccessIterator2, RandomAccessIterator2>
+    operator()(RandomAccessIterator2 first, RandomAccessIterator2 last) const;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`RandomAccessIterator1] and [`RandomAccessIterator2] shall have the same
+value type.
+[:zh_CN] [`RandomAccessIterator1] 和 [`RandomAccessIterator2] 应当具有相同的
+值类型。
+
+[para:effects]
+[:en] Finds a subsequence of equal values in a sequence.
+[:zh_CN] 在一个序列中寻找相等值的子序列。
+
+[para:returns]
+[:en] A pair of iterators [`i] and [`j] such that
+[:zh_CN] 一对迭代器 [`i] 和 [`j]，使得
+
+[list]
+[item]
+[:en@~] [`i] is the first iterator in the range
+[=range(first,last - (pat_last_ - pat_first_))] such that for every non-negative
+integer [`n] less than [`pat_last_ - pat_first_] the following condition holds:
+[`pred(*(i + n), *(pat_first_ + n)) != false], and
+[:zh_CN@~] [`i] 是范围 [=range(first,last - (pat_last_ - pat_first_))] 中，使得
+小于 [`pat_last_ - pat_first_] 的每个非负整数 [`n] 都满足
+[`pred(*(i + n), *(pat_first_ + n)) != false] 的第一个迭代器，并且
+
+[item]
+[:en@~] [`j == next(i, distance(pat_first_, pat_last_))].
+[:zh_CN@~] [`j == next(i, distance(pat_first_, pat_last_))]。
+[list:end]
+
+[:en] Returns [`make_pair(first, first)] if [=range(pat_first_,pat_last_)] is
+empty, otherwise returns [`make_pair(last, last)] if no such iterator is found.
+[:zh_CN] 当 [=range(pat_first_,pat_last_)] 为空时返回 [`make_pair(first, first)]
+，否则当不存在这种迭代器时返回 [`make_pair(last, last)]。
+
+[para:complexity]
+[:en] At most [`(last - first) * (pat_last_ - pat_first_)] applications of the
+predicate.
+[:zh_CN] 对谓词进行至多 [`(last - first) * (pat_last_ - pat_first_)] 次应用。
+[exit:description]

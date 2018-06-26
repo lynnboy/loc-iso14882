@@ -1,0 +1,173 @@
+[section#filebuf.members
+    [:en] Member functions
+    [:zh_CN] 成员函数
+]
+
+[%@library is_open[!basic_filebuf]]
+[%@library basic_filebuf[!is_open]]
+[codeblock:declaration]
+bool is_open() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`true] if a previous call to [`open] succeeded (returned a non-null
+value) and there has been no intervening call to close.
+[:zh_CN] 若上一次调用 [`open] 成功（返回非空值）且之间未发生过对 [`close] 的调用
+时返回 [`true]。
+[exit:description]
+
+[%@library open[!basic_filebuf]]
+[%@library basic_filebuf[!open]]
+[codeblock:declaration]
+basic_filebuf* open(const char* s, ios_base::openmode mode);
+basic_filebuf* open(const filesystem::path::value_type* s,
+                    ios_base::openmode mode);  // [:en] wide systems only; see [#fstream.syn]
+                                               // [|:zh_CN] 仅宽字符系统；参见 [#fstream.syn]
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`is_open() != false], returns a null pointer.
+[:zh_CN] 若 [`is_open() != false]，则返回空指针。
+
+[:en] Otherwise, initializes the [`filebuf] as required.
+[:zh_CN] 否则，根据需要初始化 [`filebuf]。
+
+[:en] It then opens a file, if possible, whose name is the [%NTBS][$:sc ntbs]
+[`s] (as if by calling [%@library fopen][`fopen(s, modstr)]).
+[:zh_CN] 如果可能，它将打开名字为 [%NTBS][$:sc ntbs] [`s] 的文件（如同通过调用
+[%@library fopen][`fopen(s, modstr)] 来进行）。
+
+[:en] The [$:sc ntbs] [`modstr] is determined from [`mode & ~ios_base::ate]
+as indicated in Table [#tab:iostreams.file.open.modes].
+[:zh_CN] 其 [$:sc ntbs] [`modstr] 是从 [`mode & ~ios_base::ate] 根据表
+[#tab:iostreams.file.open.modes] 来确定的。
+
+[:en] If [`mode] is not some combination of flags shown in the table then
+the open fails.
+[:zh_CN] 如果 [`mode] 并不是该表中所示的各标记的某种组合，则文件打开失败。
+
+[table:grid#tab:iostreams.file.open.modes
+    [:en] File open modes
+    [:zh_CN] 文件打开模式
+
+    [|@center@headercolspan=5
+        [:en] [`ios_base] flag combination
+        [:zh_CN] [`ios_base] 的标记组合 ]
+    [|@code
+        [:en] [`stdio] equivalent
+        [:zh_CN] [`stdio] 等价物 ]
+	[-]
+    [| [`binary] ]
+    [| [`in] ]
+    [| [`out] ]
+    [| [`trunc] ]
+    [| [`app] ]
+]
+[|]   [|]   [|] + [|]   [|]   [|] "w"   [-]
+[|]   [|]   [|] + [|]   [|] + [|] "a"   [-]
+[|]   [|]   [|]   [|]   [|] + [|] "a"   [-]
+[|]   [|]   [|] + [|] + [|]   [|] "w"   [-]
+[|]   [|] + [|]   [|]   [|]   [|] "r"   [-]
+[|]   [|] + [|] + [|]   [|]   [|] "r+"  [-]
+[|]   [|] + [|] + [|] + [|]   [|] "w+"  [-]
+[|]   [|] + [|] + [|]   [|] + [|] "a+"  [-]
+[|]   [|] + [|]   [|]   [|] + [|] "a+"  [-@double]
+[|] + [|]   [|] + [|]   [|]   [|] "wb"  [-]
+[|] + [|]   [|] + [|]   [|] + [|] "ab"  [-]
+[|] + [|]   [|]   [|]   [|] + [|] "ab"  [-]
+[|] + [|]   [|] + [|] + [|]   [|] "wb"  [-]
+[|] + [|] + [|]   [|]   [|]   [|] "rb"  [-]
+[|] + [|] + [|] + [|]   [|]   [|] "r+b" [-]
+[|] + [|] + [|] + [|] + [|]   [|] "w+b" [-]
+[|] + [|] + [|] + [|]   [|] + [|] "a+b" [-]
+[|] + [|] + [|]   [|]   [|] + [|] "a+b" [-]
+[table:end]
+
+[para]
+[:en] If the open operation succeeds and [`(mode & ios_base::ate) != 0],
+positions the file to the end (as if by calling [`fseek(file, 0, SEEK_END)]).
+[#:note#fn:$section.1]
+[:zh_CN] 如果打开操作成功且 [`(mode & ios_base::ate) != 0]，则将文件定位到末尾
+（如同调用 [`fseek(file, 0, SEEK_END)]）。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en] The macro [`SEEK_END] is defined, and the function signatures
+[%@library fopen] [`fopen(const char*, const char*)] and
+[%@library fseek] [`fseek(FILE*, long, int)] are declared, in
+[%@ [`<cstdio>][@cstdio]][%@library <cstdio>[@cstdio]]
+[`<cstdio>] ([#cstdio.syn]).
+[:zh_CN] [%@ [`<cstdio>][@cstdio]][%@library <cstdio>[@cstdio]]
+头文件 [`<cstdio>]（[#cstdio.syn]）定义了宏 [`SEEK_END]，并声明了函数签名
+[%@library fopen] [`fopen(const char*, const char*)] 和
+[%@library fseek] [`fseek(FILE*, long, int)]。
+[note:end]
+
+[para]
+[:en] If the repositioning operation fails, calls [`close()] and returns a null
+pointer to indicate failure.
+[:zh_CN] 如果重新定位失败，则调用 [`close()] 并返回空指针以标明故障。
+
+[para:returns]
+[:en] [`this] if successful, a null pointer otherwise.
+[:zh_CN] 成功时返回 [`this]，否则返回空指针。
+[exit:description]
+
+[%@library open[!basic_filebuf]]
+[%@library basic_filebuf[!open]]
+[codeblock:declaration]
+basic_filebuf* open(const string& s, ios_base::openmode mode);
+basic_filebuf* open(const filesystem::path& s, ios_base::openmode mode);
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[`open(s.c_str(), mode);]
+[exit:description]
+
+[%@library close[!basic_filebuf]]
+[%@library basic_filebuf[!close]]
+[codeblock:declaration]
+basic_filebuf* close();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`is_open() == false], returns a null pointer.
+[:zh_CN] 若 [`is_open() == false]，则返回空指针。
+
+[:en] If a put area exists, calls [`overflow(traits::eof())] to flush
+characters.
+[:zh_CN] 如果存在放入区，则调用 [`overflow(traits::eof())] 来冲洗其中的字符。
+
+[:en] If the last virtual member function called on [`*this] (between
+[`underflow], [`overflow], [`seekoff], and [`seekpos]) was [`overflow] then
+calls [`a_codecvt.unshift] (possibly several times) to determine a termination
+sequence, inserts those characters and calls [`overflow(traits::eof())] again.
+[:zh_CN] 如果对 [`*this] 最近调用过的虚成员函数（[`underflow]、[`overflow]、
+[`seekoff] 和 [`seekpos] 之一）为 [`overflow]，则（可能多次）调用
+[`a_codecvt.unshift] 以确定一个终止序列，插入其中的字符，然后再次调用
+[`overflow(traits::eof())]。
+
+[:en] Finally, regardless of whether any of the preceding calls fails or throws
+an exception, the function closes the file (as if by calling
+[%@library fclose] [`fclose(file)]).
+[:zh_CN] 最后，无论之前的任何调用是否失败或抛出了异常，该函数都关闭这个文件
+（如同通过调用 [%@library fclose] [`fclose(file)]）。
+
+[:en] If any of the calls made by the function, including [`fclose], fails,
+[`close] fails by returning a null pointer.
+[:zh_CN] 如果该函数所进行的任何调用（包括 [`fclose]）失败，则 [`close] 以返回
+空指针以标明失败。
+
+[:en] 如果这些调用之一抛出了异常，则捕获该异常并在关闭文件后将之重新抛出。
+
+[para:returns]
+[:en] [`this] on success, a null pointer otherwise.
+[:zh_CN] 成功时返回 [`this]，否则返回空指针。
+
+[para:postconditions]
+[:en] [`is_open() == false].
+[:zh_CN] [`is_open() == false]。
+[exit:description]

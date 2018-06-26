@@ -1,0 +1,299 @@
+[section#re.grammar
+    [:en] Modified ECMAScript regular expression grammar
+    [:zh_CN] 修改的 ECMAScript 正则表达式文法
+]
+
+[:en]
+[%regular expression[!grammar]]
+[%grammar[!regular expression]]
+[:zh_CN]
+[%正则表达式[!文法]]
+[%文法[!正则表达式]]
+
+[para]
+[%@library basic_regex]
+[%ECMAScript]
+[:en] The regular expression grammar recognized by [`basic_regex] objects
+constructed with the ECMAScript flag is that specified by ECMA-262, except as
+specified below.
+[:zh_CN] 以 [`ECMAScript] 标记创建的 [`basic_regex] 对象所识别的正则表达式文法，
+由 ECMA-262 给出，但有以下区别。
+
+[para]
+[%@library locale]
+[:en]
+[%regular expression traits]
+Objects of type specialization of [`basic_regex] store within themselves a
+default-constructed instance of their [`traits] template parameter, henceforth
+referred to as [`traits_inst].
+[:zh_CN]
+[%正则表达式特征]
+类型为 [`basic_regex] 的特例的对象在其自身内部存储一个其 [`traits] 模板实参的
+经默认构造的实例，后文中将之称为 [`traits_inst]。
+
+[:en] This [`traits_inst] object is used to support localization of the regular
+expression; [`basic_regex] member functions shall not call any locale dependent
+C or [=Cpp] API, including the formatted string input functions.
+[:zh_CN] 这个 [`traits_inst] 对象被用于支持正则表达式的本地化；[`basic_regex] 的
+各成员函数不能调用任何依赖于地域的 C 或 [=Cpp] API，包括各格式化字符串输入函数。
+
+[:en] Instead they shall call the appropriate traits member function to achieve
+the required effect.
+[:zh_CN] 它们应当代之以调用适当的特征成员函数以达成所需效果。
+
+[para]
+[:en] The following productions within the ECMAScript grammar are modified as
+follows:
+[:zh_CN] 下列 ECMAScript 文法中的产生式有所修改如下：
+
+[codeblock:notation]
+ClassAtom ::
+  -
+  ClassAtomNoDash
+  ClassAtomExClass
+  ClassAtomCollatingElement
+  ClassAtomEquivalence
+
+IdentityEscape ::
+  SourceCharacter but not c
+[codeblock:end]
+
+[para]
+[:en] The following new productions are then added:
+[:zh_CN] 添加了下列新产生式：
+
+[codeblock:notation]
+ClassAtomExClass ::
+  [: ClassName :]
+
+ClassAtomCollatingElement ::
+  [. ClassName .]
+
+ClassAtomEquivalence ::
+  [= ClassName =]
+
+ClassName ::
+  ClassNameCharacter
+  ClassNameCharacter ClassName
+
+ClassNameCharacter ::
+  SourceCharacter but not one of "." "=" ":"
+[codeblock:end]
+
+[para]
+[:en] The productions [`ClassAtomExClass], [`ClassAtomCollatingElement] and
+[`ClassAtomEquivalence] provide functionality equivalent to that of the same
+features in regular expressions in POSIX.
+[:zh_CN] 产生式 [`ClassAtomExClass]、[`ClassAtomCollatingElement] 和
+[`ClassAtomEquivalence] 提供与 POSIX 中的正则表达式中相同功能特性等价的功能。
+
+[para]
+[:en] The regular expression grammar may be modified by any
+[`regex_constants::syntax_option_type] flags specified when constructing an
+object of type specialization of [`basic_regex] according to the rules in Table
+[#tab:re:syntaxoption].
+[:zh_CN] 正则表达式文法，可以被构造类型为 [`basic_regex] 的特例的对象时所指定的
+[`regex_constants::syntax_option_type] 标记，根据表 [#tab:re:syntaxoption] 中的
+规则甲乙修改。
+
+[para]
+[:en] A [`ClassName] production, when used in [`ClassAtomExClass], is not valid
+if [`traits_inst.lookup_classname] returns zero for that name.
+[:zh_CN] 当在 [`ClassAtomExClass] 中使用产生式 [`ClassName] 时，如果
+[`traits_inst.lookup_classname] 对该名字返回零，则它是无效的。
+
+[:en] The names recognized as valid [`ClassName]s are determined by the type of
+the traits class, but at least the following names shall be recognized:
+[`alnum], [`alpha], [`blank], [`cntrl], [`digit], [`graph], [`lower], [`print],
+[`punct], [`space], [`upper], [`xdigit], [`d], [`s], [`w].
+[:zh_CN] 可被识别为有效的 [`ClassName] 的名字是由特征类的类型所决定的，但至少
+以下各名字应当被识别：
+[`alnum]，[`alpha]，[`blank]，[`cntrl]，[`digit]，[`graph]，[`lower]，[`print]，
+[`punct]，[`space]，[`upper]，[`xdigit]，[`d]，[`s]，[`w]。
+
+[:en] In addition the following expressions shall be equivalent:
+[:zh_CN] 此外，下列表达式应当等价：
+
+[codeblock:notation]
+\d [$[:en] and [:zh_CN] 和] [[:digit:]]
+
+\D [$[:en] and [:zh_CN] 和] [^[:digit:]]
+
+\s [$[:en] and [:zh_CN] 和] [[:space:]]
+
+\S [$[:en] and [:zh_CN] 和] [^[:space:]]
+
+\w [$[:en] and [:zh_CN] 和] [_[:alnum:]]
+
+\W [$[:en] and [:zh_CN] 和] [^_[:alnum:]]
+[codeblock:end]
+
+[para]
+[%@library [:en]regular expression traits[:zh_CN]正则表达式特征[!lookup_collatename]]
+[%@library lookup_collatename[![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] A [`ClassName] production when used in a [`ClassAtomCollatingElement]
+production is not valid if the value returned by
+[`traits_inst.lookup_collatename] for that name is an empty string.
+[:zh_CN] 当在 [`ClassAtomCollatingElement] 中使用产生式 [`ClassName] 时，如果
+[`traits_inst.lookup_collatename] 对该名字的返回值是空字符串，则它是无效的。
+
+[para]
+[%@library [:en]regular expression traits[:zh_CN]正则表达式特征[!isctype]]
+[%@library isctype[![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[%@library [:en]regular expression traits[:zh_CN]正则表达式特征[!lookup_classname]]
+[%@library lookup_classname[![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] The results from multiple calls to [`traits_inst.lookup_classname] can be
+bitwise OR[=']ed together and subsequently passed to [`traits_inst.isctype].
+[:zh_CN] 可以将多次调用 [`traits_inst.lookup_classname] 的结果以按位或组合起来，
+然后传递给 [`traits_inst.isctype]。
+
+[para]
+[%@library [:en]regular expression traits[:zh_CN]正则表达式特征[!transform_primary]]
+[%@library transform_primary[![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] A [`ClassName] production when used in a [`ClassAtomEquivalence]
+production is not valid if the value returned by
+[`traits_inst.lookup_collatename] for that name is an empty string or if the
+value returned by [`traits_inst.transform_primary] for the result of the call to
+[`traits_inst.lookup_collatename] is an empty string.
+[:zh_CN] 当在 [`ClassAtomEquivalence] 中使用产生式 [`ClassName] 时，如果
+[`traits_inst.lookup_collatename] 对该名字返回的值是空字符串，或者
+[`traits_inst.transform_primary] 对调用 [`traits_inst.lookup_collatename] 的结果
+返回的值是空字符串，则它是无效的。
+
+[para]
+[%@library regex_error]
+[:en] When the sequence of characters being transformed to a finite state
+machine contains an invalid class name the translator shall throw an exception
+object of type [`regex_error].
+[:zh_CN] 如果要被转换为有限状态机的字符序列中包含无效的类名时，翻译器应当抛出
+一个 [`regex_error] 类型的异常对象。
+
+[para]
+[%@library regex_error]
+[:en] If the [$CV] of a [$UnicodeEscapeSequence] is greater than the largest
+value that can be held in an object of type [`charT] the translator shall
+throw an exception object of type [`regex_error].
+[:zh_CN] 如果 [$UnicodeEscapeSequence] 的 [$CV] 值大于 [`charT] 类型的对象可以
+持有的最大值，则翻译器应当抛出一个 [`regex_error] 类型的异常对象。
+
+[enter:note]
+[:en] This means that values of the form [`"uxxxx"] that do not fit in
+a character are invalid.
+[:zh_CN] 这意味着形式为 [`"uxxxx"] 但无法放入一个字符的值是无效的。
+[exit:note]
+
+[para]
+[:en] Where the regular expression grammar requires the conversion of a sequence
+of characters to an integral value, this is accomplished by calling
+[`traits_inst.value].
+[:zh_CN] 每当正则表达式文法要求将字符序列转换为整型值，都是通过调用
+[`traits_inst.value] 来达成的。
+
+[para]
+[%@library match_flag_type]
+[:en] The behavior of the internal finite state machine representation when used
+to match a sequence of characters is as described in ECMA-262.
+[:zh_CN] 用内部有限状态机表示来匹配一个字符序列的行为，符合 ECMA-262 中的描述。
+
+[:en] The behavior is modified according to any match_flag_type flags
+([#re.matchflag]) specified when using the regular expression object in one of
+the regular expression algorithms ([#re.alg]).
+[:zh_CN] 当在正则表达式算法（[#re.alg]）之一中使用正则表达式对象时，其行为可以由
+所指定的 [`match_flag_type] 标记（[#re.matchflag]）进行改动。
+
+[:en] The behavior is also localized by interaction with the traits class
+template parameter as follows:
+[:zh_CN] 其行为还会通过与特征类模板形参之间的交互而进行如下的本地化：
+
+[list]
+[item]
+[:en] During matching of a regular expression finite state machine against a
+sequence of characters, two characters [`c] and [`d] are compared using the
+following rules:
+[:zh_CN] 在将某个正则表达式有限状态机针对某个字符序列进行匹配过程中，使用如下
+规则进行两个字符 [`c] 和 [`d] 之间的比较：
+
+[list]
+[item]
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`translate_nocase]]]
+[%[`translate_nocase][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] if [`(flags() & regex_constants::icase)] the two characters are equal
+if [`traits_inst.translate_nocase(c) == traits_inst.translate_nocase(d)];
+[:zh_CN] 若 [`(flags() & regex_constants::icase)]，则当
+[`traits_inst.translate_nocase(c) == traits_inst.translate_nocase(d)] 时两个字符
+相等；
+
+[item]
+[%@library syntax_option_type[!collate]]
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`translate]]]
+[%[`translate][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] otherwise, if [`flags() & regex_constants::collate] the two characters are
+equal if [`traits_inst.translate(c) == traits_inst.translate(d)];
+[:zh_CN] 否则，若 [`flags() & regex_constants::collate]，则当
+[`traits_inst.translate(c) == traits_inst.translate(d)] 时两个字符相等；
+
+[item]
+[:en] otherwise, the two characters are equal if [`c == d].
+[:zh_CN] 否则，当 [`c == d] 时两个字符相等。
+[list:end]
+
+[item]
+[:en] During matching of a regular expression finite state machine against a
+sequence of characters, comparison of a collating element range [`c1-c2] against
+a character [`c] is conducted as follows:
+[:zh_CN] 在将某个正则表达式有限状态机针对某个字符序列进行匹配过程中，对一个校排
+元素序列 [`c1-c2] 与一个字符 [`c] 之间的比较是如下进行的：
+
+[:en@~] if [`flags() & regex_constants::collate] is false then the character
+[`c] is matched if [`c1 <= c && c <= c2], otherwise [`c] is matched in
+accordance with the following algorithm:
+[:zh_CN@~] 如果 [`flags() & regex_constants::collate] 为 [`false]，则当
+[`c1 <= c && c <= c2] 时匹配字符 [`c]，否则根据以下算法进行 [`c] 的匹配：
+
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`translate]]]
+[%[`translate][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`translate_nocase]]]
+[%[`translate_nocase][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`transform]]]
+[%[`transform][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[codeblock:notation]
+string_type str1 = string_type(1,
+  flags() & icase ?
+    traits_inst.translate_nocase(c1) : traits_inst.translate(c1);
+string_type str2 = string_type(1,
+  flags() & icase ?
+    traits_inst.translate_nocase(c2) : traits_inst.translate(c2);
+string_type str = string_type(1,
+  flags() & icase ?
+    traits_inst.translate_nocase(c) : traits_inst.translate(c);
+return traits_inst.transform(str1.begin(), str1.end())
+      <= traits_inst.transform(str.begin(), str.end())
+  && traits_inst.transform(str.begin(), str.end())
+      <= traits_inst.transform(str2.begin(), str2.end());
+[codeblock:end]
+
+[item]
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`transform_primary]]]
+[%[`transform_primary][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] During matching of a regular expression finite state machine against a
+sequence of characters, testing whether a collating element is a member of a
+primary equivalence class is conducted by first converting the collating element
+and the equivalence class to sort keys using [`traits::transform_primary], and
+then comparing the sort keys for equality.
+[:zh_CN] 在将某个正则表达式有限状态机针对某个字符序列进行匹配过程中，测试一个
+校排元素是否是某个基本等价类的成员，是通过首先使用 [`traits::transform_primary]
+来转换该校排元素和该等价类为排序键值，然后比较排序键值的相等性来进行的。
+
+[item]
+[%[:en]regular expression traits[:zh_CN]正则表达式特征[![`lookup_classname]]]
+[%[`lookup_classname][![:en]regular expression traits[:zh_CN]正则表达式特征]]
+[:en] During matching of a regular expression finite state machine against a
+sequence of characters, a character [`c] is a member of a character class
+designated by an iterator range [=range(first,last)] if
+[`traits_inst.isctype(c, traits_inst.lookup_classname(first, last, flags() & icase))]
+is [`true].
+[:zh_CN] 在将某个正则表达式有限状态机针对某个字符序列进行匹配过程中，字符 [`c]
+是由迭代器范围 [=range(first,last)] 所代表的字符类的成员的条件是
+[`traits_inst.isctype(c, traits_inst.lookup_classname(first, last, flags() & icase))]
+为 [`true]。
+[list:end]

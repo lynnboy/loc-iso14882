@@ -1,0 +1,298 @@
+[section#mem.poly.allocator.mem
+    [:en] [`polymorphic_allocator] member functions
+    [:zh_CN] [`polymorphic_allocator] 的成员函数
+]
+
+[%@library allocate[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!allocate]]
+[codeblock:declaration]
+Tp* allocate(size_t n);
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] Equivalent to
+[:zh_CN] 等价于
+
+[codeblock:notation]
+return static_cast<Tp*>(memory_rsrc->allocate(n * sizeof(Tp), alignof(Tp)));
+[codeblock:end]
+[exit:description]
+
+[%@library deallocate[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!deallocate]]
+[codeblock:declaration]
+void deallocate(Tp* p, size_t n);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`p] was allocated from a memory resource [`x], equal to [`*memory_rsrc],
+using [`x.allocate(n * sizeof(Tp), alignof(Tp))].
+[:zh_CN] [`p] 是通过某个与 [`*memory_rsrc] 相等的内存资源 [`x]，使用
+[`x.allocate(n * sizeof(Tp), alignof(Tp))] 所分配的结果。
+
+[para:effects]
+[:en] Equivalent to [`memory_rsrc->deallocate(p, n * sizeof(Tp), alignof(Tp))].
+[:zh_CN] 等价于 [`memory_rsrc->deallocate(p, n * sizeof(Tp), alignof(Tp))]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library construct[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!construct]]
+[codeblock:declaration]
+template <class T, class... Args>
+  void construct(T* p, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] Uses-allocator construction of [`T] with allocator [`resource()]
+(see [#allocator.uses.construction]) and constructor arguments
+[`std::forward<Args>(args)...] is well-formed.
+[:zh_CN] 用分配器 [`resource()] 和实参 [`std::forward<Args>(args)...] 所进行的
+[`T] 的使用分配器的构造是良构的（参见 [#allocator.uses.construction]）。
+
+[enter:note]
+[:en] Uses-allocator construction is always well formed for types that do not
+use allocators.
+[:zh_CN] 对于不使用分配器的类型来说，使用分配器的构造总是良构的。
+[exit:note]
+
+[para:effects]
+[:en] Construct a [`T] object in the storage whose address is represented by
+[`p] by uses-allocator construction with allocator [`resource()] and constructor
+arguments [`std::forward<Args>(args)...].
+[:zh_CN] 在由 [`p] 代表其地址的存储中，以分配器 [`resource()] 和构造函数实参
+[`std::forward<Args>(args)...]，通过使用分配器的构造，构造一个 [`T] 对象。
+
+[para:throws]
+[:en] Nothing unless the constructor for [`T] throws.
+[:zh_CN] 无，除非 [`T] 的构造函数抛出异常。
+[exit:description]
+
+[%@library construct[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!construct]]
+[codeblock:declaration]
+template <class T1, class T2, class... Args1, class... Args2>
+  void construct(pair<T1,T2>* p, piecewise_construct_t,
+                 tuple<Args1...> x, tuple<Args2...> y);
+[codeblock:end]
+
+[enter:description]
+[para]
+[enter:note]
+[:en] This method and the [`construct] methods that follow are overloads for
+piecewise construction of pairs ([#pairs.pair]).
+[:zh_CN] 这个方法和以下的各 [`construct] 方法，是为对偶（[#pairs.pair]）的逐段
+构造所提供的重载。
+[exit:note]
+
+[para:effects]
+[:en] Let [`xprime] be a [`tuple] constructed from [`x] according to the
+appropriate rule from the following list.
+[:zh_CN] 令 [`xprime] 为根据以下列表中的适当规则从 [`x] 所构造的一个 [`tuple]。
+
+[enter:note]
+[:en] The following description can be summarized as constructing a
+[`pair<T1, T2>] object in the storage whose address is represented by [`p],
+as if by separate uses-allocator construction with allocator [`resource()]
+([#allocator.uses.construction]) of [`p->first] using the elements of [`x]
+and [`p->second] using the elements of [`y].
+[:zh_CN] 以下的描述可以总结为，在由 [`p] 表示其地址的存储中构造一个
+[`pair<T1, T2>]，并如同分别用 [`x] 的各元素对 [`p->first] 和用 [`y] 的各元素对
+[`p->second]，用分配器 [`resource()] 来进行使用分配器的构造
+（[#allocator.uses.construction]）一样进行构造。
+[exit:note]
+
+[list]
+[item]
+[:en] If [`uses_allocator_v<T1,memory_resource*>] is [`false] [br]
+[:zh_CN] 若 [`uses_allocator_v<T1,memory_resource*>] 为 [`false] [br]
+[:en@~] and [`is_constructible_v<T1,Args1...>] is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T1,Args1...>] 为 [`true]， [br]
+[:en@~] then [`xprime] is [`x].
+[:zh_CN@~] 则 [`xprime] 为 [`x]。
+[item]
+[:en] Otherwise, if [`uses_allocator_v<T1,memory_resource*>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T1,memory_resource*>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T1,allocator_arg_t,memory_resource*,Args1...>]
+is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T1,allocator_arg_t,memory_resource*,Args1...>]
+为 [`true]， [br]
+[:en@~] then [`xprime] is
+[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(x))].
+[:zh_CN@~] 则 [`xprime] 为
+[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(x))]。
+[item]
+[:en] Otherwise, if [`uses_allocator_v<T1,memory_resource*>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T1,memory_resource*>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T1,Args1...,memory_resource*>] is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T1,Args1...,memory_resource*>] 为 [`true]， [br]
+[:en@~] then [`xprime] is [`tuple_cat(std::move(x), make_tuple(resource()))].
+[:zh_CN@~] 则 [`xprime] 为 [`tuple_cat(std::move(x), make_tuple(resource()))]。
+[item]
+[:en] Otherwise the program is ill formed.
+[:zh_CN] 否则，程序非良构。
+[list:end]
+
+[:en] Let [`yprime] be a tuple constructed from [`y] according to the
+appropriate rule from the following list:
+[:zh_CN] 令 [`yprime] 为根据以下列表中的适当规则从 [`y] 所构造的一个 [`tuple]。
+[list]
+[item]
+[:en] If [`uses_allocator_v<T2,memory_resource*>] is [`false] [br]
+[:zh_CN] 若 [`uses_allocator_v<T2,memory_resource*>] 为 [`false] [br]
+[:en@~] and [`is_constructible_v<T2,Args2...>] is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T2,Args2...>] 为 [`true]， [br]
+[:en@~] then [`yprime] is [`y].
+[:zh_CN@~] 则 [`yprime] 为 [`y]。
+[item]
+[:en] Otherwise, if [`uses_allocator_v<T2,memory_resource*>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T2,memory_resource*>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T2,allocator_arg_t,memory_resource*,Args2...>]
+is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T2,allocator_arg_t,memory_resource*,Args2...>]
+为 [`true]， [br]
+[:en@~] then [`yprime] is
+[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(y))].
+[:zh_CN@~] 则 [`yprime] 为
+[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(y))]。
+[item]
+[:en] Otherwise, if [`uses_allocator_v<T2,memory_resource*>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T2,memory_resource*>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T2,Args2...,memory_resource*>] is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T2,Args2...,memory_resource*>] 为 [`true]， [br]
+[:en@~] then [`yprime] is [`tuple_cat(std::move(y), make_tuple(resource()))].
+[:zh_CN@~] 则 [`yprime] 为 [`tuple_cat(std::move(y), make_tuple(resource()))]。
+[item]
+[:en] Otherwise the program is ill formed.
+[:zh_CN] 否则，程序非良构。
+[list:end]
+
+[:en] Then, using [`piecewise_construct], [`xprime], and [`yprime] as the
+constructor arguments, this function constructs a [`pair<T1, T2>] object in the
+storage whose address is represented by [`p].
+[:zh_CN] 然后，这个函数以 [`xprime] 和 [`yprime] 作为构造函数实参，使用
+[`piecewise_construct]，在由 [`p] 代表其地址的存储中，构造一个 [`pair<T1, T2>]。
+[exit:description]
+
+[%@library construct[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!construct]]
+[codeblock:declaration]
+template <class T1, class T2>
+  void construct(pair<T1,T2>* p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+construct(p, piecewise_construct, tuple<>(), tuple<>());
+[codeblock:end]
+[exit:description]
+
+[%@library construct[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!construct]]
+[codeblock:declaration]
+template <class T1, class T2, class U, class V>
+  void construct(pair<T1,T2>* p, U&& x, V&& y);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+construct(p, piecewise_construct,
+          forward_as_tuple(std::forward<U>(x)),
+          forward_as_tuple(std::forward<V>(y)));
+[codeblock:end]
+[exit:description]
+
+[%@library construct[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!construct]]
+[codeblock:declaration]
+template <class T1, class T2, class U, class V>
+  void construct(pair<T1,T2>* p, const pair<U, V>& pr);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+construct(p, piecewise_construct,
+          forward_as_tuple(pr.first),
+          forward_as_tuple(pr.second));
+[codeblock:end]
+[exit:description]
+
+[%@library construct[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!construct]]
+[codeblock:declaration]
+template <class T1, class T2, class U, class V>
+  void construct(pair<T1,T2>* p, pair<U, V>&& pr);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+construct(p, piecewise_construct,
+          forward_as_tuple(std::forward<U>(pr.first)),
+          forward_as_tuple(std::forward<V>(pr.second)));
+[codeblock:end]
+[exit:description]
+
+[%@library destroy[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!destroy]]
+[codeblock:declaration]
+template <class T>
+  void destroy(T* p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] As if by [`p->~T()].
+[:zh_CN] 如同执行 [`p->~T()]。
+[exit:description]
+
+[%@library select_on_container_copy_construction[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!select_on_container_copy_construction]]
+[codeblock:declaration]
+polymorphic_allocator select_on_container_copy_construction() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`polymorphic_allocator()].
+[:zh_CN] [`polymorphic_allocator()]。
+
+[para]
+[enter:note]
+[:en] The memory resource is not propagated.
+[:zh_CN] 这个内存资源不会被传播。
+[exit:note]
+[exit:description]
+
+[%@library resource[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!resource]]
+[codeblock:declaration]
+memory_resource* resource() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`memory_rsrc].
+[:zh_CN] [`memory_rsrc]。
+[exit:description]

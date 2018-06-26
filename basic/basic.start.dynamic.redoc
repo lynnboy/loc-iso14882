@@ -1,0 +1,273 @@
+[section#basic.start.dynamic
+    [:en] Dynamic initialization of non-local variables
+    [:zh_CN] 非局部变量的动态初始化
+]
+
+[para]
+[:en]
+[%initialization[!dynamic non-local]]
+[%start[!program]]
+[%initialization[!order of]]
+Dynamic initialization of a non-local variable with static storage duration is 
+unordered if the variable is an implicitly or explicitly instantiated
+specialization, is partially-ordered if the variable is an inline variable that
+is not an implicitly or explicitly instantiated specialization, and otherwise is
+ordered.
+[:zh_CN]
+[%初始化[!非局部变量的动态～]]
+[%启动[!程序～]]
+[%初始化[!～的顺序]]
+具有静态存储期的非局部变量的动态初始化，当该变量是隐式或显式实例化的特例时，是
+无序的，当该变量是并非为隐式或显示实例化的特例的内联变量时，是部分有序的，否则
+就是有序的。
+
+[enter:note]
+[:en]
+An explicitly specialized non-inline static data member or variable template
+specialization has ordered initialization.
+[:zh_CN]
+显式特化了的非内联静态数据成员或者变量的模板特例进行有序初始化。
+[exit:note]
+
+[para]
+[:en]
+Dynamic initialization of non-local variables [`V] and [`W] with static storage
+duration are ordered as follows:
+[:zh_CN]
+具有静态存储期的非局部变量 [`V] 和 [`W] 的动态初始化的顺序如下：
+
+[list]
+[item]
+[:en]
+If [`V] and [`W] have ordered initialization and [`V] is defined before [`W]
+within a single translation unit, the initialization of [`V] is sequenced before
+the initialization of [`W].
+[:zh_CN]
+如果 [`V] 和 [`W] 具有有序初始化，且 [`V] 是在同一个翻译单元中定义于 [`W] 之前，
+则 [`V] 的初始化按顺序早于 [`W] 的初始化。
+
+[item]
+[:en]
+If [`V] has partially-ordered initialization, [`W] does not have unordered
+initialization, and [`V] is defined before [`W] in every translation unit in
+which [`W] is defined, then
+[:zh_CN]
+如果 [`V] 具有部分有序的初始化，[`W] 不具有无序初始化，而且在定义了 [`W] 的每个
+翻译单元中 [`V] 都定义于 [`W] 之前，那么
+
+[list]
+[item]
+[:en]
+if the program starts a thread ([#intro.multithread]) other than the main thread
+([#basic.start.main]), the initialization of [`V] strongly happens before the
+initialization of [`W];
+[:zh_CN]
+若程序启动了除主线程（[#basic.start.main]）之外的线程（[#intro.multithread]），
+则 [`V] 的初始化强发生早于 [`W] 的初始化；
+
+[item]
+[:en]
+otherwise, the initialization of [`V] is sequenced before the initialization of
+[`W].
+[:zh_CN]
+否则，[`V] 的初始化按顺序早于 [`W] 的初始化。
+[list:end]
+
+[item]
+[:en]
+Otherwise, if the program starts a thread other than the main thread before
+either [`V] or [`W] is initialized, it is unspecified in which threads the
+initializations of [`V] and [`W] occur; the initializations are unsequenced if
+they occur in the same thread.
+[:zh_CN]
+否则，如果程序在 [`V] 或 [`W] 被初始化之前启动了一个除主线程之外的线程，那么
+[`V] 和 [`W] 的初始化在哪些线程中进行是未指明的；当这些初始化是在相同线程中进行
+时，它们之间是无顺序的。
+
+[item]
+[:en]
+Otherwise, the initialization of [`V] and [`W] are indeterminately sequenced.
+[:zh_CN]
+否则，[`V] 和 [`W] 的初始化之间就是的未定顺序的。
+[list:end]
+
+[enter:note]
+[:en]
+This definition permits initialization of a sequence of ordered variables
+concurrently with another sequence.
+[:zh_CN]
+此条定义允许一个有序的变量序列与另一个序列的初始化之间并发地进行。
+[exit:note]
+
+[para]
+[:en]
+[%non-initialization odr-use[%odr-use[!non-initialization]]]
+A [+non-initialization odr-use[%odr-use[!non-initialization]]] is an odr-use
+([#basic.def.odr]) not caused directly or indirectly by the initialization of
+a non-local static or thread storage duration variable.
+[:zh_CN]
+[%非初始化 ODR 式使用[%ODR 式使用[!非初始化]]]
+[+非初始化 ODR 式使用[%ODR 式使用[!非初始化]]]，是并非直接或间接由某个非局部的
+静态或线程存储期变量的初始化所导致的 ODR 式使用（[#basic.def.odr]）。
+
+[para]
+[:en]
+[%evaluation[!unspecified order of]]
+It is [%@impldef dynamic initialization of static variables before [`main]]
+implementation-defined whether the dynamic initialization of a non-local
+non-inline variable with static storage duration is sequenced before the first
+statement of [`main] or is deferred.
+[:zh_CN]
+[%求值[!未指明的～顺序]]
+具有静态存储期的非局部非内联变量的动态初始化，是否按顺序早于 [`main] 的第一个
+语句还是被推迟，是[%@impldef [`main] 之前进行静态变量的动态初始化]由实现定义的。
+
+[:en]
+If it is deferred, it strongly happens before any non-initialization odr-use of
+any non-inline function or non-inline variable defined in the same translation
+unit as the variable to be initialized.[#:note#fn:$section.1]
+[:zh_CN]
+若其被推迟，则它强发生早于对与所初始化的变量的同一个翻译单元中所定义的任何非内联
+函数和非内联变量所进行的任何非初始化 ODR 式使用。
+[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en]
+A non-local variable with static storage duration having initialization with
+side effects is initialized in this case, even if it is not itself odr-used
+([#basic.def.odr], [#basic.stc.static]).
+[:zh_CN]
+具有静态存储期的具有带副作用的初始化的非局部变量，这种情况下会被初始化，即便
+其自身未被 ODR 式使用也是如此（[#basic.def.odr]，[#basic.stc.static]）。
+[note:end]
+
+[:en]
+It is [%@impldef threads and program points at which deferred dynamic
+initialization is performed] implementation-defined in which threads and at
+which points in the program such deferred dynamic initialization occurs.
+[:zh_CN]
+这种被推迟的动态初始化在哪些线程中进行，以及在程序的哪些位置进行是
+[%@impldef 进行推迟的动态初始化的线程和程序点]由实现定义的。
+
+[enter:note]
+[:en]
+Such points should be chosen in a way that allows the programmer to avoid
+deadlocks.
+[:zh_CN]
+这些点的选择应当允许程序员能够避免发生死锁。
+[exit:note]
+
+[enter:example] 
+[codeblock]
+// - File 1 -
+#include "a.h"
+#include "b.h"
+B b;
+A::A(){
+  b.Use();
+}
+
+// - File 2 -
+#include "a.h"
+A a;
+
+// - File 3 -
+#include "a.h"
+#include "b.h"
+extern A a;
+extern B b;
+
+int main() {
+  a.Use();
+  b.Use();
+}
+[codeblock:end]
+
+[:en]
+It is [%@impldef dynamic initialization of static variables before [`main]]
+implementation-defined whether either [`a] or [`b] is initialized before [`main]
+is entered or whether the initializations are delayed until [`a] is first
+odr-used in [`main].
+[:zh_CN]
+[`a] 或 [`b] 是在进入 [`main] 之前就进行初始化，还是把这些初始化推迟到 [`a] 在
+[`main] 中的首次 ODR 式使用之前，是[%@impldef [`main] 之前进行静态变量的动态
+初始化]由实现定义的。
+
+[:en]
+In particular, if [`a] is initialized before [`main] is entered, it is not
+guaranteed that [`b] will be initialized before it is odr-used by the
+initialization of [`a], that is, before [`A::A] is called.
+[:zh_CN]
+特别地，若 [`a] 在进入 [`main] 之前进行初始化，则不能保证在 [`a] 的初始化中对
+[`b] 进行 ODR 式使用之前（也就是说，在 [`A::A] 被调用之前），已经进行了初始化。
+
+[:en]
+If, however, [`a] is initialized at some point after the first statement of
+[`main], [`b] will be initialized prior to its use in [`A::A].
+[:zh_CN]
+然而，若 [`a] 在 [`main] 的第一个语句之后的某点进行初始化，则 [`b] 将会在
+[`A::A] 中使用它之前进行初始化。
+[exit:example]
+
+[para]
+[:en]
+It is [%@impldef dynamic initialization of static inline variables before
+[`main]] implementation-defined whether the dynamic initialization of a
+non-local inline variable with static storage duration is sequenced before the
+first statement of [`main] or is deferred.
+[:zh_CN]
+具有静态或线程存储期的非局部内联变量的动态初始化，是否按顺序早于 [`main] 的
+第一个语句还是被推迟，是[%@impldef [`main] 之前进行静态内联变量的动态初始化]
+由实现定义的。
+
+[:en]
+If it is deferred, it strongly happens before any non-initialization odr-use
+of that variable.
+[:zh_CN]
+若其被推迟，则它强发生早于该变量的首次非初始化 ODR 式使用。
+
+[:en]
+It is [%@impldef threads and program points at which deferred dynamic
+initialization is performed] implementation-defined in which threads and at
+which points in the program such deferred dynamic initialization occurs.
+[:zh_CN]
+这种被推迟的动态初始化在哪些线程中进行，以及在程序的哪些位置进行是
+[%@impldef 进行推迟的动态初始化的线程和程序点]由实现定义的。
+
+[para]
+[:en]
+It is [%@impldef dynamic initialization of thread-local variables before entry]
+implementation-defined whether the dynamic initialization of a non-local
+non-inline variable with thread storage duration is sequenced before
+the first statement of the initial function of the thread or is deferred.
+[:zh_CN]
+具有线程存储期的非局部非内联变量的动态初始化，是否按顺序早于该线程的启动函数的
+第一个语句还是被推迟，是[%@impldef 入口之前进行线程局部变量的动态初始化]由实现
+定义的。
+
+[:en]
+If it is deferred, the initialization associated with the entity for thread [$t]
+is sequenced befire the first non-initialization odr-use by [$t] of any
+non-inline variable with thread storage duration defined in the same translation
+unit as the variable to be initialized.
+[:zh_CN]
+若其被推迟，则与线程 [$t] 的实体相关联的初始化，按顺序早于 [$t] 对与所初始化的
+变量的同一个翻译单元中所定义的任何具有线程存储期的非内联变量的首次非初始化 ODR
+式使用。
+
+[:en]
+It is [%@impldef threads and program points at which deferred dynamic
+initialization is performed] implementation-defined in which threads and at
+which points in the program such deferred dynamic initialization occurs.
+[:zh_CN]
+这种被推迟的动态初始化在哪些线程中进行，以及在程序的哪些位置进行是
+[%@impldef 进行推迟的动态初始化的线程和程序点]由实现定义的。
+
+[para]
+[:en]
+If the initialization of a non-local variable with static or thread storage
+duration exits via an exception, [`std::terminate] is called
+([#except.terminate]).
+[:zh_CN]
+当具有静态或线程存储期的非局部变量的初始化由于抛出异常而退出时，将会调用
+[`std::terminate]（参见 [#except.terminate]）。

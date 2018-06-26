@@ -1,0 +1,163 @@
+[section#thread.req.timing
+    [:en] Timing specifications
+    [:zh_CN] 定时说明
+]
+
+[para]
+[:en] Several functions described in this Clause take an argument to specify a
+timeout.
+[:zh_CN] 本章中描述的几个函数接受一个用以指定超时的实参。
+
+[:en] These timeouts are specified as either a [`duration] or a [`time_point]
+type as specified in [#time].
+[:zh_CN] 这些超时值是以 [#time] 中所指定的 [`duration] 或 [`time_point] 类型来
+给出的。
+
+[para]
+[:en] Implementations necessarily have some delay in returning from a timeout.
+[:zh_CN] 各实现在从超时中返回时必须产生某个延时。
+
+[:en] Any overhead in interrupt response, function return, and scheduling
+induces a ["quality of implementation] delay, expressed as duration [$D_i].
+[:zh_CN] 在中断相应，函数返回，以及线程调度中发生的任何开销，都导致“实现质量”
+延迟，表示为时间段 [$D_i]。
+
+[:en] Ideally, this delay would be zero.
+[:zh_CN] 理想情况下，这种延迟应当为零。
+
+[:en] Further, any contention for processor and memory resources induces a
+["quality of management] delay, expressed as duration [$D_m].
+[:zh_CN] 此外，处理器和内存资源的争夺会引入“管理质量”延迟，表示为时间段 [$D_m]。
+
+[:en] The delay durations may vary from timeout to timeout, but in all cases
+shorter is better.
+[:zh_CN] 这些延迟时间段在每次超时时都可能不同，但任何情况下都是越短越好。
+
+[para]
+[:en] The member functions whose names end in [`_for] take an argument that
+specifies a duration.
+[:zh_CN] 名字的结尾为 [`_for] 的成员函数，接受指定一个时间段的实参。
+
+[:en] These functions produce relative timeouts.
+[:zh_CN] 这些函数产生相对超时。
+
+[:en] Implementations should use a steady clock to measure time for these
+functions.[#:note#fn:$section.1]
+[:zh_CN] 各实现应当使用某个稳定时钟为这些函数测量时间。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en] All implementations for which standard time units are meaningful must
+necessarily have a steady clock within their hardware implementation.
+[:zh_CN] 标准时间单位有意义的任何实现，必然在其硬件实现中具有一个稳定时钟。
+[note:end]
+
+[:en] Given a duration argument [$D_t], the real-time duration of the timeout is
+[$D_t + D_i + D_m].
+[:zh_CN] 给定时间段参数 [$D_t]，超时的实时时间段为 [$D_t + D_i + D_m]。
+
+[para]
+[:en] The member functions whose names end in [`_until] take an argument that
+specifies a time point.
+[:zh_CN] 名字末尾为 [`_until] 的成员函数，接受指定一个时间点的实参。
+
+[:en] These functions produce absolute timeouts.
+[:zh_CN] 这些函数产生绝对超时。
+
+[:en] Implementations should use the clock specified in the time point to
+measure time for these functions.
+[:zh_CN] 各实现应当使用该时间点中指定的时钟为这些函数测量时间。
+
+[:en] Given a clock time point argument [$C_t], the clock time point of the
+return from timeout should be [$C_t + D_i + D_m] when the clock is not adjusted
+during the timeout.
+[:zh_CN] 给定某时钟的时间点实参 [$C_t]，如果该时钟在超时之内未被调整，则从超时中
+返回的时钟时间点应当为 [$C_t + D_i + D_m]。
+
+[:en] If the clock is adjusted to the time [$C_a] during the timeout, the
+behavior should be as follows:
+[:zh_CN] 如果该时钟在超时之内被调整到时间 [$C_a]，则其行为应当如下：
+
+[list]
+[item]
+[:en] if [$C_a > C_t], the waiting function should wake as soon as possible,
+i.e. [$C_a + D_i + D_m], since the timeout is already satisfied.
+[:zh_CN] 如果 [$C_a > C_t]，则应当尽快唤醒等待的函数，亦即为 [$C_a + D_i + D_m]，
+这是由于超时已经满足了。
+
+[enter:note]
+[:en] This specification may result in the total duration of the wait decreasing
+when measured against a steady clock.
+[:zh_CN] 这条规定可能导致等待的总时间段根据稳定时钟测量会变小。
+[exit:note]
+
+[item]
+[:en] if [$C_a <= C_t], the waiting function should not time out until
+[`Clock::now()] returns a time [$C_n >= C_t], i.e. waking at [$C_t + D_i + D_m].
+[:zh_CN] 如果 [$C_a <= C_t]，则等待的函数在 [`Clock::now()] 返回的时间
+[$C_n >= C_t] 之前不能超时，亦即将于 [$C_t + D_i + D_m] 唤醒。
+
+[enter:note]
+[:en] When the clock is adjusted backwards, this specification may result in the
+total duration of the wait increasing when measured against a steady clock.
+[:zh_CN] 若时钟被向后调整，则这条规定可能导致等待的总时间段根据稳定时钟测量会
+变大。
+
+[:en] When the clock is adjusted forwards, this specification may result in the
+total duration of the wait decreasing when measured against a steady clock.
+[:zh_CN] 若时钟被向后调整，则这条规定可能导致等待的总时间段根据稳定时钟测量会
+变小。
+[exit:note]
+[list:end]
+
+[:en] An implementation shall return from such a timeout at any point from the
+time specified above to the time it would return from a steady-clock relative
+timeout on the difference between [$C_t] and the time point of the call to the
+[`_until] function.
+[:zh_CN] 从以上给出的时间，到应会导致函数返回的以稳定时钟测量的相对超时（基于
+[$C_t] 和调用该 [`_until] 函数的时间点之间的差）的任何时间点，实现在其间的任何
+时间点都应当从这种超时中返回。
+
+[enter:note]
+[:en] Implementations should decrease the duration of the wait when the clock is
+adjusted forwards.
+[:zh_CN] 各实现应当在时钟被向前调整时减少等待的时间段。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] If the clock is not synchronized with a steady clock, e.g., a CPU time
+clock, these timeouts might not provide useful functionality.
+[:zh_CN] 如果该时钟并未同稳定时钟同步（比如 CPU 时钟），则这些超时可能无法提供
+有用的功能。
+[exit:note]
+
+[para]
+[:en] The resolution of timing provided by an implementation depends on both
+operating system and hardware.
+[:zh_CN] 由实现所提供的定时分辨率同时依赖于操作系统和硬件。
+
+[:en] The finest resolution provided by an implementation is called the
+[+native resolution[%]].
+[:zh_CN] 实现所提供的最佳分辨率被称为[+本机分辨率[%]]。
+
+[para]
+[:en] Implementation-provided clocks that are used for these functions shall
+meet the [`TrivialClock] requirements ([#time.clock.req]).
+[:zh_CN] 为这些函数所使用的实现提供的时钟应当满足 [`TrivialClock] 规定
+（[#time.clock.req]）。
+
+[para]
+[:en] A function that takes an argument which specifies a timeout will throw if,
+during its execution, a clock, time point, or time duration throws an exception.
+[:zh_CN] 接受指定超时的实参的函数，如果当其执行过程中，时钟、时间点或时间段
+抛出了异常，则它会抛出异常。
+
+[:en] Such exceptions are referred to as [+timeout-related exceptions[%]].
+[:zh_CN] 这些异常被称为[+超时相关异常[%]]。
+
+[enter:note]
+[:en] Instantiations of clock, time point and duration types supplied by
+the implementation as specified in [#time.clock] do not throw exceptions.
+[:zh_CN] 由实现所提供的如 [#time.clock] 所指定的各时钟、时间点和时间段类型的
+实例不会抛出异常。
+[exit:note]

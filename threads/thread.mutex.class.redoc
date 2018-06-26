@@ -1,0 +1,86 @@
+[section#thread.mutex.class
+    [:en] Class [`mutex]
+    [:zh_CN] 类 [`mutex]
+]
+
+[%@library mutex]
+[codeblock:synopsis [!:mark ImpDef] ]
+namespace std {
+  class mutex {
+  public:
+    constexpr mutex() noexcept;
+    ~mutex();
+
+    mutex(const mutex&) = delete;
+    mutex& operator=(const mutex&) = delete;
+
+    void lock();
+    bool try_lock();
+    void unlock();
+
+    using native_handle_type = [=ImpDef]; // [:en] See [#thread.req.native]
+                                          // [|:zh_CN] 参见 [#thread.req.native]
+    native_handle_type native_handle();                // [:en] See [#thread.req.native]
+                                                       // [|:zh_CN] 参见 [#thread.req.native]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The class [`mutex] provides a non-recursive mutex with exclusive ownership
+semantics.
+[:zh_CN] 类 [`mutex] 提供一种带有互斥所有权语义的非递归互斥体。
+
+[:en] If one thread owns a mutex object, attempts by another thread to acquire
+ownership of that object will fail (for [`try_lock()]) or block (for [`lock()])
+until the owning thread has released ownership with a call to [`unlock()].
+[:zh_CN] 当一个线程拥有一个 [`mutex] 对象时，其他线程尝试获取该对象的所有权将会
+失败（对于 [`try_lock()]），或者阻塞直到拥有方线程以对 [`unlock()] 的一次调用来
+释放所有权（对于 [`lock()]）。
+
+[para]
+[enter:note]
+[:en] After a thread [`A] has called [`unlock()], releasing a mutex, it is
+possible for another thread [`B] to lock the same mutex, observe that it is no
+longer in use, unlock it, and destroy it, before thread [`A] appears to have
+returned from its unlock call.
+[:zh_CN] 当某个线程 [`A] 调用 [`unlock()] 释放某个互斥体之后，另一个线程 [`B]
+有可能在线程 [`A] 从其对 [`unlock] 的调用中返回之前，锁定相同的互斥体，察觉到其
+不再被使用，将其解锁并销毁。
+
+[:en] Implementations are required to handle such scenarios correctly, as long
+as thread [`A] doesn't access the mutex after the unlock call returns.
+[:zh_CN] 只要线程 [`A] 不会在对 [`unlock] 的调用中返回之后访问该互斥体，则要求
+各实现都要正确处理这种场景。
+
+[:en] These cases typically occur when a reference-counted object contains a
+mutex that is used to protect the reference count.
+[:zh_CN] 这样的情况通常会发生于某种引用计数的对象包含一个用于保护其引用计数的
+互斥体的情形中。
+[exit:note]
+
+[para]
+[:en] The class [`mutex] shall satisfy all of the mutex requirements
+([#thread.mutex.requirements]).
+[:zh_CN] 类 [`mutex] 应当满足所有的互斥体规定（[#thread.mutex.requirements]）。
+
+[:en] It shall be a standard-layout class (Clause [#class]).
+[:zh_CN] 它应当是标准布局类（第 [#class] 章）。
+
+[para]
+[enter:note]
+[:en] A program may deadlock if the thread that owns a [`mutex] object calls
+[`lock()] on that object.
+[:zh_CN] 当拥有某个 [`mutex] 对象的线程调用该对象的 [`lock()] 时可能发生死锁。
+
+[:en] If the implementation can detect the deadlock, a
+[`resource_deadlock_would_occur] error condition may be observed.
+[:zh_CN] 如果实现可以检测死锁，则可能观察到 [`resource_deadlock_would_occur]
+错误条件。
+[exit:note]
+
+[para]
+[:en] The behavior of a program is undefined if it destroys a [`mutex] object
+owned by any thread or a thread terminates while owning a [`mutex] object.
+[:zh_CN] 如果程序销毁了被任何线程拥有的 [`mutex] 对象，或者某个线程在拥有
+[`mutex] 对象时终止，则其行为是未定义的。

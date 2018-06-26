@@ -1,0 +1,113 @@
+[section#expr.prim.lambda
+    [:en] Lambda expressions
+    [:zh_CN] Lambda 表达式
+
+[%:begin#expression.lambda
+    [:en] expression [!lambda]
+    [:zh_CN] 表达式 [!lambda～]
+]
+]
+
+[syntax]
+[rule lambda-expression [:zh_CN] lambda-表达式 ]
+    [| lambda-introducer [~:opt lambda-declarator] compound-statement ]
+[rule:end]
+
+[rule lambda-introducer [:zh_CN] lambda-引导符 ]
+    [| [``[] [~:opt lambda-capture] [``]] ]
+[rule:end]
+
+[rule lambda-declarator [:zh_CN] lambda-声明符 ]
+    [| [`(] parameter-declaration-clause [`)] [~:opt decl-specifier-seq]
+        [~:opt noexcept-specifier] [~:opt attribute-specifier-seq] [~:opt trailing-return-type] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+Lambda expressions provide a concise way to create simple function objects.
+[:zh_CN]
+Lambda 表达式提供了创建简单函数对象的一种简洁方式。
+
+[enter:example]
+[codeblock]
+#include <algorithm>
+#include <cmath>
+void abssort(float* x, unsigned N) {
+  std::sort(x, x + N, [](float a, float b) { return std::abs(a) < std::abs(b); });
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A [~lambda-expression] is a prvalue whose result object is called the [+closure
+object].
+[:zh_CN]
+[~lambda-表达式]是纯左值，其结果对象被称为[+闭包对象]。
+
+[:en]
+A [~lambda-expression] shall not appear in an unevaluated operand (Clause
+[#expr]), in a [~template-argument], in an [~alias-declaration], in a typedef
+declaration, or in the declaration of a function or function template outside
+its function body and default arguments.
+[:zh_CN]
+[~lambda-表达式]不能出现于免求值操作数中（第 [#expr] 章），[~模板实参]中，[~别名
+声明式]中，typedef 声明式中，或处于函数或函数模板的声明式中的函数体和默认实参
+之外。
+
+[enter:note]
+[:en]
+The intention is to prevent lambdas from appearing in a signature.
+[:zh_CN]
+其意图是防止签名之中出现 lambda 表达式。
+[exit:note]
+
+[enter:note]
+[:en]
+A closure object behaves like a function object ([#function.objects]).
+[:zh_CN]
+闭包对象的行为类似于函数对象（[#function.objects]）。
+[exit:note]
+
+[para]
+[:en]
+In the [~decl-specifier-seq] of the [~lambda-declarator], each [~decl-specifier]
+shall either be [`mutable] or [`constexpr].
+[:zh_CN]
+在 [~lambda-声明符]的[~声明说明符序列]中，各个[~声明说明符]要么为 [`mutable]，
+要么为 [`constexpr]。
+
+[para]
+[:en]
+If a [~lambda-expression] does not include a [~lambda-declarator], it is as if
+the [~lambda-declarator] were [`()].
+[:zh_CN]
+如果 [~lambda-表达式]中不包含 [~lambda-声明符]，则如同其 [~lambda-声明符]为
+[`()]。
+
+[:en]
+The lambda return type is [`auto], which is replaced by the type specified by
+the [~trailing-return-type] if provided and/or deduced from [`return] statements
+as described in [#dcl.spec.auto].
+[:zh_CN]
+lambda 的返回类型为 [`auto]，并根据 [#dcl.spec.auto] 的说明被替换为其[~尾部返回
+类型]（如果有）所指定的类型和/或从 [`return] 语句中进行推断。
+
+[enter:example]
+[codeblock]
+auto x1 = [](int i){ return i; };     // [:en] OK: return type is [`int]
+                                      // [|:zh_CN] OK：返回类型为 [`int]
+auto x2 = []{ return { 1, 2 }; };     // [:en] error: deducing return type from [~braced-init-list]
+                                      // [|:zh_CN] 错误：从[~花括号初始化列表]推断返回类型
+int j;
+auto x3 = []()->auto&& { return j; }; // [:en] OK: return type is [`int&]
+                                      // [|:zh_CN] OK：返回类型为 [`int&]
+[codeblock:end]
+[exit:example]
+
+[include expr.prim.lambda.closure]
+
+[include expr.prim.lambda.capture]
+
+[%:end#expression.lambda]

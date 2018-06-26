@@ -1,0 +1,362 @@
+[section#depr.strstreambuf.virtuals
+    [:en] [`strstreambuf] overridden virtual functions
+    [:zh_CN] [`strstreambuf] 覆盖的虚函数
+]
+
+[%@library overflow[!strstreambuf]]
+[%@library strstreambuf[!overflow]]
+[codeblock:declaration]
+int_type overflow(int_type c = EOF) override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Appends the character designated by [`c] to the output sequence, if
+possible, in one of two ways:
+[:zh_CN] 如果可能，以两种方式之一将 [`c] 代表的字符追加到输出序列中：
+
+[list]
+[item]
+[:en] If [`c != EOF] and if either the output sequence has a write position
+available or the function makes a write position available (as described below),
+assigns [`c] to [`*pnext++].
+[:zh_CN] 如果 [`c != EOF] 并且要么输出序列有可用的写入位置，要么函数做出了可用的
+写入位置（如下文所述），则将 [`c] 赋值给 [`*pnext++]。
+
+[:en] Returns [`(unsigned char)c].
+[:zh_CN] 返回 [`(unsigned char)c]。
+
+[item]
+[:en] If [`c == EOF], there is no character to append.
+[:zh_CN] 如果 [`c == EOF]，则不追加字符。
+
+[:en] Returns a value other than [`EOF].
+[:zh_CN] 返回 [`EOF] 以外的字符。
+[list:end]
+
+[para]
+[:en] Returns [`EOF] to indicate failure.
+[:zh_CN] 返回 [`EOF] 以标明故障。
+
+[para:remarks]
+[:en] The function can alter the number of write positions available as a
+result of any call.
+[:zh_CN] 该函数可能由于所做出的任何调用而导致改变可用写出位置的数量。
+
+[para]
+[:en] To make a write position available, the function reallocates (or initially
+allocates) an array object with a sufficient number of elements [`n] to hold the
+current array object (if any), plus at least one additional write position.
+[:zh_CN] 为做出可用的写入位置，函数分配（或初始分配）一个具有足够元素数量 [`n]
+的数组对象，它可以持有当前数组对象（如果有）加上至少一个额外的写入位置。
+
+[:en] How many additional write positions are made available is otherwise
+[%unspecified]unspecified.[#:note#fn:$section.1]
+[:zh_CN] 做出多少额外的可用写入位置是[%未指明]未指明的。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en] An implementation should consider [`alsize] in making this decision.
+[:zh_CN] 实现在做出这个决定时应当考虑到 [`alsize]。
+[note:end]
+
+[:en] If [`palloc] is not a null pointer, the function calls [`(*palloc)(n)]
+to allocate the new dynamic array object.
+[:zh_CN] 如果 [`palloc] 不为空指针，则函数调用 [`(*palloc)(n)] 来分配新的动态
+数组对象。
+
+[:en] Otherwise, it evaluates the expression [`new charT`[n`]].
+[:zh_CN] 否则，它求值表达式 [`new charT`[n`]]。
+
+[:en] In either case, if the allocation fails, the function returns [`EOF].
+[:zh_CN] 任何情况下，如果分配失败，函数返回 [`EOF]。
+
+[:en] Otherwise, it sets [`allocated] in [`strmode].
+[:zh_CN] 否则，它在 [`strmode] 中设置 [`allocated]。
+
+[para]
+[:en] To free a previously existing dynamic array object whose first element
+address is [`p]:
+[:zh_CN] 为释放之前已经存在的动态数组对象（第一个元素地址为 [`p]）：
+
+[:en] If [`pfree] is not a null pointer, the function calls [`(*pfree)(p)].
+[:zh_CN] 若 [`pfree] 不为空指针，则函数调用 [`(*pfree)(p)]。
+
+[:en] Otherwise, it evaluates the expression [`delete`[`]p].
+[:zh_CN] 否则，它求值表达式 [`delete`[`]p]。
+
+[para]
+[:en] If [`(strmode & dynamic) == 0], or if [`(strmode & frozen) != 0], the
+function cannot extend the array (reallocate it with greater length) to make a
+write position available.
+[:zh_CN] 若 [`(strmode & dynamic) == 0] 或 [`(strmode & frozen) != 0]，则函数
+不能扩展数组（以更大的长度重新分配）来做出可用写入位置。
+[exit:description]
+
+[%@library pbackfail[!strstreambuf]]
+[%@library strstreambuf[!pbackfail]]
+[codeblock:declaration]
+int_type pbackfail(int_type c = EOF) override;
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Puts back the character designated by [`c] to the input sequence, if
+possible, in one of three ways:
+[:zh_CN] 如果可能，以三种方式之一将 [`c] 代表的字符回填到输入序列中：
+
+[list]
+[item]
+[:en] If [`c != EOF], if the input sequence has a putback position available,
+and if [`(char)c == gnext`[-1`]], assigns [`gnext - 1] to [`gnext].
+[:zh_CN] 如果 [`c != EOF]，输入序列有可用的回填位置，并且
+[`(char)c == gnext`[-1`]]，则将 [`gnext - 1] 赋值给 [`gnext]。
+
+[:en] Returns [`c].
+[:zh_CN] 返回 [`c]。
+
+[item]
+[:en] If [`c != EOF], if the input sequence has a putback position available,
+and if [`strmode & constant] is zero, assigns [`c] to [`*--gnext].
+[:zh_CN] 如果 [`c != EOF]，输入序列有可用的回填位置，并且 [`strmode & constant]，
+则将 [`c] 赋值给 [`*--gnext]。
+
+[:en] Returns [`c].
+[:zh_CN] 返回 [`c]。
+
+[item]
+[:en] If [`c == EOF] and if the input sequence has a putback position available,
+appends [`gnext - 1] to [`gnext].
+[:zh_CN] 如果 [`c == EOF]，并且输入序列有可用的回填位置，则将 [`gnext - 1] 赋值
+给 [`gnext]。
+
+[:en] Returns a value other than [`EOF].
+[:zh_CN] 返回 [`EOF] 以外的字符。
+[list:end]
+
+[para]
+[:en] Returns [`EOF] to indicate failure.
+[:zh_CN] 返回 [`EOF] 以标明故障。
+
+[para:remarks]
+[:en] If the function can succeed in more than one of these ways, it is
+[%unspecified] unspecified which way is chosen.
+[:zh_CN] 如果函数可以以多于一种方式成功进行，则选择哪种方法是[%未指明]未指明的。
+
+[:en] The function can alter the number of putback positions available as a
+result of any call.
+[:zh_CN] 该函数可能由于所做出的任何调用而导致改变可用回填位置的数量。
+[exit:description]
+
+[%@library underflow[!strstreambuf]]
+[%@library strstreambuf[!underflow]]
+[codeblock:declaration]
+int_type underflow() override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Reads a character from the [+input sequence[%]], if possible, without
+moving the stream position past it, as follows:
+[:zh_CN] 如果可能，以如下方式从[+输入序列[%]]中读取一个字符，但流位置不会移动
+超过它：
+
+[list]
+[item]
+[:en] If the input sequence has a read position available, the function signals
+success by returning [`(unsigned char)*gnext].
+[:zh_CN] 如果输入序列有可用的读取位置，则函数通过返回 [`(unsigned char)*gnext]
+标明成功。
+
+[item]
+[:en] Otherwise, if the current write next pointer [`pnext] is not a null
+pointer and is greater than the current read end pointer [`gend], makes a
+[+read position[%]] available by assigning to [`gend] a value greater than
+[`gnext] and no greater than [`pnext].
+[:zh_CN] 否则，如果当前的后继指针 [`pnext] 不为空指针且大于当前读取末尾指针
+[`gend]，则通过将 [`gend] 赋值为某个大于 [`gnext] 但不大于 [`pnext] 的值来做出
+可用的[+读取位置[%]]。
+
+[:en] Returns [`(unsigned char)*gnext].
+[:zh_CN] 返回 [`(unsigned char)*gnext]。
+[list:end]
+
+[para]
+[:en] Returns [`EOF] to indicate failure.
+[:zh_CN] 返回 [`EOF] 以标明故障。
+
+[para:remarks]
+[:en] The function can alter the number of read positions available as a
+result of any call.
+[:zh_CN] 该函数可能由于所做出的任何调用而导致改变可用读取位置的数量。
+[exit:description]
+
+[%@library seekoff[!strstreambuf]]
+[%@library strstreambuf[!seekoff]]
+[codeblock:declaration]
+pos_type seekoff(off_type off, seekdir way, openmode which = in | out) override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Alters the stream position within one of the controlled sequences, if
+possible, as indicated in Table [#tab:future.seekoff.positioning].
+[:zh_CN] 如果可能，改变其所掌控的序列之一的流位置，如表
+[#tab:future.seekoff.positioning] 所示。
+
+[table:grid#tab:future.seekoff.positioning
+    [:en] [`seekoff] positioning
+    [:zh_CN] [`seekoff] 定位
+    [|  [:en] Conditions
+        [:zh_CN] 条件 ]
+    [|  [:en] Result
+        [:zh_CN] 结果 ]
+]
+
+[|] [`(which & ios::in) != 0]
+[|] [:en] positions the input sequence
+    [:zh_CN] 定位输入序列
+[-]
+
+[|] [:en] [`(which & (ios::in | ios::out)) == (ios::in | ios::out)] and
+    [`way ==] either [`ios::beg] or [`ios:end]
+    [:zh_CN] [`(which & (ios::in | ios::out)) == (ios::in | ios::out)] 并且
+    [`way == ios::beg] 或者 [`way == ios:end]
+[|] [:en] positions both the input and the output sequences
+    [:zh_CN] 同时定位输入和输出序列
+[-]
+
+[|] [:en] Otherwise
+    [:zh_CN] 否则
+[|] [:en] the positioning operation fails.
+    [:zh_CN] 定位操作失败。
+[table:end]
+
+[para]
+[:en] For a sequence to be positioned, if its next pointer is a null pointer,
+the positioning operation fails.
+[:zh_CN] 对于被定位的序列，如果其后继指针为空指针，则定位操作失败。
+
+[:en] Otherwise, the function determines [`newoff] as indicated in Table
+[#tab:future.newoff.values].
+[:zh_CN] 否则，函数根据表 [#tab:future.newoff.values] 所指定确定 [`newoff]。
+
+[table:grid#tab:future.newoff.values
+    [:en] [`newoff] values
+    [:zh_CN] [`newoff] 的值
+    [|@code
+        [:en] Conditions
+        [:zh_CN] 条件 ]
+    [|  [:en] [`newoff] Value
+        [:zh_CN] [`newoff] 的值 ]
+]
+
+[|] way == ios::beg
+[|] 0
+[-]
+
+[|] way == ios::cur
+[|] [:en] the next pointer minus the beginning pointer ([`xnext - xbeg]).
+    [:zh_CN] 后继指针减去开始指针（[`xnext - xbeg]）。
+[-]
+
+[|] way == ios:end
+[|] [:en] [`seekhigh] minus the beginning pointer ([`seekhigh - xbeg]).
+    [:zh_CN] [`seekhigh] 减去开始指针（[`seekhigh - xbeg]）。
+[table:end]
+
+[para]
+[:en] If [`(newoff + off) < (seeklow - xbeg)] or
+[`(seekhigh - xbeg) < (newoff + off)], the positioning operation fails.
+[:zh_CN] 如果 [`(newoff + off) < (seeklow - xbeg)] 或
+[`(seekhigh - xbeg) < (newoff + off)]，则定位操作失败。
+
+[:en] Otherwise, the function assigns [`xbeg + newoff + off] to the next pointer
+[`xnext].
+[:zh_CN] 否则，函数将 [`xbeg + newoff + off] 复制给后继指针 [`xnext]。
+
+[para:returns]
+[:en] [`pos_type(newoff)], constructed from the resultant offset [`newoff] (of
+type [`off_type]), that stores the resultant stream position, if possible.
+[:zh_CN] 由结果偏移量 [`newoff]（类型为 [`off_type]）所构造的
+[`pos_type(newoff)]，如果可能，它存储结果的流位置。
+
+[:en] If the positioning operation fails, or if the constructed object cannot
+represent the resultant stream position, the return value is
+[`pos_type(off_type(-1))].
+[:zh_CN] 如果定位操作失败，或者如果所构造的对象无法表示结果的流位置，则返回值为
+[`pos_type(off_type(-1))]。
+[exit:description]
+
+[%@library seekpos[!strstreambuf]]
+[%@library strstreambuf[!seekpos]]
+[codeblock:declaration]
+pos_type seekpos(pos_type sp, ios_base::openmode which
+                  = ios_base::in | ios_base::out) override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Alters the stream position within one of the controlled sequences, if
+possible, to correspond to the stream position stored in [`sp] (as described
+below).
+[:zh_CN] 如果可能，将所掌控的序列之一的流位置改变为对应于 [`sp] 中所存储的流
+位置（如下所述）。
+
+[list]
+[item]
+[:en] If [`(which & ios::in) != 0], positions the input sequence.
+[:zh_CN] 若 [`(which & ios::in) != 0]，则定位输入序列。
+[item]
+[:en] If [`(which & ios::out) != 0], positions the output sequence.
+[:zh_CN] 若 [`(which & ios::out) != 0]，则定位输出流。
+[item]
+[:en] If the function positions neither sequence, the positioning operation
+fails.
+[:zh_CN] 若函数不定位任何序列，则定位操作失败。
+[list:end]
+
+[para]
+[:en] For a sequence to be positioned, if its next pointer is a null pointer,
+the positioning operation fails.
+[:zh_CN] 对于被定位的序列，如果其后继指针为空指针，则定位操作失败。
+
+[:en] Otherwise, the function determines [`newoff] from [`sp.offset()]:
+[:zh_CN] 否则，函数以 [`sp.offset()] 来确定 [`newoff]：
+
+[list]
+[item]
+[:en] If [`newoff] is an invalid stream position, has a negative value, or has a
+value greater than ([`seekhigh - seeklow]), the positioning operation fails
+[:zh_CN] 如果 [`newoff] 是无效的流位置，为负值，或者具有大于
+（[`seekhigh - seeklow]）的值，则定位操作失败。
+[item]
+[:en] Otherwise, the function adds [`newoff] to the beginning pointer [`xbeg]
+and stores the result in the next pointer [`xnext].
+[:zh_CN] 否则，函数向开始指针 [`xbeg] 加上 [`newoff] 并将结果存储到后继指针
+[`xnext] 中。
+[list:end]
+
+[para:returns]
+[:en] [`pos_type(newoff)], constructed from the resultant offset [`newoff] (of
+type [`off_type]), that stores the resultant stream position, if possible.
+[:zh_CN] 由结果偏移量 [`newoff]（类型为 [`off_type]）所构造的
+[`pos_type(newoff)]，如果可能，它存储结果的流位置。
+
+[:en] If the positioning operation fails, or if the constructed object cannot
+represent the resultant stream position, the return value is
+[`pos_type(off_type(-1))].
+[:zh_CN] 如果定位操作失败，或者如果所构造的对象无法表示结果的流位置，则返回值为
+[`pos_type(off_type(-1))]。
+[exit:description]
+
+[%@library setbuf[!strstreambuf]]
+[%@library strstreambuf[!setbuf]]
+[codeblock:declaration]
+streambuf<char>* setbuf(char* s, streamsize n) override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Implementation defined, except that [`setbuf(0, 0)] has no effect.
+[:zh_CN] 由实现定义，但 [`setbuf(0, 0)] 没有效果。
+[exit:description]

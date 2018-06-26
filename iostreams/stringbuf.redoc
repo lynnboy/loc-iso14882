@@ -1,0 +1,96 @@
+[section#stringbuf
+    [:en] Class template [`basic_stringbuf]
+    [:zh_CN] 类模板 [`basic_stringbuf]
+]
+
+[%@library basic_stringbuf]
+[codeblock:synopsis]
+namespace std {
+  template <class charT, class traits = char_traits<charT>,
+            class Allocator = allocator<charT>>
+  class basic_stringbuf : public basic_streambuf<charT, traits> {
+  public:
+    using char_type      = charT;
+    using int_type       = typename traits::int_type;
+    using pos_type       = typename traits::pos_type;
+    using off_type       = typename traits::off_type;
+    using traits_type    = traits;
+    using allocator_type = Allocator;
+
+    // [:en] [#stringbuf.cons], constructors
+    // [|:zh_CN] [#stringbuf.cons]，构造函数
+    explicit basic_stringbuf(
+      ios_base::openmode which = ios_base::in | ios_base::out);
+    explicit basic_stringbuf(
+      const basic_string<charT, traits, Allocator>& str,
+      ios_base::openmode which = ios_base::in | ios_base::out);
+    basic_stringbuf(const basic_stringbuf& rhs) = delete;
+    basic_stringbuf(basic_stringbuf&& rhs);
+
+    // [:en] [#stringbuf.assign], assign and swap
+    // [|:zh_CN] [#stringbuf.assign]，赋值与交换
+    basic_stringbuf& operator=(const basic_stringbuf& rhs) = delete;
+    basic_stringbuf& operator=(basic_stringbuf&& rhs);
+    void swap(basic_stringbuf& rhs);
+
+    // [:en] [#stringbuf.members], get and set
+    // [|:zh_CN] [#stringbuf.members]，获取与设置
+    basic_string<charT, traits, Allocator> str() const;
+    void str(const basic_string<charT, traits, Allocator>& s);
+
+  protected:
+    // [:en] [#stringbuf.virtuals], overridden virtual functions
+    // [|:zh_CN] [#stringbuf.virtuals]，覆盖的虚函数
+    int_type underflow() override;
+    int_type pbackfail(int_type c = traits::eof()) override;
+    int_type overflow (int_type c = traits::eof()) override;
+    basic_streambuf<charT, traits>* setbuf(charT*, streamsize) override;
+
+    pos_type seekoff(off_type off, ios_base::seekdir way,
+                     ios_base::openmode which
+                      = ios_base::in | ios_base::out) override;
+    pos_type seekpos(pos_type sp,
+                     ios_base::openmode which
+                      = ios_base::in | ios_base::out) override;
+
+  private:
+    ios_base::openmode mode;  // [=Expos]
+  };
+
+  template <class charT, class traits, class Allocator>
+    void swap(basic_stringbuf<charT, traits, Allocator>& x,
+              basic_stringbuf<charT, traits, Allocator>& y);
+}
+[codeblock:end]
+
+[para]
+[:en] The class [`basic_stringbuf] is derived from [`basic_streambuf]
+to associate possibly the input sequence and possibly the output sequence with
+a sequence of arbitrary [+characters[%]].
+[:zh_CN] 类 [`basic_stringbuf] 派生于 [`basic_streambuf]，并将可能的输入序列和
+可能的输出序列与一个任意[+字符[%]]序列关联起来。
+
+[:en] The sequence can be initialized from, or made available as, an object of
+class [`basic_string].
+[:zh_CN] 这个序列可以由类 [`basic_string] 的对象来初始化，或者作为类
+[`basic_string] 的对象提供出来。
+
+[para]
+[:en] For the sake of exposition, the maintained data is presented here as:
+[:zh_CN] 为阐释目的，此处将其所维护的数据表示为：
+
+[list]
+[item]
+[:en] [`ios_base::openmode mode], has [`in] set if the input sequence can be
+read, and [`out] set if the output sequence can be written.
+[:zh_CN] [`ios_base::openmode mode]，当可以读取输入序列时其中设置 [`in]，当可以
+写入输出序列时其中设置 [`out]。
+[list:end]
+
+[include stringbuf.cons]
+
+[include stringbuf.assign]
+
+[include stringbuf.members]
+
+[include stringbuf.virtuals]

@@ -1,0 +1,70 @@
+[section#support.dynamic
+    [:en] Dynamic memory management
+    [:zh_CN] 动态内存管理
+]
+
+[%@library hardware_destructive_interference_size]
+[codeblock:declaration [!:mark ImpDef] ]
+inline constexpr size_t hardware_destructive_interference_size = [=ImpDef];
+[codeblock:end]
+
+[para]
+[:en]
+This number is the minimum recommended offset between two concurrently-accessed
+objects to avoid additional performance degradation due to contention introduced
+by the implementation.
+[:zh_CN]
+这个数值是在两个可以并发访问的对象之间，为避免由于实现所引入的竞争而导致额外的
+性能损失，所建议的最小偏移量。
+
+[:en]
+It shall be at least [`alignof(max_align_t)].
+[:zh_CN]
+它应当至少为 [`alignof(max_align_t)]。
+
+[:en][%cats[!interfering with canines]]
+[:zh_CN][%猫[!与狗互相干扰]]
+[enter:example]
+[codeblock]
+struct keep_apart {
+  alignas(hardware_destructive_interference_size) atomic<int> cat;
+  alignas(hardware_destructive_interference_size) atomic<int> dog;
+};
+[codeblock:end]
+[exit:example]
+
+[%@library hardware_constructive_interference_size]
+[codeblock:declaration [!:mark ImpDef] ]
+inline constexpr size_t hardware_constructive_interference_size = [=ImpDef];
+[codeblock:end]
+
+[para]
+[:en]
+This number is the maximum recommended size of contiguous memory occupied by two
+objects accessed with temporal locality by concurrent threads.
+[:zh_CN]
+对于由各并发线程对两个对象所进行的具有时域局部性的访问，这个数值是这两个对象所
+占据的连续内存的所建议的最大大小。
+
+[:en]
+It shall be at least [`alignof(max_align_t)].
+[:zh_CN]
+它应当至少为 [`alignof(max_align_t)]。
+
+[%dogs[!obliviousness to interference]]
+[enter:example]
+[codeblock]
+struct together {
+  atomic<int> dog;
+  int puppy;
+};
+struct kennel {
+  // [:en] Other data members...
+  // [|:zh_CN] 其他数据成员……
+  alignas(sizeof(together)) together pack;
+  // [:en] Other data members...
+  // [|:zh_CN] 其他数据成员……
+};
+static_assert(sizeof(together) <= hardware_constructive_interference_size);
+[codeblock:end]
+[exit:example]

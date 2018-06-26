@@ -1,0 +1,141 @@
+[/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% shuffle_order_engine engine adaptor:
+/]
+
+[section#rand.adapt.shuf
+    [:en] Class template [`shuffle_order_engine]
+    [:zh_CN] 类模板 [`shuffle_order_engine]
+]
+
+[%@library shuffle_order_engine]
+[%[:en]random number engine adaptor[![`shuffle_order_engine]]
+  [:zh_CN]随机数引擎适配器[![`shuffle_order_engine]]]
+
+[para]
+[:en] A [`shuffle_order_engine] random number engine adaptor produces the same
+random numbers that are produced by some base engine [$e], but delivers them in
+a different sequence.
+[:zh_CN] [`shuffle_order_engine] 随机数引擎适配器产生某个基础引擎 [$e] 所产生的
+随机数相同，但以不同的顺序提供。
+
+[:en] The state
+[%[`shuffle_order_engine][!state]]
+[%state[![`shuffle_order_engine]]]
+[`x][$_i] of a [`shuffle_order_engine] engine adaptor object [`x] consists of
+the state [`e][$_i] of its base engine [`e], an additional value [$Y] of the
+type delivered by [`e], and an additional sequence [$V] of [$k] values also of
+the type delivered by [`e].
+[:zh_CN] [`shuffle_order_engine] 引擎适配器对象 [`x] 的状态
+[%[`shuffle_order_engine][!state]]
+[%state[![`shuffle_order_engine]]]
+[`x][$_i] 由其基础引擎 [`e] 的状态 [`e][$_i]，一个额外的 [`e] 所提供的类型的值
+[$Y]，以及一个额外的也为 [`e] 所提供的类型的 [$k] 个值的序列 [$V] 所构成。
+
+[:en] The size of the state is the size of [$e][=']s state plus [$k+1].
+[:zh_CN] 其状态的大小为 [$e] 的状态的大小加上 [$k+1]。
+
+[para]
+[:en] The transition algorithm
+[%[`shuffle_order_engine][!transition algorithm]]
+[%transition algorithm[![`shuffle_order_engine]]]
+permutes the values produced by [$e].
+[:zh_CN] 其转移算法
+[%[`shuffle_order_engine][!转移算法]]
+[%转移算法[![`shuffle_order_engine]]]
+对 [$e] 所产生的值进行排列。
+
+[:en] The state transition is performed as follows:
+[:zh_CN] 状态转移按如下进行：
+[list:ol@arparen]
+[item]
+[:en] Calculate an integer
+[:zh_CN] 计算一个整数
+[math]
+j = \left\lfloor \frac{k \cdot (Y - e_{\min})}
+                        {e_{\max} - e_{\min} +1}
+      \right\rfloor
+[math:end]
+[:en@~].
+[:zh_CN@~]。
+[item]
+[:en] Set [$Y] to [$V_j] and then set [$V_j] to [`e()].
+[:zh_CN] 将 [$Y] 设值为 [$V_j]，再将 [$V_j] 设值为 [`e()]。
+[list:end]
+
+[para]
+[:en] The generation algorithm
+[%[`shuffle_order_engine][!generation algorithm]]
+[%generation algorithm[![`shuffle_order_engine]]]
+yields the last value of [`Y] produced while advancing [`e][=']s state as
+described above.
+[:zh_CN] 其生成算法
+[%[`shuffle_order_engine][!生成算法]]
+[%生成算法[![`shuffle_order_engine]]]
+产生当按上述对 [`e] 的状态进行推进时所产生的最后的 [`Y] 值。
+
+[codeblock:synopsis]
+template<class Engine, size_t k>
+  class shuffle_order_engine {
+  public:
+    // [:en] types
+    // [|:zh_CN] 类型
+    using result_type = typename Engine::result_type;
+
+    // [:en] engine characteristics
+    // [|:zh_CN] 引擎的特性
+    static constexpr size_t table_size = k;
+    static constexpr result_type min() { return Engine::min(); }
+    static constexpr result_type max() { return Engine::max(); }
+
+    // [:en] constructors and seeding functions
+    // [|:zh_CN] 构造函数和播种函数
+    shuffle_order_engine();
+    explicit shuffle_order_engine(const Engine& e);
+    explicit shuffle_order_engine(Engine&& e);
+    explicit shuffle_order_engine(result_type s);
+    template<class Sseq> explicit shuffle_order_engine(Sseq& q);
+    void seed();
+    void seed(result_type s);
+    template<class Sseq> void seed(Sseq& q);
+
+    // [:en] generating functions
+    // [|:zh_CN] 生成函数
+    result_type operator()();
+    void discard(unsigned long long z);
+
+    // [:en] property functions
+    // [|:zh_CN] 属性函数
+    const Engine& base() const noexcept { return e; };
+
+  private:
+    Engine e;           // [=Expos]
+    result_type Y;      // [=Expos]
+    result_type V[k];   // [=Expos]
+  };
+[codeblock:end]
+
+[para]
+[:en] The following relation shall hold: [`0 < k].
+[:zh_CN] 应当满足如下关系：[`0 < k]。
+
+[para]
+[:en] The textual representation
+[%[`shuffle_order_engine][!textual representation]]
+[%textual representation[![`shuffle_order_engine]]]
+consists of the textual representation of [`e], followed by the [`k] values of
+[$V], followed by the value of [$Y].
+[:zh_CN] 其文本表示
+[%[`shuffle_order_engine][!文本表示]]
+[%文本表示[![`shuffle_order_engine]]]
+由 [`e] 的文本表示，跟着 [$V] 的 [`k] 个值，跟着 [$Y] 的值所构成。
+
+[para]
+[%@library shuffle_order_engine[![:en]constructor][:zh_CN]构造函数]
+[:en] In addition to its behavior pursuant to section [#rand.req.adapt], each
+constructor that is not a copy constructor initializes
+[$[`V[0`]], \ldots, [`V[k-1`]]] and [$Y], in that order, with values returned by
+successive invocations of [`e()].
+[:zh_CN] 除了小节 [#rand.req.adapt] 中所述的行为之外，各个并非复制构造函数的
+构造函数还以对 [`e()] 的连续调用所返回的值对 [$[`V[0`]], \ldots, [`V[k-1`]]] 和
+[$Y] 依次进行初始化。

@@ -1,0 +1,110 @@
+[section#mem.res.monotonic.buffer.mem
+    [:en] [`monotonic_buffer_resource] members
+    [:zh_CN] [`monotonic_buffer_resource] 的成员
+]
+
+[%@library release[!monotonic_buffer_resource]]
+[%@library monotonic_buffer_resource[!release]]
+[codeblock:declaration]
+void release();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Calls [`upstream_rsrc->deallocate()] as necessary to release all allocated
+memory.
+[:zh_CN] 按需调用 [`upstream_rsrc->deallocate()] 以是否所有已分配内存。
+
+[para]
+[enter:note]
+[:en] The memory is released back to [`upstream_rsrc] even if some blocks that
+were allocated from [`this] have not been deallocated from [`this].
+[:zh_CN] 内存被释放回 [`upstream_rsrc]，即便从 [`this] 分配的某些内存块尚未由
+[`this] 所回收也是如此。
+[exit:note]
+[exit:description]
+
+[%@library upstream_resource[!monotonic_buffer_resource]]
+[%@library monotonic_buffer_resource[!upstream_resource]]
+[codeblock:declaration]
+memory_resource* upstream_resource() const;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] The value of [`upstream_rsrc].
+[:zh_CN] [`upstream_rsrc] 的值。
+[exit:description]
+
+[%@library do_allocate[!monotonic_buffer_resource]]
+[%@library monotonic_buffer_resource[!do_allocate]]
+[codeblock:declaration]
+void* do_allocate(size_t bytes, size_t alignment) override;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A pointer to allocated storage ([#basic.stc.dynamic.deallocation]) with a
+size of at least [`bytes].
+[:zh_CN] 指向具有至少 [`bytes] 的大小的已分配存储
+（[#basic.stc.dynamic.deallocation]）的指针。
+
+[:en] The size and alignment of the allocated memory shall meet the requirements
+for a class derived from [`memory_resource] ([#mem.res]).
+[:zh_CN] 所分配的内存的大小和对齐应当满足针对派生于 [`memory_resource] 的类
+（[#mem.res]）的规定。
+
+[para:effects]
+[:en] If the unused space in [`current_buffer] can fit a block with the
+specified [`bytes] and [`alignment], then allocate the return block from
+[`current_buffer]; otherwise set [`current_buffer] to
+[`upstream_rsrc->allocate(n, m)], where [`n] is not less than
+[`max(bytes, next_buffer_size)] and [`m] is not less than [`alignment], and
+increase [`next_buffer_size] by an [%@impldef growth factor for
+[`monotonic_buffer_resource]] implementation-defined growth factor (which need
+not be integral), then allocate the return block from the newly-allocated
+[`current_buffer].
+[:zh_CN] 当 [`current_buffer] 中的未使用空间可以满足所指定的 [`bytes] 和
+[`alignment] 的内存块时，就从 [`current_buffer] 中分配所返回的内存块；否则
+设置 [`current_buffer] 为 [`upstream_rsrc->allocate(n, m)]，其中 [`n] 不小于
+[`max(bytes, next_buffer_size)] 且 [`m] 不小于 [`alignment]，并以某个[%@impldef
+[`monotonic_buffer_resource] 的增长比率]由实现定义的增长比率（不必为整型值）增加
+[`next_buffer_size]，然后从新分配的 [`current_buffer] 中分配所返回的内存块。
+
+[para:throws]
+[:en] Nothing unless [`upstream_rsrc->allocate()] throws.
+[:zh_CN] 无，除非 [`upstream_rsrc->allocate()] 抛出了异常。
+[exit:description]
+
+[%@library do_deallocate[!monotonic_buffer_resource]]
+[%@library monotonic_buffer_resource[!do_deallocate]]
+[codeblock:declaration]
+void do_deallocate(void* p, size_t bytes, size_t alignment) override;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] None.
+[:zh_CN] 无。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+
+[para:remarks]
+[:en] Memory used by this resource increases monotonically until its
+destruction.
+[:zh_CN] 由这个资源所使用的内存将单调地增长，直到其销毁。
+[exit:description]
+
+[%@library do_is_equal[!monotonic_buffer_resource]]
+[%@library monotonic_buffer_resource[!do_is_equal]]
+[codeblock:declaration]
+bool do_is_equal(const memory_resource& other) const noexcept override;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`this == dynamic_cast<const monotonic_buffer_resource*>(&other)].
+[:zh_CN] [`this == dynamic_cast<const monotonic_buffer_resource*>(&other)]。
+[exit:description]

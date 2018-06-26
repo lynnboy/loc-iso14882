@@ -1,0 +1,128 @@
+[section#filebuf
+    [:en] Class template [`basic_filebuf]
+    [:zh_CN] 类模板 [`basic_filebuf]
+]
+
+[%@library basic_filebuf]
+[codeblock:synopsis]
+namespace std {
+  template <class charT, class traits = char_traits<charT>>
+  class basic_filebuf : public basic_streambuf<charT, traits> {
+  public:
+    using char_type   = charT;
+    using int_type    = typename traits::int_type;
+    using pos_type    = typename traits::pos_type;
+    using off_type    = typename traits::off_type;
+    using traits_type = traits;
+
+    // [:en] [#filebuf.cons], constructors/destructor
+    // [|:zh_CN] [#filebuf.cons]，构造函数/析构函数
+    basic_filebuf();
+    basic_filebuf(const basic_filebuf& rhs) = delete;
+    basic_filebuf(basic_filebuf&& rhs);
+    virtual ~basic_filebuf();
+
+    // [:en] [#filebuf.assign], assign and swap
+    // [|:zh_CN] [#filebuf.assign]，复制和交换
+    basic_filebuf& operator=(const basic_filebuf& rhs) = delete;
+    basic_filebuf& operator=(basic_filebuf&& rhs);
+    void swap(basic_filebuf& rhs);
+
+    // [:en] [#filebuf.members], members
+    // [|:zh_CN] [#filebuf.members]，成员
+    bool is_open() const;
+    basic_filebuf* open(const char* s, ios_base::openmode mode);
+    basic_filebuf* open(const filesystem::path::value_type* s,
+                        ios_base::openmode mode);  // [:en] wide systems only; see [#fstream.syn]
+                                                   // [|:zh_CN] 仅宽字符系统；参见 [#fstream.syn]
+    basic_filebuf* open(const string& s,
+                        ios_base::openmode mode);
+    basic_filebuf* open(const filesystem::path& s,
+                        ios_base::openmode mode);
+    basic_filebuf* close();
+
+  protected:
+    // [:en] [#filebuf.virtuals], overridden virtual functions
+    // [|:zh_CN] [#filebuf.virtuals]，覆盖的虚函数
+    streamsize showmanyc() override;
+    int_type underflow() override;
+    int_type uflow() override;
+    int_type pbackfail(int_type c = traits::eof()) override;
+    int_type overflow (int_type c = traits::eof()) override;
+
+    basic_streambuf<charT, traits>* setbuf(char_type* s,
+                                           streamsize n) override;
+    pos_type seekoff(off_type off, ios_base::seekdir way,
+                     ios_base::openmode which
+                      = ios_base::in | ios_base::out) override;
+    pos_type seekpos(pos_type sp,
+                     ios_base::openmode which
+                      = ios_base::in | ios_base::out) override;
+    int      sync() override;
+    void     imbue(const locale& loc) override;
+  };
+
+  template <class charT, class traits>
+    void swap(basic_filebuf<charT, traits>& x,
+              basic_filebuf<charT, traits>& y);
+}
+[codeblock:end]
+
+[para]
+[:en] The class [`basic_filebuf<charT, traits>] associates both the input
+sequence and the output sequence with a file.
+[:zh_CN] 类 [`basic_filebuf<charT, traits>] 同时将输入序列和输出序列与一个文件
+关联起来。
+
+[para]
+[:en] The restrictions on reading and writing a sequence controlled by an object
+of class [`basic_filebuf<charT, traits>] are the same as for reading and writing
+with the C standard library [`FILE]s.
+[:zh_CN] 对由类 [`basic_filebuf<charT, traits>] 的对象所掌控的序列进行读取和写入
+的限制条件，与 C 标准程序库的 [`FILE] 上进行读取和写入的限制条件相同。
+
+[para]
+[:en] In particular:
+[:zh_CN] 特别是：
+
+[list]
+[item]
+[:en] If the file is not open for reading the input sequence cannot be read.
+[:zh_CN] 如果文件并非为读取打开，则无法读取输入序列。
+[item]
+[:en] If the file is not open for writing the output sequence cannot be written.
+[:zh_CN] 如果文件并非为写入打开，则无法写入输出序列。
+[item]
+[:en] A joint file position is maintained for both the input sequence and the
+output sequence.
+[:zh_CN] 同时为输入序列和输出序列维护了一份联合的文件位置。
+[list:end]
+
+[para]
+[:en] An instance of [`basic_filebuf] behaves as described in [#filebuf]
+provided [`traits::pos_type] is [`fpos<traits::state_type>].
+[:zh_CN] 当 [`traits::pos_type] 为 [`fpos<traits::state_type>] 时，
+[`basic_filebuf] 的实例的行为如 [#filebuf] 所述。
+
+[:en] Otherwise the behavior is undefined.
+[:zh_CN] 否则其行为是未定义的。
+
+[para]
+[:en] In order to support file I/O and multibyte/wide character conversion,
+conversions are performed using members of a facet, referred to as
+[`a_codecvt] in following sections, obtained as if by
+[:zh_CN] 为支持文件 I/O 和多字节字符/宽字符转换，使用了一个刻面的成员来实施转换，
+在以下各小节中将之称为 [`a_codecvt]，如同通过以下方式获得：
+
+[codeblock:notation]
+const codecvt<charT, char, typename traits::state_type>& a_codecvt =
+  use_facet<codecvt<charT, char, typename traits::state_type>>(getloc());
+[codeblock:end]
+
+[include filebuf.cons]
+
+[include filebuf.assign]
+
+[include filebuf.members]
+
+[include filebuf.virtuals]

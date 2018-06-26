@@ -1,0 +1,106 @@
+[section#thread.once.callonce
+    [:en] Function [`call_once]
+    [:zh_CN] 函数 [`call_once]
+]
+
+[%@library call_once]
+[codeblock:declaration]
+template<class Callable, class... Args>
+  void call_once(once_flag& flag, Callable&& func, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[codeblock:notation [!:var INVOKE] ]
+[*INVOKE](std::forward<Callable>(func), std::forward<Args>(args)...)
+[codeblock:end]
+
+[:en] (see [#func.require]) shall be a valid expression.
+[:zh_CN] （参见 [#func.require]）应当是有效的表达式。
+
+[para:effects]
+[:en] An execution of [`call_once] that does not call its [`func] is a
+[+passive[%]] execution.
+[:zh_CN] 并不调用 [`func] 的对 [`call_once] 的执行，是一次[+消极[%]]执行。
+
+[:en] An execution of [`call_once] that calls its [`func] is an [+active[%]]
+execution.
+[:zh_CN] 调用了 [`func] 的对 [`call_once] 的执行，是一次[+积极[%]]执行。
+
+[:en] An active execution shall call
+[`[*INVOKE](std::forward<Callable>(func), std::forward<Args>(args)...)].
+[:zh_CN] 积极执行中应当调用
+[`[*INVOKE](std::forward<Callable>(func), std::forward<Args>(args)...)]。
+
+[:en] If such a call to [`func] throws an exception the execution is
+[+exceptional[%]], otherwise it is [+returning[%]].
+[:zh_CN] 如果这种对 [`func] 的调用抛出了异常，则该次执行是[+异常[%]]执行，否则
+它是[+有返回[%]]执行。
+
+[:en] An exceptional execution shall propagate the exception to the caller of
+[`call_once].
+[:zh_CN] 异常执行应当将其异常传播给 [`call_once] 的调用方。
+
+[:en] Among all executions of [`call_once] for any given [`once_flag]: at most
+one shall be a returning execution; if there is a returning execution, it shall
+be the last active execution; and there are passive executions only if there is
+a returning execution.
+[:zh_CN] 在针对给定 [`once_flag] 的所有 [`call_once] 执行之中：应当最多有一次是
+有返回执行；如果存在有返回执行，则它应当是最后一次积极执行；并且仅当存在有返回
+执行时才出现消极执行。
+
+[enter:note]
+[:en] Passive executions allow other threads to reliably observe the results
+produced by the earlier returning execution.
+[:zh_CN] 消极执行允许其他线程能够可靠地观察到较早的有返回执行所产生的结果。
+[exit:note]
+
+[para:sync]
+[:en] For any given [`once_flag]: all active executions occur in a total order;
+completion of an active execution synchronizes with ([#intro.multithread]) the
+start of the next one in this total order; and the returning execution
+synchronizes with the return from all passive executions.
+[:zh_CN] 对于任何给定的 [`once_flag]：所有的积极执行都依据某个全序发生；一次活跃
+执行的完成同步于（[#intro.multithread]）这个全序中下一次活跃执行的开始；且有返回
+执行同步于所有消极执行的返回。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]),
+or any exception thrown by [`func].
+[:zh_CN] 当需要异常时（[#thread.req.exception]）抛出 [`system_error] ，或者由
+[`func] 所抛出的异常。
+
+[para]
+[enter:example]
+[codeblock]
+// [:en] global flag, regular function
+// [|:zh_CN] 全局标志，常规函数
+void init();
+std::once_flag flag;
+
+void f() {
+  std::call_once(flag, init);
+}
+
+// [:en] function static flag, function object
+// [|:zh_CN] 函数静态标志，函数对象
+struct initializer {
+  void operator()();
+};
+
+void g() {
+  static std::once_flag flag2;
+  std::call_once(flag2, initializer());
+}
+
+// [:en] object flag, member function
+// [|:zh_CN] 对象标志，成员函数
+class information {
+  std::once_flag verified;
+  void verifier();
+public:
+  void verify() { std::call_once(verified, &information::verifier, *this); }
+};
+[codeblock:end]
+[exit:example]
+[exit:description]

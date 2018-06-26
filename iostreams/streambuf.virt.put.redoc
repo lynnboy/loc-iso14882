@@ -1,0 +1,141 @@
+[section#streambuf.virt.put
+    [:en] Put area
+    [:zh_CN] 放入区
+]
+
+[%@library xsputn[!basic_streambuf]]
+[%@library basic_streambuf[!xsputn]]
+[codeblock:declaration]
+streamsize xsputn(const char_type* s, streamsize n);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Writes up to [`n] characters to the output sequence as if by repeated
+calls to [`sputc(c)].
+[:zh_CN] 以以如同重复调用 [`sputc(c)] 的方式向输出序列写入至多 [`n] 个字符。
+
+[:en] The characters written are obtained from successive elements of the array
+whose first element is designated by [`s].
+[:zh_CN] 所写入的各字符是从以 [`s] 代表其首个元素的数组的连续元素中获得的。
+
+[:en] Writing stops when either [`n] characters have been written or a call to
+[`sputc(c)] would return [`traits::eof()].
+[:zh_CN] 一旦已有 [`n] 个字符被写入，或者对 [`sputc(c)] 的调用将返回
+[`traits::eof()]，就停止赋值。
+
+[:en] It is unspecified whether the function calls [`overflow()] when
+[`pptr() == epptr()] becomes [`true] or whether it achieves the same effects by
+other means.
+[:en] 当 [`pptr() == epptr()] 变为 [`true] 时，或者当以其他方式达成同样的效果时，
+是否调用 [`overflow()] 是未指明的。
+
+[para:returns]
+[:en] The number of characters written.
+[:zh_CN] 所写入的字符数。
+[exit:description]
+
+[%@library overflow[!basic_streambuf]]
+[%@library basic_streambuf[!overflow]]
+[codeblock:declaration]
+int_type overflow(int_type c = traits::eof());
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Consumes some initial subsequence of the characters of the [+pending
+sequence[%]].
+[:zh_CN] 消耗其[+待定序列[%]]的起始部分的字符序列。
+
+[:en] The pending sequence is defined as the concatenation of
+[:zh_CN] 其待定序列定义为如下的拼接：
+
+[list]
+[item]
+[:en@~] the empty sequence if [`pbase()] is not null, otherwise the
+[`pptr() - pbase()] characters beginning at [`pbase()], followed by
+[:zh_CN@~] 当 [`pbase()] 为非空值时为空序列，否则为以 [`pbase()] 开始的
+[`pptr() - pbase()] 个字符，之后跟着
+[item]
+[:en@~] the empty sequence if [`traits::eq_int_type(c, traits::eof())] returns
+[`true], otherwise the sequence consisting of [`c].
+[:zh_CN@~] 当 [`traits::eq_int_type(c, traits::eof())] 返回 [`true] 时为空序列，
+否则为由 [`c] 所构成的序列。
+[list:end]
+
+[para:remarks]
+[:en] The member functions [`sputc()] and [`sputn()] call this function in case
+that no room can be found in the put buffer enough to accommodate the argument
+character sequence.
+[:zh_CN] 成员函数 [`sputc()] 和 [`sputn()] 将在无法在放入缓冲区中找到足够的空间
+来处理其实参字符序列的情况下调用这个函数。
+
+[para:requires]
+[:en] Every overriding definition of this virtual function shall obey the
+following constraints:
+[:zh_CN] 这个虚函数的所有覆盖定义都应当遵守以下约束：
+
+[list]
+[item]
+[:en] The effect of consuming a character on the associated output sequence is
+specified[#:note#fn:$section.1]
+[:zh_CN] 消耗其所关联的输出序列上的字符的效果是有所指明的[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en] That is, for each class derived from an instance of [`basic_streambuf]
+in this Clause ([#stringbuf], [#filebuf]), a specification of how consuming a
+character effects the associated output sequence is given.
+[:zh_CN] 就是说，本章中派生于 [`basic_streambuf] 的实例的各个类（[#stringbuf]，
+[#filebuf]），都分布给出了对消耗一个字符将如何影响其所关联的输出序列的说明。
+
+[:en] There is no requirement on a program-defined class.
+[:zh_CN] 对由程序定义的类则没有这样的要求。
+[note:end]
+
+[item]
+[:en] Let [`r] be the number of characters in the pending sequence not consumed.
+[:zh_CN] 令 [`r] 为待定序列中尚未消耗的字符数。
+
+[:en] If [`r] is nonzero then [`pbase()] and [`pptr()] shall be set so that:
+[`pptr() - pbase() == r] and the [`r] characters starting at [`pbase()] are the
+associated output stream.
+[:zh_CN] 若 [`r] 非零，则应当设置 [`pbase()] 和 [`pptr()] 以使得
+[`pptr() - pbase() == r]，并且以 [`pbase()] 开始的 [`r] 个字符即为其所关联的输出
+流。
+
+[:en] In case [`r] is zero (all characters of the pending sequence have been
+consumed) then either [`pbase()] is set to [`nullptr], or [`pbase()] and
+[`pptr()] are both set to the same non-null value.
+[:zh_CN] 若 [`r] 为零（即待定序列中的所有字符都已被消耗），则或者 [`pbase()] 被
+设值为 [`nullptr]，或者 [`pbase()] 和 [`pptr()] 都被设值为同一个非空值。
+
+[item]
+[:en] The function may fail if either appending some character to the associated
+output stream fails or if it is unable to establish [`pbase()] and [`pptr()]
+according to the above rules.
+[:zh_CN] 如果向所关联的输出流中追加字符失败，或者无法根据以上规则建立 [`pbase()]
+和 [`pptr()] 的值，则函数将会失败。
+[list:end]
+
+[para:returns]
+[:en] [`traits::eof()] or throws an exception if the function fails.
+[:zh_CN] 当函数失败时返回 [`traits::eof()] 或者抛出异常。
+
+[:en] Otherwise, returns some value other than [`traits::eof()] to indicate
+success.[#:note#fn:$section.2]
+[:zh_CN] 否则，返回某个 [`traits::eof()] 以外的值以标明成功。
+[#:note#fn:$section.2]
+
+[note:foot#fn:$section.1]
+[:en] Typically, [`overflow] returns [`c] to indicate success, except when
+[`traits::eq_int_type(c, traits::eof())] returns [`true], in which case it
+returns [`traits::not_eof(c)].
+[:zh_CN] 通常，[`overflow] 返回 [`c] 以标明成功，但当
+[`traits::eq_int_type(c, traits::eof())] 返回 [`true] 的情况下它返回
+[`traits::not_eof(c)].
+[note:end]
+
+[para:default]
+[:en] Returns [`traits::eof()].
+[:zh_CN] 返回 [`traits::eof()]。
+[exit:description]

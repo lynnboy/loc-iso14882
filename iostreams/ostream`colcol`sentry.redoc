@@ -1,0 +1,98 @@
+[section#ostream::sentry
+    [:en] Class [`basic_ostream::sentry]
+    [:zh_CN] 类 [`basic_ostream::sentry]
+]
+
+[%@library basic_ostream::sentry]
+[%@library sentry[!basic_ostream]]
+[codeblock:synopsis]
+namespace std {
+  template <class charT, class traits = char_traits<charT>>
+  class basic_ostream<charT, traits>::sentry {
+    bool ok_; // [=Expos]
+  public:
+    explicit sentry(basic_ostream<charT, traits>& os);
+    ~sentry();
+    explicit operator bool() const { return ok_; }
+
+    sentry(const sentry&) = delete;
+    sentry& operator=(const sentry&) = delete;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The class [`sentry] defines a class that is responsible for doing
+exception safe prefix and suffix operations.
+[:zh_CN] 类 [`sentry] 所定义的类负责进行异常安全前缀和后缀操作。
+
+[%@library basic_ostream::sentry[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+explicit sentry(basic_ostream<charT, traits>& os);
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] If [`os.good()] is nonzero, prepares for formatted or unformatted output.
+[:zh_CN] 若 [`os.good()] 非零，则为格式化或无格式的输出进行准备。
+
+[:en] If [`os.tie()] is not a null pointer, calls [%@library flush]
+[`os.tie()->flush()].[#:note#fn:$section.1]
+[:zh_CN] 如果 [`os.tie()] 不是空指针，则调用 [%@library flush]
+[`os.tie()->flush()]。[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en] The call [`os.tie()->flush()] does not necessarily occur if the function
+can determine that no synchronization is necessary.
+[:zh_CN] 如果函数可以确定不需要进行同步，则并不需要调用 [`os.tie()->flush()]。
+[note:end]
+
+[para]
+[:en] If, after any preparation is completed, [`os.good()] is [`true],
+[`ok_ == true] otherwise, [`ok_ == false].
+[:zh_CN] 如果准备工作完成后 [`is.good()] 为 [`true]，则有 [`ok_ == true]，否则
+[`ok_ == false]。
+
+[:en] During preparation, the constructor may call [`setstate(failbit)] (which
+may throw [`ios_base::failure] ([#iostate.flags]))[#:note#fn:$section.2]
+[:zh_CN] 进行准备过程中，构造函数可能调用 [`setstate(failbit)]（这可能会抛出
+[`ios_base::failure]（[#iostate.flags]））。[#:note#fn:$section.2]
+
+[note:foot#fn:$section.2]
+[:en] The [`sentry] constructor and destructor can also perform additional
+implementation-dependent operations.
+[:zh_CN] [`sentry] 的构造函数和析构函数还可以进行其他特定于实现的操作。
+[note:end]
+[exit:description]
+
+[%@library basic_ostream::sentry[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~sentry();
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en]
+If [`(os.flags() & ios_base::unitbuf) && !uncaught_exceptions() && os.good()]
+is [`true], calls [`os.rdbuf()->pubsync()].
+[:zh_CN]
+如果 [`(os.flags() & ios_base::unitbuf) && !uncaught_exceptions() && os.good()]
+为 [`true]，则调用 [`os.rdbuf()->pubsync()]。
+
+[:en] If that function returns -1, sets [`badbit] in [`os.rdstate()] without
+propagating an exception.
+[:zh_CN] 如果该函数返回 -1，则在 [`os.rdstate()] 中设置 [`badbit] 而并不传播
+异常。
+[exit:description]
+
+[%@library operator bool[!basic_ostream::sentry]]
+[%@library basic_ostream::sentry[!operator bool]]
+[codeblock:declaration]
+explicit operator bool() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Returns [`ok_].
+[:zh_CN] 返回 [`ok_]。
+[exit:description]

@@ -1,0 +1,84 @@
+[section#mem.res.private
+    [:en] [`memory_resource] private virtual member functions
+    [:zh_CN] [`memory_resource] 的私有虚成员函数
+]
+
+[%@library do_allocate[!memory_resource]]
+[%@library memory_resource[!do_allocate]]
+[codeblock:declaration]
+virtual void* do_allocate(size_t bytes, size_t alignment) = 0;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`alignment] shall be a power of two.
+[:zh_CN] [`alignment] 应当为二的幂。
+
+[para:returns]
+[:en] A derived class shall implement this function to return a pointer to
+allocated storage ([#basic.stc.dynamic.deallocation]) with a size of at least
+[`bytes].
+[:zh_CN] 派生类应当将这个函数实现为返回指向大小至少为 [`bytes] 的已分配存储
+（[#basic.stc.dynamic.deallocation]）的指针。
+
+[:en] The returned storage is aligned to the specified alignment, if such
+alignment is supported ([#basic.align]); otherwise it is aligned to
+[`max_align].
+[:zh_CN] 如果支持所指定的对齐（[#basic.align]），则所返回的存储根据它进行对齐，
+否则就按 [`max_align] 进行对齐。
+
+[para:throws]
+[:en] A derived class implementation shall throw an appropriate exception if it
+is unable to allocate memory with the requested size and alignment.
+[:zh_CN] 当派生类的实现无法为所请求的大小和对齐分配内存时，应当抛出一个适当的
+异常。
+[exit:description]
+
+[%@library do_deallocate[!memory_resource]]
+[%@library memory_resource[!do_deallocate]]
+[codeblock:declaration]
+virtual void do_deallocate(void* p, size_t bytes, size_t alignment) = 0;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`p] shall have been returned from a prior call to
+[`allocate(bytes, alignment)] on a memory resource equal to [`*this], and the
+storage at [`p] shall not yet have been deallocated.
+[:zh_CN] [`p] 应当是由之前在某个等于 [`*this] 的内存资源上调用
+[`allocate(bytes, alignment)] 所返回的指针，且 [`p] 所指向的存储应当尚未被回收。
+
+[para:effects]
+[:en] A derived class shall implement this function to dispose of allocated
+storage.
+[:zh_CN] 派生类应当将这个函数实现为将已分配存储进行处置。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library do_is_equal[!memory_resource]]
+[%@library memory_resource[!do_is_equal]]
+[codeblock:declaration]
+virtual bool do_is_equal(const memory_resource& other) const noexcept = 0;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A derived class shall implement this function to return [`true] if memory
+allocated from [`this] can be deallocated from [`other] and vice-versa,
+otherwise [`false].
+[:zh_CN] 派生类应当将这个函数实现为，当由 [`this] 所分配的内存可以由 [`other] 所
+回收且反之亦然时，返回 [`true]，否则返回 [`false]。
+
+[enter:note]
+[:en] The most-derived type of [`other] might not match the type of [`this].
+[:zh_CN] [`other] 的最终派生类型可能并不匹配于 [`this] 的类型。
+
+[:en] For a derived class [`D], a typical implementation of this function will
+immediately return [`false] if [`dynamic_cast<const D*>(&other) == nullptr].
+[:zh_CN] 对于某个派生类 [`D]，这个函数的典型实现，在
+[`dynamic_cast<const D*>(&other) == nullptr] 时直接返回 [`false]。
+[exit:note]
+[exit:description]

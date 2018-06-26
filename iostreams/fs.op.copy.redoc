@@ -1,0 +1,266 @@
+[section#fs.op.copy
+    [:en] Copy
+    [:zh_CN] 复制
+]
+
+[%@library copy[!path]]
+[codeblock:declaration]
+void copy(const path& from, const path& to);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`copy(from, to, copy_options::none)].
+[:zh_CN] 等价于 [`copy(from, to, copy_options::none)]。
+[exit:description]
+
+[%@library copy[!path]]
+[codeblock:declaration]
+void copy(const path& from, const path& to, error_code& ec) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`copy(from, to, copy_options::none, ec)].
+[:zh_CN] 等价于 [`copy(from, to, copy_options::none, ec)]。
+[exit:description]
+
+[%@library copy[!path]]
+[codeblock:declaration]
+void copy(const path& from, const path& to, copy_options options);
+void copy(const path& from, const path& to, copy_options options,
+          error_code& ec) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] At most one element from each option group ([#fs.enum.copy.opts]) is set
+in [`options].
+[:zh_CN] [`options] 中只能为各选项组设置最多一个元素（[#fs.enum.copy.opts]）。
+
+[para:effects]
+[:en] Before the first use of [`f] and [`t]:
+[:zh_CN] 第一次使用 [`f] 和 [`t] 之前：
+[list]
+[item]
+[:en] If
+[:zh_CN] 如果
+
+[codeblock:notation]
+(options & copy_options::create_symlinks) != copy_options::none ||
+(options & copy_options::skip_symlinks) != copy_options::none
+[codeblock:end]
+
+[:en@~] then [`auto f = symlink_status(from)] and if needed
+[`auto t = symlink_status(to)].
+[:zh_CN@~] 则有 [`auto f = symlink_status(from)]，而如果需要的话有
+[`auto t = symlink_status(to)]。
+
+[item]
+[:en] Otherwise, if
+[:zh_CN] 否则，如果
+
+[codeblock:notation]
+(options & copy_options::copy_symlinks) != copy_options::none
+[codeblock:end]
+
+[:en@~] then [`auto f = symlink_status(from)] and if needed
+[`auto t = status(to)].
+[:zh_CN@~] 则有 [`auto f = symlink_status(from)]，而如果需要的话有
+[`auto t = status(to)]。
+
+[item]
+[:en] Otherwise, [`auto f = status(from)] and if needed [`auto t = status(to)].
+[:zh_CN] 否则，有 [`auto f = status(from)]，而如果需要的话有
+[`auto t = status(to)]。
+[list:end]
+
+[:en] Effects are then as follows:
+[:zh_CN] 然后，其效果如下：
+
+[list]
+[item]
+[:en] If [`f.type()] or [`t.type()] is an implementation-defined file type
+([#fs.enum.file_type]), then the effects are [%@impldef effect of
+[`filesystem::copy]] implementation-defined.
+[:zh_CN] 如果 [`f.type()] 或 [`t.type()] 是某种由实现定义的文件类型
+（[#fs.enum.file_type]），则其效果是[%@impldef [`filesystem::copy] 的效果]
+由实现定义的。
+
+[item]
+[:en] Otherwise, an error is reported as specified in [#fs.err.report] if:
+[:zh_CN] 否则，以下情况下根据 [#fs.err.report] 所述报告错误：
+
+[list]
+[item]
+[:en@~] [`!exists(f)], or
+[:zh_CN@~] [`!exists(f)]，或者
+[item]
+[:en@~] [`equivalent(from, to)], or
+[:zh_CN@~] [`equivalent(from, to)]，或者
+[item]
+[:en@~] [`is_other(f) || is_other(t)], or
+[:zh_CN@~] [`is_other(f) || is_other(t)]，或者
+[item]
+[:en@~] [`is_directory(f) && is_regular_file(t)].
+[:zh_CN@~] [`is_directory(f) && is_regular_file(t)]。
+[list:end]
+
+[item]
+[:en] Otherwise, if [`is_symlink(f)], then:
+[:zh_CN] 否则，如果 [`is_symlink(f)]，则：
+
+[list]
+[item]
+[:en] If [`(options & copy_options::skip_symlinks) != copy_options::none] then
+return.
+[:zh_CN] 若 [`(options & copy_options::skip_symlinks) != copy_options::none] 则
+返回。
+
+[item]
+[:en] Otherwise if
+[:zh_CN] 否则若
+
+[codeblock:notation]
+!exists(t) && (options & copy_options::copy_symlinks) != copy_options::none
+[codeblock:end]
+
+[:en@~] then [`copy_symlink(from, to)].
+[:zh_CN@~] 则执行 [`copy_symlink(from, to)]。
+
+[item]
+[:en] Otherwise report an error as specified in [#fs.err.report].
+[:zh_CN] 否则根据 [#fs.err.report] 所述报告错误。
+[list:end]
+
+[item]
+[:en] Otherwise, if [`is_regular_file(f)], then:
+[:zh_CN] 否则，如果 [`is_regular_file(f)]，则：
+
+[list]
+[item]
+[:en] If [`(options & copy_options::directories_only) != copy_options::none],
+then return.
+[:zh_CN] 若 [`(options & copy_options::directories_only) != copy_options::none]
+则返回。
+
+[item]
+[:en] Otherwise, if
+[`(options & copy_options::create_symlinks) != copy_options::none], then create
+a symbolic link to the source file.
+[:zh_CN] 否则，若
+[`(options & copy_options::create_symlinks) != copy_options::none]，则创建到
+源文件的一个符号连接。
+
+[item]
+[:en] Otherwise, if
+[`(options & copy_options::create_hard_links) != copy_options::none], then
+create a hard link to the source file.
+[:zh_CN] 否则，若
+[`(options & copy_options::create_hard_links) != copy_options::none]，则创建到
+源文件的一个硬连接。
+
+[item]
+[:en] Otherwise, if [`is_directory(t)], then
+[`copy_file(from, to/from.filename(), options)].
+[:zh_CN] 否则，若 [`is_directory(t)]，则执行
+[`copy_file(from, to/from.filename(), options)]。
+
+[item]
+[:en] Otherwise, [`copy_file(from, to, options)].
+[:zh_CN] 否则，执行 [`copy_file(from, to, options)]。
+[list:end]
+
+[item]
+[:en] Otherwise, if
+[:zh_CN] 否则，如果
+
+[codeblock:notation]
+is_directory(f) &&
+((options & copy_options::recursive) != copy_options::none ||
+ options == copy_options::none)
+[codeblock:end]
+
+[:en@~] then:
+[:zh_CN@~] 则：
+
+[list]
+[item]
+[:en] If [`!exists(t)], then [`create_directory(to, from)].
+[:zh_CN] 若 [`!exists(t)]，则执行 [`create_directory(to, from)]。
+
+[item]
+[:en] Then, iterate over the files in [`from], as if by
+[:zh_CN] 然后，如同如下方式对 [`from] 中的各文件进行迭代
+
+[codeblock:notation [!:mark UnSpec] ]
+for (const directory_entry& x : directory_iterator(from))
+  copy(x.path(), to/x.path().filename(), options | copy_options::[=UnSpec])
+[codeblock:end]
+[list:end]
+
+[item]
+[:en] Otherwise, for the signature with argument [`ec], [`ec.clear()].
+[:zh_CN] 否则，对于带有 [`ec] 实参的签名，执行 [`ec.clear()]。
+
+[item]
+[:en] Otherwise, no effects.
+[:zh_CN] 否则，没有效果。
+[list:end]
+
+[para:throws]
+[:en] As specified in [#fs.err.report].
+[:zh_CN] 如 [#fs.err.report] 所述。
+
+[para:remarks]
+[:en] For the signature with argument [`ec], any library functions called by the
+implementation shall have an [`error_code] argument if applicable.
+[:zh_CN] 对于带有 [`ec] 实参的签名，其实现所调用的每个程序库函数，如果适用，
+各自都应当有一个 [`error_code] 实参。
+
+[para]
+[enter:example]
+[:en] Given this directory structure:
+[:zh_CN] 给定如下目录结构：
+
+[codeblock]
+/dir1
+  file1
+  file2
+  dir2
+    file3
+[codeblock:end]
+
+[:en] Calling [`copy("/dir1", "/dir3")] would result in:
+[:zh_CN] 调用 [`copy("/dir1", "/dir3")] 的结果为：
+
+[codeblock]
+/dir1
+  file1
+  file2
+  dir2
+    file3
+/dir3
+  file1
+  file2
+[codeblock:end]
+
+[:en] Alternatively, calling [`copy("/dir1", "/dir3", copy_options::recursive)]
+would result in:
+[:zh_CN] 而调用 [`copy("/dir1", "/dir3", copy_options::recursive)] 的结果则为：
+
+[codeblock]
+/dir1
+  file1
+  file2
+  dir2
+    file3
+/dir3
+  file1
+  file2
+  dir2
+    file3
+[codeblock:end]
+[exit:example]
+
+[exit:description]

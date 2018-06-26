@@ -1,0 +1,117 @@
+[section#atomics.fences
+    [:en] Fences
+    [:zh_CN] 屏障
+]
+
+[para]
+[:en] This section introduces synchronization primitives called [+fences[%]].
+[:zh_CN] 本小节介绍成为[+屏障[%]]的同步原语。
+
+[:en] Fences can have acquire semantics, release semantics, or both.
+[:zh_CN] 屏障可以具有获取语义，释放语义，或同时具有二者。
+
+[:en] A fence with acquire semantics is called an [+acquire fence[%]].
+[:zh_CN] 具有获取语义的屏障称为[+获取屏障[%]]。
+
+[:en] A fence with release semantics is called a [+release fence[%]].
+[:zh_CN] 具有释放语义的屏障称为[+释放屏障[%]]。
+
+[para]
+[:en] A release fence [$A] synchronizes with an acquire fence [$B] if there
+exist atomic operations [$X] and [$Y], both operating on some atomic object
+[$M], such that [$A] is sequenced before [$X], [$X] modifies [$M], [$Y] is
+sequenced before [$B], and [$Y] reads the value written by [$X] or a value
+written by any side effect in the hypothetical release sequence [$X] would head
+if it were a release operation.
+[:zh_CN] 对于释放屏障 [$A] 与获取屏障 [$B]，如果存在原子性操作 [$X] 和 [$Y]，
+二者均操作某个原子性对象 [$M]，并使得 [$A] 按顺序早于 [$X]，[$X] 修改 [$M]，[$Y]
+按顺序早于 [$B]，且 [$Y] 读取到了由 [$X] 所写入的值，或者当 [$X] 是释放操作时由
+虚构的以 [$X] 起始的释放序列中的任何副作用所写入的值，则 [$A] 同步于 [$B]。
+
+[para]
+[:en] A release fence [$A] synchronizes with an atomic operation [$B] that
+performs an acquire operation on an atomic object [$M] if there exists an atomic
+operation [$X] such that [$A] is sequenced before [$X], [$X] modifies [$M], and
+[$B] reads the value written by [$X] or a value written by any side effect in
+the hypothetical release sequence [$X] would head if it were a release
+operation.
+[:zh_CN] 对于释放屏障 [$A] 与在原子性对象 [$M] 上实施获取操作的原子性操作 [$B]，
+如果存在原子性操作 [$X]，使得 [$A] 按顺序早于 [$X]，[$X] 修改 [$M]，且 [$B] 读取
+到了由 [$X] 所写入的值，或者当 [$X] 是释放操作时由虚构的以 [$X] 起始的释放序列中
+的任何副作用所写入的值，则 [$A] 同步于 [$B]。
+
+[para]
+[:en] An atomic operation [$A] that is a release operation on an atomic object
+[$M] synchronizes with an acquire fence [$B] if there exists some atomic
+operation [$X] on [$M] such that [$X] is sequenced before [$B] and reads the
+value written by [$A] or a value written by any side effect in the release
+sequence headed by [$A].
+[:zh_CN] 对于在原子性对象 [$M] 上实施释放操作的原子性操作 [$A] 和获取屏障 [$B]，
+如果存在 [$M] 的某个原子性操作 [$X]，使得 [$X] 按顺序早于 [$B]，且它读取到了由
+[$A] 所写入的值，或者由以 [$A] 起始的释放序列中的任何副作用所写入的值，则 [$A]
+同步于 [$B]。
+
+[%library atomic_thread_fence]
+[codeblock:declaration]
+extern "C" void atomic_thread_fence(memory_order order) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Depending on the value of [`order], this operation:
+[:zh_CN] 取决于 [`order] 的值，该操作：
+
+[list]
+[item]
+[:en] has no effects, if [`order == memory_order_relaxed];
+[:zh_CN] 当 [`order == memory_order_relaxed] 时没有效果；
+
+[item]
+[:en] is an acquire fence, if
+[`order == memory_order_acquire || order == memory_order_consume];
+[:zh_CN] 当 [`order == memory_order_acquire || order == memory_order_consume] 时
+为获取屏障；
+
+[item]
+[:en] is a release fence, if [`order == memory_order_release];
+[:zh_CN] 当 [`order == memory_order_release] 时为释放屏障；
+
+[item]
+[:en] is both an acquire fence and a release fence, if
+[`order == memory_order_acq_rel];
+[:zh_CN] 当 [`order == memory_order_acq_rel] 时同时为获取屏障和释放屏障；
+
+[item]
+[:en] is a sequentially consistent acquire and release fence, if
+[`order == memory_order_seq_cst].
+[:zh_CN] 当 [`order == memory_order_seq_cst] 时为顺序一致的获取和释放屏障。
+[list:end]
+[exit:description]
+
+[%library atomic_signal_fence]
+[codeblock:declaration]
+extern "C" void atomic_signal_fence(memory_order order) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`atomic_thread_fence(order)], except that the resulting
+ordering constraints are established only between a thread and a signal handler
+executed in the same thread.
+[:zh_CN] 等价于 [`atomic_thread_fence(order)]，但其结果顺序性约束仅在一个线程
+和在相同线程中执行的一个信号处理器之间建立。
+
+[para]
+[enter:note]
+[:en] [`atomic_signal_fence] can be used to specify the order in which actions
+performed by the thread become visible to the signal handler.
+[:zh_CN] [`atomic_signal_fence] 可以用于指定由线程所实施的动作以何种顺序变得对
+信号处理器可见。
+
+[:en] Compiler optimizations and reorderings of loads and stores are inhibited
+in the same way as with [`atomic_thread_fence], but the hardware fence
+instructions that [`atomic_thread_fence] would have inserted are not emitted.
+[:zh_CN] 编译器对加载和存储进行的优化和重排序，以同 [`atomic_thread_fence] 相同
+的方式被禁止，但不会发出 [`atomic_thread_fence] 所需要插入的硬件屏障指令。
+[exit:note]
+[exit:description]
