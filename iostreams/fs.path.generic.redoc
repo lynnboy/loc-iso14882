@@ -64,11 +64,28 @@
 [syntax:end]
 
 [para]
-[enter:note]
-[:en] Operating systems often place restrictions on the characters that may be
-used in a [~filename].
-[:zh_CN] 操作系统通常对可以用在[~文件名]中的字符有所限制。
+[:en] A [+filename] is the name of a file.
+[:zh_CN] [+文件名]是文件的名字。
 
+[:en] Filenames [~dot] and [~dot-dot], consisting solely of one and two period
+characters respectively, have special meaning.
+[:zh_CN] 文件名 [~点] 和 [~点点]（分别仅由一个或两个句点字符构成）有特殊含义。
+
+[:en] The following characteristics of filenames are operating system dependent:
+[:zh_CN] 文件名的下列特征是特定于操作系统的：
+
+[list]
+[item]
+[:en] The permitted characters.
+[:zh_CN] 所允许的字符。
+
+[enter:example]
+[:en] Some operating systems prohibit the ASCII control characters
+(0x00 [=-] 0x1F) in filenames.
+[:zh_CN] 某些操作系统禁止文件系统中使用 ASCII 控制字符（0x00 到 0x1F）。
+[exit:example]
+
+[enter:note]
 [:en] For wide portability, users may wish to limit [~filename] characters to
 the POSIX Portable Filename Character Set:
 [:zh_CN] 为了广泛可移植性，用户可能希望将[~文件名]字符限制为 POSIX 的可移植
@@ -81,6 +98,24 @@ a b c d e f g h i j k l m n o p q r s t u v w x y z
 [codeblock:end]
 [exit:note]
 
+[item]
+[:en] The maximum permitted length.
+[:zh_CN] 最大允许的长度。
+[item]
+[:en] Filenames that are not permitted.
+[:zh_CN] 不允许使用的文件名。
+[item]
+[:en] Filenames that have special meaning.
+[:zh_CN] 具有特殊含义的文件名。
+[item]
+[:en] Case awareness and sensitivity during path resolution.
+[:zh_CN] 进行路径解析时的大小写无关性和敏感性。
+[item]
+[:en] Special rules that may apply to file types other than regular files, such
+as directories.
+[:zh_CN] 施加于常规文件以外的文件类型（比如目录）的特殊规则。
+[list:end]
+
 [para]
 [:en] Except in a [~root-name], multiple successive [~directory-separator]
 characters are considered to be the same as one [~directory-separator]
@@ -89,13 +124,11 @@ character.
 [~目录分隔符]字符相同。
 
 [para]
-[:en] The filename [~dot] ([#fs.def.filename]) is treated as a reference to the
-current directory.
-[:zh_CN] 文件名[~点]（[#fs.def.filename]）被当做对当前目录的引用。
+[:en] The filename [~dot] is treated as a reference to the current directory.
+[:zh_CN] 文件名[~点]被当做对当前目录的引用。
 
-[:en] The filename [~dot-dot] ([#fs.def.filename]) is treated as a reference to
-the parent directory.
-[:zh_CN] 文件名[~点点]（[#fs.def.filename]）被当做对父目录的引用。
+[:en] The filename [~dot-dot] is treated as a reference to the parent directory.
+[:zh_CN] 文件名[~点点]被当做对父目录的引用。
 
 [:en] What the filename [~dot-dot] refers to relative to [~root-directory] is
 [%@impldef meaning of [~dot-dot] in [~root-directory]] implementation-defined.
@@ -108,8 +141,8 @@ system.
 
 [para]
 [:en] A [~root-name] identifies the starting location for pathname resolution
-([#fs.def.pathres]).
-[:zh_CN] [~根名]标定路径名解析时的起始位置（[#fs.def.pathres]）。
+([#fs.class.path]).
+[:zh_CN] [~根名]标定路径名解析时的起始位置（[#fs.class.path]）。
 
 [:en] If there are no operating system dependent [~root-name]s, at least one
 [%@impldef supported [~root-name]s in addition to any operating system dependent
@@ -142,3 +175,65 @@ and a [~relative-path] without an intervening [~root-directory] element.
 [:zh_CN] 在 POSIX 式的操作系统上，有可能出现一个[~根名]和一个[~相对路径]又不在
 二者中间出现[~根目录]元素。
 [exit:note]
+
+[para]
+[%:begin#path.normalization
+    [:en] path[!normalization]
+    [:zh_CN] 路径[!正规化] ]
+[:en] [+Normalization[%normalization[!path][%path[!normalization]]]] of a
+generic format pathname means:
+[:zh_CN] [+正规化[%正规化[!路径][%路径[!正规化]]]]一个通用格式的路径名的含义为：
+
+[list]
+[item]
+[:en] If the path is empty, stop.
+[:zh_CN] 若路径为空，停止。
+[item]
+[:en] Replace each slash character in the [~root-name] with a
+[~preferred-separator].
+[:zh_CN] 将[~根名]中的每个斜杠字符替换为一个[~首选分隔符]。
+[item]
+[:en] Replace each [~directory-separator] with a [~preferred-separator].
+[:zh_CN] 将每个[~目录分隔符]替换为一个[~首选分隔符]。
+[enter:note]
+[:en] The generic pathname grammar ([#fs.path.generic]) defines
+[~directory-separator] as one or more slashes and [~preferred-separator]s.
+[:zh_CN] 通用路径名的文法（[#fs.path.generic]）将[~目录分隔符]定义为一个或多个
+斜杠和[~首选分隔符]。
+[exit:note]
+[item]
+[:en] Remove each [~dot] filename and any immediately following
+[~directory-separator].
+[:zh_CN] 将每个文件名[~点]和任何紧跟其后的[~目录分隔符]删除。
+[item]
+[:en] As long as any appear, remove a non-[~dot-dot] filename immediately
+followed by a [~directory-separator] and a [~dot-dot] filename, along with any
+immediately following [~directory-separator].
+[:zh_CN] 只要仍出现，就将非[~点点]文件名及其后紧跟的[~目录分隔符]和[~点点]文件名
+以及其后紧跟的任何[~目录分隔符]删除。
+[item]
+[:en] If there is a [~root-directory], remove all [~dot-dot] filenames and any
+[~directory-separator]s immediately following them.
+[:zh_CN] 如果出现[~根目录]，则将紧跟其后的所有[~点点]文件名和任何[~目录分隔符]
+删除。
+[enter:note]
+[:en] These [~dot-dot] filenames attempt to refer to nonexistent parent
+directories.
+[:zh_CN] 这些[~点点]文件名试图指代并不存在的父目录。
+[exit:note]
+[item]
+[:en] If the last filename is [~dot-dot], remove any trailing
+[~directory-separator].
+[:zh_CN] 若最后一个文件名是[~点点]，则删除任何末尾的[~目录分隔符]。
+[item]
+[:en] If the path is empty, add a [~dot].
+[:zh_CN] 若路径为空，则添加一个[~点]。
+[list:end]
+[section:end]
+
+[:en] The result of normalization is a path in [+normal form[%normal form
+[!path]]], which is said to be [+normalized[%]].
+[:zh_CN] 正规化的结果是一个具有[+正规形式[%正规形式[!路径]]]的路径，并称其为
+[+正规化的[%]]。
+
+[%:end#path.normalization]
