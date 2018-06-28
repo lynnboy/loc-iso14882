@@ -54,18 +54,21 @@ An explicit instantiation declaration begins with the [`extern] keyword.
 [:en]
 If the explicit instantiation is for a class or member class, the
 [~elaborated-type-specifier] in the [~declaration] shall include a
-[~simple-template-id].
+[~simple-template-id]; otherwise, the [~declaration] shall be a
+[~simple-declaration] whose [~init-declarator-list] comprises a single
+[~init-declarator] that does not have an [~initializer].
 [:zh_CN]
 若显式实例化的是类或成员类，则其[~声明式]中的[~详细类型说明符]应当包含一个[~简单
-模板标识]。
+模板标识]；否则，其[~声明式]应当为一个[~简单声明式]，其[~初始化声明符列表]包含
+一个没有[~初始化式]的[~初始化声明符]。
 
 [:en]
 If the explicit instantiation is for a function or member function, the
-[~unqualified-id] in the [~declaration] shall be either a [~template-id] or,
+[~unqualified-id] in the [~declarator] shall be either a [~template-id] or,
 where all template arguments can be deduced, a [~template-name] or
 [~operator-function-id].
 [:zh_CN]
-若显式实例化的是函数或成员函数，则其[~声明式]中的[~未限定标识]应当为一个[~模板
+若显式实例化的是函数或成员函数，则其[~声明符]中的[~未限定标识]应当为一个[~模板
 标识]，或者当所有模板实参均可被推断出来时，为一个[~模板名]或[~运算符函数标识]。
 
 [enter:note]
@@ -87,10 +90,11 @@ template specialization in the [~qualified-id] for the member name shall be a
 标识]中的该类模板特例的名字应当为一个[~简单模板标识]。
 
 [:en]
-If the explicit instantiation is for a variable, the [~unqualified-id] in the
-declaration shall be a [~template-id].
+If the explicit instantiation is for a variable template specialization, the
+[~unqualified-id] in the [~declarator] shall be a [~simple-template-id].
 [:zh_CN]
-若显式实例化的是变量，则其声明式中的[~未限定标识]应当为一个[~模板标识]。
+若显式实例化的是变量模板特例，则其[~声明符]中的[~未限定标识]应当为一个
+[~简单模板标识]。
 
 [:en]
 An explicit instantiation shall appear in an enclosing namespace of its
@@ -152,10 +156,59 @@ explicit specialization of the entity with the same template arguments.
 
 [:en]
 If the [~declaration] of the explicit instantiation names an implicitly-declared
-special member function (Clause [#special]), the program is ill-formed.
+special member function ([#special]), the program is ill-formed.
 [:zh_CN]
-若显式实例化式的[~声明式]指名了某个隐式声明的特殊成员函数（第 [#special] 章），
-则程序非良构。
+若显式实例化式的[~声明式]指名了某个隐式声明的特殊成员函数（[#special]），则程序
+非良构。
+
+[para]
+[:en]
+The [~declaration] in an [~explicit-instantiation] and the [~declaration]
+produced by the corresponding substitution into the templated function,
+variable, or class are two declarations of the same entity.
+[:zh_CN]
+[~显式实例化式]中的[~声明式]，以及通过向模板化的函数、变量或类之中进行相应的替换
+所产生的[~声明式]，应当是同一个实体的两个声明式。
+
+[enter:note]
+[:en]
+These declarations are required to have matching types as specified in
+[#basic.link], except as specified in [#except.spec].
+[:zh_CN]
+除了在 [#except.spec] 中给出的例外，这些声明式必须根据 [#basic.link] 具有匹配的
+类型。
+
+[enter:example]
+[codeblock]
+template<typename T> T var = {};
+template float var<float>;   // [:en] OK, instantiated variable has type [`float]
+                             // [|:zh_CN] OK，实例化的变量类型为 [`float]
+template int var<int[16]>[]; // [:en] OK, absence of major array bound is permitted
+                             // [|:zh_CN] OK，允许缺少主数组边界
+template int *var<int>;      // [:en] error: instantiated variable has type [`int]
+                             // [|:zh_CN] 错误：实例化的变量类型为 [`int]
+
+template<typename T> auto av = T();
+template int av<int>;        // [:en] OK, variable with type [`int] can be redeclared with type [`auto]
+                             // [|:zh_CN] OK，类型为 [`int] 的变量可以用类型 [`auto] 重复声明
+
+template<typename T> auto f() {}
+template void f<int>();      // [:en] error: function with deduced return type
+                             // [|:zh_CN] 错误：带有推断返回类型的函数
+                             // [:en@~] redeclared with non-deduced return type ([#dcl.spec.auto])
+                             // [|:zh_CN@~] 以非推断返回类型重新声明（[#dcl.spec.auto]）
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[:en]
+Despite its syntactic form, the [~declaration] in an [~explicit-instantiation]
+for a variable is not itself a definition and does not conflict with the
+definition instantiated by an explicit instantiation definition for that
+variable.
+[:zh_CN]
+无论其语法形式如何，变量的[~显式实例化式]中的[~声明式]自身并非是定义式，且并不会
+与对该变量的显式实例化定义式所实例化的定义式产生冲突。
 
 [para]
 [:en]
@@ -236,17 +289,40 @@ template void sort<>(Array<int>&);
 [exit:example]
 
 [para]
+[enter:note]
+[:en]
+An explicit instantiation of a constrained template shall satisfy that
+template[=']s associated constraints ([#temp.constr.decl]).
+[:zh_CN]
+受约束模板的显式实例化应当满足该模板的关联约束（[#temp.constr.decl]）。
+
+[:en]
+The satisfaction of constraints is determined when forming the template name of
+an explicit instantiation in which all template arguments are specified
+([#temp.names]), or, for explicit instantiations of function templates, during
+template argument deduction ([#temp.deduct.decl]) when one or more trailing
+template arguments are left unspecified.
+[:zh_CN]
+对约束的满足情况是在构成显式实例化式的模板名（其中所有模板形参都被指定）
+（[#temp.names]）时确定的，或者对于函数模板的显式实例化式，若其有一个或更多尾部
+模板实参未予指定，则是在模板实参推断（[#temp.deduct.decl]）过程中确定的。
+[exit:note]
+
+[para]
 [:en]
 An explicit instantiation that names a class template specialization is also an
 explicit instantiation of the same kind (declaration or definition) of each
 of its members (not including members inherited from base classes and members
 that are templates) that has not been previously explicitly specialized in the
-translation unit containing the explicit instantiation, except as described
-below.
+translation unit containing the explicit instantiation, provided that the
+associated constraints, if any, of that member are satisfied by the template
+arguments of the explicit instantiation ([#temp.constr.decl],
+[#temp.constr.constr]), except as described below.
 [:zh_CN]
 除了下面描述的之外，指名某个类模板特例的显式实例化式，同时还是在包含该显式实例化
 式的翻译单元中，所有之前并未被显式特化过的成员（不包括继承自基类的成员和模板成员
-）的相同种类（声明式或定义式）的显式实例化式。
+）的相同种类（声明式或定义式）的显式实例化式，前提是该成员的关联约束（如果有）都
+被该显式实例化式的模板实参所满足（[#temp.constr.decl]，[#temp.constr.constr]）。
 
 [enter:note]
 [:en]
@@ -272,11 +348,11 @@ Except for inline functions and variables, declarations with types deduced from
 their initializer or return value ([#dcl.spec.auto]), [`const] variables of
 literal types, variables of reference types, and class template specializations,
 explicit instantiation declarations have the effect of suppressing the implicit
-instantiation of the entity to which they refer.
+instantiation of the definition of the entity to which they refer.
 [:zh_CN]
 除了内联函数和变量，带有由其初始化式或返回值进行推断的类型的声明式
 （[#dcl.spec.auto]），字面量类型的 [`const] 变量，引用类型的变量，以及类模板特例
-之外，显式实例化声明式具有抑制它们所指代的实体的隐式实例化的效果。
+之外，显式实例化声明式具有抑制它们所指代的实体的定义式的隐式实例化的效果。
 
 [enter:note]
 [:en]

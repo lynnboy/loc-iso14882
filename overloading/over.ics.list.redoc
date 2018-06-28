@@ -13,14 +13,64 @@ expression and special rules apply for converting it to a parameter type.
 
 [para]
 [:en]
-If the parameter type is an aggregate class [`X] and the initializer list has a
-single element of type [$cv] [`U], where [`U] is [`X] or a class derived from
-[`X], the implicit conversion sequence is the one required to convert the
-element to the parameter type.
+If the initializer list is a [~designated-initializer-list], a conversion is
+only possible if the parameter has an aggregate type that can be initialized
+from the initializer list according to the rules for aggregate initialization
+([#dcl.init.aggr]), in which case the implicit conversion sequence is a
+user-defined conversion sequence whose second standard conversion sequence
+is an identity conversion.
 [:zh_CN]
-如果形参类型为聚合类 [`X] 且其初始化式列表具有类型 [$cv] [`U] 的单个元素，其中
-[`U] 为 [`X] 或派生自 [`X] 的类，则隐式转换序列是将该元素转换为形参类型所需的
-一个转换。
+如果初始化式列表是[~定名初始化式列表]，则只有当形参具有聚合类型且可以根据聚合
+初始化的规则（[#dcl.init.aggr]）从这个初始化式列表进行初始化时，才可能进行转换，
+这种情况下隐式转换序列是一个用户定义转换序列，其第二个标准转换序列为恒等转换。
+
+[enter:note]
+[:en]
+Aggregate initialization does not require that the members are declared in
+designation order.
+[:zh_CN]
+聚合初始化并不需要成员按照所指名的顺序声明。
+
+[:en]
+If, after overload resolution, the order does not match for the selected
+overload, the initialization of the parameter will be ill-formed
+([#dcl.init.list]).
+[:zh_CN]
+如果进行重载决议之后，其顺序与所选择的重载不匹配，则对该形参的初始化将是非良构的
+（[#dcl.init.list]）。
+
+[enter:example]
+[codeblock]
+struct A { int x, y; };
+struct B { int y, x; };
+void f(A a, int);          // #1
+void f(B b, ...);          // #2
+void g(A a);               // #3
+void g(B b);               // #4
+void h() {
+  f({.x = 1, .y = 2}, 0);  // [:en] OK; calls #1
+                           // [|:zh_CN] OK；调用 #1
+  f({.y = 2, .x = 1}, 0);  // [:en] error: selects #1, initialization of [`a] fails
+                           // [|:zh_CN] 错误：选择了 #1，由于不匹配的
+                           // [:en@~] due to non-matching member order ([#dcl.init.list])
+                           // [|:zh_CN@~] 成员顺序而导致失败（[#dcl.init.list]）
+  g({.x = 1, .y = 2});     // [:en] error: ambiguous between #3 and #4
+                           // [|:zh_CN] 错误：在 #3 和 #4 之间有歧义
+}
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[:en]
+Otherwise, if the parameter type is an aggregate class [`X] and the initializer
+list has a single element of type [$cv] [`U], where [`U] is [`X] or a class
+derived from [`X], the implicit conversion sequence is the one required to
+convert the element to the parameter type.
+[:zh_CN]
+否则，如果形参类型为聚合类 [`X] 且其初始化式列表具有类型 [$cv] [`U] 的单个元素，
+其中 [`U] 为 [`X] 或派生自 [`X] 的类，则隐式转换序列是将该元素转换为形参类型所需
+的一个转换。
 
 [para]
 [:en]

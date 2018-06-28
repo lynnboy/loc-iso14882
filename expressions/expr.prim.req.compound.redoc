@@ -1,0 +1,159 @@
+[section#expr.prim.req.compound
+    [:en] Compound requirements
+    [:zh_CN] 组合要求
+
+[%  [:en] requirement [!compound]
+	[:zh_CN] 要求[!组合～] ]
+]
+
+[syntax]
+[rule compound-requirement [:zh_CN] 组合要求 ]
+    [| [`{] expression [`}] [`:opt noexcept] [~:opt return-type-requirement] [`;] ]
+[rule:end]
+
+[rule return-type-requirement [:zh_CN] 返回类型要求 ]
+    [| trailing-return-type ]
+    [| [`->] [~:opt cv-qualifier-seq] constrained-parameter
+        [~:opt cv-qualifier-seq] [~:opt abstract-declarator] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A [~compound-requirement] asserts properties of the [~expression] [`E].
+[:zh_CN]
+[~组合要求]断言[~表达式] [`E] 的各项性质。
+
+[:en]
+Substitution of template arguments (if any) and verification of semantic
+properties proceed in the following order:
+[:zh_CN]
+模板实参（如果有）的替换和对语义性质的验证以如下顺序进行：
+
+[list]
+[item]
+[:en] Substitution of template arguments (if any) into the [~expression] is
+performed.
+[:zh_CN] 实施模板实参（如果有）向[~表达式]中的替换。
+
+[item]
+[:en] If the [`noexcept] specifier is present, [`E] shall not be a
+potentially-throwing expression ([#except.spec]).
+[:zh_CN] 如果出现 [`noexcept] 说明符，则 [`E] 不能为潜在抛出的表达式
+（[#except.spec]）。
+
+[item]
+[:en] If the [~return-type-requirement] is present, then:
+[:zh_CN] 如果出现[~返回类型要求]，则：
+
+[list]
+[item]
+[:en] Substitution of template arguments (if any) into the
+[~return-type-requirement] is performed.
+[:zh_CN] 实施模板实参（如果有）向[~返回类型要求]中的替换。
+
+[item]
+[:en] If the [~return-type-requirement] is a [~trailing-return-type], [`E] is
+implicitly convertible to the type named by the [~trailing-return-type].
+[:zh_CN] 如果该[~返回类型要求]是一个[~尾部返回类型]，则 [`E] 应当可以隐式转换为
+由该[~尾部返回类型]所指名的类型。
+
+[:en] If conversion fails, the enclosing [~requires-expression] is [`false].
+[:zh_CN] 如果转换失败，则外围 [~requires-表达式]为 [`false]。
+
+[item]
+[:en] If the [~return-type-requirement] starts with a [~constrained-parameter]
+([#temp.param]), the [~expression] is deduced against an invented function
+template [`F] using the rules in [#temp.deduct.call].
+[:zh_CN] 如果该[~返回类型要求]以一个[~受约束形参]（[#temp.param]）开始，则使用
+[#temp.deduct.call] 中的规则以一个虚构的函数形参 [`F] 来推断该[~表达式]。
+
+[:en] [`F] is a [`void] function template with a single type template parameter
+[`T] declared with the [~constrained-parameter].
+[:zh_CN] [`F] 为 [`void] 函数模板，并带有一个类型模板形参 [`T] 并以该[~受约束
+形参]所声明。
+
+[:en] A [~cv-qualifier-seq] [$cv] is formed as the union of [`const] and
+[`volatile] specifiers around the [~constrained-parameter].
+[:zh_CN] 以在[~受约束形参]周围的 [`const] 和 [`volatile] 说明符的合并构成一个
+[~cv-说明符序列] [$cv]。
+
+[:en] [`F] has a single [~parameter] whose [~type-specifier] is [$cv] [`T]
+followed by the [~abstract-declarator].
+[:zh_CN] [`F] 有一个[~形参]，其[~类型说明符]为 [$cv] [`T] 后面跟着[~抽象声明符]。
+
+[:en] If deduction fails, the enclosing [~requires-expression] is [`false].
+[:zh_CN] 如果推断失败，则外围[~requires-表达式]为 [`false]。
+[list:end]
+[list:end]
+
+[enter:example]
+[codeblock]
+template<typename T> concept C1 = requires(T x) {
+  {x++};
+};
+[codeblock:end]
+
+[:en]
+The [~compound-requirement] in [`C1] requires that [`x++] is a valid expression.
+[:zh_CN]
+[`C1] 中的[~组合要求]要求 [`x++] 是有效表达式。
+
+[:en]
+It is equivalent to a [~simple-requirement] with the same [~expression].
+[:zh_CN]
+它等价于一个具有相同[~表达式]的[~简单要求]。
+
+[codeblock]
+template<typename T> concept C2 = requires(T x) {
+  {*x} -> typename T::inner;
+};
+[codeblock:end]
+
+[:en]
+The [~compound-requirement] in [`C2] requires that [`*x] is a valid expression,
+that [`typename T::inner] is a valid type, and that [`*x] is implicitly
+convertible to [`typename T::inner].
+[:zh_CN]
+[`C2] 中的[~组合要求]要求 [`*x] 为有效表达式，[`typename T::inner] 为有效类型，
+并且 [`*x] 可以隐式转换为 [`typename T::inner]。
+
+[codeblock]
+template<typename T, typename U> concept C3 = requires (T t, U u) {
+  t == u;
+};
+template<typename T> concept C4 = requires(T x) {
+  {*x} -> C3<int> const&;
+};
+[codeblock:end]
+
+[:en]
+The [~compound-requirement] requires that [`*x] be deduced as an argument for
+the invented function:
+[:zh_CN]
+[~组合要求]要求 [`*x] 可以作为以下的虚构函数的实参进行推断：
+
+[codeblock]
+template<C3<int> X> void f(X const&);
+[codeblock:end]
+
+[:en]
+In this case, deduction only succeeds if an expression of the type deduced for
+[`X] can be compared to an [`int] with the [`==] operator.
+[:zh_CN]
+这种情况下，仅当具有为 [`X] 所推断的类型的表达式可以与 [`int] 用 [`==] 运算符
+进行比较时，推断成功。
+
+[codeblock]
+template<typename T> concept C5 =
+  requires(T x) {
+    {g(x)} noexcept;
+  };
+[codeblock:end]
+
+[:en]
+The [~compound-requirement] in [`C5] requires that [`g(x)] is a valid expression
+and that [`g(x)] is non-throwing.
+[:zh_CN]
+[`C5] 中的[~组合要求]要求 [`g(x)] 是有效表达式，且 [`g(x)] 不会抛出异常。
+[exit:example]

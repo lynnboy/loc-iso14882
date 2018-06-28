@@ -95,26 +95,26 @@ constexpr 构造函数（[#dcl.constexpr]）；
 
 [item]
 [:en]
-an expression that would exceed the implementation-defined limits (see Annex
+an expression that would exceed the implementation-defined limits (see
 [#implimits]);
 [:zh_CN]
-可能超出由实现定义的限制额度的表达式（参见附录 [#implimits]）；
+可能超出由实现定义的限制额度的表达式（参见 [#implimits]）；
 
 [item]
 [:en]
-an operation that would have undefined behavior as specified in Clauses [#intro]
+an operation that would have undefined behavior as specified in [#intro]
 through [#cpp] of this International Standard
 [:zh_CN]
-可能具有在本国际标准从第 [#intro] 章到第 [#cpp] 章中所述的未定义行为的操作
+可能具有在本国际标准从 [#intro] 到 [#cpp] 中所述的未定义行为的操作
 
 [enter:note]
 [:en]
-including, for example, signed integer overflow (Clause [#expr]), certain
-pointer arithmetic ([#expr.add]), division by zero ([#expr.mul]), or certain
-shift operations ([#expr.shift])
+including, for example, signed integer overflow ([#expr]), certain pointer
+arithmetic ([#expr.add]), division by zero ([#expr.mul]), or certain shift
+operations ([#expr.shift])
 [:zh_CN]
-包括，（例如）有符号整数的溢出（第 [#expr] 章），某些指针算术（[#expr.add]），
-被零除（[#expr.mul]），或者某些移位操作（[#expr.shift]）
+包括，（例如）有符号整数的溢出（[#expr]），某些指针算术（[#expr.add]），被零除
+（[#expr.mul]），或者某些移位操作（[#expr.shift]）
 [exit:note]
 
 [:en@~]
@@ -327,12 +327,12 @@ a [~throw-expression] ([#expr.throw]).
 [:en]
 If [`e] satisfies the constraints of a core constant expression, but evaluation
 of [`e] would evaluate an operation that has undefined behavior as specified in
-Clauses [#library] through [#thread] of this International Standard, it is
+[#library] through [#thread] of this International Standard, it is
 unspecified whether [`e] is a core constant expression.
 [:zh_CN]
 如果 [`e] 满足对核心常量表达式的约束，但对 [`e] 的求值可能会求值某个具有在本
-国际标准从第 [#library] 章到第 [#thread] 章中所述的未定义行为的操作，那么 [`e]
-是否是核心常量表达式是未指明的
+国际标准从 [#library] 到 [#thread] 中所述的未定义行为的操作，那么 [`e] 是否是
+核心常量表达式是未指明的
 
 [enter:example]
 [codeblock]
@@ -407,6 +407,35 @@ alignments ([#dcl.align]).
 
 [para]
 [:en]
+If an expression of literal class type is used in a context where an integral
+constant expression is required, then that expression is contextually implicitly
+converted ([#conv]) to an integral or unscoped enumeration type and the selected
+conversion function shall be [`constexpr].
+[:zh_CN]
+如果字面量类类型的表达式用在需要整型常量表达式的语境中，则该表达式被按语境隐式
+转换（[#conv]）为某种整型或无作用域枚举类型，且所选择的转换函数应当为
+[`constexpr]。
+
+[enter:example]
+[codeblock]
+struct A {
+  constexpr A(int i) : val(i) { }
+  constexpr operator int() const { return val; }
+  constexpr operator long() const { return 42; }
+private:
+  int val;
+};
+template<int> struct X { };
+constexpr A a = alignof(int);
+alignas(a) int n;              // [:en] error: ambiguous conversion
+                               // [|:zh_CN] 错误：有歧义的转换
+struct B { int n : a; };       // [:en] error: ambiguous conversion
+                               // [|:zh_CN] 错误：有歧义的转换
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
 A [+converted constant expression[%expression[!converted constant]]] of type
 [`T] is an expression, implicitly converted to type [`T], where the converted
 expression is a constant expression and the implicit conversion sequence
@@ -471,14 +500,14 @@ arguments ([#temp.arg]).
 [%conversion[!contextual]]]
 A [+contextually converted constant expression of type [`bool] [%conversion
 [!contextual to constant expression of type [`bool]]]] is an expression,
-contextually converted to [`bool] (Clause [#conv]), where the converted
-expression is a constant expression and the conversion sequence contains only
-the conversions above.
+contextually converted to [`bool] ([#conv]), where the converted expression is
+a constant expression and the conversion sequence contains only the conversions
+above.
 [:zh_CN]
 [%按语境转换为类型 [`bool] 的常量表达式 [%转换[!按语境～]]]
 [+按语境转换为类型 [`bool] 的常量表达式 [%转换[!按语境～为类型 [`bool] 的常量
-表达式]]]，是按语境转换为 [`bool]（第 [#conv] 章）的表达式，所转换的表达式是
-常量表达式，且其转换序列中仅包含上述转换。
+表达式]]]，是按语境转换为 [`bool]（[#conv]）的表达式，所转换的表达式是常量
+表达式，且其转换序列中仅包含上述转换。
 
 [para]
 [:en]
@@ -543,12 +572,12 @@ during program execution.[#:note#fn:$section.1]
 
 [note:foot#fn:$section.1]
 [:en]
-Nonetheless, implementations are encouraged to provide consistent results,
-irrespective of whether the evaluation was performed during translation and/or
-during program execution.
+Nonetheless, implementations should provide consistent results, irrespective of
+whether the evaluation was performed during translation and/or during program
+execution.
 [:zh_CN]
-无论如何，我们鼓励实现提供一致的结果，并与求值是否实际发生于翻译过程中还是程序
-执行过程中无关。
+无论如何，实现最好提供一致的结果，并与求值是否实际发生于翻译过程中还是程序执行
+过程中无关。
 [note:end]
 
 [enter:example]
@@ -567,34 +596,4 @@ It is unspecified whether the value of [`f()] will be [`true] or [`false].
 [:zh_CN]
 [`f()] 的值是 [`true] 还是 [`false] 是未指明的。
 [exit:example]
-
 [exit:note]
-
-[para]
-[:en]
-If an expression of literal class type is used in a context where an integral
-constant expression is required, then that expression is contextually implicitly
-converted (Clause [#conv]) to an integral or unscoped enumeration type and the
-selected conversion function shall be [`constexpr].
-[:zh_CN]
-若字面量类类型的表达式被用在需要整型常量表达式的语境中，则该表达式被按语境隐式
-转换（第 [#conv] 章）为整型或无作用域枚举类型，且被选择的转换函数应当是
-[`constexpr] 的。
-
-[enter:example]
-[codeblock]
-struct A {
-  constexpr A(int i) : val(i) { }
-  constexpr operator int() const { return val; }
-  constexpr operator long() const { return 43; }
-private:
-  int val;
-};
-template<int> struct X { };
-constexpr A a = 42;
-X<a> x;             // [:en] OK: unique conversion to [`int]
-                    // [|:zh_CN] OK：向 [`int] 的唯一转换
-int ary[a];         // [:en] error: ambiguous conversion
-                    // [|:zh_CN] 错误：有歧义的转换
-[codeblock:end]
-[exit:example]

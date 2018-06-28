@@ -44,14 +44,28 @@ return values ([#stmt.return]).
     [| braced-init-list ]
 [rule:end]
 
+[rule braced-init-list [:zh_CN] 花括号初始化列表 ]
+    [| [`{] initializer-list [`:opt ,] [`}] ]
+    [| [`{] designated-initializer-list [`:opt ,] [`}] ]
+    [| [`{] [`}] ]
+[rule:end]
+
 [rule initializer-list [:zh_CN] 初始化式列表 ]
     [| initializer-clause [`:opt ...] ]
     [| initializer-list [`,] initializer-clause [`:opt ...] ]
 [rule:end]
 
-[rule braced-init-list [:zh_CN] 花括号初始化列表 ]
-    [| [`{] initializer-list [`:opt ,] [`}] ]
-    [| [`{] [`}] ]
+[rule designated-initializer-list [:zh_CN] 定名初始化式列表 ]
+    [| designated-initializer-clause ]
+    [| designated-initializer-list [`,] designated-initializer-clause [`:opt ...] ]
+[rule:end]
+
+[rule designated-initializer-clause [:zh_CN] 定名初始化式子句 ]
+    [| designator brace-or-equal-initializer ]
+[rule:end]
+
+[rule designator [:zh_CN] 定名符 ]
+    [| [`.] identifier ]
 [rule:end]
 
 [rule expr-or-braced-init-list [:zh_CN] 表达式或花括号初始化列表 ]
@@ -139,23 +153,23 @@ to a pointer type results in a null pointer value.
 
 [item]
 [:en]
-if [`T] is a (possibly cv-qualified) non-union class type, each non-static data
-member, each non-virtual base class subobject, and, if the object is not a base
-class subobject, each virtual base class subobject is zero-initialized and
-padding is initialized to zero bits;
+if [`T] is a (possibly cv-qualified) non-union class type, its padding bits
+([#basic.types]) are initialized to zero bits and each non-static data member,
+each non-virtual base class subobject, and, if the object is not a base class
+subobject, each virtual base class subobject is zero-initialized;
 [:zh_CN]
-若 [`T] 为（可能被 cv 限定的）非联合类类型，则其每个非静态数据成员，每个非虚基类
-子对象，以及当该对象不是基类子对象是，其每个虚基类子对象，都被零初始化，且填充位
-被初始化为零位；
+若 [`T] 为（可能被 cv 限定的）非联合类类型，则其填充位（[#basic.types]）均被
+初始化为零位，且其每个非静态数据成员，每个非虚基类子对象，以及当该对象不是基类
+子对象时，其每个虚基类子对象，都被零初始化；
 
 [item]
 [:en]
-if [`T] is a (possibly cv-qualified) union type, the object[=']s first
-non-static named data member is zero-initialized and padding is initialized to
-zero bits;
+if [`T] is a (possibly cv-qualified) union type, its padding bits
+([#basic.types]) are initialized to zero bits and the object[=']s first
+non-static named data member is zero-initialized;
 [:zh_CN]
-若 [`T] 为（可能被 cv 限定的）联合类型，则对象的第一个非静态具名数据成员被
-零初始化，且填充位被初始化为零位；
+若 [`T] 为（可能被 cv 限定的）联合类型，则其填充位（[#basic.types]）均被初始化为
+零位，且对象的第一个非静态具名数据成员被零初始化；
 
 [item]
 [:en]
@@ -179,10 +193,10 @@ To [+default-initialize[%default-initialization]] an object of type [`T] means:
 [list]
 [item]
 [:en]
-If [`T] is a (possibly cv-qualified) class type (Clause [#class]), constructors
+If [`T] is a (possibly cv-qualified) class type ([#class]), constructors
 are considered.
 [:zh_CN]
-若 [`T] 为（可能被 cv 限定的）类类型（第 [#class] 章），则考察期构造函数。
+若 [`T] 为（可能被 cv 限定的）类类型（[#class]），则考察期构造函数。
 
 [:en]
 The applicable constructors are enumerated ([#over.match.ctor]), and the best
@@ -270,11 +284,11 @@ To [+value-initialize[%value-initialization]] an object of type [`T] means:
 [list]
 [item]
 [:en]
-if [`T] is a (possibly cv-qualified) class type (Clause [#class]) with either no
+if [`T] is a (possibly cv-qualified) class type ([#class]) with either no
 default constructor ([#class.ctor]) or a default constructor that is
 user-provided or deleted, then the object is default-initialized;
 [:zh_CN]
-若 [`T] 为（可能被 cv 限定的）类类型（第 [#class] 章），且要么没默认构造函数
+若 [`T] 为（可能被 cv 限定的）类类型（[#class]），且要么没默认构造函数
 （[#class.ctor]），要么带有用户提供的或弃置的默认构造函数，则对象进行值初始化；
 
 [item]
@@ -412,8 +426,8 @@ character type or [`std::byte] type ([#cstddef.syn]), or
 转换或转换的操作数（[#conv.integral]，[#expr.type.conv]，[#expr.static.cast]，
 [#expr.cast]），或者
 [item]
-[:en@~] a discarded-value expression (Clause [#expr]),
-[:zh_CN@~] 弃值表达式（第 [#expr] 章），
+[:en@~] a discarded-value expression ([#expr]),
+[:zh_CN@~] 弃值表达式（[#expr]），
 [list:end]
 
 [:en@~]
@@ -720,12 +734,12 @@ converted) value of the initializer expression.
 否则，被初始化的对象的初值为初始化式表达式的（可能经过转换的）值。
 
 [:en]
-Standard conversions (Clause [#conv]) will be used, if necessary, to convert the
+Standard conversions ([#conv]) will be used, if necessary, to convert the
 initializer expression to the cv-unqualified version of the destination type; no
 user-defined conversions are considered.
 [:zh_CN]
-如果需要，将使用标准转换（第 [#conv] 章）把初始化式表达式转换为目标类型的
-cv 未限定版本；不考虑用户定义转换。
+如果需要，将使用标准转换（[#conv]）把初始化式表达式转换为目标类型的 cv 未限定
+版本；不考虑用户定义转换。
 
 [:en]
 If the conversion cannot be done, the initialization is ill-formed.
@@ -773,6 +787,13 @@ evaluated in the order specified for function calls ([#expr.call]).
 [:zh_CN]
 当初始化式是带有括号的[~表达式列表]时，根据函数调用所指定的顺序（[#expr.call]）
 对各个表达式进行求值。
+
+[para]
+[:en]
+The same [~identifier] shall not appear in multiple [~designator]s of a
+[~designated-initializer-list].
+[:zh_CN]
+同一个[~标识符]不能出现于一个[~定名初始化式列表]的多个[~定名符]中。
 
 [para]
 [:en]

@@ -56,10 +56,12 @@ In other words, [`Array] is a parameterized type with [`T] as its parameter.
 When a member function, a member class, a member enumeration, a static data
 member or a member template of a class template is defined outside of the class
 template definition, the member definition is defined as a template definition
-in which the [~template-parameter]s are those of the class template.
+in which the [~template-head] is equivalent to that of the class template
+([#temp.over.link]).
 [:zh_CN]
 当一个类模板的成员函数、成员类、成员枚举、静态数据成员或成员模板在类模板定义式
-之外进行定义时，该成员定义式被定义为模板定义式，并采用这个类模板的[~模板形参]。
+之外进行定义时，该成员定义式被定义为模板定义式，其[~模板头]等价于类模板的
+[~模板头]（[#temp.over.link]）。
 
 [:en]
 The names of the template parameters used in the definition of the member may
@@ -105,6 +107,30 @@ template<class ... Types> void B<Types>::f4() { }        // [:en] error
                                                          // [|:zh_CN] 错误
 [codeblock:end]
 
+[codeblock]
+template<typename T> concept C = true;
+template<typename T> concept D = true;
+
+template<C T> struct S {
+  void f();
+  void g();
+  void h();
+  template<D U> struct Inner;
+};
+
+template<C A> void S<A>::f() { }        // [:en] OK: [~template-head]s match
+                                        // [|:zh_CN] OK：[~模板头]相匹配
+template<typename T> void S<T>::g() { } // [:en] error: no matching declaration for [`S<T>]
+                                        // [|:zh_CN] 错误：没有与 [`S<T>] 匹配的声明式
+
+template<typename T> requires C<T>      // [:en] error (no diagnostic required): [~template-head]s are
+                                        // [|:zh_CN] 错误（无须诊断）：[~模板头]功能等价
+void S<T>::h() { }                      // [:en@~] functionally equivalent but not equivalent
+                                        // [|:zh_CN@~] 但并不等价
+
+template<C X> template<D Y>
+struct S<X>::Inner { };                 // OK
+[codeblock:end]
 [exit:example]
 
 [para]

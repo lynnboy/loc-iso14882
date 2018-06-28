@@ -53,12 +53,15 @@ template.
 
 [para]
 [:en]
-A partial specialization matches a given actual template argument
-list if the template arguments of the partial specialization can be
-deduced from the actual template argument list ([#temp.deduct]).
+A partial specialization matches a given actual template argument list if the
+template arguments of the partial specialization can be deduced from the actual
+template argument list ([#temp.deduct]), and the deduced template arguments
+satisfy the associated constraints of the partial specialization, if any
+([#temp.constr.decl]).
 [:zh_CN]
 若某个部分特化式的模板实参能够从给定的实际模板实参列表中推断出来
-（[#temp.deduct]），则该部分特化式与这个实际模板实参列表相匹配。
+（[#temp.deduct]），并且所推断的模板实参满足该部分特化式的关联约束（如果有）
+（[#temp.constr.decl]），则该部分特化式与这个实际模板实参列表相匹配。
 
 [enter:example]
 [codeblock]
@@ -78,6 +81,22 @@ A<int, char*, 1> a4;            // [:en] uses #5, [`T1] is [`int], [`T2] is [`ch
                                 // [|:zh_CN] 使用 #5，[`T1] 为 [`int]，[`T2] 为 [`char]，[`I] 为 [`1]
 A<int*, int*, 2> a5;            // [:en] ambiguous: matches #3 and #5
                                 // [|:zh_CN] 有歧义：匹配 #3 和 #5
+[codeblock:end]
+[exit:example]
+
+[enter:example]
+[codeblock]
+template<typename T> concept C = requires (T t) { t.f(); };
+
+template<typename T> struct S { };  // #1
+template<C T> struct S<T> { };      // #2
+
+struct Arg { void f(); };
+
+S<int> s1;  // [:en] uses #1; the constraints of #2 are not satisfied
+            // [|:zh_CN] 使用 #1；#2 的约束未能满足
+S<Arg> s2;  // [:en] uses #2; both constraints are satisfied but #2 is more specialized
+            // [|:zh_CN] 使用 #2；二者的约束都满足，但 #2 更特殊
 [codeblock:end]
 [exit:example]
 

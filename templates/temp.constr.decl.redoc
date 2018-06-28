@@ -1,0 +1,137 @@
+[section#temp.constr.decl
+    [:en] constrained declarations
+    [:zh_CN] 受约束声明式
+]
+
+[para]
+[:en]
+A template declaration ([#temp]) or function declaration ([#dcl.fct]) can be
+constrained by the use of a [~requires-clause].
+[:zh_CN]
+模板声明式（[#temp]）或函数声明式（[#dcl.fct]）可以通过使用 [~requires-子句]来
+进行约束。
+
+[:en]
+This allows the specification of constraints for that declaration as an
+expression:
+[:zh_CN]
+允许为这个声明式以一个表达式的形式说明其约束：
+
+[syntax]
+[rule constraint-expression [:zh_CN] 约束表达式 ]
+    [| logical-or-expression ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+Constraints can also be associated with a declaration through the use of
+[~constrained-parameter]s in a [~template-parameter-list].
+[:zh_CN]
+还可以通过在[~模板形参列表]中使用[~受约束实参]来将约束与声明式关联起来。
+
+[:en]
+Each of these forms introduces additional [~constraint-expression]s that are
+used to constrain the declaration.
+[:zh_CN]
+每种形式都引入了额外的[~约束表达式]，以之对声明式进行约束。
+
+[para]
+[:en]
+[%constraint[!associated][%associated constraints]]
+A template[=']s [+associated constraints] are defined as follows:
+[:zh_CN]
+[%约束[!关联][%关联约束]]
+模板的[+关联约束]定义如下：
+
+[list]
+[item]
+[:en] If there are no introduced [~constraint-expression]s, the declaration has
+no associated constraints.
+[:zh_CN] 如果没有引入[~约束表达式]，则该声明式没有关联约束。
+
+[item]
+[:en] Otherwise, if there is a single introduced [~constraint-expression], the
+associated constraints are the normal form ([#temp.constr.normal]) of that
+expression.
+[:zh_CN] 否则，如果有一个引入的[~约束表达式]，则其关联约束为该表达式的正规形式
+（[#temp.constr.normal]）。
+
+[item]
+[:en] Otherwise, the associated constraints are the normal form of a logical
+AND expression ([#expr.log.and]) whose operands are in the following order:
+[:zh_CN] 否则，其关联约束为一个逻辑与表达式（[#expr.log.and]）的正规形式，其各
+操作数顺序如下：
+
+[list]
+[item]
+[:en]
+the [~constraint-expression] introduced by each [~constrained-parameter]
+([#temp.param]) in the declaration[=']s [~template-parameter-list], in order of
+appearance, and
+[:zh_CN]
+由该声明式的[~模板形参列表]中的每个[~受约束形参]（[#temp.param]）所引入的
+[~约束表达式]，以其出现顺序，以及
+
+[item]
+[:en]
+the [~constraint-expression] introduced by a [~requires-clause] following a
+[~template-parameter-list] ([#temp]), and
+[:zh_CN]
+由 [~requires-子句]所引入的[~约束表达式]后面跟着[~模板形参列表]（[#temp]），以及
+
+[item]
+[:en]
+the [~constraint-expression] introduced by a trailing [~requires-clause]
+([#dcl.decl]) of a function declaration ([#dcl.fct]).
+[:zh_CN]
+由函数声明式（[#dcl.fct]）的尾部 [~requires-子句]（[#dcl.decl]）所引入的
+[~约束表达式]。
+[list:end]
+[list:end]
+
+[:en]
+The formation of the associated constraints establishes the order in which
+constraints are instantiated when checking for satisfaction
+([#temp.constr.constr]).
+[:zh_CN]
+
+[enter:example]
+[codeblock]
+template<typename T> concept C = true;
+
+template<C T> void f1(T);
+template<typename T> requires C<T> void f2(T);
+template<typename T> void f3(T) requires C<T>;
+[codeblock:end]
+
+[:en]
+The functions [`f1], [`f2], and [`f3] have the associated constraint [`C<T>].
+[:zh_CN]
+函数 [`f1]、[`f2] 和 [`f3] 具有关联约束 [`C<T>]。
+
+[codeblock]
+template<typename T> concept C1 = true;
+template<typename T> concept C2 = sizeof(T) > 0;
+
+template<C1 T> void f4(T) requires C2<T>;
+template<typename T> requires C1<T> && C2<T> void f5(T);
+[codeblock:end]
+
+[:en]
+The associated constraints of [`f4] and [`f5] are [`C1<T> [$\land] C2<T>].
+[:zh_CN]
+[`f4] 和 [`f5] 的关联约束为 [`C1<T> [$\land] C2<T>]。
+
+[codeblock]
+template<C1 T> requires C2<T> void f6();
+template<C2 T> requires C1<T> void f7();
+[codeblock:end]
+
+[:en]
+The associated constraints of [`f6] are [`C1<T> [$\land] C2<T>], and those of
+[`f7] are [`C2<T> [$\land] C1<T>].
+[:zh_CN]
+[`f6] 的关联约束为 [`C1<T> [$\land] C2<T>]，而 [`f7] 的则为
+[`C2<T> [$\land] C1<T>]。
+[exit:example]

@@ -74,6 +74,75 @@ int j = sizeof(S::m + 42);      // OK
 [exit:example]
 [list:end]
 
+[para]
+[:en]
+An [~id-expression] that denotes the specialization of a concept
+([#temp.concept]) results in a prvalue of type [`bool].
+[:zh_CN]
+代表某个概念（[#temp.concept]）的特例的[~标识表达式]的结果为 [`bool] 类型的
+纯右值。
+
+[:en]
+The expression is [`true] if the concept[=']s normalized
+[~constraint-expression] ([#temp.constr.decl]) is satisfied
+([#temp.constr.constr]) by the specified template arguments and [`false]
+otherwise.
+[:zh_CN]
+如果该概念的正规化的[~约束表达式]（[#temp.constr.decl]）被指定的模板实参所满足
+（[#temp.constr.constr]），则表达式为 [`true]，否则为 [`false]。
+
+[enter:example]
+[codeblock]
+template<typename T> concept C = true;
+static_assert(C<int>);  // OK
+[codeblock:end]
+[exit:example]
+
+[enter:note]
+[:en]
+A concept[=']s constraints are also considered when using a template name
+([#temp.names]) and during overload resolution ([#over]), and they are compared
+during the the partial ordering of constraints ([#temp.constr.order]).
+[:zh_CN]
+栽使用模板名（[#temp.names]）以及在重载决议（[#over]）过程中，同样要考察概念的
+约束，在对约束的部分排序（[#temp.constr.order]）中也要对它们进行比较。
+[exit:note]
+
+[para]
+[:en]
+A program that refers explicitly or implicitly to a function with a
+[~requires-clause] whose [~constraint-expression] is not satisfied, other than
+to declare it, is ill-formed.
+[:zh_CN]
+显式或隐式涉指了某个带有 [~requires-子句]的函数，其[~约束表达式]未能满足，且并非
+是对它的声明，则非良构。
+
+[enter:example]
+[codeblock]
+void f(int) requires false;
+
+void g() {
+  f(0);                         // [:en] error: cannot call [`f]
+                                // [|:zh_CN] 错误：不能调用 [`f]
+  void (*p1)(int) = f;          // [:en] error: cannot take the address of [`f]
+                                // [|:zh_CN] 错误：不能获取 [`f] 的地址
+  decltype(f)* p2 = nullptr;    // [:en] error: the type [`decltype(f)] is invalid
+                                // [|:zh_CN] 错误：类型 [`decltype(f)] 无效
+}
+[codeblock:end]
+
+[:en]
+In each case, the constraints of [`f] are not satisfied.
+[:zh_CN]
+以上任何情况中，[`f] 的约束都未满足。
+
+[:en]
+In the declaration of [`p2], those constraints are required to be satisfied
+even though [`f] is an unevaluated operand ([#expr]).
+[:zh_CN]
+在 [`p2] 的声明式中，即便 [`f] 是免求值操作数（[#expr]），仍要求其约束被满足。
+[exit:example]
+
 [include expr.prim.id.unqual]
 
 [include expr.prim.id.qual]

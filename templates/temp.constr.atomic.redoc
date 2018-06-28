@@ -1,0 +1,96 @@
+[section#temp.constr.atomic
+    [:en] Atomic constraints
+    [:zh_CN] 原子约束
+]
+
+[para]
+[:en]
+An [+atomic constraint] is formed from an expression [`E] and a mapping from the
+template parameters that appear within [`E] to template arguments involving the
+template parameters of the constrained entity, called the [+parameter mapping]
+([#temp.constr.decl]).
+[:zh_CN]
+[+原子约束]，是由一个表达式 [`E]，以及从表达式 [`E] 中出现的模板形参向涉及受约束
+实体的模板形参的模板实参的一项映射（称为[+形参映射]（[#temp.constr.decl]））
+所构成的。
+
+[enter:note]
+[:en]
+Atomic constraints are formed by constraint normalization
+([#temp.constr.normal]).
+[:zh_CN]
+原子约束是通过约束正规化（[#temp.constr.normal]）构成的。
+
+[:en]
+[`E] is never a logical AND expression ([#expr.log.and]) nor a logical OR
+expression ([#expr.log.or]).
+[:zh_CN]
+[`E] 既不能是逻辑与表达式（[#expr.log.and]）也不能是逻辑或表达式
+（[#expr.log.or]）。
+[exit:note]
+
+[para]
+[:en]
+[%identical[!atomic constraints][%atomic constraint[!identical]]]
+Two atomic constraints are [+identical[%atomic constraint[!identical]]] if they
+are formed from the same [~expression] and the targets of the parameter mappings
+are equivalent according to the rules for expressions described in
+[#temp.over.link].
+[:zh_CN]
+[%相同[!原子约束][%原子约束[!相同]]]
+如果两个原子约束有相同的[~表达式]构成，并且其形参映射的各个目标根据
+[#temp.over.link] 所述的表达式规则是等价的，则二者[+相同[%原子约束[!相同]]]。
+
+[para]
+[:en]
+To determine if an atomic constraint is [+satisfied[%constraint[!satisfaction
+[!atomic]]]], the parameter mapping and template arguments are first substituted
+into its expression.
+[:zh_CN]
+为确定原子约束是否[+被满足[%约束[!满足[!原子]]]]，先将其形参映射和模板实参替换到
+其表达式之中。
+
+[:en]
+If substitution results in an invalid type or expression, the constraint is not
+satisfied.
+[:zh_CN]
+如果替换导致了无效类型或表达式，则该约束未能满足。
+
+[:en]
+Otherwise, the lvalue-to-rvalue conversion ([#conv.lval]) is performed if
+necessary, and [`E] shall be a constant expression of type [`bool].
+[:zh_CN]
+否则，如果需要就进行左值向右值转换（[#conv.lval]），且 [`E] 应当为 [`bool] 类型
+的常量表达式。
+
+[:en]
+The constraint is satisfied if and only if evaluation of [`E] results in
+[`true].
+[:zh_CN]
+当且仅当 [`E] 的求值结果为 [`true] 时该约束被满足。
+
+[enter:example]
+[codeblock]
+template<typename T> concept C =
+  sizeof(T) == 4 && !true;      // [:en] requires atomic constraints
+                                // [|:zh_CN] 要求原子约束
+                                // [:en@~] [`sizeof(T) == 4] and [`!true]
+                                // [|:zh_CN@~] [`sizeof(T) == 4] 和 [`!true]
+
+template<typename T> struct S {
+  constexpr operator bool() const { return true; }
+};
+
+template<typename T> requires (S<T>{})
+void f(T);          // #1
+void f(int);        // #2
+
+void g() {
+  f(0);             // [:en] error: expression [`S<int>{}] does not have type [`bool]
+                    // [|:zh_CN] 错误：当为 #1 的推断实参检查约束满足情况时，
+}                   // [:en@~] while checking satisfaction of deduced arguments of #1;
+                    // [|:zh_CN@~] 表达式 [`S<int>{}] 并非类型 [`bool]；
+                    // [:en@~] call is ill-formed even though #2 is a better match
+                    // [|:zh_CN@~] 即便 #2 是更好的匹配，该调用也是非良构的
+[codeblock:end]
+[exit:example]

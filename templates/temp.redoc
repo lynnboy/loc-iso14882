@@ -20,21 +20,48 @@
 
 [para]
 [:en]
-A [+template] defines a family of classes, functions, or variables, or an alias
-for a family of types.
+A [+template] defines a family of classes, functions, or variables, an alias for
+a family of types, or a concept.
 [:zh_CN]
-[+模板]定义了一族类、函数或变量，或者为一族类型而定义别名。
+[+模板]定义了一族类、函数或变量，为一族类型定义别名，或者定义一个概念。
 
 [:][%[`template]]
 
 [syntax]
 [rule template-declaration [:zh_CN] 模板声明式 ]
-    [| [`template] [`<] template-parameter-list [`>] declaration ]
+    [| template-head declaration ]
+    [| template-head concept-definition ]
+[rule:end]
+
+[rule template-head [:zh_CN] 模板头 ]
+    [| [`template] [`<] template-parameter-list [`>] [~:opt requires-clause] ]
 [rule:end]
 
 [rule template-parameter-list [:zh_CN] 模板形参列表 ]
     [| template-parameter ]
     [| template-parameter-list [`,] template-parameter ]
+[rule:end]
+
+[rule requires-clause [:zh_CN] requires-子句 ]
+    [| [`requires] constraint-logical-or-expression ]
+[rule:end]
+
+[rule constraint-logical-or-expression [:zh_CN] 约束逻辑或表达式 ]
+    [| constraint-logical-and-expression ]
+    [| constraint-logical-or-expression [`||] constraint-logical-and-expression ]
+[rule:end]
+
+[rule constraint-logical-and-expression [:zh_CN] 约束逻辑与表达式 ]
+    [| primary-expression ]
+    [| constraint-logical-and-expression [`&&] primary-expression ]
+[rule:end]
+
+[rule concept-definition [:zh_CN] 概念定义式 ]
+    [| [`concept] concept-name [`=] constraint-expression [`;] ]
+[rule:end]
+
+[rule concept-name [:zh_CN] 概念名 ]
+    [| identifier ]
 [rule:end]
 [syntax:end]
 
@@ -48,11 +75,11 @@ consecutive [`>] tokens ([#temp.names]).
 为两个连续的 [`>] 记号（[#temp.names]）而产生的。
 [exit:note]
 
-[para:~]
+[para]
 [:en]
-The [~declaration] in a [~template-declaration] shall
+The [~declaration] in a [~template-declaration] (if any) shall
 [:zh_CN]
-[~模板声明式]中的[~声明式]应当
+[~模板声明式]中的[~声明式]（如果有）应当
 
 [list]
 [item]
@@ -79,6 +106,7 @@ template, or
 [:zh_CN@~] 是一个[~别名声明式]。
 [list:end]
 
+[para]
 [:en]
 A [~template-declaration] is a [~declaration].
 [:zh_CN]
@@ -86,11 +114,13 @@ A [~template-declaration] is a [~declaration].
 
 [:en]
 [%template[!definition of]]
-A [~template-declaration] is also a definition if its [~declaration] defines a
+A [~template-declaration] is also a definition if its [~template-head] is
+followed by either a [~concept-definition] or a [~declaration] that defines a
 function, a class, a variable, or a static data member.
 [:zh_CN]
 [%模板[!～定义式]]
-若[~模板声明式]的[~声明式]定义了函数、类、变量或静态数据成员，则它也是定义式。
+若[~模板声明式]的[~模板头]后面跟着的要么是[~概念定义式]，要么跟着定义了函数、类、
+变量或静态数据成员的[~声明式]，则它也是定义式。
 
 [:en]
 [%variable template[!definition of]]
@@ -276,6 +306,56 @@ entity is a templated entity.
 
 [para]
 [:en]
+A [~template-declaration] is written in terms of its template parameters.
+[:zh_CN]
+[~模板声明式]时以其模板实参为基础编写的。
+
+[:en]
+The optional [~requires-clause] following a [~template-parameter-list] allows
+the specification of constraints ([#temp.constr.decl]) on template arguments
+([#temp.arg]).
+[:zh_CN]
+跟在[~模板形参列表]之后的可选的 [~requires-子句]，允许对模板实参（[#temp.arg]）
+说明其约束（[#temp.constr.decl]）。
+
+[:en]
+The [~requires-clause] introduces the [~constraint-expression] that results from
+interpreting the [~constraint-logical-or-expression] as a
+[~constraint-expression].
+[:zh_CN]
+[~requires-子句]所引入的[~约束表达式]是将[~约束逻辑或表达式]作为[~约束表达式]
+解释的结果。
+
+[:en]
+The [~constraint-logical-or-expression] of a [~requires-clause] is an
+unevaluated operand ([#expr]).
+[:zh_CN]
+[~requires-子句]的[~约束逻辑与表达式]是免求值操作数（[#expr]）。
+
+[enter:note]
+[:en]
+The expression in a [~requires-clause] uses a restricted grammar to avoid
+ambiguities.
+[:zh_CN]
+[~requires-子句]中的表达式使用一套受限制的文法来避免歧义。
+
+[:en]
+Parentheses can be used to specify arbitrary expressions in a
+[~requires-clause].
+[:zh_CN]
+可以用括号来在 [~requires-子句]中指定任意的表达式。
+
+[enter:example]
+[codeblock]
+template<int N> requires N == sizeof new unsigned short
+int f();    // [:en] error: parentheses required around [`==] expression
+            // [|:zh_CN] 错误：[`==] 表达式需要有括号包围
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[:en]
 A function template, member function of a class template, variable template, or
 static data member of a class template shall be defined in every translation
 unit in which it is implicitly instantiated ([#temp.inst]) unless the
@@ -291,6 +371,8 @@ in some translation unit; no diagnostic is required.
 [include temp.names]
 
 [include temp.arg]
+
+[include temp.constr]
 
 [include temp.type]
 

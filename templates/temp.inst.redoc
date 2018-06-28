@@ -76,11 +76,12 @@ X<char> ch;         // [:en] error: incomplete type [`X<char>]
 Within a template declaration, a local class ([#class.local]) or enumeration and
 the members of a local class are never considered to be entities that can be
 separately instantiated (this includes their default arguments,
-[~noexcept-specifier]s, and non-static data member initializers, if any).
+[~noexcept-specifier]s, and non-static data member initializers, if any, but
+not their [~partial-concept-id]s or [~requires-clause]s).
 [:zh_CN]
 在模板声明式中，局部类（[#class.local]）或枚举，以及局部类的成员，不会被当作可以
 单独进行实例化的实体（这还包括它们的默认实参，[~noexcept-说明符]，以及非静态数据
-成员初始化式，如果有）。
+成员初始化式，如果有，但不包括其[~部分概念标识]或 [~requires-子句]）。
 
 [:en]
 As a result, the dependent names are looked up, the semantic constraints are
@@ -478,4 +479,88 @@ template<class T> class X {
                     // [|:zh_CN@~] 隐式实例化 [`X<T**>]，[$\ldots]
 };
 [codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+The [~partial-concept-id]s and [~requires-clause] of a template specialization
+or member function are not instantiated along with the specialization or
+function itself, even for a member function of a local class; substitution into
+the atomic constraints formed from them is instead performed as specified in
+[#temp.constr.decl] and [#temp.constr.atomic] when determining whether the
+constraints are satisfied.
+[:zh_CN]
+模板特例或成员函数的[~部分概念标识]和 [~requires-子句]，并不会与特例或函数自身
+一起实例化，即便局部类的成员函数也是如此；当要确定其约束是否满足时，代之以根据
+[#temp.constr.decl] 和 [#temp.constr.atomic] 中所指定的来进行向以它们所构成的
+原子约束中进行替换。
+
+[enter:note]
+[:en]
+The satisfaction of constraints is determined during name lookup or overload
+resolution ([#over.match]).
+[:zh_CN]
+在名字查找或重载决议（[#over.match]）中需要确定其约束的满足情况。
+[exit:note]
+
+[enter:example]
+[codeblock]
+template<typename T> concept C = sizeof(T) > 2;
+template<typename T> concept D = C<T> && sizeof(T) > 4;
+
+template<typename T> struct S {
+  S() requires C<T> { } // #1
+  S() requires D<T> { } // #2
+};
+
+S<char> s1;             // [:en] error: no matching constructor
+                        // [|:zh_CN] 错误：没有匹配的构造函数
+S<char[8]> s2;          // [:en] OK, calls #2
+                        // [|:zh_CN] OK，调用 #2
+[codeblock:end]
+
+[:en]
+When [`S<char>] is instantiated, both constructors are part of the
+specialization.
+[:zh_CN]
+当实例化 [`S<char>] 时，两个构造函数都是该特例的一部分。
+
+[:en]
+Their constraints are not satisfied, and they suppress the implicit declaration
+of a default constructor for [`S<char>] ([#class.ctor]), so there is no viable
+constructor for [`s1].
+[:zh_CN]
+它们的约束并未满足，而它们却抑制了 [`S<char>] 的默认构造函数的隐式声明式
+（[#class.ctor]），因此 [`s1] 没有可行的构造函数。
+[exit:example]
+
+[enter:example]
+[codeblock]
+template<typename T> struct S1 {
+  template<typename U>
+    requires false
+  struct Inner1;    // [:en] ill-formed, no diagnostic required
+                    // [|:zh_CN] 非良构，无须诊断
+};
+
+template<typename T> struct S2 {
+  template<typename U>
+    requires (sizeof(T[-(int)sizeof(T)]) > 1)
+  struct Inner2;    // [:en] ill-formed, no diagnostic required
+                    // [|:zh_CN] 非良构，无须诊断
+};
+[codeblock:end]
+
+[:en]
+The class [`S1<T>::Inner1] is ill-formed, no diagnostic required, because it has
+no valid specializations.
+[:zh_CN]
+类 [`S1<T>::Inner1] 非良构，无须诊断，因为它没有有效的特例。
+
+[:en]
+[`S2] is ill-formed, no diagnostic required, since no substitution into the
+constraints of its [`Inner2] template would result in a valid expression.
+[:zh_CN]
+[`S2] 非良构，无须诊断，因为向其 [`Inner2] 模板的元素进行替换无法导致有效的
+表达式。
 [exit:example]

@@ -35,6 +35,7 @@ preprocessing tokens are available.
 那样）进行完全的宏替换；没有其他预处理记号。
 
 [para]
+[%[`__VA_ARGS__]]
 [:en]
 An identifier [`__VA_ARGS__] that occurs in the replacement list shall be
 treated as if it were a parameter, and the variable arguments shall form the
@@ -42,3 +43,78 @@ preprocessing tokens used to replace it.
 [:zh_CN]
 替换列表中出现的 [`__VA_ARGS__] 标识符应当当作如同是一个形参，并且应当由可变实参
 构成用于替换它的预处理记号。
+
+[para]
+[%[`__VA_OPT__]]
+[:en]
+The identifier [`__VA_OPT__] shall always occur as part of the token sequence
+[`__VA_OPT__([$content])], where [$content] is an arbitrary sequence of
+[~preprocessing-tokens] other than [`__VA_OPT__], which is terminated by the
+closing [`)] and skips intervening pairs of matching left and right parentheses.
+[:zh_CN]
+标识符 [`__VA_OPT__] 应当总是作为记号序列 [`__VA_OPT__([$content])] 的一部分
+出现，其中 [$content] 是除了 [`__VA_OPT__] 之外的任意[~预处理记号]的序列，并以
+闭合的 [`)] 终止，跳过其间交错的匹配的左右括号对。
+
+[:en]
+If [$content] would be ill-formed as the replacement list of the current
+function-like macro, the program is ill-formed.
+[:zh_CN]
+如果 [$content] 作为当前函数式宏的替换列表时非良构的，则程序非良构。
+
+[:en]
+The token sequence [`__VA_OPT__([$content])] shall be treated as if it were a
+parameter, and the preprocessing tokens used to replace it are defined as
+follows.
+[:zh_CN]
+记号序列 [`__VA_OPT__([$content])] 应当被当做如同它是一个形参，并且用以代换它的
+预处理记号按如下定义：
+
+[:en]
+If the variable arguments consist of no tokens, the replacement consists of
+a single placemarker preprocessing token ([#cpp.concat], [#cpp.rescan]).
+[:zh_CN]
+如果可变实参中没有任何记号，则其代换由单个位置标记预处理记号构成
+（[#cpp.concat]，[#cpp.rescan]）。
+
+[:en]
+Otherwise, the replacement consists of the results of the expansion of
+[$content] as the replacement list of the current function-like macro before
+rescanning and further replacement.
+[:zh_CN]
+否则，将 [$content] 作为当前函数式宏在进行重新扫描和进一步代换之前的替换列表进行
+展开，以其结果构成其代换。
+
+[enter:example]
+[codeblock]
+#define F(...)           f(0 __VA_OPT__(,) __VA_ARGS__)
+#define G(X, ...)        f(0, X __VA_OPT__(,) __VA_ARGS__)
+#define SDEF(sname, ...) S sname __VA_OPT__(= { __VA_ARGS__ })
+
+F(a, b, c)          // [:en] replaced by [`f(0, a, b, c)]
+                    // [|:zh_CN] 替换为 [`f(0, a, b, c)]
+F()                 // [:en] replaced by [`f(0)]
+                    // [|:zh_CN] 替换为 [`f(0)]
+
+G(a, b, c)          // [:en] replaced by [`f(0, a, b, c)]
+                    // [|:zh_CN] 替换为 [`f(0, a, b, c)]
+G(a, )              // [:en] replaced by [`f(0, a)]
+                    // [|:zh_CN] 替换为 [`f(0, a)]
+G(a)                // [:en] replaced by [`f(0, a)]
+                    // [|:zh_CN] 替换为 [`f(0, a)]
+
+SDEF(foo);          // [:en] replaced by [`S foo;]
+                    // [|:zh_CN] 替换为 [`S foo;]
+SDEF(bar, 1, 2);    // [:en] replaced by [`S bar = { 1, 2 };]
+                    // [|:zh_CN] 替换为 [`S bar = { 1, 2 };]
+
+#define H1(X, ...) X __VA_OPT__(##) __VA_ARGS__ // [:en] ill-formed: [`##] may not appear at
+                                                // [|:zh_CN] 非良构：[`##] 不能出现在
+                                                // [:en@~] the beginning of a replacement list ([#cpp.concat])
+                                                // [|:zh_CN@~] 替代列表的开始（[#cpp.concat]）
+#define H2(X, Y, ...) __VA_OPT__(X ## Y,) __VA_ARGS__
+
+H2(a, b, c, d)      // [:en] replaced by [`ab, c, d]
+                    // [|:zh_CN] 替换为 [`ab, c, d]
+[codeblock:end]
+[exit:example]

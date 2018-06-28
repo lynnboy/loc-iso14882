@@ -1,0 +1,66 @@
+[section#expr.prim.req.nested
+    [:en] Nested requirements
+    [:zh_CN] 嵌套要求
+
+[%  [:en] requirement [!nested]
+	[:zh_CN] 要求[!嵌套～] ]
+]
+
+[syntax]
+[rule nested-requirement [:zh_CN] 嵌套要求 ]
+    [| [`requires] constraint-expression [`;] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A [~nested-requirement] can be used to specify additional constraints in terms
+of local parameters.
+[:zh_CN]
+[~嵌套要求]可以用于以局部形参来指定额外的约束。
+
+[:en]
+The [~constraint-expression] shall be satisfied ([#temp.constr.decl]) by the
+substituted template arguments, if any.
+[:zh_CN]
+其[~约束表达式]应当被替换后的模板实参（如果有）所满足（[#temp.constr.decl]）。
+
+[:en]
+Substitution of template arguments into a [~nested-requirement] does not result
+in substitution into the [~constraint-expression] other than as specified in
+[#temp.constr.decl].
+[:zh_CN]
+除了在 [#temp.constr.decl] 中指定的之外，向[~嵌套要求]中替换模板实参，并不会导致
+向其[~约束表达式]中进行替换。
+
+[enter:example]
+[codeblock]
+template<typename U> concept C = sizeof(U) == 1;
+
+template<typename T> concept D = requires (T t) {
+  requires C<decltype (+t)>;
+};
+[codeblock:end]
+
+[:en]
+[`D<T>] is satisfied if [`sizeof(decltype (+t)) == 1] ([#temp.constr.atomic]).
+[:zh_CN]
+当 [`sizeof(decltype (+t)) == 1] 时 [`D<T>] 被满足（[#temp.constr.atomic]）。
+[exit:example]
+
+[para]
+[:en]
+A local parameter shall only appear as an unevaluated operand ([#expr]) within
+the [~constraint-expression].
+[:zh_CN]
+局部形参只用作[~约束表达式]之中的免求值表达式（[#expr]）。
+
+[enter:example]
+[codeblock]
+template<typename T> concept C = requires (T a) {
+  requires sizeof(a) == 4;  // OK
+  requires a == 0;          // [:en] error: evaluation of a constraint variable
+                            // [|:zh_CN] 错误：对约束变量求值
+}
+[codeblock:end]
+[exit:example]
