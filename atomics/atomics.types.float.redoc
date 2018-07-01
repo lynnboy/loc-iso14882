@@ -1,0 +1,186 @@
+[section#atomics.types.float
+    [:en] Specializations for floating-point types
+    [:zh_CN] 针对浮点类型的特化式
+]
+
+[%@library atomic<[*floating-point]>]
+[para]
+[:en] There are specializations of the [`atomic] template for the floating-point
+types [`float], [`double], and [`long double].
+[:zh_CN] [`atomic] 模板对浮点类型 [`float]、[`double] 和 [`long double] 进行了
+特化。
+
+[:en] For each such floating-point type [`[*floating-point]], the specialization
+[`atomic<[*floating-point]>] provides additional atomic operations appropriate
+to floating-point types.
+[:zh_CN] 对于每个这样的浮点类型 [`[*floating-point]]，特例
+[`atomic<[*floating-point]>] 提供了适用于该浮点类型的额外的原子性操作。
+
+[codeblock:synopsis [!:var floating-point] [!:mark ImpDef] ]
+namespace std {
+  template<> struct atomic<[*floating-point]> {
+    static constexpr bool is_always_lock_free = [%@impdef [:en] whether a given
+[`atomic] type[=']s operations are always lock free [:zh_CN] 给定 [`atomic] 类型
+的操作是否总是无锁的][=ImpDef];
+    bool is_lock_free() const volatile noexcept;
+    bool is_lock_free() const noexcept;
+    void store([*floating-point], memory_order = memory_order_seq_cst) volatile noexcept;
+    void store([*floating-point], memory_order = memory_order_seq_cst) noexcept;
+    [*floating-point] load(memory_order = memory_order_seq_cst) const volatile noexcept;
+    [*floating-point] load(memory_order = memory_order_seq_cst) const noexcept;
+    operator [*floating-point]() const volatile noexcept;
+    operator [*floating-point]() const noexcept;
+    [*floating-point] exchange([*floating-point],
+                            memory_order = memory_order_seq_cst) volatile noexcept;
+    [*floating-point] exchange([*floating-point],
+                            memory_order = memory_order_seq_cst) noexcept;
+    bool compare_exchange_weak([*floating-point]&, [*floating-point],
+                               memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_weak([*floating-point]&, [*floating-point],
+                               memory_order, memory_order) noexcept;
+    bool compare_exchange_strong([*floating-point]&, [*floating-point],
+                                 memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_strong([*floating-point]&, [*floating-point],
+                                 memory_order, memory_order) noexcept;
+    bool compare_exchange_weak([*floating-point]&, [*floating-point],
+                               memory_order = memory_order_seq_cst) volatile noexcept;
+    bool compare_exchange_weak([*floating-point]&, [*floating-point],
+                               memory_order = memory_order_seq_cst) noexcept;
+    bool compare_exchange_strong([*floating-point]&, [*floating-point],
+                                 memory_order = memory_order_seq_cst) volatile noexcept;
+    bool compare_exchange_strong([*floating-point]&, [*floating-point],
+                                 memory_order = memory_order_seq_cst) noexcept;
+    [*floating-point] fetch_add([*floating-point],
+                             memory_order = memory_order_seq_cst) volatile noexcept;
+    [*floating-point] fetch_add([*floating-point],
+                             memory_order = memory_order_seq_cst) noexcept;
+    [*floating-point] fetch_sub([*floating-point],
+                             memory_order = memory_order_seq_cst) volatile noexcept;
+    [*floating-point] fetch_sub([*floating-point],
+                             memory_order = memory_order_seq_cst) noexcept;
+
+    atomic() noexcept = default;
+    constexpr atomic([*floating-point]) noexcept;
+    atomic(const atomic&) = delete;
+    atomic& operator=(const atomic&) = delete;
+    atomic& operator=(const atomic&) volatile = delete;
+    [*floating-point] operator=([*floating-point]) volatile noexcept;
+    [*floating-point] operator=([*floating-point]) noexcept;
+
+    [*floating-point] operator+=([*floating-point]) volatile noexcept;
+    [*floating-point] operator+=([*floating-point]) noexcept;
+    [*floating-point] operator-=([*floating-point]) volatile noexcept;
+    [*floating-point] operator-=([*floating-point]) noexcept;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The atomic floating-point specializations are standard-layout structs.
+[:zh_CN] [`atomic] 的浮点特例是标准布局结构。
+
+[:en] They each have a trivial default constructor and a trivial destructor.
+[:zh_CN] 它们都具有平凡的默认构造函数和平凡的析构函数。
+
+[para]
+[:en] Descriptions are provided below only for members that differ from the
+primary template.
+[:zh_CN] 下文仅为与主模板不同的成员提供描述。
+
+[para]
+[:en] The following operations perform arithmetic addition and subtraction
+computations.
+[:zh_CN] 以下各操作实施算术加法和减法运算。
+
+[:en] The key, operator, and computation correspondence are identified in Table
+[#tab:atomic.arithmetic.computations].
+[:zh_CN] 关键词、运算符和运算之间的对应关系在表
+[#tab:atomic.arithmetic.computations] 中标明。
+
+[%@library atomic_fetch_add]
+[%@library atomic_fetch_sub]
+[%@library atomic_fetch_add_explicit]
+[%@library atomic_fetch_sub_explicit]
+[%@library fetch_add[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!fetch_add]]
+[%@library fetch_sub[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!fetch_sub]]
+[codeblock:declaration]
+T fetch_[*key](T operand, memory_order order = memory_order_seq_cst) volatile noexcept;
+T fetch_[*key](T operand, memory_order order = memory_order_seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Atomically replaces the value pointed to by [`this] with the result of the
+computation applied to the value pointed to by [`this] and the given [`operand].
+[:zh_CN] 原子地将由 [`this] 所指向的值替换为对由 [`this] 所指向的值和给定的
+[`operand] 实施运算的结果。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] These operations are atomic read-modify-write operations
+([#intro.multithread]).
+[:zh_CN] 这些操作是原子性读-改-写操作（[#intro.multithread]）。
+
+[para:returns]
+[:en] Atomically, the value pointed to by [`this] immediately before the
+effects.
+[:zh_CN] 原子地返回紧接其效果生效前 [`this] 所指向的值。
+
+[para:remarks]
+[:en] If the result is not a representable value for its type ([#expr.pre]) the
+result is unspecified, but the operations otherwise have no undefined behavior.
+[:en] 如果结果不是其类型可以表示的值（[#expr.pre]），则结果未指明，但除此以外
+这些操作并没有未定义的行为。
+
+[:en] Atomic arithmetic operations on [`[*floating-point]] should conform to the
+[`std::numeric_limits<[*floating-point]>] traits associated with the
+floating-point type ([#limits.syn]).
+[:zh_CN] 对 [`[*floating-point]] 进行的原子性算术运算应当遵循与该浮点类型所关联
+的 [`std::numeric_limits<[*floating-point]>] 特征（[#limits.syn]）。
+
+[:en] The floating-point environment ([#cfenv]) for atomic arithmetic operations
+on [`[*floating-point]] may be different than the calling thread[=']s
+floating-point environment.
+[:zh_CN] 对 [`[*floating-point]] 进行原子性算术运算的浮点环境（[#cfenv]）可能与
+调用方线程的浮点环境不同。
+[exit:description]
+
+[%@library operator+=[!atomic<T*>]]
+[%@library atomic<T*>[!operator+=]]
+[%@library operator-=[!atomic<T*>]]
+[%@library atomic<T*>[!operator-=]]
+[%@library operator+=[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!operator+=]]
+[%@library operator-=[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!operator-=]]
+[codeblock:declaration]
+T operator [*op]=(T operand) volatile noexcept;
+T operator [*op]=(T operand) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return fetch_[*key](operand) [*op] operand;]
+[:zh_CN] 等价于：[`return fetch_[*key](operand) [*op] operand;]
+
+[para:remarks]
+[:en] If the result is not a representable value for its type ([#expr.pre]) the
+result is unspecified, but the operations otherwise have no undefined behavior.
+[:en] 如果结果不是其类型可以表示的值（[#expr.pre]），则结果未指明，但除此以外
+这些操作并没有未定义的行为。
+
+[:en] Atomic arithmetic operations on [`[*floating-point]] should conform to the
+[`std::numeric_limits<[*floating-point]>] traits associated with the
+floating-point type ([#limits.syn]).
+[:zh_CN] 对 [`[*floating-point]] 进行的原子性算术运算应当遵循与该浮点类型所关联
+的 [`std::numeric_limits<[*floating-point]>] 特征（[#limits.syn]）。
+
+[:en] The floating-point environment ([#cfenv]) for atomic arithmetic operations
+on [`[*floating-point]] may be different than the calling thread[=']s
+floating-point environment.
+[:zh_CN] 对 [`[*floating-point]] 进行原子性算术运算的浮点环境（[#cfenv]）可能与
+调用方线程的浮点环境不同。
+[exit:description]

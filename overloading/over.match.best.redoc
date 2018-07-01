@@ -114,11 +114,11 @@ or, if not that,
 [:en]
 the context is an initialization by conversion function for direct reference
 binding ([#over.match.ref]) of a reference to function type, the return type of
-[`F1] is the same kind of reference (i.e. lvalue or rvalue) as the reference
+[`F1] is the same kind of reference (lvalue or rvalue) as the reference
 being initialized, and the return type of [`F2] is not
 [:zh_CN]
 其语境是为函数类型的引用进行直接引用绑定时通过转换函数所进行的初始化
-（[#over.match.ref]），且 [`F1] 的返回类型是与被初始化的引用相同种类（亦即左值或
+（[#over.match.ref]），且 [`F1] 的返回类型是与被初始化的引用相同种类（左值或
 右值）的引用，而 [`F2] 的返回类型并非如此
 
 [enter:example]
@@ -189,6 +189,51 @@ int main() {
   B b;              // [:en] OK, [`B::B()]
                     // [|:zh_CN] oK，[`B::B()]
 }
+[codeblock:end]
+[exit:example]
+
+[:en@~] or, if not that,
+[:zh_CN@~] 或者，若非如此，
+
+[item]
+[:en]
+[`F1] is an operator function for a relational ([#expr.rel]) or equality
+([#expr.eq]) operator and [`F2] is an operator function for a three-way
+comparison operator ([#expr.spaceship])
+[:zh_CN]
+[`F1] 是关系（[#expr.rel]）或相等性（[#expr.eq]）运算符的运算符函数，而 [`F2] 是
+三路比较运算符（[#expr.spaceship]）的运算符函数
+
+[enter:example]
+[codeblock]
+struct S {
+  auto operator<=>(const S&, const S&) = default; // #1
+  bool operator<(const S&, const S&);             // #2
+};
+bool b = S() < S();                               // [:en] calls #2
+                                                  // [|:zh_CN] 调用 #2
+[codeblock:end]
+[exit:example]
+
+[:en@~] or, if not that,
+[:zh_CN@~] 或者，若非如此，
+
+[item]
+[:en]
+[`F1] and [`F2] are operator functions for [`operator<=>] and [`F2] is a
+synthesized candidate with reversed order of parameters and [`F1] is not
+[:zh_CN]
+[`F1] 和 [`F2] 都是 [`operator<=>] 的运算符函数，且 [`F2] 为合成的具有相反形参
+顺序的候选函数而 [`F1] 不是
+
+[enter:example]
+[codeblock]
+struct S {
+  std::weak_ordering operator<=>(const S&, int);  // #1
+  std::weak_ordering operator<=>(int, const S&);  // #2
+};
+bool b = 1 < S();                                 // [:en] calls #2
+                                                  // [|:zh_CN] 调用 #2
 [codeblock:end]
 [exit:example]
 

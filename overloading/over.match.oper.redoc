@@ -10,18 +10,18 @@
 [:en]
 If no operand of an operator in an expression has a type that is a class or an
 enumeration, the operator is assumed to be a built-in operator and interpreted
-according to [#expr].
+according to [#expr.compound].
 [:zh_CN]
 若表达式中运算符的操作数的类型均不为类或枚举，则假定该运算符为内建运算符且按照
-[#expr] 对其进行解释。
+[#expr.compound] 对其进行解释。
 
 [enter:note]
 [:en]
 Because [`.], [`.*], and [`::] cannot be overloaded, these operators are always
-built-in operators interpreted according to [#expr].
+built-in operators interpreted according to [#expr.compound].
 [:zh_CN]
-由于 [`.]、[`.*] 和 [`::] 不能被重载，故这些运算符总是按照 [#expr] 解释的内建
-运算符。
+由于 [`.]、[`.*] 和 [`::] 不能被重载，故这些运算符总是按照 [#expr.compound] 解释
+的内建运算符。
 
 [:en]
 [`?:] cannot be overloaded, but the rules in this subclause are used to
@@ -80,9 +80,9 @@ function-call notation as summarized in Table [#tab:over.rel.op.func]
 
 [:en]
 However, the operands are sequenced in the order prescribed for the built-in
-operator ([#expr]).
+operator ([#expr.compound]).
 [:zh_CN]
-不过，其操作数的顺序遵循为内建运算符所指定的顺序（[#expr]）。
+不过，其操作数的顺序遵循为内建运算符所指定的顺序（[#expr.compound]）。
 
 [table:grid@border=column#tab.over.rel.op.func
     [:en] Relationship between operator and function call notation
@@ -219,11 +219,47 @@ For all other operators, no such restrictions apply.
 
 [para]
 [:en]
-The set of candidate functions for overload resolution is the union of the
-member candidates, the non-member candidates, and the built-in candidates.
+The set of candidate functions for overload resolution for some operator [`@] is
+the union of the member candidates, the non-member candidates, and the built-in
+candidates for that operator [`@].
 [:zh_CN]
-重载决议的候选函数集合是成员候选函数、非成员候选函数和内建候选函数的并集。
+对某个运算符 [`@] 的重载决议的候选函数集合，是该运算符 [`@] 的成员候选函数、
+非成员候选函数和内建候选函数的并集。
 
+[:en]
+If that operator is a relational ([#expr.rel]) or equality ([#expr.eq]) operator
+with operands [`x] and [`y], then for each member, non-member, or built-in
+candidate for the operator [`<=>]:
+[:zh_CN]
+如果该运算符是带有操作数 [`x] 和 [`y] 的关系运算符（[#expr.rel]）或相等性
+（[#expr.eq]）运算符，则对运算符 [`<=>] 的每个成员、非成员或内建候选函数：
+
+[list]
+[item]
+[:en]
+that operator is added to the set of candidate functions for overload resolution
+if [`x <=> y @ 0] is well-formed using that [`operator<=>]; and
+[:zh_CN]
+如果使用这个 [`operator<=>] 时 [`x <=> y @ 0] 良构，则将该运算符加入重载决议的
+候选函数集合。
+
+[item]
+[:en]
+a synthesized candidate is added to the candidate set where the order of the two
+parameters is reversed if [`0 @ y <=> x] is well-formed using that
+[`operator<=>];
+[:zh_CN]
+如果使用这个 [`operator<=>] 使 [`0 @ y <=> x] 良构，则将一个合成的倒转两个形参的
+顺序的候选函数加入候选集合；
+[list:end]
+
+[:en]
+where in each case [`operator<=>] candidates are not considered for the
+recursive lookup of operator [`@].
+[:zh_CN]
+其各种情况下在对运算符 [`@] 进行递归查找时不考虑 [`operator<=>] 候选函数。
+
+[para]
 [:en]
 The argument list contains all of the operands of the operator.
 [:zh_CN]
@@ -257,7 +293,19 @@ void m() {
 [codeblock:end]
 [exit:example]
 
-[/% USA _136/_28 L6899 USA core-756/734/682 over.match.oper/]
+[para]
+[:en]
+If an [`operator<=>] candidate is selected by overload resolution for an
+operator [`@], but [`@] is not [`<=>], [`x @ y] is interpreted as [`0 @ y <=> x]
+if the selected candidate is a synthesized candidate with reversed order of
+parameters, or [`x <=> y @ 0] otherwise, using the selected [`operator<=>]
+candidate.
+[:zh_CN]
+如果重载决议为运算符 [`@] 选择了一个 [`operator<=>] 候选函数，但 [`@] 并非
+[`<=>]，则当所选择的候选函数为合成的带有相反形参顺序的候选函数时，将 [`x @ y]
+解释为 [`0 @ y <=> x]，否则为 [`x <=> @ 0]，使用所选择的 [`operator<=>] 候选函数
+。
+
 [para]
 [:en]
 If a built-in candidate is selected by overload resolution, the operands of
@@ -271,9 +319,9 @@ of a user-defined conversion sequence ([#over.ics.user]) is not applied.
 
 [:en]
 Then the operator is treated as the corresponding built-in operator and
-interpreted according to [#expr].
+interpreted according to [#expr.compound].
 [:zh_CN]
-然后该运算符就被当作其对应的内建运算符并按照 [#expr] 对其进行解释。
+然后该运算符就被当作其对应的内建运算符并按照 [#expr.compound] 对其进行解释。
 
 [enter:example]
 [codeblock]
@@ -326,10 +374,10 @@ type.
 [:en]
 If the operator is the operator [`,], the unary operator [`&], or the operator
 [`->], and there are no viable functions, then the operator is assumed to be the
-built-in operator and interpreted according to [#expr].
+built-in operator and interpreted according to [#expr.compound].
 [:zh_CN]
 若该运算符是 [`,] 运算符、一元 [`&] 运算符或 [`->] 运算符，并且没有可行函数，则
-该运算符被假定为内建运算符并按照 [#expr] 对其进行解释。
+该运算符被假定为内建运算符并按照 [#expr.compound] 对其进行解释。
 
 [para]
 [enter:note]

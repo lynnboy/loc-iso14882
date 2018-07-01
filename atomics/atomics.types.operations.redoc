@@ -23,6 +23,7 @@ operations to volatile objects.
 [%@library atomic[![:en]constructor[:zh_CN]构造函数]]
 [%@library atomic<T*>[![:en]constructor[:zh_CN]构造函数]]
 [%@library atomic<[*integral]>[![:en]constructor[:zh_CN]构造函数]]
+[%@library atomic<[*floating-point]>[![:en]constructor[:zh_CN]构造函数]]
 [codeblock:declaration]
 atomic() noexcept = default;
 [codeblock:end]
@@ -41,6 +42,7 @@ atomic() noexcept = default;
 [%@library atomic[![:en]constructor[:zh_CN]构造函数]]
 [%@library atomic<T*>[![:en]constructor[:zh_CN]构造函数]]
 [%@library atomic<[*integral]>[![:en]constructor[:zh_CN]构造函数]]
+[%@library atomic<[*floating-point]>[![:en]constructor[:zh_CN]构造函数]]
 [codeblock:declaration]
 constexpr atomic(T desired) noexcept;
 [codeblock:end]
@@ -56,12 +58,12 @@ constexpr atomic(T desired) noexcept;
 [enter:note]
 [:en] It is possible to have an access to an atomic object [`A] race with its
 construction, for example by communicating the address of the just-constructed
-object [`A] to another thread via [`memory_order_relaxed] operations on a
+object [`A] to another thread via [`memory_order::relaxed] operations on a
 suitable atomic pointer variable, and then immediately accessing [`A] in the
 receiving thread.
 [:zh_CN] 使对原子性对象 [`A] 的某次访问与其构造直接产生竞争是可能的，比如通过
 将正在构造的对象 [`A] 的地址，通过在适当的原子性指针变量上的
-[`memory_order_relaxed] 操作通知给另一个线程，然后在接收线程中立即访问 [`A]。
+[`memory_order::relaxed] 操作通知给另一个线程，然后在接收线程中立即访问 [`A]。
 
 [:en] This results in undefined behavior.
 [:zh_CN] 这将导致未定义的行为。
@@ -102,6 +104,8 @@ atomic<int> v = ATOMIC_VAR_INIT(5);
 [%@library atomic<T*>[!is_always_lock_free]]
 [%@library is_always_lock_free[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!is_always_lock_free]]
+[%@library is_always_lock_free[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!is_always_lock_free]]
 [codeblock:declaration [!:mark ImpDef] ]
 static constexpr bool is_always_lock_free = [%@impdefx [:en] whether a given
 [`atomic] type[=']s operations are always lock free [:zh_CN] 给定 [`atomic] 类型
@@ -130,6 +134,8 @@ corresponding [`ATOMIC_..._LOCK_FREE] macro, if defined.
 [%@library atomic<T*>[!is_lock_free]]
 [%@library is_lock_free[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!is_lock_free]]
+[%@library is_lock_free[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!is_lock_free]]
 [codeblock:declaration]
 bool is_lock_free() const volatile noexcept;
 bool is_lock_free() const noexcept;
@@ -156,17 +162,19 @@ the value of [`is_always_lock_free] for the same type.
 [%@library atomic<T*>[!store]]
 [%@library store[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!store]]
+[%@library store[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!store]]
 [codeblock:declaration]
-void store(T desired, memory_order order = memory_order_seq_cst) volatile noexcept;
-void store(T desired, memory_order order = memory_order_seq_cst) noexcept;
+void store(T desired, memory_order order = memory_order::seq_cst) volatile noexcept;
+void store(T desired, memory_order order = memory_order::seq_cst) noexcept;
 [codeblock:end]
 
 [enter:description]
 [para:requires]
-[:en] The [`order] argument shall not be [`memory_order_consume],
-[`memory_order_acquire], nor [`memory_order_acq_rel].
-[:zh_CN] 实参 [`order] 不能为 [`memory_order_consume]、[`memory_order_acquire]
-或 [`memory_order_acq_rel]。
+[:en] The [`order] argument shall not be [`memory_order::consume],
+[`memory_order::acquire], nor [`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不能为 [`memory_order::consume]、[`memory_order::acquire]
+或 [`memory_order::acq_rel]。
 
 [para:effects]
 [:en] Atomically replaces the value pointed to by [`this] with the value of
@@ -183,6 +191,8 @@ void store(T desired, memory_order order = memory_order_seq_cst) noexcept;
 [%@library atomic<T*>[!operator=]]
 [%@library operator=[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!operator=]]
+[%@library operator=[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!operator=]]
 [codeblock:declaration]
 T operator=(T desired) volatile noexcept;
 T operator=(T desired) noexcept;
@@ -190,8 +200,8 @@ T operator=(T desired) noexcept;
 
 [enter:description]
 [para:effects]
-[:en] Equivalent to: [`store(desired)].
-[:zh_CN] 等价于：[`store(desired)]。
+[:en] Equivalent to [`store(desired)].
+[:zh_CN] 等价于 [`store(desired)]。
 
 [para:returns]
 [:en] [`desired].
@@ -206,17 +216,19 @@ T operator=(T desired) noexcept;
 [%@library atomic<T*>[!load]]
 [%@library load[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!load]]
+[%@library load[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!load]]
 [codeblock:declaration]
-T load(memory_order order = memory_order_seq_cst) const volatile noexcept;
-T load(memory_order order = memory_order_seq_cst) const noexcept;
+T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
+T load(memory_order order = memory_order::seq_cst) const noexcept;
 [codeblock:end]
 
 [enter:description]
 [para:requires]
-[:en] The [`order] argument shall not be [`memory_order_release] nor
-[`memory_order_acq_rel].
-[:zh_CN] 实参 [`order] 不能为 [`memory_order_release] 或 [`memory_order_acq_rel]
-。
+[:en] The [`order] argument shall not be [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不能为 [`memory_order::release] 或
+[`memory_order::acq_rel]。
 
 [para:effects]
 [:en] Memory is affected according to the value of [`order].
@@ -233,6 +245,8 @@ T load(memory_order order = memory_order_seq_cst) const noexcept;
 [%@library atomic<T*>[!operator T*]]
 [%@library operator [*integral][!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!operator [*integral]]]
+[%@library operator [*floating-point][!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!operator [*floating-point]]]
 [codeblock:declaration]
 operator T() const volatile noexcept;
 operator T() const noexcept;
@@ -252,9 +266,11 @@ operator T() const noexcept;
 [%@library atomic<T*>[!exchange]]
 [%@library exchange[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!exchange]]
+[%@library exchange[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!exchange]]
 [codeblock:declaration]
-T exchange(T desired, memory_order order = memory_order_seq_cst) volatile noexcept;
-T exchange(T desired, memory_order order = memory_order_seq_cst) noexcept;
+T exchange(T desired, memory_order order = memory_order::seq_cst) volatile noexcept;
+T exchange(T desired, memory_order order = memory_order::seq_cst) noexcept;
 [codeblock:end]
 
 [enter:description]
@@ -285,12 +301,16 @@ effects.
 [%@library atomic<T*>[!compare_exchange_weak]]
 [%@library compare_exchange_weak[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!compare_exchange_weak]]
+[%@library compare_exchange_weak[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!compare_exchange_weak]]
 [%@library compare_exchange_strong[!atomic]]
 [%@library atomic[!compare_exchange_strong]]
 [%@library compare_exchange_strong[!atomic<T*>]]
 [%@library atomic<T*>[!compare_exchange_strong]]
 [%@library compare_exchange_strong[!atomic<[*integral]>]]
 [%@library atomic<[*integral]>[!compare_exchange_strong]]
+[%@library compare_exchange_strong[!atomic<[*floating-point]>]]
+[%@library atomic<[*floating-point]>[!compare_exchange_strong]]
 [codeblock:declaration]
 bool compare_exchange_weak(T& expected, T desired,
                            memory_order success, memory_order failure) volatile noexcept;
@@ -301,21 +321,21 @@ bool compare_exchange_strong(T& expected, T desired,
 bool compare_exchange_strong(T& expected, T desired,
                              memory_order success, memory_order failure) noexcept;
 bool compare_exchange_weak(T& expected, T desired,
-                           memory_order order = memory_order_seq_cst) volatile noexcept;
+                           memory_order order = memory_order::seq_cst) volatile noexcept;
 bool compare_exchange_weak(T& expected, T desired,
-                           memory_order order = memory_order_seq_cst) noexcept;
+                           memory_order order = memory_order::seq_cst) noexcept;
 bool compare_exchange_strong(T& expected, T desired,
-                             memory_order order = memory_order_seq_cst) volatile noexcept;
+                             memory_order order = memory_order::seq_cst) volatile noexcept;
 bool compare_exchange_strong(T& expected, T desired,
-                             memory_order order = memory_order_seq_cst) noexcept;
+                             memory_order order = memory_order::seq_cst) noexcept;
 [codeblock:end]
 
 [enter:description]
 [para:requires]
-[:en] The [`failure] argument shall not be [`memory_order_release] nor
-[`memory_order_acq_rel].
-[:zh_CN] 实参 [`failure] 不能为 [`memory_order_release] 或
-[`memory_order_acq_rel]。
+[:en] The [`failure] argument shall not be [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] 实参 [`failure] 不能为 [`memory_order::release] 或
+[`memory_order::acq_rel]。
 
 [para:effects]
 [:en] Retrieves the value in [`expected].
@@ -336,13 +356,13 @@ according to the value of [`failure].
 
 [:en] When only one [`memory_order] argument is supplied, the value of
 [`success] is [`order], and the value of [`failure] is [`order] except that a
-value of [`memory_order_acq_rel] shall be replaced by the value
-[`memory_order_acquire] and a value of [`memory_order_release] shall be replaced
-by the value [`memory_order_relaxed].
+value of [`memory_order::acq_rel] shall be replaced by the value
+[`memory_order::acquire] and a value of [`memory_order::release] shall be
+replaced by the value [`memory_order::relaxed].
 [:zh_CN] 当只提供了一个 [`memory_order] 实参时，[`success] 的值即为 [`order]，而
-[`failure] 的值也为 [`order] 但值 [`memory_order_acq_rel] 应当替换为值
-[`memory_order_acquire] 而值 [`memory_order_release] 应当替换为值
-[`memory_order_relaxed]。
+[`failure] 的值也为 [`order] 但值 [`memory_order::acq_rel] 应当替换为值
+[`memory_order::acquire] 而值 [`memory_order::release] 应当替换为值
+[`memory_order::relaxed]。
 
 [:en] If and only if the comparison is false then, after the atomic operation,
 the contents of the memory in [`expected] are replaced by the value read from

@@ -90,30 +90,21 @@ variant& operator=(variant&& rhs) noexcept([=SeeBelow]);
 [:en] If neither [`*this] nor [`rhs] holds a value, there is no effect.
 [:zh_CN] 若 [`*this] 和 [`rhs] 都不持有值，则没有效果。
 
-[:en] Otherwise,
-[:zh_CN] 否则，
+[item]
+[:en] Otherwise, if [`*this] holds a value but [`rhs] does not, destroys the
+value contained in [`*this] and sets [`*this] to not hold a value.
+[:zh_CN] 否则，若 [`*this] 持有值但 [`rhs] 不持有值，则销毁 [`*this] 所持有的
+值并设置 [`*this] 为不持有值。
 
 [item]
-[:en@~] if [`*this] holds a value but [`rhs] does not, destroys the value
-contained in [`*this] and sets [`*this] to not hold a value.
-[:zh_CN@~] 若 [`*this] 持有值但 [`rhs] 不持有值，则销毁 [`*this] 所持有的值并
-设置 [`*this] 为不持有值。
-
-[:en] Otherwise,
-[:zh_CN] 否则，
-
-[item]
-[:en@~] if [`index() == [$j]], assigns [`get<][$j][`>(std::move(rhs))] to the
-value contained in [`*this].
-[:zh_CN@~] 若 [`index() == [$j]]，则将 [`get<][$j][`>(std::move(rhs))] 赋值给
+[:en] Otherwise, if [`index() == [$j]], assigns [`get<[$j]>(std::move(rhs))]
+to the value contained in [`*this].
+[:zh_CN] 否则，若 [`index() == [$j]]，则将 [`get<[$j]>(std::move(rhs))] 赋值给
 [`*this] 所包含的值。
 
-[:en] Otherwise,
-[:zh_CN] 否则，
-
 [item]
-[:en@~] equivalent to [`emplace<[$j]>(get<[$j]>(std::move(rhs)))].
-[:zh_CN@~] 等价于 [`emplace<[$j]>(get<[$j]>(std::move(rhs)))]。
+[:en] Otherwise, equivalent to [`emplace<[$j]>(get<[$j]>(std::move(rhs)))].
+[:zh_CN] 否则，等价于 [`emplace<[$j]>(get<[$j]>(std::move(rhs)))]。
 [list:end]
 
 [para:returns]
@@ -121,12 +112,12 @@ value contained in [`*this].
 [:zh_CN] [`*this]。
 
 [para:remarks]
-[:en] This function shall not participate in overload resolution unless
+[:en] This operator shall be defined as deleted unless
 [`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] is [`true]
 for all [$i].
 [:zh_CN] 除非
 [`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] 对于所有 [$i]
-均为 [`true]，否则这个函数不能参与重载决议。
+均为 [`true]，否则这个运算符应当被定义为弃置的。
 
 [:en] The expression inside [`noexcept] is equivalent to:
 [`is_nothrow_move_constructible_v<T[$_i]> &&
@@ -155,7 +146,7 @@ safety guarantee of [`T][$_j][=']s move assignment; [`index()] will be [$j].
 [%@library operator=[!variant]]
 [%@library variant[!operator=]]
 [codeblock:declaration [!:mark SeeBelow] ]
-template <class T> variant& operator=(T&& t) noexcept([=SeeBelow]);
+template<class T> variant& operator=(T&& t) noexcept([=SeeBelow]);
 [codeblock:end]
 
 [enter:description]
@@ -179,23 +170,17 @@ value contained in [`*this].
 [:zh_CN] 若 [`*this] 持有一个 [`T][$_j]，则将 [`std::forward<T>(t)] 赋值给
 [`*this] 所包含的值。
 
-[:en] Otherwise,
-[:zh_CN] 否则，
-
 [item]
-[:en@~] if [`is_nothrow_constructible_v<T[$_j], T> ||
+[:en] Otherwise, if [`is_nothrow_constructible_v<T[$_j], T> ||
 !is_nothrow_move_constructible_v<T[$_j]>] is [`true], equivalent to
 [`emplace<[$j]>(std::forward<T>(t))].
-[:zh_CN@~] 若 [`is_nothrow_constructible_v<T[$_j], T> ||
+[:zh_CN] 否则，若 [`is_nothrow_constructible_v<T[$_j], T> ||
 !is_nothrow_move_constructible_v<T[$_j]>] 为 [`true]，则等价于
 [`emplace<[$j]>(std::forward<T>(t))]。
 
-[:en] Otherwise,
-[:zh_CN] 否则，
-
 [item]
-[:en@~] equivalent to [`operator=(variant(std::forward<T>(t)))].
-[:zh_CN@~] 等价于 [`operator=(variant(std::forward<T>(t)))]。
+[:en] Otherwise, equivalent to [`operator=(variant(std::forward<T>(t)))].
+[:zh_CN] 否则，等价于 [`operator=(variant(std::forward<T>(t)))]。
 [list:end]
 
 [para:postconditions]
@@ -210,14 +195,23 @@ the imaginary function overload resolution described above.
 
 [para:remarks]
 [:en] This function shall not participate in overload resolution unless
-[`is_same_v<decay_t<T>, variant>] is [`false], unless
-[`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] is [`true], and
-unless the expression [`[$FUN](std::forward<T>(t))] (with [`[$FUN]] being the
+[:zh_CN] 除非满足以下条件，否则这个函数不能参与重载决议：
+
+[list]
+[item]
+[:en] [`is_same_v<remove_cvrev_t<T>, variant>] is [`false],
+[:zh_CN] [`is_same_v<remove_cvrev_t<T>, variant>] 为 [`false]，
+[item]
+[:en] [`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] is
+[`true], and
+[:zh_CN] [`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] 为
+[`true]，并且
+[item]
+[:en] the expression [`[$FUN](std::forward<T>(t))] (with [`[$FUN]] being the
 above-mentioned set of imaginary functions) is well-formed.
-[:zh_CN] 除非 [`is_same_v<decay_t<T>, variant>] 为 [`false]，除非
-[`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] 为 [`true]，并且
-除非表达式 [`[$FUN](std::forward<T>(t))] 良构（其中 [`[$FUN]] 为上述的虚构函数
-集合），否则这个函数不能参与重载决议。
+[:zh_CN] 表达式 [`[$FUN](std::forward<T>(t))] 良构（其中 [`[$FUN]] 为上述的虚构
+函数集合）。
+[list:end]
 
 [para]
 [enter:note]

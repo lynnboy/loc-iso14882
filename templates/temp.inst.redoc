@@ -165,33 +165,36 @@ Friendly<float> ff;                             // [:en] ill-formed: produces se
 Unless a member of a class template or a member template has been explicitly
 instantiated or explicitly specialized, the specialization of the member is
 implicitly instantiated when the specialization is referenced in a context that
-requires the member definition to exist; in particular, the initialization (and
-any associated side-effects) of a static data member does not occur unless the
-static data member is itself used in a way that requires the definition of the
-static data member to exist.
+requires the member definition to exist or if the existence of the definition of
+the member affects the semantics of the program; in particular, the
+initialization (and any associated side-effects) of a static data member does
+not occur unless the static data member is itself used in a way that requires
+the definition of the static data member to exist.
 [:zh_CN]
 除非类模板的成员或成员模板已被显式实例化或显式特化，否则在需要存在该成员的定义式
-的语境中指代该特例时，该成员的特例就被隐式实例化；特别地，除非静态数据成员自身以
-需要该静态数据成员的定义式存在的方式被使用，否则静态数据成员的实例化（以及任何
-相关的副作用）并不会发生。
+的语境中指代该特例时，或者该成员的定义的存在与否会影响程序的语义时，该成员的特例
+就被隐式实例化；特别地，除非静态数据成员自身以需要该静态数据成员的定义式存在的
+方式被使用，否则静态数据成员的实例化（以及任何相关的副作用）并不会发生。
 
 [para]
 [:en]
 Unless a function template specialization has been explicitly instantiated or
 explicitly specialized, the function template specialization is implicitly
 instantiated when the specialization is referenced in a context that requires a
-function definition to exist.
+function definition to exist or if the existence of the definition affects the
+semantics of the program.
 [:zh_CN]
 除非函数模板特例已被显式实例化或显式特化，否则在需要存在函数定义式的语境中涉指该
-特例时，该函数模板特例就被隐式实例化。
+特例时，或者其定义的存在与否会影响程序的语义时，该函数模板特例就被隐式实例化。
 
 [:en]
 A function whose declaration was instantiated from a friend function definition
 is implicitly instantiated when it is referenced in a context that requires a
-function definition to exist.
+function definition to exist or if the existence of the definition affects the
+semantics of the program.
 [:zh_CN]
 如果某个函数的声明式是由某个友元函数定义式实例化而来，则当由于在某个要求存在函数
-定义的语境中涉指它时，它被隐式实例化。
+定义的语境中涉指它时，或者其定义的存在与否会影响程序的语义时，它被隐式实例化。
 
 [:en]
 Unless a call is to a function template explicit specialization or to a member
@@ -240,10 +243,12 @@ Nothing in this example requires [`class Z<double>], [`Z<int>::g()], or
 [:en]
 Unless a variable template specialization has been explicitly instantiated or
 explicitly specialized, the variable template specialization is implicitly
-instantiated when the specialization is used.
+instantiated when it is referenced in a context that requires a variable
+definition to exist or if the existence of the definition affects the semantics
+of the program.
 [:zh_CN]
-除非变量模板特例已被显式实例化或显式特化，否则变量模板特例在使用该特例时就被隐式
-实例化。
+除非变量模板特例已被显式实例化或显式特化，否则变量模板特例在某个要求存在变量的
+定义的语境中涉指它时，或者当其定义的存在与否会影响程序的语义时，它就被隐式实例化。
 
 [:en]
 A default template argument for a variable template is implicitly instantiated
@@ -252,6 +257,46 @@ the default argument.
 [:zh_CN]
 变量模板的默认模板实参，当其变量模板在需要该默认实参的值的语境中被涉指时被隐式
 实例化。
+
+[para]
+[:en]
+[%definition[!program semantics affected by]]
+[%variable[!program semantics affected by the existence of a variable definition]]
+[%function[!program semantics affected by the existence of a function definition]]
+[%program semantics[!affected by the existence of a variable or function definition]]
+[:zh_CN]
+[%定义[!影响程序语义]]
+[%变量[!程序语义受到变量定义存在与否的影响]]
+[%函数[!程序语义受到函数定义存在与否的影响]]
+[%程序语义[!受变量或函数定义存在与否的影响]]
+[:en]
+The existence of a definition of a variable or function is considered to affect
+the semantics of the program if the variable or function is needed for constant
+evaluation by an expression ([#expr.const]), even if constant evaluation of the
+expression is not required or if constant expression evaluation does not use the
+definition.
+[:zh_CN]
+如果变量或函数被某个表达式的常量求值所需要（[#expr.const]），则认为该变量或函数
+的定义存在与否会影响程序的语义，即使该表达式的常量求值并不是必要的，或常量表达式
+求值并未使用该定义时也是如此。
+
+[enter:example]
+[codeblock]
+template<typename T> constexpr int f() { return T::value; }
+template<bool B, typename T> void g(decltype(B ? f<T>() : 0));
+template<bool B, typename T> void g(...);
+template<bool B, typename T> void h(decltype(int{B ? f<T>() : 0}));
+template<bool B, typename T> void h(...);
+void x() {
+  g<false, int>(0); // [:en] OK, [`B ? f<T>() : 0] is not potentially constant evaluated
+                    // [|:zh_CN] OK，[`B ? f<T>() : 0] 并非潜在常量求值
+  h<false, int>(0); // [:en] error, instantiates [`f<int>] even though [`B] evaluates to [`false] and
+                    // [|:zh_CN] 错误，即便 [`B] 求值为 [`false]，且从 [`int] 对 [`int]
+                    // [:en@~] list-initialization of [`int] from [`int] cannot be narrowing
+                    // [|:zh_CN@~] 进行的列表初始化式并不会窄化，也会实例化 [`f<int>]
+}
+[codeblock:end]
+[exit:example]
 
 [para]
 [:en]
@@ -300,6 +345,16 @@ constexpr if statement ([#stmt.if]), unless such instantiation is required.
 除非必须进行实例化，否则实现不能隐式实例化函数模板，变量模板，成员模板，类模板的
 非虚成员函数、成员类或静态数据成员，或者 constexpr if 语句（[#stmt.if]）的子语句
 。
+
+[enter:note]
+[:en]
+The instantiation of a generic lambda does not require instantiation of
+substatements of a constexpr if statement within its [~compound-statement]
+unless the call operator template is instantiated.
+[:zh_CN]
+泛型 lambda 的实例化并不要求对其[~组合语句]中的 constexpr if 语句的子语句进行
+实例化，除非其调用运算符模板被实例化。
+[exit:note]
 
 [:en]
 It is unspecified whether or not an implementation implicitly instantiates a

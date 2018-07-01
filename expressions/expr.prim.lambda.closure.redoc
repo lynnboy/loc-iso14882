@@ -56,21 +56,15 @@ the size and/or alignment of the closure type,
 
 [item]
 [:en@~]
-whether the closure type is trivially copyable ([#class]),
+whether the closure type is trivially copyable ([#class]), or
 [:zh_CN@~]
-闭包类型是否是可平凡复制的（[#class]），
+闭包类型是否是可平凡复制的（[#class]），或者
 
 [item]
 [:en@~]
-whether the closure type is a standard-layout class ([#class]), or
+whether the closure type is a standard-layout class ([#class]).
 [:zh_CN@~]
-闭包类型是否是标准布局类（[#class]），
-
-[item]
-[:en@~]
-whether the closure type is a POD class ([#class]).
-[:zh_CN@~]
-闭包类型是否是 POD 类（[#class]）。
+闭包类型是否是标准布局类（[#class]）。
 [list:end]
 
 [:en]
@@ -119,6 +113,21 @@ corresponding invented [~template-parameter].
 函数调用运算符模板的返回类型和函数形参，从该[~lambda-表达式]的[~尾部返回类型]和
 [~形参声明子句]，通过将[~形参声明子句]的[~声明说明符]中的每个 [`auto]，替换为
 其对应的虚构[~模板形参]的名字而衍生出来。
+
+[:en]
+The [~requires-clause] of the function call operator template is the
+[~requires-clause] immediately following [`<] [~template-parameter-list] [`>],
+if any.
+[:zh_CN]
+函数调用运算符模板的 [~requires-子句]是紧跟在“[`<] [~模板形参列表] [`>]”之后的
+[~requires-子句]（如果有）。
+
+[:en]
+The trailing [~requires-clause] of the function call operator or operator
+template is the [~requires-clause] following the [~lambda-declarator], if any.
+[:zh_CN]
+函数调用运算符或运算符模板的尾部 [~requires-子句]是跟在 [~lambda-声明符]后面的
+[~requires-子句]（如果有）。
 
 [enter:example]
 [codeblock]
@@ -237,14 +246,43 @@ static_assert(add(one)(one)() == monoid(2)()); // OK
 
 [para]
 [:en]
-The closure type for a non-generic [~lambda-expression] with no
-[~lambda-capture] has a conversion function to pointer to function with [=Cpp]
-language linkage ([#dcl.link]) having the same parameter and return types as the
-closure type[=']s function call operator.
+The function call operator or operator template may be constrained
+([#temp.constr.decl]) by a [~constrained-parameter] ([#temp.param]),
+a [~requires-clause] ([#temp]), or a trailing [~requires-clause] ([#dcl.decl]).
 [:zh_CN]
-没有 [~lambda-捕获式]的非泛型 [~lambda-表达式]的闭包类型，具有一个转换函数，转换
-为指向具有同其闭包类型的函数调用运算符相同的形参和返回类型，并具有 [=Cpp] 语言
-连接（[#dcl.link]）的函数的指针。
+函数调用运算符或运算符模板可以通过[~受约束形参]（[#temp.param]，
+[#temp.constr.decl]），[~requires-子句]（[#temp]），或者尾部 [~requires-子句]
+（[#dcl.decl]）来进行约束（[#temp.constr.decl]）。
+
+[enter:example]
+[codeblock]
+template <typename T> concept C1 = /* ... */;
+template <std::size_t N> concept C2 = /* ... */;
+template <typename A, typename B> concept C3 = /* ... */;
+
+auto f = []<typename T1, C1 T2> requires C2<sizeof(T1) + sizeof(T2)>
+         (T1 a1, T1 b1, T2 a2, auto a3, auto a4) requires C3<decltype(a4), T2> {
+  // [:en] [`T2] is a constrained parameter,
+  // [|:zh_CN] [`T2] 是受约束形参，
+  // [:en@~] [`T1] and [`T2] are constrained by a [~requires-clause], and
+  // [|:zh_CN@~] [`T1] 和 [`T2] 被 [~requires-子句]约束，而
+  // [:en@~] [`T2] and the type of [`a4] are constrained by a trailing [~requires-clause].
+  // [|:zh_CN@~] [`T2] 和 [`a4] 的类型则被尾部 [~requires-子句]约束。
+};
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+The closure type for a non-generic [~lambda-expression] with no
+[~lambda-capture] whose constraints (if any) are satisfied has a conversion
+function to pointer to function with [=Cpp] language linkage ([#dcl.link])
+having the same parameter and return types as the closure type[=']s function
+call operator.
+[:zh_CN]
+没有 [~lambda-捕获式]的非泛型 [~lambda-表达式]（其约束（如果有）均得以满足）的
+闭包类型，具有一个转换函数，转换为指向具有同其闭包类型的函数调用运算符相同的形参
+和返回类型，并具有 [=Cpp] 语言连接（[#dcl.link]）的函数的指针。
 
 [:en]
 The conversion is to ["pointer to [`noexcept] function] if the function call
@@ -472,16 +510,24 @@ in [#dcl.fct.def.general].
 [para]
 [:en]
 The closure type associated with a [~lambda-expression] has no default
-constructor and a deleted copy assignment operator.
+constructor if the [~lambda-expression] has a [~lambda-capture] and a defaulted
+default constructor otherwise.
 [:zh_CN]
-与 [~lambda-表达式]相关联的闭包类型，没有默认构造函数，并具有一个弃置的复制赋值
-运算符。
+如果 [~lambda-表达式]带有 [~lambda-捕获式]，则该 [~lambda-表达式]所关联的闭包
+类型没有默认构造函数，否则它有预置的默认构造函数。
 
 [:en]
 It has a defaulted copy constructor and a defaulted move constructor
 ([#class.copy]).
 [:zh_CN]
-它具有预置的复制构造函数和预置的移动构造函数（[#class.copy]）。
+它带有预置的复制构造函数和预置的移动构造函数（[#class.copy]）。
+
+[:en]
+It has a deleted copy assignment operator if the [~lambda-expression] has a
+[~lambda-capture] and defaulted copy and move assignment operators otherwise.
+[:zh_CN]
+如果该 [~lambda-表达式]带有 [~lambda-捕获式]，则它带有一个弃置的复制赋值运算符，
+否则它带有预置的复制和移动赋值运算符。
 
 [enter:note]
 [:en]
@@ -502,7 +548,7 @@ implicitly-declared destructor ([#class.dtor]).
 [:en]
 A member of a closure type shall not be explicitly instantiated
 ([#temp.explicit]), explicitly specialized ([#temp.expl.spec]), or named in a
-[`friend] declaration ([#class.friend]).
+friend declaration ([#class.friend]).
 [:zh_CN]
 闭包类型的成员不能被显式实例化（[#temp.explicit]），显式特化（[#temp.expl.spec]）
-，或者在 [`friend] 声明式中被指名（[#class.friend]）。
+，或者在友元声明式中被指名（[#class.friend]）。

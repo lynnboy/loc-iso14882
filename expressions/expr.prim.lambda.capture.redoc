@@ -100,48 +100,37 @@ void S2::f(int i) {
 
 [para]
 [:en]
-A [~lambda-expression] whose smallest enclosing scope is a block scope
-([#basic.scope.block]) is a [+local lambda expression]; any other
-[~lambda-expression] shall not have a [~capture-default] or [~simple-capture] in
-its [~lambda-introducer].
+A [~lambda-expression] is a [+local lambda expression] if its innermost
+enclosing scope is a block scope ([#basic.scope.block]), or if it appears within
+a default member initializer and its innermost enclosing scope is the
+corresponding class scope ([#basic.scope.class]); any other [~lambda-expression]
+shall not have a [~capture-default] or [~simple-capture] in its
+[~lambda-introducer].
 [:zh_CN]
-最小的外围作用域是块作用域（[#basic.scope.local]）的 [~lambda-表达式]是[+局部
-lambda 表达式]；任何其他 [~lambda-表达式]的 [~lambda-引导符]中都不能包含[~默认
-捕获符]或[~简单捕获符]。
-
-[:en]
-The [+reaching scope] of a local lambda expression is the set of enclosing
-scopes up to and including the innermost enclosing function and its parameters.
-[:zh_CN]
-局部 lambda 表达式的[+可达作用域]，为其外围作用域的集合，直到并包括其最内层外围
-函数及其形参。
-
-[enter:note]
-[:en]
-This reaching scope includes any intervening [~lambda-expression]s.
-[:zh_CN]
-可达作用域中包括介于其间的任意 [~lambda-表达式]。
-[exit:note]
+如果 [~lambda-表达式]的最内层外围作用域是块作用域（[#basic.scope.block]），或者
+它出现于默认成员初始化式之内且其最内层外围作用域是对应的类作用域
+（[#basic.scope.class]），则它是[+局部 lambda 表达式]；任何其他 [~lambda-表达式]
+的 [~lambda-引导符]中都不能包含[~默认捕获符]或[~简单捕获符]。
 
 [para]
 [:en]
 The [~identifier] in a [~simple-capture] is looked up using the usual rules for
-unqualified name lookup ([#basic.lookup.unqual]); each such lookup shall find an
-entity.
+unqualified name lookup ([#basic.lookup.unqual]); each such lookup shall find a
+local entity.
 [:zh_CN]
 使用未限定名查找的常规规则对[~简单捕获符]中的[~标识符]进行查找
-（[#basic.lookup.unqual]）；每次这种查找都应当找到该局部 lambda 表达式的可达作用
-域中的某个具有自动存储期的变量。
+（[#basic.lookup.unqual]）；每次这种查找都应当找到一个局部实体。
+
+[:en]
+The [~simple-capture]s [`this] and [`* this] denote the local entity [`*this].
+[:zh_CN]
+[~简单捕获符] [`this] 和 [`* this] 代表局部实体 [`*this]。
 
 [:en]
 An entity that is designated by a [~simple-capture] is said to be [+explicitly
-captured], and shall be [`*this] (when the [~simple-capture] is ["[`this]] or
-["[`* this]]) or a variable with automatic storage duration declared in the
-reaching scope of the local lambda expression.
+captured].
 [:zh_CN]
-由[~简单捕获符]所代表的实体称为被[+显式捕获]，且应当为 [`*this]（当其[~简单捕获
-符]为“[`this]”或“[`* this]”时），或者为某个声明于该局部 lambda 表达式的可达
-作用域之中的具有自动存储期的变量。
+由[~简单捕获符]所代表的实体称为被[+显式捕获]。
 
 [para]
 [:en]
@@ -216,47 +205,61 @@ auto z = [a = 42](int a) { return 1; } // [:en] error: parameter and local varia
 
 [para]
 [:en]
-A [~lambda-expression] with an associated [~capture-default] that does not
-explicitly capture [`*this] or a variable with automatic storage duration (this
-excludes any [~id-expression] that has been found to refer to an
-[~init-capture][=']s associated non-static data member), is said to
-[%implicit capture[!definition of]] [+implicitly capture [%capture[!implicit]]]
-the entity (i.e., [`*this] or a variable) if the [~compound-statement]:
+For the purposes of lambda capture, an expression potentially references local
+entities as follows:
 [:zh_CN]
-当关联了[~默认捕获符]的[~lambda-表达式]，并未明确捕获 [`*this] 或者具有自动存储
-期的变量（这不包括任何被发现指代某个[~带初始化捕获符]所关联的非静态数据成员的
-[~标识表达式]），且其[~组合语句]符合如下情况时，称其[%隐式捕获[!～的定义]]
-[+隐式捕获[%捕获[!隐式～]]]该实体（亦即 [`*this] 或者变量）：
+考虑 lambda 捕获时，表达式按如下方式潜在地指代局部实体：
 
 [list]
 [item]
-[:en@~]
-odr-uses ([#basic.def.odr]) the entity (in the case of a variable),
-[:zh_CN@~]
-ODR 式使用（[#basic.def.odr]）了该实体（当其为变量的情况），
+[:en]
+An [~id-expression] that names a local entity potentially references that
+entity; an [~id-expression] that names one or more non-static class members and
+does not form a pointer to member ([#expr.unary.op]) potentially references
+[`*this].
+[:zh_CN]
+指名某个局部实体的[~标识表达式]潜在地引用该实体；指名一个或更多非静态类成员但不
+构成成员指针的[~标识表达式]（[#expr.unary.op]）潜在地引用 [`*this]。
+
+[enter:note]
+[:en]
+This occurs even if overload resolution selects a static member function for the
+[~id-expression].
+[:zh_CN]
+即便重载决议为该[~标识表达式]选择的是静态成员函数也是如此。
+[exit:note]
 
 [item]
-[:en@~]
-odr-uses ([#basic.def.odr]) [`this] (in the case of the object designated by
-[`*this]), or
-[:zh_CN@~]
-ODR 式使用（[#basic.def.odr]）了 [`this]（当其为由 [`*this] 所代表的对象的情况）
-，或者
+[:en]
+A [`this] expression potentially references [`*this].
+[:zh_CN]
+表达式 [`this] 潜在地引用 [`*this]。
 
 [item]
-[:en@~]
-names the entity in a potentially-evaluated expression ([#basic.def.odr]) where
-the enclosing full-expression depends on a generic lambda parameter declared
-within the reaching scope of the [~lambda-expression].
-[:zh_CN@~]
-在潜在求值表达式（[#basic.def.odr]）中涉及该实体，包含它的全表达式依赖于该
-[~lambda-表达式]的可达作用域中所声明的某个泛型 lambda 形参。
+[:en]
+A [~lambda-expression] potentially references the local entities named by its
+[~simple-capture]s.
+[:zh_CN]
+[~lambda-表达式]潜在地引用其[~简单捕获符]所指名的各局部实体。
 [list:end]
+
+[:en]
+If an expression potentially references a local entity within a declarative
+region in which it is odr-usable, and the expression would be potentially
+evaluated if the effect of any enclosing [`typeid] expressions ([#expr.typeid])
+were ignored, the entity is said to be [+implicitly captured[%capture
+[!implicit]]] by each intervening [~lambda-expression] with an associated
+[~capture-default] that does not explicitly capture it.
+[:zh_CN]
+如果某个表达式在其可 ODR 式使用的声明区中潜在地引用了某个局部实体，且该表达式
+在忽略任何外围的 [`typeid] 表达式（[#expr.typeid]）的效果时是潜在求值的，则称
+该实体被介入期间的每个带有[~默认捕获符]且并未显式捕获它的 [~lambda-表达式]所
+[+隐式捕获[%捕获[!隐式～]]]。
 
 [enter:example]
 [codeblock]
-void f(int, const int (&)[2] = {})    { }   // #1
-void f(const int&, const int (&)[1])  { }   // #2
+void f(int, const int (&)[2] = {});         // #1
+void f(const int&, const int (&)[1]);       // #2
 void test() {
   const int x = 17;
   auto g = [](auto a) {
@@ -264,33 +267,53 @@ void test() {
                                 // [|:zh_CN] OK：调用 #1，并未捕获 [`x]
   };
 
+  auto g1 = [=](auto a) {
+    f(x);                       // [:en] OK: calls #1, captures [`x]
+                                // [|:zh_CN] OK：调用 #1，捕获 [`x]
+  };
+
   auto g2 = [=](auto a) {
     int selector[sizeof(a) == 1 ? 1 : 2]{};
-    f(x, selector);             // [:en] OK: is a dependent expression, so captures [`x]
-                                // [|:zh_CN] OK：这是待决表达式，并捕获 [`x]
+    f(x, selector);             // [:en] OK: captures [`x], might call #1 or #2
+                                // [|:zh_CN] OK：捕获了 [`x]，可能调用 #1 或 #2
+  };
+
+  auto g3 = [=](auto a) {
+    typeid(a + x);              // [:en] captures [`x] regardless of whether [`a + x] is an unevaluated operand
+                                // [|:zh_CN] 无论 [`a + x] 是否是免求值操作数，都捕获 [`x]
   };
 }
 [codeblock:end]
-[exit:example]
 
 [:en]
-All such implicitly captured entities shall be declared within the reaching
-scope of the lambda expression.
+Within [`g1], an implementation might optimize away the capture of [`x] as it is
+not odr-used.
 [:zh_CN]
-所有这些隐式捕获的实体应当在该 lambda 表达式的可达作用域中进行了声明。
+在 [`g1] 中，实现可能会将对 [`x] 的捕获优化掉，因为它并未被 ODR-式使用。
+[exit:example]
 
 [enter:note]
 [:en]
-The implicit capture of an entity by a nested [~lambda-expression] can cause its
-implicit capture by the containing [~lambda-expression] (see below).
+The set of captured entities is determined syntactically, and entities might be
+implicitly captured even if the expression denoting a local entity is within a
+discarded statement ([#stmt.if]).
 [:zh_CN]
-在嵌套的 [~lambda-表达式]中对某个实体进行隐式捕获，会造成在包含它的 [~lambda-表
-达式]中对其隐式捕获（见下文）。
+被捕获实体的集合是依据语法来确定的，而且即便代表某个局部实体的表达式处于弃用语句
+（[#stmt.if]）之中，实体也可能会被隐式捕获。
 
-[:en]
-Implicit odr-uses of [`this] can result in implicit capture.
-[:zh_CN]
-对 [`this] 进行隐含的 ODR 式使用会造成隐式捕获。
+[enter:example]
+[codeblock]
+template<bool B>
+void f(int n) {
+  [=](auto a) {
+    if constexpr (B && sizeof(a) > 4) {
+      (void)n;                  // [:en] captures [`n] regardless of the value of [`B] and [`sizeof(int)]
+                                // [|:zh_CN] 无论 [`B] 和 [`sizeof(int)] 的值时什么都捕获 [`n]
+    }
+  }(0);
+}
+[codeblock:end]
+[exit:example]
 [exit:note]
 
 [para]
@@ -307,29 +330,12 @@ the scope containing the [~lambda-expression].
 ODR 式使用的（[#basic.def.odr]）。
     
 [:en]
-If [`*this] is captured by a local lambda expression, its nearest enclosing
-function shall be a non-static member function.
+If a [~lambda-expression] explicitly captures an entity that is not odr-usable
+or captures a structured-binding (explicitly or implicitly), the program is
+ill-formed.
 [:zh_CN]
-若某个局部 lambda 表达式捕获了 [`*this]，则其最内层外围函数应当是一个非静态成员
-函数。
-
-[:en]
-If a [~lambda-expression] or an instantiation of the function call operator
-template of a generic lambda odr-uses ([#basic.def.odr]) [`this] or a variable
-with automatic storage duration from its reaching scope, that entity shall be
-captured by the [~lambda-expression].
-[:zh_CN]
-若某个 [~lambda-表达式]或某个泛型 lambda 的函数调用运算符模板的实例化中，ODR 式
-使用（[#basic.def.odr]）了 [`this]，或其可达作用域中的某个具有自动存储期的变量，
-则该实体应当被这个 [~lambda-表达式]所捕获。
-
-[:en]
-If a [~lambda-expression] captures an entity and that entity is not defined or
-captured in the immediately enclosing lambda expression or function, the program
-is ill-formed.
-[:zh_CN]
-如果 [~lambda-表达式]捕获了某个实体，而该实体并未在其直接外围 lambda 表达式或
-函数中定义或捕获，则程序非良构。
+如果 [~lambda-表达式]所捕获的实体并非可 ODR-式使用的，或者（显式或隐式）捕获了
+结构化绑定，则程序非良构。
 
 [enter:example]
 [%Bond[!James Bond]]
@@ -351,14 +357,16 @@ void f1(int i) {
       int m = n*n;
       int j = 40;
       auto m3 = [this,m] {
-        auto m4 = [&,j] {       // [:en] error: [`j] not captured by [`m3]
-                                // [|:zh_CN] 错误：[`j] 未被 [`m3] 捕获
-          int x = n;            // [:en] error: [`n] implicitly captured by [`m4] but not captured by [`m3]
-                                // [|:zh_CN] 错误：[`n] 被 [`m4] 隐式捕获但未被 [`m3] 所捕获
+        auto m4 = [&,j] {       // [:en] error: [`j] not odr-usable due to intervening lambda [`m3]
+                                // [|:zh_CN] 错误：[`j] 由于介入的 lambda [`m3] 而并非可 ODR-式使用的
+          int x = n;            // [:en] error: [`n] is odr-used but not odr-usable due to intervening lambda [`m3]
+                                // [|:zh_CN] 错误：[`n] 被 ODR-式使用但由于介入的 lambda [`m3] 而并非可 ODR-式使用的
           x += m;               // [:en] OK: [`m] implicitly captured by [`m4] and explicitly captured by [`m3]
                                 // [|:zh_CN] OK：[`m] 被 [`m4] 隐式捕获并被 [`m3] 显式捕获
-          x += i;               // [:en] error: [`i] is outside of the reaching scope
-                                // [|:zh_CN] 错误：[`i] 不在可达作用域中
+          x += i;               // [:en] error: [`i] is odr-used but not odr-usable
+                                // [|:zh_CN] 错误：[`i] 被 ODR-式使用但由于介入的
+                                // [:en@~] due to intervening function and class scopes
+                                // [|:zh_CN@~] 函数和类作用域而非可 ODR-式使用的
           x += f;               // [:en] OK: [`this] captured implicitly by [`m4] and explicitly by [`m3]
                                 // [|:zh_CN] OK：[`this] 被 [`m4] 隐式捕获并被 [`m3] 显式捕获
         };
@@ -475,42 +483,19 @@ to a member of the closure type.
 不进行 ODR-式使用的[~标识表达式]，指代原来的实体，而并非指代闭包类型的成员。
 
 [:en]
-Furthermore, such an [~id-expression] does not cause the implicit capture of the
+However, such an [~id-expression] can still cause the implicit capture of the
 entity.
 [:zh_CN]
-此外，这种[~标识表达式]并不会导致对该实体的隐式捕获。
+不过，这种[~标识表达式]仍会导致对该实体的隐式捕获。
 [exit:note]
 
 [:en]
-If [`*this] is captured by copy, each odr-use of [`this] is transformed into a
-pointer to the corresponding unnamed data member of the closure type,
-cast ([#expr.cast]) to the type of [`this].
+If [`*this] is captured by copy, each expression that odr-uses [`this] is
+transformed to instead refer to the corresponding unnamed data member of the
+closure type.
 [:zh_CN]
-当 [`*this] 被复制捕获时，对 [`this] 的每次 ODR 式使用，均被变换为对其闭包类型的
-对应无名数据成员的一个指针，并强制转换（[#expr.cast]）为 [`this] 的类型。
-
-[enter:note]
-[:en]
-The cast ensures that the transformed expression is a prvalue.
-[:zh_CN]
-这个强制转换保证所变换的表达式是纯右值。
-[exit:note]
-
-[:en]
-An [~id-expression] within the [~compound-statement] of a [~lambda-expression]
-that is an odr-use of a reference captured by reference refers to the entity to
-which the captured reference is bound and not to the captured reference.
-[:zh_CN]
-[~lambda-表达式]的[~组合语句]中的[~标识表达式]，若其为按引用捕获的引用，则它指代
-的是其所捕获的引用所绑定的实体，而不是所捕获的引用。
-
-[enter:note]
-[:en]
-The validity of such captures is determined by the lifetime of the object to
-which the reference refers, not by the lifetime of the reference itself.
-[:zh_CN]
-这种捕获的有效性取决于该引用所指代的对象的生存期，而不是该引用自身的生存期。
-[exit:note]
+当 [`*this] 被复制捕获时，每个 ODR 式使用 [`this] 的表达式，均被变换为而并非指代
+其闭包类型的对应无名数据成员。
 
 [enter:example]
 [codeblock]
@@ -524,14 +509,6 @@ void g() {
                     // [|:zh_CN] OK：导致 [`N] 被捕获；[`&N] 指向
                     // [:en@~] the corresponding member of the closure type
                     // [|:zh_CN@~] 闭包类型的对应成员
-  };
-}
-auto h(int &r) {
-  return [&] {
-    ++r;            // [:en] Valid after [`h] returns if the lifetime of the
-                    // [|:zh_CN] [`h] 返回之后，当 [`r] 所绑定的
-                    // [:en@~] object to which [`r] is bound has not ended
-                    // [|:zh_CN@~] 对象的生存期尚未结束时保持有效
   };
 }
 [codeblock:end]
@@ -569,6 +546,37 @@ A bit-field or a member of an anonymous union shall not be captured by
 reference.
 [:zh_CN]
 不能引用捕获位字段或者匿名联合的成员。
+
+[para]
+[:en]
+An [~id-expression] within the [~compound-statement] of a [~lambda-expression]
+that is an odr-use of a reference captured by reference refers to the entity to
+which the captured reference is bound and not to the captured reference.
+[:zh_CN]
+[~lambda-表达式]的[~组合语句]中，ODR 式使用某个被按引用捕获的引用的[~标识表达式]
+，所指代的是被捕获的引用所绑定的实体而不是被捕获的引用自身。
+
+[enter:note]
+[:en]
+The validity of such captures is determined by the lifetime of the object to
+which the reference refers, not by the lifetime of the reference itself.
+[:zh_CN]
+这种捕获的有效性，是通过该引用所指代的对象的生存期所决定，而不是引用自身的生存期
+所决定。
+[exit:note]
+
+[enter:example]
+[codeblock]
+auto h(int &r) {
+  return [&] {
+    ++r;            // [:en] Valid after [`h] returns if the lifetime of the
+                    // [|:zh_CN] [`h] 返回之后，当 [`r] 所绑定的
+                    // [:en@~] object to which [`r] is bound has not ended
+                    // [|:zh_CN@~] 对象的生存期尚未结束时保持有效
+  };
+}
+[codeblock:end]
+[exit:example]
 
 [para]
 [:en]
@@ -614,37 +622,6 @@ auto m1 = [a, &b, &c]() mutable {
 a = 2; b = 2; c = 2;
 m1();
 std::cout << a << b << c;
-[codeblock:end]
-[exit:example]
-
-[para]
-[:en]
-Every occurrence of [`decltype((x))] where [`x] is a possibly parenthesized
-[~id-expression] that names an entity of automatic storage duration is treated
-as if [`x] were transformed into an access to a corresponding data member of the
-closure type that would have been declared if [`x] were an odr-use of the
-denoted entity.
-[:zh_CN]
-若 [`x] 为可能带有括号的[~标识表达式]，并指名某个自动存储期的实体，则每个
-[`decltype((x))] 均被当作如同：当 [`x] 为对其所代表的实体的 ODR 式使用时，将
-[`x] 变换为对所应声明的闭包类型的对应数据成员的访问。
-
-[enter:example]
-[codeblock]
-void f3() {
-  float x, &r = x;
-  [=] {                     // [:en] [`x] and [`r] are not captured (appearance in a [`decltype] operand is not an odr-use)
-                            // [|:zh_CN] [`x] 和 [`r] 并未被捕获（出现在 [`decltype] 的操作数中并非 ODR 式使用）
-    decltype(x) y1;         // [:en] [`y1] has type [`float]
-                            // [|:zh_CN] [`y1] 的类型为 [`float]
-    decltype((x)) y2 = y1;  // [:en] [`y2] has type [`float const&] because this lambda is not [`mutable] and [`x] is an lvalue
-                            // [|:zh_CN] [`y2] 的类型为 [`float const&]，这是由于该 lambda 不是 [`mutable] 而且 [`x] 是左值
-    decltype(r) r1 = y1;    // [:en] [`r1] has type [`float&] (transformation not considered)
-                            // [|:zh_CN] [`r1] 的类型为 [`float&]（不须变换）
-    decltype((r)) r2 = y2;  // [:en] [`r2] has type [`float const&]
-                            // [|:zh_CN] [`r2] 的类型为 [`float const&]
-  };
-}
 [codeblock:end]
 [exit:example]
 

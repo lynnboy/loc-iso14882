@@ -150,29 +150,37 @@ template<class T> struct A<T*> { X::Y ab; };        // OK
 
 [para]
 [:en]
-A member of a class template may be declared to be a friend of a non-template
-class.
+A template friend declaration may declare a member of a dependent type to be a
+friend.
 [:zh_CN]
-可以把类模板的成员声明为非模板类的友元。
+模板友元声明式可以将具有待决类型的成员声明为友元。
 
 [:en]
-In this case, the corresponding member of every specialization of the primary
-class template and class template partial specializations thereof is a friend of
-the class granting friendship.
+The friend declaration shall declare a function or specify a type with an
+[~elaborated-type-specifier], in either case with a [~nested-name-specifier]
+ending with a [~simple-template-id], [$C], whose [~template-name] names a class
+template.
 [:zh_CN]
-在这种情况下，主类模板及其类模板部分特化式的每个特例的对应成员都是授予友元关系的
-类的友元。
+该引用声明式应当声明一个函数，或者指定带有[~详述类型说明符]的类型，两种情况下
+都带有一个[~嵌套名说明符]并以[~简单模板标识] [$C] 结，其[~模板名]指名了某个类
+模板。
 
 [:en]
-For explicit specializations and specializations of partial specializations, the
-corresponding member is the member (if any) that has the same name, kind (type,
-function, class template, or function template), template parameters, and
-signature as the member of the class template instantiation that would otherwise
-have been generated.
+The template parameters of the template friend declaration shall be deducible
+from [$C] ([#temp.deduct.type]).
 [:zh_CN]
-对于显式特化式和部分特化式的特例，其对应成员（如果有），为与该类模板进行实例化时
-所生成的成员具有相同名字，种类（类型、函数、类模板或函数模板），模板形参和签名的
-成员。
+这个模板友元声明式的模板形参应当可以从 [$C] 进行推断（[#temp.deduct.type]）。
+
+[:en]
+In this case, a member of a specialization [$S] of the class template is a
+friend of the class granting friendship if deduction of the template parameters
+of [$C] from [$S] succeeds, and substituting the deduced template arguments into
+the friend declaration produces a declaration that would be a valid
+redeclaration of the member of the specialization.
+[:zh_CN]
+这种情况下，对于该类模板的某个特例 [$S]，如果从 [$S] 对 [$C] 的模板形参进行的
+推断成功，并且将被推断的模板形参替换到该友元声明式中后所产生的声明式是该特例的
+某个成员的有效的重复声明，则该成员成为授予友元关系的类的友元。
 
 [enter:example]
 [codeblock]
@@ -182,6 +190,8 @@ template<class T> struct A {
   struct D {
     void g();
   };
+  T h();
+  template<T U> T i();
 };
 template<> struct A<int> {
   struct B { };
@@ -189,6 +199,10 @@ template<> struct A<int> {
   struct D {
     void g();
   };
+  template<int U> int i();
+};
+template<> struct A<float*> {
+  int *h();
 };
 
 class C {
@@ -200,11 +214,18 @@ class C {
                                                 // [|:zh_CN] 未授予 [`A<int>::f()] 友元关系，
                                                 // [:en@~] because its return type does not match
                                                 // [|:zh_CN@~] 因为其返回类型不匹配
-  template<class T> friend void A<T>::D::g();   // [:en] does not grant friendship to [`A<int>::D::g()]
-                                                // [|:zh_CN] 未授予 [`A<int>::D::g()] 友元关系，
-                                                // [:en@~] because [`A<int>::D] is not a specialization of [`A<T>::D]
-                                                // [|:zh_CN@~] 因为 [`A<int>::D] 不是 [`A<T>::D] 的特例
-};
+  template<class T> friend void A<T>::D::g();   // [:en] ill-formed: [`A<T>::D] does not end with
+                                                // [|:zh_CN] 非良构：[`A<T>::D] 并非以
+                                                // [:en@] a [~simple-template-id]
+                                                // [|:zh_CN@~] [~简单模板标识]结尾
+  template<class T> friend int *A<T*>::h();     // [:en] grants friendship to [`A<int*>::h()] and [`A<float*>::h()]
+                                                // [|:zh_CN] 授予 [`A<int*>::h()] 和 [`A<float*>::h()] 友元关系
+  template<class T> template<T U>               // [:en] grants friendship to instantiations of [`A<T>::i()] and
+                                                // [|:zh_CN] 向 [`A<T>::i()] 的各实例，向 [`A<int>::i()]，
+    friend T A<T>::i();                         // [:en@~] to [`A<int>::i()], and thereby to all specializations
+                                                // [|:zh_CN@~] 因而向这些这些函数模板的所有特例
+};                                              // [:en@~] of those function templates
+                                                // [|:zh_CN@~] 授予友元关系
 [codeblock:end]
 [exit:example]
 

@@ -26,10 +26,12 @@ function, class type, enumeration type, or template.
 
 [para]
 [:en]
+[%expression[!potentially evaluated]]
 An expression is [+potentially evaluated] unless it is an unevaluated operand
-([#expr]) or a subexpression thereof.
+([#expr.prop]) or a subexpression thereof.
 [:zh_CN]
-表达式是[+潜在求值的]，除非它是免求值操作数（[#expr]）或其子表达式。
+[%表达式[!潜在求值的～]]
+表达式是[+潜在求值的]，除非它是免求值操作数（[#expr.prop]）或其子表达式。
 
 [:en]
 The set of [+potential results] of an expression [`e] is defined as follows:
@@ -115,14 +117,73 @@ subexpression.
 [codeblock]
 struct S { static const int x = 0; };
 const int &f(const int &r);
-int n = b ? (1, S::x)  // [:en] [`S::x] is not odr-used here
-                       // [|:zh_CN] [`S::x] 并未被 ODR 式使用
-          : f(S::x);   // [:en] [`S::x] is odr-used here, so a definition is required
-                       // [|:zh_CN] [`S::x] 被 ODR 式使用，所以需要一个定义式
+int n = b ? (1, S::x)           // [:en] [`S::x] is not odr-used here
+                                // [|:zh_CN] [`S::x] 并未被 ODR 式使用
+          : f(S::x);            // [:en] [`S::x] is odr-used here, so a definition is required
+                                // [|:zh_CN] [`S::x] 被 ODR 式使用，所以需要一个定义式
 [codeblock:end]
 [exit:example]
 
 [exit:note]
+
+[para]
+[:en]
+[%function[!named by an expression]]
+A function is [+named by an expression] as follows:
+[:zh_CN]
+[%函数[!被表达式指名]]
+以下情况下函数[+被表达式指名]：
+
+[list]
+[item]
+[:en]
+A function whose name appears in an expression is named by that expression if it
+is the unique lookup result or the selected member of a set of overloaded
+functions ([#basic.lookup], [#over.match], [#over.over]), unless it is a pure
+virtual function and either its name is not explicitly qualified or the
+expression forms a pointer to member ([#expr.unary.op]).
+[:zh_CN]
+名字出现于某表达式中的函数，如果它是唯一的查找结果或者重载函数集合中所选择的成员
+（[#basic.lookup]，[#over.match]，[#over.over]），则它被该表达式所指名，除非它是
+纯虚函数并且要么其名字并未被明确限定要么表达式构成了成员指针（[#expr.unary.op]）
+。
+
+[enter:note]
+[:en]
+This covers taking the address of functions ([#conv.func], [#expr.unary.op]),
+calls to named functions ([#expr.call]), operator overloading ([#over]),
+user-defined conversions ([#class.conv.fct]), allocation functions for placement
+[~new-expression]s ([#expr.new]), as well as non-default initialization
+([#dcl.init]).
+[:zh_CN]
+这条也覆盖了获取函数的地址（[#conv.func]，[#expr.unary.op]），对具名函数
+（[#expr.call]），运算符重载（[#over]），用户定义的转换（[#class.conv.fct]），
+放置式 [~new-表达式]的分配函数（[#expr.new]）的调用，以及非默认初始化
+（[#dcl.init]）等情况。
+
+[:en]
+A constructor selected to copy or move an object of class type is considered to
+be named by an expression even if the call is actually elided by the
+implementation ([#class.copy]).
+[:zh_CN]
+选择用于复制或移动类类型的对象的构造函数，即便其调用实际上被实现所消除
+（[#class.copy]），也认为它是被表达式所指名的。
+[exit:note]
+
+[item]
+[:en]
+An allocation or deallocation function for a class is named by a
+[~new-expression] as specified in [#expr.new] and [#class.free].
+[:zh_CN]
+根据 [#expr.new] 和 [#class.free] 所述由 [~new-表达式]指名类的分配和回收函数。
+
+[item]
+[:en]
+A deallocation function for a class is named by a delete expression as specified
+in [#expr.delete] and [#class.free].
+[:zh_CN]
+根据 [#expr.delete] 和 [#class.free] 所述由 delete 表达式指名类的回收函数。
+[list:end]
 
 [para]
 [:en]
@@ -132,73 +193,40 @@ is [+odr-used] by [`ex] unless applying the lvalue-to-rvalue conversion
 not invoke any non-trivial functions and, if [`x] is an object, [`ex] is an
 element of the set of potential results of an expression [`e], where either the
 lvalue-to-rvalue conversion ([#conv.lval]) is applied to [`e], or [`e] is a
-discarded-value expression ([#expr]).
+discarded-value expression ([#expr.prop]).
 [:zh_CN]
 变量 [`x] 当其名字用作潜在求值表达式 [`ex] 时，即被 [`ex] 所 [+ODR 式使用]，但
 不包括以下情况：对 [`x] 实施左值向右值转换（[#conv.lval]）后产生一个不调用任何非
 平凡函数的常量表达式（[#expr.const]），以及当 [`x] 是对象时，[`ex] 为某个表达式
 [`e] 的潜在结果集合的元素，而要么对 [`e] 实施了左值向右值转换（[#conv.lval]），
-要么 [`e] 是个弃值表达式（[#expr]）。
+要么 [`e] 是个弃值表达式（[#expr.prop]）。
 
+[para]
 [:en]
-[`this] is odr-used if it appears as a potentially-evaluated expression
+A structured binding is odr-used if it appears as a potentially-evaluated
+expression.
+[:zh_CN]
+当结构化绑定作为潜在求值表达式出现时，它即被 ODR 式使用。
+
+[para]
+[:en]
+[`*this] is odr-used if [`this] appears as a potentially-evaluated expression
 (including as the result of the implicit transformation in the body of a
 non-static member function ([#class.mfct.non-static])).
 [:zh_CN]
 当 [`this] 用作潜在求值表达式（也包括在非静态成员函数体中所进行的隐式变换的结果
-（[#class.mfct.non-static]））时，它被 ODR 式使用。
+（[#class.mfct.non-static]））时，ODR 式使用 [`*this]。
 
+[para]
 [:en]
 A virtual member function is odr-used if it is not pure.
 [:zh_CN]
 若虚成员函数不是纯虚函数，它即被 ODR 式使用。
 
 [:en]
-A function whose name appears as a potentially-evaluated expression is odr-used
-if it is the unique lookup result or the selected member of a set of overloaded
-functions ([#basic.lookup], [#over.match], [#over.over]), unless it is a pure
-virtual function and either its name is not explicitly qualified or the
-expression forms a pointer to member ([#expr.unary.op]).
+A function is odr-used if it is named by a potentially-evaluated expression.
 [:zh_CN]
-当函数的名字被用作潜在求值表达式时，若它是唯一的查找结果，或重载函数集合中选取的
-那个成员（[#basic.lookup]，[#over.match]，[#over.over]），它即被 ODR 式使用，但
-这不包括这样的情况：函数是纯虚函数，而且要么其名字并未被明确限定，要么该表达式
-构成了成员指针（[#expr.unary.op]）。
-
-[enter:note]
-[:en]
-This covers calls to named functions ([#expr.call]), operator overloading
-([#over]), user-defined conversions ([#class.conv.fct]), allocation function for
-placement [~new-expression]s ([#expr.new]), as well as non-default
-initialization ([#dcl.init]).
-[:zh_CN]
-这涵盖了对具名函数（[#expr.call]），运算符重载（[#over]），用户定义转换函数
-（[#class.conv.fct]），放置式 [~new-表达式]的分配函数（[#expr.new]）的调用，
-以及非默认初始化（[#dcl.init]）。
-
-[:en]
-A constructor selected to copy or move an object of class type is odr-used even
-if the call is actually elided by the implementation ([#class.copy]).
-[:zh_CN]
-被选择用于复制或移动类类型的对象的构造函数，即使其调用可能实际上被实现所省略，
-它仍然是被 ODR 式使用的（[#class.copy]）。
-[exit:note]
-
-[:en]
-An allocation or deallocation function for a class is odr-used by a
-[~new-expression] appearing in a potentially-evaluated expression as specified
-in [#expr.new] and [#class.free].
-[:zh_CN]
-在潜在求值表达式中出现的 [~new-表达式]，按 [#expr.new] 和 [#class.free] 所述
-ODR 式使用类的分配或回收函数。
-
-[:en]
-A deallocation function for a class is odr-used by a delete expression appearing
-in a potentially-evaluated expression as specified in [#expr.delete] and
-[#class.free].
-[:zh_CN]
-在潜在求值表达式中出现的 delete 表达式，按 [#expr.delete] 和 [#class.free] 所述
-ODR 式使用类的回收函数。
+若函数被潜在求值表达式所指名，它即被 ODR 式使用。
 
 [:en]
 A non-placement allocation or deallocation function for a class is odr-used by
@@ -223,6 +251,7 @@ technique.
 实现不必在构造函数或析构函数中调用分配函数和回收函数；但这是一种允许的实现技术。
 [note:end]
 
+[para]
 [:en]
 An assignment operator function in a class is odr-used by an implicitly-defined
 copy-assignment or move-assignment function for another class as specified in
@@ -241,6 +270,73 @@ A destructor for a class is odr-used if it is potentially invoked
 ([#class.dtor]).
 [:zh_CN]
 如果类的析构函数被潜在调用，则它被 ODR 式使用（[#class.dtor]）。
+
+[para]
+[:en]
+A local entity ([#basic]) is [+odr-usable] in a declarative region
+([#basic.scope.declarative]) if:
+[:zh_CN]
+以下情况下，称局部实体（[#basic]）在某个声明区（[#basic.scope.declarative]）中
+[+可 ODR 式使用]。
+
+[list]
+[item]
+[:en]
+the local entity is either not [`*this], or an enclosing class or non-lambda
+function parameter scope exists and, if the innermost such scope is a function
+parameter scope, it corresponds to a non-static member function, and
+[:zh_CN]
+该局部实体要么不是 [`*this]，要么存在某个外围的类或非 lambda 函数形参作用域，
+以及当最内层的这种作用域是一个函数形参作用域时它对应于某个非静态成员函数，以及
+
+[item]
+[:en]
+for each intervening declarative region ([#basic.scope.declarative]) between the
+point at which the entity is introduced and the region (where [`*this] is
+considered to be introduced within the innermost enclosing class or non-lambda
+function definition scope), either:
+[:zh_CN]
+对于每个介入到引入该实体的位置和该声明区之间的声明区
+（[#basic.scope.declarative]），其中 [`*this] 被认为是在最内层的外围的类或非
+lambda 函数定义式作用域中引入的，有：
+
+[list]
+[item]
+[:en@~]
+the declarative region is a block scope, or
+[:zh_CN@~]
+该声明区是块作用域，或者
+[item]
+[:en@~]
+the declarative region is the function parameter scope of a [~lambda-expression]
+that has a [~simple-capture] naming the entity or has a [~capture-default].
+[:zh_CN@~]
+该声明区是某个[~lambda-表达式]的函数形参声明区，且其带有指名该实体的
+[~简单捕获符]或者带有[~默认捕获符]。
+[list:end]
+[list:end]
+
+[:en]
+If a local entity is odr-used in a declarative region in which it is not
+odr-usable, the program is ill-formed.
+[:zh_CN]
+如果局部实体在其不可 ODR 式使用的声明区中被 ODR 式使用，则程序非良构。
+
+[enter:example]
+[codeblock]
+void f(int n) {
+  [] { n = 1; };                // [:en] error, [`n] is not odr-usable due to intervening lambda-expression
+                                // [|:zh_CN] 错误，[`n] 由于介入的 lambda-表达式而不可 ODR 式使用
+  struct A {
+    void f() { n = 2; }         // [:en] error, [`n] is not odr-usable due to intervening function definition scope
+                                // [|:zh_CN] 错误，[`n] 由于介入的函数定义式作用域而不可 ODR 式使用
+  };
+  void g(int = n);              // [:en] error, [`n] is not odr-usable due to intervening function parameter scope
+                                // [|:zh_CN] 错误，[`n] 由于介入的函数形参作用域而不可 ODR 式使用
+  [&] { [n]{ return n; }; };    // OK
+}
+[codeblock:end]
+[exit:example]
 
 [para]
 [:en]
@@ -447,9 +543,9 @@ name can refer to
 [list]
 [item]
 [:en]
-a non-volatile [`const] object with internal or no linkage if the object
+a non-volatile const object with internal or no linkage if the object
 [:zh_CN]
-具有内部连接或无连接的非 volatile [`const] 对象，只要该对象
+具有内部连接或无连接的非 volatile 的 const 对象，只要该对象
 
 [list]
 [item]
@@ -599,6 +695,21 @@ If the definitions of [`D] satisfy all these requirements, then the behavior is
 as if there were a single definition of [`D].
 [:zh_CN]
 如果 [`D] 的定义式都符合以上所有要求，则程序表现为如同仅有一个 [`D] 的定义式。
+
+[enter:note]
+[:en]
+The entity is still declared in multiple translation units, and [#basic.link]
+still applies to these declarations.
+[:zh_CN]
+该实体仍然在多个翻译单元中有所声明，并且 [#basic.link] 仍然适用于这些声明式。
+
+[:en]
+In particular, [~lambda-expression]s ([#expr.prim.lambda]) appearing in the type
+of [`D] may result in the different declarations having distinct types.
+[:zh_CN]
+特别是，出现于 [`D] 的类型中的 [~lambda-表达式]（[#expr.prim.lambda]）可能导致
+不同的声明式中各自具有不同的类型。
+[exit:note]
 
 [:en]
 If the definitions of [`D] do not satisfy these requirements, then the behavior

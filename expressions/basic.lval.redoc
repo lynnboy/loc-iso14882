@@ -100,6 +100,44 @@ An [+rvalue] is a prvalue or an xvalue.
 [+右值]（rvalue）是纯右值或临限值。
 [list:end]
 
+[para]
+[:en]
+Every expression belongs to exactly one of the fundamental classifications in
+this taxonomy: lvalue, xvalue, or prvalue.
+[:zh_CN]
+每个表达式都属于这种分类法中的恰好一种基础类别：左值、临限值或纯右值。
+
+[:en]
+This property of an expression is called its [+value category].
+[:zh_CN]
+表达式的这项属性被称为它的[+值类别]。
+
+[enter:note]
+[:en]
+The discussion of each built-in operator in [#expr.compound] indicates the
+category of the value it yields and the value categories of the operands it
+expects.
+[:zh_CN]
+[#expr.compound] 中针对每个内建运算符的讨论，指出其所产生的值类别以及它所要求的
+操作数的值类别。
+
+[:en]
+For example, the built-in assignment operators expect that the left operand is
+an lvalue and that the right operand is a prvalue and yield an lvalue as the
+result.
+[:zh_CN]
+例如，内建赋值运算符都要求其左操作数为左值，而其右操作数是纯右值，且其产生的结果
+为左值。
+
+[:en]
+User-defined operators are functions, and the categories of values they expect
+and yield are determined by their parameter and return types.
+[:zh_CN]
+用户定义运算符是函数，它们所要求的和所产生的值的类别都由它们的形参和返回类型来
+决定。
+[exit:note]
+
+[para]
 [enter:note]
 [:en]
 Historically, lvalues and rvalues were so-called because they could appear on
@@ -117,40 +155,73 @@ Despite their names, these terms classify expressions, not values.
 尽管其命名如此，但这些术语分配的是表达式而并不是值。
 [exit:note]
 
+[para]
 [:en]
-Every expression belongs to exactly one of the fundamental classifications in
-this taxonomy: lvalue, xvalue, or prvalue.
+[%expression[!rvalue reference]]
 [:zh_CN]
-每个表达式都属于这种分类法中的恰好一种基础类别：左值、临限值或纯右值。
-
-[:en]
-This property of an expression is called its [+value category].
-[:zh_CN]
-表达式的这项属性被称为它的[+值类别]。
-
+[%表达式[!右值引用]]
 [enter:note]
 [:en]
-The discussion of each built-in operator in [#expr] indicates the category of
-the value it yields and the value categories of the operands it expects.
+An expression is an xvalue if it is:
 [:zh_CN]
-[#expr] 中针对每个内建运算符的讨论，指出其所产生的值类别以及它所要求的操作数的
-值类别。
+符合以下条件的表达式是临限值：
+
+[list]
+[item]
+[:en] the result of calling a function, whether implicitly or explicitly, whose
+return type is an rvalue reference to object type,
+[:zh_CN] 函数调用的结果，无论隐式还是显式调用，且其返回类型是指代对象类型的右值
+引用，
+
+[item]
+[:en] a cast to an rvalue reference to object type,
+[:zh_CN] 强制转换为指代对象类型的右值引用，
+
+[item]
+[:en] a class member access expression designating a non-static data member of
+non-reference type in which the object expression is an xvalue, or
+[:zh_CN] 代表某个具有非引用类型的非静态数据成员的类成员访问表达式，其对象表达式
+是临限值，或者
+
+[item]
+[:en] a [`.*] pointer-to-member expression in which the first operand is an
+xvalue and the second operand is a pointer to data member.
+[:zh_CN] [`.*] 成员指针表达式，其第一个操作数时临限值且其第二个操作数是指向数据
+成员的指针。
+[list:end]
 
 [:en]
-For example, the built-in assignment operators expect that the left operand is
-an lvalue and that the right operand is a prvalue and yield an lvalue as the
-result.
+In general, the effect of this rule is that named rvalue references are treated
+as lvalues and unnamed rvalue references to objects are treated as xvalues;
+rvalue references to functions are treated as lvalues whether named or not.
 [:zh_CN]
-例如，内建赋值运算符都要求其左操作数为左值，而其右操作数是纯右值，且其产生的结果
-为左值。
-
-[:en]
-User-defined operators are functions, and the categories of values they expect
-and yield are determined by their parameter and return types.
-[:zh_CN]
-用户定义运算符是函数，它们所要求的和所产生的值的类别都由它们的形参和返回类型来
-决定。
+一般来说，这条规则的效果是使具名的右值引用被当做左值，而指代对象的无名的右值引用
+则被当做临限值；指代函数的右值引用无论是否具名都被当做左值。
 [exit:note]
+
+[enter:example]
+[codeblock]
+struct A {
+  int m;
+};
+A&& operator+(A, A);
+A&& f();
+
+A a;
+A&& ar = static_cast<A&&>(a);
+[codeblock:end]
+
+[:en]
+The expressions [`f()], [`f().m], [`static_cast<A&&>(a)], and [`a + a] are
+xvalues.
+[:zh_CN]
+表达式 [`f()]，[`f().m]，[`static_cast<A&&>(a)]，和 [`a + a] 都是临限值。
+
+[:en]
+The expression [`ar] is an lvalue.
+[:zh_CN]
+表达式 [`ar] 是左值。
+[exit:example]
 
 [para]
 [:en]
@@ -181,9 +252,9 @@ class or array type always has a result object.
 除非纯右值是 [~decltype-说明符]的操作数，否则类或数组类型的纯右值总是有结果对象。
 
 [:en]
-For a discarded prvalue, a temporary object is materialized; see [#expr].
+For a discarded prvalue, a temporary object is materialized; see [#expr.prop].
 [:zh_CN]
-弃值的纯右值将实体化临时对象；参见 [#expr]。
+弃值的纯右值将实体化临时对象；参见 [#expr.prop]。
 [exit:note]
 
 [:en]
@@ -193,19 +264,33 @@ expression.
 泛左值的[+结果[%结果[!泛左值]]]是由该表达式所代表的实体。
 
 [para]
-[enter:note]
 [:en]
-Whenever a glvalue appears in a context where a prvalue is expected, the glvalue
-is converted to a prvalue; see [#conv.lval], [#conv.array], and [#conv.func].
+Whenever a glvalue expression appears as an operand of an operator that expects
+a prvalue for that operand, the lvalue-to-rvalue ([#conv.lval]),
+array-to-pointer ([#conv.array]), or function-to-pointer ([#conv.func]) standard
+conversions are applied to convert the expression to a prvalue.
 [:zh_CN]
-当泛左值出现在要求纯右值的语境中时，泛左值被转换为纯右值；参见 [#conv.lval]，
-[#conv.array]，和 [#conv.func]。
+一旦将泛左值表达式作为操作数，而运算符预期其操作数为纯右值时，就对该表达式实施
+左值向右值（[#conv.lval]）、数组向指针（[#conv.array]）或函数向指针
+（[#conv.func]）标准转换，将其转换为纯右值。
 
+[enter:note]
 [:en]
 An attempt to bind an rvalue reference to an lvalue is not such a context; see
 [#dcl.init.ref].
 [:zh_CN]
 试图向左值绑定右值引用不属于这种语境；参见 [#dcl.init.ref]。
+[exit:note]
+
+[enter:note]
+[:en]
+Because cv-qualifiers are removed from the type of an expression of non-class
+type when the expression is converted to a prvalue, an lvalue expression of type
+[`const int] can, for example, be used where a prvalue expression of type [`int]
+is required.
+[:zh_CN]
+因为非类类型的表达式在向纯右值转换时要移除其 cv 限定符，因此，如类型 [`const
+int] 这样的左值表达式，可以用在需要类型 [`int] 的纯右值表达式之处。
 [exit:note]
 
 [enter:note]
@@ -219,13 +304,13 @@ then be promoted ([#conv.prom]).
 [exit:note]
 
 [para]
-[enter:note]
 [:en]
-Whenever a prvalue appears in a context where a glvalue is expected, the prvalue
-is converted to an xvalue; see [#conv.rval].
+Whenever a prvalue expression appears as an operand of an operator that expects
+a glvalue for that operand, the temporary materialization conversion
+([#conv.rval]) is applied to convert the expression to an xvalue.
 [:zh_CN]
-当纯右值出现在要求泛左值的语境中时，纯右值被转换为临限值；参见 [#conv.rval]。
-[exit:note]
+一旦将纯右值表达式作为操作数，而运算符预期其操作数为泛左值时，就对该表达式实施
+临时对象实体化转换（[#conv.rval]）以将其转换为临限值。
 
 [para]
 [:en]
@@ -261,9 +346,9 @@ cv-unqualified types.
 类和数组的纯右值可以具有 cv 限定的类型；其他纯右值总是具有 cv 未限定的类型。
 
 [:en]
-See [#expr].
+See [#expr.prop].
 [:zh_CN]
-参见[#expr]。
+参见 [#expr.prop]。
 [exit:note]
 
 [para]
@@ -275,12 +360,12 @@ type.
 
 [enter:note]
 [:en]
-A program that attempts to modify an object through a nonmodifiable lvalue or
-through an rvalue expression is ill-formed ([#expr.ass], [#expr.post.incr],
-[#expr.pre.incr]).
+A program that attempts to modify an object through a nonmodifiable lvalue
+expression or through an rvalue expression is ill-formed ([#expr.ass], 
+[#expr.post.incr], [#expr.pre.incr]).
 [:zh_CN]
-试图通过不可改变的左值或通过右值表达式改变对象的程序是非良构的（[#expr.ass]，
-[#expr.post.incr]，[#expr.pre.incr]）。
+试图通过不可改变的左值表达式或通过右值表达式改变对象的程序是非良构的
+（[#expr.ass]，[#expr.post.incr]，[#expr.pre.incr]）。
 [exit:note]
 
 [para]

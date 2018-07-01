@@ -1,0 +1,284 @@
+[section#util.smartptr.atomic.shared
+    [:en] Atomic specialization for [`shared_ptr]
+    [:zh_CN] [`shared_ptr] 的原子性特化式
+]
+[%@library atomic<shared_ptr<T>>]
+[codeblock:synopsis [!:mark ImpDef] ]
+namespace std {
+  template<class T> struct atomic<shared_ptr<T>> {
+    using value_type = shared_ptr<T>;
+    static constexpr bool is_always_lock_free = [%@impdef [:en] whether a given [`atomic] type[=']s operations are always lock free
+[:zh_CN] 给定 [`atomic] 类型的操作是否总是无锁的][=ImpDef];
+
+    bool is_lock_free() const noexcept;
+    void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+    shared_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
+    operator shared_ptr<T>() const noexcept;
+
+    shared_ptr<T> exchange(shared_ptr<T> desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+
+    bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                               memory_order success, memory_order failure) noexcept;
+    bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                                 memory_order success, memory_order failure) noexcept;
+
+    bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                               memory_order order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                                 memory_order order = memory_order::seq_cst) noexcept;
+
+    constexpr atomic() noexcept = default;
+    atomic(shared_ptr<T> desired) noexcept;
+    atomic(const atomic&) = delete;
+    void operator=(const atomic&) = delete;
+    void operator=(shared_ptr<T> desired) noexcept;
+
+  private:
+    shared_ptr<T> p;            // [=Expos]
+  };
+}
+[codeblock:end]
+
+[%@library atomic<shared_ptr<T>>[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr atomic() noexcept = default;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`p{}].
+[:zh_CN] 初始化 [`p{}]。
+[exit:description]
+
+[%@library atomic<shared_ptr<T>>[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+atomic(shared_ptr<T> desired) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the object with the value [`desired].
+[:zh_CN] 以值 [`desired] 初始化对象。
+
+[:en] Initialization is not an atomic operation ([#intro.multithread]).
+[:zh_CN] 初始化并非是原子性操作（[#intro.multithread]）。
+
+[enter:note]
+[:en] It is possible to have an access to an atomic object [`A] race with its
+construction, for example, by communicating the address of the just-constructed
+object [`A] to another thread via [`memory_order::relaxed] operations on a
+suitable atomic pointer variable, and then immediately accessing [`A] in the
+receiving thread.
+[:zh_CN] 使对原子性对象 [`A] 的访问与其构造产生竞争是可能的，例如通过将刚刚构造
+的对象 [`A] 的地址通过对某个适当的原子性指针变量进行 [`memory_order::relaxed]
+操作通信给其他线程，然后在接收方线程中立即访问 [`A]。
+
+[:en] This results in undefined behavior.
+[:zh_CN] 这将导致未定义的行为。
+[exit:note]
+[exit:description]
+
+[%@library store[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!store]]
+[codeblock:declaration]
+void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] The [`order] argument shall not be [`memory_order::consume],
+[`memory_order::acquire], nor [`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不能为 [`memory_order::consume]、
+[`memory_order::acquire] 或者 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Atomically replaces the value pointed to by [`this] with the value of
+[`desired] as if by [`p.swap(desired)].
+[:zh_CN] 原子性地将 [`this] 所指向的值如同以 [`p.swap(desired)] 来替换为
+[`desired] 的值。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+[exit:description]
+
+[%@library operator=[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!operator=]]
+[codeblock:declaration]
+void operator=(shared_ptr<T> desired) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`store(desired)].
+[:zh_CN] 等价于 [`store(desired)]。
+[exit:description]
+
+[%@library load[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!load]]
+[codeblock:declaration]
+shared_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`order] shall not be [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] [`order] 不能为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[para:returns]
+[:en] Atomically returns [`p].
+[:zh_CN] 原子性地返回 [`p]。
+[exit:description]
+
+[%@library operator shared_ptr<T>[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!operator shared_ptr<T>]]
+[codeblock:declaration]
+operator shared_ptr<T>() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return load();]
+[:zh_CN] 等价于：[`return load();]
+[exit:description]
+
+[%@library exchange[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!exchange]]
+[codeblock:declaration]
+shared_ptr<T> exchange(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Atomically replaces [`p] with [`desired] as if by [`p.swap(desired)].
+[:zh_CN] 原子性地将 [`p] 如同以 [`p.swap(desired)] 来替换为 [`desired]。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] This is an atomic read-modify-write operation ([#intro.races]).
+[:zh_CN] 这是一个原子性的读-改-写操作（[#intro.races]）。
+
+[para:returns]
+[:en] Atomically returns the value of [`p] immediately before the effects.
+[:zh_CN] 原子性地返回其效果产生前 [`p] 的值。
+[exit:description]
+
+[%@library compare_exchange_weak[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!compare_exchange_weak]]
+[%@library compare_exchange_strong[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!compare_exchange_strong]]
+[codeblock:declaration]
+bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                           memory_order success, memory_order failure) noexcept;
+bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                             memory_order success, memory_order failure) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`failure] shall not be [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] [`failure] 不能为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] If [`p] is equivalent to [`expected], assigns [`desired] to [`p] and has
+synchronization semantics corresponding to the value of [`success], otherwise
+assigns [`p] to [`expected] and has synchronization semantics corresponding to
+the value of [`failure].
+[:zh_CN] 如果 [`p] 等价于 [`expected]，则将 [`desired] 赋值给 [`p] 并具有对应于
+[`success] 的值的同步语义，否则将 [`p] 赋值给 [`expected] 并具有对应于
+[`failure] 的值的同步语义。
+
+[para:returns]
+[:en] [`true] if [`p] was equivalent to [`expected], [`false] otherwise.
+[:zh_CN] 当 [`p] 等价于 [`expected] 时返回 [`true]，否则返回 [`false]。
+
+[para:remarks]
+[:en] Two [`shared_ptr] objects are equivalent if they store the same pointer
+value and either share ownership, or both are empty.
+[:zh_CN] 如果两个 [`shared_ptr] 对象存储了相同的指针值，并且它们共享所有权或者
+都为空，则它们等价。
+
+[:en] The weak form may fail spuriously.
+[:zh_CN] 弱（weak）的形式可能会发生假性失败。
+
+[:en] See [#atomics.types.operations].
+[:zh_CN] 参见 [#atomics.types.operations]。
+
+[para]
+[:en] If the operation returns [`true], [`expected] is not accessed after the
+atomic update and the operation is an atomic read-modify-write operation
+([#intro.multithread]) on the memory pointed to by [`this].
+[:zh_CN] 如果操作返回了 [`true]，则进行原子性更新之后不会访问 [`expected]，且
+该操作是对由 [`this] 所指向的内存的原子性读-改-写操作（[#intro.multithread]）。
+
+[:en] Otherwise, the operation is an atomic load operation on that memory, and
+[`expected] is updated with the existing value read from the atomic object in
+the attempted atomic update.
+[:zh_CN] 否则，该操作是对该内存的原子性加载操作，且以从试图进行原子性更新的
+原子性对象中所读到的现有值对 [`expected] 进行了更新。
+
+[:en] The [`use_count] update corresponding to the write to [`expected] is part
+of the atomic operation.
+[:zh_CN] 对应于向 [`expected] 的写入的 [`use_count] 更新是原子性操作的一部分。
+
+[:en] The write to [`expected] itself is not required to be part of the atomic
+operation.
+[:zh_CN] 向 [`example] 的写入本身并不需要是该原子性操作的一部分。
+[exit:description]
+
+[%@library compare_exchange_weak[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!compare_exchange_weak]]
+[codeblock:declaration]
+bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+return compare_exchange_weak(expected, desired, order, fail_order);
+[codeblock:end]
+
+[:en@~] where [`fail_order] is the same as [`order] except that a value of
+[`memory_order::acq_rel] shall be replaced by the value [`memory_order::acquire]
+and a value of [`memory_order::release] shall be replaced by the value
+[`memory_order::relaxed].
+[:zh_CN@~] 其中 [`fail_order] 与 [`order] 相同，但 [`memory_order::acq_rel] 值
+应当被替换为 [`memory_order::acquire] 值，且 [`memory_order::release] 值应当被
+替换为 [`memory_order::relaxed] 值。
+[exit:description]
+
+[%@library compare_exchange_strong[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!compare_exchange_strong]]
+[codeblock:declaration]
+bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
+                             memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+return compare_exchange_strong(expected, desired, order, fail_order);
+[codeblock:end]
+
+[:en@~] where [`fail_order] is the same as [`order] except that a value of
+[`memory_order::acq_rel] shall be replaced by the value [`memory_order::acquire]
+and a value of [`memory_order::release] shall be replaced by the value
+[`memory_order::relaxed].
+[:zh_CN@~] 其中 [`fail_order] 与 [`order] 相同，但 [`memory_order::acq_rel] 值
+应当被替换为 [`memory_order::acquire] 值，且 [`memory_order::release] 值应当被
+替换为 [`memory_order::relaxed] 值。
+[exit:description]

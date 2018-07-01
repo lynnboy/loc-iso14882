@@ -334,6 +334,57 @@ being ill-formed.
 [exit:note]
 
 [para]
+[:en]
+A [~lambda-expression] appearing in a function type or a template parameter is
+not considered part of the immediate context for the purposes of template
+argument deduction.
+[:zh_CN]
+对于模板实参推断来说，出现在函数类型或模板形参中的 [~lambda-表达式]不被当做是其
+直接语境的一部分。
+
+[enter:note]
+[:en]
+The intent is to avoid requiring implementations to deal with substitution
+failure involving arbitrary statements.
+[:zh_CN]
+其目的是避免要求实现处理涉及任意语句的替换错误。
+
+[enter:example]
+[codeblock]
+template <class T>
+  auto f(T) -> decltype([]() { T::invalid; } ());
+void f(...);
+f(0);               // [:en] error: invalid expression not part of the immediate context
+                    // [|:zh_CN] 错误：无效的表达式并非直接语境的一部分
+
+template <class T, std::size_t = sizeof([]() { T::invalid; })>
+  void g(T);
+void g(...);
+g(0);               // [:en] error: invalid expression not part of the immediate context
+                    // [|:zh_CN] 错误：无效的表达式并非直接语境的一部分
+
+template <class T>
+  auto h(T) -> decltype([x = T::invalid]() { });
+void h(...);
+h(0);               // [:en] error: invalid expression not part of the immediate context
+                    // [|:zh_CN] 错误：无效的表达式并非直接语境的一部分
+
+template <class T>
+  auto i(T) -> decltype([]() -> typename T::invalid { });
+void i(...);
+i(0);               // [:en] error: invalid expression not part of the immediate context
+                    // [|:zh_CN] 错误：无效的表达式并非直接语境的一部分
+
+template <class T>
+  auto j(T t) -> decltype([](auto x) -> decltype(x.invalid) { } (t));   // #1
+void j(...);                                                            // #2
+j(0);               // [:en] deduction fails on #1, calls #2
+                    // [|:zh_CN] 对 #1 的推断失败，调用 #2
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
 [enter:example]
 [codeblock]
 struct X { };

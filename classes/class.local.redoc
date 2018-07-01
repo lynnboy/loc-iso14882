@@ -33,12 +33,13 @@ to names outside the function as does the enclosing function.
 局部类处于其外围作用域的作用域中，且对其外围函数之外的名字具有与该函数相同的
 访问权。
 
+[enter:note]
 [:en]
-Declarations in a local class shall not odr-use ([#basic.def.odr]) a variable
-with automatic storage duration from an enclosing scope.
+A declaration in a local class cannot odr-use ([#basic.def.odr]) a local entity
+from an enclosing scope.
 [:zh_CN]
-局部类之中的声明式不能 ODR 式使用（[#basic.def.odr]）其外围作用域中具有自动存储
-期的变量。
+局部类之中的声明式不能 ODR 式使用（[#basic.def.odr]）其外围作用域中的局部实体。
+[exit:note]
 
 [enter:example]
 [%  [:en] example[!local class]
@@ -50,17 +51,21 @@ void f() {
   int x;
   const int N = 5;
   extern int q();
+  int arr[2];
+  auto [y, z] = arr;
 
   struct local {
-    int g() { return x; }       // [:en] error: odr-use of automatic variable [`x]
-                                // [|:zh_CN] 错误：ODR 式使用了自动变量 [`x]
+    int g() { return x; }       // [:en] error: odr-use of non-odr-usable variable [`x]
+                                // [|:zh_CN] 错误：ODR 式使用了不可 ODR 式使用的变量 [`x]
     int h() { return s; }       // OK
     int k() { return ::x; }     // OK
     int l() { return q(); }     // OK
     int m() { return N; }       // [:en] OK: not an odr-use
                                 // [|:zh_CN] OK：并非 ODR 式使用
-    int* n() { return &N; }     // [:en] error: odr-use of automatic variable [`N]
-                                // [|:zh_CN] 错误：ODR 式使用了自动变量 [`N]
+    int* n() { return &N; }     // [:en] error: odr-use of non-odr-usable variable [`N]
+                                // [|:zh_CN] 错误：ODR 式使用了不可 ODR 式使用的变量 [`N]
+    int p() { return y; }       // [:en] error: odr-use of non-odr-usable structured binding [`y]
+                                // [|:zh_CN] 错误：ODR 式使用了不可 ODR 式使用的结构化绑定 [`y]
   };
 }
 

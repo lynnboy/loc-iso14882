@@ -4,37 +4,42 @@
 ]
 
 [para]
-[%[`<type_traits>][@type_traits]]
-[%@library <type_traits>[@type_traits]]
+[%@header type_traits]
 [:en] The header [`<type_traits>] has the following addition:
 [:zh_CN] 头文件 [`<type_traits>] 有下列添加声明：
 
 [%@library is_literal_type]
 [codeblock:synopsis]
 namespace std {
-  template <class T> struct is_literal_type;
+  template<class T> struct is_literal_type;
 
-  template <class T> constexpr bool is_literal_type_v = is_literal_type<T>::value;
+  template<class T> constexpr bool is_literal_type_v = is_literal_type<T>::value;
 
-  template <class> struct result_of; // [:en] not defined
-                                     // [|:zh_CN] 未予定义
-  template <class Fn, class... ArgTypes> struct result_of<Fn(ArgTypes...)>;
+  template<class> struct result_of;   // [:en] not defined
+                                      // [|:zh_CN] 未予定义
+  template<class Fn, class... ArgTypes> struct result_of<Fn(ArgTypes...)>;
+  template<class T> using result_of_t = typename result_of<T>::type;
 
-  template <class T> using result_of_t = typename result_of<T>::type;
+  template<class T> struct is_pod;
+  template<class T> inline constexpr bool is_pod_v = is_pod<T>::value;
 }
 [codeblock:end]
 
-[para:requires]
-[:en] For [`is_literal_type], [`remove_all_extents_t<T>] shall be a complete
-type or [$cv] [`void].
-[:zh_CN] 对于 [`is_literal_type]，[`remove_all_extents_t<T>] 应当是完整类型或者
-[$cv] [`void]。
+[para]
+[:en] The behavior of a program that adds specializations for any of the
+templates defined in this subclause is undefined, unless explicitly permitted by
+the specification of the corresponding template.
+[:zh_CN] 除非由相应模板的说明所明确允许，否则为本子条款中所定义的任何模板添加
+特化式的程序的行为是未定义的。
 
-[:en] For [`result_of<Fn(ArgTypes...)>], [`Fn] and all types in the parameter
-pack [`ArgTypes] shall be complete types, [$cv] [`void], or arrays of unknown
-bound.
-[:zh_CN] 对于 [`result_of<Fn(ArgTypes...)>]，[`Fn] 以及形参包组 [`ArgTypes] 中的
-所有类型都应当是完整类型，[$cv] [`void]，或者边界未知的数组。
+[codeblock:declaration]
+template<class T> struct is_literal_type;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`remove_all_extents_t<T>] shall be a complete type or [$cv] [`void].
+[:zh_CN] [`remove_all_extents_t<T>] 应当是完整类型或者 [$cv] [`void]。
 
 [para]
 [:en] [`is_literal_type<T>] is a [`UnaryTypeTrait] ([#meta.rqmts]) with a base
@@ -43,15 +48,66 @@ characteristic of [`true_type] if [`T] is a literal type ([#basic.types]), and
 [:zh_CN] [`is_literal_type<T>] 是一种 [`UnaryTypeTrait]（[#meta.rqmts]），当
 [`T] 为字面量类型（[#basic.types]）时，其基础特征为 [`true_type]，否则为
 [`false_type]。
+[exit:description]
 
-[:en] The partial specialization [`result_of<Fn(ArgTypes...)>] is a
-[`TransformationTrait] whose member typedef [`type] is defined if and only if
-[`invoke_result<Fn, ArgTypes...>::type] is defined.
-[:zh_CN] 部分特例 [`result_of<Fn(ArgTypes...)>] 是一种 [`TransformationTrait]，
-当且仅当 [`invoke_result<Fn, ArgTypes...>::type] 有定义时其成员 typedef [`type]
-有定义。
+[codeblock:declaration]
+template<class Fn, class... ArgTypes> struct result_of<Fn(ArgTypes...)>;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`Fn] and all types in the parameter pack [`ArgTypes] shall be complete
+types, [$cv] [`void], or arrays of unknown bound.
+[:zh_CN] [`Fn] 以及形参包组 [`ArgTypes] 中的所有类型都应当是完整类型，
+[$cv] [`void]，或者边界未知的数组。
 
 [para]
-[:en] The behavior of a program that adds specializations for any of the
-templates defined in this subclause is undefined.
-[:zh_CN] 为本子条款中所定义的任何模板添加特化式的程序的行为是未定义的。
+[:en] The partial specialization [`result_of<Fn(ArgTypes...)>] is a
+[`TransformationTrait] ([#meta.rqmts]) whose member typedef [`type] is defined
+if and only if [`invoke_result<Fn, ArgTypes...>::type] ([#func.invoke]) is
+defined.
+[:zh_CN] 部分特例 [`result_of<Fn(ArgTypes...)>] 是一种 [`TransformationTrait]
+（[#meta.rqmts]），当且仅当 [`invoke_result<Fn, ArgTypes...>::type]
+（[#func.invoke]）有定义时其成员 typedef [`type] 有定义。
+
+[:en] If [`type] is defined, it names the same type as
+[`invoke_result_t<Fn, ArgTypes...>].
+[:zh_CN] 如果 [`type] 有定义，则它与 [`invoke_result_t<Fn, ArgTypes...>] 指名
+相同的类型。
+[exit:description]
+
+[codeblock:declaration]
+template<class T> struct is_pod;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`remove_all_extents_t<T>] shall be a complete type or [$cv] [`void].
+[:zh_CN] [`remove_all_extents_t<T>] 应当是完整类型或者 [$cv] [`void]。
+
+[para]
+[:en] [`is_pod<T>] is a [`UnaryTypeTrait] ([#meta.rqmts]) with a base
+characteristic of [`true_type] if [`T] is a POD type, and [`false_type]
+otherwise.
+[:zh_CN] [`is_pod<T>] 是一种 [`UnaryTypeTrait]（[#meta.rqmts]），当 [`T] 为 POD
+类型时，其基础特征为 [`true_type]，否则为 [`false_type]。
+
+[:] [%POD]
+[:en] A POD class is a class that is both a trivial class and a standard-layout
+class, and has no non-static data members of type non-POD class (or array
+thereof).
+[:zh_CN] POD 类是既为平凡类也为标准布局类的类，且它没有非 POD 类（或其数组）类型
+的非静态数据成员。
+
+[:en] A POD type is a scalar type, a POD class, an array of such a type, or a
+cv-qualified version of one of these types.
+[:zh_CN] POD 类型是标量类型，POD 类，以及这些类型的数组，或者这些类型之一的 cv
+限定的版本。
+
+[para]
+[enter:note]
+[:en] It is unspecified whether a closure type ([#expr.prim.lambda.closure]) is
+a POD type.
+[:zh_CN] 闭包类型（[#expr.prim.lambda.closure]）是否是 POD 类型是未指明的。
+[exit:note]
+[exit:description]
