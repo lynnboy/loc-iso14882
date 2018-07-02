@@ -1,0 +1,127 @@
+[section#span.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[%@library span]
+[:en] A [`span] is a view over a contiguous sequence of objects, the storage of
+which is owned by some other object.
+[:zh_CN] [`span] 是对对象的连续序列的一种视图，由某个其他对象拥有其存储。
+
+[para]
+[:en] [`ElementType] is required to be a complete object type that is not an
+abstract class type.
+[:zh_CN] 要求 [`ElementType] 为并非抽象类类型的完整对象类型。
+
+[para]
+[:en] If [`Extent] is negative and not equal to [`dynamic_extent], the program
+is ill-formed.
+[:zh_CN] 如果 [`Extent] 为负数且不等于 [`dynamic_extent]，则程序非良构。
+
+[para]
+[:en] The iterator type for span is a random access iterator and a contiguous
+iterator.
+[:zh_CN] [`span] 的迭代器类型是随机访问迭代器和连续迭代器。
+
+[para]
+[:en] All member functions of [`span] have constant time complexity.
+[:zh_CN] [`span] 的所有成员函数都具有常量时间复杂度。
+
+[%@library span]
+[codeblock:synopsis [!:mark ImpDef SeeBelow ] ]
+nnamespace std {
+  template<class ElementType, ptrdiff_t Extent = dynamic_extent>
+  class span {
+  public:
+    // [:en] constants and types
+    // [|:zh_CN] 常量和类型
+    using element_type = ElementType;
+    using value_type = remove_cv_t<ElementType>;
+    using index_type = ptrdiff_t;
+    using difference_type = ptrdiff_t;
+    using pointer = element_type*;
+    using reference = element_type&;
+    using iterator = [%@impdef [:en] type of [`span::iterator] [:zh_CN] [`span::iterator] 的类型][=ImpDef];
+    using const_iterator = [%@impdef [:en] type of [`span::const_iterator] [:zh_CN] [`span::const_iterator] 的类型][=ImpDef];
+    using reverse_iterator = reverse_iterator<iterator>;
+    using const_reverse_iterator = reverse_iterator<const_iterator>;
+    static constexpr index_type extent = Extent;
+
+    // [:en] [#span.cons], constructors, copy, and assignment
+    // [|:zh_CN] [#span.cons]，构造函数，复制和赋值
+    constexpr span() noexcept;
+    constexpr span(pointer ptr, index_type count);
+    constexpr span(pointer first, pointer last);
+    template<size_t N>
+      constexpr span(element_type (&arr)[N]) noexcept;
+    template<size_t N>
+      constexpr span(array<value_type, N>& arr) noexcept;
+    template<size_t N>
+      constexpr span(const array<value_type, N>& arr) noexcept;
+    template<class Container>
+      constexpr span(Container& cont);
+    template<class Container>
+      constexpr span(const Container& cont);
+    constexpr span(const span& other) noexcept = default;
+    template<class OtherElementType, ptrdiff_t OtherExtent>
+      constexpr span(const span<OtherElementType, OtherExtent>& s) noexcept;
+
+    ~span() noexcept = default;
+
+    constexpr span& operator=(const span& other) noexcept = default;
+
+    // [:en] [#span.sub], subviews
+    // [|:zh_CN] [#span.sub]，子视图
+    template<ptrdiff_t Count>
+      constexpr span<element_type, Count> first() const;
+    template<ptrdiff_t Count>
+      constexpr span<element_type, Count> last() const;
+    template<ptrdiff_t Offset, ptrdiff_t Count = dynamic_extent>
+      constexpr span<element_type, [=SeeBelow]> subspan() const;
+
+    constexpr span<element_type, dynamic_extent> first(index_type count) const;
+    constexpr span<element_type, dynamic_extent> last(index_type count) const;
+    constexpr span<element_type, dynamic_extent> subspan(
+      index_type offset, index_type count = dynamic_extent) const;
+
+    // [:en] [#span.obs], observers
+    // [|:zh_CN] [#span.obs]，探查函数
+    constexpr index_type size() const noexcept;
+    constexpr index_type size_bytes() const noexcept;
+    constexpr bool empty() const noexcept;
+
+    // [:en] [#span.elem], element access
+    // [|:zh_CN] [#span.elem]，元素访问
+    constexpr reference operator[](index_type idx) const;
+    constexpr reference operator()(index_type idx) const;
+    constexpr pointer data() const noexcept;
+
+    // [:en] [#span.iterators], iterator support
+    // [|:zh_CN] [#span.iterators]，迭代器支持
+    constexpr iterator begin() const noexcept;
+    constexpr iterator end() const noexcept;
+    constexpr const_iterator cbegin() const noexcept;
+    constexpr const_iterator cend() const noexcept;
+    constexpr reverse_iterator rbegin() const noexcept;
+    constexpr reverse_iterator rend() const noexcept;
+    constexpr const_reverse_iterator crbegin() const noexcept;
+    constexpr const_reverse_iterator crend() const noexcept;
+
+  private:
+    pointer data_;    // [=Expos]
+    index_type size_; // [=Expos]
+  };
+
+  template<class T, size_t N>
+    span(T (&)[N]) -> span<T, N>;
+  template<class T, size_t N>
+    span(array<T, N>&) -> span<T, N>;
+  template<class T, size_t N>
+    span(const array<T, N>&) -> span<const T, N>;
+  template<class Container>
+    span(Container&) -> span<typename Container::value_type>;
+  template<class Container>
+    span(const Container&) -> span<const typename Container::value_type>;
+}
+[codeblock:end]

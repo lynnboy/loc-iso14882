@@ -309,18 +309,71 @@ an object of a most derived class type or of a non-class type is called a
 
 [para]
 [:en]
-[%most derived object [!bit-field]]
-Unless it is a bit-field ([#class.bit]), a most derived object shall have a
-nonzero size and shall occupy one or more bytes of storage.
+A [+potentially-overlapping subobject] is either:
 [:zh_CN]
-[%全派生对象 [!位字段]]
-除非作为位字段（[#class.bit]），否则全派生对象的大小不应为零，并应当占据
-一个或多个字节的存储。
+[+潜在重叠的子对象]是：
+
+[list]
+[item]
+[:en@~] a base class subobject, or
+[:zh_CN@~] 基类子对象，或者
+[item]
+[:en@~] a non-static data member declared with the [`no_unique_address]
+attribute ([#dcl.attr.nouniqueaddr]).
+[:zh_CN@~] 以 [`no_unique_address] 特性标注（[#dcl.attr.nouniqueaddr]）所声明的
+非静态数据成员。
+[list:end]
+
+[para]
+[:en]
+[%object[!zero size]]
+[%object[!nonzero size]]
+An object has nonzero size if it
+[:zh_CN]
+[%对象[!零大小]]
+[%对象[!非零大小]]
+以下情况下对象具有非零大小
+
+[list]
+[item]
+[:en] is not a potentially-overlapping subobject, or
+[:zh_CN] 它并非潜在重叠子对象，或者
+[item]
+[:en] is not of class type, or
+[:zh_CN] 它不具有类类型，或者
+[item]
+[:en] is of a class type with virtual member functions or virtual base classes,
+or
+[:zh_CN] 它具有带有虚成员函数或虚基类的类类型，或者
+[item]
+[:en] has subobjects of nonzero size or bit-fields of nonzero length.
+[:zh_CN] 它具有非零大小的子对象或非零长位字段。
+[list:end]
 
 [:en]
-Base class subobjects may have zero size.
+Otherwise, if the object is a base class subobject of a standard-layout class
+type with no non-static data members, it has zero size.
 [:zh_CN]
-基类子对象的大小可以为零。
+否则，如果该对象是某个没有非静态数据成员的标准布局类类型的基类子对象，则它大小为
+零。
+
+[:en]
+Otherwise, the circumstances under which the object has zero size are
+[%@impldef which non-standard-layout objects containing no data are considered
+empty] implementation-defined.
+[:zh_CN]
+否则，在何种情况下对象大小为零是[%@impldef 哪些不包含数据的非标准布局对象被当成
+为空]由实现定义的。
+
+[:en]
+[%most derived object[!bit-field]]
+Unless it is a bit-field ([#class.bit]), an object with nonzero size shall
+occupy one or more bytes of storage, including every byte that is occupied in
+full or in part by any of its subobjects.
+[:zh_CN]
+[%全派生对象[!位字段]]
+除非作为位字段（[#class.bit]），否则具有非零大小的对象都应当占据一个或更多字节的
+存储，包括由它的任何子对象所全部或部分占据的各个字节。
 
 [:en]
 An object of trivially copyable or standard-layout type ([#basic.types]) shall
@@ -332,27 +385,27 @@ occupy contiguous bytes of storage.
 [:en]
 [% most derived object [! bit-field]]
 [% most derived object [! zero size subobject]]
-Unless an object is a bit-field or a base class subobject of zero size, the
-address of that object is the address of the first byte it occupies.
+Unless an object is a bit-field or a subobject of zero size, the address of that
+object is the address of the first byte it occupies.
 [:zh_CN]
 [% 全派生对象 [! 位字段]]
 [% 全派生对象 [! 零大小子对象]]
-除非某个对象是位字段或者是零大小的基类子对象，否则该对象的地址就是它所占据的
-第一个字节的地址。
+除非某个对象是位字段或者是零大小的子对象，否则该对象的地址就是它所占据的第一个
+字节的地址。
 
 [:en]
-Two objects [$a] and [$b] with overlapping lifetimes that are not bit-fields may
-have the same address if one is nested within the other, or if at least one is
-a base class subobject of zero size and they are of different types;
+Two objects with overlapping lifetimes that are not bit-fields may have the same
+address if one is nested within the other, or if at least one is a subobject of
+zero size and they are of different types;
 [:zh_CN]
-对于不是位字段的两个生存期重叠的对象 [$a] 和 [$b]，若其中之一嵌套于另一个之中，
-或者若其中至少有一个是大小为零的基类子对象而它们类型不同，则它们可以具有相同的
-地址；
+对于不是位字段的两个生存期重叠的对象，若其中之一嵌套于另一个之中，或者若其中至少
+有一个是大小为零的子对象而它们类型不同，则它们可以具有相同的地址；
 
 [:en@~]
-otherwise, they shall have distinct addresses.[#:note#fn:$section.1]
+otherwise, they have distinct addresses and occupy disjoint bytes of storage.
+[#:note#fn:$section.1]
 [:zh_CN@~]
-否则，它们应当具有各自独立的地址。[#:note#fn:$section.1]
+否则，它们具有各自独立的地址并占据不想交的字节存储。[#:note#fn:$section.1]
 
 [note:foot#fn:$section.1]
 [:en]
@@ -364,7 +417,6 @@ observe the difference ([#intro.execution]).
 地址，或者并不真正存储某个对象（[#intro.execution]）。
 [note:end]
 
-[para:~]
 [enter:example]
 [codeblock]
 static const char test1 = 'x';
@@ -373,6 +425,13 @@ const bool b = &test1 != &test2;        // [:en] always [`true]
                                         // [|:zh_CN] 永远为 [`true]
 [codeblock:end]
 [exit:example]
+
+[:en]
+The address of a non-bit-field subobject of zero size is the address of an
+unspecified byte of storage occupied by the complete object of that subobject.
+[:zh_CN]
+大小为零的非位字段子对象的地址，是该子对象所在完整对象所占据的某个未指明的字节
+存储的地址。
 
 [para]
 [enter:note]

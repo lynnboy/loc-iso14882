@@ -1,0 +1,37 @@
+[section#diff.cpp17.temp
+    [:en] [#temp]: templates
+    [:zh_CN] [#temp]：模板
+]
+
+[para:diff] [#temp.names]
+[=Change]
+[:en] An [~unqualified-id] that is followed by a [`<] and for which name lookup
+finds nothing or finds a function will be treated as a [~template-name] in order
+to potentially cause argument dependent lookup to be performed.
+[:zh_CN] 对后面跟着 [`<] 的[~未限定标识]，若名字查找并未找到任何声明式或者找到
+了一个函数，则也将其作为[~模板名]处理，以便潜在地引发进行依赖于实参的查找。
+
+[=Rationale]
+[:en] It was problematic to call a function template with an explicit template
+argument list via argument dependent lookup because of the need to have a
+template with the same name visible via normal lookup.
+[:zh_CN] 之前在通过依赖于实参的名字查找来调用带有显式模板实参列表的函数模板时
+是有问题的，因为在普通查找过程中需要一个具有相同名字的模板。
+
+[=Effect]
+[:en] Previously valid code that uses a function name as the left operand of a
+[`<] operator would become ill-formed.
+[:zh_CN] 之前有效的使用函数名作为 [`<] 运算符的左操作数的代码将变为非良构的。
+
+[codeblock]
+struct A {};
+bool operator<(void (*fp)(), A);
+void f() {}
+int main() {
+  A a;
+  f < a;    // [:en] ill-formed; previously well-formed
+            // [|:zh_CN] 非良构；之前是良构的
+  (f) < a;  // [:en] still well formed
+            // [|:zh_CN] 仍然良构
+}
+[codeblock:end]
