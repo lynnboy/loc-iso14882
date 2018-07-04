@@ -1,0 +1,121 @@
+[section#time.clock.tai.nonmembers
+    [:en] Non-member functions
+    [:zh_CN] 非成员函数
+]
+
+[%@library operator<<[!tai_time]]
+[%@library tai_time[!operator<<]]
+[codeblock:declaration]
+template<class charT, class traits, class Duration>
+  basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os, const tai_time<Duration>& t);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Calls [`to_stream(os, fmt, t)], where [`fmt] is a string containing
+[`"%F %T"] widened to [`charT].
+[:zh_CN] 调用 [`to_stream(os, fmt, t)]，其中 [`fmt] 为包含 [`"%F %T"] 并被拓宽为
+[`charT] 的字符串。
+
+[para:returns]
+[:en] [`os].
+[:zh_CN] [`os]。
+[exit:description]
+
+[%@library to_stream[!tai_time]]
+[%@library tai_time[!to_stream]]
+[codeblock:declaration]
+template<class charT, class traits, class Duration>
+  basic_ostream<charT, traits>&
+    to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const tai_time<Duration>& tp);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Streams [`tp] into [`os] using the format specified by the NTCTS [`fmt].
+[:zh_CN] 使用由 [$:sc ntcts] [`fmt] 所指定的格式将 [`tp] 插入到 [`os] 中。
+
+[:en] [`fmt] encoding follows the rules specified in [#time.format].
+[:zh_CN] [`fmt] 的编码遵循 [#time.format] 中所指定的规则。
+
+[:en] If [`%Z] is used, it will be replaced with [`"TAI"].
+[:zh_CN] 如果使用了 [`%Z]，则将其替换为 [`"TAI"]。
+
+[:en] If [`%z] is used (or a modified variant of [`%z]), an offset of [`0min]
+will be formatted.
+[:zh_CN] 如果使用了 [`%z]（或 [`%z] 的带修饰变体），则格式化一个 [`0min] 偏移量。
+
+[:en] The date and time formatted shall be equivalent to that formatted by a
+[`sys_time] initialized with:
+[:zh_CN] 日期和时间的格式化应当等价于以如下方式初始化的 [`sys_time] 的格式化：
+
+[codeblock:notation]
+sys_time<Duration>{tp.time_since_epoch()} -
+  (sys_days{1970y/January/1} - sys_days{1958y/January/1})
+[codeblock:end]
+
+[para:returns]
+[:en] [`os].
+[:zh_CN] [`os]。
+
+[para]
+[enter:example]
+[codeblock]
+auto st = sys_days{2000y/January/1};
+auto tt = clock_cast<tai_clock>(st);
+cout << format("%F %T %Z == ", st) << format("%F %T %Z\n", tt);
+[codeblock:end]
+
+[:en]
+Produces this output:
+[:zh_CN]
+产生如下输出：
+
+[codeblock]
+2000-01-01 00:00:00 UTC == 2000-01-01 00:00:32 TAI
+[codeblock:end]
+[exit:example]
+[exit:description]
+
+[%@library from_stream[!tai_time]]
+[%@library tai_time[!from_stream]]
+[codeblock:declaration]
+template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+  basic_istream<charT, traits>&
+    from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                tai_time<Duration>& tp, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                minutes* offset = nullptr);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Attempts to parse the input stream [`is] into the [`tai_time] [`tp] using
+the format flags given in the NTCTS [`fmt] as specified in [#time.parse].
+[:zh_CN] 尝试如 [#time.parse] 中所指定的方式使用由 [$:sc ntcts] [`fmt] 所给定的
+格式标记将输入流 [`is] 解析到 [`tai_time] [`tp] 之中。
+
+[:en] If the parse fails to decode a valid date,
+[`is.setstate(ios_base::failbit)] shall be called and [`tp] shall not be
+modified.
+[:zh_CN] 如果解析无法解码有效日期，则应当调用 [`is.setstate(ios_base::failbit)]
+且 [`tp] 不应被改动。
+
+[:en] If [`%Z] is used and successfully parsed, that value will be assigned to
+[`*abbrev] if [`abbrev] is non-null.
+[:zh_CN] 如果使用了 [`%Z] 并且成功进行了解析，则当 [`abbrev] 不为空值时将该值
+赋值给 [`*abbrev]。
+
+[:en] If [`%z] (or a modified variant) is used and successfully parsed,
+that value will be assigned to [`*offset] if [`offset] is non-null.
+[:zh_CN] 如果使用了 [`%z]（或其带修饰变体）并且成功进行了解析，则当 [`offset]
+不为空值时将该值赋值给 [`*offset]。
+
+[:en] Additionally, the parsed offset will be subtracted from the successfully
+parsed timestamp prior to assigning that difference to [`tp].
+[:zh_CN] 此外，从成功解析到的时间戳中减去解析到的偏移量，再将其差值赋值给 [`tp]。
+
+[para:returns]
+[:en] [`is].
+[:zh_CN] [`is]。
+[exit:description]

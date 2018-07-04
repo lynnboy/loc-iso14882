@@ -80,23 +80,6 @@ template<class T> class Y {
 [codeblock:end]
 [exit:example]
 
-[para]
-[:en]
-When a [~qualified-id] is intended to refer to a type that is not a member of
-the current instantiation ([#temp.dep.type]) and its [~nested-name-specifier]
-refers to a dependent type, it shall be prefixed by the keyword [`typename],
-forming a [~typename-specifier].
-[:zh_CN]
-当某个[~限定标识]有意指代某个并非当前实例的成员的类型（[#temp.dep.type]），并且
-其[~嵌套名说明符]指代某个待决类型时，它应当带有 [`typename] 关键字前缀，以构成
-一个 [~typename-说明符]。
-
-[:en]
-If the [~qualified-id] in a [~typename-specifier] does not denote a type or a
-class template, the program is ill-formed.
-[:zh_CN]
-若 [~typename-说明符]中的[~限定标识]并不代表某个类型或者类模板，则程序非良构。
-
 [syntax]
 [rule typename-specifier [:zh_CN] typename-说明符 ]
     [| [`typename] nested-name-specifier identifier ]
@@ -106,12 +89,12 @@ class template, the program is ill-formed.
 
 [para]
 [:en]
-If a specialization of a template is instantiated for a set of
-[~template-argument]s such that the [~qualified-id] prefixed by [`typename]
-does not denote a type or a class template, the specialization is ill-formed.
+A [~typename-specifier] denotes the type or class template denoted by the
+[~simple-type-specifier] ([#dcl.type.simple]) formed by omitting the keyword
+[`typename].
 [:zh_CN]
-如果某个模板的特化式针对一组[~模板实参]进行实例化，使得带有 [`typename] 前缀的
-[~限定标识]并不代表某个类型或者类模板，则该特化式非良构。
+[~typename-说明符]代表由忽略其 [`typename] 关键字所构成的[~简单模板标识]
+（[#dcl.type.simple]）所代表的类型或类模板。
 
 [:en]
 The usual qualified name lookup ([#basic.lookup.qual]) is used to find the
@@ -170,22 +153,112 @@ The [`typename] keyword is not permitted by the syntax of these constructs.
 
 [para]
 [:en]
-If, for a given set of template arguments, a specialization of a template is
-instantiated that refers to a [~qualified-id] that denotes a type or a class
-template, and the [~qualified-id] refers to a member of an unknown
-specialization, the [~qualified-id] shall either be prefixed by [`typename] or
-shall be used in a context in which it implicitly names a type as described
-above.
+A [~qualified-id] is assumed to name a type if
 [:zh_CN]
-对于给定的一组模板实参，如果所实例化的模板特例涉指某个代表类型或者类模板的[~限定
-标识]，并且该[~限定标识]代表某个未知特例的成员，则该[~限定标识]要么应当带有
-[`typename] 前缀，要么应当在如上所述的隐式指名类型的语境中使用。
+如下情况下[~限定标识]被假定为指名某个类型：
+
+[list]
+[item]
+[:en] it is a qualified name in a type-id-only context (see below), or
+[:zh_CN] 它是只接受[~类型标识]的语境（见下文）中的一个限定名，或者
+[item]
+[:en] it is a [~decl-specifier] of the [~decl-specifier-seq] of a
+[:zh_CN] 它是以下各种[~声明说明符序列]中的[~声明说明符]:
+[list]
+[item]
+[:en@~] [~simple-declaration] or a [~function-definition] in namespace scope,
+[:zh_CN@~] 命名空间作用域中的[~简单声明式]或[~函数定义式]，
+[item]
+[:en@~] [~member-declaration],
+[:zh_CN@~] [~成员声明式]，
+[item]
+[:en@~] [~parameter-declaration] in a [~member-declaration]
+[#:note#fn:$section.1], unless that [~parameter-declaration] appears in a
+default argument,
+[:zh_CN@~] [~成员声明式][#:note#fn:$section.1]中的[~形参声明式]，除非该[~形参
+声明式]出现于默认实参之中，
+[item]
+[:en@~] [~parameter-declaration] in a [~declarator] of a function or function
+template declaration whose [~declarator-id] is qualified, unless that
+[~parameter-declaration] appears in a default argument,
+[:zh_CN@~] [~声明符标识]有限定的函数或函数模板的[~声明符]中的[~形参声明式]，除非
+该[~形参声明式]出现于默认实参之中，
+[item]
+[:en@~] [~parameter-declaration] in a [~lambda-declarator], unless that
+[~parameter-declaration] appears in a default argument, or
+[:zh_CN@~] [~lambda-声明符]中的[~形参声明式]，除非该[~形参声明式]出现于默认实参
+之中，或者
+[item]
+[:en@~] [~parameter-declaration] of a (non-type) [~template-parameter].
+[:zh_CN@~] （非类型）[~模板形参]的[~形参声明式]。
+[list:end]
+[list:end]
+
+[note:foot#fn:$section.1]
+[:en]
+This includes friend function declarations.
+[:zh_CN]
+包括友元函数声明式。
+[note:end]
+
+[:en]
+A qualified name is said to be in a [+type-id-only context] if it appears in a
+[~type-id], [~new-type-id], or [~defining-type-id] and the smallest enclosing
+[~type-id], [~new-type-id], or [~defining-type-id] is a [~new-type-id],
+[~defining-type-id], [~trailing-return-type], default argument of a
+[~type-parameter] of a template, or [~type-id] of a [`static_cast],
+[`const_cast], [`reinterpret_cast], or [`dynamic_cast].
+[:zh_CN]
+如果一个限定名出现于某个[~类型标识]、[~new-类型标识]或[~定义类型标识]之内，且其
+最小的外围[~类型标识]、[~new-类型标识]或[~定义类型标识]是[~new-类型标识]，
+[~定义类型标识]，[~尾部返回类型]，模板的[~类型形参]的默认实参，或者
+[`static_cast]、[`const_cast]、[`reinterpret_cast] 或 [`dynamic_cast] 的
+[~类型标识]，则称其处于[+仅接受类型标识的语境]中。
+
+[enter:example]
+[codeblock]
+template<class T> T::R f();             // [:en] OK, return type of a function declaration at global scope
+                                        // [|:zh_CN] OK，全局作用域中的函数声明式的返回类型
+template<class T> void f(T::R);         // [:en] ill-formed (no diagnostic required), attempt to declare
+                                        // [|:zh_CN] 非良构（无须诊断），试图声明
+                                        // [:en@~] a [`void] variable template
+                                        // [|:zh_CN@~] [`void] 变量模板
+template<class T> struct S {
+  using Ptr = PtrTraits<T>::Ptr;        // [:en] OK, in a [~defining-type-id]
+                                        // [|:zh_CN] OK，在[~定义类型标识]中
+  T::R f(T::P p) {                      // [:en] OK, class scope
+                                        // [|:zh_CN] OK，类作用域
+    return static_cast<T::R>(p);        // [:en] OK, [~type-id] of a [`static_cast]
+                                        // [|:zh_CN] OK，[`static_cast] 的[~类型标识]
+  }
+  auto g() -> S<T*>::Ptr;               // [:en] OK, [~trailing-return-type]
+                                        // [|:zh_CN] OK，[~尾部返回类型]
+};
+template<typename T> void f() {
+  void (*pf)(T::X);                     // [:en] variable [`pf] of type [`void*] initialized with [`T::X]
+                                        // [|:zh_CN] 以 [`T::x] 初始化 [`void*] 类型的变量 [`pf]
+  void g(T::X);                         // [:en] error: [`T::X] at block scope does not denote a type
+                                        // [|:zh_CN] 错误：[`T::X] 在块作用域中并不代表类型
+                                        // [:en@~] (attempt to declare a [`void] variable)
+                                        // [|:zh_CN@~] （试图声明 [`void] 变量）
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A [~qualified-id] that refers to a member of an unknown specialization, that is
+not prefixed by [`typename], and that is not otherwise assumed to name a type
+(see above) denotes a non-type.
+[:zh_CN]
+涉指某个未知特例的成员，没有 [`typename] 前缀，以及并未被假定为指名某个类型
+（见上文）的[~限定标识]，代表非类型。
 
 [enter:example]
 [codeblock]
 template <class T> void f(int i) {
-  T::x * i;         // [:en] [`T::x] must not be a type
-                    // [|:zh_CN] [`T::x] 不能为类型
+  T::x * i;         // [:en] expression, not the declaration of a variable [`i]
+                    // [|:zh_CN] 表达式，而不是变量 [`i] 的声明式
 }
 
 struct Foo {
@@ -208,25 +281,11 @@ int main() {
 [:en]
 Within the definition of a class template or within the definition of a member
 of a class template following the [~declarator-id], the keyword [`typename]
-is not required when referring to the name of a previously declared member of
-the class template that declares a type or a class template.
+is not required when referring to a member of the current instantiation
+([#temp.dep.expr]).
 [:zh_CN]
-在类模板的定义式中，或者类模板的成员的定义式中，其[~声明符标识]之后，当指代该
-类模板的某个之前已经声明为类型或者类模板的成员的名字时不需要 [`typename] 关键字。
-
-[enter:note]
-[:en]
-Such names can be found using unqualified name lookup ([#basic.lookup.unqual]),
-class member lookup ([#class.qual]) into the current instantiation
-([#temp.dep.type]), or class member access expression lookup
-([#basic.lookup.classref]) when the type of the object expression is the current
-instantiation ([#temp.dep.expr]).
-[:zh_CN]
-可以通过未限定名查找（[#basic.lookup.unqual]），在当前实例（[#temp.dep.type]）中
-进行类成员查找（[#class.qual]），或当对象表达式的类型为当前实例
-（[#temp.dep.expr]）时进行类成员访问表达式的查找（[#basic.lookup.classref]）来对
-这种名字进行查找。
-[exit:note]
+在类模板的定义式中，或者类模板的成员的定义式中，其[~声明符标识]之后，当指代当前
+实例化（[#temp.dep.expr]）的成员时不需要 [`typename] 关键字。
 
 [enter:example]
 [codeblock]
@@ -242,12 +301,19 @@ template<class T> struct A {
 [:en]
 [%checking[!syntax]]
 [%checking[!point of error]]
-Knowing which names are type names allows the syntax of every template to be
-checked.
+The validity of a template may be checked prior to any instantiation.
 [:zh_CN]
 [%检查[!语法～]]
 [%检查[!错误～点]]
-知道哪个名字是类型名，就允许对每个模板定义式的语法进行检查。
+模板的有效性可能在进行任何实例化之前进行检查。
+
+[enter:note]
+[:en]
+Knowing which names are type names allows the syntax of every template to be
+checked in this way.
+[:zh_CN]
+知道哪个名字是类型名，就允许对每个模板定义式的语法以这种方式进行检查。
+[exit:note]
 
 [:en]
 The program is ill-formed, no diagnostic required, if:

@@ -1,0 +1,69 @@
+[section#time.clock.utc.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[%@library utc_clock]
+[codeblock:synopsis [!:mark UnSpec] ]
+namespace std::chrono {
+  class utc_clock {
+  public:
+    using rep                       = [$ [:en]a signed arithmetic type[:zh_CN]有符号算术类型];
+    using period                    = ratio<[=UnSpec], [=UnSpec]>;
+    using duration                  = chrono::duration<rep, period>;
+    using time_point                = chrono::time_point<utc_clock>;
+    static constexpr bool is_steady = [=UnSpec];
+
+    static time_point now();
+
+    template<class Duration>
+      static sys_time<common_type_t<Duration, seconds>>
+        to_sys(const utc_time<Duration>& t);
+    template<class Duration>
+      static utc_time<common_type_t<Duration, seconds>>
+        from_sys(const sys_time<Duration>& t);
+  };
+}
+[codeblock:end]
+
+[para]
+[:en]
+In contrast to [`sys_time], which does not take leap seconds into account,
+[`utc_clock] and its associated [`time_point], [`utc_time], count time,
+including leap seconds, since 1970-01-01 00:00:00 UTC.
+[:zh_CN]
+相较而言，与并不考虑闰秒的 [`sys_time] 不同，[`utc_clock] 及其关联的
+[`time_point]（[`utc_time]）从 1970-01-01 00:00:00 UTC 开始计时，其中包括闰秒。
+
+[enter:example]
+[br]
+[:en]
+[`clock_cast<utc_clock>(sys_seconds{sys_days{1970y/January/1}}).time_since_epoch()]
+is [`0s].
+[:zh_CN]
+[`clock_cast<utc_clock>(sys_seconds{sys_days{1970y/January/1}}).time_since_epoch()]
+为 [`0s]。
+[br]
+[:en]
+[`clock_cast<utc_clock>(sys_seconds{sys_days{2000y/January/1}}).time_since_epoch()]
+is [`946'684'822s], which is [`10'957 * 86'400s + 22s].
+[:zh_CN]
+[`clock_cast<utc_clock>(sys_seconds{sys_days{2000y/January/1}}).time_since_epoch()]
+为 [`946'684'822s]，亦即 [`10'957 * 86'400s + 22s]。
+[br]
+[exit:example]
+
+[para]
+[:en]
+[`utc_clock] is not a TrivialClock unless the implementation can guarantee that
+[`utc_clock::now()] does not propagate an exception.
+[:zh_CN]
+除非实现可以保证 [`utc_clock::now()] 不会传播异常，否则 [`utc_clock] 并不是
+[`TrivialClock]。
+
+[enter:note]
+[:en]
+[`noexcept(from_sys(system_clock::now()))] is [`false].
+[:zh_CN]
+[`noexcept(from_sys(system_clock::now()))] 为 [`false]。
+[exit:note]

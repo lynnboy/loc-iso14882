@@ -1,0 +1,646 @@
+[section#time.parse
+    [:en] Parsing
+    [:zh_CN] 解析
+]
+
+[%:begin@library#parse parse]
+
+[para]
+[:en]
+Each [`parse] overload specified in this subclause calls [`from_stream]
+unqualified, so as to enable argument dependent lookup
+([#basic.lookup.argdep]).
+[:zh_CN]
+本子条款中的各个 [`parse] 重载，都对 [`from_stream] 进行未限定的调用，以启用
+依赖于实参的名字查找（[#basic.lookup.argdep]）。
+
+[codeblock:declaration [!:mark UnSpec] ]
+template<class charT, class traits, class Alloc, class Parsable>
+  [=UnSpec]
+    parse(const basic_string<charT, traits, Alloc>& fmt, Parsable& tp);
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非
+
+[codeblock:notation]
+from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp)
+[codeblock:end]
+
+[:en@~] is a valid expression.
+[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+
+[para:returns]
+[:en] A manipulator that, when extracted from a
+[`basic_istream<charT, traits> is], calls [`from_stream(is, fmt.c_str(), tp)].
+[:zh_CN] 一个操作符，当从一个 [`basic_istream<charT, traits> is] 进行抽取时，
+将调用 [`from_stream(is, fmt.c_str(), tp)]。
+[exit:description]
+
+[codeblock:declaration [!:mark UnSpec] ]
+template<class charT, class traits, class Alloc, class Parsable>
+  [=UnSpec]
+    parse(const basic_string<charT, traits, Alloc>& fmt, Parsable& tp,
+          basic_string<charT, traits, Alloc>& abbrev);
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非
+
+[codeblock:notation]
+from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp, &abbrev)
+[codeblock:end]
+
+[:en@~] is a valid expression.
+[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+
+[para:returns]
+[:en] A manipulator that, when extracted from a
+[`basic_istream<charT, traits> is], calls
+[`from_stream(is, fmt.c_str(), tp, &abbrev)].
+[:zh_CN] 一个操作符，当从一个 [`basic_istream<charT, traits> is] 进行抽取时，
+将调用 [`from_stream(is, fmt.c_str(), tp, &abbrev)]。
+[exit:description]
+
+[codeblock:declaration [!:mark UnSpec] ]
+template<class charT, class traits, class Alloc, class Parsable>
+  [=UnSpec]
+    parse(const basic_string<charT, traits, Alloc>& fmt, Parsable& tp,
+          minutes& offset);
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非
+
+[codeblock:notation]
+from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp, nullptr, &offset)
+[codeblock:end]
+
+[:en@~] is a valid expression.
+[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+
+[para:returns]
+[:en] A manipulator that, when extracted from a
+[`basic_istream<charT, traits> is], calls
+[`from_stream(is, fmt.c_str(), tp, nullptr, &offset)].
+[:zh_CN] 一个操作符，当从一个 [`basic_istream<charT, traits> is] 进行抽取时，
+将调用 [`from_stream(is, fmt.c_str(), tp, nullptr, &offset)]。
+[exit:description]
+
+[codeblock:declaration [!:mark UnSpec] ]
+template<class charT, class traits, class Alloc, class Parsable>
+  [=UnSpec]
+    parse(const basic_string<charT, traits, Alloc>& fmt, Parsable& tp,
+          basic_string<charT, traits, Alloc>& abbrev, minutes& offset);
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非
+
+[codeblock:notation]
+from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp, &abbrev, &offset)
+[codeblock:end]
+
+[:en@~] is a valid expression.
+[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+
+[para:returns]
+[:en] A manipulator that, when extracted from a
+[`basic_istream<charT, traits> is], calls
+[`from_stream(is, fmt.c_str(), tp, &abbrev, &offset)].
+[:zh_CN] 一个操作符，当从一个 [`basic_istream<charT, traits> is] 进行抽取时，
+将调用 [`from_stream(is, fmt.c_str(), tp, &abbrev, &offset)]。
+[exit:description]
+
+[para]
+[:en]
+All [`from_stream] overloads behave as unformatted input functions, except that
+they have an unspecified effect on the value returned by subsequent calls to
+[`basic_istream<>::gcount()].
+[:zh_CN]
+所有的 [`from_stream] 重载函数的行为都表现为无格式化输入函数，但它们对于随后调用
+的 [`basic_istream<>::gcount()] 具有未指明的效果。
+
+[:en]
+Each overload takes a format string containing ordinary characters and flags
+which have special meaning.
+[:zh_CN]
+各个重载函数都接受一个包含普通字符和一些具有特殊含义的标记的格式字符串。
+
+[:en]
+Each flag begins with a [`%].
+[:zh_CN]
+每个标记都以一个 [`%] 开始。
+
+[:en]
+Some flags can be modified by [`E] or [`O].
+[:zh_CN]
+一些标记可以被 [`E] 或 [`O] 所修饰。
+
+[:en]
+During parsing each flag interprets characters as parts of date and time types
+according to the table below.
+[:zh_CN]
+在解析过程中，各个标记都根据下表来讲字符作为日期和时间类型的一部分进行解释。
+
+[:en]
+Some flags can be modified by a width parameter given as a positive decimal
+integer called out as [`[*N]] below which governs how many characters are parsed
+from the stream in interpreting the flag.
+[:zh_CN]
+一些标记可以被一个宽度参数所修饰，它被指定为一个正的十进制整数（下文中成其为
+[`[*N]]），它控制解释这个标记时需要从流中解析多少个字符。
+
+[:en]
+All characters in the format string that are not represented in the table below,
+except for white space, are parsed unchanged from the stream.
+[:zh_CN]
+格式字符串中未在下表中有所表示的所有字符，除了空格以外，都从流中不改动地解析。
+
+[:en]
+A white space character matches zero or more white space characters in the input
+stream.
+[:zh_CN]
+一个空格字符与输入流中的零个或多个空格字符相匹配。
+
+[para]
+[:en]
+If the [`from_stream] overload fails to parse everything specified by the format
+string, or if insufficient information is parsed to specify a complete duration,
+time point, or calendrical data structure, [`setstate(ios_base::failbit)]
+is called on the [`basic_istream].
+[:zh_CN]
+如果 [`from_stream] 重载函数无法解析格式字符串中指定的所有项目，或者无法解析到
+足够的信息已指定一个完整的时间段、时间点或日历数据结构，则对该 [`basic_istream]
+调用 [`setstate(ios_base::failbit)]。
+
+[table:grid#tab:time.parse.spec
+    [:en] Meaning of [`parse] flags
+    [:zh_CN] [`format] 标记的含义
+    
+    [|@code
+        [:en] Flag
+        [:zh_CN] 标记 ]
+    [|  [:en] Parsed value
+        [:zh_CN] 解析的值 ]
+]
+
+[|] %a
+[|] [:en] The Locale[=']s full or abbreviated case-insensitive weekday name.
+    [:zh_CN] 该地域的全称或简称大小写不敏感的周日期名。
+[-]
+[|] %A
+[|] [:en] Equivalent to [`%a].
+    [:zh_CN] 等价于 [`%a]。
+[-]
+[|] %b
+[|] [:en] The Locale[=']s full or abbreviated case-insensitive month name.
+    [:zh_CN] 该地域的全称或简称大小写不敏感的月名。
+[-]
+[|] %B
+[|] [:en] Equivalent to [`%b].
+    [:zh_CN] 等价于 [`%b]。
+[-]
+[|] %c
+[|] [:en] The locale[=']s date and time representation.
+    [:zh_CN] 该地域的日期与时间表示。
+
+[:en] The modified command [`%Ec] interprets the locale[=']s alternate date and
+time representation.
+[:zh_CN] 修饰命令 [`%Ec] 解释该地域的替代日期与时间表示。
+[-]
+[|] %C
+[|] [:en] The century as a decimal number.
+    [:zh_CN] 世纪的十进制数字
+
+[:en] The modified command [`%[*N]C] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]C] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified commands [`%EC] and [`%OC] interpret the locale[=']s
+alternate representation of the century.
+[:zh_CN] 修饰命令 [`%EC] 和 [`%OC] 解释该地域的替代世纪表示。
+[-]
+[|] %d
+[|] [:en] The day of the month as a decimal number.
+    [:zh_CN] 月内日期的十进制数字。
+
+[:en] The modified command [`%[*N]d] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]d] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%Ed] interprets the locale[=']s alternate
+representation of the day of the month.
+[:zh_CN] 修饰命令 [`%Ed] 解释该地域的月内日期的替代表示。
+[-]
+[|] %D
+[|] [:en] Equivalent to [`%m/%d/%y].
+    [:zh_CN] 等价于 [`%m/%d/%y]。
+[-]
+[|] %e
+[|] [:en] Equivalent to [`%d] and can be modified like [`%d].
+    [:zh_CN] 等价于 [`%d] 且可以如 [`%d] 一样被修饰。
+[-]
+[|] %F
+[|] [:en] Equivalent to [`%Y-%m-%d].
+    [:zh_CN] 等价于 [`%Y-%m-%d]。
+
+[:en] If modified with a width [`[*N]], the width is applied to only [`%Y].
+[:zh_CN] 如果带有宽度 [`[*N]] 修饰，则该宽度仅适用于 [`%Y]。
+[-]
+
+[|] %g
+[|] [:en] The last two decimal digits of the ISO week-based year.
+    [:zh_CN] ISO 基于周的年份的后两位十进制数字。
+
+[:en] The modified command [`%[*N]g] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]g] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %G
+[|] [:en] The ISO week-based year as a decimal number.
+    [:zh_CN] ISO 基于周的年份的十进制数字。
+
+[:en] The modified command [`%[*N]G] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]G] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 4.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %h
+[|] [:en] Equivalent to [`%b].
+    [:zh_CN] 等价于 [`%b]。
+[-]
+[|] %H
+[|] [:en] The hour (24-hour clock) as a decimal number.
+    [:zh_CN] 小时（24 小时时钟）的十进制数字。
+
+[:en] The modified command [`%[*N]H] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]H] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%OH] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%OH] 解释该地域的替代表示。
+[-]
+[|] %I
+[|] [:en] The hour (12-hour clock) as a decimal number.
+    [:zh_CN] 小时（12 小时时钟）的十进制数字。
+
+[:en] The modified command [`%[*N]I] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]I] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %j
+[|] [:en] The day of the year as a decimal number.
+    [:zh_CN] 年日期的十进制数字。
+
+[:en] Jan 1 is [`001].
+[:zh_CN] 一月一日为 [`001]。
+
+[:en] The modified command [`%[*N]j] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]j] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 3.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 3。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %m
+[|] [:en] The month as a decimal number.
+    [:zh_CN] 月的十进制数字。
+
+[:en] Jan is [`01].
+[:zh_CN] 一月为 [`01]。
+
+[:en] The modified command [`%[*N]m] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]m] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%Om] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%Om] 解释该地域的替代表示。
+[-]
+[|] %M
+[|] [:en] The minute as a decimal number.
+    [:zh_CN] 分的十进制数字。
+
+[:en] The modified command [`%[*N]M] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]M] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%OM] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%OM] 解释该地域的替代表示。
+[-]
+[|] %n
+[|] [:en] Matches one white space character.
+    [:zh_CN] 匹配一个空格字符。
+
+[enter:note]
+[:en] [`%n], [`%t], and a space can be combined to match a wide range of
+white-space patterns.
+[:zh_CN] 可以用 [`%n]、[`%t] 和空格的组合来匹配很大范围的空白模式。
+
+[:en] For example, [`"%n "] matches one or more white space characters, and
+[`"%n%t%t"] matches one to three white space characters.
+[:zh_CN] 例如，[`"%n "] 匹配一个或更多空格字符，而 [`"%n%t%t"] 匹配一个到三个
+空格字符。
+[exit:note]
+[-]
+[|] %p
+[|] [:en] The locale[=']s equivalent of the AM/PM designations associated with a
+12-hour clock.
+    [:zh_CN] 该地域中等价于与 12 小时时钟关联的“AM/PM”指示符。
+
+[:en] The command [`%I] must precede [`%p] in the format string.
+[:zh_CN] 格式字符串中，命令 [`%I] 必须在 [`%p] 之前。
+[-]
+[|] %r
+[|] [:en] The locale[=']s 12-hour clock time.
+    [:zh_CN] 该地域的 12 小时时钟时间。
+[-]
+[|] %R
+[|] [:en] Equivalent to [`%H:%M].
+    [:zh_CN] 等价于 [`%H:%M]。
+[-]
+[|] %S
+[|] [:en] The seconds as a decimal number.
+    [:zh_CN] 秒的十进制数字。
+
+[:en] The modified command [`%[*N]S] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]S] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2 if the input time has a
+precision convertible to seconds.
+[:zh_CN] 如果未指定 [`[*N]]，则当输入时间具有可以转换为秒的精度时默认值为 2。
+
+[:en] Otherwise the default width is determined by the decimal precision of the
+input and the field is interpreted as a [`long double] in a fixed format.
+[:zh_CN] 否则其默认宽度由输入的十进制精度决定，且该字段在固定的格式中作为
+[`long double] 进行解释。
+
+[:en] If encountered, the locale determines the decimal point character.
+[:zh_CN] 如果出现此种情况，则由地域决定小数点字符。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%OS] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%OS] 解释该地域的替代表示。
+[-]
+[|] %t
+[|] [:en] Matches zero or one white space characters.
+    [:zh_CN] 匹配零个或一个空格字符。
+[-]
+[|] %T
+[|] [:en] Equivalent to [`%H:%M:%S].
+    [:zh_CN] 等价于 [`%H:%M:%S]。
+[-]
+[|] %u
+[|] [:en] The ISO weekday as a decimal number ([`1]-[`7]), where Monday is [`1].
+    [:zh_CN] ISO 周日期的十进制数字（[`1] 到 [`7]），其中周一为 [`1]。
+
+[:en] The modified command [`%[*N]u] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]u] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is [`1].
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 [`1]。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%Ou] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%Ou] 解释该地域的替代表示。
+[-]
+[|] %U
+[|] [:en] The week number of the year as a decimal number.
+    [:zh_CN] 年内周序数的十进制数字。
+
+[:en] The first Sunday of the year is the first day of week [`01].
+[:zh_CN] 一年的第一个周日为第 [`01] 周的第一天。
+
+[:en] Days of the same year prior to that are in week [`00].
+[:zh_CN] 同年中此前的日期处于第 [`00] 周。
+
+[:en] The modified command [`%[*N]U] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]U] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %V
+[|] [:en] The ISO week-based week number as a decimal number.
+    [:zh_CN] ISO 基于周的周序数的十进制数字。
+
+[:en] The modified command [`%[*N]V] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]V] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %w
+[|] [:en] The weekday as a decimal number ([`0]-[`6]), where Sunday is [`0].
+    [:zh_CN] ISO 周日期的十进制数字（[`0] 到 [`6]），其中周日为 [`0]。
+
+[:en] The modified command [`%[*N]w] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]w] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is [`1].
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 [`1]。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%Ow] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%Ow] 解释该地域的替代表示。
+[-]
+[|] %W
+[|] [:en] The week number of the year as a decimal number.
+    [:zh_CN] 年内周序数的十进制数字。
+
+[:en] The first Monday of the year is the first day of week [`01].
+[:zh_CN] 一年的第一个周一为第 [`01] 周的第一天。
+
+[:en] Days of the same year prior to that are in week [`00].
+[:zh_CN] 同年中此前的日期处于第 [`00] 周。
+
+[:en] The modified command [`%[*N]W] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]W] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+[-]
+[|] %x
+[|] [:en] The locale[=']s date representation.
+    [:zh_CN] 该地域的日期表示。
+
+[:en] The modified command [`%Ex] produces the locale[=']s alternate
+date representation.
+[:zh_CN] 修饰命令 [`%Ex] 产生该地域的替代日期表示。
+[-]
+[|] %X
+[|] [:en] The locale[=']s time representation.
+    [:zh_CN] 该地域的时间表示。
+
+[:en] The modified command [`%EX] produces the locale[=']s alternate
+time representation.
+[:zh_CN] 修饰命令 [`%EX] 产生该地域的替代时间表示。
+[-]
+[|] %y
+[|] [:en] The last two decimal digits of the year.
+    [:zh_CN] 年份的后两位十进制数字。
+
+[:en] If the century is not otherwise specified (e.g.  with [`%C]), values in
+the range [=crange(69,99)] are presumed to refer to the years 1969 to 1999,
+and values in the range [=crange(00,68)] are presumed to refer to the years 2000
+to 2068.
+[:zh_CN] 如果未另行指明世纪（比如以 [`%C]），则范围 [=crange(69,99)] 中的值被
+假定为 1969 到 1999 中的年份，而范围 [=crange(00,68)] 中的值则被假定为 2000 到
+2068 中的年份。
+
+[:en] The modified command [`%[*N]y] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]y] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 2.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 2。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified commands [`%Ey] and [`%Oy] interpret the locale[=']s
+alternate representation.
+[:zh_CN] 修饰命令 [`%Ey] 和 [`%Oy] 解释该地域的替代表示。
+[-]
+[|] %Y
+[|] [:en] The year as a decimal number.
+    [:zh_CN] 年份的十进制数字。
+
+[:en] The modified command [`%[*N]Y] specifies the maximum number of characters
+to read.
+[:zh_CN] 修饰命令 [`%[*N]Y] 指定读取的最大字符数。
+
+[:en] If [`[*N]] is not specified, the default is 4.
+[:zh_CN] 如果未指定 [`[*N]]，则默认值为 4。
+
+[:en] Leading zeroes are permitted but not required.
+[:zh_CN] 允许但不要求有前导零。
+
+[:en] The modified command [`%EY] interprets the locale[=']s alternate
+representation.
+[:zh_CN] 修饰命令 [`%EY] 解释该地域的替代表示。
+[-]
+[|] %z
+[|] [:en] The offset from UTC in the format [``[+|-`]hh`[mm`]].
+    [:zh_CN] 格式为 [``[+|-`]hh`[mm`]] 的 UTC 偏移量。
+
+[:en] For example [`-0430] refers to 4 hours 30 minutes behind UTC, and [`04]
+refers to 4 hours ahead of UTC.
+[:zh_CN] 例如 [`-0430] 代表落后 UTC 4 小时 30 分钟，而 [`04] 代表超前 UTC 4 小时。
+
+[:en] The modified commands [`%Ez] and [`%Oz] parses a [`:] between the hours
+and minutes and render leading zeroes on the hour field optional:
+[``[+|-`]h`[h`]`[:mm`]].
+[:zh_CN] 修饰命令 [`%Ez] 和 [`%Oz] 在小时和分钟之间解析一个 [`:]，并将小时字段
+中的前导零作为可选处理：[``[+|-`]h`[h`]`[:mm`]]。
+
+[:en] For example [`-04:30] refers to 4 hours 30 minutes behind UTC, and [`04]
+refers to 4 hours ahead of UTC.
+[:zh_CN] 例如 [`-04:30] 代表落后 UTC 4 小时 30 分钟，而 [`04] 代表超前 UTC 4
+小时。
+[-]
+[|] %Z
+[|] [:en] The time zone abbreviation or name.
+    [:zh_CN] 时区简称或名字。
+
+[:en] A single word is parsed.
+[:zh_CN] 解析单个单词。
+
+[:en] This word can only contain characters from the basic source character set
+([#lex.charset]) that are alphanumeric, or one of [`'_'], [`'/'], [`'-'], or
+[`'+'].
+[:zh_CN] 这个单词只能保护基本源字符集（[#lex.charset]）中的字母或数字字符，或者
+[`'_']、[`'/']、[`'-'] 或 [`'+'] 之一。
+[-]
+[|] %%
+[|] [:en] A [`%] character is extracted.
+    [:zh_CN] 抽取一个 [`%] 字符。
+[-]
+[table:end]
+
+[%:end#parse]

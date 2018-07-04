@@ -72,11 +72,11 @@ or built-in operator is to be invoked to implement the operator.
 
 [:en]
 Therefore, the operator notation is first transformed to the equivalent
-function-call notation as summarized in Table [#tab:over.rel.op.func]
-(where [`@] denotes one of the operators covered in the specified subclause).
+function-call notation as summarized in [#over.rel.op.func] (where [`@] denotes
+one of the operators covered in the specified subclause).
 [:zh_CN]
-因此，运算符的记法先要按照表 [#tab:over.rel.op.func] 中所总结的规则变形为其等价
-的函数调用记法（其中 [`@] 代表在指定的子条款中涵盖的运算符之一）。
+因此，运算符的记法先要按照 [#over.rel.op.func] 中所总结的规则变形为其等价的函数
+调用记法（其中 [`@] 代表在指定的子条款中涵盖的运算符之一）。
 
 [:en]
 However, the operands are sequenced in the order prescribed for the built-in
@@ -117,15 +117,15 @@ operator ([#expr.compound]).
 For a unary operator [`@] with an operand of a type whose cv-unqualified version
 is [`T1], and for a binary operator [`@] with a left operand of a type whose
 cv-unqualified version is [`T1] and a right operand of a type whose
-cv-unqualified version is [`T2], three sets of candidate functions, designated
+cv-unqualified version is [`T2], four sets of candidate functions, designated
 [+member candidates[%member candidate]], [+non-member candidates[%non-member
-candidate]] and [+built-in candidates[%built-in candidate]], are constructed as
-follows:
+candidate]], [+built-in candidates[%built-in candidate]], and [+rewritten
+candidate[%rewritten candidate]], are constructed as follows:
 [:zh_CN]
 对于操作数类型的 cv 未限定版本为 [`T1] 的一元运算符 [`@]，以及对于左操作数类型的
 cv 未限定版本为 [`T1]，而右操作数类型的 cv 未限定版本为 [`T2] 的二元运算符 [`@]，
-按照如下规则构造代表[+成员候选函数]、[+非成员候选函数]和[+内建候选函数]的三个
-候选函数集合：
+按照如下规则构造代表[+成员候选函数]、[+非成员候选函数]、[+内建候选函数]和
+[+重写候选函数]的四个候选函数集合：
 
 [list]
 [item]
@@ -192,6 +192,50 @@ converted according to [#over.best.ics], and
 that is not a function template specialization.
 [:zh_CN@~] 不与任何不是函数模板特例的非成员候选函数带有相同的形参类型列表。
 [list:end]
+
+[item]
+[:en]
+For the relational ([#expr.rel]) and equality ([#expr.eq]) operators, the
+rewritten candidates include all member, non-member, and built-in candidates
+for the operator [`<=>] for which the rewritten expression [`(x <=> y) @ 0] is
+well-formed using that [`operator<=>].
+[:zh_CN]
+对于关系（[#expr.rel]）和相等性（[#expr.eq]）运算符，重写候选函数包括能够在使用
+该 [`operator<=>] 时使重写表达式 [`(x <=> y) @ 0] 良构的运算符 [`<=>] 的所有
+成员、非成员和内建候选函数。
+
+[:en]
+For the relational ([#expr.rel]), equality ([#expr.eq]), and three-way
+comparison ([#expr.spaceship]) operators, the rewritten candidates also include
+a synthesized candidate, with the order of the two parameters reversed, for each
+member, non-member, and built-in candidate for the operator [`<=>] for which the
+rewritten expression [`0 @ (y <=> x)] is well-formed using that [`operator<=>].
+[:zh_CN]
+对于关系（[#expr.rel]）、相等性（[#expr.eq]）和三路比较（[#expr.spaceship]）
+运算符，重写候选函数还包括，对于能够在使用该 [`operator<=>] 时使重写表达式
+[`0 @ (y <=> x)] 良构的运算符 [`<=>] 的所有成员、非成员和内建候选函数，一个具有
+顺序相反的两个形参的合成候选函数。
+
+[enter:note]
+[:en]
+A candidate synthesized from a member candidate has its implicit object
+parameter as the second parameter, thus implicit conversions are considered for
+the first, but not for the second, parameter.
+[:zh_CN]
+对成员候选函数的合成候选函数，隐式对象形参变为第二个形参，使得对第一个形参会考虑
+隐式转换，但对第二个形参则不会。
+[exit:note]
+
+[:en]
+In each case, rewritten candidates are not considered in the context of the
+rewritten expression.
+[:zh_CN]
+各种情况下，都不会在重写表达式的语境中考虑重写候选函数。
+
+[:en]
+For all other operators, the rewritten candidate set is empty.
+[:zh_CN]
+对于所有其它运算符，重写候选函数集合为空。
 [list:end]
 
 [para]
@@ -221,44 +265,11 @@ For all other operators, no such restrictions apply.
 [para]
 [:en]
 The set of candidate functions for overload resolution for some operator [`@] is
-the union of the member candidates, the non-member candidates, and the built-in
-candidates for that operator [`@].
+the union of the member candidates, the non-member candidates, the built-in
+candidates, and the rewritten candidates for that operator [`@].
 [:zh_CN]
 对某个运算符 [`@] 的重载决议的候选函数集合，是该运算符 [`@] 的成员候选函数、
-非成员候选函数和内建候选函数的并集。
-
-[:en]
-If that operator is a relational ([#expr.rel]) or equality ([#expr.eq]) operator
-with operands [`x] and [`y], then for each member, non-member, or built-in
-candidate for the operator [`<=>]:
-[:zh_CN]
-如果该运算符是带有操作数 [`x] 和 [`y] 的关系运算符（[#expr.rel]）或相等性
-（[#expr.eq]）运算符，则对运算符 [`<=>] 的每个成员、非成员或内建候选函数：
-
-[list]
-[item]
-[:en]
-that operator is added to the set of candidate functions for overload resolution
-if [`x <=> y @ 0] is well-formed using that [`operator<=>]; and
-[:zh_CN]
-如果使用这个 [`operator<=>] 时 [`x <=> y @ 0] 良构，则将该运算符加入重载决议的
-候选函数集合。
-
-[item]
-[:en]
-a synthesized candidate is added to the candidate set where the order of the two
-parameters is reversed if [`0 @ y <=> x] is well-formed using that
-[`operator<=>];
-[:zh_CN]
-如果使用这个 [`operator<=>] 使 [`0 @ y <=> x] 良构，则将一个合成的倒转两个形参的
-顺序的候选函数加入候选集合；
-[list:end]
-
-[:en]
-where in each case [`operator<=>] candidates are not considered for the
-recursive lookup of operator [`@].
-[:zh_CN]
-其各种情况下在对运算符 [`@] 进行递归查找时不考虑 [`operator<=>] 候选函数。
+非成员候选函数、内建候选函数和重写候选函数的并集。
 
 [para]
 [:en]
@@ -296,16 +307,15 @@ void m() {
 
 [para]
 [:en]
-If an [`operator<=>] candidate is selected by overload resolution for an
-operator [`@], but [`@] is not [`<=>], [`x @ y] is interpreted as [`0 @ y <=> x]
+If a rewritten candidate is selected by overload resolution for an operator
+[`@], [`x @ y] is interpreted as the rewritten expression: [`0 @ y <=> x]
 if the selected candidate is a synthesized candidate with reversed order of
-parameters, or [`x <=> y @ 0] otherwise, using the selected [`operator<=>]
-candidate.
+parameters, or [`x <=> y @ 0] otherwise, using the selected rewritten
+[`operator<=>] candidate.
 [:zh_CN]
-如果重载决议为运算符 [`@] 选择了一个 [`operator<=>] 候选函数，但 [`@] 并非
-[`<=>]，则当所选择的候选函数为合成的带有相反形参顺序的候选函数时，将 [`x @ y]
-解释为 [`0 @ y <=> x]，否则为 [`x <=> @ 0]，使用所选择的 [`operator<=>] 候选函数
-。
+如果重载决议为运算符 [`@] 选择了一个重写候选函数，则当所选择的候选函数为合成的
+带有相反形参顺序的候选函数时，使用所选择的重写 [`operator<=>] 候选函数将
+[`x @ y] 解释为重写表达式 [`0 @ y <=> x]，否则为 [`x <=> @ 0]。
 
 [para]
 [:en]

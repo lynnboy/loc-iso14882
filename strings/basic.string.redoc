@@ -107,7 +107,7 @@ associated with an exception type:
 [%@library basic_string[!reverse_iterator]]
 [%@library const_reverse_iterator[!basic_string]]
 [%@library basic_string[!const_reverse_iterator]]
-[codeblock:synopsis [!:mark ImpDef] ]
+[codeblock:synopsis [!:mark ImpDef SeeBelow ] ]
 namespace std {
   template<class charT, class traits = char_traits<charT>,
            class Allocator = allocator<charT>>
@@ -144,7 +144,8 @@ namespace std {
                  const Allocator& a = Allocator());
     template<class T>
       basic_string(const T& t, size_type pos, size_type n, const Allocator& a = Allocator());
-    explicit basic_string(basic_string_view<charT, traits> sv, const Allocator& a = Allocator());
+    template<class T>
+      explicit basic_string(const T& t, const Allocator& a = Allocator());
     basic_string(const charT* s, size_type n, const Allocator& a = Allocator());
     basic_string(const charT* s, const Allocator& a = Allocator());
     basic_string(size_type n, charT c, const Allocator& a = Allocator());
@@ -159,7 +160,8 @@ namespace std {
     basic_string& operator=(basic_string&& str)
       noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value ||
                allocator_traits<Allocator>::is_always_equal::value);
-    basic_string& operator=(basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& operator=(const T& t);
     basic_string& operator=(const charT* s);
     basic_string& operator=(charT c);
     basic_string& operator=(initializer_list<charT>);
@@ -189,7 +191,7 @@ namespace std {
     void resize(size_type n, charT c);
     void resize(size_type n);
     size_type capacity() const noexcept;
-    void reserve(size_type res_arg = 0);
+    void reserve(size_type res_arg);
     void shrink_to_fit();
     void clear() noexcept;
     [[nodiscard]] bool empty() const noexcept;
@@ -209,13 +211,15 @@ namespace std {
     // [:en] [#string.modifiers], modifiers
     // [|:zh_CN] [#string.modifiers]，改动函数
     basic_string& operator+=(const basic_string& str);
-    basic_string& operator+=(basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& operator+=(const T& t);
     basic_string& operator+=(const charT* s);
     basic_string& operator+=(charT c);
     basic_string& operator+=(initializer_list<charT>);
     basic_string& append(const basic_string& str);
     basic_string& append(const basic_string& str, size_type pos, size_type n = npos);
-    basic_string& append(basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& append(const T& t);
     template<class T>
       basic_string& append(const T& t, size_type pos, size_type n = npos);
     basic_string& append(const charT* s, size_type n);
@@ -231,7 +235,8 @@ namespace std {
       noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value ||
                allocator_traits<Allocator>::is_always_equal::value);
     basic_string& assign(const basic_string& str, size_type pos, size_type n = npos);
-    basic_string& assign(basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& assign(const T& t);
     template<class T>
       basic_string& assign(const T& t, size_type pos, size_type n = npos);
     basic_string& assign(const charT* s, size_type n);
@@ -244,7 +249,8 @@ namespace std {
     basic_string& insert(size_type pos, const basic_string& str);
     basic_string& insert(size_type pos1, const basic_string& str,
                          size_type pos2, size_type n = npos);
-    basic_string& insert(size_type pos, basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& insert(size_type pos, const T& t);
     template<class T>
       basic_string& insert(size_type pos1, const T& t, size_type pos2, size_type n = npos);
     basic_string& insert(size_type pos, const charT* s, size_type n);
@@ -265,7 +271,8 @@ namespace std {
     basic_string& replace(size_type pos1, size_type n1, const basic_string& str);
     basic_string& replace(size_type pos1, size_type n1, const basic_string& str,
                           size_type pos2, size_type n2 = npos);
-    basic_string& replace(size_type pos1, size_type n1, basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& replace(size_type pos1, size_type n1, const T& t);
     template<class T>
       basic_string& replace(size_type pos1, size_type n1, const T& t,
                             size_type pos2, size_type n2 = npos);
@@ -274,8 +281,8 @@ namespace std {
     basic_string& replace(size_type pos, size_type n1, size_type n2, charT c);
 
     basic_string& replace(const_iterator i1, const_iterator i2, const basic_string& str);
-    basic_string& replace(const_iterator i1, const_iterator i2,
-                          basic_string_view<charT, traits> sv);
+    template<class T>
+      basic_string& replace(const_iterator i1, const_iterator i2, const T& t);
     basic_string& replace(const_iterator i1, const_iterator i2, const charT* s, size_type n);
     basic_string& replace(const_iterator i1, const_iterator i2, const charT* s);
     basic_string& replace(const_iterator i1, const_iterator i2, size_type n, charT c);
@@ -298,46 +305,50 @@ namespace std {
     operator basic_string_view<charT, traits>() const noexcept;
     allocator_type get_allocator() const noexcept;
 
-    size_type find (basic_string_view<charT, traits> sv, size_type pos = 0) const noexcept;
+    template<class T>
+      size_type find (const T& t, size_type pos = 0) const;
     size_type find (const basic_string& str, size_type pos = 0) const noexcept;
     size_type find (const charT* s, size_type pos, size_type n) const;
     size_type find (const charT* s, size_type pos = 0) const;
     size_type find (charT c, size_type pos = 0) const;
-    size_type rfind(basic_string_view<charT, traits> sv, size_type pos = npos) const noexcept;
+    template<class T>
+      size_type rfind(const T& t, size_type pos = npos) const;
     size_type rfind(const basic_string& str, size_type pos = npos) const noexcept;
     size_type rfind(const charT* s, size_type pos, size_type n) const;
     size_type rfind(const charT* s, size_type pos = npos) const;
     size_type rfind(charT c, size_type pos = npos) const;
 
-    size_type find_first_of(basic_string_view<charT, traits> sv,
-                            size_type pos = 0) const noexcept;
+    template<class T>
+      size_type find_first_of(const T& t, size_type pos = 0) const;
     size_type find_first_of(const basic_string& str, size_type pos = 0) const noexcept;
     size_type find_first_of(const charT* s, size_type pos, size_type n) const;
     size_type find_first_of(const charT* s, size_type pos = 0) const;
     size_type find_first_of(charT c, size_type pos = 0) const;
-    size_type find_last_of (basic_string_view<charT, traits> sv,
-                            size_type pos = npos) const noexcept;
+    template<class T>
+      size_type find_last_of (const T& t, size_type pos = npos) const;
     size_type find_last_of (const basic_string& str, size_type pos = npos) const noexcept;
     size_type find_last_of (const charT* s, size_type pos, size_type n) const;
     size_type find_last_of (const charT* s, size_type pos = npos) const;
     size_type find_last_of (charT c, size_type pos = npos) const;
 
-    size_type find_first_not_of(basic_string_view<charT, traits> sv,
-                                size_type pos = 0) const noexcept;
+    template<class T>
+      size_type find_first_not_of(const T& t, size_type pos = 0) const;
     size_type find_first_not_of(const basic_string& str, size_type pos = 0) const noexcept;
     size_type find_first_not_of(const charT* s, size_type pos, size_type n) const;
     size_type find_first_not_of(const charT* s, size_type pos = 0) const;
     size_type find_first_not_of(charT c, size_type pos = 0) const;
-    size_type find_last_not_of (basic_string_view<charT, traits> sv,
-                                size_type pos = npos) const noexcept;
+    template<class T>
+      size_type find_last_not_of (const T& t, size_type pos = npos) const;
     size_type find_last_not_of (const basic_string& str, size_type pos = npos) const noexcept;
     size_type find_last_not_of (const charT* s, size_type pos, size_type n) const;
     size_type find_last_not_of (const charT* s, size_type pos = npos) const;
     size_type find_last_not_of (charT c, size_type pos = npos) const;
 
     basic_string substr(size_type pos = 0, size_type n = npos) const;
-    int compare(basic_string_view<charT, traits> sv) const noexcept;
-    int compare(size_type pos1, size_type n1, basic_string_view<charT, traits> sv) const;
+    template<class T>
+      int compare(const T& t) const;
+    template<class T>
+      int compare(size_type pos1, size_type n1, const T& t) const;
     template<class T>
       int compare(size_type pos1, size_type n1, const T& t,
                   size_type pos2, size_type n2 = npos) const;
@@ -363,8 +374,30 @@ namespace std {
       -> basic_string<typename iterator_traits<InputIterator>::value_type,
                       char_traits<typename iterator_traits<InputIterator>::value_type>,
                       Allocator>;
+
+  template<class charT,
+           class traits,
+           class Allocator = allocator<charT>>
+    explicit basic_string(basic_string_view<charT, traits>, const Allocator& = Allocator())
+      -> basic_string<charT, traits, Allocator>;
+
+  template<class charT,
+           class traits,
+           class Allocator = allocator<charT>>
+    basic_string(basic_string_view<charT, traits>,
+                 typename [=SeeBelow]::size_type, typename [=SeeBelow]::size_type,
+                 const Allocator& = Allocator())
+      -> basic_string<charT, traits, Allocator>;
 }
 [codeblock:end]
+
+[para]
+[:en]
+A [`size_type] parameter type in a [`basic_string] deduction guide refers to the
+[`size_type] member type of the type deduced by the deduction guide.
+[:zh_CN]
+[`basic_string] 推断指导中的形参类型 [`size_type] 代表由该推断指导所推断的类型的
+[`size_type] 成员类型。
 
 [include string.require]
 

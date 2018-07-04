@@ -4,6 +4,37 @@
 ]
 
 [%@header chrono]
+[%@library treat_as_floating_point_v]
+[%@library is_clock_v]
+[%@library nanoseconds]
+[%@library microseconds]
+[%@library milliseconds]
+[%@library seconds]
+[%@library minutes]
+[%@library hours]
+[%@library days]
+[%@library weeks]
+[%@library years]
+[%@library months]
+[%@library sys_time]
+[%@library sys_seconds]
+[%@library sys_days]
+[%@library utc_time]
+[%@library utc_seconds]
+[%@library tai_time]
+[%@library tai_seconds]
+[%@library gps_time]
+[%@library gps_seconds]
+[%@library file_time]
+[%@library local_time]
+[%@library local_seconds]
+[%@library local_days]
+[%@library local_t]
+[%@library choose]
+[%@library earliest[!choose]]
+[%@library choose[!earliest]]
+[%@library latest[!choose]]
+[%@library choose[!latest]]
 [codeblock:synopsis [!:note] [!:mark UnSpec] ]
 namespace std {
   namespace chrono {
@@ -33,6 +64,9 @@ namespace std {
     template<class Rep> struct duration_values;
     template<class Rep>
       inline constexpr bool treat_as_floating_point_v = treat_as_floating_point<Rep>::value;
+
+    template<class T> struct is_clock;
+    template<class T> inline constexpr bool is_clock_v = is_clock<T>::value;
 
     // [:en] [#time.duration.nonmember], [`duration] arithmetic
     // [|:zh_CN] [#time.duration.nonmember]，[`duration] 的算术
@@ -93,6 +127,23 @@ namespace std {
     template<class ToDuration, class Rep, class Period>
       constexpr ToDuration round(const duration<Rep, Period>& d);
 
+    // [:en] [#time.duration.io], [`duration] I/O
+    // [|:zh_CN] [#time.duration.io]，[`duration] I/O
+    template<class charT, class traits, class Rep, class Period>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os,
+                   const duration<Rep, Period>& d);
+    template<class charT, class traits, class Rep, class Period>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const duration<Rep, Period>& d);
+    template<class charT, class traits, class Rep, class Period, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    duration<Rep, Period>& d,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
     // [:en] convenience typedefs
     // [|:zh_CN] 便利的 typedef
     using nanoseconds  = duration<[$:note [:en] signed integer type of at least 64 bits [:zh_CN] 至少 64 位的有符号整数类型], nano>;
@@ -101,6 +152,14 @@ namespace std {
     using seconds      = duration<[$:note [:en] signed integer type of at least 35 bits [:zh_CN] 至少 35 位的有符号整数类型]>;
     using minutes      = duration<[$:note [:en] signed integer type of at least 29 bits [:zh_CN] 至少 29 位的有符号整数类型], ratio<  60>>;
     using hours        = duration<[$:note [:en] signed integer type of at least 23 bits [:zh_CN] 至少 23 位的有符号整数类型], ratio<3600>>;
+    using days         = duration<[$:note [:en] signed integer type of at least 23 bits [:zh_CN] 至少 23 位的有符号整数类型],
+                                  ratio_multiply<ratio<24>, hours::period>>;
+    using weeks        = duration<[$:note [:en] signed integer type of at least 23 bits [:zh_CN] 至少 23 位的有符号整数类型],
+                                  ratio_multiply<ratio<7>, days::period>>;
+    using years        = duration<[$:note [:en] signed integer type of at least 23 bits [:zh_CN] 至少 23 位的有符号整数类型],
+                                  ratio_multiply<ratio<146097, 400>, days::period>>;
+    using months       = duration<[$:note [:en] signed integer type of at least 23 bits [:zh_CN] 至少 23 位的有符号整数类型],
+                                  ratio_divide<years::period, ratio<12>>>;
 
     // [:en] [#time.point.nonmember], [`time_point] arithmetic
     // [|:zh_CN] [#time.point.nonmember]，[`time_point] 的算术
@@ -156,29 +215,831 @@ namespace std {
     template<class Rep, class Period>
       constexpr duration<Rep, Period> abs(duration<Rep, Period> d);
 
-    // [:en] [#time.clock], clocks
-    // [|:zh_CN] [#time.clock]，时钟
+    // [:en] [#time.clock.system], class [`system_clock]
+    // [|:zh_CN] [#time.clock.system]，类 [`system_clock]
     class system_clock;
+
+    template<class Duration>
+      using sys_time  = time_point<system_clock, Duration>;
+    using sys_seconds = sys_time<seconds>;
+    using sys_days    = sys_time<days>;
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const sys_time<Duration>& tp);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const sys_days& dp);
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const sys_time<Duration>& tp);
+
+    template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    sys_time<Duration>& tp,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.clock.utc], class [`utc_clock]
+    // [|:zh_CN] [#time.clock.utc]，类 [`utc_clock]
+    class utc_clock;
+
+    template<class Duration>
+      using utc_time  = time_point<utc_clock, Duration>;
+    using utc_seconds = utc_time<seconds>;
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const utc_time<Duration>& t);
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const utc_time<Duration>& tp);
+    template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    utc_time<Duration>& tp,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.clock.tai], class [`tai_clock]
+    // [|:zh_CN] [#time.clock.tai]，类 [`tai_clock]
+    class tai_clock;
+
+    template<class Duration>
+      using tai_time  = time_point<tai_clock, Duration>;
+    using tai_seconds = tai_time<seconds>;
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const tai_time<Duration>& t);
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const tai_time<Duration>& tp);
+    template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    tai_time<Duration>& tp,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.clock.gps], class [`gps_clock]
+    // [|:zh_CN] [#time.clock.gps]，类 [`gps_clock]
+    class gps_clock;
+
+    template<class Duration>
+      using gps_time  = time_point<gps_clock, Duration>;
+    using gps_seconds = gps_time<seconds>;
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const gps_time<Duration>& t);
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const gps_time<Duration>& tp);
+    template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    gps_time<Duration>& tp,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.clock.file], class [`file_clock]
+    // [|:zh_CN] [#time.clock.file]，类 [`file_clock]
+    class file_clock;
+
+    template<class Duration>
+      using file_time = time_point<file_clock, Duration>;
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const file_time<Duration>& tp);
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const file_time<Duration>& tp);
+    template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    file_time<Duration>& tp,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.clock.steady], class [`steady_clock]
+    // [|:zh_CN] [#time.clock.steady]，类 [`steady_clock]
     class steady_clock;
+
+    // [:en] [#time.clock.hires], class [`high_resolution_clock]
+    // [|:zh_CN] [#time.clock.hires]，类 [`high_resolution_clock]
     class high_resolution_clock;
+
+    // [:en] [#time.clock.local], local time
+    // [|:zh_CN] [#time.clock.local]，局部时间
+    struct local_t {};
+    template<class Duration>
+      using local_time  = time_point<local_t, Duration>;
+    using local_seconds = local_time<seconds>;
+    using local_days    = local_time<days>;
+
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const local_time<Duration>& tp);
+    template<class charT, class traits, class Duration>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const local_time<Duration>& tp,
+                  const string* abbrev = nullptr, const seconds* offset_sec = nullptr);
+    template<class charT, class traits, class Duration, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    local_time<Duration>& tp,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.clock.cast], [`time_point] conversions
+    // [|:zh_CN] [#time.clock.cast]，[`time_point] 转换
+    template<class DestClock, class SourceClock>
+      struct clock_time_conversion;
+
+    template<class DestClock, class SourceClock, class Duration>
+      auto clock_cast(const time_point<SourceClock, Duration>& t);
+
+    // [:en] [#time.cal.last], class [`last_spec]
+    // [|:zh_CN] [#time.cal.last]，类 [`last_spec]
+    struct last_spec;
+
+    // [:en] [#time.cal.day], class [`day]
+    // [|:zh_CN] [#time.cal.day]，类 [`day]
+    class day;
+
+    constexpr bool operator==(const day& x, const day& y) noexcept;
+    constexpr bool operator!=(const day& x, const day& y) noexcept;
+    constexpr bool operator< (const day& x, const day& y) noexcept;
+    constexpr bool operator> (const day& x, const day& y) noexcept;
+    constexpr bool operator<=(const day& x, const day& y) noexcept;
+    constexpr bool operator>=(const day& x, const day& y) noexcept;
+
+    constexpr day  operator+(const day&  x, const days& y) noexcept;
+    constexpr day  operator+(const days& x, const day&  y) noexcept;
+    constexpr day  operator-(const day&  x, const days& y) noexcept;
+    constexpr days operator-(const day&  x, const day&  y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const day& d);
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const day& d);
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    day& d, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.month], class [`month]
+    // [|:zh_CN] [#time.cal.month]，类 [`month]
+    class month;
+
+    constexpr bool operator==(const month& x, const month& y) noexcept;
+    constexpr bool operator!=(const month& x, const month& y) noexcept;
+    constexpr bool operator< (const month& x, const month& y) noexcept;
+    constexpr bool operator> (const month& x, const month& y) noexcept;
+    constexpr bool operator<=(const month& x, const month& y) noexcept;
+    constexpr bool operator>=(const month& x, const month& y) noexcept;
+
+    constexpr month  operator+(const month&  x, const months& y) noexcept;
+    constexpr month  operator+(const months& x,  const month& y) noexcept;
+    constexpr month  operator-(const month&  x, const months& y) noexcept;
+    constexpr months operator-(const month&  x,  const month& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const month& m);
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const month& m);
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    month& m, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.year], class [`year]
+    // [|:zh_CN] [#time.cal.year]，类 [`year]
+    class year;
+
+    constexpr bool operator==(const year& x, const year& y) noexcept;
+    constexpr bool operator!=(const year& x, const year& y) noexcept;
+    constexpr bool operator< (const year& x, const year& y) noexcept;
+    constexpr bool operator> (const year& x, const year& y) noexcept;
+    constexpr bool operator<=(const year& x, const year& y) noexcept;
+    constexpr bool operator>=(const year& x, const year& y) noexcept;
+
+    constexpr year  operator+(const year&  x, const years& y) noexcept;
+    constexpr year  operator+(const years& x, const year&  y) noexcept;
+    constexpr year  operator-(const year&  x, const years& y) noexcept;
+    constexpr years operator-(const year&  x, const year&  y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const year& y);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const year& y);
+
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    year& y, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.wd], class [`weekday]
+    // [|:zh_CN] [#time.cal.wd]，类 [`weekday]
+    class weekday;
+
+    constexpr bool operator==(const weekday& x, const weekday& y) noexcept;
+    constexpr bool operator!=(const weekday& x, const weekday& y) noexcept;
+
+    constexpr weekday operator+(const weekday& x, const days&    y) noexcept;
+    constexpr weekday operator+(const days&    x, const weekday& y) noexcept;
+    constexpr weekday operator-(const weekday& x, const days&    y) noexcept;
+    constexpr days    operator-(const weekday& x, const weekday& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const weekday& wd);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const weekday& wd);
+
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    weekday& wd, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.wdidx], class [`weekday_indexed]
+    // [|:zh_CN] [#time.cal.wdidx]，类 [`weekday_indexed]
+    class weekday_indexed;
+
+    constexpr bool operator==(const weekday_indexed& x, const weekday_indexed& y) noexcept;
+    constexpr bool operator!=(const weekday_indexed& x, const weekday_indexed& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const weekday_indexed& wdi);
+
+    // [:en] [#time.cal.wdlast], class [`weekday_last]
+    // [|:zh_CN] [#time.cal.wdlast]，类 [`weekday_last]
+    class weekday_last;
+
+    constexpr bool operator==(const weekday_last& x, const weekday_last& y) noexcept;
+    constexpr bool operator!=(const weekday_last& x, const weekday_last& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const weekday_last& wdl);
+
+    // [:en] [#time.cal.md], class [`month_day]
+    // [|:zh_CN] [#time.cal.md]，类 [`month_day]
+    class month_day;
+
+    constexpr bool operator==(const month_day& x, const month_day& y) noexcept;
+    constexpr bool operator!=(const month_day& x, const month_day& y) noexcept;
+    constexpr bool operator< (const month_day& x, const month_day& y) noexcept;
+    constexpr bool operator> (const month_day& x, const month_day& y) noexcept;
+    constexpr bool operator<=(const month_day& x, const month_day& y) noexcept;
+    constexpr bool operator>=(const month_day& x, const month_day& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const month_day& md);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const month_day& md);
+
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    month_day& md, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.mdlast], class [`month_day_last]
+    // [|:zh_CN] [#time.cal.mdlast]，类 [`month_day_last]
+    class month_day_last;
+
+    constexpr bool operator==(const month_day_last& x, const month_day_last& y) noexcept;
+    constexpr bool operator!=(const month_day_last& x, const month_day_last& y) noexcept;
+    constexpr bool operator< (const month_day_last& x, const month_day_last& y) noexcept;
+    constexpr bool operator> (const month_day_last& x, const month_day_last& y) noexcept;
+    constexpr bool operator<=(const month_day_last& x, const month_day_last& y) noexcept;
+    constexpr bool operator>=(const month_day_last& x, const month_day_last& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const month_day_last& mdl);
+
+    // [:en] [#time.cal.mwd], class [`month_weekday]
+    // [|:zh_CN] [#time.cal.mwd]，类 [`month_weekday]
+    class month_weekday;
+
+    constexpr bool operator==(const month_weekday& x, const month_weekday& y) noexcept;
+    constexpr bool operator!=(const month_weekday& x, const month_weekday& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const month_weekday& mwd);
+
+    // [:en] [#time.cal.mwdlast], class [`month_weekday_last]
+    // [|:zh_CN] [#time.cal.mwdlast]，类 [`month_weekday_last]
+    class month_weekday_last;
+
+    constexpr bool operator==(const month_weekday_last& x, const month_weekday_last& y) noexcept;
+    constexpr bool operator!=(const month_weekday_last& x, const month_weekday_last& y) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const month_weekday_last& mwdl);
+
+    // [:en] [#time.cal.ym], class [`year_month]
+    // [|:zh_CN] [#time.cal.ym]，类 [`year_month]
+    class year_month;
+
+    constexpr bool operator==(const year_month& x, const year_month& y) noexcept;
+    constexpr bool operator!=(const year_month& x, const year_month& y) noexcept;
+    constexpr bool operator< (const year_month& x, const year_month& y) noexcept;
+    constexpr bool operator> (const year_month& x, const year_month& y) noexcept;
+    constexpr bool operator<=(const year_month& x, const year_month& y) noexcept;
+    constexpr bool operator>=(const year_month& x, const year_month& y) noexcept;
+
+    constexpr year_month operator+(const year_month& ym, const months& dm) noexcept;
+    constexpr year_month operator+(const months& dm, const year_month& ym) noexcept;
+    constexpr year_month operator-(const year_month& ym, const months& dm) noexcept;
+    constexpr months operator-(const year_month& x, const year_month& y) noexcept;
+    constexpr year_month operator+(const year_month& ym, const years& dy) noexcept;
+    constexpr year_month operator+(const years& dy, const year_month& ym) noexcept;
+    constexpr year_month operator-(const year_month& ym, const years& dy) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const year_month& ym);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt, const year_month& ym);
+
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    year_month& ym, basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.ymd], class [`year_month_day]
+    // [|:zh_CN] [#time.cal.ymd]，类 [`year_month_day]
+    class year_month_day;
+
+    constexpr bool operator==(const year_month_day& x, const year_month_day& y) noexcept;
+    constexpr bool operator!=(const year_month_day& x, const year_month_day& y) noexcept;
+    constexpr bool operator< (const year_month_day& x, const year_month_day& y) noexcept;
+    constexpr bool operator> (const year_month_day& x, const year_month_day& y) noexcept;
+    constexpr bool operator<=(const year_month_day& x, const year_month_day& y) noexcept;
+    constexpr bool operator>=(const year_month_day& x, const year_month_day& y) noexcept;
+
+    constexpr year_month_day operator+(const year_month_day& ymd, const months& dm) noexcept;
+    constexpr year_month_day operator+(const months& dm, const year_month_day& ymd) noexcept;
+    constexpr year_month_day operator+(const year_month_day& ymd, const years& dy) noexcept;
+    constexpr year_month_day operator+(const years& dy, const year_month_day& ymd) noexcept;
+    constexpr year_month_day operator-(const year_month_day& ymd, const months& dm) noexcept;
+    constexpr year_month_day operator-(const year_month_day& ymd, const years& dy) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const year_month_day& ymd);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const year_month_day& ymd);
+
+    template<class charT, class traits, class Alloc = allocator<charT>>
+      basic_istream<charT, traits>&
+        from_stream(basic_istream<charT, traits>& is, const charT* fmt,
+                    year_month_day& ymd,
+                    basic_string<charT, traits, Alloc>* abbrev = nullptr,
+                    minutes* offset = nullptr);
+
+    // [:en] [#time.cal.ymdlast], class [`year_month_day_last]
+    // [|:zh_CN] [#time.cal.ymdlast]，类 [`year_month_day_last]
+    class year_month_day_last;
+
+    constexpr bool operator==(const year_month_day_last& x,
+                              const year_month_day_last& y) noexcept;
+    constexpr bool operator!=(const year_month_day_last& x,
+                              const year_month_day_last& y) noexcept;
+    constexpr bool operator< (const year_month_day_last& x,
+                              const year_month_day_last& y) noexcept;
+    constexpr bool operator> (const year_month_day_last& x,
+                              const year_month_day_last& y) noexcept;
+    constexpr bool operator<=(const year_month_day_last& x,
+                              const year_month_day_last& y) noexcept;
+    constexpr bool operator>=(const year_month_day_last& x,
+                              const year_month_day_last& y) noexcept;
+
+    constexpr year_month_day_last
+      operator+(const year_month_day_last& ymdl, const months& dm) noexcept;
+    constexpr year_month_day_last
+      operator+(const months& dm, const year_month_day_last& ymdl) noexcept;
+    constexpr year_month_day_last
+      operator+(const year_month_day_last& ymdl, const years& dy) noexcept;
+    constexpr year_month_day_last
+      operator+(const years& dy, const year_month_day_last& ymdl) noexcept;
+    constexpr year_month_day_last
+      operator-(const year_month_day_last& ymdl, const months& dm) noexcept;
+    constexpr year_month_day_last
+      operator-(const year_month_day_last& ymdl, const years& dy) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const year_month_day_last& ymdl);
+
+    // [:en] [#time.cal.ymwd], class [`year_month_weekday]
+    // [|:zh_CN] [#time.cal.ymwd]，类 [`year_month_weekday]
+    class year_month_weekday;
+
+    constexpr bool operator==(const year_month_weekday& x,
+                              const year_month_weekday& y) noexcept;
+    constexpr bool operator!=(const year_month_weekday& x,
+                              const year_month_weekday& y) noexcept;
+
+    constexpr year_month_weekday
+      operator+(const year_month_weekday& ymwd, const months& dm) noexcept;
+    constexpr year_month_weekday
+      operator+(const months& dm, const year_month_weekday& ymwd) noexcept;
+    constexpr year_month_weekday
+      operator+(const year_month_weekday& ymwd, const years& dy) noexcept;
+    constexpr year_month_weekday
+      operator+(const years& dy, const year_month_weekday& ymwd) noexcept;
+    constexpr year_month_weekday
+      operator-(const year_month_weekday& ymwd, const months& dm) noexcept;
+    constexpr year_month_weekday
+      operator-(const year_month_weekday& ymwd, const years& dy) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const year_month_weekday& ymwdi);
+
+    // [:en] [#time.cal.ymwdlast], class [`year_month_weekday_last]
+    // [|:zh_CN] [#time.cal.ymwdlast]，类 [`year_month_weekday_last]
+    class year_month_weekday_last;
+
+    constexpr bool operator==(const year_month_weekday_last& x,
+                              const year_month_weekday_last& y) noexcept;
+    constexpr bool operator!=(const year_month_weekday_last& x,
+                              const year_month_weekday_last& y) noexcept;
+
+    constexpr year_month_weekday_last
+      operator+(const year_month_weekday_last& ymwdl, const months& dm) noexcept;
+    constexpr year_month_weekday_last
+      operator+(const months& dm, const year_month_weekday_last& ymwdl) noexcept;
+    constexpr year_month_weekday_last
+      operator+(const year_month_weekday_last& ymwdl, const years& dy) noexcept;
+    constexpr year_month_weekday_last
+      operator+(const years& dy, const year_month_weekday_last& ymwdl) noexcept;
+    constexpr year_month_weekday_last
+      operator-(const year_month_weekday_last& ymwdl, const months& dm) noexcept;
+    constexpr year_month_weekday_last
+      operator-(const year_month_weekday_last& ymwdl, const years& dy) noexcept;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const year_month_weekday_last& ymwdl);
+
+    // [:en] [#time.cal.operators], civil calendar conventional syntax operators
+    // [|:zh_CN] [#time.cal.operators]，民用日历的便利语法运算符
+    constexpr year_month
+      operator/(const year& y, const month& m) noexcept;
+    constexpr year_month
+      operator/(const year& y, int m) noexcept;
+    constexpr month_day
+      operator/(const month& m, const day& d) noexcept;
+    constexpr month_day
+      operator/(const month& m, int d) noexcept;
+    constexpr month_day
+      operator/(int m, const day& d) noexcept;
+    constexpr month_day
+      operator/(const day& d, const month& m) noexcept;
+    constexpr month_day
+      operator/(const day& d, int m) noexcept;
+    constexpr month_day_last
+      operator/(const month& m, last_spec) noexcept;
+    constexpr month_day_last
+      operator/(int m, last_spec) noexcept;
+    constexpr month_day_last
+      operator/(last_spec, const month& m) noexcept;
+    constexpr month_day_last
+      operator/(last_spec, int m) noexcept;
+    constexpr month_weekday
+      operator/(const month& m, const weekday_indexed& wdi) noexcept;
+    constexpr month_weekday
+      operator/(int m, const weekday_indexed& wdi) noexcept;
+    constexpr month_weekday
+      operator/(const weekday_indexed& wdi, const month& m) noexcept;
+    constexpr month_weekday
+      operator/(const weekday_indexed& wdi, int m) noexcept;
+    constexpr month_weekday_last
+      operator/(const month& m, const weekday_last& wdl) noexcept;
+    constexpr month_weekday_last
+      operator/(int m, const weekday_last& wdl) noexcept;
+    constexpr month_weekday_last
+      operator/(const weekday_last& wdl, const month& m) noexcept;
+    constexpr month_weekday_last
+      operator/(const weekday_last& wdl, int m) noexcept;
+    constexpr year_month_day
+      operator/(const year_month& ym, const day& d) noexcept;
+    constexpr year_month_day
+      operator/(const year_month& ym, int d) noexcept;
+    constexpr year_month_day
+      operator/(const year& y, const month_day& md) noexcept;
+    constexpr year_month_day
+      operator/(int y, const month_day& md) noexcept;
+    constexpr year_month_day
+      operator/(const month_day& md, const year& y) noexcept;
+    constexpr year_month_day
+      operator/(const month_day& md, int y) noexcept;
+    constexpr year_month_day_last
+      operator/(const year_month& ym, last_spec) noexcept;
+    constexpr year_month_day_last
+      operator/(const year& y, const month_day_last& mdl) noexcept;
+    constexpr year_month_day_last
+      operator/(int y, const month_day_last& mdl) noexcept;
+    constexpr year_month_day_last
+      operator/(const month_day_last& mdl, const year& y) noexcept;
+    constexpr year_month_day_last
+      operator/(const month_day_last& mdl, int y) noexcept;
+    constexpr year_month_weekday
+      operator/(const year_month& ym, const weekday_indexed& wdi) noexcept;
+    constexpr year_month_weekday
+      operator/(const year& y, const month_weekday& mwd) noexcept;
+    constexpr year_month_weekday
+      operator/(int y, const month_weekday& mwd) noexcept;
+    constexpr year_month_weekday
+      operator/(const month_weekday& mwd, const year& y) noexcept;
+    constexpr year_month_weekday
+      operator/(const month_weekday& mwd, int y) noexcept;
+    constexpr year_month_weekday_last
+      operator/(const year_month& ym, const weekday_last& wdl) noexcept;
+    constexpr year_month_weekday_last
+      operator/(const year& y, const month_weekday_last& mwdl) noexcept;
+    constexpr year_month_weekday_last
+      operator/(int y, const month_weekday_last& mwdl) noexcept;
+    constexpr year_month_weekday_last
+      operator/(const month_weekday_last& mwdl, const year& y) noexcept;
+    constexpr year_month_weekday_last
+      operator/(const month_weekday_last& mwdl, int y) noexcept;
+
+    // [:en] [#time.tod], class template [`time_of_day]
+    // [|:zh_CN] [#time.tod]，类模板 [`time_of_day]
+    template<class Duration> class time_of_day;
+    template<> class time_of_day<hours>;
+    template<> class time_of_day<minutes>;
+    template<> class time_of_day<seconds>;
+    template<class Rep, class Period> class time_of_day<duration<Rep, Period>>;
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const time_of_day<hours>& t);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const time_of_day<minutes>& t);
+
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const time_of_day<seconds>& t);
+
+    template<class charT, class traits, class Rep, class Period>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os,
+                   const time_of_day<duration<Rep, Period>>& t);
+
+    // [:en] [#time.zone.db], time zone database
+    // [|:zh_CN] [#time.zone.db]，时区数据库
+    struct tzdb;
+    class tzdb_list;
+
+    // [:en] [#time.zone.db.access], time zone database access
+    // [|:zh_CN] [#time.zone.db.access]，时区数据库访问
+    const tzdb& get_tzdb();
+    tzdb_list& get_tzdb_list();
+    const time_zone* locate_zone(string_view tz_name);
+    const time_zone* current_zone();
+
+    // [:en] [#time.zone.db.remote], remote time zone database support
+    // [|:zh_CN] [#time.zone.db.remote]，远程时区数据库支持
+    const tzdb& reload_tzdb();
+    string remote_version();
+
+    // [:en] [#time.zone.exception], exception classes
+    // [|:zh_CN] [#time.zone.exception]，异常类
+    class nonexistent_local_time;
+    class ambiguous_local_time;
+
+    // [:en] [#time.zone.info], information classes
+    // [|:zh_CN] [#time.zone.info]，信息类
+    struct sys_info;
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const sys_info& si);
+
+    struct local_info;
+    template<class charT, class traits>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const local_info& li);
+
+    // [:en] [#time.zone.timezone], class [`time_zone]
+    // [|:zh_CN] [#time.zone.timezone]，类 [`time_zone]
+    enum class choose {earliest, latest};
+    class time_zone;
+
+    bool operator==(const time_zone& x, const time_zone& y) noexcept;
+    bool operator!=(const time_zone& x, const time_zone& y) noexcept;
+
+    bool operator<(const time_zone& x, const time_zone& y) noexcept;
+    bool operator>(const time_zone& x, const time_zone& y) noexcept;
+    bool operator<=(const time_zone& x, const time_zone& y) noexcept;
+    bool operator>=(const time_zone& x, const time_zone& y) noexcept;
+
+    // [:en] [#time.zone.zonedtraits], class template [`zoned_traits]
+    // [|:zh_CN] [#time.zone.zonedtraits]，类模板 [`zoned_traits]
+    template<class T> struct zoned_traits;
+
+    // [:en] [#time.zone.zonedtime], class template [`zoned_time]
+    // [|:zh_CN] [#time.zone.zonedtime]，类模板 [`zoned_time]
+    template<class Duration, class TimeZonePtr = const time_zone*> class zoned_time;
+
+    using zoned_seconds = zoned_time<seconds>;
+
+    template<class Duration1, class Duration2, class TimeZonePtr>
+      bool operator==(const zoned_time<Duration1, TimeZonePtr>& x,
+                      const zoned_time<Duration2, TimeZonePtr>& y);
+
+    template<class Duration1, class Duration, class TimeZonePtr2>
+      bool operator!=(const zoned_time<Duration1, TimeZonePtr>& x,
+                      const zoned_time<Duration2, TimeZonePtr>& y);
+
+    template<class charT, class traits, class Duration, class TimeZonePtr>
+      basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os,
+                   const zoned_time<Duration, TimeZonePtr>& t);
+
+    template<class charT, class traits, class Duration, class TimeZonePtr>
+      basic_ostream<charT, traits>&
+        to_stream(basic_ostream<charT, traits>& os, const charT* fmt,
+                  const zoned_time<Duration, TimeZonePtr>& tp);
+
+    // [:en] [#time.zone.leap], leap second support
+    // [|:zh_CN] [#time.zone.leap]，闰秒支持
+    class leap;
+
+    bool operator==(const leap& x, const leap& y);
+    bool operator!=(const leap& x, const leap& y);
+    bool operator< (const leap& x, const leap& y);
+    bool operator> (const leap& x, const leap& y);
+    bool operator<=(const leap& x, const leap& y);
+    bool operator>=(const leap& x, const leap& y);
+
+    template<class Duration>
+      bool operator==(const leap& x, const sys_time<Duration>& y);
+    template<class Duration>
+      bool operator==(const sys_time<Duration>& x, const leap& y);
+    template<class Duration>
+      bool operator!=(const leap& x, const sys_time<Duration>& y);
+    template<class Duration>
+      bool operator!=(const sys_time<Duration>& x, const leap& y);
+    template<class Duration>
+      bool operator< (const leap& x, const sys_time<Duration>& y);
+    template<class Duration>
+      bool operator< (const sys_time<Duration>& x, const leap& y);
+    template<class Duration>
+      bool operator> (const leap& x, const sys_time<Duration>& y);
+    template<class Duration>
+      bool operator> (const sys_time<Duration>& x, const leap& y);
+    template<class Duration>
+      bool operator<=(const leap& x, const sys_time<Duration>& y);
+    template<class Duration>
+      bool operator<=(const sys_time<Duration>& x, const leap& y);
+    template<class Duration>
+      bool operator>=(const leap& x, const sys_time<Duration>& y);
+    template<class Duration>
+      bool operator>=(const sys_time<Duration>& x, const leap& y);
+
+    // [:en] [#time.zone.link], class [`link]
+    // [|:zh_CN] [#time.zone.link]，类 [`link]
+    class link;
+
+    bool operator==(const link& x, const link& y);
+    bool operator!=(const link& x, const link& y);
+    bool operator< (const link& x, const link& y);
+    bool operator> (const link& x, const link& y);
+    bool operator<=(const link& x, const link& y);
+    bool operator>=(const link& x, const link& y);
+
+    // [:en] [#time.format], formatting
+    // [|:zh_CN] [#time.format]，格式化
+    template<class charT, class Streamable>
+      basic_string<charT>
+        format(const charT* fmt, const Streamable& s);
+    template<class charT, class Streamable>
+      basic_string<charT>
+        format(const locale& loc, const charT* fmt, const Streamable& s);
+    template<class charT, class traits, class Alloc, class Streamable>
+      basic_string<charT, traits, Alloc>
+        format(const basic_string<charT, traits, Alloc>& fmt, const Streamable& s);
+    template<class charT, class traits, class Alloc, class Streamable>
+      basic_string<charT, traits, Alloc>
+        format(const locale& loc, const basic_string<charT, traits, Alloc>& fmt,
+               const Streamable& s);
+
+    // [:en] [#time.parse], parsing
+    // [|:zh_CN] [#time.parse]，解析
+    template<class charT, class traits, class Alloc, class Parsable>
+      [=UnSpec]
+        parse(const basic_string<charT, traits, Alloc>& format, Parsable& tp);
+
+    template<class charT, class traits, class Alloc, class Parsable>
+      [=UnSpec]
+        parse(const basic_string<charT, traits, Alloc>& format, Parsable& tp,
+              basic_string<charT, traits, Alloc>& abbrev);
+
+    template<class charT, class traits, class Alloc, class Parsable>
+      [=UnSpec]
+        parse(const basic_string<charT, traits, Alloc>& format, Parsable& tp,
+              minutes& offset);
+
+    template<class charT, class traits, class Alloc, class Parsable>
+      [=UnSpec]
+        parse(const basic_string<charT, traits, Alloc>& format, Parsable& tp,
+              basic_string<charT, traits, Alloc>& abbrev, minutes& offset);
+
+    // [:en] calendrical constants
+    // [|:zh_CN] 日历常量
+    inline constexpr last_spec last{};
+
+    inline constexpr weekday Sunday{0};
+    inline constexpr weekday Monday{1};
+    inline constexpr weekday Tuesday{2};
+    inline constexpr weekday Wednesday{3};
+    inline constexpr weekday Thursday{4};
+    inline constexpr weekday Friday{5};
+    inline constexpr weekday Saturday{6};
+
+    inline constexpr month January{1};
+    inline constexpr month February{2};
+    inline constexpr month March{3};
+    inline constexpr month April{4};
+    inline constexpr month May{5};
+    inline constexpr month June{6};
+    inline constexpr month July{7};
+    inline constexpr month August{8};
+    inline constexpr month September{9};
+    inline constexpr month October{10};
+    inline constexpr month November{11};
+    inline constexpr month December{12};
   }
 
   inline namespace literals {
   inline namespace chrono_literals {
     // [:en] [#time.duration.literals], suffixes for duration literals
     // [|:zh_CN] [#time.duration.literals]，duration 字面量的后缀
+    constexpr chrono::year operator""y(unsigned long long y) noexcept;
+    constexpr chrono::day  operator""d(unsigned long long d) noexcept;
+
     constexpr chrono::hours                                operator""h(unsigned long long);
     constexpr chrono::duration<[=UnSpec], ratio<3600,1>> operator""h(long double);
-    constexpr chrono::minutes                              operator""min(unsigned long long);
-    constexpr chrono::duration<[=UnSpec], ratio<60,1>>   operator""min(long double);
-    constexpr chrono::seconds                              operator""s(unsigned long long);
-    constexpr chrono::duration<[=UnSpec]>                operator""s(long double);
-    constexpr chrono::milliseconds                         operator""ms(unsigned long long);
-    constexpr chrono::duration<[=UnSpec], milli>         operator""ms(long double);
-    constexpr chrono::microseconds                         operator""us(unsigned long long);
-    constexpr chrono::duration<[=UnSpec], micro>         operator""us(long double);
-    constexpr chrono::nanoseconds                          operator""ns(unsigned long long);
-    constexpr chrono::duration<[=UnSpec], nano>          operator""ns(long double);
+
+    constexpr chrono::minutes                             operator""min(unsigned long long);
+    constexpr chrono::duration<[=UnSpec], ratio<60, 1>> operator""min(long double);
+
+    constexpr chrono::seconds               operator""s(unsigned long long);
+    constexpr chrono::duration<[=UnSpec]> operator""s(long double);
+
+    constexpr chrono::milliseconds                 operator""ms(unsigned long long);
+    constexpr chrono::duration<[=UnSpec], milli> operator""ms(long double);
+
+    constexpr chrono::microseconds                 operator""us(unsigned long long);
+    constexpr chrono::duration<[=UnSpec], micro> operator""us(long double);
+
+    constexpr chrono::nanoseconds                 operator""ns(unsigned long long);
+    constexpr chrono::duration<[=UnSpec], nano> operator""ns(long double);
   }
   }
 

@@ -50,11 +50,11 @@ template<class T, class... Args>
 
 [enter:description]
 [para:requires]
-[:en] Uses-allocator construction of [`T] with allocator [`resource()]
+[:en] Uses-allocator construction of [`T] with allocator [`*this]
 (see [#allocator.uses.construction]) and constructor arguments
 [`std::forward<Args>(args)...] is well-formed.
-[:zh_CN] 用分配器 [`resource()] 和实参 [`std::forward<Args>(args)...] 所进行的
-[`T] 的使用分配器的构造是良构的（参见 [#allocator.uses.construction]）。
+[:zh_CN] 用分配器 [`*this] 和实参 [`std::forward<Args>(args)...] 所进行的 [`T]
+的使用分配器的构造是良构的（参见 [#allocator.uses.construction]）。
 
 [enter:note]
 [:en] Uses-allocator construction is always well-formed for types that do not
@@ -64,14 +64,19 @@ use allocators.
 
 [para:effects]
 [:en] Construct a [`T] object in the storage whose address is represented by
-[`p] by uses-allocator construction with allocator [`resource()] and constructor
+[`p] by uses-allocator construction with allocator [`*this] and constructor
 arguments [`std::forward<Args>(args)...].
-[:zh_CN] 在由 [`p] 代表其地址的存储中，以分配器 [`resource()] 和构造函数实参
+[:zh_CN] 在由 [`p] 代表其地址的存储中，以分配器 [`*this] 和构造函数实参
 [`std::forward<Args>(args)...]，通过使用分配器的构造，构造一个 [`T] 对象。
 
 [para:throws]
 [:en] Nothing unless the constructor for [`T] throws.
 [:zh_CN] 无，除非 [`T] 的构造函数抛出异常。
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution if [`T] is a
+specialization of [`pair].
+[:zh_CN] 如果 [`T] 是 [`pair] 的特例，则这个函数不能参与重载决议。
 [exit:description]
 
 [%@library construct[!polymorphic_allocator]]
@@ -98,41 +103,43 @@ appropriate rule from the following list.
 [enter:note]
 [:en] The following description can be summarized as constructing a
 [`pair<T1, T2>] object in the storage whose address is represented by [`p],
-as if by separate uses-allocator construction with allocator [`resource()]
+as if by separate uses-allocator construction with allocator [`*this]
 ([#allocator.uses.construction]) of [`p->first] using the elements of [`x]
 and [`p->second] using the elements of [`y].
 [:zh_CN] 以下的描述可以总结为，在由 [`p] 表示其地址的存储中构造一个
 [`pair<T1, T2>]，并如同分别用 [`x] 的各元素对 [`p->first] 和用 [`y] 的各元素对
-[`p->second]，用分配器 [`resource()] 来进行使用分配器的构造
+[`p->second]，用分配器 [`*this] 来进行使用分配器的构造
 （[#allocator.uses.construction]）一样进行构造。
 [exit:note]
 
 [list]
 [item]
-[:en] If [`uses_allocator_v<T1,memory_resource*>] is [`false] [br]
-[:zh_CN] 若 [`uses_allocator_v<T1,memory_resource*>] 为 [`false] [br]
+[:en] If [`uses_allocator_v<T1,polymorphic_allocator>] is [`false] [br]
+[:zh_CN] 若 [`uses_allocator_v<T1,polymorphic_allocator>] 为 [`false] [br]
 [:en@~] and [`is_constructible_v<T1,Args1...>] is [`true], [br]
 [:zh_CN@~] 并且 [`is_constructible_v<T1,Args1...>] 为 [`true]， [br]
 [:en@~] then [`xprime] is [`x].
 [:zh_CN@~] 则 [`xprime] 为 [`x]。
 [item]
-[:en] Otherwise, if [`uses_allocator_v<T1,memory_resource*>] is [`true] [br]
-[:zh_CN] 否则，若 [`uses_allocator_v<T1,memory_resource*>] 为 [`true] [br]
-[:en@~] and [`is_constructible_v<T1,allocator_arg_t,memory_resource*,Args1...>]
+[:en] Otherwise, if [`uses_allocator_v<T1,polymorphic_allocator>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T1,polymorphic_allocator>] 为 [`true] [br]
+[:en@~] and
+[`is_constructible_v<T1,allocator_arg_t,polymorphic_allocator,Args1...>]
 is [`true], [br]
-[:zh_CN@~] 并且 [`is_constructible_v<T1,allocator_arg_t,memory_resource*,Args1...>]
+[:zh_CN@~] 并且
+[`is_constructible_v<T1,allocator_arg_t,polymorphic_allocator,Args1...>]
 为 [`true]， [br]
 [:en@~] then [`xprime] is
-[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(x))].
+[`tuple_cat(make_tuple(allocator_arg, *this), std::move(x))].
 [:zh_CN@~] 则 [`xprime] 为
-[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(x))]。
+[`tuple_cat(make_tuple(allocator_arg, *this), std::move(x))]。
 [item]
-[:en] Otherwise, if [`uses_allocator_v<T1,memory_resource*>] is [`true] [br]
-[:zh_CN] 否则，若 [`uses_allocator_v<T1,memory_resource*>] 为 [`true] [br]
-[:en@~] and [`is_constructible_v<T1,Args1...,memory_resource*>] is [`true], [br]
-[:zh_CN@~] 并且 [`is_constructible_v<T1,Args1...,memory_resource*>] 为 [`true]， [br]
-[:en@~] then [`xprime] is [`tuple_cat(std::move(x), make_tuple(resource()))].
-[:zh_CN@~] 则 [`xprime] 为 [`tuple_cat(std::move(x), make_tuple(resource()))]。
+[:en] Otherwise, if [`uses_allocator_v<T1,polymorphic_allocator>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T1,polymorphic_allocator>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T1,Args1...,polymorphic_allocator>] is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T1,Args1...,polymorphic_allocator>] 为 [`true]， [br]
+[:en@~] then [`xprime] is [`tuple_cat(std::move(x), make_tuple(*this))].
+[:zh_CN@~] 则 [`xprime] 为 [`tuple_cat(std::move(x), make_tuple(*this))]。
 [item]
 [:en] Otherwise the program is ill formed.
 [:zh_CN] 否则，程序非良构。
@@ -143,30 +150,30 @@ appropriate rule from the following list:
 [:zh_CN] 令 [`yprime] 为根据以下列表中的适当规则从 [`y] 所构造的一个 [`tuple]。
 [list]
 [item]
-[:en] If [`uses_allocator_v<T2,memory_resource*>] is [`false] [br]
-[:zh_CN] 若 [`uses_allocator_v<T2,memory_resource*>] 为 [`false] [br]
+[:en] If [`uses_allocator_v<T2,polymorphic_allocator>] is [`false] [br]
+[:zh_CN] 若 [`uses_allocator_v<T2,polymorphic_allocator>] 为 [`false] [br]
 [:en@~] and [`is_constructible_v<T2,Args2...>] is [`true], [br]
 [:zh_CN@~] 并且 [`is_constructible_v<T2,Args2...>] 为 [`true]， [br]
 [:en@~] then [`yprime] is [`y].
 [:zh_CN@~] 则 [`yprime] 为 [`y]。
 [item]
-[:en] Otherwise, if [`uses_allocator_v<T2,memory_resource*>] is [`true] [br]
-[:zh_CN] 否则，若 [`uses_allocator_v<T2,memory_resource*>] 为 [`true] [br]
-[:en@~] and [`is_constructible_v<T2,allocator_arg_t,memory_resource*,Args2...>]
+[:en] Otherwise, if [`uses_allocator_v<T2,polymorphic_allocator>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T2,polymorphic_allocator>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T2,allocator_arg_t,polymorphic_allocator,Args2...>]
 is [`true], [br]
-[:zh_CN@~] 并且 [`is_constructible_v<T2,allocator_arg_t,memory_resource*,Args2...>]
+[:zh_CN@~] 并且 [`is_constructible_v<T2,allocator_arg_t,polymorphic_allocator,Args2...>]
 为 [`true]， [br]
 [:en@~] then [`yprime] is
-[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(y))].
+[`tuple_cat(make_tuple(allocator_arg, *this), std::move(y))].
 [:zh_CN@~] 则 [`yprime] 为
-[`tuple_cat(make_tuple(allocator_arg, resource()), std::move(y))]。
+[`tuple_cat(make_tuple(allocator_arg, *this), std::move(y))]。
 [item]
-[:en] Otherwise, if [`uses_allocator_v<T2,memory_resource*>] is [`true] [br]
-[:zh_CN] 否则，若 [`uses_allocator_v<T2,memory_resource*>] 为 [`true] [br]
-[:en@~] and [`is_constructible_v<T2,Args2...,memory_resource*>] is [`true], [br]
-[:zh_CN@~] 并且 [`is_constructible_v<T2,Args2...,memory_resource*>] 为 [`true]， [br]
-[:en@~] then [`yprime] is [`tuple_cat(std::move(y), make_tuple(resource()))].
-[:zh_CN@~] 则 [`yprime] 为 [`tuple_cat(std::move(y), make_tuple(resource()))]。
+[:en] Otherwise, if [`uses_allocator_v<T2,polymorphic_allocator>] is [`true] [br]
+[:zh_CN] 否则，若 [`uses_allocator_v<T2,polymorphic_allocator>] 为 [`true] [br]
+[:en@~] and [`is_constructible_v<T2,Args2...,polymorphic_allocator>] is [`true], [br]
+[:zh_CN@~] 并且 [`is_constructible_v<T2,Args2...,polymorphic_allocator>] 为 [`true]， [br]
+[:en@~] then [`yprime] is [`tuple_cat(std::move(y), make_tuple(*this))].
+[:zh_CN@~] 则 [`yprime] 为 [`tuple_cat(std::move(y), make_tuple(*this))]。
 [item]
 [:en] Otherwise the program is ill formed.
 [:zh_CN] 否则，程序非良构。

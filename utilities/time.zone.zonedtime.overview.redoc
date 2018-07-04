@@ -1,0 +1,110 @@
+[section#time.zone.zonedtime.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[%@library zoned_time]
+
+[codeblock:synopsis]
+namespace std::chrono {
+  template<class Duration, class TimeZonePtr = const time_zone*>
+  class zoned_time {
+  public:
+    using duration = common_type_t<Duration, seconds>;
+
+  private:
+    TimeZonePtr        zone_;                   // [=Expos]
+    sys_time<duration> tp_;                     // [=Expos]
+
+    using traits = zoned_traits<TimeZonePtr>;   // [=Expos]
+
+  public:
+    zoned_time();
+    zoned_time(const zoned_time&) = default;
+    zoned_time& operator=(const zoned_time&) = default;
+
+    zoned_time(const sys_time<Duration>& st);
+    explicit zoned_time(TimeZonePtr z);
+    explicit zoned_time(string_view name);
+
+    template<class Duration2>
+      zoned_time(const zoned_time<Duration2>& zt) noexcept;
+
+    zoned_time(TimeZonePtr z,    const sys_time<Duration>& st);
+    zoned_time(string_view name, const sys_time<Duration>& st);
+
+    zoned_time(TimeZonePtr z,    const local_time<Duration>& tp);
+    zoned_time(string_view name, const local_time<Duration>& tp);
+    zoned_time(TimeZonePtr z,    const local_time<Duration>& tp, choose c);
+    zoned_time(string_view name, const local_time<Duration>& tp, choose c);
+
+    template<class Duration2, class TimeZonePtr2>
+      zoned_time(TimeZonePtr z, const zoned_time<Duration2, TimeZonePtr2>& zt);
+    template<class Duration2, class TimeZonePtr2>
+      zoned_time(TimeZonePtr z, const zoned_time<Duration2, TimeZonePtr2>& zt, choose);
+
+    zoned_time(string_view name, const zoned_time<Duration>& zt);
+    zoned_time(string_view name, const zoned_time<Duration>& zt, choose);
+
+    zoned_time& operator=(const sys_time<Duration>& st);
+    zoned_time& operator=(const local_time<Duration>& ut);
+
+    operator sys_time<duration>() const;
+    explicit operator local_time<duration>() const;
+
+    TimeZonePtr          get_time_zone()  const;
+    local_time<duration> get_local_time() const;
+    sys_time<duration>   get_sys_time()   const;
+    sys_info             get_info()       const;
+  };
+
+  zoned_time() -> zoned_time<seconds>;
+
+  template<class Duration>
+    zoned_time(sys_time<Duration>)
+      -> zoned_time<common_type_t<Duration, seconds>>;
+
+  template<class TimeZonePtr, class Duration>
+    zoned_time(TimeZonePtr, sys_time<Duration>)
+      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+
+  template<class TimeZonePtr, class Duration>
+    zoned_time(TimeZonePtr, local_time<Duration>, choose = choose::earliest)
+      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+
+  template<class TimeZonePtr, class Duration>
+    zoned_time(TimeZonePtr, zoned_time<Duration>, choose = choose::earliest)
+      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+
+  zoned_time(string_view) -> zoned_time<seconds>;
+
+  template<class Duration>
+    zoned_time(string_view, sys_time<Duration>)
+      -> zoned_time<common_type_t<Duration, seconds>>;
+
+  template<class Duration>
+    zoned_time(string_view, local_time<Duration>, choose = choose::earliest)
+      -> zoned_time<common_type_t<Duration, seconds>>;
+
+  template<class Duration, class TimeZonePtr, class TimeZonePtr2>
+    zoned_time(TimeZonePtr, zoned_time<Duration, TimeZonePtr2>, choose = choose::earliest)
+      -> zoned_time<Duration, TimeZonePtr>;
+}
+[codeblock:end]
+
+[para]
+[:en] [`zoned_time] represents a logical pairing of a [`time_zone] and a
+[`time_point] with precision [`Duration].
+[:zh_CN] [`zoned_time] 表示一个 [`time_zone] 和一个 [`time_point] 的
+精度为 [`Duration] 的逻辑对偶。
+
+[:en] [`zoned_time<Duration>] maintains the invariant that it always refers to
+a valid time zone and represents a point in time that exists and is not
+ambiguous in that time zone.
+[:zh_CN] [`zoned_time<Duration>] 维护一项不变式，使其总是指代某个有效的时区，并
+表示在该时区中存在且无歧义的某个时间点。
+
+[para]
+[:en] If [`Duration] is not a specialization of [`chrono::duration], the program
+is ill-formed.
+[:zh_CN] 如果 [`Duration] 不是 [`chrono::duration] 的特例，则程序非良构。

@@ -1,0 +1,68 @@
+[section#time.clock.gps.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[%@library gps_clock]
+[codeblock:synopsis [!:mark UnSpec] ]
+namespace std::chrono {
+  class gps_clock {
+  public:
+    using rep                       = [$ [:en]a signed arithmetic type[:zh_CN]有符号算术类型];
+    using period                    = ratio<[=UnSpec], [=UnSpec]>;
+    using duration                  = chrono::duration<rep, period>;
+    using time_point                = chrono::time_point<gps_clock>;
+    static constexpr bool is_steady = [=UnSpec];
+
+    static time_point now();
+
+    template<class Duration>
+      static utc_time<common_type_t<Duration, seconds>>
+        to_utc(const gps_time<Duration>&) noexcept;
+    template<class Duration>
+      static gps_time<common_type_t<Duration, seconds>>
+        from_utc(const utc_time<Duration>&) noexcept;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en]
+The clock [`gps_clock] measures seconds since the first Sunday of January, 1980
+00:00:00 UTC.
+[:zh_CN]
+时钟 [`gps_clock] 测量从 1980 年一月第一个周日 00:00:00 UTC 开始的秒数。
+
+[:en]
+Leap seconds are not inserted into GPS.
+[:zh_CN]
+GPS 中并未插入闰秒。
+
+[:en]
+Therefore every time a leap second is inserted into UTC, UTC falls another
+second behind GPS.
+[:zh_CN]
+因此每当向 UTC 中插入一个闰秒，UTC 就落后 GPS 新的一秒。
+
+[:en]
+Aside from the offset from [`1958y/January/1] to [`1980y/January/Sunday`[1`]],
+GPS is behind TAI by 19s due to the 10s offset between 1958 and 1970
+and the additional 9 leap seconds inserted between 1970 and 1980.
+[:zh_CN]
+除了从 [`1958y/January/1] 到 [`1980y/January/Sunday`[1`]] 之间的偏移量之外，
+GPS 落后 TAI 19s，包括 1958 到 1970 之间的 10s 偏移量以及在 1970 到 1980 之间
+插入的额外 9 个闰秒。
+
+[:en]
+[`gps_clock] is not a TrivialClock unless the implementation can guarantee that
+[`gps_clock::now()] does not propagate an exception.
+[:zh_CN]
+除非实现可以保证 [`gps_clock::now()] 不会传播异常，否则 [`gps_clock] 并不是
+[`TrivialClock]。
+
+[enter:note]
+[:en]
+[`noexcept(from_sys(utc_clock::now()))] is [`false].
+[:zh_CN]
+[`noexcept(from_sys(utc_clock::now()))] 为 [`false]。
+[exit:note]

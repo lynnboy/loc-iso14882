@@ -1,0 +1,78 @@
+[section#time.zone.exception.ambig
+    [:en] Class [`ambiguous_local_time]
+    [:zh_CN] 类 [`ambiguous_local_time]
+]
+
+[%@library ambiguous_local_time]
+
+[codeblock:synopsis]
+namespace std::chrono {
+  class ambiguous_local_time : public runtime_error {
+  public:
+    template<class Duration>
+      ambiguous_local_time(const local_time<Duration>& tp, const local_info& i);
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`ambiguous_local_time] is thrown when an attempt is made to convert an
+ambiguous [`local_time] to a [`sys_time] without specifying [`choose::earliest]
+or [`choose::latest].
+[:zh_CN] 每当试图将有歧义的 [`local_time] 转换为 [`sys_time] 但未指定
+[`choose::earliest] 或 [`choose::latest] 时，会抛出 [`ambiguous_local_time]。
+
+[%@library ambiguous_local_time[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class Duration>
+  ambiguous_local_time(const local_time<Duration>& tp, const local_info& i);
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`i.result == local_info::ambiguous].
+[:zh_CN] [`i.result == local_info::ambiguous]。
+
+[para:effects]
+[:en] Constructs a [`ambiguous_local_time] by initializing the base class with
+a sequence of [`char] equivalent to that produced by [`os.str()] initialized as
+shown below:
+[:zh_CN] 构造一个 [`ambiguous_local_time]，以等价于以下代码所初始化的
+[`os.str()] 所产生的 [`char] 的序列来初始化其基类：
+
+[codeblock:notation]
+ostringstream os;
+os << tp << " is ambiguous.  It could be\n"
+   << tp << ' ' << i.first.abbrev << " == "
+   << tp - i.first.offset << " UTC or\n"
+   << tp << ' ' << i.second.abbrev  << " == "
+   << tp - i.second.offset  << " UTC";
+[codeblock:end]
+
+[para]
+[enter:example]
+[codeblock]
+#include <chrono>
+#include <iostream>
+
+int main() {
+  using namespace std::chrono;
+  try {
+    auto zt = zoned_time{"America/New_York",
+                         local_days{Sunday[1]/November/2016} + 1h + 30min};
+  } catch (const ambiguous_local_time& e) {
+    std::cout << e.what() << '\n';
+  }
+}
+[codeblock:end]
+
+[:en] Produces the output:
+[:zh_CN] 产生输出：
+
+[codeblock]
+2016-11-06 01:30:00 is ambiguous.  It could be
+2016-11-06 01:30:00 EDT == 2016-11-06 05:30:00 UTC or
+2016-11-06 01:30:00 EST == 2016-11-06 06:30:00 UTC
+[codeblock:end]
+[exit:example]
+[exit:description]

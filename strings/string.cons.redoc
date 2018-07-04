@@ -1,6 +1,6 @@
 [section#string.cons
-    [:en] [`basic_string] constructors and assignment operators
-    [:zh_CN] [`basic_string] 的构造函数与赋值运算符
+    [:en] Constructors and assignment operators
+    [:zh_CN] 构造函数与赋值运算符
 ]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -100,13 +100,32 @@ basic_string(sv.substr(pos, n), a);
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
 [codeblock:declaration]
-explicit basic_string(basic_string_view<charT, traits> sv, const Allocator& a = Allocator());
+template<class T>
+  explicit basic_string(const T& t, const Allocator& a = Allocator());
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Same as [`basic_string(sv.data(), sv.size(), a)].
-[:zh_CN] 与 [`basic_string(sv.data(), sv.size(), a)] 相同。
+[:en] Creates a variable, [`sv], as if by
+[`basic_string_view<charT, traits> sv = t;] and then behaves the same as
+[`basic_string(sv.data(), sv.size(), a)].
+[:zh_CN] 如同以 [`basic_string_view<charT, traits> sv = t;] 创建一个变量 [`sv]，
+然后其行为与 [`basic_string(sv.data(), sv.size(), a)] 相同。
+
+[para:remarks]
+[:en] This constructor shall not participate in overload resolution unless
+[:zh_CN] 除非符合以下条件，否则这个构造函数不能参与重载决议
+
+[list]
+[item]
+[:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true]
+and
+[:zh_CN] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
+[`true]，并且
+[item]
+[:en] [`is_convertible_v<const T&, const charT*>] is [`false].
+[:zh_CN] [`is_convertible_v<const T&, const charT*>] 为 [`false]。
+[list:end]
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -273,6 +292,30 @@ does not qualify as an allocator ([#container.requirements.general]).
 不能作为分配器的类型（[#container.requirements.general]）时，不能参与重载决议。
 [exit:description]
 
+[codeblock:declaration [!:mark SeeBelow] ]
+template<class charT,
+         class traits,
+         class Allocator = allocator<charT>>
+  explicit basic_string(basic_string_view<charT, traits>, const Allocator& = Allocator())
+    -> basic_string<charT, traits, Allocator>;
+
+template<class charT,
+         class traits,
+         class Allocator = allocator<charT>>
+  basic_string(basic_string_view<charT, traits>,
+               typename [=SeeBelow]::size_type, typename [=SeeBelow]::size_type,
+               const Allocator& = Allocator())
+    -> basic_string<charT, traits, Allocator>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] Shall not participate in overload resolution if [`Allocator] is a type
+that does not qualify as an allocator ([#container.requirements.general]).
+[:zh_CN] 当 [`Allocator] 不能被当做分配器（[#container.requirements.general]）的
+类型时，不能参与重载决议。
+[exit:description]
+
 [%@library operator=[!basic_string]]
 [%@library basic_string[!operator=]]
 [codeblock:declaration]
@@ -319,13 +362,36 @@ that iterators, pointers and references may be invalidated.
 [%@library operator=[!basic_string]]
 [%@library basic_string[!operator=]]
 [codeblock:declaration]
-basic_string& operator=(basic_string_view<charT, traits> sv);
+template<class T>
+  basic_string& operator=(const T& t);
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Equivalent to: [`return assign(sv);]
-[:zh_CN] 等价于：[`return assign(sv);]
+[:en] Equivalent to:
+[:zh_CN] 等价于
+
+[codeblock:notation]
+{
+  basic_string_view<charT, traits> sv = t;
+  return assign(sv);
+}
+[codeblock:end]
+
+[para:remarks]
+[:en] This function shall not participate in overload resolution unless
+[:zh_CN] 除非符合以下条件，否则这个函数不能参与重载决议
+
+[list]
+[item]
+[:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true]
+and
+[:zh_CN] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
+[`true]，并且
+[item]
+[:en] [`is_convertible_v<const T&, const charT*>] is [`false].
+[:zh_CN] [`is_convertible_v<const T&, const charT*>] 为 [`false]。
+[list:end]
 [exit:description]
 
 [%@library operator=[!basic_string]]

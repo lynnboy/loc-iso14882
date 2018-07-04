@@ -1,0 +1,124 @@
+[section#time.zone.info.sys
+    [:en] Class [`sys_info]
+    [:zh_CN] 类 [`sys_info]
+]
+
+[%@library sys_info]
+
+[codeblock:synopsis]
+namespace std::chrono {
+  struct sys_info {
+    sys_seconds   begin;
+    sys_seconds   end;
+    seconds       offset;
+    minutes       save;
+    string        abbrev;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] A [`sys_info] structure can be obtained from the combination of a
+[`time_zone] and either a [`sys_time] or [`local_time].
+[:zh_CN] [`sys_info] 结构可以通将一个 [`time_zone] 和一个 [`sys_time] 或
+[`local_time] 组合起来而获得。
+
+[:en] It can also be obtained from a [`zoned_time], which is effectively a pair
+of a [`time_zone] and [`sys_time].
+[:zh_CN] 还可以通过一个 [`zoned_time] 来获得，它就想到与一对 [`time_zone] 和
+[`sys_time]。
+
+[para]
+[enter:note]
+[:en] This type provides a low-level interface to time zone information.
+[:zh_CN] 这个类型提供时区信息的底层接口。
+
+[:en] Typical conversions from [`sys_time] to [`local_time] will use this
+structure implicitly, not explicitly.
+[:zh_CN] 从 [`sys_time] 向 [`local_time] 的转换一般会隐式而非显式地使用这个结构。
+[exit:note]
+
+[para]
+[%@library begin[!sys_info]]
+[%@library sys_info[!begin]]
+[%@library end[!sys_info]]
+[%@library sys_info[!end]]
+[:en] The [`begin] and [`end] data members indicate that, for the associated
+[`time_zone] and [`time_point], the [`offset] and [`abbrev] are in effect in the
+range [=range(begin,end)].
+[:zh_CN] [`begin] 和 [`end] 数据成员表明，对于其关联的 [`time_zone] 和
+[`time_point]，[`offset] 和 [`abbrev] 实际上都处于范围 [=range(begin,end)] 之内。
+
+[:en] This information can be used to efficiently iterate the transitions of a
+[`time_zone].
+[:zh_CN] 这项信息可以用于高效地进行重复的 [`time_zone] 转换。
+
+[para]
+[%@library offset[!sys_info]]
+[%@library sys_info[!offset]]
+[:en] The [`offset] data member indicates the UTC offset in effect for the
+associated [`time_zone] and [`time_point].
+[:zh_CN] [`offset] 数据成员表明其所关联的 [`time_zone] 和 [`time_point] 的实际
+UTC 偏移量。
+
+[:en] The relationship between [`local_time] and [`sys_time] is:
+[:zh_CN] [`local_time] 和 [`sys_time] 之间的关系为：
+
+[codeblock:notation]
+offset = local_time - sys_time
+[codeblock:end]
+
+[para]
+[%@library save[!sys_info]]
+[%@library sys_info[!save]]
+[:en] The [`save] data member is extra information not normally needed for
+conversion between [`local_time] and [`sys_time].
+[:zh_CN] [`save] 数据成员是通常由 [`local_time] 和 [`sys_time] 的互相转换中所
+需要的额外信息。
+
+[:en] If [`save != 0min], this [`sys_info] is said to be on ["daylight saving]
+time, and [`offset - save] suggests what offset this [`time_zone] might use
+if it were off daylight saving time.
+[:zh_CN] 如果 [`save != 0min]，则称这个 [`sys_info] 处于“夏令时”，而
+[`offset - save] 表示当离开夏令时时这个 [`time_zone] 可能使用的偏移量。
+
+[:en] However, this information should not be taken as authoritative.
+[:zh_CN] 不过，最好不要将这条信息当做权威信息。
+
+[:en] The only sure way to get such information is to query the [`time_zone]
+with a [`time_point] that returns a [`sys_info] where [`save == 0min].
+[:zh_CN] 唯一确定获得这种信息的方式是以某个 [`time_point] 来查询 [`time_zone]
+并返回 [`save == 0min] 的 [`sys_info]。
+
+[:en] There is no guarantee what [`time_point] might return such a [`sys_info]
+except that it is guaranteed not to be in the range [=range(begin,end)]
+(if [`save != 0min] for this [`sys_info]).
+[:zh_CN] 不保证什么样的 [`time_point] 会返回这样的 [`sys_info]，但保证它不会处于
+[=range(begin,end)] 之中（如果这个 [`sys_info] 的 [`save != 0min]）。
+
+[para]
+[%@library abbrev[!sys_info]]
+[%@library sys_info[!abbrev]]
+[:en] The [`abbrev] data member indicates the current abbreviation used for the
+associated [`time_zone] and [`time_point].
+[:zh_CN] 数据成员 [`abbrev] 标明用于其所关联的 [`time_zone] 和 [`time_point] 的
+当前简称。
+
+[:en] Abbreviations are not unique among the [`time_zone]s, and so one cannot
+reliably map abbreviations back to a [`time_zone] and UTC offset.
+[:zh_CN] 简称在 [`time_zone] 之间并不唯一，因而无法可靠地将简称映射回
+[`time_zone] 和 UTC 偏移量。
+
+[%@library operator<<[!sys_info]]
+[%@library sys_info[!operator<<]]
+[codeblock:declaration]
+template<class charT, class traits>
+  basic_ostream<charT, traits>&
+    operator<<(basic_ostream<charT, traits>& os, const sys_info& r);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Streams out the [`sys_info] object [`r] in an unspecified format.
+[:zh_CN] 将 [`sys_info] 对象 [`r] 以未指明的格式进行流输出。
+[exit:description]
