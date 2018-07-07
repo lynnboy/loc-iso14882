@@ -6,8 +6,47 @@
 [para]
 [%@library fpos]
 [%@library streamoff]
-[:en] Operations specified in [#iostreams.position.requirements] are permitted.
-[:zh_CN] 允许进行 [#iostreams.position.requirements] 中指定的操作。
+[:en] An [`fpos] type specifies file position information.
+[:zh_CN] [`fpos] 类型指定文件定位信息。
+
+[:en] It holds a state object whose type is equal to the template parameter
+[`stateT].
+[:zh_CN] 其所持有的状态对象的类型等于模板形参 [`stateT]。
+
+[:en] Type [`stateT] shall meet the [`DefaultConstructible]
+([#defaultconstructible]), [`CopyConstructible] ([#copyconstructible]),
+[`CopyAssignable] ([#copyassignable]), and [`Destructible] ([#destructible])
+requirements.
+[:zh_CN] 类型 [`stateT] 应当满足 [`DefaultConstructible]
+（[#defaultconstructible]），[`CopyConstructible]（[#copyconstructible]），
+[`CopyAssignable]（[#copyassignable]），以及 [`Destructible]（[#destructible]）
+的规定。
+
+[:en] If [`is_trivially_copy_constructible_v<stateT>] is [`true], then
+[`fpos<stateT>] has a trivial copy constructor.
+[:zh_CN] 如果 [`is_trivially_copy_constructible_v<stateT>] 为 [`true]，则
+[`fpos<stateT>] 应当具有平凡的复制构造函数。
+
+[:en] If [`is_trivially_copy_assignable<stateT>] is [`true], then
+[`fpos<stateT>] has a trivial copy assignment operator.
+[:zh_CN] 如果 [`is_trivially_copy_assignable<stateT>] 为 [`true]，则
+[`fpos<stateT>] 应当具有平凡的复制赋值运算符。
+
+[:en] If [`is_trivially_destructible_v<stateT>] is [`true], then [`fpos<stateT>]
+has a trivial destructor.
+[:zh_CN] 如果 [`is_trivially_destructible_v<stateT>] 为 [`true]，则
+[`fpos<stateT>] 应当具有平凡的析构函数。
+
+[:en] All specializations of [`fpos] satisfy the [`DefaultConstructible],
+[`CopyConstructible], [`CopyAssignable], [`Destructible], and
+[`EqualityComparable] ([#equalitycomparable]) requirements.
+[:zh_CN] [`fpos] 的所有特例都满足 [`DefaultConstructible]，[`CopyConstructible]，
+[`CopyAssignable]，[`Destructible]，以及 [`EqualityComparable] 的规定。
+
+[:en] In addition, the expressions shown in [#iostreams.position.requirements]
+are valid and have the indicated semantics.
+[:zh_CN] 此外，[#iostreams.position.requirements] 中给出的各表达式均有效并具有
+所指定的语义。
 
 [:en] In that table,
 [:zh_CN] 该表中，
@@ -17,20 +56,17 @@
 [:en@~] [`P] refers to an instance of [`fpos],
 [:zh_CN@~] [`P] 代表 [`fpos] 的实例，
 [item]
-[:en@~] [`p] and [`q] refer to values of type [`P],
-[:zh_CN@~] [`p] 和 [`q] 代表 [`P] 类型的值，
+[:en@~] [`p] and [`q] refer to values of type [`P] or [`const P],
+[:zh_CN@~] [`p] 和 [`q] 代表 [`P] 或 [`const P] 类型的值，
 [item]
-[:en@~] [`O] refers to type [`streamoff],
-[:zh_CN@~] [`O] 代表类型 [`streamoff]，
+[:en@~] [`pl] and [`ql] refer to modifiable lvalues of type [`P],
+[:zh_CN@~] [`pl] 和 [`ql] 代表 [`P] 类型的可改动的左值，
 [item]
-[:en@~] [`o] refers to a value of type [`streamoff],
-[:zh_CN@~] [`o] 代表 [`streamoff] 类型的值，
+[:en@~] [`O] refers to type [`streamoff], and
+[:zh_CN@~] [`O] 代表类型 [`streamoff]，而
 [item]
-[:en@~] [`sz] refers to a value of type [`streamsize] and
-[:zh_CN@~] [`sz] 代表 [`streamsize] 类型的值，而
-[item]
-[:en@~] [`i] refers to a value of type [`int].
-[:zh_CN@~] [`i] 代表 [`int] 类型的值。
+[:en@~] [`o] refers to a value of type [`streamoff] or [`const streamoff].
+[:zh_CN@~] [`o] 代表 [`streamoff] 或 [`const streamoff] 类型的值。
 [list:end]
 
 [table:grid#tab:iostreams.position.requirements
@@ -53,27 +89,34 @@
         [:zh_CN] 断言/注解 [br] 前/后条件
     ]
 ]
-[|] P(i)
-[|]
-[|]
-[|] [`p == P(i)]
-    [para]
-    [:en] note: a destructor is assumed.
-    [:zh_CN] 注：假定存在析构函数。
-[-]
-
-[|] P p(i); [br] P p = i;
-[|]
-[|]
-[|] [para:postconditions]
-    [:en] [`p == P(i)].
-    [:zh_CN] [`p == P(i)]。
-[-]
-
 [|] P(o)
-[|] [`fpos]
+[|] [`P]
 [|] [:en] converts from [`offset]
     [:zh_CN] 转换自 [`offset]
+[|] [para:effects]
+	[:en] Value-initializes the state object.
+	[:zh_CN] 值初始化其状态对象。
+[-]
+
+[|] P p(o); [br] P p = 0;
+[|]
+[|]
+[|] [para:effects]
+	[:en] Value-initializes the state object.
+	[:zh_CN] 值初始化其状态对象。
+	[para:postconditions]
+	[`p == P(o)]
+[-]
+
+[|] P()
+[|] [`P]
+[|] [`P(0)]
+[|]
+[-]
+
+[|] P p;
+[|]
+[|] [`P p(0);]
 [|]
 [-]
 
@@ -84,14 +127,6 @@
 [|] [`P(O(p)) == p]
 [-]
 
-[|] p == q
-[|] [:en] convertible to [`bool]
-    [:zh_CN] 可转换为 [`bool]
-[|]
-[|] [:en] [`==] is an equivalence relation
-    [:zh_CN] [`==] 为等价关系
-[-]
-
 [|] p != q
 [|] [:en] convertible to [`bool]
     [:zh_CN] 可转换为 [`bool]
@@ -99,28 +134,41 @@
 [|]
 [-]
 
-[|] q == p + o [br] p += o
-[|] [`fpos]
+[|] p + o
+[|] [`P]
 [|] [:en] [`+] offset
     [:zh_CN] [`+] 偏移量
-[|] [`q - o == p]
+[|] [para:remarks]
+	[:en] With [`ql = p + o;], then: [`ql - o == p]
+	[:zh_CN] 令 [`ql = p + o;]，则有：[`ql - o == p]
 [-]
 
-[|] q == p - o [br] p -= o
-[|] [`fpos]
+[|] pl += o
+[|] [`P&]
+[|] [`+=] offset
+[|] [para:remarks]
+	[:en] With [`ql = pl;], before the [`+=]: [`pl - o == ql]
+	[:zh_CN] 在 [`+=] 之前令 [`ql = pl;]，则有：[`pl - o == ql]
+[-]
+
+[|] p - o
+[|] [`P]
 [|] [:en] [`-] offset
     [:zh_CN] [`-] 偏移量
-[|] [`q + o == p]
+[|] [para:remarks]
+	[:en] With [`ql = p - o;], then: [`ql + o == p]
+	[:zh_CN] 令 [`ql = p - o;]，则有：[`ql + o == p]
 [-]
 
-[|] o == p - q
-[|] [`streamoff]
-[|] [:en] distance
-    [:zh_CN] 距离
-[|] [`q + o == p]
+[|] pl -= o
+[|] [`P&]
+[|] [`-=] offset
+[|] [para:remarks]
+	[:en] With [`ql = pl;], before the [`-=]: [`pl + o == ql]
+	[:zh_CN] 在 [`-=] 之前令 [`ql = pl;]，则有：[`pl + o == ql]
 [-]
 
-[|] streamsize(o)
+[|] o + p
 [|] [`streamsize]
 [|] [:en] converts
     [:zh_CN] 转换
