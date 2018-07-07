@@ -207,6 +207,18 @@ template specializations are generated using template argument deduction
 候选的函数模板特例。
 
 [:en]
+If a constructor template or conversion function template has an
+[~explicit-specifier] whose [~constant-expression] is value-dependent
+([#temp.dep]), template argument deduction is performed first and then, if the
+context requires a candidate that is not explicit and the generated
+specialization is explicit ([#dcl.fct.spec]), it will be removed from the
+candidate set.
+[:zh_CN]
+如果构造函数模板或转换函数模板带有[~explicit-说明符]且其[~常量表达式]是值待决的
+（[#temp.dep]），则首先进行模板实参推断，然后若语境中需要非显式的候选函数而所
+产生的特例是显式的（[#dcl.fct.spec]），则它被从候选集合中移除。
+
+[:en]
 Those candidates are then handled as candidate functions in the usual way.
 [#:note#fn:$section.1]
 [:zh_CN]
@@ -249,6 +261,43 @@ excluded from the set of candidate functions in all contexts.
 [:zh_CN]
 被定义为弃置的预置移动特殊函数（[#class.copy]），在所有语境中都从候选函数的集合
 中排除。
+
+[:en]
+A constructor inherited from class type [`C] ([#class.inhctor.init]) that has a
+first parameter of type ["reference to [$cv1] [`P]] (including such a
+constructor instantiated from a template) is excluded from the set of candidate
+functions when constructing an object of type [$cv2] [`D] if the argument list
+has exactly one argument and [`C] is reference-related to [`P] and [`P] is
+reference-related to [`D].
+[:zh_CN]
+当构造一个 [$cv2] [`D] 类型的对象时，若其实参列表恰好包含一个实参，并且 [`C] 与
+[`P] 引用相关而 [`P] 与 [`D] 引用相关，则继承于类类型 [`C] 的构造函数
+（[#class.inhctor.init]），若其第一个形参类型为“到 [$cv1] [`P] 的引用”（包括从
+模板中实例化而得的构造函数），将从候选函数集合中被排除。
+
+[enter:example]
+[codeblock]
+struct A {
+  A();
+  A(A &&);                              // #1
+  template<typename T> A(T &&);         // #2
+};
+struct B : A {
+  using A::A;
+  B(const B &);                         // #3
+  B(B &&) = default;                    // [:en] #4, implicitly deleted
+                                        // [|:zh_CN] #4，隐含为弃置的
+
+  struct X { X(X &&) = delete; } x;
+};
+extern B b1;
+B b2 = static_cast<B&&>(b1);            // [:en] calls #3: #1, #2, and #4 are not viable
+                                        // [|:zh_CN] 调用 #3：#1、#2 和 #4 均不可行
+struct C { operator B&&(); };
+B b3 = C();                             // [:en] calls #3
+                                        // [|:zh_CN] 调用 #3
+[codeblock:end]
+[exit:example]
 
 [include over.match.call]
 

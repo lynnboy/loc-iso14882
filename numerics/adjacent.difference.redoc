@@ -26,33 +26,37 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`T] be the value type of [`decltype(first)].
+[:zh_CN] 令 [`T] 为 [`decltype(first)] 的值类型。
+
+[:en] For the overloads that do not take an argument [`binary_op], let
+[`binary_op] be an lvalue that denotes an object of type [`minus<>].
+[:zh_CN] 对于不解释 [`binary_op] 实参的重载，令 [`binary_op] 为代表 [`minus<>]
+类型的对象的左值。
+
 [para:requires]
 [list]
 [item]
-[:en] For the overloads with no [`ExecutionPolicy], [`InputIterator][=']s value
-type shall be [`MoveAssignable] ([#moveassignable]) and shall be constructible
-from the type of [`*first].
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，[`InputIterator] 的值类型应当为
-[`MoveAssignable]（[#moveassignable]），并且 [`*first] 的类型应当可以转换为该
-值类型。
+[:en] For the overloads with no [`ExecutionPolicy], [`T] shall be
+[`MoveAssignable] ([#moveassignable]) and shall be constructible from the type
+of [`*first].
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，[`T] 应当为 [`MoveAssignable]
+（[#moveassignable]），并且 [`*first] 的类型应当可以转换为该值类型。
 
 [:en] [`acc] (defined below) shall be writable to the [`result] output iterator.
 [:zh_CN] [`acc]（定义如下）应当可以向输出迭代器 [`result] 写出。
 
-[:en] The result of the expression [`val - std::move(acc)] or
-[`binary_op(val, std::move(acc))] shall be writable to the [`result] output
-iterator.
-[:zh_CN] 表达式 [`val - std::move(acc)] 或 [`binary_op(val, std::move(acc))] 的
-结果应当可以向输出迭代器 [`result] 写出。
+[:en] The result of the expression [`binary_op(val, std::move(acc))] shall be
+writable to the [`result] output iterator.
+[:zh_CN] 表达式 [`binary_op(val, std::move(acc))] 的结果应当可以向输出迭代器
+[`result] 写出。
 
 [item]
-[:en] For the overloads with an [`ExecutionPolicy], the value type of
-[`ForwardIterator1] shall be [`CopyConstructible] ([#copyconstructible]) from
-the expression [`*first - *first] or [`binary_op(*first, *first)], and
-assignable to the value type of [`ForwardIterator2].
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，[`ForwardIterator1] 的值类型应当为
-从表达式 [`*first - *first] 或 [`binary_op(*first, *first)] [`CopyConstructible]
-（[#copyconstructible]），并且可以向 [`ForwardIterator2] 的值类型赋值。
+[:en] For the overloads with an [`ExecutionPolicy], the result of the expression
+[`binary_op(*first, *first)] and [`*first] shall be writable to [`result].
+[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，表达式 [`binary_op(*first, *first)]
+和 [`*first] 的结果应当可以向 [`result] 写出。
 
 [item]
 [:en] For all overloads, in the ranges [=crange(first,last)] and
@@ -70,39 +74,29 @@ elements nor invalidate iterators or subranges.[#:note#fn:$section.1]
 
 [para:effects]
 [:en] For the overloads with no [`ExecutionPolicy] and a non-empty range, the
-function creates an accumulator [`acc] whose type is [`InputIterator][=']s
-value type, initializes it with [`*first], and assigns the result to [`*result].
+function creates an accumulator [`acc] of type [`T], initializes it with
+[`*first], and assigns the result to [`*result].
 [:zh_CN] 对于不带有 [`ExecutionPolicy] 而带有一个非空范围的重载，函数创建一个
-累加数 [`acc]，其类型为 [`InputIterator] 的值类型，以 [`*first] 对其初始化，并将
-其结果赋值给 [`*result]。
+[`T] 类型的累加数 [`acc]，以 [`*first] 对其初始化，并将其结果赋值给 [`*result]。
 
 [:en] For every iterator [`i] in [=range(first + 1,last)] in order, creates an
-object [`val] whose type is [`InputIterator][=']s value type, initializes it
-with [`*i], computes [`val - std::move(acc)] or
+object [`val] whose type is [`T], initializes it with [`*i], computes
 [`binary_op(val, std::move(acc))], assigns the result to
 [`*(result + (i - first))], and move assigns from [`val] to [`acc].
-[:zh_CN] 对于 [=range(first + 1,last)] 中的每个迭代器 [`i]，依序创建对象 [`val]，
-其类型为 [`InputIterator] 的值类型，以 [`*i] 对其初始化，计算
-[`val - std::move(acc)] 或者 [`binary_op(val, std::move(acc))]，将其结果赋值给
-[`*(result + (i - first))]，并将 [`val] 移动赋值给 [`acc]。
+[:zh_CN] 对于 [=range(first + 1,last)] 中的每个迭代器 [`i]，依序创建 [`T] 类型的
+对象 [`val]，以 [`*i] 对其初始化，计算 [`binary_op(val, std::move(acc))]，将其
+结果赋值给 [`*(result + (i - first))]，并将 [`val] 移动赋值给 [`acc]。
 
 [para]
-[:en] For the overloads with an [`ExecutionPolicy] and a non-empty range, first
-the function creates an object whose type is [`ForwardIterator1][=']s value
-type, initializes it with [`*first], and assigns the result to [`*result].
-[:zh_CN] 对于带有 [`ExecutionPolicy] 而带有一个非空范围的重载，函数首先创建一个
-类型为 [`ForwardIterator1] 的值类型的对象，以 [`*first] 对其初始化，并将其结果
-赋值给 [`*result]。
+[:en] For the overloads with an [`ExecutionPolicy] and a non-empty range,
+performs [`*result = *first].
+[:zh_CN] 对于带有 [`ExecutionPolicy] 而带有一个非空范围的重载，执行
+[`*result = *first]。
 
-[:en] Then for every [`d] in [=crange(1,last - first - 1)], creates an object
-[`val] whose type is [`ForwardIterator1][=']s value type, initializes it with
-[`*(first + d) - *(first + d - 1)] or
-[`binary_op(*(first + d), *(first + d - 1))], and assigns the result to
-[`*(result + d)].
-[:zh_CN] 对于 [=crange(1,last - first - 1)] 中的每个 [`d]，创建对象 [`val]，
-其类型为 [`ForwardIterator1] 的值类型，以 [`*(first + d) - *(first + d - 1)]
-或者 [`binary_op(*(first + d), *(first + d - 1))] 对其初始化，并将其结果赋值给
-[`*(result + d)]。
+[:en] Then, for every [`d] in [``[1, last - first - 1`]], performs
+[`*(result + d) = binary_op(*(first + d), *(first + (d - 1)))].
+[:zh_CN] 对于 [``[1, last - first - 1`]] 中的每个 [`d]，执行
+[`*(result + d) = binary_op(*(first + d), *(first + (d - 1)))]。
 
 [para:returns]
 [:en] [`result + (last - first)].

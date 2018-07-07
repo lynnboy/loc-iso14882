@@ -47,8 +47,8 @@ In the constructor descriptions that follow, let [$i] be in the range
 形参包组中的第 [$i] 个类型，其中的索引基于零。
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
-[codeblock:declaration [!:mark EXPLICIT] ]
-[=EXPLICIT] constexpr tuple();
+[codeblock:declaration [!:mark SeeBelow] ]
+explicit([=SeeBelow]) constexpr tuple();
 [codeblock:end]
 
 [enter:description]
@@ -68,10 +68,10 @@ template arguments.
 [:zh_CN] 这种行为可以由带有默认模板实参的构造函数模板来予以实现。
 [exit:note]
 
-[:en] The constructor is explicit if and only if [$[`T]_i] is not implicitly
-default-constructible for at least one [$i].
-[:zh_CN] 当且仅当 [$[`T]_i] 对于至少一个 [$i] 并非是可以隐式默认构造时，这个
-构造函数是显式的。
+[:en] The expression inside [`explicit] evaluates to [`true] if and only if
+[$[`T]_i] is not implicitly default-constructible for at least one [$i].
+[:zh_CN] 当且仅当 [$[`T]_i] 对于至少一个 [$i] 并非是可以隐式默认构造时，
+[`explicit] 中的表达式求值为 [`true]。
 
 [enter:note]
 [:en] This behavior can be implemented with a trait that checks whether a
@@ -82,8 +82,8 @@ default-constructible for at least one [$i].
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
-[codeblock:declaration [!:mark EXPLICIT] ]
-[=EXPLICIT] constexpr tuple(const Types&...);
+[codeblock:declaration [!:mark SeeBelow] ]
+explicit([=SeeBelow]) constexpr tuple(const Types&...);
 [codeblock:end]
 
 [enter:description]
@@ -98,15 +98,17 @@ all [$i].
 [:zh_CN] 除非 [`sizeof...(Types) >= 1] 并且 [`is_copy_constructible_v<T[$_i]>]
 对于所有 [$i] 均为 [`true]，否则这个构造函数不能参与重载决议。
 
-[:en] The constructor is explicit if and only if
-[`is_convertible_v<const T[$_i]&, T[$_i]>] is [`false] for at least one [$i].
-[:zh_CN] 当且仅当 [`is_convertible_v<const T[$_i]&, T[$_i]>] 对于至少一个 [$i]
-为 [`false] 时，这个构造函数是显式的。
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+
+[codeblock:notation]
+!conjunction_v<is_convertible<const Types&, Types>...>
+[codeblock:end]
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
-[codeblock:declaration]
-template<class... UTypes> [=EXPLICIT] constexpr tuple(UTypes&&... u);
+[codeblock:declaration [!:mark SeeBelow] ]
+template<class... UTypes> explicit([=SeeBelow]) constexpr tuple(UTypes&&... u);
 [codeblock:end]
 
 [enter:description]
@@ -123,10 +125,12 @@ template<class... UTypes> [=EXPLICIT] constexpr tuple(UTypes&&... u);
 [`sizeof...(Types) >= 1]，并且 [`is_constructible_v<T[$_i], U[$_i]&&>] 对于所有
 [$i] 均为 [`true]，否则这个构造函数不能参与重载决议。
 
-[:en] The constructor is explicit if and only if
-[`is_convertible_v<U[$_i]&&, T[$_i]>] is [`false] for at least one [$i].
-[:zh_CN] 当且仅当 [`is_convertible_v<U[$_i]&&, T[$_i]>] 对于至少一个 [$i] 为
-[`false] 时，这个构造函数是显式的。
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+
+[codeblock:notation]
+!conjunction_v<is_convertible<UTypes, Types>...>
+[codeblock:end]
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
@@ -163,8 +167,8 @@ tuple(tuple&& u) = default;
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
-[codeblock:declaration [!:mark EXPLICIT] ]
-template<class... UTypes> [=EXPLICIT] constexpr tuple(const tuple<UTypes...>& u);
+[codeblock:declaration [!:mark SeeBelow] ]
+template<class... UTypes> explicit([=SeeBelow]) constexpr tuple(const tuple<UTypes...>& u);
 [codeblock:end]
 
 [enter:description]
@@ -196,15 +200,17 @@ and [`UTypes...] expands to [`U]) [`is_convertible_v<const tuple<U>&, T>],
 [`is_constructible_v<T, const tuple<U>&>] 和 [`is_same_v<T, U>] 均为 [`false]。
 [list:end]
 
-[:en] The constructor is explicit if and only if
-[`is_convertible_v<const U[$_i]&, T[$_i]>] is [`false] for at least one [$i].
-[:zh_CN] 当且仅当 [`is_convertible_v<const U[$_i]&, T[$_i]>] 对于至少一个 [$i]
-为 [`false] 时，这个构造函数是显式的。
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+
+[codeblock:notation]
+!conjunction_v<is_convertible<const UTypes&, Types>...>
+[codeblock:end]
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
-[codeblock:declaration [!:mark EXPLICIT] ]
-template<class... UTypes> [=EXPLICIT] constexpr tuple(tuple<UTypes...>&& u);
+[codeblock:declaration [!:mark SeeBelow] ]
+template<class... UTypes> explicit([=SeeBelow]) constexpr tuple(tuple<UTypes...>&& u);
 [codeblock:end]
 
 [enter:description]
@@ -236,16 +242,18 @@ and [`UTypes...] expands to [`U]) [`is_convertible_v<tuple<U>, T>],
 [`is_constructible_v<T, tuple<U>>] 和 [`is_same_v<T, U>] 均为 [`false]。
 [list:end]
 
-[:en] The constructor is explicit if and only if
-[`is_convertible_v<U[$_i]&&, T[$_i]>] is [`false] for at least one [$i].
-[:zh_CN] 当且仅当 [`is_convertible_v<U[$_i]&&, T[$_i]>] 对于至少一个 [$i] 为
-[`false] 时，这个构造函数是显式的。
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+
+[codeblock:notation]
+!conjunction_v<is_convertible<UTypes, Types>...>
+[codeblock:end]
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
 [%@library pair]
-[codeblock:declaration [!:mark EXPLICIT] ]
-template<class U1, class U2> [=EXPLICIT] constexpr tuple(const pair<U1, U2>& u);
+[codeblock:declaration [!:mark SeeBelow] ]
+template<class U1, class U2> explicit([=SeeBelow]) constexpr tuple(const pair<U1, U2>& u);
 [codeblock:end]
 
 [enter:description]
@@ -263,17 +271,18 @@ template<class U1, class U2> [=EXPLICIT] constexpr tuple(const pair<U1, U2>& u);
 [`is_constructible_v<T[_1], const U2&>] 为 [`true]，否则这个构造函数不能参与
 重载决议。
 
-[:en] The constructor is explicit if and only if
-[`is_convertible_v<const U1&, T[_0]>] is [`false] or
-[`is_convertible_v<const U2&, T[_1]>] is [`false].
-[:zh_CN] 当且仅当 [`is_convertible_v<const U1&, T[_0]>] 为 [`false] 或者
-[`is_convertible_v<const U2&, T[_1]>] 为 [`false] 时，这个构造函数是显式的。
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+
+[codeblock:notation]
+!is_convertible_v<const U1&, T[$_0]> || !is_convertible_v<const U2&, T[$_1]>
+[codeblock:end]
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
 [%@library pair]
-[codeblock:declaration [!:mark EXPLICIT] ]
-template<class U1, class U2> [=EXPLICIT] constexpr tuple(pair<U1, U2>&& u);
+[codeblock:declaration [!:mark SeeBelow] ]
+template<class U1, class U2> explicit([=SeeBelow]) constexpr tuple(pair<U1, U2>&& u);
 [codeblock:end]
 
 [enter:description]
@@ -291,33 +300,34 @@ second element with [`std::forward<U2>(u.second)].
 [`true] 并且 [`is_constructible_v<T[_1], U2&&>] 为 [`true]，否则这个构造函数不能
 参与重载决议。
 
-[:en] The constructor is explicit if and only if
-[`is_convertible_v<U1&&, T[_0]>] is [`false] or
-[`is_convertible_v<U2&&, T[_1]>] is [`false].
-[:zh_CN] 当且仅当 [`is_convertible_v<U1&&, T[_0]>] 为 [`false] 或者
-[`is_convertible_v<U2&&, T[_1]>] 为 [`false] 时，这个构造函数是显式的。
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+
+[codeblock:notation]
+!is_convertible_v<U1, T[$_0]> || !is_convertible_v<U2, T[$_1]>
+[codeblock:end]
 [exit:description]
 
 [%@library tuple[![:en]constructor[:zh_CN]构造函数]]
-[codeblock:declaration [!:mark EXPLICIT] ]
+[codeblock:declaration [!:mark SeeBelow] ]
 template<class Alloc>
   tuple(allocator_arg_t, const Alloc& a);
 template<class Alloc>
-  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, const Types&...);
+  explicit([=SeeBelow]) tuple(allocator_arg_t, const Alloc& a, const Types&...);
 template<class Alloc, class... UTypes>
-  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, UTypes&&...);
+  explicit([=SeeBelow]) tuple(allocator_arg_t, const Alloc& a, UTypes&&...);
 template<class Alloc>
   tuple(allocator_arg_t, const Alloc& a, const tuple&);
 template<class Alloc>
   tuple(allocator_arg_t, const Alloc& a, tuple&&);
 template<class Alloc, class... UTypes>
-  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, const tuple<UTypes...>&);
+  explicit([=SeeBelow]) tuple(allocator_arg_t, const Alloc& a, const tuple<UTypes...>&);
 template<class Alloc, class... UTypes>
-  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, tuple<UTypes...>&&);
+  explicit([=SeeBelow]) tuple(allocator_arg_t, const Alloc& a, tuple<UTypes...>&&);
 template<class Alloc, class U1, class U2>
-  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, const pair<U1, U2>&);
+  explicit([=SeeBelow]) tuple(allocator_arg_t, const Alloc& a, const pair<U1, U2>&);
 template<class Alloc, class U1, class U2>
-  [=EXPLICIT] tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&&);
+  explicit([=SeeBelow]) tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&&);
 [codeblock:end]
 
 [enter:description]

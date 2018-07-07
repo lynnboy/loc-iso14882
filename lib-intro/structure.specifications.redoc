@@ -77,47 +77,90 @@ appropriate):[#:note#fn:$section.2]
 
 [note:foot#fn:$section.2]
 [:en]
-To save space, items that do not apply to a function are omitted.
+To save space, elements that do not apply to a function are omitted.
 [:zh_CN]
 为节省空间，并不适用于某一函数的条目将被省略。
 
 [:en]
-For example, if a function does not specify any further preconditions, there
-will be no [=Requires] paragraph.
+For example, if a function specifies no preconditions, there will be no
+[=Requires] element.
 [:zh_CN]
-例如，若某函数并未指定任何进一步的前条件，则将没有“要求”段落。
+例如，若某函数并未指定任何前条件，则将没有 [=Requires] 条目。
 [note:end]
 
 [list]
 [item]
-[:en] [=Requires] the preconditions for calling the function
-[:zh_CN] [=Requires] 调用该函数的前条件
+[:en] [=Requires] the preconditions for calling the function.
+[:zh_CN] [=Requires] 调用该函数的前条件。
 [item]
-[:en] [=Effects] the actions performed by the function
-[:zh_CN] [=Effects] 该函数实施的动作
+[:en] [=Constraints] the conditions for the function[=']s participation in
+overload resolution ([#over.match]).
+[:zh_CN] [=Constraints] 该函数参与重载决议的条件（[#over.match]）。
+[enter:note]
+[:en] Failure to meet such a condition results in the function[=']s silent
+non-viability.
+[:zh_CN] 无法满足这种条件将导致该函数沉默地变为不可行。
+[exit:note]
+[enter:example]
+[:en] An implementation might express such a condition via a
+[~constraint-expression] ([#temp.constr.decl]).
+[:zh_CN] 实现可能通过[~约束表达式]来表达这种条件（[#temp.constr.decl]）。
+[exit:example]
+[item]
+[:en] [=Mandates] the conditions that, if not met, render the program ill-formed.
+[:zh_CN] [=Mandates] 如果无法满足这些条件，将使程序成为非良构。
+[enter:example]
+[:en] An implementation might express such a condition via a
+[~constraint-expression] in a [~static_assert-declaration] ([#dcl.dcl]).
+[:zh_CN] 实现可能通过在 [~static_assert-声明式]（[#dcl.dcl]）中的[~约束表达式]来
+表达这种条件。
+[:en] If the diagnostic is to be emitted only after the function has been
+selected by overload resolution, an implementation might express such a
+condition via a [~constraint-expression] ([#temp.constr.decl]) and also define
+the function as deleted.
+[:zh_CN] 如果需要仅在函数被重载决议选择后给出诊断，则实现可以通过[~约束表达式]来
+表达这种条件（[#temp.constr.decl]），并同时将函数定义为弃置的。
+[exit:example]
+[item]
+[:en] [=Expects] the conditions (sometimes termed preconditions) that the
+function assumes to hold whenever it is called.
+[:zh_CN] [=Expects] 函数假定每当其被调用时都满足的条件（有时称为前条件）。
+[enter:example]
+[:en] An implementation might express such conditions via an attribute such as
+[``[`[expects`]`]] ([#dcl.attr.contract])。
+[:zh_CN] 实现可以通过如 [``[`[expects`]`]] 这样的特性标注来表达这种条件
+（[#dcl.attr.contract]）。
+[:en] However, some such conditions might not lend themselves to expression via
+code.
+[:zh_CN] 不过，某些这样的条件可能无法通过代码来予以表达。
+[exit:example]
+[item]
+[:en] [=Effects] the actions performed by the function.
+[:zh_CN] [=Effects] 该函数实施的动作。
 [item]
 [:en] [=Sync] the synchronization operations ([#intro.multithread]) applicable
-to the function
-[:zh_CN] [=Sync] 适用于该函数的同步操作（[#intro.multithread]）
+to the function.
+[:zh_CN] [=Sync] 适用于该函数的同步操作（[#intro.multithread]）。
 [item]
-[:en] [=Postconditions] the observable results established by the function
-[:zh_CN] [=Postconditions] 该函数造成的可观察结果
+[:en] [=Ensures] the conditions (sometimes temred observable results or
+postconditions) established by the function.
+[:zh_CN] [=Ensures] 该函数所建立的条件（有时被称为可观察结果或后条件）。
 [item]
-[:en] [=Returns] a description of the value(s) returned by the function
-[:zh_CN] [=Returns] 对该函数所返回的值的说明
+[:en] [=Returns] a description of the value(s) returned by the function.
+[:zh_CN] [=Returns] 对该函数所返回的值的说明。
 [item]
 [:en] [=Throws] any exceptions thrown by the function, and the conditions that
-would cause the exception
-[:zh_CN] [=Throws] 该函数所抛出的任何异常，以及可能造成异常的条件
+would cause the exception.
+[:zh_CN] [=Throws] 该函数所抛出的任何异常，以及可能造成异常的条件。
 [item]
-[:en] [=Complexity] the time and/or space complexity of the function
-[:zh_CN] [=Complexity] 该函数的时间和/或空间复杂度
+[:en] [=Complexity] the time and/or space complexity of the function.
+[:zh_CN] [=Complexity] 该函数的时间和/或空间复杂度。
 [item]
-[:en] [=Remarks] additional semantic constraints on the function
-[:zh_CN] [=Remarks] 该函数的其他语义约束
+[:en] [=Remarks] additional semantic constraints on the function.
+[:zh_CN] [=Remarks] 该函数的其他语义约束。
 [item]
-[:en] [=Errors] the error conditions for error codes reported by the function
-[:zh_CN] [=Errors] 由该函数报告的错误号码的错误条件
+[:en] [=Errors] the error conditions for error codes reported by the function.
+[:zh_CN] [=Errors] 由该函数报告的错误号码的错误条件。
 [list:end]
 
 [para]
@@ -130,21 +173,22 @@ are interpreted as follows.
 各个要素的解释规则如下。
 
 [:en]
-If [`F][=']s semantics specifies a [=Requires] element, then that requirement is
-logically imposed prior to the [+equivalent-to[%]] semantics.
+If [`F][=']s semantics specifies any [=Constraints] or [`Mandates] elements,
+then those requirements are logically imposed prior to the [+equivalent-to[%]]
+semantics.
 [:zh_CN]
-若 [`F] 的语义指定了 [=Requires] 要素，则此要求在逻辑上先于其[+等价于[%]]
-语义进行。
+若 [`F] 的语义指定了 [=Constraints] 或 [`Mandates] 要素，则此要求在逻辑上先于其
+[+等价于[%]]语义进行。
 
 [:en]
-Next, the semantics of the code sequence are determined by the [=Requires],
-[=Effects], [=Sync], [=Postconditions], [=Returns], [=Throws], [=Complexity], 
-[=Remarks], and [=Errors] specified for the function invocations contained in
-the code sequence.
+Next, the semantics of the code sequence are determined by the [=Constraints],
+[=Mandates], [=Expects], [=Effects], [=Sync], [=Ensures], [=Returns], [=Throws],
+[=Complexity], [=Remarks], and [=Errors] specified for the function invocations
+contained in the code sequence.
 [:zh_CN]
-然后，根据代码序列中包含的各个函数调用所指定的 [=Requires]、[=Effects]、[=Sync]、
-[=Postconditions]、[=Returns]、[=Throws]、[=Complexity]、[=Remarks]、和
-[=Errors] 来确定代码序列的语义。
+然后，根据代码序列中包含的各个函数调用所指定的 [=Constraints]、[=Mandates]、
+[=Expects]、[=Effects]、[=Sync]、[=Ensures]、[=Returns]、[=Throws]、
+[=Complexity]、[=Remarks]、和 [=Errors] 来确定代码序列的语义。
 
 [:en]
 The value returned from [`F] is specified by [`F][=']s [=Returns] element, or if
@@ -155,12 +199,12 @@ the [`return] statements ([#stmt.return]) in the code sequence.
 [`F] 的非-[`void] 返回值由其代码序列中的 [`returns] 语句（[#stmt.return]）指定。
 
 [:en]
-If [`F][=']s semantics contains a [=Throws], [=Postconditions], or [=Complexity]
+If [`F][=']s semantics contains a [=Throws], [=Ensures], or [=Complexity]
 element, then that supersedes any occurrences of that element in the code
 sequence.
 [:zh_CN]
-如果 [`F] 的语义包含 [=Throws]、[=Postconditions] 或 [=Complexity] 要素，则它
-代替代码序列中所出现的任何这些要素。
+如果 [`F] 的语义包含 [=Throws]、[=Ensures] 或 [=Complexity] 要素，则它代替代码
+序列中所出现的任何这些要素。
 
 [para]
 [:en]

@@ -341,12 +341,11 @@ bool compare_exchange_strong(T& expected, T desired,
 [:en] Retrieves the value in [`expected].
 [:zh_CN] 获取 [`expected] 中的值。
 
-[:en] It then atomically compares the contents of the memory pointed to by
-[`this] for equality with that previously retrieved from [`expected], and if
-true, replaces the contents of the memory pointed to by [`this] with that in
-[`desired].
-[:zh_CN] 然后原子地比较由 [`this] 所指向的内存的内容和之前从 [`expected] 所获取
-到的内容，当为真时，将由 [`this] 所指向的内存的内容替换为 [`desired] 中的内容。
+[:en] It then atomically compares the value representation of the value pointed
+to by [`this] for equality with that previously retrieved from [`expected], and
+if true, replaces the value pointed to by [`this] with that in [`desired].
+[:zh_CN] 然后原子地比较由 [`this] 所指向值和之前从 [`expected] 所获取到的值的
+值表示，当为真时，将由 [`this] 所指向的值替换为 [`desired] 中的值。
 
 [:en] If and only if the comparison is true, memory is affected according to the
 value of [`success], and if the comparison is false, memory is affected
@@ -365,10 +364,10 @@ replaced by the value [`memory_order::relaxed].
 [`memory_order::relaxed]。
 
 [:en] If and only if the comparison is false then, after the atomic operation,
-the contents of the memory in [`expected] are replaced by the value read from
-the memory pointed to by [`this] during the atomic comparison.
-[:zh_CN] 当且仅当比较结果为假时，在该原子性操作之后，[`expected] 中的内存内容被
-替换为原子性比较过程中从 [`this] 所指向的内存读到的值。
+the value in [`expected] is replaced by the value pointed to by [`this] during
+the atomic comparison.
+[:zh_CN] 当且仅当比较结果为假时，在该原子性操作之后，[`expected] 中的值被替换为
+原子性比较过程中 [`this] 所指向的值。
 
 [:en] If the operation returns [`true], these operations are atomic
 read-modify-write operations ([#intro.multithread]) on the memory pointed to by
@@ -385,8 +384,10 @@ read-modify-write operations ([#intro.multithread]) on the memory pointed to by
 
 [para]
 [enter:note]
-[:en] For example, the effect of [`compare_exchange_strong] is
-[:zh_CN] 例如，[`compare_exchange_strong] 的效果为：
+[:en] For example, the effect of [`compare_exchange_strong] on objects without
+padding bits ([#basic.types]) is
+[:zh_CN] 例如，对没有填充位（[#basic.types]）的对象进行
+[`compare_exchange_strong] 的效果为：
 
 [codeblock]
 if (memcmp(this, &expected, sizeof(*this)) == 0)
@@ -470,13 +471,13 @@ would not, the strong one is preferable.
 
 [para]
 [enter:note]
-[:en] The [`memcpy] and [`memcmp] semantics of the compare-and-exchange
-operations may result in failed comparisons for values that compare equal with
-[`operator==] if the underlying type has padding bits, trap bits, or alternate
-representations of the same value.
-[:zh_CN] 当底层类型带有填充位、陷阱位，或者相同值具有替代表示时，由于比较并交换
-操作的 [`memcpy] 和 [`memcmp] 语义，可能导致对以 [`operator==] 比较为相等的值
-出现比较失败。
+[:en] Under cases where the [`memcpy] and [`memcmp] semantics of the
+compare-and-exchange operations apply, the outcome might be failed comparisons
+for values that compare equal with [`operator==] if the underlying type has
+trap bits or alternate representations of the same value.
+[:zh_CN] 对于适用比较并交换操作的 [`memcpy] 和 [`memcmp] 语义的情况下，当底层
+类型带有陷阱位，或者相同值具有替代表示时，对以 [`operator==] 比较为相等的值可能
+出现比较失败的结果。
 
 [:en] Notably, on implementations conforming to ISO/IEC/IEEE 60559,
 floating-point [`-0.0] and [`+0.0] will not compare equal with [`memcmp] but
@@ -485,5 +486,60 @@ compare equal with [`memcmp] but will not compare equal with [`operator==].
 [:zh_CN] 还要注意，在遵循 ISO/IEC/IEEE 60559 的实现中，浮点 [`-0.0] 和 [`+0.0]
 以 [`memcmp] 比较时不相等但以 [`operator==] 比较时相等，而具有相同负荷内容的
 NaN 之间以 [`memcmp] 比较时相等但以 [`operator==] 比较时则不相等。
+[exit:note]
+
+[enter:note]
+[:en] Because compare-and-exchange acts on an object[=']s value representation,
+padding bits that never participate in the object[=']s value representation are
+ignored.
+[:zh_CN] 由于比较并交换是在对象的值表示上进行的，从不参与对象的值表示的填充位
+都被忽略。
+
+[:en] As a consequence, the following code is guaranteed to avoid spurious
+failure:
+[:zh_CN] 其结果是，以下的代码可以保证避免假性失败：
+
+[codeblock]
+struct padded {
+  char clank = 0x42;
+  // [:en] Padding here.
+  // [|:zh_CN] 此处有填充
+  unsigned biff = 0xC0DEFEFE;
+};
+atomic<padded> pad = ATOMIC_VAR_INIT({});
+
+bool zap() {
+  padded expected, desired{0, 0};
+  return pad.compare_exchange_strong(expected, desired);
+}
+[codeblock:end]
+[exit:note]
+
+[enter:note]
+[:en] For a union with bits that participate in the value representation of some
+members but not others, compare-and-exchange might always fail.
+[:zh_CN] 如果一个联合带有参与某些成员而非另一些成员的值表示的位，则比较并交换
+可能总是失败。
+
+[:en] This is because such padding bits have an indeteminate value when they
+do not participate in the value representation of the active member.
+[:zh_CN] 这是因为这种填充位在其不参与活跃成员的值表示时具有不确定的值。
+
+[:en] As a consequence, the following code is not guaranteed to ever succeed:
+[:zh_CN] 其结果时，以下代码并不保证总是成功：
+
+[codeblock]
+union pony {
+  double celestia = 0.;
+  short luna; // [:en] padded
+              // [|:zh_CN] 有填充
+};
+atomic<pony> princesses = ATOMIC_VAR_INIT({});
+
+bool party(pony desired) {
+  pony expected;
+  return princesses.compare_exchange_strong(expected, desired);
+}
+[codeblock:end]
 [exit:note]
 [exit:description]

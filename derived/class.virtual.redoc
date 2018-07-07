@@ -562,3 +562,59 @@ a function with a deleted definition.
 相似地，没有弃置定义式的函数也不能覆盖带有弃置定义式的函数。
 
 [%:end#virtual.function]
+
+[para]
+[:en]
+If an overriding function specifies contract conditions ([#dcl.attr.contract]),
+it shall specify the same list of contract conditions as its overridden
+functions; no diagnostic is required if corresponding conditions will always
+evaluate to the same value.
+[:zh_CN]
+如果覆盖函数指定了契约条件（[#dcl.attr.contract]），则它应当指定其所覆盖的函数
+相同的契约条件列表；当对应条件总是求值为相同的值时无须诊断。
+
+[:en]
+Otherwise, it is considered to have the list of contract conditions from one of
+its overridden functions; the names in the contract conditions are bound, and
+the semantic constraints are checked, at the point where the contract conditions
+appear.
+[:zh_CN]
+否则，将其当做带有其所覆盖的函数之一的契约条件列表；在契约条件出现的地方进行契约
+条件中的名字的绑定以及对其约束语义的检查。
+
+[:en]
+Given a virtual function [`f] with a contract condition that odr-uses [`*this]
+([#basic.def.odr]), the class of which [`f] is a direct member shall be be an
+unambiguous and accessible base class of any class in which [`f] is overridden.
+[:zh_CN]
+给定某个虚函数 [`f]，其所带有的契约条件 ODR 式使用了 [`*this]
+（[#basic.def.odr]），以 [`f] 为直接成员的类，在覆盖了 [`f] 的任何类中都应当是
+无歧义且可访问的基类。
+
+[:en]
+If a function overrides more than one function, all of the overridden functions
+shall have the same list of contract conditions ([#dcl.attr.contract]);
+no diagnostic is required if corresponding conditions will always evaluate to
+the same value.
+[:zh_CN]
+如果某个函数覆盖了多于一个函数，则所有被覆盖的函数都应当具有相同的契约条件列表
+（[#dcl.attr.contract]）；当对应条件总是求值为相同的值时无须诊断。
+
+[enter:example]
+[codeblock]
+struct A {
+  virtual void g() [[expects: x == 0]];
+  int x = 42;
+};
+
+int x = 42;
+struct B {
+  virtual void g() [[expects: x == 0]];
+}
+
+struct C : A, B {
+  virtual void g();             // [:en] error: preconditions of overridden functions are not the same
+                                // [|:zh_CN] 错误：被覆盖函数的前条件不同
+};
+[codeblock:end]
+[exit:example]

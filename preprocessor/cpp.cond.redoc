@@ -29,11 +29,17 @@
     [| h-pp-tokens h-preprocessing-token ]
 [rule:end]
 
-[rule has-include-expression [:zh_CN] 可包含表达式 ]
+[%[`__has_include]]
+[rule has-include-expression [:zh_CN] 包含查询表达式 ]
     [| [`__has_include] [`(] [`<] h-char-sequence [`>] [`)] ]
     [| [`__has_include] [`(] [`"] q-char-sequence [`"] [`)] ]
     [| [`__has_include] [`(] string-literal [`)] ]
     [| [`__has_include] [`(] [`<] h-pp-tokens [`>] [`)] ]
+[rule:end]
+
+[%[`__has_cpp_attribute]]
+[rule has-attribute-expression [:zh_CN] 特性查询表达式 ]
+    [| [`__has_cpp_attribute] [`(] pp-tokens [`)] ]
 [rule:end]
 [syntax:end]
 
@@ -43,11 +49,12 @@ The expression that controls conditional inclusion shall be an integral constant
 expression except that identifiers (including those lexically identical to
 keywords) are interpreted as described below[#:note#fn:$section.1] and it may
 contain zero or more [~defined-macro-expression]s and/or
-[~has-include-expression]s as unary operator expressions.
+[~has-include-expression]s and/or [~has-attribute-expression]s as unary operator
+expressions.
 [:zh_CN]
 控制条件包含的表达式应当为整型常量表达式，但标识符（包括在词法上等同于关键字的）
 按照下文所述进行解释[#:note#fn:$section.1]，且它可以包含零个或多个作为一元运算符
-表达式的[~已定义宏表达式]和/或[~可包含表达式]。
+表达式的[~已定义宏表达式]和/或[~包含查询表达式]和/或[~特性查询表达式]。
 
 [note:foot#fn:$section.1]
 [:en]
@@ -76,7 +83,7 @@ The third and fourth forms of [~has-include-expression] are considered only if
 neither of the first or second forms matches, in which case the preprocessing
 tokens are processed just as in normal text.
 [:zh_CN]
-[~可包含表达式]的第三和第四种形式，只有当第一和第二种形式都无法匹配时才会考虑，
+[~包含查询表达式]的第三和第四种形式，只有当第一和第二种形式都无法匹配时才会考虑，
 这种情况下其中的预处理记号被当做普通的文本来处理。
 
 [para]
@@ -86,7 +93,7 @@ sequence in each contained [~has-include-expression] is searched for as if that
 preprocessing token sequence were the [~pp-tokens] in a [`#include] directive,
 except that no further macro expansion is performed.
 [:zh_CN]
-各个[~可包含表达式]中的带括号的预处理记号序列所指定的头文件或源文件，是将这个
+各个[~包含查询表达式]中的带括号的预处理记号序列所指定的头文件或源文件，是将这个
 预处理记号序列当成是一个 [`#include] 指令中的[~预处理记号序列]来搜索的，但不会
 进行进一步的宏展开。
 
@@ -100,22 +107,85 @@ If such a directive would not satisfy the syntactic requirements of a
 The [~has-include-expression] evaluates to [`1] if the search for the source
 file succeeds, and to [`0] if the search fails.
 [:zh_CN]
-如果对源文件的搜索成功，则[~可包含表达式]求值为 [`1]，如果搜索失败则为 [`0]。
+如果对源文件的搜索成功，则[~包含查询表达式]求值为 [`1]，如果搜索失败则为 [`0]。
+
+[para]
+[:en]
+Each [~has-attribute-expression] is replaced by a non-zero [~pp-number] matching
+the form of an [~integer-literal] if the implementation supports an attribute
+with the name specified by interpreting the [~pp-tokens] as an
+[~attribute-token], and by [`0] otherwise.
+[:zh_CN]
+对于每个[~特性查询表达式]，如果实现支持将其[~预处理记号序列]作为一个[~特性记号]
+进行解释时所指名的特性标注，则它被替换为与[~整数字面量]的形式相匹配的一个非零的
+[~预处理数字]，否则被替换为 [`0]。
+
+[:en]
+The program is ill-formed if the [~pp-tokens] do not match the form of an
+[~attribute-token].
+[:zh_CN]
+如果[~预处理记号序列]与[~特性记号]的形式不匹配，则程序非良构。
+
+[para]
+[:en]
+For an attribute specified in this document, the value of the
+[~has-attribute-expression] is given by [#cpp.cond.ha].
+[:zh_CN]
+对于本文档中所给出的特性，[~特性查询表达式]的值由 [#cpp.cond.ha] 给出。
+
+[:en]
+For other attributes recognized by the implementation, the value is
+[%@impldef value of [~has-attribute-expression] for non-standard attributes]
+implementation-defined.
+[:zh_CN]
+对于实现所能识别的其他特性标注，其值则是[%@impldef 非标准特性标注的[~特性查询
+表达式]的值]由实现定义的。
+
+[enter:note]
+[:en]
+It is expected that the availability of an attribute can be detected by any
+non-zero result.
+[:zh_CN]
+预期可以通过检查任何非零结果来监测某个特性标注的可用性。
+[exit:note]
+
+[table:grid#tab:cpp.cond.ha
+    [:en] [`__has_cpp_attribute] values
+    [:zh_CN] [`__has_cpp_attribute] 的值
+    [|@code
+        [:en] Attribute
+        [:zh_CN] 特性标注 ]
+    [|@code
+        [:en] Value
+        [:zh_CN] 值 ]
+]
+
+[|] carries_depencency  [|] 200809L [-]
+[|] deprecated          [|] 201309L [-]
+[|] fallthrough         [|] 201603L [-]
+[|] likely              [|] 201803L [-]
+[|] maybe_unused        [|] 201603L [-]
+[|] no_unique_address   [|] 201803L [-]
+[|] nodiscard           [|] 201603L [-]
+[|] noreturn            [|] 200809L [-]
+[|] unlikely            [|] 201803L [-]
+[table:end]
 
 [para]
 [:en]
 The [`#ifdef] and [`#ifndef] directives, and the [`defined] conditional
-inclusion operator, shall treat [`__has_include] as if it were the name of a
-defined macro.
+inclusion operator, shall treat [`__has_include] and [`__has_cpp_attribute]
+as if it were the name of a defined macro.
 [:zh_CN]
 [`#ifdef] 和 [`#ifndef] 指令以及 [`defined] 条件包含运算符，将 [`__has_include]
-当做如同是一个已定义的宏的名字。
+和 [`__has_cpp_attribute] 当做如同是一个已定义的宏的名字。
 
 [:en]
-The identifier [`__has_include] shall not appear in any context not mentioned in
-this subclause.
+The identifier [`__has_include] and [`__has_cpp_attribute] shall not appear in
+any context not mentioned in this subclause.
 [:zh_CN]
-本子条款中未提及的任何其他语境都不能出现标识符 [`__has_include]。
+本子条款中未提及的任何其他语境都不能出现标识符 [`__has_include] 和
+[`__has_cpp_attribute]。
 
 [para]
 [:en]
@@ -170,8 +240,8 @@ all remaining identifiers and keywords, except for [`true] and [`false], are
 replaced with the [~pp-number] [`0], and then each preprocessing token is
 converted into a token.
 [:zh_CN]
-在进行所有的宏扩展和对[~已定义宏表达式]和[~可包含表达式]的求值所导致的替换之后，
-所有余下的除 [`true] 和 [`false] 之外的标识符和关键字均被替换为[~预处理数字]
+在进行所有的宏扩展和对[~已定义宏表达式]和[~包查询含表达式]的求值所导致的替换之后
+，所有余下的除 [`true] 和 [`false] 之外的标识符和关键字均被替换为[~预处理数字]
 [`0]，随即每个预处理记号均被转换为一个记号。
 
 [enter:note]
@@ -337,6 +407,7 @@ preprocessing directive.
 然而，注释可以在源文件的任意位置出现，包括在预处理指令之中。
 [note:end]
 
+[para]
 [enter:example]
 [:en]
 This demonstrates a way to include a library [`optional] facility only if it is
@@ -347,13 +418,36 @@ available:
 [codeblock]
 #if __has_include(<optional>)
 #  include <optional>
-#  define have_optional 1
+#  if __cpp_lib_optional >= 201603
+#    define have_optional 1
+#  endif
 #elif __has_include(<experimental/optional>)
 #  include <experimental/optional>
-#  define have_optional 1
-#  define experimental_optional 1
-#else
+#  if __cpp_lib_experimental_optional >= 201411
+#    define have_optional 1
+#    define experimental_optional 1
+#  endif
+#endif
+#ifndef have_optional
 #  define have_optional 0
 #endif
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:example]
+[:en]
+This demonstrates a way to use the attribute [``[`[acme::deprecated`]`]]
+only if it is available.
+[:zh_CN]
+下面展示了只有在特性标注 [``[`[acme::deprecated`]`]] 可用时才进行使用的一种方式：
+
+[codeblock]
+#if __has_cpp_attribute(acme::deprecated)
+#  define ATTR_DEPRECATED(msg) [[acme::deprecated(msg)]]
+#else
+#  define ATTR_DEPRECATED(msg) [[deprecated(msg)]]
+#endif
+ATTR_DEPRECATED("This function is deprecated") void anvil();
 [codeblock:end]
 [exit:example]

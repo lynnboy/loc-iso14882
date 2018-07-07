@@ -44,48 +44,17 @@ void g(double d) {
 
 [para]
 [:en]
-When an explicit template argument list is specified, if the template arguments
-are not compatible with the template parameter list or do not result in a valid
-function type as described below, type deduction fails.
+When an explicit template argument list is specified, if the given
+[~template-id] is not valid ([#temp.names]), type deduction fails.
 [:zh_CN]
-当指定显式模板实参列表时，如果其模板实参与模板形参列表不兼容，或者根据如下描述
-无法产生合法的函数类型，则类型推断失败。
+当指定显式模板实参列表时，如果所给定的[~模板标识]无效（[#temp.names]），则类型
+推断失败。
 
 [:en]
-Specifically, the following steps are performed when evaluating an explicitly
-specified template argument list with respect to a given function template:
+Otherwise, the specified template argument values are substituted for the
+corresponding template parameters as specified below.
 [:zh_CN]
-具体地说，当根据给定的函数模板来对显式指定的模板实参列表进行求值时将实施以下步骤
-：
-
-[list]
-[item]
-[:en]
-If the specified template arguments do not match the template parameters in kind
-(i.e., type, non-type, template), or if there are more arguments than there are
-parameters and no parameter is a template parameter pack, or if there is not an
-argument for each non-pack parameter, type deduction fails.
-[:zh_CN]
-如果所指定的模板实参在种类上（就是类型、非类型、模板）与模板形参不匹配，或者如果
-有比形参更多的实参但形参中没有模板形参包组，或者如果并非全部非包组形参都有一个
-实参，则类型推断失败。
-
-[item]
-[:en]
-If any non-type arguments does not match the types of the corresponding non-type
-template parameters, and is not convertible to the type of the corresponding
-non-type parameter as specified in [#temp.arg.nontype], type deduction fails.
-[:zh_CN]
-如果有任何非类型实参与对应非类型模板形参的类型不匹配，或者无法根据
-[#temp.arg.nontype] 中所指定的规则转换为对应非类型形参的类型，则类型推断失败。
-
-[item]
-[:en]
-The specified template argument values are substituted for the corresponding
-template parameters as specified below.
-[:zh_CN]
-以所指定的模板实参值根据如下所述对其对应的模板形参进行替换。
-[list:end]
+否则，以所指定的模板实参值根据如下所述对其对应的模板形参进行替换。
 
 [para]
 [:en]
@@ -259,6 +228,14 @@ causes deduction to fail is encountered.
 [:zh_CN]
 代换以词法顺序进行，且当遇到导致推断失败的条件时终止。
 
+[:en]
+If substitution into different declarations of the same function template would
+cause template instantiations to occur in a different order or not at all,
+the program is ill-formed; no diagnostic required.
+[:zh_CN]
+如果向同一个函数模板的不同声明式中进行的代换可能导致以不同顺序进行模板实例化或者
+无法发生实例化，则程序非良构；无须诊断。
+
 [enter:note]
 [:en]
 The equivalent substitution in exception specifications is done only when the
@@ -276,12 +253,18 @@ template <class T> typename T::X f(typename A<T>::X);
 template <class T> void f(...) { }
 template <class T> auto g(typename A<T>::X) -> typename T::X;
 template <class T> void g(...) { }
+template <class T> typename T::X h(typename A<T>::X);
+template <class T> auto h(typename A<T>::X) -> typename T::X;   // [:en] redeclaration
+                                                                // [|:zh_CN] 重复声明
+template <class T> void h(...) { }
 
-void h() {
+void x() {
   f<int>(0);        // [:en] OK, substituting return type causes deduction to fail
                     // [|:zh_CN] OK，对返回类型进行代换时导致推断失败
   g<int>(0);        // [:en] error, substituting parameter type instantiates [`A<int>]
                     // [|:zh_CN] 错误，对形参类型的代换实例化了 [`A<int>]
+  h<int>(0);        // [:en] ill-formed, no diagnostic required
+                    // [|:zh_CN] 非良构，无须诊断
 }
 [codeblock:end]
 [exit:example]
@@ -312,10 +295,12 @@ Access checking is done as part of the substitution process.
 [exit:note]
 
 [:en]
-Only invalid types and expressions in the immediate context of the function type
-and its template parameter types can result in a deduction failure.
+Only invalid types and expressions in the immediate context of the function
+type, its template parameter types, and its [~explicit-specifier] can result in
+a deduction failure.
 [:zh_CN]
-只有函数类型及其模板形参类型的直接语境中的无效类型和表达式才能导致推断失败。
+只有函数类型，其模板形参的类型，以及其 [~explicit-说明符]的直接语境中的无效类型
+和表达式才能导致推断失败。
 
 [enter:note]
 [:en]
@@ -419,11 +404,11 @@ of differing lengths.
 [item]
 [:en]
 Attempting to create an array with an element type that is [`void], a function
-type, a reference type, or an abstract class type, or attempting to create an
-array with a size that is zero or negative.
+type, or a reference type, or attempting to create an array with a size that is
+zero or negative.
 [:zh_CN]
-试图创建元素类型为 [`void]，函数类型，引用类型或抽象类类型的数组，或者试图创建
-大小为零或为负的数组。
+试图创建元素类型为 [`void]、函数类型或引用类型的数组，或者试图创建大小为零或为负
+的数组。
 
 [enter:example]
 [codeblock]
@@ -560,13 +545,6 @@ Attempting to create a function type in which a parameter has a type of [`void],
 or in which the return type is a function type or array type.
 [:zh_CN]
 试图创建形参类型为 [`void]，或返回类型为函数类型或数组类型的函数类型。
-
-[item]
-[:en]
-Attempting to create a function type in which a parameter type or the return
-type is an abstract class type ([#class.abstract]).
-[:zh_CN]
-试图创建形参类型或返回类型为抽象类类型（[#class.abstract]）的函数类型。
 [list:end]
 [exit:note]
 

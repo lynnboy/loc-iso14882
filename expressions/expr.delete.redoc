@@ -147,14 +147,15 @@ expression before it is used as the operand of the [~delete-expression].
 [:en]
 [%[`delete][!undefined]]
 In a single-object delete expression, if the static type of the object to be
-deleted is different from its dynamic type, the static type shall be a base
-class of the dynamic type of the object to be deleted and the static type shall
-have a virtual destructor or the behavior is undefined.
+deleted is different from its dynamic type and the selected deallocation
+function (see below) is not a destroying operator delete, the static type shall
+be a base class of the dynamic type of the object to be deleted and the static
+type shall have a virtual destructor or the behavior is undefined.
 [:zh_CN]
 [%[`delete][!未定义的]]
-在单对象 delete 表达式中，若所要删除的对象的静态类型与其动态类型不同，则其
-静态类型应当是所要删除的对象的动态类型的基类，且这个静态类型应当带有虚析构函数，
-否则其行为是未定义的。
+在单对象 delete 表达式中，若所要删除的对象的静态类型与其动态类型不同，并且所选择
+的回收函数（见下文）不是销毁用 delete 运算符，则其静态类型应当是所要删除的对象的
+动态类型的基类，且这个静态类型应当带有虚析构函数，否则其行为是未定义的。
 
 [:en]
 In an array delete expression, if the dynamic type of the object to be deleted
@@ -185,12 +186,14 @@ the behavior is undefined.
 [:en]
 [%[`delete][!destructor and]]
 If the value of the operand of the [~delete-expression] is not a null pointer
-value, the [~delete-expression] will invoke the destructor (if any) for the
-object or the elements of the array being deleted.
+value and the selected deallocation function (see below) is not a destroying
+operator delete, the [~delete-expression] will invoke the destructor (if any)
+for the object or the elements of the array being deleted.
 [:zh_CN]
 [%[`delete][!析构函数与～]]
-若 [~delete-表达式]的操作数的值不是空指针值，则该 [~delete-表达式]将调用所要删除
-的对象或数组元素的析构函数（如果有）。
+若 [~delete-表达式]的操作数的值不是空指针值，且所选择的回收函数（见下文）不是
+销毁用 delete 运算符，则该 [~delete-表达式]将调用所要删除的对象或数组元素的析构
+函数（如果有）。
 
 [:en]
 In the case of an array, the elements will be destroyed in order of decreasing
@@ -317,6 +320,15 @@ the function to be called is selected as follows:
 [list]
 [item]
 [:en]
+If any of the deallocation functions is a destroying operator delete, all
+deallocation functions that are not destroying operator deletes are eliminated
+from further consideration.
+[:zh_CN]
+如果有任何回收函数时销毁用 delete 运算符，则所有并非销毁用 delete 运算符的回收
+函数在进一步考察中都被忽略。
+
+[item]
+[:en]
 If the type has new-extended alignment, a function with a parameter of type
 [`std::align_val_t] is preferred; otherwise a function without such a parameter
 is preferred.
@@ -325,16 +337,17 @@ is preferred.
 就优先选择不带有这种形参的函数。
 
 [:en]
-If exactly one preferred function is found, that function is selected and the
-selection process terminates.
+If any preferred functions are found, all non-preferred functions are eliminated
+from further consideration.
 [:zh_CN]
-如果恰好找到一个优先函数，则选择这个函数，选择过程终止。
+如果找到了任何优先函数，则所有非优先的函数在进一步考察中都被忽略。
 
+[para]
 [:en]
-If more than one preferred function is found, all non-preferred functions are
-eliminated from further consideration.
+If exactly one function remains, that function is selected and the selection
+process terminates.
 [:zh_CN]
-如果找到了多个优先函数，则所有非优先的函数在进一步考察中都被忽略。
+如果恰好剩余一个函数，则选择这个函数，选择过程终止。
 
 [item]
 [:en]
@@ -345,14 +358,13 @@ type [`std::size_t] is selected.
 
 [item]
 [:en]
-If the type is complete and if, for the second alternative (delete array) only,
-the operand is a pointer to a class type with a non-trivial destructor or a
-(possibly multi-dimensional) array thereof, the function with a parameter of
-type [`std::size_t] is selected.
+If the type is complete and if, for an array delete expression only, the operand
+is a pointer to a class type with a non-trivial destructor or a (possibly
+multi-dimensional) array thereof, the function with a parameter of type
+[`std::size_t] is selected.
 [:zh_CN]
-若其为完整类型，且（仅对于第二种情况，删除数组）若其操作数是指向带有非平凡析构
-函数的类类型或其（可能多维的）数组的指针，则选择带有 [`std::size_t] 类型形参的
-函数。
+若其为完整类型，仅对于数组删除表达式，若其操作数是指向带有非平凡析构函数的类类型
+或其（可能多维的）数组的指针，则选择带有 [`std::size_t] 类型形参的函数。
 
 [item]
 [:en]
@@ -364,51 +376,82 @@ of type [`std::size_t] is selected.
 
 [para]
 [:en]
+For a single-object delete expression, the deleted object is the object denoted
+by the operand if its static type does not have a virtual destructor, and its
+most-derived object otherwise.
+[:zh_CN]
+对于单对象 delete 表达式，当其操作数的静态类型不带有虚析构函数时，被删除对象是该
+操作数所代表的对象，否则为其全派生对象。
+
+[enter:note]
+[:en]
+If the deallocation function is not a destroying operator delete and the deleted
+object is not the most derived object in the former case, the behavior is
+undefined, as stated above.
+[:zh_CN]
+如果回收函数并非销毁用 delete 运算符，且被删除的对象并非前一种情况中的全派生对象
+，则其行为是未定义的，如上文所述。
+[exit:note]
+
+[:en]
+For an array delete expression, the deleted object is the array object.
+[:zh_CN]
+对于数组 delete 表达式，被删除对象就是该数组对象。
+
+[:en]
 When a [~delete-expression] is executed, the selected deallocation function
-shall be called with the address of the most-derived object in a single-object
-delete expression, or the address of the object suitably adjusted for the array
+shall be called with the address of the deleted object in a single-object delete
+expression, or the address of the deleted object suitably adjusted for the array
 allocation overhead ([#expr.new]) in an array delete expression, as its first
 argument.
 [:zh_CN]
-当执行 [~delete-表达式]时，在单对象 delete 表达式中，应当以全派生对象的地址作为
-第一个实参，而在数组 delete 表达式中，应当以为数组分配开销经过适当调整的对象的
-地址作为第一个实参，调用所选择的回收函数。
+当执行 [~delete-表达式]时，在单对象 delete 表达式中，应当以被删除对象的地址作为
+第一个实参，而在数组 delete 表达式中，应当以为数组分配开销（[#expr.new]）经过
+适当调整的被删除对象的地址作为第一个实参，调用所选择的回收函数。
+
+[enter:note]
+[:en]
+Any cv-qualifiers in the type of the deleted object are ignored when forming
+this argument.
+[:zh_CN]
+在构成这个实参时，被删除对象的类型中的任何 cv 限定符都被忽略。
+[exit:note]
+
+[:en]
+If a destroying operator delete is used, an unspecified value is passed as the
+argument corresponding to the parameter of type [`std::destroying_delete_t].
+[:zh_CN]
+如果使用的是销毁用 delete 运算符，则以一个未指明的值传递作为对应于
+[`std::destroying_delete_t] 类型的形参的实参。
 
 [:en]
 If a deallocation function with a parameter of type [`std::align_val_t] is used,
-the alignment of the type of the object to be deleted is passed as the
-corresponding argument.
+the alignment of the type of the deleted object is passed as the corresponding
+argument.
 [:zh_CN]
-当使用带有 [`std::align_val_t] 类型形参的回收函数时，应当将所删除对象的类型的
+当使用带有 [`std::align_val_t] 类型形参的回收函数时，应当将被删除对象的类型的
 对齐作为相应的实参进行传递。
 
 [:en]
 If a deallocation function with a parameter of type [`std::size_t] is used, the
-size of the most-derived type, or of the array plus allocation overhead,
-respectively, is passed as the corresponding argument.[#:note#fn:$section.4]
+size of deleted object in a single-object delete expression, or of the array
+plus allocation overhead in an array delete expression, is passed as the
+corresponding argument.
 [:zh_CN]
-当使用带有 [`std::size_t] 类型形参的回收函数时，应当分别将全派生类型的大小，或
-数组加上分配开销的大小，作为相应的实参进行传递。[#:note#fn:$section.4]
-
-[note:foot#fn:$section.4]
-[:en]
-If the static type of the object to be deleted is complete and is different from
-the dynamic type, and the destructor is not virtual, the size might be
-incorrect, but that case is already undefined, as stated above.
-[:zh_CN]
-若所删除对象的静态类型完整且与其静态类型不同，并且其析构函数不是虚函数，则其大小
-可能不正确，但这种情况下已经如上文所述是未定义的。
-[note:end]
+当使用带有 [`std::size_t] 类型形参的回收函数时，在单对象 delete 表达式中，应当将
+被删除对象的大小，而在数组 delete 表达式中，应当将数组大小加上分配开销，作为相应
+的实参进行传递。
 
 [enter:note]
 [:en]
-If this results in a call to a usual deallocation function, and either the first
-argument was not the result of a prior call to a usual allocation function or
-the second argument was not the corresponding argument in said call, the
-behavior is undefined ([#new.delete.single], [#new.delete.array]).
+If this results in a call to a replaceable deallocation function, and either
+the first argument was not the result of a prior call to a replaceable
+allocation function or the second or third argument was not the corresponding
+argument in said call, the behavior is undefined ([#new.delete.single],
+[#new.delete.array]).
 [:zh_CN]
-如果这导致了对常规回收函数的调用，而要么其第一个实参并非此前对常规分配函数的调用
-结果，要么第二个实参并非该调用中的对应实参，则其行为未定义
+如果这导致了对某个可替换回收函数的调用，而要么其第一个实参并非此前对某个可替换
+分配函数的调用结果，要么第二或第三个实参并非该调用中的对应实参，则其行为未定义
 （[#new.delete.single]，[#new.delete.array]）。
 [exit:note]
 

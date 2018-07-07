@@ -5,14 +5,18 @@
 
 [para]
 [:en]
-If the type of a [~template-parameter] contains a placeholder type
-([#dcl.spec.auto], [#temp.param]), the deduced parameter type is determined
-from the type of the [~template-argument] by placeholder type deduction
-([#dcl.type.auto.deduct]).
+If the type [`T] of a [~template-parameter] ([#temp.param]) contains a
+placeholder type ([#dcl.spec.auto]) or a placeholder for a deduced class type
+([#dcl.type.class.deduct]), the type of the parameter is the type deduced for
+the variable [`x] in the invented declaration
 [:zh_CN]
-如果[~模板形参]的类型中包含占位符类型（[#dcl.spec.auto]，[#temp.param]），则通过
-占位符类型推断（[#dcl.type.auto.deduct]）由其[~模板实参]的类型确定所推断的形参
-类型。
+如果[~模板形参]的类型 [`T]（[#temp.param]）中包含占位符类型（[#dcl.spec.auto]）
+或者推断类类型的占位符（[#dcl.type.class.deduct]），则该形参的类型是在以下虚构
+的声明式中对变量 [`x] 所推断的类型：
+
+[codeblock:notation]
+  T x = [~template-argument];
+[codeblock:end]
 
 [:en]
 If a deduced parameter type is not permitted for a [~template-parameter]
@@ -30,12 +34,14 @@ constant expression ([#expr.const]) of the type of the [~template-parameter].
 （[#expr.const]）。
 
 [:en]
-For a non-type [~template-parameter] of reference or pointer type, the value of
-the constant expression shall not refer to (or for a pointer type, shall not be
-the address of):
+For a non-type [~template-parameter] of reference or pointer type, or for each
+non-static data member of reference or pointer type in a non-type
+[~template-parameter] of class type or subobject thereof, the reference or
+pointer value shall not refer to or be the address of (respectively):
 [:zh_CN]
-对于引用或指针类型的非类型[~模板形参实参]，常量表达式的值不能指代（或若为指针
-类型，不能是以下各项的地址）：
+对于引用或指针类型的非类型[~模板形参]，或者对于具有类类型的[~模板形参]或其子对象
+中的所有引用或指针类型的非静态数据成员，这个引用或指针值（各自）不能指代以下各项
+或为其地址：
 
 [list]
 [item]
@@ -104,22 +110,30 @@ B<2.5> b3;                      // [:en] error: template parameter type cannot b
 
 [para]
 [enter:note]
-[:en] A string literal ([#lex.string]) is not an acceptable
-[~template-argument].
+[:en] A string literal ([#lex.string]) is not an acceptable [~template-argument]
+for a [~template-parameter] of non-class type.
 [:zh_CN]
-字符串字面量（[#lex.string]）不是可接受的[~模板实参]。
+字符串字面量（[#lex.string]）对于非类类型的[~模板形参]不是可接受的[~模板实参]。
 
 [enter:example]
 [codeblock]
-template<class T, const char* p> class X {
+template<class T, T p> class X {
   /* ... */
 };
 
-X<int, "Studebaker"> x1;        // [:en] error: string literal as [~template-argument]
+X<const char*, "Studebaker"> x; // [:en] error: string literal as [~template-argument]
                                 // [|:zh_CN] 错误：字符串字面量用作[~模板实参]
 
 const char p[] = "Vivisectionist";
-X<int,p> x2;                    // OK
+X<const char*, p> y;            // OK
+
+class A {
+  constexpr A(const char*) {}
+  auto operator<=>(A, A) = default;
+};
+
+X<A, "Pyrophoricity"> z;        // [:en] OK, string literal is a constructor argument to [`A]
+                                // [|:zh_CN] OK，字符串字面量是提供给 [`A] 的构造函数实参
 [codeblock:end]
 [exit:example]
 [exit:note]

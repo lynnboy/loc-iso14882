@@ -167,28 +167,24 @@ cv-qualified) types:
 
 [list]
 [item]
-[:en@~] integral or enumeration type,
-[:zh_CN@~] 整型或枚举类型，
+[:en@~] a type that is literal, has strong structural equality
+([#class.compare.default]), has no [`mutable] or [`volatile] subobjects, and in
+which if there is a defaulted member [`operator<=>], then it is declared public,
+[:zh_CN@~] 字面量类型，具有强结构化相等性（[#class.compare.default]），没有
+[`mutable] 或 [`volatile] 子对象，并且当具有预置的成员 [`operator<=>] 时该成员被
+声明为公开的，
 
 [item]
-[:en@~] pointer to object or pointer to function,
-[:zh_CN@~] 对象指针或函数指针，
+[:en@~] an lvalue reference type,
+[:zh_CN@~] 左值引用类型，
 
 [item]
-[:en@~] lvalue reference to object or lvalue reference to function,
-[:zh_CN@~] 对象的左值引用或函数的左值引用，
+[:en@~] a type that contains a placeholder type\iref{dcl.spec.auto}, or
+[:zh_CN@~] 包含占位符类型的类型（[#dcl.spec.auto]），或者
 
 [item]
-[:en@~] pointer to member,
-[:zh_CN@~] 成员指针，
-
-[item]
-[:en@~] [`std::nullptr_t], or
-[:zh_CN@~] [`std::nullptr_t]，或者
-
-[item]
-[:en@~] a type that contains a placeholder type ([#dcl.spec.auto]).
-[:zh_CN@~] 包含占位符类型的类型（[#dcl.spec.auto]）。
+[:en@~] a placeholder for a deduced class type ([#dcl.type.class.deduct]).
+[:zh_CN@~] 推断类类型的占位符（[#dcl.type.class.deduct]）。
 [list:end]
 
 [para]
@@ -209,29 +205,48 @@ determining its type.
 
 [para]
 [:en]
-A non-type non-reference [~template-parameter] is a prvalue.
+When a non-type [~template-parameter] of non-reference and non-class type is
+used as an initializer for a reference, a temporary is always used.
 [:zh_CN]
-非类型非引用[~模板形参]是纯右值。
+当非引用且非类类型的非类型[~模板形参]用作引用的初始化式时，总要使用临时对象。
 
 [:en]
-It shall not be assigned to or in any other way have its value changed.
+An [~id-expression] naming a non-type [~template-parameter] of class type [`T]
+denotes a static storage duration object of type [`const T], known as a
+[+template parameter object], whose value is that of the corresponding template
+argument after it has been converted to the type of the [~template-parameter].
 [:zh_CN]
-它不能被赋值或以任意其他方式改变其值。
+指名类类型 [`T] 的非类型[~模板形参]的[~标识表达式]代表某个静态存储期的
+[`const T] 类型的对象，称为[+模板形参对象]，其值为对应模板实参转换为该
+[~模板形参]的类型之后的值。
 
 [:en]
-A non-type non-reference [~template-parameter] cannot have its address taken.
+All such template parameters in the program of the same type with the same value
+denote the same template parameter object.
 [:zh_CN]
-不能获取非类型非引用[~模板形参]的地址。
+[:zh_CN]
+程序中的这种具有相同类型和相同值的全部模板形参，都代表相同的模板形参对象。
+
+[enter:note]
+[:en]
+If an [~id-expression] names a non-type non-reference [~template-parameter],
+then it is a prvalue if it has non-class type.
+[:zh_CN]
+如果某个[~标识表达式]指名某个非类型的非引用[~模板形参]，则当它具有非类类型时它
+是纯右值。
 
 [:en]
-When a non-type non-reference [~template-parameter] is used as an initializer
-for a reference, a temporary is always used.
+Otherwise, if it is of class type [`T], it is an lvalue and has type [`const T]
+([#expr.prim.id.unqual]).
 [:zh_CN]
-当非类型非引用[~模板形参]用作引用的初始化式时，总要使用临时对象。
+否则，若它具有类类型 [`T]，则它是左值且类型为 [`const T]
+（[#expr.prim.id.unqual]）。
+[exit:note]
 
 [enter:example]
 [codeblock]
-template<const X& x, int i> void f() {
+struct A { auto operator<=>(A, A) = default; };
+template<const X& x, int i, A a> void f() {
   i++;                          // [:en] error: change of [~template-parameter] value
                                 // [|:zh_CN] 错误：[~模板形参]的值被改变
 
@@ -239,10 +254,13 @@ template<const X& x, int i> void f() {
   &i;                           // [:en] error: address of non-reference [~template-parameter]
                                 // [|:zh_CN] 错误：非引用[~模板形参]的地址
 
+  &a;                           // OK
   int& ri = i;                  // [:en] error: non-const reference bound to temporary
                                 // [|:zh_CN] 错误：将非 const 引用绑定到临时对象上
   const int& cri = i;           // [:en] OK: const reference bound to temporary
                                 // [|:zh_CN] OK：const 引用绑定到临时对象上
+  const A& ra = a;              // [:en] OK: const reference bound to a template parameter object
+                                // [|:zh_CN] OK：const 引用绑定到模板形参对象上
 }
 [codeblock:end]
 [exit:example]

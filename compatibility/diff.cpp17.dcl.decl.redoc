@@ -1,0 +1,62 @@
+[section#diff.cpp17.dcl.decl
+    [:en] [#dcl.decl]: declarators
+    [:zh_CN] [#dcl.decl]：声明符
+]
+
+[para:diff] [#dcl.init.aggr]
+[=Change]
+[:en] A class that has user-declared constructors is never an aggregate.
+[:zh_CN] 带有用户声明构造函数的类不是聚合。
+
+[=Rationale]
+[:en] Remove potentially error-prone aggregate initialization which may apply
+notwithstanding the declared constructors of a class.
+[:zh_CN] 移除了潜在易错的聚合初始化，其可能与类中所声明的构造函数不一致。
+
+[=Effect]
+[:en] Valid [=CppXVII] code that aggregate-initializes a type with a
+user-declared constructor may be ill-formed or have different semantics
+in this International Standard.
+[:zh_CN] 对具有用户声明构造函数的类型进行聚合初始化的有效 [=CppXVII] 代码，在
+本国际标准中可能非良构或具有不同的语义。
+
+[codeblock]
+struct A {              // [:en] not an aggregate; previously an aggregate
+                        // [|:zh_CN] 并非聚合；之前是聚合和
+  A() = delete;
+};
+
+struct B {              // [:en] not an aggregate; previously an aggregate
+                        // [|:zh_CN] 并非聚合；之前是聚合和
+  B() = default;
+  int i = 0;
+};
+
+struct C {              // [:en] not an aggregate; previously an aggregate
+                        // [|:zh_CN] 并非聚合；之前是聚合和
+  C(C&&) = default;
+  int a, b;
+};
+
+A a{};                  // [:en] ill-formed; previously well-formed
+                        // [|:zh_CN] 非良构；之前是良构的
+B b = {1};              // [:en] ill-formed; previously well-formed
+                        // [|:zh_CN] 非良构；之前是良构的
+auto* c = new C{2, 3};  // [:en] ill-formed; previously well-formed
+                        // [|:zh_CN] 非良构；之前是良构的
+
+struct Y;
+
+struct X {
+  operator Y();
+};
+
+struct Y {              // [:en] not an aggregate; previously an aggregate
+                        // [|:zh_CN] 并非聚合；之前是聚合和
+  Y(const Y&) = default;
+  X x;
+};
+
+Y y{X{}};               // [:en] copy constructor call; previously aggregate-initialization
+                        // [|:zh_CN] 调用复制构造函数；之前是聚合初始化
+[codeblock:end]
