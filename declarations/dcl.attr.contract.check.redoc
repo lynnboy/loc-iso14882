@@ -1,0 +1,261 @@
+[section#dcl.attr.contract.check
+    [:en] Checking contracts
+    [:zh_CN] 检查契约
+]
+
+[para]
+[:en]
+If the [~contract-level] of a [~contract-attribute-specifier] is absent, it is
+assumed to be [`default].
+[:zh_CN]
+如果[~契约特性说明符]中没有[~契约级别]，则假定为 [`default]。
+
+[enter:note]
+[:en]
+A [`default] [~contract-level] is expected to be used for those contracts where
+the cost of run-time checking is assumed to be small (or at least not expensive)
+compared to the cost of executing the function.
+[:zh_CN]
+[~契约级别] [`default] 预期被用于那些假定其运行时检查的成本与函数执行的成本相比
+较小（或至少不高昂）的契约。
+
+[:en]
+An [`audit] [~contract-level] is expected to be used for those contracts where
+the cost of run-time checking is assumed to be large (or at least significant)
+compared to the cost of executing the function.
+[:zh_CN]
+[~契约级别] [`audit] 预期被用于那些假定其运行时检查的成本与函数执行的成本相比
+较大（或至少显著）的契约。
+
+[:en]
+An [`axiom] [~contract-level] is expected to be used for those contracts that
+are formal comments and are not evaluated at run-time.
+[:zh_CN]
+[~契约级别] [`axiom] 预期被用于那些作为形式化的代码注释而并不在运行时求值的契约。
+[exit:note]
+
+[para]
+[enter:note]
+[:en]
+Multiple contract conditions may be applied to a function type with the same or
+different [~contract-level]s.
+[:zh_CN]
+可以对一个函数类型以相同或不同的[~契约级别]应用多个契约条件。
+
+[enter:example]
+[codeblock]
+int z;
+
+bool is_prime(int k);
+
+void f(int x)
+  [[expects: x > 0]]
+  [[expects audit: is_prime(x)]]
+  [[ensures: z > 10]]
+{
+  /* ... */
+}
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[:en]
+A translation may be performed with one of the following [+build levels[%build
+level]]: [$off], [$default], or [$audit].
+[:zh_CN]
+一次翻译可以根据以下[+构建级别]之一来进行：[$off]、[$default] 或 [$audit]。
+
+[:en]
+A translation with build level set to [$off] performs no checking for any
+contracts.
+[:zh_CN]
+将构建级别设为 [$off] 的翻译中不为任何契约实施检查。
+
+[:en]
+A translation with build level set to [$default] performs checking for
+[`default] contracts.
+[:zh_CN]
+将构建级别设为 [$default] 的翻译中为 [`default] 契约实施检查。
+
+[:en]
+A translation with build level set to [$audit] performs checking for [`default]
+and [`audit] contracts.
+[:zh_CN]
+将构建级别设为 [$audit] 的翻译中为 [`default] 和 [`audit] 契约实施检查。
+
+[:en]
+If no build level is explicitly selected, the build level is [$default].
+[:zh_CN]
+如果没有明确选择构建级别，则构建级别为 [$default]。
+
+[:en]
+The mechanism for selecting the build level is [%@impldef mechanism for
+selecting the build level] implementation-defined.
+[:zh_CN]
+选择构建级别的机制是[%@impldef 选择构建级别的机制]由实现定义的。
+
+[:en]
+The translation of a program consisting of translation units where the build
+level is not the same in all translation units is conditionally-supported.
+[:zh_CN]
+由多个翻译单元组成的程序，构建级别并非在全部翻译单元中都相同的情况，对它的翻译是
+有条件支持的。
+
+[:en]
+There should be no programmatic way of setting, modifying, or querying
+the build level of a translation unit.
+[:zh_CN]
+不应当为设值、修改或查询翻译单元的构建级别提供可编程的方式。
+
+[para]
+[:en]
+During constant expression evaluation ([#expr.const]), only predicates of
+checked contracts are evaluted.
+[:zh_CN]
+在常量表达式求值（[#expr.const]）过程中，仅对受检查的契约的谓词进行求值。
+
+[:en]
+In other contexts, it is unspecified whether the predicate for a contract that
+is not checked under the current build level is evaluated; if the predicate of
+such a contract would evaluate to [`false], the behavior is undefined.
+[:zh_CN]
+在其他语境中，在当前构建级别下并非受检查的契约的谓词是否被求值是未指明的；而如果
+这种契约的谓词被求值为 [`false]，则其行为是未定义的。
+
+[para]
+[:en]
+The [+violation handler] of a program is a function of type ["[`:opt noexcept]
+function of (lvalue reference to [`const std::contract_violation]) returning
+[`void]], and is specified in an [%@impldef specification of violation handler]
+implementation-defined manner.
+[:zh_CN]
+程序中的[+违例处理器]，是类型为“返回 [`void] 的
+（[`const std::contract_violation] 的左值引用）的 [`:opt noexcept] 函数”的函数，
+并且是以[%@impldef 对违例处理器的指定]由实现定义的方式所指定的。
+
+[:en]
+The violation handler is invoked when the predicate of a checked contract
+evaluates to [`false] (called a [+contract violation]).
+[:zh_CN]
+违例处理器将在某个被检查契约的谓词求值为 [`false]（称为一次[+契约违例]）时调用。
+
+[:en]
+There should be no programmatic way of setting or modifying the violation
+handler.
+[:zh_CN]
+不应当为设值或修改违例处理器提供可编程的方式。
+
+[:en]
+It is [%@impldef argument for violation handler] implementation-defined how the
+violation handler is established for a program and how the
+[`std::contract_violation] argument value is set, except as specified below.
+[:zh_CN]
+除了下文所述外，如何为程序设立违例处理器，以及如何设置其
+[`std::contract_violation] 实参，是[%@impldef 违例处理器的实参]由实现定义的。
+
+[:en]
+If a precondition is violated, the source location of the violation is
+[%@impldef source location of precondition violation] implementation-defined.
+[:zh_CN]
+当某个前条件被违反时，该违例的源代码位置是[%@impldef 前条件违例的源代码位置]
+由实现定义的。
+
+[enter:note]
+[:en]
+Implementations are encouraged but not required to report the caller site.
+[:zh_CN]
+鼓励但并不要求各实现报告调用方位置。
+[exit:note]
+
+[:en]
+If a postcondition is violated, the source location of the violation is
+the source location of the function definition.
+[:zh_CN]
+当某个后条件被违反时，该违例的源代码位置是函数定义式的源代码位置。
+
+[:en]
+If an assertion is violated, the source location of the violation is
+the source location of the statement to which the assertion is applied.
+[:zh_CN]
+当某个断言被违反时，该违例的源代码位置是该断言所应用的语句的源代码位置。
+
+[para]
+[:en]
+If a user-provided violation handler exits by throwing an exception and a
+contract is violated on a call to a function with a non-throwing exception
+specification, then the behavior is as if the exception escaped the function
+body.
+[:zh_CN]
+如果用户提供的违例处理器以抛出异常而退出，而对某个带有无抛出异常说明的函数的调用
+上违反了某个契约，则其行为如同这个异常从其函数体中脱离出来。
+
+[enter:note]
+[:en]
+The function [`std::terminate] is invoked ([#except.terminate]).
+[:zh_CN]
+调用函数 [`std::terminate]（[#except.terminate]）。
+[exit:note]
+
+[enter:example]
+[codeblock]
+void f(int x) noexcept [[expects: x > 0]];
+
+void g() {
+  f(0);                                         // [:en] [`std::terminate()] if violation handler throws
+                                                // [|:zh_CN] 当违例处理器抛出异常时调用 [`std::terminate()]
+  /* ... */
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A translation may be performed with one of the following [+violation
+continuation modes[%violation continuation mode]]: [$off] or [$on].
+[:zh_CN]
+[:zh_CN]
+一次翻译可以根据以下[+违例继续模式]之一来进行：[$off] 或 [$on]。
+
+[:en]
+A translation with violation continuation mode set to [$off] terminates
+execution by invoking the function [`std::terminate] ([#except.terminate]) after
+completing the execution of the violation handler.
+[:zh_CN]
+将违例继续模式设为 [$off] 的翻译中，当完成违例处理器的执行之后通过调用函数
+[`std::terminate]（[#except.terminate]）来终止执行。
+
+[:en]
+A translation with a violation continuation mode set to [$on] continues
+execution after completing the execution of the violation handler.
+将违例继续模式设为 [$on] 的翻译中，当完成违例处理器的执行之后继续其执行。
+
+[:en]
+If no continuation mode is explicitly selected, the default continuation mode is
+[$off].
+[:zh_CN]
+如果没有明确选择违例继续模式，则默认的继续模式为 [$off]。
+
+[enter:note]
+[:en]
+A continuation mode set to [$on] provides the opportunity to install a logging
+handler to instrument a pre-existing code base and fix errors before enforcing
+checks.
+[:zh_CN]
+将继续模式设置为 [$on]，提供了安装记录日志的处理器，以便对现存的代码库进行测量并
+在强制实施检查之前修正各种错误的机会。
+[exit:note]
+
+[enter:example]
+[codeblock]
+void f(int x) [[expects: x > 0]];
+
+void g() {
+  f(0);         // [:en] [`std::terminate()] after handler if continuation mode is off;
+                // [|:zh_CN] 当继续模式为 off 时，调用处理器后将调用 [`std::terminate()]；
+                // [:en@~] proceeds after handler if continuation mode is on
+                // [|:zh_CN@~] 当继续模式为 on 时，调用处理器之后继续执行
+  /* ... */
+}
+[codeblock:end]
+[exit:example]

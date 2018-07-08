@@ -1,0 +1,178 @@
+[section#dcl.attr.contract.syn
+    [:en] Syntax
+    [:zh_CN] 语法
+]
+
+[para]
+[:en]
+Contract attributes are used to specify preconditions, postconditions, and
+assertions for functions.
+[:zh_CN]
+契约特性标注用于为函数指定前条件、后条件和断言。
+
+[syntax]
+[rule contract-attribute-specifier [:zh_CN] 契约特性说明符 ]
+    [| [``[] [``[] [`expects] [~:opt contract-level] [`:] conditional-expression [``]] [``]] ]
+    [| [``[] [``[] [`ensures] [~:opt contract-level] [~:opt identifier] [`:] conditional-expression [``]] [``]] ]
+    [| [``[] [``[] [`assert] [~:opt contract-level] [`:] conditional-expression [``]] [``]] ]
+[rule:end]
+
+[rule contract-level [:zh_CN] 契约级别 ]
+    [| [`default] ]
+    [| [`audit] ]
+    [| [`axiom] ]
+[rule:end]
+[syntax:end]
+
+[:en]
+An ambiguity between a [~contract-level] and an [~identifier] is resolved in
+favor of [~contract-level].
+[:zh_CN]
+[~契约级别]和[~标识符]之间的歧义按照[~契约级别]优先来解决。
+
+[para]
+[:en]
+A [~contract-attribute-specifier] using [`expects] is a [+precondition].
+[:zh_CN]
+使用 [`expects] 的[~契约特性说明符]是一个[+前条件]。
+
+[:en]
+It expresses a function[=']s expectation on its arguments and/or the state of
+other objects using a predicate that is intended to hold upon entry into the
+function.
+[:zh_CN]
+它表达的是函数对其实参以及其他对象的状态的预期，所使用的是预计在函数的入口采用的
+谓词。
+
+[:en]
+The attribute may be applied to the function type of a function declaration.
+[:zh_CN]
+该特性标注可以应用于函数声明式的函数类型。
+
+[para]
+[:en]
+A [~contract-attribute-specifier] using [`ensures] is a [+postcondition].
+[:zh_CN]
+使用 [`ensures] 的[~契约特性说明符]是一个[+后条件]。
+
+[:en]
+It expresses a condition that a function should ensure for the return value
+and/or the state of objects using a predicate that is intended to hold upon exit
+from the function.
+[:zh_CN]
+它表达的是函数对其返回值以及其他对象的状态应当保证达成的条件，所使用的是预计在从
+函数退出时采用的谓词。
+
+[:en]
+The attribute may be applied to the function type of a function declaration.
+[:zh_CN]
+该特性标注可以应用于函数声明式的函数类型。
+
+[:en]
+A postcondition may introduce an identifier to represent the glvalue result or
+the prvalue result object of the function.
+[:zh_CN]
+后条件可以引入一个标识符以表示函数的泛左值结果或者纯右值结果对象。
+
+[enter:example]
+[codeblock]
+int f(char * c)
+  [[ensures res: res > 0 && c != nullptr]];
+
+int g(double * p)
+  [[ensures audit res: res != 0 && p != nullptr && *p <= 0.0]];
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A [~contract-attribute-specifier] using [`assert] is an [+assertion].
+[:zh_CN]
+使用 [`assert] 的[~契约特性说明符]是一个[+断言]。
+
+[:en]
+It expresses a condition that is intended to be satisfied where it appears in a
+function body.
+[:zh_CN]
+它表达的是预计在函数体中其所出现的位置应当得以满足的条件。
+
+[:en]
+The attribute may be applied to a null statement ([#stmt.expr]).
+[:zh_CN]
+该特性标注可以应用于空语句上（[#stmt.expr]）。
+
+[:en]
+An assertion is checked by evaluating its predicate as part of the evaluation of
+the null statement it applies to.
+[:zh_CN]
+对断言的检查，是作为其所应用的空语句的求值的一部分而对其谓词求值来进行的。
+
+[para]
+[:en]
+Preconditions, postconditions, and assertions are collectively called
+[+contracts[!contract]].
+[:zh_CN]
+前条件、后条件和断言统称为[+契约]。
+
+[:en]
+The [~conditional-expression] in a contract is contextually converted to [`bool]
+([#conv]); the converted expression is called the [+predicate[%contract
+[!predicate]]] of the contract.
+[:zh_CN]
+契约中的[~条件表达式]被按语境转换为 [`bool]（[#conv]）；转换后的表达式称为该契约
+的[+谓词[%契约[!谓词]]]。
+
+[enter:note]
+[:en]
+The predicate of a contract is potentially evaluated ([#basic.def.odr]).
+[:zh_CN]
+契约的谓词是潜在求值的（[#basic.def.odr]）。
+[exit:note]
+
+[para]
+[:en]
+The only side effects of a predicate that are allowed in a
+[~contract-attribute-specifier] are modifications of non-volatile objects
+whose lifetime began and ended within the evaluation of the predicate.
+[:zh_CN]
+[~契约特性说明符]中所允许的唯一谓词的副作用，是对生存期的开始和结束都处于该谓词
+的求值之内的非 volatile 对象的改动。
+
+[:en]
+An evaluation of a predicate that exits via an exception invokes the function
+[`std::terminate()] ([#except.terminate]).
+[:zh_CN]
+当谓词的求值以异常而退出时调用函数 [`std::terminate()]（[#except.terminate]）。
+
+[:en]
+The behavior of any other side effect is undefined.
+[:zh_CN]
+任何其他副作用的行为都是未定义的。
+
+[enter:example]
+[codeblock]
+void push(int x, queue & q)
+  [[expects: !q.full()]]
+  [[ensures: !q.empty()]]
+{
+  /* ... */
+  [[assert: q.is_valid()]];
+  /* ... */
+}
+
+int min = -42;
+constexpr int max = 42;
+
+constexpr int g(int x)
+  [[expects: min <= x]]                         // [:en] error
+                                                // [|:zh_CN] 错误
+  [[expects: x < max]]                          // OK
+{
+  /* ... */
+  [[assert: 2*x < max]];
+  [[assert: ++min > 0]];                        // [:en] undefined behavior
+                                                // [|:zh_CN] 未定义行为
+  /* ... */
+}
+[codeblock:end]
+[exit:example]
