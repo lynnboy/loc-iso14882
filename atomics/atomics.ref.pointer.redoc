@@ -1,0 +1,118 @@
+[section#atomics.ref.pointer
+    [:en] Partial specialization for pointers
+    [:zh_CN] 针对指针的部分特化式
+]
+
+[%@library atomic_ref<T*>]
+[codeblock:synopsis [!:mark ImpDef] ]
+namespace std {
+  template<class T> struct atomic_ref<T*> {
+  private:
+    T** ptr;              // [=Expos]
+  public:
+    using value_type = T*;
+    using difference_type = ptrdiff_t;
+    static constexpr bool is_always_lock_free = [%@impdefx [:en] whether a given
+[`atomic_ref] type[=']s operations are always lock free [:zh_CN] 给定 [`atomic_ref] 类型
+的操作是否总是无锁的][=ImpDef];
+    static constexpr size_t required_alignment = [%@impdefx [:en] required alignment
+for [`atomic_ref] type[=']s operations [:zh_CN] [`atomic_ref] 类型的操作所需的对齐][=ImpDef];
+
+    atomic_ref() = delete;
+    atomic_ref& operator=(const atomic_ref&) = delete;
+
+    explicit atomic_ref(T*&);
+    atomic_ref(const atomic_ref&) noexcept;
+
+    T* operator=(T*) const noexcept;
+    operator T*() const noexcept;
+
+    bool is_lock_free() const noexcept;
+    void store(T*, memory_order = memory_order_seq_cst) const noexcept;
+    T* load(memory_order = memory_order_seq_cst) const noexcept;
+    T* exchange(T*, memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order, memory_order) const noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order, memory_order) const noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order = memory_order_seq_cst) const noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order = memory_order_seq_cst) const noexcept;
+
+    T* fetch_add(difference_type, memory_order = memory_order_seq_cst) const noexcept;
+    T* fetch_sub(difference_type, memory_order = memory_order_seq_cst) const noexcept;
+
+    T* operator++(int) const noexcept;
+    T* operator--(int) const noexcept;
+    T* operator++() const noexcept;
+    T* operator--() const noexcept;
+    T* operator+=(difference_type) const noexcept;
+    T* operator-=(difference_type) const noexcept;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Descriptions are provided below only for members that differ from the
+primary template.
+[:zh_CN] 下文仅为与主模板不同的成员提供描述。
+
+[para]
+[:en] The following operations perform arithmetic computations.
+[:zh_CN] 以下各操作实施算术运算。
+
+[:en] The key, operator, and computation correspondence is identified in
+[#atomic.pointer.computations].
+[:zh_CN] 关键词、运算符和运算之间的对应关系在 [#atomic.pointer.computations] 中
+标明。
+
+[%@library fetch_add[!atomic_ref<T*>]]
+[%@library atomic_ref<T*>[!fetch_add]]
+[%@library fetch_sub[!atomic_ref<T*>]]
+[%@library atomic_ref<T*>[!fetch_sub]]
+[codeblock:declaration]
+T* fetch_[*key](difference_type operand, memory_order order = memory_order_seq_cst) const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:requires]
+[:en] [`T] shall be an object type, otherwise the program is ill-formed.
+[:zh_CN] [`T] 应当为对象类型，否则程序非良构。
+
+[para:effects]
+[:en] Atomically replaces the value referenced by [`*ptr] with the result of the
+computation applied to the value referenced by [`*ptr] and the given operand.
+[:zh_CN] 原子地将由 [`*ptr] 所引用的值替换为对由 [`*ptr] 所引用的值和给定的
+[`operand] 实施运算的结果。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] These operations are atomic read-modify-write operations ([#intro.races]).
+[:zh_CN] 这些操作是原子性读-改-写操作（[#intro.races]）。
+
+[para:returns]
+[:en] Atomically, the value referenced by [`*ptr] immediately before the
+effects.
+[:zh_CN] 原子地返回紧接其效果生效前 [`*ptr] 所引用的值。
+
+[para:remarks]
+[:en] The result may be an undefined address, but the operations otherwise have
+no undefined behavior.
+[:zh_CN] 结构可能是未定义的地址，但除此之外该操作没有未定义的行为。
+[exit:description]
+
+[%@library operator+=[!atomic_ref<T*>]]
+[%@library atomic_ref<T*>[!operator+=]]
+[%@library operator-=[!atomic_ref<T*>]]
+[%@library atomic_ref<T*>[!operator-=]]
+[codeblock:declaration]
+T* operator [*op]=(difference_type operand) const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return fetch_[*key](operand) [*op] operand;]
+[:zh_CN] 等价于：[`return fetch_[*key](operand) [*op] operand;]
+[exit:description]
