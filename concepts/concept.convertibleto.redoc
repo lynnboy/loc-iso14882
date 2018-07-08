@@ -1,0 +1,71 @@
+[section#concept.convertibleto
+    [:en] Concept [`ConvertibleTo]
+    [:zh_CN] 概念 [`ConvertibleTo]
+]
+
+[para]
+[:en] The [`ConvertibleTo] concept requires an expression of a particular
+type and value category to be both implicitly and explicitly convertible to some
+other type.
+[:zh_CN] [`ConvertibleTo] 概念要求特定类型和值类别的表达式同时可以隐式和显式转换
+为某个其他类型。
+
+[:en] The implicit and explicit conversions are required to produce equal
+results.
+[:zh_CN] 要求隐式和显式的转换产生相等的结果。
+
+[%@library ConvertibleTo]
+[codeblock:declaration]
+template<class From, class To>
+  concept ConvertibleTo =
+    is_convertible_v<From, To> &&
+    requires(From (&f)()) {
+      static_cast<To>(f());
+    };
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`test] be the invented function:
+[:zh_CN] 令 [`test] 为某个虚构函数：
+
+[codeblock:notation]
+To test(From (&f)()) {
+  return f();
+}
+[codeblock:end]
+
+[:en@~] and let [`f] be a function with no arguments and return type [`From]
+such that [`f()] is equality-preserving.
+[:zh_CN@~] 并令 [`f] 为不接受实参且返回类型为 [`From] 的函数，并使得 [`f()] 维持
+相等性。
+
+[:en] [`ConvertibleTo<From, To>] is satisfied only if:
+[:zh_CN] 仅当符合以下条件时 [`ConvertibleTo<From, To>] 得以满足：
+
+[list]
+[item]
+[:en] [`To] is not an object or reference-to-object type, or
+[`static_cast<To>(f())] is equal to [`test(f)].
+[:zh_CN] [`To] 并非对象或对象引用类型，或者 [`static_cast<To>(f())] 等于
+[`test(f)]。
+
+[item]
+[:en] [`From] is not a reference-to-object type, or
+[:zh_CN] [`From] 并非对象引用类型，或者
+
+[list]
+[item]
+[:en] If [`From] is an rvalue reference to a non const-qualified type, the
+resulting state of the object referenced by [`f()] after either above
+expression is valid but unspecified ([#lib.types.movedfrom]).
+[:zh_CN] 如果 [`From] 是到非 const 限定的类型的右值引用，则经过以上任何表达式
+之后 [`f()] 所指代的对象的结果状态，是有效但未指明的（[#lib.types.movedfrom]）。
+
+[item]
+[:en] Otherwise, the object referred to by [`f()] is not modified by either
+above expression.
+[:zh_CN] 否则，以上任何表达式都不改动 [`f()] 所指代的对象。
+[list:end]
+[list:end]
+[exit:description]

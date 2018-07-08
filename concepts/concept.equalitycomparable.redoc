@@ -1,0 +1,96 @@
+[section#concept.equalitycomparable
+    [:en] Concept [`EqualityComparable]
+    [:zh_CN] 概念 [`EqualityComparable]
+]
+
+[codeblock:declaration]
+template<class T, class U>
+  concept [*weakly-equality-comparable-with] = // [=Expos]
+    requires(const remove_reference_t<T>& t,
+             const remove_reference_t<U>& u) {
+      t == u; requires Boolean<decltype(t == u)>;
+      t != u; requires Boolean<decltype(t != u)>;
+      u == t; requires Boolean<decltype(u == t)>;
+      u != t; requires Boolean<decltype(u != t)>;
+    };
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`t] and [`u] be lvalues of types [`const remove_reference_t<T>] and
+[`const remove_reference_t<U>] respectively.
+[:zh_CN] 令 [`t] 和 [`u] 分别为类型 [`const remove_reference_t<T>] 和
+[`const remove_reference_t<U>] 的左值。
+
+[:en] [`[*weakly-equality-comparable-with]<T, U>] is satisfied only if:
+[:zh_CN] 仅当符合以下条件时 [`[*weakly-equality-comparable-with]<T, U>] 得以满足：
+
+[list]
+[item]
+[:en] [`t == u], [`u == t], [`t != u], and [`u != t] have the same domain.
+[:zh_CN] [`t == u]，[`u == t]，[`t != u]，和 [`u != t] 具有相同定义域。
+[item]
+[:en] [`bool(u == t) ==  bool(t == u)].
+[:zh_CN] [`bool(u == t) ==  bool(t == u)]。
+[item]
+[:en] [`bool(t != u) == !bool(t == u)].
+[:zh_CN] [`bool(t != u) == !bool(t == u)]。
+[item]
+[:en] [`bool(u != t) ==  bool(t != u)].
+[:zh_CN] [`bool(u != t) ==  bool(t != u)]。
+[list:end]
+[exit:description]
+
+[%@library EqualityComparable]
+[codeblock:declaration]
+template<class T>
+  concept EqualityComparable = [*weakly-equality-comparable-with]<T, T>;
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`a] and [`b] be objects of type [`T].
+[:zh_CN] 令 [`a] 和 [`b] 为 [`T] 类型的对象。
+
+[:en] [`EqualityComparable<T>] is satisfied only if [`bool(a == b)] is [`true]
+when [`a] is equal to [`b] ([#concepts.equality]), and [`false] otherwise.
+[:zh_CN] 仅当若 [`a] 等于 [`b]（[#concepts.equality]）则 [`bool(a == b)] 为
+[`true] 否则为 [`false] 时，[`EqualityComparable<T>] 得以满足。
+
+[para]
+[enter:note]
+[:en] The requirement that the expression [`a == b] is equality-preserving
+implies that [`==] is transitive and symmetric.
+[:zh_CN] 对表达式 [`a == b] 维持相等性的规定意味着 [`==] 的可传递性和对称性。
+[exit:note]
+[exit:description]
+
+[%@library EqualityComparableWith]
+[codeblock:declaration]
+template<class T, class U>
+  concept EqualityComparableWith =
+    EqualityComparable<T> && EqualityComparable<U> &&
+    CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
+    EqualityComparable<
+      common_reference_t<
+        const remove_reference_t<T>&,
+        const remove_reference_t<U>&>> &&
+    [*weakly-equality-comparable-with]<T, U>;
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`t] be an lvalue of type [`const remove_reference_t<T>],
+[`u] be an lvalue of type [`const remove_reference_t<U>], and [`C] be:
+[:zh_CN] 令 [`t] 为 [`const remove_reference_t<T>] 类型的左值，[`u] 为
+[`const remove_reference_t<U>] 类型的左值，并令 [`C] 为：
+
+[codeblock:notation]
+common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>
+[codeblock:end]
+
+[:en] [`EqualityComparableWith<T, U>] is satisfied only if
+[`bool(t == u) == bool(C(t) == C(u))].
+[:zh_CN] 仅当 [`bool(t == u) == bool(C(t) == C(u))] 时，
+[`EqualityComparableWith<T, U>] 得以满足。
+[exit:description]

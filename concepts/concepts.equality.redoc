@@ -1,0 +1,230 @@
+[section#concepts.equality
+    [:en] Equality preservation
+    [:zh_CN] 维持相等性
+]
+
+[para]
+[:en]
+An expression is [+equality-preserving[%expression[!equality-preserving]]] if,
+given equal inputs, the expression results in equal outputs.
+[:zh_CN]
+如果给定相等的输出，表达式都导致相等的输出，则表达式是[+维持相等性[%表达式
+[!维持相等性]]]的。
+
+[:en]
+The inputs to an expression are the set of the expression[=']s operands.
+[:zh_CN]
+表达式的输入为该表达式的操作数的集合。
+
+[:en]
+The output of an expression is the expression[=']s result and all operands
+modified by the expression.
+[:zh_CN]
+表达式的输出为该表达式的结果以及所有被该表达式所改动的操作数。
+
+[para]
+[:en]
+Not all input values need be valid for a given expression; e.g., for integers
+[`a] and [`b], the expression [`a / b] is not well-defined when [`b] is [`0].
+[:zh_CN]
+对于给定表达式，不需要其所有输入值都有效；例如，对于整数 [`a] 和 [`b]，表达式
+[`a / b] 在当 [`b] 为 [`0] 时是没有恰当定义的。
+
+[:en]
+This does not preclude the expression [`a / b] being equality-preserving.
+[:zh_CN]
+这并不妨碍表达式 [`a / b] 维持相等性。
+
+[:en]
+The [+domain[%]] of an expression is the set of input values for which the
+expression is required to be well-defined.
+[:zh_CN]
+某个表达式的[+定义域[%]]，是该表达式被要求有恰当定义的输入值的集合。
+
+[para]
+[:en]
+Expressions required by this document to be equality-preserving are further
+required to be stable: two evaluations of such an expression with the same input
+objects are required to have equal outputs absent any explicit intervening
+modification of those input objects.
+[:zh_CN]
+本文档要求维持相等性的表达式还要求是稳定的：这种表达式以相同输入对象进行的两次
+求值，当不存在明确介入其中对这些输入对象的改动时，要求具有相等的输出。
+
+[enter:note]
+[:en]
+This requirement allows generic code to reason about the current values of
+objects based on knowledge of the prior values as observed via
+equality-preserving expressions.
+[:zh_CN]
+这项规定允许泛型代码对对象的当前值，基于其对之前通过维持相等性的表达式所观察到的
+值的知识进行推理。
+
+[:en]
+It effectively forbids spontaneous changes to an object, changes to an object
+from another thread of execution, changes to an object as side effects of
+non-modifying expressions, and changes to an object as side effects of modifying
+a distinct object if those changes could be observable to a library function via
+an equality-preserving expression that is required to be valid for that object.
+[:zh_CN]
+这相当于禁止对象自发改动，从其他执行线程中改动对象，作为非改动表达式的副作用发生
+对象的改动，以及作为对其他对象的改动的副作用发生对象的改动，只要这些改动通过某个
+要求对该对象有效的维持相等性表达式，对某个程序库函数是可观察的。
+[exit:note]
+
+[para]
+[:en]
+Expressions declared in a [~requires-expression] in this document are required
+to be equality-preserving, except for those annotated with the comment ["not
+required to be equality-preserving.]
+[:zh_CN]
+本文档中在 [~requires-表达式]中声明的表达式，除非标明了“不需要维持相等性”的注释，
+否则都要求维持相等性。
+
+[:en]
+An expression so annotated may be equality-preserving, but is not required to be
+so.
+[:zh_CN]
+由这样标注的表达式可以维持相等性，但并不要求必须这样。
+
+[para]
+[:en]
+An expression that may alter the value of one or more of its inputs in a manner
+observable to equality-preserving expressions is said to modify those inputs.
+[:zh_CN]
+以对维持相等性表达式可观察的方式修改其一个或多个输入的值的表达式，被称为修改了
+这些输入。
+
+[:en]
+This document uses a notational convention to specify which expressions declared
+in a [~requires-expression] modify which inputs: except where otherwise
+specified, an expression operand that is a non-constant lvalue or rvalue may be
+modified.
+[:zh_CN]
+本文档用一种约定表示法来指定 [~requires-表达式]中声明的哪些表达式会修改那些输入：
+除非另行指明，非常量的左值或右值表达式操作数可以被修改。
+
+[:en]
+Operands that are constant lvalues or rvalues are required to not be modified.
+[:zh_CN]
+常量的左值或右值操作数要求不能被修改。
+
+[para]
+[:en]
+Where a [~requires-expression] declares an expression that is non-modifying for
+some constant lvalue operand, additional variations of that expression that
+accept a non-constant lvalue or (possibly constant) rvalue for the given operand
+are also required except where such an expression variation is explicitly
+required with differing semantics.
+[:zh_CN]
+每当 [~requires-表达式]声明了对某个常量左值操作数无改动的表达式，这个表达式为
+给定操作数接受非常量左值或（可能为常量）右值的其他变体也被要求，除非这些表达式
+变体已被显式要求具有不同的语义。
+
+[:en]
+These [+implicit expression variations[%]] are required to meet the semantic
+requirements of the declared expression.
+[:zh_CN]
+要求这些[+隐式表达式变体[%]]也满足所声明的表达式的语义规定。
+
+[:en]
+The extent to which an implementation validates the syntax of the variations is
+unspecified.
+[:zh_CN]
+实现以何种程度对这些变体的语法进行验证是未指明的。
+
+[para]
+[enter:example]
+[codeblock]
+template<class T> concept C = requires(T a, T b, const T c, const T d) {
+  c == d;           // #1
+  a = std::move(b); // #2
+  a = c;            // #3
+};
+[codeblock:end]
+
+[:en] For the above example:
+[:zh_CN] 上例中：
+
+[list]
+[item]
+[:en]
+Expression #1 does not modify either of its operands, #2 modifies both of its
+operands, and #3 modifies only its first operand [`a].
+[:zh_CN]
+表达式 #1 不修改其任何操作数，#2 修改其两个操作数，而 #3 仅修改其第一个操作数
+[`a]。
+
+[item]
+[:en]
+Expression #1 implicitly requires additional expression variations that meet
+the requirements for [`c == d] (including non-modification), as if the
+expressions
+[:zh_CN]
+表达式 #1 隐含要求满足 [`c == d] 的规定（包括无修改）的其他的表达式变体，如同
+以下各表达式
+
+[codeblock]
+                                            c  ==           b;
+          c  == std::move(d);               c  == std::move(b);
+std::move(c) ==           d;      std::move(c) ==           b;
+std::move(c) == std::move(d);     std::move(c) == std::move(b);
+
+          a  ==           d;                a  ==           b;
+          a  == std::move(d);               a  == std::move(b);
+std::move(a) ==           d;      std::move(a) ==           b;
+std::move(a) == std::move(d);     std::move(a) == std::move(b);
+[codeblock:end]
+
+[:en@~] had been declared as well.
+[:zh_CN@~] 也同样被声明。
+
+[item]
+[:en]
+Expression #3 implicitly requires additional expression variations that meet
+the requirements for [`a = c] (including non-modification of the second
+operand), as if the expressions [`a = b] and [`a = std::move(c)] had
+been declared.
+表达式 #3 隐含要求满足 [`a == c] 的规定（包括对第二个操作数无修改）的其他表达式
+变体，如同表达式 [`a = b] 和 [`a = std::move(c)] 也被声明。
+
+[:en]
+Expression #3 does not implicitly require an expression variation with a
+non-constant rvalue second operand, since expression #2 already specifies
+exactly such an expression explicitly.
+[:zh_CN]
+表达式 #3 并不隐含要求带有非常量右值的第二个操作数的表达式变体，因为表达式 #2
+已经显式地精确指定了这样的表达式。
+[list:end]
+[exit:example]
+
+[para]
+[enter:example]
+[:en]
+The following type [`T] meets the explicitly stated syntactic requirements
+of concept [`C] above but does not meet the additional implicit requirements:
+[:zh_CN]
+以下类型 [`T] 满足上文的概念 [`C] 的显式指定的语法规定，但并不满足其额外的隐式
+规定：
+
+[codeblock]
+struct T {
+  bool operator==(const T&) const { return true; }
+  bool operator==(T&) = delete;
+};
+[codeblock:end]
+
+[:en]
+[`T] fails to meet the implicit requirements of [`C], so [`C<T>] is not
+satisfied.
+[:zh_CN]
+由于 [`T] 并不满足 [`C] 的隐含规定，因而 [`C<T>] 未能得以满足。
+
+[:en]
+Since implementations are not required to validate the syntax of implicit
+requirements, it is unspecified whether an implementation diagnoses
+as ill-formed a program that requires [`C<T>].
+[:zh_CN]
+由于并不要求实现验证隐含规定的语法，实现是否将要求 [`C<T>] 的程序诊断为非良构
+是未指明的。
+[exit:example]

@@ -1,0 +1,112 @@
+[section#concept.stricttotallyordered
+    [:en] Concept [`StrictTotallyOrdered]
+    [:zh_CN] 概念 [`StrictTotallyOrdered]
+]
+
+[%@library StrictTotallyOrdered]
+[codeblock:declaration]
+template<class T>
+  concept StrictTotallyOrdered =
+    EqualityComparable<T> &&
+    requires(const remove_reference_t<T>& a,
+             const remove_reference_t<T>& b) {
+      a <  b; requires Boolean<decltype(a <  b)>;
+      a >  b; requires Boolean<decltype(a >  b)>;
+      a <= b; requires Boolean<decltype(a <= b)>;
+      a >= b; requires Boolean<decltype(a >= b)>;
+    };
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`a], [`b], and [`c] be lvalues of type [`const remove_reference_t<T>].
+[:zh_CN] 令 [`a]，[`b] 和 [`c] 为 [`const remove_reference_t<T>] 类型的左值。
+
+[:en] [`StrictTotallyOrdered<T>] is satisfied only if
+[:zh_CN] 仅当符合以下条件时 [`StrictTotallyOrdered<T>] 得以满足：
+
+[list]
+[item]
+[:en] Exactly one of [`bool(a < b)], [`bool(a > b)], or [`bool(a == b)] is
+[`true].
+[:zh_CN] [`bool(a < b)]，[`bool(a > b)] 和 [`bool(a == b)] 中恰好有一个为
+[`true]。
+[item]
+[:en] If [`bool(a < b)] and [`bool(b < c)], then [`bool(a < c)].
+[:zh_CN] 当 [`bool(a < b)] 且 [`bool(b < c)] 时，[`bool(a < c)]。
+[item]
+[:en] [`bool(a >  b) ==  bool(b < a)].
+[:zh_CN] [`bool(a >  b) ==  bool(b < a)]。
+[item]
+[:en] [`bool(a <= b) == !bool(b < a)].
+[:zh_CN] [`bool(a <= b) == !bool(b < a)]。
+[item]
+[:en] [`bool(a >= b) == !bool(a < b)].
+[:zh_CN] [`bool(a >= b) == !bool(a < b)]。
+[list:end]
+[exit:description]
+
+[codeblock:declaration]
+template<class T, class U>
+  concept StrictTotallyOrderedWith =
+    StrictTotallyOrdered<T> && StrictTotallyOrdered<U> &&
+    CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
+    StrictTotallyOrdered<
+      common_reference_t<
+        const remove_reference_t<T>&,
+        const remove_reference_t<U>&>> &&
+    EqualityComparableWith<T, U> &&
+    requires(const remove_reference_t<T>& t,
+             const remove_reference_t<U>& u) {
+      t <  u; requires Boolean<decltype(t <  u)>;
+      t >  u; requires Boolean<decltype(t >  u)>;
+      t <= u; requires Boolean<decltype(t <= u)>;
+      t >= u; requires Boolean<decltype(t >= u)>;
+      u <  t; requires Boolean<decltype(u <  t)>;
+      u >  t; requires Boolean<decltype(u >  t)>;
+      u <= t; requires Boolean<decltype(u <= t)>;
+      u >= t; requires Boolean<decltype(u >= t)>;
+    };
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`t] be an lvalue of type [`const remove_reference_t<T>],
+[`u] be an lvalue of type [`const remove_reference_t<U>], and [`C] be:
+[:zh_CN] 令 [`t] 为 [`const remove_reference_t<T>] 类型的左值，[`u] 为
+[`const remove_reference_t<U>] 类型的左值，并令 [`C] 为：
+
+[codeblock:notation]
+common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>
+[codeblock:end]
+
+[:en] [`StrictTotallyOrderedWith<T, U>] is satisfied only if
+[:zh_CN] 仅当符合以下条件时 [`StrictTotallyOrderedWith<T, U>] 得以满足：
+
+[list]
+[item]
+[:en] [`bool(t <  u) == bool(C(t) <  C(u))].
+[:zh_CN] [`bool(t <  u) == bool(C(t) <  C(u))]。
+[item]
+[:en] [`bool(t >  u) == bool(C(t) >  C(u))].
+[:zh_CN] [`bool(t >  u) == bool(C(t) >  C(u))]。
+[item]
+[:en] [`bool(t <= u) == bool(C(t) <= C(u))].
+[:zh_CN] [`bool(t <= u) == bool(C(t) <= C(u))]。
+[item]
+[:en] [`bool(t >= u) == bool(C(t) >= C(u))].
+[:zh_CN] [`bool(t >= u) == bool(C(t) >= C(u))]。
+[item]
+[:en] [`bool(u <  t) == bool(C(u) <  C(t))].
+[:zh_CN] [`bool(u <  t) == bool(C(u) <  C(t))]。
+[item]
+[:en] [`bool(u >  t) == bool(C(u) >  C(t))].
+[:zh_CN] [`bool(u >  t) == bool(C(u) >  C(t))]。
+[item]
+[:en] [`bool(u <= t) == bool(C(u) <= C(t))].
+[:zh_CN] [`bool(u <= t) == bool(C(u) <= C(t))]。
+[item]
+[:en] [`bool(u >= t) == bool(C(u) >= C(t))].
+[:zh_CN] [`bool(u >= t) == bool(C(u) >= C(t))]。
+[list:end]
+[exit:description]

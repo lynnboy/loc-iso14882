@@ -154,6 +154,31 @@ template<class... T> struct common_type;
     或为未知边界的数组。
 [-]
 
+[%@library basic_common_reference]
+[|]
+template<class, class, [br]
+ template<class> class, [br]
+ template<class> class> [br]
+ struct [br]
+ basic_common_reference;
+[|] [:en] Unless this trait is specialized (as specified in Note D, below),
+    there shall be no member [`type].
+    [:zh_CN] 除非这个特征被（如表后注释 D 所述）特化，否则不能有成员 [`type]。
+[-]
+
+[%@library common_reference]
+[|]
+template<class... T> [br]
+struct common_reference;
+[|] [:en] The member [~typedef-name] [`type] is defined or omitted as specified
+    in Note C, below.
+    [:zh_CN] 成员 [~typedef-名] [`type] 按表后注释 C 所述进行定义或省略。
+
+    [:en] Each type in the parameter pack [`T] shall be complete or
+    [$cv] [`void].
+    [:zh_CN] 形参包组 [`T] 中的每个类型都应当是完整的，或为 [$cv] [`void]。
+[-]
+
 [%@library underlying_type]
 [|]
 template<class T> [br]
@@ -232,6 +257,91 @@ whether any extended alignment is supported ([#basic.align]).
 
 [%@library common_type]
 [para]
+[:en] Let:
+[:zh_CN] 令：
+
+[list]
+[item]
+[:en] [`[*CREF](A)] be [`add_lvalue_reference_t<const remove_reference_t<A>>],
+[:zh_CN] [`[*CREF](A)] 为 [`add_lvalue_reference_t<const remove_reference_t<A>>]，
+
+[item]
+[:en] [`[*XREF](A)] denote a unary class template [`T] such that [`T<U>] denotes
+the same type as [`U] with the addition of [`A][=']s cv and reference
+qualifiers, for a non-reference cv-unqualified type [`U],
+[:zh_CN] [`[*XREF](A)] 代表某个一元类模板 [`T]，使得对于某个非引用 cv 未限定的
+类型 [`U]，[`T<U>] 代表与 [`U] 相同的类型但加上 [`A] 的 cv 和引用限定符，
+
+[item]
+[:en] [`[*COPYCV](FROM, TO)] be an alias for type [`TO] with the addition of
+[`FROM][=']s top-level cv-qualifiers.
+[:zh_CN] [`[*COPYCV](FROM, TO)] 为对类型 [`TO] 的别名但加上 [`FROM] 的顶层
+cv 限定符。
+
+[enter:example]
+[:en] [`[*COPYCV](const int, volatile short)] is an alias for
+[`const volatile short].
+[:zh_CN] [`[*COPYCV](const int, volatile short)] 是 [`const volatile short] 的
+别名。
+[exit:example]
+
+[item]
+[:en] [`[*COND_RES](X, Y)] be
+[`decltype(false ? declval<X(&)()>()() : declval<Y(&)()>()())].
+[:zh_CN] [`[*COND_RES](X, Y)] 为
+[`decltype(false ? declval<X(&)()>()() : declval<Y(&)()>()())]。
+[list:end]
+
+[:en] Given types [`A] and [`B], let [`X] be [`remove_reference_t<A>], let [`Y]
+be [`remove_reference_t<B>], and let [`[*COMMON_REF](A, B)] be:
+[:zh_CN] 给定类型 [`A] 和 [`B]，令 [`X] 为 [`remove_reference_t<A>]，令 [`Y]
+为 [`remove_reference_t<B>]，并令 [`[*COMMON_REF](A, B)] 为：
+
+[list]
+[item]
+[:en] If [`A] and [`B] are both lvalue reference types, [`[*COMMON_REF](A, B)]
+is [`[*COND_RES]([*COPYCV](X, Y) &, [*COPYCV](Y, X) &)] if that type exists and
+is a reference type.
+[:zh_CN] 如果 [`A] 和 [`B] 都为左值引用类型，则 [`[*COMMON_REF](A, B)] 为
+[`[*COND_RES]([*COPYCV](X, Y) &, [*COPYCV](Y, X) &)]（若该类型存在且为引用类型）。
+
+[item]
+[:en] Otherwise, let [`C] be [`remove_reference_t<[*COMMON_REF](X&, Y&)>&&].
+[:zh_CN] 否则，令 [`C] 为 [`remove_reference_t<[*COMMON_REF](X&, Y&)>&&]。
+
+[:en] If [`A] and [`B] are both rvalue reference types, [`C] is well-formed, and
+[`is_convertible_v<A, C> && is_convertible_v<B, C>] is [`true], then
+[`[*COMMON_REF](A, B)] is [`C].
+[:zh_CN] 如果 [`A] 和 [`B] 都为右值引用类型，[`C] 良构，并且
+[`is_convertible_v<A, C> && is_convertible_v<B, C>] 为 [`true]，则
+[`[*COMMON_REF](A, B)] 为 [`C]。
+
+[item]
+[:en] Otherwise, let [`D] be [`[*COMMON_REF](const X&, Y&)].
+[:zh_CN] 否则，令 [`D] 为 [`[*COMMON_REF](const X&, Y&)]。
+
+[:en] If [`A] is an rvalue reference and [`B] is an lvalue reference and [`D] is
+well-formed and [`is_convertible_v<A, D>] is [`true], then
+[`[*COMMON_REF](A, B)] is [`D].
+[:zh_CN] 如果 [`A] 为右值引用而 [`B] 为左值引用，[`D] 良构，并且
+[`is_convertible_v<A, D>] 为 [`true]，则 [`[*COMMON_REF](A, B)] 为 [`D].
+
+[item]
+[:en] Otherwise, if [`A] is an lvalue reference and [`B] is an rvalue reference,
+then [`[*COMMON_REF](A, B)] is [`[*COMMON_REF](B, A)].
+[:zh_CN] 否则，如果 [`A] 为左值引用而 [`B] 为右值引用，则 [`[*COMMON_REF](A, B)]
+为 [`[*COMMON_REF](B, A)]。
+
+[item]
+[:en] Otherwise, [`[*COMMON_REF](A, B)] is ill-formed.
+[:zh_CN] 否则，[`[*COMMON_REF](A, B)] 非良构。
+[list:end]
+
+[:en] If any of the types computed above is ill-formed, then
+[`[*COMMON_REF](A, B)] is ill-formed.
+[:zh_CN] 如果以上所计算的任何类型非良构，则 [`[*COMMON_REF](A, B)] 非良构。
+
+[para]
 [:en] Note A: For the [`common_type] trait applied to a template parameter pack
 [`T] of types, the member [`type] shall be either defined or not present as
 follows:
@@ -268,16 +378,26 @@ let [`C] denote the same type, if any, as [`common_type_t<D1, D2>].
 [:zh_CN] 若 [`is_same_v<T1, D1>] 为 [`false] 或者 [`is_same_v<T2, D2>] 为
 [`false]，则令 [`C] 代表与 [`common_type_t<D1, D2>] 的相同类型（如果有）。
 [item]
-[:en] Otherwise, let [`C] denote the same type, if any, as
-[:zh_CN] 否则，令 [`C] 代表与如下相同的类型（如果有）
+[enter:note]
+[:en] None of the following will apply if there is a specialization
+[`common_type<D1, D2>].
+[:zh_CN] 如果存在特例 [`common_type<D1, D2>]，则以下各项都不适用。
+[exit:note]
+[item]
+[:en] Otherwise, if
+[:zh_CN] 否则，如果
+
 [codeblock:notation]
 decay_t<decltype(false ? declval<D1>() : declval<D2>())>
 [codeblock:end]
 
-[enter:note]
-[:en] This will not apply if there is a specialization [`common_type<D1, D2>].
-[:zh_CN] 如果有 [`common_type<D1, D2>] 的特例，则这条不适用。
-[exit:note]
+[:en@~] denotes a valid type, let [`C] denote that type.
+[:zh_CN@~] 代表有效类型，则令 [`C] 代表这个类型。
+[item]
+[:en] Otherwise, if [`[*COND_RES]([*CREF](D1), [*CREF](D2))] denotes a type, let
+[`C] denote the type [`decay_t<[*COND_RES]([*CREF](D1), [*CREF](D2))>].
+[:zh_CN] 否则，如果 [`[*COND_RES]([*CREF](D1), [*CREF](D2))] 代表某个类型，则令
+[`C] 代表类型 [`decay_t<[*COND_RES]([*CREF](D1), [*CREF](D2))>]。
 [list:end]
 
 [:en] In either case, the member [~typedef-name] [`type] shall denote the same
@@ -330,19 +450,144 @@ cv-unqualified non-reference type [`C] to which each of the types [`T1] and
 [:zh_CN]
 这种特化式并不需要带有名为 [`type] 的成员，但若它有，则该成员应当是对某个可访问
 且无歧义的 cv 未限定的非引用类型 [`C] 的 [~typedef-名]，且 [`T1] 和 [`T2] 都应当
-能够显示转换为这个类型。
+能够显式转换为这个类型。
 
 [:en]
 Moreover, [`common_type_t<T1, T2>] shall denote the same type, if any, as does
 [`common_type_t<T2, T1>].
 [:zh_CN]
-此外 [`common_type_t<T1, T2>] 应当代表与 [`common_type_t<T2, T1>] 相同的类型
+此外 [`common_type_t<T1, T2>] 与 [`common_type_t<T2, T1>] 应当代表相同的类型
 （如果有）。
 
 [:en]
 No diagnostic is required for a violation of this Note[=']s rules.
 [:zh_CN]
 违反这条注解的规则不需要进行诊断。
+
+[para]
+[:en] Note C: For the [`common_reference] trait applied to a parameter pack
+[`T] of types, the member [`type] shall be either defined or not present as
+follows:
+[:zh_CN] 注解 C：对于在一个形参包组 [`T] 上实施的 [`common_reference] 特征，其
+成员 [`type] 应当按如下条件被定义或不存在：
+
+[list]
+[item]
+[:en] If [`sizeof...(T)] is zero, there shall be no member [`type].
+[:zh_CN] 如果 [`sizeof...(T)] 为零，则不应当存在成员 [`type]。
+
+[item]
+[:en] Otherwise, if [`sizeof...(T)] is one, let [`T0] denote the sole type in
+the pack [`T].
+[:zh_CN] 否则，如果 [`sizeof...(T)] 为一，令 [`T0] 代表包组 [`T] 中的唯一类型。
+
+[:en] The member typedef [`type] shall denote the same type as [`T0].
+[:zh_CN] 成员 typedef [`type] 应当代表与 [`T0] 相同的类型。
+
+[item]
+[:en] Otherwise, if [`sizeof...(T)] is two, let [`T1] and [`T2] denote the two
+types in the pack [`T].
+[:zh_CN] 否则，如果 [`sizeof...(T)] 为二，令 [`T1] 和 [`T2] 代表包组 [`T] 中的
+两个类型。
+
+[:en] Then
+[:zh_CN] 则有：
+
+[list]
+[item]
+[:en] If [`T1] and [`T2] are reference types and [`[*COMMON_REF](T1, T2)] is
+well-formed, then the member typedef [`type] denotes that type.
+[:zh_CN] 如果 [`T1] 和 [`T2] 都为引用类型，且 [`[*COMMON_REF](T1, T2)] 良构，则
+成员 typedef [`type] 代表这个类型。
+
+[item]
+[:en] Otherwise, if
+[`basic_common_reference<remove_cvref_t<T1>, remove_cvref_t<T2>, [*XREF](T1), [*XREF](T2)>::type]
+is well-formed, then the member typedef [`type] denotes that type.
+[:zh_CN] 否则，如果
+[`basic_common_reference<remove_cvref_t<T1>, remove_cvref_t<T2>, [*XREF](T1), [*XREF](T2)>::type]
+良构，则成员 typedef [`type] 代表这个类型。
+
+[item]
+[:en] Otherwise, if [`[*COND_RES](T1, T2)] is well-formed, then the member
+typedef [`type] denotes that type.
+[:zh_CN] 否则，如果 [`[*COND_RES](T1, T2)] 良构，则成员 typedef [`type] 代表这个
+类型。
+
+[item]
+[:en] Otherwise, if [`common_type_t<T1, T2>] is well-formed, then the member
+typedef [`type] denotes that type.
+[:zh_CN] 否则，如果 [`common_type_t<T1, T2>] 良构，则成员 typedef [`type] 代表
+这个类型。
+
+[item]
+[:en] Otherwise, there shall be no member [`type].
+[:zh_CN] 否则，不应当存在成员 [`type]。
+[list:end]
+
+[item]
+[:en] Otherwise, if [`sizeof...(T)] is greater than two, let [`T1], [`T2], and
+[`Rest], respectively, denote the first, second, and (pack of) remaining types
+comprising [`T].
+[:zh_CN] 否则，如果 [`sizeof...(T)] 大于二，令 [`T1]、[`T2] 和 [`Rest] 分别代表
+组成 [`T] 的第一个、第二个和剩余类型（的包组）。
+
+[:en] Let [`C] be the type [`common_reference_t<T1, T2>].
+[:zh_CN] 令 [`C] 为类型 [`common_reference_t<T1, T2>]。
+
+[:en] Then:
+[:zh_CN] 则有：
+
+[list]
+[item]
+[:en] If there is such a type [`C], the member typedef [`type] shall denote the
+same type, if any, as [`common_reference_t<C, Rest...>].
+[:zh_CN] 如果存在这样的类型 [`T]，则成员 typedef [`type] 应当代表与
+[`common_reference_t<C, Rest...>] 相同的类型（如果有）。
+
+[item]
+[:en] Otherwise, there shall be no member [`type].
+[:zh_CN] 否则，不应当存在成员 [`type]。
+[list:end]
+[list:end]
+
+[para]
+[:en] Note D: Notwithstanding the provisions of [#meta.type.synop], and
+pursuant to [#namespace.std], a program may partially specialize
+[`basic_common_reference<T, U, TQual, UQual>] for types [`T] and [`U] such that
+[`is_same_v<T, decay_t<T>>] and [`is_same_v<U, decay_t<U>>] are each [`true].
+[:zh_CN] 注解 D：无论 [#meta.type.synop] 如何规定，根据 [#namespace.std]，程序都
+可以为类型 [`T] 和 [`U] 来部分特化 [`basic_common_reference<T, U, TQual, UQual>]，
+以使得 [`is_same_v<T, decay_t<T>>] 和 [`is_same_v<U, decay_t<U>>] 均为 [`true]。
+
+[enter:note]
+[:en] Such specializations can be used to influence the result of
+[`common_reference], and are needed when only explicit conversions are desired
+between the template arguments.
+[:zh_CN] 这种特化式可以用于影响 [`common_reference] 的结果，并且仅当在模板实参
+之间需要进行显式转换时，这种特化式才是必要的。
+[exit:note]
+
+[:en]
+Such a specialization need not have a member named [`type], but if it does, that
+member shall be a [~typedef-name] for an accessible and unambiguous type [`C] to
+which each of the types [`TQual<T>] and [`UQual<U>] is convertible.
+[:zh_CN]
+这种特化式并不需要带有名为 [`type] 的成员，但若它有，则该成员应当是对某个可访问
+且无歧义的类型 [`C] 的 [~typedef-名]，且 [`TQual<T>] 和 [`UQual<U>] 都应当能够
+转换为这个类型。
+
+[:en]
+Moreover, [`basic_common_reference<T, U, TQual, UQual>::type] shall denote the
+same type, if any, as does [`basic_common_reference<U, T, UQual, TQual>::type].
+[:zh_CN]
+此外 [`basic_common_reference<T, U, TQual, UQual>::type] 与
+[`basic_common_reference<U, T, UQual, TQual>::type] 应当代表相同的类型（如果有）。
+
+[:en]
+No diagnostic is required for a violation of these rules.
+[:zh_CN]
+违反这些规则不需要进行诊断。
 
 [para]
 [enter:example]

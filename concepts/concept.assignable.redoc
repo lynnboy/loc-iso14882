@@ -1,0 +1,76 @@
+[section#concept.assignable
+    [:en] Concept [`Assignable]
+    [:zh_CN] 概念 [`Assignable]
+]
+
+[%@library Assignable]
+[codeblock:declaration]
+template<class LHS, class RHS>
+  concept Assignable =
+    is_lvalue_reference_v<LHS> &&
+    CommonReference<const remove_reference_t<LHS>&, const remove_reference_t<RHS>&> &&
+    requires(LHS lhs, RHS&& rhs) {
+      lhs = std::forward<RHS>(rhs);
+      requires Same<decltype(lhs = std::forward<RHS>(rhs)), LHS>;
+    };
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let:
+[:zh_CN] 令：
+
+[list]
+[item]
+[:en] [`lhs] be an lvalue that refers to an object [`lcopy] such that
+[`decltype((lhs))] is [`LHS],
+[:zh_CN] [`lhs] 为指代某个对象 [`lcopy] 的左值，使得 [`decltype((lhs))] 为
+[`LHS]，
+[item]
+[:en] [`rhs] be an expression such that [`decltype((rhs))] is [`RHS], and
+[:zh_CN] [`rhs] 使得 [`decltype((rhs))] 为 [`RHS] 的表达式，以及
+[item]
+[:en] [`rcopy] be a distinct object that is equal to [`rhs].
+[:zh_CN] [`rcopy] 为等于 [`rhs] 的其他对象。
+[list:end]
+
+[:en] [`Assignable<LHS, RHS>] is satisfied only if
+[:zh_CN] 仅当符合以下条件时 [`Assignable<LHS, RHS>] 得以满足：
+
+[list]
+[item]
+[:en] [`addressof(lhs = rhs) == addressof(lcopy)].
+[:zh_CN] [`addressof(lhs = rhs) == addressof(lcopy)]。
+
+[item]
+[:en] After evaluating [`lhs = rhs]:
+[:zh_CN] 对 [`lhs = rhs] 求值之后：
+
+[list]
+[item]
+[:en] [`lhs] is equal to [`rcopy], unless [`rhs] is a non-const xvalue that
+refers to [`lcopy].
+[:zh_CN] [`lhs] 等于 [`rcopy]，除非 [`rhs] 是指代 [`lcopy] 的非 const 临限值。
+
+[item]
+[:en] If [`rhs] is a non-[`const] xvalue, the resulting state of the object to
+which it refers is valid but unspecified ([#lib.types.movedfrom]).
+[:zh_CN] 如果 [`rhs] 是非 [`const] 临限值，则其所指代的对象的结果状态有效但
+未指明（[#lib.types.movedfrom]）。
+
+[item]
+[:en] Otherwise, if [`rhs] is a glvalue, the object to which it refers is not
+modified.
+[:zh_CN] 否则，如果 [`rhs] 为泛左值，则不改动其所指代的对象。
+[list:end]
+[list:end]
+
+[para]
+[enter:note]
+[:en] Assignment need not be a total function ([#structure.requirements]);
+in particular, if assignment to an object [`x] can result in a modification
+of some other object [`y], then [`x = y] is likely not in the domain of [`=].
+[:zh_CN] 赋值不必是全函数（[#structure.requirements]）；尤其是，如果对对象 [`x]
+的赋值可能造成对其他对象 [`y] 的改动，则 [`x = y] 很可能不在 [`=] 的定义域之中。
+[exit:note]
+[exit:description]
