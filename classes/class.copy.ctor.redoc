@@ -1,0 +1,482 @@
+[section#class.copy.ctor
+    [:en] Copy/move constructors
+    [:zh_CN] 复制/移动构造函数
+]
+
+[para]
+[%:begin#constructor.copy
+    [:en] constructor[!copy]
+    [:zh_CN] 构造函数[!复制～]
+]
+[%:begin#constructor.move
+    [:en] constructor[!move]
+    [:zh_CN] 构造函数[!移动～]
+]
+[:en]
+[%copy[!class object][%constructor[!copy]]]
+[%move[!class object][%constructor[!move]]]
+A non-template constructor for class [`X] is a copy constructor if its first
+parameter is of type [`X&], [`const X&], [`volatile X&] or [`const volatile X&],
+and either there are no other parameters or else all other parameters have
+default arguments ([#dcl.fct.default]).
+[:zh_CN]
+[%复制[!类对象][%构造函数[!复制～]]]
+[%移动[!类对象][%构造函数[!移动～]]]
+如果类 [`X] 的某个非模板构造函数的第一个形参类型为 [`X&]，[`const X&]，
+[`volatile X&] 或 [`const volatile X&]，且要么它没有其他形参要么所有其他形参都
+带有默认实参（[#dcl.fct.default]），则它是复制构造函数。
+
+[enter:example]
+[:en]
+[`X::X(const X&)] and [`X::X(X&,int=1)] are copy constructors.
+[:zh_CN]
+[`X::X(const X&)] 和 [`X::X(X&,int=1)] 都是复制构造函数。
+
+[codeblock]
+struct X {
+  X(int);
+  X(const X&, int = 1);
+};
+X a(1);             // [:en] calls [`X(int);]
+                    // [|:zh_CN] 调用了 [`X(int);]
+X b(a, 0);          // [:en] calls [`X(const X&, int);]
+                    // [|:zh_CN] 调用了 [`X(const X&, int);]
+X c = b;            // [:en] calls [`X(const X&, int);]
+                    // [|:zh_CN] 调用了 [`X(const X&, int);]
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A non-template constructor for class [`X] is a move constructor if its first
+parameter is of type [`X&&], [`const X&&], [`volatile X&&], or [`const volatile
+X&&], and either there are no other parameters or else all other parameters have
+default arguments ([#dcl.fct.default]).
+[:zh_CN]
+如果类 [`X] 的某个非模板构造函数的第一个形参类型为 [`X&&]，[`const X&&]，
+[`volatile X&&] 或 [`const volatile X&&]，且要么它没有其他形参要么所有其他形参都
+带有默认实参（[#dcl.fct.default]），则它是移动构造函数。
+
+[enter:example]
+[:en]
+[`Y::Y(Y&&)] is a move constructor.
+[:zh_CN]
+[`Y::Y(Y&&)] 是移动构造函数。
+
+[codeblock]
+struct Y {
+  Y(const Y&);
+  Y(Y&&);
+};
+extern Y f(int);
+Y d(f(1));          // [:en] calls [`Y(Y&&)]
+                    // [|:zh_CN] 调用了 [`Y(Y&&)]
+Y e = d;            // [:en] calls [`Y(const Y&)]
+                    // [|:zh_CN] 调用了 [`Y(const Y&)]
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:note]
+[:en]
+All forms of copy/move constructor may be declared for a class.
+[:zh_CN]
+可以为一个类声明全部形式的复制/移动构造函数。
+
+[enter:example]
+[codeblock]
+struct X {
+  X(const X&);
+  X(X&);            // OK
+  X(X&&);
+  X(const X&&);     // [:en] OK, but possibly not sensible
+                    // [|:zh_CN] OK，但可能无法被觉察到
+};
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[enter:note]
+[:en]
+If a class [`X] only has a copy constructor with a parameter of type [`X&],
+an initializer of type [`const X] or [`volatile X] cannot initialize an object
+of type (possibly cv-qualified) [`X].
+[:zh_CN]
+若类 [`X] 仅具有带有类型 [`X&] 的形参的复制构造函数，则类型为 [`const X] 或
+[`volatile X] 的初始化式不能用于初始化（可能被 cv 限定的）[`X] 类型的对象。
+
+[enter:example]
+[codeblock]
+struct X {
+  X();              // [:en] default constructor
+                    // [|:zh_CN] 默认构造函数
+  X(X&);            // [:en] copy constructor with a nonconst parameter
+                    // [|:zh_CN] 带有非 const 形参的复制构造函数
+};
+const X cx;
+X x = cx;           // [:en] error: [`X::X(X&)] cannot copy [`cx] into [`x]
+                    // [|:zh_CN] 错误：[`X::X(X&)] 不能把 [`cx] 复制给 [`x]
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[para]
+[:en]
+A declaration of a constructor for a class [`X] is ill-formed if its first
+parameter is of type (optionally cv-qualified) [`X] and either there are no
+other parameters or else all other parameters have default arguments.
+[:zh_CN]
+若类 [`X] 的某个构造函数的第一个形参类型为（可选地被 cv 限定的）[`X]，且要么没有
+其他形参要么所有其他形参均带有默认实参，则其声明式是非良构的。
+
+[:en]
+A member function template is never instantiated to produce such a constructor
+signature.
+[:zh_CN]
+永远不会实例化成员函数模板来产生这种构造函数签名。
+
+[enter:example]
+[codeblock]
+struct S {
+  template<typename T> S(T);
+  S();
+};
+
+S g;
+
+void h() {
+  S a(g);           // [:en] does not instantiate the member template to produce [`S::S<S>(S)];
+                    // [|:zh_CN] 并不实例化成员模板以产生 [`S::S<S>(S)]；
+                    // [:en@~] uses the implicitly declared copy constructor
+                    // [|:zh_CN@~] 使用隐式声明的复制构造函数
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+If the class definition does not explicitly declare a copy constructor,
+a non-explicit one is declared [+implicitly[%constructor[!copy[!implicitly
+declared]]]].
+[:zh_CN]
+
+若类定义式中并未明确声明复制构造函数，则将[+隐式[%构造函数[!复制～
+[!隐式声明的～]]]]声明一个非 explicit 的复制构造函数。
+
+[:en]
+If the class definition declares a move constructor or move assignment operator,
+the implicitly declared copy constructor is defined as deleted; otherwise, it is
+defined as defaulted ([#dcl.fct.def]).
+[:zh_CN]
+若类定义式中声明了一个移动构造函数或移动赋值运算符，则隐式声明的复制构造函数被
+定义为弃置的；否则它被定义为预置的（[#dcl.fct.def]）。
+
+[:en]
+The latter case is deprecated if the class has a user-declared copy assignment
+operator or a user-declared destructor.
+[:zh_CN]
+当类带有用户声明的复制赋值运算符或用户声明的析构函数时，后一种情况是被摒弃的。
+
+[para]
+[:en]
+The implicitly-declared copy constructor for a class [`X] will have the form
+[:zh_CN]
+为类 [`X] 所隐式声明的复制构造函数的形式为
+
+[codeblock:notation]
+X::X(const X&)
+[codeblock:end]
+
+[:en@~]
+if each potentially constructed subobject of a class type [`M] (or array
+thereof) has a copy constructor whose first parameter is of type [`const M&] or
+[`const volatile M&].[#:note#fn:$section.1]
+[:zh_CN@~]
+其条件为类类型 [`M]（或其数组）的每个潜在构造的子对象均带有以类型 [`const M&] 或
+[`const volatile M&] 为第一个形参的复制构造函数。
+[#:note#fn:$section.1]
+
+[note:foot#fn:$section.1]
+[:en]
+This implies that the reference parameter of the implicitly-declared copy
+constructor cannot bind to a [`volatile] lvalue; see [#diff.special].
+[:zh_CN]
+这意味着隐式声明的复制构造函数的引用形参不能绑定到 [`volatile] 左值；参见
+[#diff.special]。
+[note:end]
+
+[:en]
+Otherwise, the implicitly-declared copy constructor will have the form
+[:zh_CN]
+否则，隐式声明的复制构造函数的形式为
+
+[codeblock:notation]
+X::X(X&)
+[codeblock:end]
+
+[para]
+[:en]
+[%constructor[!move[!implicitly declared]]]
+If the definition of a class [`X] does not explicitly declare a move
+constructor, a non-explicit one will be implicitly declared as defaulted if and
+only if
+[:zh_CN]
+[%构造函数[!移动～[!隐式声明的～]]]
+若类定义式中并未明确声明移动构造函数，则当且仅当满足如下条件时将隐式声明一个
+非 explicit 的预置的移动构造函数：
+
+[list]
+[item]
+[:en@~] [`X] does not have a user-declared copy constructor,
+[:zh_CN@~] [`X] 不带有用户声明的复制构造函数，
+
+[item]
+[:en@~] [`X] does not have a user-declared copy assignment operator,
+[:zh_CN@~] [`X] 不带有用户声明的复制赋值运算符，
+
+[item]
+[:en@~] [`X] does not have a user-declared move assignment operator, and
+[:zh_CN@~] [`X] 不带有用户声明的移动赋值运算符，并且
+
+[item]
+[:en@~] [`X] does not have a user-declared destructor.
+[:zh_CN@~] [`X] 不带有用户声明的析构函数。
+[list:end]
+
+[enter:note]
+[:en]
+When the move constructor is not implicitly declared or explicitly supplied,
+expressions that otherwise would have invoked the move constructor may instead
+invoke a copy constructor.
+[:zh_CN]
+如果并未隐式声明或者显式提供移动构造函数，则本应调用移动构造函数的表达式将改为
+调用复制构造函数。
+[exit:note]
+
+[para]
+[:en]
+The implicitly-declared move constructor for class [`X] will have the form
+[:zh_CN]
+为类 [`X] 隐式声明的移动构造函数的形式为
+
+[codeblock:notation]
+X::X(X&&)
+[codeblock:end]
+
+[para]
+[:en]
+An implicitly-declared copy/move constructor is an inline public member of
+its class.
+[:zh_CN]
+隐式声明的复制/移动构造函数是其类的内联的公开成员。
+
+[:en]
+A defaulted copy/move constructor for a class [`X] is defined as deleted
+([#dcl.fct.def.delete]) if [`X] has:
+当类 [`X] 具有以下各项时，[`X] 的预置的复制/移动构造函数被定义为弃置的
+（[#dcl.fct.def.delete]）：
+[:zh_CN]
+
+[list]
+[item]
+[:en@~] a potentially constructed subobject type [`M] (or array thereof) that
+cannot be copied/moved because overload resolution ([#over.match]), as applied
+to find [`M][=']s corresponding constructor, results in an ambiguity or a
+function that is deleted or inaccessible from the defaulted constructor,
+[:zh_CN@~] 类型 [`M]（或其数组）的潜在构造的子对象，由于查找 [`M] 的对应构造函数
+所进行的重载决议（[#over.match]），其结果有歧义，或者是被弃置的或在这个预置构造
+函数中无法访问的函数，而无法被复制或移动，
+
+[item]
+[:en@~] a variant member whose corresponding constructor as selected by overload
+resolution is non-trivial,
+[:zh_CN@~] 可变成员，其由重载决议所选择的对应构造函数是非平凡的，
+
+[item]
+[:en@~] any potentially constructed subobject of a type with a destructor that
+is deleted or inaccessible from the defaulted constructor, or,
+[:zh_CN@~] 任何其类型带有被弃置或在这个预置的构造函数中无法访问的析构函数的潜在
+构造的子对象，或者
+
+[item]
+[:en@~] for the copy constructor, a non-static data member of rvalue reference
+type.
+[:zh_CN@~] （对于复制构造函数）右值引用类型的非静态数据成员。
+[list:end]
+
+[:en]
+A defaulted move constructor that is defined as deleted is ignored by overload
+resolution ([#over.match], [#over.over]).
+[:zh_CN]
+被定义为弃置的预置移动构造函数，在重载决议中被忽略（[#over.match]，
+[#over.over]）。
+
+[enter:note]
+[:en]
+A deleted move constructor would otherwise interfere with initialization from
+an rvalue which can use the copy constructor instead.
+[:zh_CN]
+否则弃置的移动构造函数将干扰以右值进行的初始化，而其本可以换用复制构造函数。
+[exit:note]
+
+[para]
+[:en]
+[%constructor[!copy[!trivial]]]
+[%constructor[!move[!trivial]]]
+A copy/move constructor for class [`X] is trivial if it is not user-provided
+and if:
+[:zh_CN]
+[%构造函数[!复制～[!平凡的～]]]
+[%构造函数[!移动～[!平凡的～]]]
+当类 [`X] 的复制/移动构造函数不是用户提供的，并且满足如下条件时，它是平凡的：
+
+[list]
+[item]
+[:en@~] class [`X] has no virtual functions ([#class.virtual]) and no virtual
+base classes ([#class.mi]), and
+[:zh_CN@~] 类 [`X] 没有虚函数（[#class.virtual]）也没有虚基类（[#class.mi]），
+并且
+
+[item]
+[:en@~] the constructor selected to copy/move each direct base class subobject
+is trivial, and
+[:zh_CN@~] 所选择用于复制/移动每个直接基类子对象的构造函数是平凡的，并且
+
+[item]
+[:en@~] for each non-static data member of [`X] that is of class type (or array
+thereof), the constructor selected to copy/move that member is trivial;
+[:zh_CN@~] 对于 [`X] 的每个类类型（或其数组）的非静态数据成员，所选择用于复制/
+移动该成员的构造函数是平凡的；
+[list:end]
+
+[:en@~]
+otherwise the copy/move constructor is [+non-trivial[%constructor[!copy
+[!nontrivial]]]].
+[:zh_CN]
+否则该复制/移动构造函数是[+非平凡的[%构造函数[!复制～[!非平凡～]]]]。
+
+[para]
+[:en]
+[%constructor[!copy[!implicitly defined]]]
+[%constructor[!move[!implicitly defined]]]
+A copy/move constructor that is defaulted and not defined as deleted is
+[+implicitly defined[%]] when it is odr-used ([#basic.def.odr]), when it is
+needed for constant evaluation ([#expr.const]), or when it is explicitly
+defaulted after its first declaration.
+[:zh_CN]
+[%构造函数[!复制～[!隐式定义的～]]]
+[%构造函数[!移动～[!隐式定义的～]]]
+当预置的且并未被定义为弃置的复制/移动构造函数被 ODR 式使用（[#basic.def.odr]），
+它被常量求值所需要（[#expr.const]）时，或者当在其首个声明式之后被显式预置时，
+它将被[+隐式定义[%]]。
+
+[enter:note]
+[:en]
+The copy/move constructor is implicitly defined even if the implementation
+elided its odr-use ([#basic.def.odr], [#class.temporary]).
+[:zh_CN]
+即使实现将其 ODR 式使用消除掉（[#basic.def.odr]，[#class.temporary]）也要对该
+复制/移动构造函数进行隐式定义。
+[exit:note]
+
+[:en]
+If the implicitly-defined constructor would satisfy the requirements of a
+constexpr constructor ([#dcl.constexpr]), the implicitly-defined constructor
+is [`constexpr].
+[:zh_CN]
+若隐式定义的构造函数能够符合对 constexpr 构造函数（[#dcl.constexpr]）的规定，则
+隐式定义的构造函数是 [`constexpr] 的。
+
+[para]
+[:en]
+Before the defaulted copy/move constructor for a class is implicitly defined,
+all non-user-provided copy/move constructors for its potentially constructed
+subobjects shall have been implicitly defined.
+[:zh_CN]
+在对某个类的预置复制/移动构造函数进行隐式定义之前，它的所有潜在构造子对象的非
+用户提供的复制/移动构造函数都应当是已经被隐式定义的。
+
+[enter:note]
+[:en]
+An implicitly-declared copy/move constructor has an implied exception
+specification ([#except.spec]).
+[:zh_CN]
+隐式声明的复制/移动构造函数带有隐含的异常说明（[#except.spec]）。
+[exit:note]
+
+[para]
+[:en]
+The implicitly-defined copy/move constructor for a non-union class [`X] performs
+a memberwise copy/move of its bases and members.
+[:zh_CN]
+非联合类 [`X] 隐式定义的复制/移动构造函数实施其基类和成员的逐成员复制/移动。
+
+[enter:note]
+[:en]
+Default member initializers of non-static data members are ignored.
+[:zh_CN]
+忽略非静态数据成员的默认成员初始化式。
+
+[:en]
+See also the example in [#class.base.init].
+[:zh_CN]
+另见 [#class.base.init] 中的示例。
+[exit:note]
+
+[:en]
+The order of initialization is the same as the order of initialization of bases
+and members in a user-defined constructor (see [#class.base.init]).
+[:zh_CN]
+初始化的顺序与在用户定义的构造函数中为基类和成员进行的初始化的顺序相同（参见
+[#class.base.init]）。
+
+[:en]
+Let [`x] be either the parameter of the constructor or, for the move
+constructor, an xvalue referring to the parameter.
+[:zh_CN]
+令 [`x] 为构造函数的形参，或对于移动构造函数为一个指代其形参的临限值。
+
+[:en]
+Each base or non-static data member is copied/moved in the manner appropriate to
+its type:
+[:zh_CN]
+每个基类对象或非静态数据成员按照与其类型相适应的方式进行复制/移动：
+
+[list]
+[item]
+[:en@~] if the member is an array, each element is direct-initialized with the
+corresponding subobject of [`x];
+[:zh_CN@~] 若该成员是数组，则其每个元素以 [`x] 的对应子对象进行直接初始化；
+
+[item]
+[:en@~] if a member [`m] has rvalue reference type [`T&&], it is
+direct-initialized with [`static_cast<T&&>(x.m)];
+[:zh_CN@~] 若成员 [`m] 具有右值引用类型 [`T&&]，则它以 [`static_cast<T&&>(x.m)]
+进行直接初始化；
+
+[item]
+[:en@~] otherwise, the base or member is direct-initialized with the
+corresponding base or member of [`x].
+[:zh_CN@~] 否则，基类或成员就以 [`x] 的对应基类或成员进行直接初始化。
+[list:end]
+
+[:en]
+[%initialization[!virtual base class]]
+Virtual base class subobjects shall be initialized only once by the
+implicitly-defined copy/move constructor (see [#class.base.init]).
+[:zh_CN]
+[%初始化[!虚基类]]
+虚基类子对象应当只被隐式定义的复制/移动构造函数初始化一次（参见
+[#class.base.init]）。
+
+[para]
+[:en]
+The implicitly-defined copy/move constructor for a union [`X] copies the object
+representation ([#basic.types]) of [`X].
+[:zh_CN]
+联合 [`X] 隐式定义的复制/移动构造函数对 [`X] 的对象表示（[#basic.types]）进行
+复制。
+
+[%:end#constructor.move]
+[%:end#constructor.copy]
