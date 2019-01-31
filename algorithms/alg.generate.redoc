@@ -19,36 +19,43 @@ template<class OutputIterator, class Size, class Generator>
 template<class ExecutionPolicy, class ForwardIterator, class Size, class Generator>
   ForwardIterator generate_n(ExecutionPolicy&& exec,
                              ForwardIterator first, Size n, Generator gen);
+
+namespace ranges {
+  template<Iterator O, Sentinel<O> S, CopyConstructible F>
+    requires Invocable<F&> && Writable<O, invoke_result_t<F&>>
+    constexpr O generate(O first, S last, F gen);
+  template<class R, CopyConstructible F>
+    requires Invocable<F&> && OutputRange<R, invoke_result_t<F&>>
+    constexpr safe_iterator_t<R> generate(R&& r, F gen);
+  template<Iterator O, CopyConstructible F>
+    requires Invocable<F&> && Writable<O, invoke_result_t<F&>>
+    constexpr O generate_n(O first, iter_difference_t<O> n, F gen);
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$N] be [$\max(0, [`n])] for the [`generate_n] algorithms, and
+[`last - first] for the [`generate] algorithms.
+[:zh_CN] 令 [$N] 对于各 [`generate_n] 算法为 [$\max(0, [`n])]，而对于各
+[`generate] 算法为 [`last - first]。
+
 [para:requires]
-[:en] [`gen] takes no arguments, [`Size] shall be convertible to an integral
-type ([#conv.integral], [#class.conv]).
-[:zh_CN] [`gen] 不接受实参，[`Size] 应当可以转换为整型类型（[#conv.integral]，
-[#class.conv]）。
+[:en] [`Size] shall be convertible to an integral type ([#conv.integral],
+[#class.conv]).
+[:zh_CN] [`Size] 应当可以转换为整型类型（[#conv.integral]，[#class.conv]）。
 
 [para:effects]
-[:en] The [`generate] algorithms invoke the function object [`gen] and assigns
-the return value of [`gen] through all the iterators in the range
-[=range(first,last)].
-[:zh_CN] 算法 [`generate] 调用函数对象 [`gen]，并将其返回值通过范围
-[=range(first,last)] 中的每个迭代器进行赋值。
-
-[:en] The [`generate_n] algorithms invoke the function object [`gen] and assigns
-the return value of [`gen] through all the iterators in the range
-[=range(first,first + n)] if [`n] is positive, otherwise it does nothing.
-[:zh_CN] 当 [`n] 为正时，算法 [`generate_n] 调用函数对象 [`gen]，并将其返回值
-通过范围 [=range(first,first + n)] 中的每个迭代器进行赋值，否则不做任何事。
+[:en] Assigns the result of successive evaluations of [`gen()] through each
+iterator in the range [=range(first,first + [$N])].
+[:zh_CN] 通过范围 [=range(first,first + [$N])] 中的每个迭代器，将对 [`gen()] 的
+连续求值的结果对其进行赋值。
 
 [para:returns]
-[:en] [`generate_n] returns [`first + n] for non-negative values of [`n] and
-[`first] for negative values.
-[:zh_CN] [`generate_n] 对于非负的 [`n] 返回 [`first + n]，而对于负值则返回
-[`first]。
+[:en] [`first + [$N]].
+[:zh_CN] [`first + [$N]]。
 
 [para:complexity]
-[:en] Exactly [`last - first], [`n], or 0 invocations of [`gen] and assignments,
-respectively.
-[:zh_CN] 分别恰好进行 [`last - first]，[`n] 或 0 次对 [`gen] 的调用和赋值。
+[:en] Exactly [$N] evaluations of [`gen()] and assignments.
+[:zh_CN] 恰好进行 [$N] 次对 [`gen()] 的求值和赋值。
 [exit:description]

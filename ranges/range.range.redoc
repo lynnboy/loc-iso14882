@@ -1,0 +1,132 @@
+[section#range.range
+    [:en] Ranges
+    [:zh_CN] 范围
+]
+
+[para]
+[:en] The [`Range] concept defines the requirements of a type that allows
+iteration over its elements by providing an iterator and sentinel that denote
+the elements of the range.
+[:zh_CN] [`Range] 概念定义了针对类型的一些规定，允许通过提供代表范围中的元素的
+迭代器和哨位来对各个元素进行迭代。
+
+[%@librry Range]
+[codeblock:declaration [!:var range-impl forwarding-range]]
+template<class T>
+  concept [*range-impl] =          // [=Expos]
+    requires(T&& t) {
+      ranges::begin(std::forward<T>(t));        // [:en] sometimes equality-preserving (see below)
+                                                // [|:zh_CN] 有时候是维持相等性的（见下文）
+      ranges::end(std::forward<T>(t));
+    };
+
+template<class T>
+  concept Range = [*range-impl]<T&>;
+
+template<class T>
+  concept [*forwarding-range] =    // [=Expos]
+    Range<T> && [*range-impl]<T>;
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] The required expressions [`ranges::begin(std::forward<T>(t))] and
+[`ranges::end(std::forward<T>(t))] of the [`[*range-impl]] concept do not
+require implicit expression variations ([#concepts.equality]).
+[:zh_CN] 对 [`[*range-impl]] 概念规定的表达式
+[`ranges::begin(std::forward<T>(t))] 和 [`ranges::end(std::forward<T>(t))] 并不
+规定提供隐式表达式变体（[#concepts.equality]）。
+
+[para]
+[:en] Given an expression [`E] such that [`decltype((E))] is [`T], [`T] models
+[`[*range-impl]] only if
+[:zh_CN] 给定某个表达式 [`E] 并使 [`decltype((E))] 为 [`T]，仅当满足以下条件时，
+[`T] 构成 [`[*range-impl]]：
+
+[list]
+[item]
+[:en@~] [=range(ranges::begin(E),ranges::end(E))] denotes a range
+([#iterator.requirements.general]),
+[:zh_CN@~] [=range(ranges::begin(E),ranges::end(E))] 代表一个范围
+（[#iterator.requirements.general]），
+
+[item]
+[:en@~] both [`ranges::begin(E)] and [`ranges::end(E)] are amortized constant
+time and non-modifying, and
+[:zh_CN@~] [`ranges::begin(E)] 和 [`ranges::end(E)] 均为均摊常量时间且不进行
+改动，并且
+
+[item]
+[:en@~] if the type of [`ranges::begin(E)] models [`ForwardIterator],
+[`ranges::begin(E)] is equality-preserving.
+[:zh_CN@~] 若 [`ranges::begin(E)] 的类型构成 [`ForwardIterator]，则
+[`ranges::begin(E)] 是维持相等性的。
+[list:end]
+
+[para]
+[enter:note]
+[:en] Equality preservation of both [`ranges::begin] and [`ranges::end] enables
+passing a [`Range] whose iterator type models [`ForwardIterator] to multiple
+algorithms and making multiple passes over the range by repeated calls to
+[`ranges::begin] and [`ranges::end].
+[:zh_CN] [`ranges::begin] 和 [`ranges::end] 同时维持相等性，允许将迭代器类型构成
+[`ForwardIterator] 的 [`Range] 传递给多个算法，并通过对 [`ranges::begin] 和
+[`ranges::end] 的重复调用来对范围进行多遍访问。
+
+[:en] Since [`ranges::begin] is not required to be equality-preserving when the
+return type does not model [`ForwardIterator], repeated calls might not return
+equal values or might not be well-defined; [`ranges::begin] should be called at
+most once for such a range.
+[:zh_CN] 由于当 [`ranges::begin] 的返回类型不构成 [`ForwardIterator] 时并不要求
+它维持相等性，所以对其进行重复调用可能并不会返回相等值或者可能是未定义的；对于
+这样的范围应当最多调用 [`ranges::begin] 一次。
+[exit:note]
+
+[para]
+[:en] Given an expression [`E] such that [`decltype((E))] is [`T] and an lvalue
+[`t] that denotes the same object as [`E], [`T] models [`[*forwarding-range]]
+only if
+[:zh_CN] 给定表达式 [`E]，令 [`decltype((E))] 为 [`T]，并令左值 [`t] 与 [`E]
+代表相同的对象，则仅当符合以下条件时 [`T] 构成 [`[*forwarding-range]]：
+
+[list]
+[item]
+[:en@~] [`ranges::begin(E)] and [`ranges::begin(t)] are expression-equivalent,
+[:zh_CN@~] [`ranges::begin(E)] 和 [`ranges::begin(t)] 表达式等价，
+[item]
+[:en@~] [`ranges::end(E)] and [`ranges::end(t)] are expression-equivalent, and
+[:zh_CN@~] [`ranges::end(E)] 和 [`ranges::end(t)] 表达式等价，并且
+[item]
+[:en@~] the validity of iterators obtained from the object denoted by [`E] is
+not tied to the lifetime of that object.
+[:zh_CN@~] 对从 [`E] 所代表的对象中获得的迭代器的有效性，与这个对象的生存期之间
+并无关联。
+[list:end]
+
+[para]
+[enter:note]
+[:en] Since the validity of iterators is not tied to the lifetime of an object
+whose type models [`[*forwarding-range]], a function can accept arguments of
+such a type by value and return iterators obtained from it without danger of
+dangling.
+[:zh_CN] 由于对迭代器的有效性，与类型构成了 [`[*forwarding-range]] 的对象的
+生存期之间并无关联，所以接受按值传递的这种类型的实参并返回从其中获得的迭代器的
+函数并没有发生悬挂的危险。
+[exit:note]
+
+[para]
+[enter:example]
+[:en] Specializations of class template [`subrange] ([#range.subrange]) model
+[`[*forwarding-range]].
+[:zh_CN] 类模板 [`subrange]（[#range.subrange]）的特例都构成
+[`[*forwarding-range]]。
+
+[:en] [`subrange] provides non-member rvalue overloads of [`begin] and [`end]
+with the same semantics as its member lvalue overloads, and [`subrange][=']s
+iterators [=-] since they are ["borrowed] from some other range [=-] do not have
+validity tied to the lifetime of a [`subrange] object.
+[:zh_CN] [`subrange] 提供了 [`begin] 和 [`end] 的非成员右值重载版本，并与其成员
+的左值重载版本具有相同语义，并且 [`subrange] 的迭代器——由于它们是从其他范围中
+“借”来的——其有效性与 [`subrange] 对象的生存期并无关联。
+[exit:example]
+[exit:description]

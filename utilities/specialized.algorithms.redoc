@@ -6,16 +6,16 @@
 [para]
 [:en]
 Throughout this subclause, the names of template parameters are used to express
-type requirements.
+type requirements for those algorithms defined directly in namespace [`std].
 [:zh_CN]
-本子条款的通篇中，各模板形参的名字用于表达类型规定。
+本子条款的通篇中，各模板形参的名字用于表达针对直接定义于命名空间 [`std] 中的各个
+算法的类型规定。
 
 [list]
 [item]
 [:en]
 If an algorithm[=']s template parameter is named [`InputIterator], the template
-argument shall satisfy the [*Cpp17InputIterator] requirements
-([#input.iterators]).
+argument shall meet the [*Cpp17InputIterator] requirements ([#input.iterators]).
 [:zh_CN]
 若某个算法的模板形参名为 [`InputIterator]，则其模板实参应当满足
 [*Cpp17InputIterator] 的规定（[#input.iterators]）。
@@ -23,7 +23,7 @@ argument shall satisfy the [*Cpp17InputIterator] requirements
 [item]
 [:en]
 If an algorithm[=']s template parameter is named [`ForwardIterator], the
-template argument shall satisfy the [*Cpp17ForwardIterator] requirements
+template argument shall meet the [*Cpp17ForwardIterator] requirements
 ([#forward.iterators]), and is required to have the property that no exceptions
 are thrown from increment, assignment, comparison, or indirection through valid
 iterators.
@@ -33,11 +33,86 @@ iterators.
 迭代器的增量、赋值、比较或间接中不抛出异常的性质。
 [list:end]
 
+[para]
 [:en]
 Unless otherwise specified, if an exception is thrown in the following
-algorithms there are no effects.
+algorithms, objects constructed by a placement [~new-expression] ([#expr.new])
+are destroyed in an unspecified order before allowing the exception to propagate.
 [:zh_CN]
-除非另行说明，否则当下列算法中抛出异常时，它们没有效果。
+除非另行说明，否则当下列算法中抛出异常时，以放置式 [~new-表达式]（[#expr.new]）
+所构造的各个对象，在允许异常进行传播之前，以某个未指明的顺序进行销毁。
+
+[para]
+[:en] In the description of the algorithms, operator [`-] is used for some of
+the iterator categories for which it need not be defined.
+[:zh_CN] 各算法的描述中，对某些迭代器类别使用了运算符 [`-]，但并不需要定义它。
+
+[:en] In these cases, the value of the expression [`b - a] is the number of
+increments of [`a] needed to make [`bool(a == b)] be [`true].
+[:zh_CN] 这些情况下，表达式 [`b - a] 的值是使得 [`bool(a == b)] 为 [`true] 所需
+的对 [`a] 进行增量操作的次数。
+
+[para]
+[:en] The following additional requirements apply for those algorithms defined
+in namespace [`std::ranges]:
+[:zh_CN] 对于定义于命名空间 [`std::ranges] 中的各算法，还有下列的额外规定：
+
+[list]
+[item]
+[:en] The entities defined in the [`std::ranges] namespace in this subclause are
+not found by argument-dependent name lookup ([#basic.lookup.argdep]).
+[:zh_CN] 本子条款中在 [`std::ranges] 命名空间中定义的各个实体，不会被依赖于实参
+的名字查找（[#basic.lookup.argdep]）所找到。
+
+[:en] When found by unqualified ([#basic.lookup.unqual]) name lookup for the
+[~postfix-expression] in a function call ([#expr.call]), they inhibit
+argument-dependent name lookup.
+[:zh_CN] 一旦在对函数调用中的[~后缀表达式]（[#expr.call]）所进行的未限定名字查找
+（[#basic.lookup.unqual]）中找到它们，它们就抑制了依赖于实参的名字查找。
+
+[item]
+[:en] Overloads of algorithms that take [`Range] arguments ([#range.range])
+behave as if they are implemented by calling [`ranges::begin] and [`ranges::end]
+on the [`Range](s) and dispatching to the overload that takes separate iterator
+and sentinel arguments.
+[:zh_CN] 接受 [`Range] 实参（[#range.range]）的算法重载的行为，如同它们是以在
+各 [`Range] 上调用 [`ranges::begin] 和 [`ranges::end] 然后转派给接受分别的迭代器
+和哨位实参的重载的方式来实现的。
+
+[item]
+[:en] The number and order of deducible template parameters for algorithm
+declarations is unspecified, except where explicitly stated otherwise.
+[:zh_CN] 除非另行明确指定，否则各个算法声明式的可推断的模板形参的数量和顺序都是
+未指明的。
+
+[enter:note]
+[:en] Consequently, these algorithms may not be called with explicitly-specified
+template argument lists.
+[:zh_CN] 因此，这些算法就不能以明确指定的模板实参列表来进行调用。
+[exit:note]
+[list:end]
+
+[para]
+[enter:note]
+[:en] When invoked on ranges of potentially overlapping subobjects
+([#intro.object]), the algorithms specified in this subclause
+[#specialized.algorithms] result in undefined behavior.
+[:zh_CN] 当对潜在重叠的子对象（[#intro.object]）的范围上调用时，本子条款
+[#specialized.algorithms] 中所指定的各个算法都导致未定义行为。
+[exit:note]
+
+[para]
+[:en] Some algorithms defined in this clause make use of the exposition-only
+function [`[*voidify]]:
+[:zh_CN] 本条款中所定义的某些算法，用到了仅用于阐释的函数 [`[*voidify]]：
+[codeblock:notation [!:var voidify]]
+template<class T>
+  void* [*voidify](T& ptr) noexcept {
+    return const_cast<void*>(static_cast<const volatile void*>(addressof(ptr)));
+  }
+[codeblock:end]
+
+[include special.mem.concepts]
 
 [include specialized.addressof]
 

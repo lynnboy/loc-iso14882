@@ -13,24 +13,41 @@ template<class ForwardIterator, class T, class Compare>
   constexpr ForwardIterator
     upper_bound(ForwardIterator first, ForwardIterator last,
                 const T& value, Compare comp);
+
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+           IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+    constexpr I upper_bound(I first, S last, const T& value, Comp comp = {}, Proj proj = {});
+  template<ForwardRange R, class T, class Proj = identity,
+           IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+             ranges::less<>>
+    constexpr safe_iterator_t<R>
+      upper_bound(R&& r, const T& value, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for overloads with
+no parameters by those names.
+[:zh_CN] 对于没有具有名字 [`comp] 和 [`proj] 的形参的各重载，令 [`comp] 为
+[`less{}] 并令 [`proj] 为 [`identity{}]。
+
 [para:requires]
 [:en] The elements [`e] of [=range(first,last)] shall be partitioned with
-respect to the expression [`!(value < e)] or [`!comp(value, e)].
-[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当根据表达式 [`!(value < e)] 或
-[`!comp(value, e)] 已分区。
+respect to the expression [`!bool(invoke(comp, value, invoke(proj, e)))].
+[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当根据表达式
+[`!bool(invoke(comp, value, invoke(proj, e)))] 已分区。
 
 [para:returns]
 [:en] The furthermost iterator [`i] in the range [=crange(first,last)] such
-that for every iterator [`j] in the range [=range(first,i)] the following
-corresponding conditions hold: [`!(value < *j)] or [`comp(value, *j) == false].
+that for every iterator [`j] in the range [=range(first,i)],
+[`!bool(invoke(comp, value, invoke(proj, *j)))] is [`true].
 [:zh_CN] 范围 [=crange(first,last)] 中最远处的迭代器 [`i]，使得对于范围
-[=range(first,i)] 中的每个迭代器 [`j]，以下对应条件成立：[`!(value < *j)] 或
-[`comp(value, *j) == false]。
+[=range(first,i)] 中的每个迭代器 [`j]，
+[`!bool(invoke(comp, value, invoke(proj, *j)))] 均为 [`true]。
 
 [para:complexity]
-[:en] At most [$\log_2([`last - first]) + [=O](1)] comparisons.
-[:zh_CN] 最多 [$\log_2([`last - first]) + [=O](1)] 次比较。
+[:en] At most [$\log_2([`last - first]) + [=O](1)] comparisons and projections.
+[:zh_CN] 最多 [$\log_2([`last - first]) + [=O](1)] 次比较和投射。
 [exit:description]

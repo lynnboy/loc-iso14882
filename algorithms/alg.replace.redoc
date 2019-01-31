@@ -21,23 +21,69 @@ template<class ExecutionPolicy, class ForwardIterator, class Predicate, class T>
   void replace_if(ExecutionPolicy&& exec,
                   ForwardIterator first, ForwardIterator last,
                   Predicate pred, const T& new_value);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, class T1, class T2, class Proj = identity>
+    requires Writable<I, const T2&> &&
+             IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T1*>
+    constexpr I
+      replace(I first, S last, const T1& old_value, const T2& new_value, Proj proj = {});
+  template<InputRange R, class T1, class T2, class Proj = identity>
+    requires Writable<iterator_t<R>, const T2&> &&
+             IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T1*>
+    constexpr safe_iterator_t<R>
+      replace(R&& r, const T1& old_value, const T2& new_value, Proj proj = {});
+  template<InputIterator I, Sentinel<I> S, class T, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    requires Writable<I, const T&>
+    constexpr I replace_if(I first, S last, Pred pred, const T& new_value, Proj proj = {});
+  template<InputRange R, class T, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    requires Writable<iterator_t<R>, const T&>
+    constexpr safe_iterator_t<R>
+      replace_if(R&& r, Pred pred, const T& new_value, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$E] be
+[:zh_CN] 令 [$E]：
+[list]
+[item]
+[:en@~] [`bool(*i == old_value)] for [`replace],
+[:zh_CN@~] 对于 [`replace] 为 [`bool(*i == old_value)]，
+[item]
+[:en@~] [`bool(pred(*i))] for [`replace_if],
+[:zh_CN@~] 对于 [`replace_if] 为 [`bool(pred(*i))]，
+[item]
+[:en@~] [`bool(invoke(proj, *i) == old_value)] for [`ranges::replace], or
+[:zh_CN@~] 对于 [`ranges::replace] 为 [`bool(invoke(proj, *i) == old_value)]，
+或者
+[item]
+[:en@~] [`bool(invoke(pred, invoke(proj, *i)))] for [`ranges::replace_if].
+[:zh_CN@~] 对于 [`ranges::replace_if] 为
+[`bool(invoke(pred, invoke(proj, *i)))]。
+[list:end]
+
 [para:requires]
 [:en] The expression [`*first = new_value] shall be valid.
 [:zh_CN] 表达式 [`*first = new_value] 应当有效。
 
 [para:effects]
 [:en] Substitutes elements referred by the iterator [`i] in the range
-[=range(first,last)] with [`new_value], when the following corresponding
-conditions hold: [`*i == old_value], [`pred(*i) != false].
-[:zh_CN] 将范围 [=range(first,last)] 中由迭代器 [`i] 所指代的使以下对应条件成立
-的元素替换为 [`new_value]：[`*i == old_value]，[`pred(*i) != false]。
+[=range(first,last)] with [`new_value], when [$E] is [`true].
+[:zh_CN] 将范围 [=range(first,last)] 中由迭代器 [`i] 所指代的使 [$E] 为 [`true]
+的元素替换为 [`new_value]。
+
+[para:returns]
+[:en] [`last] for the overloads in namespace [`ranges].
+[:zh_CN] 对于命名空间 [`ranges] 中的重载，返回 [`last]。
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate.
-[:zh_CN] 恰好进行 [`last - first] 次对应谓词的运用。
+[:en] Exactly [`last - first] applications of the corresponding predicate and
+any projection.
+[:zh_CN] 恰好进行 [`last - first] 次对应谓词和任何投射的运用。
 [exit:description]
 
 [%@library replace_copy]
@@ -67,9 +113,62 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                     ForwardIterator1 first, ForwardIterator1 last,
                     ForwardIterator2 result,
                     Predicate pred, const T& new_value);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, class T1, class T2, OutputIterator<const T2&> O,
+           class Proj = identity>
+    requires IndirectlyCopyable<I, O> &&
+             IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T1*>
+    constexpr replace_copy_result<I, O>
+      replace_copy(I first, S last, O result, const T1& old_value, const T2& new_value,
+                   Proj proj = {});
+  template<InputRange R, class T1, class T2, OutputIterator<const T2&> O,
+           class Proj = identity>
+    requires IndirectlyCopyable<iterator_t<R>, O> &&
+             IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T1*>
+    constexpr replace_copy_result<safe_iterator_t<R>, O>
+      replace_copy(R&& r, O result, const T1& old_value, const T2& new_value,
+                   Proj proj = {});
+
+  template<InputIterator I, Sentinel<I> S, class T, OutputIterator<const T&> O,
+           class Proj = identity, IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    requires IndirectlyCopyable<I, O>
+    constexpr replace_copy_if_result<I, O>
+      replace_copy_if(I first, S last, O result, Pred pred, const T& new_value,
+                      Proj proj = {});
+  template<InputRange R, class T, OutputIterator<const T&> O, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    requires IndirectlyCopyable<iterator_t<R>, O>
+    constexpr replace_copy_if_result<safe_iterator_t<R>, O>
+      replace_copy_if(R&& r, O result, Pred pred, const T& new_value,
+                      Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$E] be
+[:zh_CN] 令 [$E]：
+[list]
+[item]
+[:en@~] [`bool(*(first + (i - result)) == old_value)] for [`replace_copy],
+[:zh_CN@~] 对于 [`replace_copy] 为
+[`bool(*(first + (i - result)) == old_value)]，
+[item]
+[:en@~] [`bool(pred(*(first + (i - result))))] for [`replace_copy_if],
+[:zh_CN@~] 对于 [`replace_copy_if] 为 [`bool(pred(*(first + (i - result))))]，
+[item]
+[:en@~] [`bool(invoke(proj, *(first + (i - result))) == old_value)] for
+[`ranges::replace_copy], or
+[:zh_CN@~] 对于 [`ranges::replace_copy] 为
+[`bool(invoke(proj, *(first + (i - result))) == old_value)]，或者
+[item]
+[:en@~] [`bool(invoke(pred, invoke(proj, *(first + (i - result)))))] for
+[`ranges::replace_copy_if].
+[:zh_CN@~] 对于 [`ranges::replace_copy_if] 为
+[`bool(invoke(pred, invoke(proj, *(first + (i - result)))))]。
+[list:end]
+
 [para:requires]
 [:en] The results of the expressions [`*first] and [`new_value] shall be
 writable ([#iterator.requirements.general]) to the [`result] output iterator.
@@ -84,21 +183,25 @@ first))] shall not overlap.
 [para:effects]
 [:en] Assigns to every iterator [`i] in the range [=range(result,result + (last
 - first))] either [`new_value] or [`*(first + (i - result))] depending on
-whether the following corresponding conditions hold:
+whether [$E] holds.
 [:zh_CN] 向范围 [=range(result,result + (last - first))] 中的每个迭代器 [`i]，
-根据下列对应条件是否成立，或者以 [`new_value] 或者以 [`*(first + (i - result))]
-进行赋值：
-
-[codeblock:notation]
-*(first + (i - result)) == old_value
-pred(*(first + (i - result))) != false
-[codeblock:end]
+根据 [$E] 是否成立，或者以 [`new_value] 或者以 [`*(first + (i - result))]
+进行赋值。
 
 [para:returns]
-[:en] [`result + (last - first)].
-[:zh_CN] [`result - (last - first)]。
+[list]
+[item]
+[:en@~] [`result + (last - first)] for the overload in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的重载，返回 [`result + (last - first)]，或者
+[item]
+[:en@~] [`{last, result + (last - first)}] for the overloads in namespace
+[`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的重载，返回
+[`{last, result + (last - first)}]。
+[list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate.
-[:zh_CN] 恰好进行 [`last - first] 次对应谓词的运用。
+[:en] Exactly [`last - first] applications of the corresponding predicate and
+any projection.
+[:zh_CN] 恰好进行 [`last - first] 次对应谓词和任何投射的运用。
 [exit:description]

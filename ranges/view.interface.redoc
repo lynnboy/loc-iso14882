@@ -1,0 +1,105 @@
+[section#view.interface
+    [:en] view interface
+    [:zh_CN] 视图接口
+]
+
+[para]
+[:en] The class template [`view_interface] is a helper for defining [`View]-like
+types that offer a container-like interface.
+[:zh_CN] 类模板 [`view_interface] 用于辅助定义提供类似容器的接口的 [`View] 式
+类型。
+
+[:en] It is parameterized with the type that is derived from it.
+[:zh_CN] 它是以从它派生的类型来参数化的。
+
+[%@library view_interface]
+[codeblock:synopsis [!:var range-common-iterator range-common-iterator-impl]]
+namespace std::ranges {
+  template<Range R>
+  struct [*range-common-iterator-impl] {                   // [=Expos]
+    using type = common_iterator<iterator_t<R>, sentinel_t<R>>;
+  };
+  template<CommonRange R>
+  struct [*range-common-iterator-impl]<R> {                // [=Expos]
+    using type = iterator_t<R>;
+  };
+  template<Range R>
+    using [*range-common-iterator] =                       // [=Expos]
+      typename [*range-common-iterator-impl]<R>::type;
+
+  template<class D>
+    requires is_class_v<D> && Same<D, remove_cv_t<D>>
+  class view_interface : public view_base {
+  private:
+    constexpr D& derived() noexcept {                   // [=Expos]
+      return static_cast<D&>(*this);
+    }
+    constexpr const D& derived() const noexcept {       // [=Expos]
+      return static_cast<const D&>(*this);
+    }
+  public:
+    constexpr bool empty() requires ForwardRange<D> {
+      return ranges::begin(derived()) == ranges::end(derived());
+    }
+    constexpr bool empty() const requires ForwardRange<const D> {
+      return ranges::begin(derived()) == ranges::end(derived());
+    }
+
+    constexpr explicit operator bool()
+      requires requires { ranges::empty(derived()); } {
+        return !ranges::empty(derived());
+      }
+    constexpr explicit operator bool() const
+      requires requires { ranges::empty(derived()); } {
+        return !ranges::empty(derived());
+      }
+
+    constexpr auto data() requires ContiguousIterator<iterator_t<D>> {
+      return ranges::empty(derived()) ? nullptr : addressof(*ranges::begin(derived()));
+    }
+    constexpr auto data() const
+      requires Range<const D> && ContiguousIterator<iterator_t<const D>> {
+        return ranges::empty(derived()) ? nullptr : addressof(*ranges::begin(derived()));
+      }
+
+    constexpr auto size() requires ForwardRange<D> &&
+      SizedSentinel<sentinel_t<D>, iterator_t<D>> {
+        return ranges::end(derived()) - ranges::begin(derived());
+      }
+    constexpr auto size() const requires ForwardRange<const D> &&
+      SizedSentinel<sentinel_t<const D>, iterator_t<const D>> {
+        return ranges::end(derived()) - ranges::begin(derived());
+      }
+
+    constexpr decltype(auto) front() requires ForwardRange<D>;
+    constexpr decltype(auto) front() const requires ForwardRange<const D>;
+
+    constexpr decltype(auto) back() requires BidirectionalRange<D> && CommonRange<D>;
+    constexpr decltype(auto) back() const
+      requires BidirectionalRange<const D> && CommonRange<const D>;
+
+    template<RandomAccessRange R = D>
+      constexpr decltype(auto) operator[](iter_difference_t<iterator_t<R>> n) {
+        return ranges::begin(derived())[n];
+      }
+    template<RandomAccessRange R = const D>
+      constexpr decltype(auto) operator[](iter_difference_t<iterator_t<R>> n) const {
+        return ranges::begin(derived())[n];
+      }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The template parameter [`D] for [`view_interface] may be an incomplete
+type.
+[:zh_CN] [`view_interface] 的模板形参 [`D] 可以是不完整类型。
+
+[:en] Before any member of the resulting specialization of [`view_interface]
+other than special member functions is referenced, [`D] shall be complete, and
+model both [`DerivedFrom<view_interface<D>>] and [`View].
+[:zh_CN] 在对所造成的 [`view_interface] 的特例的任何除了特殊成员之外的成员进行
+涉指之前，[`D] 应当是完整的，并且应当同时构成 [`DerivedFrom<view_interface<D>>]
+和 [`View]。
+
+[include view.interface.members]

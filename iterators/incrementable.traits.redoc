@@ -1,0 +1,76 @@
+[section#incrementable.traits
+    [:en] Incrementable traits
+    [:zh_CN] 可增量特征
+]
+
+[para]
+[:en] To implement algorithms only in terms of incrementable types, it is often
+necessary to determine the difference type that corresponds to a particular
+incrementable type.
+[:zh_CN] 为实现仅针对可增量类型的算法，经常需要确定对应于特定可增量类型的差类型。
+
+[:en] Accordingly, it is required that if [`WI] is the name of a type that
+models the [`WeaklyIncrementable] concept ([#iterator.concept.winc]), the type
+[:zh_CN] 据此，若 [`WI] 是构成了 [`WeaklyIncrementable] 概念
+（[#iterator.concept.winc]）的某个类型的名字，则要求类型
+
+[codeblock:notation]
+iter_difference_t<WI>
+[codeblock:end]
+
+[:en@~] be defined as the incrementable type[=']s difference type.
+[:zh_CN@~] 即被定义为该可增量类型的差类型。
+
+[%@library incrementable_traits]
+[codeblock:synopsis [!:mark SeeBelow] ]
+namespace std {
+  template<class> struct incrementable_traits { };
+
+  template<class T>
+    requires is_object_v<T>
+  struct incrementable_traits<T*> {
+    using difference_type = ptrdiff_t;
+  };
+
+  template<class I>
+  struct incrementable_traits<const I>
+    : incrementable_traits<I> { };
+
+  template<class T>
+    requires requires { typename T::difference_type; }
+  struct incrementable_traits<T> {
+    using difference_type = typename T::difference_type;
+  };
+
+  template<class T>
+    requires (!requires { typename T::difference_type; } &&
+              requires(const T& a, const T& b) { { a - b } -> Integral; })
+  struct incrementable_traits<T> {
+    using difference_type = make_signed_t<decltype(declval<T>() - declval<T>())>;
+  };
+
+  template<class T>
+    using iter_difference_t = [=SeeBelow];
+}
+[codeblock:end]
+
+[%@library iter_difference_t]
+[para]
+[:en] The type [`iter_difference_t<I>] denotes
+[:zh_CN] 类型 [`iter_difference_t<I>]：
+
+[list]
+[item]
+[:en@~] [`incrementable_traits<I>::difference_type] if [`iterator_traits<I>]
+names a specialization generated from the primary template, and
+[:zh_CN@~] 当 [`iterator_traits<I>] 指名从其主模板生成的特例时，代表
+[`incrementable_traits<I>::difference_type]，
+
+[item]
+[:en@~] [`iterator_traits<I>::difference_type] otherwise.
+[:zh_CN@~] 否则代表 [`iterator_traits<I>::difference_type]。
+[list:end]
+
+[para]
+[:en] Users may specialize [`incrementable_traits] on program-defined types.
+[:zh_CN] 用户可以为程序所定义的类型来特化 [`incrementable_traits]。

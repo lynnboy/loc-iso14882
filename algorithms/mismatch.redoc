@@ -50,35 +50,64 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
              ForwardIterator1 first1, ForwardIterator1 last1,
              ForwardIterator2 first2, ForwardIterator2 last2,
              BinaryPredicate pred);
+
+namespace ranges {
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+           class Proj1 = identity, class Proj2 = identity,
+           IndirectRelation<projected<I1, Proj1>,
+                            projected<I2, Proj2>> Pred = ranges::equal_to<>>
+    constexpr mismatch_result<I1, I2>
+      mismatch(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+               Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, InputRange R2,
+           class Proj1 = identity, class Proj2 = identity,
+           IndirectRelation<projected<iterator_t<R1>, Proj1>,
+                            projected<iterator_t<R2>, Proj2>> Pred = ranges::equal_to<>>
+    constexpr mismatch_result<safe_iterator_t<R1>, safe_iterator_t<R2>>
+      mismatch(R1&& r1, R2&& r2, Pred pred = {},
+               Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:remarks]
-[:en] If [`last2] was not given in the argument list, it denotes
-[`first2 + (last1 - first1)] below.
-[:zh_CN] 如果实参列表中未给出 [`last2]，则它在下文中代表
+[para]
+[:en] Let [`last2] be [`first2 + (last1 - first1)] for the overloads with no
+parameter [`last2] or [`r2].
+[:zh_CN] 令 [`last2] 对于没有形参 [`last2] 或 [`r2] 的重载为
 [`first2 + (last1 - first1)]。
 
-[para:returns]
-[:en] A pair of iterators [`first1 + n] and [`first2 + n], where [`n] is the
-smallest integer such that, respectively,
-[:zh_CN] 一对迭代器 [`first1 + n] 和 [`first2 + n]，其中 [`n] 为能够分别使得
+[para]
+[:en] Let [$E] be:
+[:zh_CN] 令 [$E]：
 
 [list]
 [item]
-[:en@~] [`!(*(first1 + n) == *(first2 + n))] or
-[:zh_CN@~] [`!(*(first1 + n) == *(first2 + n))] 和
+[:en@~] [`!(*(first1 + n) == *(first2 + n))] for the overloads with no parameter
+[`pred],
+[:zh_CN@~] 对于没有形参 [`pred] 的重载为 [`!(*(first1 + n) == *(first2 + n))]，
 [item]
-[:en@~] [`pred(*(first1 + n), *(first2 + n)) == false],
-[:zh_CN@~] [`pred(*(first1 + n), *(first2 + n)) == false]
+[:en@~] [`pred(*(first1 + n), *(first2 + n)) == false] for the overloads with
+a parameter [`pred] and no parameter [`proj1],
+[:zh_CN@~] 对于带有一个形参 [`pred] 且没有形参 [`proj1] 的重载为
+[`pred(*(first1 + n), *(first2 + n)) == false]，
+[item]
+[:en@~]
+[`!invoke(pred, invoke(proj1, *(first1 + n)), invoke(proj2, *(first2 + n)))]
+for the overloads with both parameters [`pred] and [`proj1].
+[:zh_CN@~] 对于同时带有形参 [`pred] 和 [`proj1] 的重载为
+[`!invoke(pred, invoke(proj1, *(first1 + n)), invoke(proj2, *(first2 + n)))]。
 [list:end]
 
-[:en@~] or [`min(last1 - first1, last2 - first2)] if no such integer exists.
-[:zh_CN@~] 的最小整数，或当不存在这种整数时为
-[`min(last1 - first1, last2 - first2)]。
+[para:returns]
+[:en] [`{ first1 + n, first2 + n }], where [`n] is the smallest integer such
+that [$E] holds, or [$\min([`last1 - first1], \ [`last2 - first2])] if no such
+integer exists.
+[:zh_CN] [`{ first1 + n, first2 + n }]，其中 [`n] 为能够使得 [$E] 成立的最小整数
+，或当不存在这种整数时为 [$\min([`last1 - first1], \ [`last2 - first2])]。
 
 [para:complexity]
-[:en] At most [`min(last1 - first1, last2 - first2)] applications of the
-corresponding predicate.
-[:zh_CN] 最多进行 [`min(last1 - first1, last2 - first2)] 次相应谓词的运用。
+[:en] At most [$\min([`last1 - first1], \ [`last2 - first2])] applications of
+the corresponding predicate and any projections.
+[:zh_CN] 最多进行 [$\min([`last1 - first1], \ [`last2 - first2])] 次相应谓词和
+任何投射的运用。
 [exit:description]

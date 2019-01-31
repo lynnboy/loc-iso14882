@@ -1,0 +1,224 @@
+[section#ranges.syn
+    [:en] Header [`<ranges>] synopsis
+    [:zh_CN] 头文件 [`<ranges>] 纲要
+]
+
+[%@library <ranges>]
+[codeblock:synopsis [!:mark UnSpec SeeBelow]
+    [!:var fowarding-range tiny-range weakly-equality-comparable-with]]
+#include <initializer_list>
+#include <iterator>
+
+namespace std::ranges {
+  inline namespace [=UnSpec] {
+    // [:en] [#range.access], range access
+    // [|:zh_CN] [#range.access]，范围访问
+    inline constexpr [=UnSpec] begin = [=UnSpec];
+    inline constexpr [=UnSpec] end = [=UnSpec];
+    inline constexpr [=UnSpec] cbegin = [=UnSpec];
+    inline constexpr [=UnSpec] cend = [=UnSpec];
+    inline constexpr [=UnSpec] rbegin = [=UnSpec];
+    inline constexpr [=UnSpec] rend = [=UnSpec];
+    inline constexpr [=UnSpec] crbegin = [=UnSpec];
+    inline constexpr [=UnSpec] crend = [=UnSpec];
+
+    // [:en] [#range.prim], range primitives
+    // [|:zh_CN] [#range.prim]，范围原语
+    inline constexpr [=UnSpec] size = [=UnSpec];
+    inline constexpr [=UnSpec] empty = [=UnSpec];
+    inline constexpr [=UnSpec] data = [=UnSpec];
+    inline constexpr [=UnSpec] cdata = [=UnSpec];
+  }
+
+  // [:en] [#range.range], ranges
+  // [|:zh_CN] [#range.range]，范围
+  template<class T>
+    using iterator_t = decltype(ranges::begin(declval<T&>()));
+
+  template<class T>
+    using sentinel_t = decltype(ranges::end(declval<T&>()));
+
+  template<[*fowarding-range] R>
+    using safe_iterator_t = iterator_t<R>;
+
+  template<class T>
+    concept Range = [=SeeBelow];
+
+  // [:en] [#range.sized], sized ranges
+  // [|:zh_CN] [#range.sized]，有大小范围
+  template<class>
+    inline constexpr bool disable_sized_range = false;
+
+  template<class T>
+    concept SizedRange = [=SeeBelow];
+
+  // [:en] [#range.view], views
+  // [|:zh_CN] [#range.view]，视图
+  template<class T>
+    inline constexpr bool enable_view = [=SeeBelow];
+
+  struct view_base { };
+
+  template<class T>
+    concept View = [=SeeBelow];
+
+  // [:en] [#range.refinements], common range refinements
+  // [|:zh_CN] [#range.refinements]，一般的范围精炼概念
+  template<class R, class T>
+    concept OutputRange = [=SeeBelow];
+
+  template<class T>
+    concept InputRange = [=SeeBelow];
+
+  template<class T>
+    concept ForwardRange = [=SeeBelow];
+
+  template<class T>
+    concept BidirectionalRange = [=SeeBelow];
+
+  template<class T>
+    concept RandomAccessRange = [=SeeBelow];
+
+  template<class T>
+    concept ContiguousRange = [=SeeBelow];
+
+  template<class T>
+    concept CommonRange = [=SeeBelow];
+
+  template<class T>
+    concept ViewableRange = [=SeeBelow];
+
+  // [:en] [#view.interface], class template [`view_interface]
+  // [|:zh_CN] [#view.interface]，类模板 [`view_interface]
+  template<class D>
+    requires is_class_v<D>
+  class view_interface;
+
+  // [:en] [#range.subrange], sub-ranges
+  // [|:zh_CN] [#range.subrange]，子范围
+  enum class subrange_kind : bool { unsized, sized };
+
+  template<Iterator I, Sentinel<I> S = I, subrange_kind K = [=SeeBelow]>
+    requires (K == subrange_kind::sized || !SizedSentinel<S, I>)
+  class subrange;
+
+  template<[*forwarding-range] R>
+    using safe_subrange_t = subrange<iterator_t<R>>;
+
+  // [:en] [#range.all], all view
+  // [|:zh_CN] [#range.all]，全视图
+  namespace view { inline constexpr [=UnSpec] all = [=UnSpec]; }
+
+  template<ViewableRange R>
+    using all_view = decltype(view::all(declval<R>()));
+
+  // [:en] [#range.filter], filter view
+  // [|:zh_CN] [#range.filter]，过滤视图
+  template<InputRange V, IndirectUnaryPredicate<iterator_t<V>> Pred>
+    requires View<V>
+  class filter_view;
+
+  namespace view { inline constexpr [=UnSpec] filter = [=UnSpec]; }
+
+  // [:en] [#range.transform], transform view
+  // [|:zh_CN] [#range.transform]，变换视图
+  template<InputRange V, CopyConstructible F>
+    requires View<V> && is_object_v<F> &&
+             RegularInvocable<F&, iter_reference_t<iterator_t<V>>>
+  class transform_view;
+
+  namespace view { inline constexpr [=UnSpec] transform = [=UnSpec]; }
+
+  // [:en] [#range.iota], iota view
+  // [|:zh_CN] [#range.iota]，iota 视图
+  template<WeaklyIncrementable W, Semiregular Bound = unreachable_sentinel_t>
+    requires [*weakly-equality-comparable-with]<W, Bound>
+  class iota_view;
+
+  namespace view { inline constexpr [=UnSpec] iota = [=UnSpec]; }
+
+  // [:en] [#range.take], take view
+  // [|:zh_CN] [#range.take]，采取视图
+  template<View> class take_view;
+
+  namespace view { inline constexpr [=UnSpec] take = [=UnSpec]; }
+
+  // [:en] [#range.join], join view
+  // [|:zh_CN] [#range.join]，联接视图
+  template<InputRange V>
+    requires View<V> && InputRange<iter_reference_t<iterator_t<V>>> &&
+             (is_reference_v<iter_reference_t<iterator_t<V>>> ||
+              View<iter_value_t<iterator_t<V>>>)
+  class join_view;
+
+  namespace view { inline constexpr [=UnSpec] join = [=UnSpec]; }
+
+  // [:en] [#range.empty], empty view
+  // [|:zh_CN] [#range.empty]，空视图
+  template<class T>
+    requires is_object_v<T>
+  class empty_view;
+
+  namespace view {
+    template<class T>
+      inline constexpr empty_view<T> empty {};
+  }
+
+  // [:en] [#range.single], single view
+  // [|:zh_CN] [#range.single]，单对象视图
+  template<CopyConstructible T>
+    requires is_object_v<T>
+  class single_view;
+
+  namespace view { inline constexpr [=UnSpec] single = [=UnSpec]; }
+
+  // [:en] [#range.split], split view
+  // [|:zh_CN] [#range.split]，分割视图
+  template<class R>
+    concept [*tiny-range] = [=SeeBelow];   // \expos
+
+  template<InputRange V, ForwardRange Pattern>
+    requires View<V> && View<Pattern> &&
+             IndirectlyComparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to<>> &&
+             (ForwardRange<V> || [*tiny-range]<Pattern>)
+  class split_view;
+
+  namespace view { inline constexpr [=UnSpec] split = [=UnSpec]; }
+
+  // [:en] [#range.counted], counted view
+  // [|:zh_CN] [#range.counted]，计数视图
+  namespace view { inline constexpr [=UnSpec] counted = [=UnSpec]; }
+
+  // [:en] [#range.common], common view
+  // [|:zh_CN] [#range.common]，一般视图
+  template<View V>
+    requires (!CommonRange<V>)
+  class common_view;
+
+  namespace view { inline constexpr [=UnSpec] common = [=UnSpec]; }
+
+  // [:en] [#range.reverse], reverse view
+  // [|:zh_CN] [#range.reverse]，逆向视图
+  template<View V>
+    requires BidirectionalRange<V>
+  class reverse_view;
+
+  namespace view { inline constexpr [=UnSpec] reverse = [=UnSpec]; }
+}
+
+namespace std {
+  namespace view = ranges::view;
+
+  template<class I, class S, ranges::subrange_kind K>
+  struct tuple_size<ranges::subrange<I, S, K>>
+    : integral_constant<size_t, 2> {};
+  template<class I, class S, ranges::subrange_kind K>
+  struct tuple_element<0, ranges::subrange<I, S, K>> {
+    using type = I;
+  };
+  template<class I, class S, ranges::subrange_kind K>
+  struct tuple_element<1, ranges::subrange<I, S, K>> {
+    using type = S;
+  };
+}
+[codeblock:end]

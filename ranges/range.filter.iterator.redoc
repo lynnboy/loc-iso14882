@@ -1,0 +1,275 @@
+[section#range.filter.iterator
+    [:en] Class [`filter_view::iterator]
+    [:zh_CN] 类 [`filter_view::iterator]
+]
+
+[%@library iterator[!filter_view]]
+[codeblock:synopsis [!:var has-arrow]]
+namespace std::ranges {
+  template<class V, class Pred>
+  class filter_view<V, Pred>::iterator {
+  private:
+    iterator_t<V> current_ = iterator_t<V>();   // [=Expos]
+    filter_view* parent_ = nullptr;             // [=Expos]
+  public:
+    using iterator_concept  = [=SeeBelow];
+    using iterator_category = [=SeeBelow];
+    using value_type        = iter_value_t<iterator_t<V>>;
+    using difference_type   = iter_difference_t<iterator_t<V>>;
+
+    iterator() = default;
+    constexpr iterator(filter_view& parent, iterator_t<V> current);
+
+    constexpr iterator_t<V> base() const;
+    constexpr iter_reference_t<iterator_t<V>> operator*() const;
+    constexpr iterator_t<V> operator->() const
+      requires [*has-arrow]<iterator_t<V>>;
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires ForwardRange<V>;
+
+    constexpr iterator& operator--() requires BidirectionalRange<V>;
+    constexpr iterator operator--(int) requires BidirectionalRange<V>;
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<V>>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<V>>;
+
+    friend constexpr iter_rvalue_reference_t<iterator_t<V>> iter_move(const iterator& i)
+      noexcept(noexcept(ranges::iter_move(i.current_)));
+    friend constexpr void iter_swap(const iterator& x, const iterator& y)
+      noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
+      requires IndirectlySwappable<iterator_t<V>>;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Modification of the element a [`filter_view::iterator] denotes is
+permitted, but results in undefined behavior if the resulting value does not
+satisfy the filter predicate.
+[:zh_CN] 允许对 [`filter_view::iterator] 所代表的元素进行改动，但若其结果值不
+符合过滤器的谓词，将导致未定义行为。
+
+[para]
+[:en] [`iterator::iterator_concept] is defined as follows:
+[:zh_CN] [`iterator::iterator_concept] 的定义如下：
+
+[list]
+[item]
+[:en] If [`V] models [`BidirectionalRange], then [`iterator_concept] denotes
+[`bidirectional_iterator_tag].
+[:zh_CN] 若 [`V] 构成 [`BidirectionalRange]，则 [`iterator_concept] 代表
+[`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`V] models [`ForwardRange], then [`iterator_concept]
+denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`V] 构成 [`ForwardRange]，则 [`iterator_concept] 代表
+[`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_concept] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_concept] 代表 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[:en] [`iterator::iterator_category] is defined as follows:
+[:zh_CN] [`iterator::iterator_category] 的定义如下：
+
+[list]
+[item]
+[:en] Let [`C] denote the type
+[`iterator_traits<iterator_t<V>>::iterator_category].
+[:zh_CN] 令 [`C] 代表类型
+[`iterator_traits<iterator_t<V>>::iterator_category]。
+
+[item]
+[:en] If [`C] models [`DerivedFrom<bidirectional_iterator_tag>], then
+[`iterator_category] denotes [`bidirectional_iterator_tag].
+[:zh_CN] 若 [`C] 构成 [`DerivedFrom<bidirectional_iterator_tag>]，则
+[`iterator_category] 代表 [`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`C] models [`DerivedFrom<forward_iterator_tag>], then
+[`iterator_category] denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`C] 构成 [`DerivedFrom<forward_iterator_tag>]，则
+[`iterator_category] 代表 [`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_category] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_category] 代表 [`input_iterator_tag]。
+[list:end]
+
+[%@library iterator[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator(filter_view& parent, iterator_t<V> current);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`current_] with [`current] and initializes [`parent_] with
+[`addressof(parent)].
+[:zh_CN] 以 [`current] 初始化 [`current_] 并以 [`addressof(parent)] 初始化
+[`parent_]。
+[exit:description]
+
+[%@library base[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator_t<V> base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return current_;]
+[:zh_CN] 等价于：[`return current_;]
+[exit:description]
+
+[%@library operator*[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iter_reference_t<iterator_t<V>> operator*() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return *current_;]
+[:zh_CN] 等价于：[`return *current_;]
+[exit:description]
+
+[%@library operator->[!filter_view::iterator]]
+[codeblock:declaration [!:var has-arrow]]
+constexpr iterator_t<V> operator->() const
+  requires [*has-arrow]<iterator_t<V>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return current_;]
+[:zh_CN] 等价于：[`return current_;]
+[exit:description]
+
+[%@library operator++[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator++();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+current_ = ranges::find_if(++current_, ranges::end(parent_->base_), ref(*parent_->pred_));
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator++[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`++*this].
+[:zh_CN] 等价于：[`++*this]。
+[exit:description]
+
+[%@library operator++[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator++(int) requires ForwardRange<V>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator--() requires BidirectionalRange<V>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+do
+  --current_;
+while (!invoke(*parent_->pred_, *current_));
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator--(int) requires BidirectionalRange<V>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator==[!filter_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires EqualityComparable<iterator_t<V>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ == y.current_;]
+[:zh_CN] 等价于：[`return x.current_ == y.current_;]
+[exit:description]
+
+[%@library operator!=[!filter_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const iterator& x, const iterator& y)
+  requires EqualityComparable<iterator_t<V>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]
+
+[%@library iter_move[!filter_view::iterator]]
+[codeblock:declaration]
+friend constexpr iter_rvalue_reference_t<iterator_t<V>> iter_move(const iterator& i)
+  noexcept(noexcept(ranges::iter_move(i.current_)));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::iter_move(i.current_);]
+[:zh_CN] 等价于：[`return ranges::iter_move(i.current_);]
+[exit:description]
+
+[%@library iter_swap[!filter_view::iterator]]
+[codeblock:declaration]
+friend constexpr void iter_swap(const iterator& x, const iterator& y)
+  noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
+  requires IndirectlySwappable<iterator_t<V>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`ranges::iter_swap(x.current_, y.current_)].
+[:zh_CN] 等价于 [`ranges::iter_swap(x.current_, y.current_)]。
+[exit:description]

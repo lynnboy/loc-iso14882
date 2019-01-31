@@ -1,0 +1,114 @@
+[section#common.iterator
+    [:en] Class template [`common_iterator]
+    [:zh_CN] 类模板 [`common_iterator]
+]
+
+[para]
+[:en] Class template [`common_iterator] is an iterator/sentinel adaptor that is
+capable of representing a non-common range of elements (where the types of the
+iterator and sentinel differ) as a common range (where they are the same).
+[:zh_CN] 类模板 [`common_iterator] 是一种迭代器/哨位适配器，能够将一个非一般
+元素范围（其迭代器与哨位具有不同类型）表示为一个一般范围（类型相同）。
+
+[:en] It does this by holding either an iterator or a sentinel, and implementing
+the equality comparison operators appropriately.
+[:zh_CN] 它通过持有一个迭代器或者一个哨位的方式做到这点，并适当地实现了相等性
+比较运算符。
+
+[para]
+[enter:note]
+[:en] The [`common_iterator] type is useful for interfacing with legacy
+code that expects the begin and end of a range to have the same type.
+[:zh_CN] [`common_iterator] 类型在与预期范围的开始和末尾具有相同类型的遗留代码
+之间协作时非常有用。
+[exit:note]
+
+[para]
+[enter:example]
+[codeblock]
+template<class ForwardIterator>
+void fun(ForwardIterator begin, ForwardIterator end);
+
+list<int> s;
+// [:en] populate the list [`s]
+// [|:zh_CN] 产生列表 [`s]
+using CI = common_iterator<counted_iterator<list<int>::iterator>, default_sentinel_t>;
+// [:en] call [`fun] on a range of 10 ints
+// [|:zh_CN] 在 10 个 [`int] 的范围上调用 [`fun]
+fun(CI(counted_iterator(s.begin(), 10)), CI(default_sentinel));
+[codeblock:end]
+[exit:example]
+
+[%@library common_iterator]
+[codeblock:synopsis [!:var dereferenceable] [!:mark SeeBelow]]
+namespace std {
+  template<Iterator I, Sentinel<I> S>
+    requires (!Same<I, S>)
+  class common_iterator {
+  public:
+    constexpr common_iterator() = default;
+    constexpr common_iterator(I i);
+    constexpr common_iterator(S s);
+    template<class I2, class S2>
+      requires ConvertibleTo<const I2&, I> && ConvertibleTo<const S2&, S>
+        constexpr common_iterator(const common_iterator<I2, S2>& x);
+
+    template<class I2, class S2>
+      requires ConvertibleTo<const I2&, I> && ConvertibleTo<const S2&, S> &&
+               Assignable<I&, const I2&> && Assignable<S&, const S2&>
+        common_iterator& operator=(const common_iterator<I2, S2>& x);
+
+    decltype(auto) operator*();
+    decltype(auto) operator*() const
+      requires [*dereferenceable]<const I>;
+    decltype(auto) operator->() const
+      requires [=SeeBelow];
+
+    common_iterator& operator++();
+    decltype(auto) operator++(int);
+
+    template<class I2, Sentinel<I> S2>
+      requires Sentinel<S, I2>
+    friend bool operator==(
+      const common_iterator& x, const common_iterator<I2, S2>& y);
+    template<class I2, Sentinel<I> S2>
+      requires Sentinel<S, I2> && EqualityComparableWith<I, I2>
+    friend bool operator==(
+      const common_iterator& x, const common_iterator<I2, S2>& y);
+    template<class I2, Sentinel<I> S2>
+      requires Sentinel<S, I2>
+    friend bool operator!=(
+      const common_iterator& x, const common_iterator<I2, S2>& y);
+
+    template<SizedSentinel<I> I2, SizedSentinel<I> S2>
+      requires SizedSentinel<S, I2>
+    friend iter_difference_t<I2> operator-(
+      const common_iterator& x, const common_iterator<I2, S2>& y);
+
+    friend iter_rvalue_reference_t<I> iter_move(const common_iterator& i)
+      noexcept(noexcept(ranges::iter_move(declval<const I&>())))
+        requires InputIterator<I>;
+    template<IndirectlySwappable<I> I2, class S2>
+      friend void iter_swap(const common_iterator& x, const common_iterator<I2, S2>& y)
+        noexcept(noexcept(ranges::iter_swap(declval<const I&>(), declval<const I2&>())));
+
+  private:
+    variant<I, S> v_;   // [=Expos]
+  };
+
+  template<class I, class S>
+  struct incrementable_traits<common_iterator<I, S>> {
+    using difference_type = iter_difference_t<I>;
+  };
+
+  template<InputIterator I, class S>
+  struct iterator_traits<common_iterator<I, S>> {
+    using iterator_concept = [=SeeBelow];
+    using iterator_category = [=SeeBelow];
+    using value_type = iter_value_t<I>;
+    using difference_type = iter_difference_t<I>;
+    using pointer = [=SeeBelow];
+    using reference = iter_reference_t<I>;
+  };
+}
+[codeblock:end]

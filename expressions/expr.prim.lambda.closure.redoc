@@ -75,45 +75,17 @@ type.
 
 [para]
 [:en]
-The closure type for a non-generic [~lambda-expression] has a public inline
-function call operator ([#over.call]) whose parameters and return type are
-described by the [~lambda-expression][=']s [~parameter-declaration-clause] and
-[~trailing-return-type] respectively.
+The closure type for a [~lambda-expression] has a public inline function call
+operator (for a non-generic lambda) or function call operator template (for a
+generic lambda) ([#over.call]) whose parameters and return type are described by
+the [~lambda-expression][=']s [~parameter-declaration-clause] and
+[~trailing-return-type] respectively, and whose [~template-parameter-list]
+consists of the specified [~template-parameter-list], if any.
 [:zh_CN]
-非泛型[~lambda-表达式]的闭包类型具有一个公开的内联函数调用运算符（[#over.call]）
-，其形参和返回类型分别由该 [~lambda-表达式]的[~形参声明子句]和[~尾部返回类型]
-说明。
-
-[:en]
-For a generic lambda, the closure type has a public inline function call
-operator member template ([#temp.mem]) whose [~template-parameter-list] consists
-of the specified [~template-parameter-list], if any, to which is appended one
-invented type [~template-parameter] for each occurrence of [`auto] in the
-lambda[=']s [~parameter-declaration-clause], in order of appearance.
-[:zh_CN]
-对于泛型 lambda，其闭包类型具有一个公开的内联函数调用运算符成员模板
-（[#temp.mem]），其[~模板形参列表]由该 lambda 所指定的[~模板形参列表]（如果有），
-并为该 lambda 的[~形参声明子句]中出现的每个 [`auto]，按照出现顺序向其添加一个
-虚构的类型[~模板形参]所构成。
-
-[:en]
-The invented type [~template-parameter] is a template parameter pack if the
-corresponding [~parameter-declaration] declares a function parameter pack
-([#dcl.fct]).
-[:zh_CN]
-如果的[~形参声明式]声明了函数形参包组，则对应的虚构的类型[~模板形参]是模板形参
-包组（[#dcl.fct]）。
-
-[:en]
-The return type and function parameters of the function call operator template
-are derived from the [~lambda-expression][=']s [~trailing-return-type] and
-[~parameter-declaration-clause] by replacing each occurrence of [`auto] in the
-[~decl-specifier]s of the [~parameter-declaration-clause] with the name of the
-corresponding invented [~template-parameter].
-[:zh_CN]
-函数调用运算符模板的返回类型和函数形参，从该[~lambda-表达式]的[~尾部返回类型]和
-[~形参声明子句]，通过将[~形参声明子句]的[~声明说明符]中的每个 [`auto]，替换为
-其对应的虚构[~模板形参]的名字而衍生出来。
+[~lambda-表达式]的闭包类型具有一个公开的内联函数调用运算符（对于非泛型 lambda）
+（[#over.call]）或函数调用运算符模板（对于泛型 lambda），其形参和返回类型分别由
+该 [~lambda-表达式]的[~形参声明子句]和[~尾部返回类型]说明，且其[~模板形参列表]
+由所给出的[~模板形参列表]所构成（如果有）。
 
 [:en]
 The [~requires-clause] of the function call operator template is the
@@ -129,6 +101,14 @@ template is the [~requires-clause] following the [~lambda-declarator], if any.
 [:zh_CN]
 函数调用运算符或运算符模板的尾部 [~requires-子句]是跟在 [~lambda-声明符]后面的
 [~requires-子句]（如果有）。
+
+[enter:note]
+[:en]
+The function call operator for a generic lambda might be an abbreviated function
+template ([#dcl.fct]).
+[:zh_CN]
+泛型 lambda 的函数调用运算符可以是简写函数模板（[#dcl.fct]）。
+[exit:note]
 
 [enter:example]
 [codeblock]
@@ -183,12 +163,20 @@ of the corresponding function call operator or operator template.
 [:en]
 The function call operator or any given operator template specialization is a
 constexpr function if either the corresponding [~lambda-expression][=']s
-[~parameter-declaration-clause] is followed by [`constexpr], or it satisfies the
-requirements for a constexpr function ([#dcl.constexpr]).
+[~parameter-declaration-clause] is followed by [`constexpr] or [`consteval], or
+it satisfies the requirements for a constexpr function ([#dcl.constexpr]).
 [:zh_CN]
 函数调用运算符或给定的任何运算符模板特例，当其对应的[~lambda-表达式]的[~形参声明
-子句]之后跟着 [`constexpt]，或者它满足对 constexpr 函数的要求
+子句]之后跟着 [`constexpr] 或 [`consteval]，或者它满足对 constexpr 函数的要求
 （[#dcl.constexpr]）时，就是 constexpr 函数。
+
+[:en]
+It is an immediate function ([#dcl.constexpr]) if the corresponding
+[~lambda-expression][=']s [~parameter-declaration-clause] is followed by
+[`consteval].
+[:zh_CN]
+如果其对应 [~lambda-表达式]的[~形参声明子句]后面跟着 [`consteval]，则它是直接
+函数（[#dcl.constexpr]）。
 
 [enter:note]
 [:en]
@@ -246,12 +234,13 @@ static_assert(add(one)(one)() == monoid(2)()); // OK
 [exit:example]
 
 [para]
+[enter:note]
 [:en]
 The function call operator or operator template may be constrained
-([#temp.constr.decl]) by a [~constrained-parameter] ([#temp.param]),
+([#temp.constr.decl]) by a [~type-constraint] ([#temp.param]),
 a [~requires-clause] ([#temp]), or a trailing [~requires-clause] ([#dcl.decl]).
 [:zh_CN]
-函数调用运算符或运算符模板可以通过[~受约束形参]（[#temp.param]，
+函数调用运算符或运算符模板可以通过[~类型约束]（[#temp.param]，
 [#temp.constr.decl]），[~requires-子句]（[#temp]），或者尾部 [~requires-子句]
 （[#dcl.decl]）来进行约束（[#temp.constr.decl]）。
 
@@ -263,8 +252,8 @@ template <typename A, typename B> concept C3 = /* ... */;
 
 auto f = []<typename T1, C1 T2> requires C2<sizeof(T1) + sizeof(T2)>
          (T1 a1, T1 b1, T2 a2, auto a3, auto a4) requires C3<decltype(a4), T2> {
-  // [:en] [`T2] is a constrained parameter,
-  // [|:zh_CN] [`T2] 是受约束形参，
+  // [:en] [`T2] is constrained by a [~type-constraint],
+  // [|:zh_CN] [`T2] 由一个[~类型约束]所约束，
   // [:en@~] [`T1] and [`T2] are constrained by a [~requires-clause], and
   // [|:zh_CN@~] [`T1] 和 [`T2] 被 [~requires-子句]约束，而
   // [:en@~] [`T2] and the type of [`a4] are constrained by a trailing [~requires-clause].
@@ -272,6 +261,7 @@ auto f = []<typename T1, C1 T2> requires C2<sizeof(T1) + sizeof(T2)>
 };
 [codeblock:end]
 [exit:example]
+[exit:note]
 
 [para]
 [:en]
@@ -301,9 +291,11 @@ function call operator.
 
 [:en]
 [`F] is a constexpr function if the function call operator is a constexpr
-function.
+function and is an immediate function if the function call operator is an
+immediate function.
 [:zh_CN]
-当函数调用运算符是 constexpr 函数时，[`F] 也是 constexpr 函数。
+当函数调用运算符是 constexpr 函数时，[`F] 也是 constexpr 函数，并且当函数调用
+运算符是直接函数时，[`F] 也是直接函数。
 
 [:en]
 For a generic lambda with no [~lambda-capture], the closure type has a

@@ -3,110 +3,175 @@
     [:zh_CN] 概念 [`Swappable]
 ]
 
-[%@library Swappable]
-[codeblock:declaration]
-template<class T>
-  concept Swappable = is_swappable_v<T>;
-[codeblock:end]
-
-[enter:description]
 [para]
-[:en] Let [`a1] and [`a2] denote distinct equal objects of type [`T], and let
-[`b1] and [`b2] similarly denote distinct equal objects of type [`T].
-[:zh_CN] 令 [`a1] 和 [`a2] 代表 [`T] 类型的不同但相等的对象，类似地令 [`b1] 和
-[`b2] 代表 [`T] 类型的不同但相等的对象。
+[:en] Let [`t1] and [`t2] be equiality-preserving expressions that denote
+distinct equal objects of type [`T], and let [`u1] and [`u2] similarly denote
+distinct equal objects of type [`U].
+[:zh_CN] 令 [`t1] 和 [`t2] 为维持相等性表达式并代表 [`T] 类型的不同但相等的对象，
+类似地令 [`u1] 和 [`u2] 代表 [`U] 类型的不同但相等的对象。
 
-[:en] [`Swappable<T>] is satisfied only if after evaluating either
-[`swap(a1, b1)] or [`swap(b1, a1)] in the context described below, [`a1] is
-equal to [`b2] and [`b1] is equal to [`a2].
-[:zh_CN] 仅当在下述语境中对 [`swap(a1, b1)] 或者 [`swap(b1, a1)] 求值之后，
-[`a1] 等于 [`b2] 并且 [`b1] 等于 [`a2] 时，[`Swappable<T>] 得以满足。
+[enter:note]
+[:en] [`t1] and [`t2] can denote distinct objects, or the same object.
+[:zh_CN] [`t1] 和 [`t2] 可以代表不同的对象，也可以代表相同的对象。
+[exit:note]
 
-[para]
-[:en] The context in which [`swap(a1, b1)] or [`swap(b1, a1)] is evaluated
-shall ensure that a binary non-member function named [`swap] is selected via
-overload resolution ([#over.match]) on a candidate set that includes:
-[:zh_CN] 对 [`swap(a1, b1)] 或 [`swap(b1, a1)] 进行求值的语境，应当保证在包含
-以下各项的候选函数集合中通过重载决议（[#over.match]）选取名为 [`swap] 的二元
-非成员函数：
+[:en] An operation [+exchanges the values[%]] denoted by [`t1] and [`u1] if and
+only if the operation modifies neither [`t2] nor [`u2] and:
+[:zh_CN] 当且仅当某个操作并不修改 [`t2] 或 [`u2]，并满足下列条件时，该操作
+[+交换[%交换～的值]]由 [`t1] 和 [`u1] 所代表的值：
 
 [list]
 [item]
-[:en] the two [`swap] function templates defined in [`<utility>] ([#utility])
-and
-[:zh_CN] [`<utility>]（[#utility]）中所定义的两个 [`swap] 函数模板，以及
+[:en] If [`T] and [`U] are the same type, the result of the operation is that
+[`t1] equals [`u2] and [`u1] equals [`t2].
+[:zh_CN] 若 [`T] 和 [`U] 为相同类型，则操作的结果为 [`t1] 等于 [`u2] 且 [`u1]
+等于 [`t2]。
+
 [item]
-[:en] the lookup set produced by argument-dependent lookup
-([#basic.lookup.argdep]).
-[:zh_CN] 由依赖于实参的名字查找（[#basic.lookup.argdep]）所产生的查找集合。
+[:en] If [`T] and [`U] are different types that model
+[`CommonReference<const T&, const U&>], the result of the operation is that
+[`C(t1)] equals [`C(u2)] and [`C(u1)] equals [`C(t2)] where [`C] is
+[`common_reference_t<const T&, const U&>].
+[:zh_CN] 若 [`T] 和 [`U] 为构成 [`CommonReference<const T&, const U&>] 的不同
+类型，则操作的结果为 [`C(t1)] 等于 [`C(u2)] 且 [`C(u1)] 等于 [`C(t2)]，其中 [`C]
+为 [`common_reference_t<const T&, const U&>]。
 [list:end]
-[exit:description]
+
+[para]
+[%@library ranges::swap]
+[:en] The name [`ranges::swap] denotes a customization point object
+([#customization.point.object]).
+[:zh_CN] 名字 [`ranges::swap] 代表一个定制化点对象。
+
+[:en] The expression [`ranges::swap(E1, E2)] for some subexpressions [`E1] and
+[`E2] is expression-equivalent to an expression [`S] determined as follows:
+[:zh_CN] 对于子表达式 [`E1] 和 [`E2]，表达式 [`ranges::swap(E1, E2)] 与如下确定
+的一个表达式 [`S] 之间表达式等价：
+
+[list]
+[item]
+[:en] [`S] is [`(void)swap(E1, E2)][#:note#fn.$1] if [`E1] or [`E2] has class or
+enumeration type ([#basic.compound]) and that expression is valid, with overload
+resolution performed in a context that includes the declarations
+[:zh_CN] 如果 [`E1] 或 [`E2] 具有类或者枚举类型（[#basic.compound]），且表达式
+[`(void)swap(E1, E2)][#:note#fn.$1] 在包含如下各声明式
+
+[codeblock:notation]
+  template<class T>
+    void swap(T&, T&) = delete;
+  template<class T, size_t N>
+    void swap(T(&)[N], T(7)[N]) = delete;
+[codeblock:end]
+
+[:en@~] and does not include a declaration of [`ranges::swap].
+[:zh_CN@~] 且并不包含 [`ranges::swap] 的声明式的语境中实施重载决议时是有效的，则
+[`S] 为 [`(void)swap(E1, E2)]。
+
+[note:foot#fn:$1]
+[:en] The name [`swap] is used here unqualified.
+[:zh_CN] 这里未限定地使用名字 [`swap]。
+[note:end]
+
+[:en] If the function selected by overload resolution does not exchange the
+values denoted by [`E1] and [`E2], the program is ill-formed with no diagnostic
+required.
+[:zh_CN] 如果重载决议所选出的函数并不会交换由 [`E1] 和 [`E1] 所代表的值，则程序
+非良构但无须诊断。
+
+[item]
+[:en] Otherwise, if [`E1] and [`E2] are lvalues of array types
+([#basi.compound]) with equal extent and [`ranges::swap(*E1, *E2)] is a valid
+expression, [`S] is [`(void)ranges::swap_ranges(E1, E2)], except that
+[`noexcept(S)] is equal to [`noexcept(ranges::swap(*E1, *E2))].
+[:zh_CN] 否则，如果 [`E1] 和 [`E2] 为具有相等的界的数组类型（[#basic.compound]）
+的，并且 [`ranges::swap(*E1, *E2)] 是有效表达式，则 [`S] 为
+[`(void)ranges::swap_ranges(E1, E2)]，但有 [`noexcept(S)] 为
+[`noexcept(ranges::swap(*E1, *E2))]。
+
+[item]
+[:en] Otherwise, if [`E1] and [`E2] are lvalues of the same type [`T] that
+models [`MoveConstructible<T>] and [`Assignable<T&, T>], [`S] is an expression
+that exchanges the denoted values.
+[:zh_CN] 否则，如果 [`E1] 和 [`E2] 为相同类型 [`T] 的左值，且 [`T] 构成了
+[`MoveConstructible<T>] 和 [`Assignable<T&, T>]，则 [`S] 为一个交换它们所代表的
+值的表达式。
+
+[:en] [`S] is a constant expression if
+[:zh_CN] 以下情况下 [`S] 是常量表达式：
+
+[list]
+[item]
+[:en@~] [`T] is a literal type ([#basic.types]),
+[:zh_CN@~] [`T] 为字面量类型（[#basic.types]），
+[item]
+[:en@~] both [`E1 = std::move(E2)] and [`E2 = std::move(E1)] are constant
+subexpressions ([#defns.const.subexpr]), and
+[:zh_CN@~] [`E1 = std::move(E2)] 和 [`E2 = std::move(E1)] 均为常量子表达式
+（[#defns.const.subexpr]），并且
+[item]
+[:en@~] the full-expressions of the initializers in the declarations
+[:zh_CN@~] 以下声明式中
+
+[codeblock:notation]
+T t1(std::move(E1));
+T t2(std::move(E2));
+[codeblock:end]
+
+[:en@~] are constant subexpressions.
+[:zh_CN@~] 各初始化式的全表达式均为常量子表达式。
+[list:end]
+
+[:en] [`noexcept(S)] is equal to
+[`is_nothrow_move_constructible_v<T> && is_nothrow_move_assignable_v<T>].
+[:zh_CN] [`noexcept(S)] 等于
+[`is_nothrow_move_constructible_v<T> && is_nothrow_move_assignable_v<T>]。
+
+[item]
+[:en] Otherwise, [`ranges::swap(E1, E2)] is ill-formed.
+[:zh_CN] 否则，[`ranges::swap(E1, E2)] 非良构。
+
+[enter:note]
+[:en] This case can result in substitution failure when [`ranges::swap(E1, E2)]
+appears in the immediate context of a template instantiation.
+[:zh_CN] 当 [`ranges::swap(E1, E2)] 出现于模板实例化的直接语境中时，这种情况下
+将会导致替换失败。
+[exit:note]
+[list:end]
+
+[para]
+[enter:note]
+[:en] Whenever [`ranges::swap(E1, E2)] is a valid expression, it exchanges the
+values denoted by [`E1] and [`E2] and has type [`void].
+[:zh_CN] 只要 [`ranges::swap(E1, E2)] 是有效表达式，则它交换由 [`E1] 和 [`E2] 所
+代表的值，并具有类型 [`void]。
+[exit:note]
+
+[%@library Swappable]
+[codeblock:declaration]
+template<class T>
+  concept Swappable = requires(T& a, T& b) { ranges::swap(a, b); };
+[codeblock:end]
 
 [%@library SwappableWith]
 [codeblock:declaration]
 template<class T, class U>
   concept SwappableWith =
-    is_swappable_with_v<T, T> && is_swappable_with_v<U, U> &&
     CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
-    is_swappable_with_v<T, U> && is_swappable_with_v<U, T>;
+    requires(T&& t, U&& u) {
+      ranges::swap(std::forward<T>(t), std::forward<T>(t));
+      ranges::swap(std::forward<U>(u), std::forward<U>(u));
+      ranges::swap(std::forward<T>(t), std::forward<U>(u));
+      ranges::swap(std::forward<U>(u), std::forward<T>(t));
+    };
 [codeblock:end]
 
-[enter:description]
 [para]
-[:en] Let:
-[:zh_CN] 令：
-
-[list]
-[item]
-[:en] [`t1] and [`t2] denote distinct equal objects of type [`remove_cvref_t<T>],
-[:zh_CN] [`t1] 和 [`t2] 代表 [`remove_cvref_t<T>] 类型的不同但相等的对象，
-[item]
-[:en] [$E_t] be an expression that denotes [`t1] such that [`decltype(([$E_t]))]
-is [`T],
-[:zh_CN] [$E_t] 为代表 [`t1] 的表达式，使得 [`decltype(([$E_t]))] 为 [`T]，
-[item]
-[:en] [`u1] and [`u2] similarly denote distinct equal objects of type
-[`remove_cvref_t<U>],
-[:zh_CN] 类似地，[`u1] 和 [`u2] 代表 [`remove_cvref_t<U>] 类型的不同但相等的对象，
-[item]
-[:en] [$E_u] be an expression that denotes [`u1] such that [`decltype(([$E_u]))]
-is [`U], and
-[:zh_CN] [$E_u] 为代表 [`u1] 的表达式，使得 [`decltype(([$E_u]))] 为 [`U]，以及
-[item]
-[:en] [`C] be
-[:zh_CN] [`C] 为
-[codeblock:notation]
-common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>
-[codeblock:end]
-[list:end]
-
-[:en] [`SwappableWith<T, U>] is satisfied only if after evaluating either
-[`swap([$E_t], [$E_u])] or [`swap([$E_u], [$E_t])] in the context described
-above, [`C(t1)] is equal to [`C(u2)] and [`C(u1)] is equal to [`C(t2)].
-[:zh_CN] 仅当在上述语境中对 [`swap([$E_t], [$E_u])] 或者 [`swap([$E_u], [$E_t])]
-求值之后，[`C(t1)] 等于 [`C(u2)] 并且 [`C(u1)] 等于 [`C(t2)] 时，
-[`SwappableWith<T, U>] 得以满足。
-
-[para]
-[:en] The context in which [`swap([$E_t], [$E_u])] or [`swap([$E_u], [$E_t])] is
-evaluated shall ensure that a binary non-member function named [`swap] is
-selected via overload resolution ([#over.match]) on a candidate set that
-includes:
-[:zh_CN] 对 [`swap([$E_t], [$E_u])] 或 [`swap([$E_u], [$E_t])] 进行求值的语境，
-应当保证在包含以下各项的候选函数集合中通过重载决议（[#over.match]）选取名为
-[`swap] 的二元非成员函数：
-
-[list]
-[item]
-[:en] the two [`swap] function templates defined in [`<utility>] ([#utility])
-and
-[:zh_CN] [`<utility>]（[#utility]）中所定义的两个 [`swap] 函数模板，以及
-[item]
-[:en] the lookup set produced by argument-dependent lookup
-([#basic.lookup.argdep]).
-[:zh_CN] 由依赖于实参的名字查找（[#basic.lookup.argdep]）所产生的查找集合。
-[list:end]
-[exit:description]
+[enter:note]
+[:en] The semantics of the [`Swappable] and [`SwappableWith] concepts are fully
+defined by the [`ranges::swap] customization point.
+[:zh_CN] 概念 [`Swappable] 和 [`SwappableWith] 的语义完全由定制化点
+[`ranges::swap] 所定义。
+[exit:note]
 
 [para]
 [enter:example]
@@ -120,22 +185,17 @@ an appropriate context under the various conditions as follows:
 #include <concepts>
 #include <utility>
 
+namespace ranges = std::ranges;
+
 template<class T, std::SwappableWith<T> U>
 void value_swap(T&& t, U&& u) {
-  using std::swap;
-  swap(std::forward<T>(t), std::forward<U>(u)); // [:en] OK: uses ["swappable with] conditions
-                                                // [|:zh_CN] OK：使用左值和右值的
-                                                // [:en@~] for rvalues and lvalues
-                                                // [|:zh_CN@~] “可互相交换”条件
+  ranges::swap(std::forward<T>(t), std::forward<U>(u));
 }
 
 template<std::Swappable T>
 void lv_swap(T& t1, T& t2) {
-  using std::swap;
-  swap(t1, t2);                                 // [:en] OK: uses swappable conditions for
-                                                // [|:zh_CN] OK：使用 [`T] 类型的
-}                                               // [:en@~] lvalues of type [`T]
-                                                // [|:zh_CN@~] “可交换”条件
+  ranges::swap(t1, t2);
+}
 
 namespace N {
   struct A { int m; };
@@ -143,13 +203,10 @@ namespace N {
   Proxy proxy(A& a) { return Proxy{ &a }; }
 
   void swap(A& x, Proxy p) {
-    std::swap(x.m, p.a->m);                     // [:en] OK: uses context equivalent to swappable
-                                                // [|:zh_CN] OK：使用等价于基础类型的
-                                                // [:en@~] conditions for fundamental types
-                                                // [|:zh_CN@~] 可交换条件的语境
+    ranges::swap(x.m, p.a->m);
   }
-  void swap(Proxy p, A& x) { swap(x, p); }      // [:en] satisfy symmetry constraint
-                                                // [|:zh_CN] 满足对称性约束
+  void swap(Proxy p, A& x) { swap(x, p); }      // [:en] satisfy symmetry requirement
+                                                // [|:zh_CN] 满足对称性规定
 }
 
 int main() {

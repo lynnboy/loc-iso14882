@@ -13,8 +13,7 @@
 
 [rule return-type-requirement [:zh_CN] 返回类型规定 ]
     [| trailing-return-type ]
-    [| [`->] [~:opt cv-qualifier-seq] constrained-parameter
-        [~:opt cv-qualifier-seq] [~:opt abstract-declarator] ]
+    [| [`->] type-constraint ]
 [rule:end]
 [syntax:end]
 
@@ -53,40 +52,53 @@ potentially-throwing expression ([#except.spec]).
 [:zh_CN] 实施模板实参（如果有）向[~返回类型规定]中的替换。
 
 [item]
-[:en] If the [~return-type-requirement] is a [~trailing-return-type], [`E] is
-implicitly convertible to the type named by the [~trailing-return-type].
-[:zh_CN] 如果该[~返回类型规定]是一个[~尾部返回类型]，则 [`E] 应当可以隐式转换为
-由该[~尾部返回类型]所指名的类型。
+[:en] If the [~return-type-requirement] is a [~trailing-return-type]
+([#dcl.decl]), [`E] is implicitly convertible to the type named by the
+[~trailing-return-type].
+[:zh_CN] 如果该[~返回类型规定]是一个[~尾部返回类型]（[#dcl.decl]），则 [`E] 应当
+可以隐式转换为由该[~尾部返回类型]所指名的类型。
 
 [:en] If conversion fails, the enclosing [~requires-expression] is [`false].
 [:zh_CN] 如果转换失败，则外围 [~requires-表达式]为 [`false]。
 
 [item]
-[:en] If the [~return-type-requirement] starts with a [~constrained-parameter]
-([#temp.param]), the [~expression] is deduced against an invented function
-template [`F] using the rules in [#temp.deduct.call].
-[:zh_CN] 如果该[~返回类型规定]以一个[~受约束形参]（[#temp.param]）开始，则使用
-[#temp.deduct.call] 中的规则以一个虚构的函数形参 [`F] 来推断该[~表达式]。
+[:en] If the [~return-type-requirement] is of the form [`->] [~type-constraint],
+then the contextually-determined type being constrained is [`decltype((E))].
+[:zh_CN] 如果该[~返回类型规定]的形式为“[`->] [~类型约束]”，则其所约束的按语境
+确定的类型为 [`decltype((E))]。
 
-[:en] [`F] is a [`void] function template with a single type template parameter
-[`T] declared with the [~constrained-parameter].
-[:zh_CN] [`F] 为 [`void] 函数模板，并带有一个类型模板形参 [`T] 并以该[~受约束
-形参]所声明。
+[:en] The immediately-declared constraint ([#temp]) of [`decltype((E))] shall be
+satisfied.
+[:zh_CN] [`decltype((E))] 的直接声明的约束（[#temp]）应当得以满足。
 
-[:en] A [~cv-qualifier-seq] [$cv] is formed as the union of [`const] and
-[`volatile] specifiers around the [~constrained-parameter].
-[:zh_CN] 以在[~受约束形参]周围的 [`const] 和 [`volatile] 说明符的合并构成一个
-[~cv-说明符序列] [$cv]。
+[enter:example]
+[:en] Given concepts [`C] and [`D],
+[:zh_CN] 给定概念 [`C] 和 [`D]，
 
-[:en] [`F] has a single parameter whose [~type-specifier] is [$cv] [`T] followed
-by the [~abstract-declarator].
-[:zh_CN] [`F] 有一个形参，其[~类型说明符]为 [$cv] [`T] 后面跟着[~抽象声明符]。
+[codeblock]
+requires {
+  { E1 } -> C;
+  { E2 } -> D<A[$_1], [$\cdots], A[$_n]>;
+};
+[codeblock:end]
 
-[:en] If deduction fails, the enclosing [~requires-expression] is [`false].
-[:zh_CN] 如果推断失败，则外围[~requires-表达式]为 [`false]。
+[:en@~] is equivalent to
+[:zh_CN@~] 等价于
+
+[codeblock]
+requires {
+  E1; requires C<decltype((E1))>;
+  E2; requires D<decltype((E2)), A[$_1], [$\cdots], A[$_n]>;
+};
+[codeblock:end]
+
+[:en@~] (including in the case where [$n] is zero).
+[:zh_CN@~] （包括 [$n] 为零的情况）。
+[exit:example]
 [list:end]
 [list:end]
 
+[para]
 [enter:example]
 [codeblock]
 template<typename T> concept C1 = requires(T x) {
@@ -120,41 +132,15 @@ convertible to [`typename T::inner].
 并且 [`*x] 可以隐式转换为 [`typename T::inner]。
 
 [codeblock]
-template<typename T, typename U> concept C3 = requires (T t, U u) {
-  t == u;
-};
-template<typename T> concept C4 = requires(T x) {
-  {*x} -> C3<int> const&;
-};
-[codeblock:end]
-
-[:en]
-The [~compound-requirement] requires that [`*x] be deduced as an argument for
-the invented function:
-[:zh_CN]
-[~组合规定]要求 [`*x] 可以作为以下的虚构函数的实参进行推断：
-
-[codeblock]
-template<C3<int> X> void f(X const&);
-[codeblock:end]
-
-[:en]
-In this case, deduction only succeeds if an expression of the type deduced for
-[`X] can be compared to an [`int] with the [`==] operator.
-[:zh_CN]
-这种情况下，仅当具有为 [`X] 所推断的类型的表达式可以与 [`int] 用 [`==] 运算符
-进行比较时，推断成功。
-
-[codeblock]
-template<typename T> concept C5 =
+template<typename T> concept C3 =
   requires(T x) {
     {g(x)} noexcept;
   };
 [codeblock:end]
 
 [:en]
-The [~compound-requirement] in [`C5] requires that [`g(x)] is a valid expression
+The [~compound-requirement] in [`C3] requires that [`g(x)] is a valid expression
 and that [`g(x)] is non-throwing.
 [:zh_CN]
-[`C5] 中的[~组合规定]要求 [`g(x)] 是有效表达式，且 [`g(x)] 不会抛出异常。
+[`C3] 中的[~组合规定]要求 [`g(x)] 是有效表达式，且 [`g(x)] 不会抛出异常。
 [exit:example]

@@ -1,0 +1,119 @@
+[section#range.split.view
+    [:en] Class template [`split_view]
+    [:zh_CN] 类模板 [`split_view]
+]
+
+[codeblock:synopsis [!:var simple-view require-constant tiny-range]]
+namespace std::ranges {
+  template<auto> struct [*require-constant];       // [=Expos]
+
+  template<class R>
+  concept [*tiny-range] =                          // [=Expos]
+    SizedRange<R> &&
+    requires { typename [*require-constant]<remove_reference_t<R>::size()>; } &&
+    (remove_reference_t<R>::size() <= 1);
+
+  template<InputRange V, ForwardRange Pattern>
+    requires View<V> && View<Pattern> &&
+             IndirectlyComparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to<>> &&
+             (ForwardRange<V> || [*tiny-range]<Pattern>)
+  class split_view : public view_interface<split_view<V, Pattern>> {
+  private:
+    V base_ = V();                              // [=Expos]
+    Pattern pattern_ = Pattern();               // [=Expos]
+    iterator_t<V> current_ = iterator_t<V>();   // [:en] [=Expos], present only if [`!ForwardRange<V>]
+                                                // [|:zh_CN] [=Expos]，仅当 [`!ForwardRange] 时给出
+    template<bool> struct outer_iterator;       // [=Expos]
+    template<bool> struct inner_iterator;       // [=Expos]
+  public:
+    split_view() = default;
+    constexpr split_view(V base, Pattern pattern);
+
+    template<InputRange R, ForwardRange P>
+      requires Constructible<V, all_view<R>> &&
+               Constructible<Pattern, all_view<P>>
+    constexpr split_view(R&& r, P&& p);
+
+    template<InputRange R>
+      requires Constructible<V, all_view<R>> &&
+               Constructible<Pattern, single_view<iter_value_t<iterator_t<R>>>>
+    constexpr split_view(R&& r, iter_value_t<iterator_t<R>> e);
+
+    constexpr auto begin() {
+      if constexpr (ForwardRange<V>)
+        return outer_iterator<[*simple-view]<V>>{*this, ranges::begin(base_)};
+      else {
+        current_ = ranges::begin(base_);
+        return outer_iterator<false>{*this};
+      }
+    }
+
+    constexpr auto begin() const requires ForwardRange<V> && ForwardRange<const V> {
+      return outer_iterator<true>{*this, ranges::begin(base_)};
+    }
+
+    constexpr auto end() requires ForwardRange<V> && CommonRange<V> {
+      return outer_iterator<[*simple-view]<V>>{*this, ranges::end(base_)};
+    }
+
+    constexpr auto end() const {
+      if constexpr (ForwardRange<V> && ForwardRange<const V> && CommonRange<const V>)
+        return outer_iterator<true>{*this, ranges::end(base_)};
+      else
+        return default_sentinel;
+    }
+  };
+
+  template<class R, class P>
+    split_view(R&&, P&&) -> split_view<all_view<R>, all_view<P>>;
+
+  template<InputRange R>
+    split_view(R&&, iter_value_t<iterator_t<R>>)
+      -> split_view<all_view<R>, single_view<iter_value_t<iterator_t<R>>>>;
+}
+[codeblock:end]
+
+[%@library split_view[!split_view]]
+[codeblock:declaration]
+constexpr split_view(V base, Pattern pattern);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`std::move(base)], and [`pattern_] with
+[`std::move(pattern)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(pattern)] 初始化
+[`pattern_]。
+[exit:description]
+
+[%@library split_view[!split_view]]
+[codeblock:declaration]
+template<InputRange R, ForwardRange P>
+  requires Constructible<V, all_view<R>> &&
+           Constructible<Pattern, all_view<P>>
+constexpr split_view(R&& r, P&& p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`pattern_]
+with [`view::all(std::forward<P>(p))].
+[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以
+[`view::all(std::forward<P>(p))] 初始化 [`pattern_]。
+[exit:description]
+
+[%@library split_view[!split_view]]
+[codeblock:declaration]
+template<InputRange R>
+  requires Constructible<V, all_view<R>> &&
+           Constructible<Pattern, single_view<iter_value_t<iterator_t<R>>>>
+constexpr split_view(R&& r, iter_value_t<iterator_t<R>> e);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`pattern_]
+with [`single_view{std::move(e)}].
+[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以
+[`single_view{std::move(e)}] 初始化 [`pattern_]。
+[exit:description]

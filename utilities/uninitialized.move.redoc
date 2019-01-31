@@ -10,21 +10,58 @@ template<class InputIterator, class ForwardIterator>
 [codeblock:end]
 
 [enter:description]
+[para:expects]
+[:en] [=range(result,last - first)] shall not overlap with [=range(first,last)].
+[:zh_CN] [=range(result,last - first)] 不能与 [=range(first,last)] 重叠。
+
 [para:effects]
 [:en] Equivalent to:
 [:zh_CN] 等价于：
-
-[codeblock:notation]
+[codeblock:notation [!:var voidify]]
 for (; first != last; (void)++result, ++first)
-  ::new (static_cast<void*>(addressof(*result)))
+  ::new ([*voidify](*result))
     typename iterator_traits<ForwardIterator>::value_type(std::move(*first));
 [codeblock:end]
+[exit:description]
 
-[para:remarks]
+[%@library uninitialized_move]
+[codeblock:declaration [!:var no-throw-forward-iterator no-throw-forward-range no-throw-sentinel]]
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S1,
+           [*no-throw-forward-iterator] O, [*no-throw-sentinel]<O> S2>
+      requires Constructible<iter_value_t<O>, iter_rvalue_reference_t<I>>
+    uninitialized_move_result<I, O>
+      uninitialized_move(I ifirst, S1 ilast, O ofirst, S2 olast);
+  template<InputRange IR, [*no-throw-forward-range] OR>
+      requires Constructible<iter_value_t<iterator_t<OR>>, iter_rvalue_reference_t<iterator_t<IR>>>
+    uninitialized_move_result<safe_iterator_t<IR>, safe_iterator_t<OR>>
+      uninitialized_move(IR&& input_range, OR&& output_range);
+}
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [=range(ofirst,olast)] shall not overlap with [=range(ifirst,ilast)].
+[:zh_CN] [=range(ofirst,olast)] 不能与 [=range(ifirst,ilast)] 重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
+for (; ifirst != ilast && ofirst != olast; ++ofirst, (void)++ifirst) {
+  ::new ([*voidify](*ofirst))
+    remove_reference_t<iter_reference_t<O>>(ranges::iter_move(ifirst));
+}
+return {ifirst, ofirst};
+[codeblock:end]
+
+[para]
+[enter:note]
 [:en] If an exception is thrown, some objects in the range [=range(first,last)]
 are left in a valid but unspecified state.
 [:zh_CN] 如果抛出了异常，则范围 [=range(first,last)] 中的一些对象将遗留为某个
 有效但未指明的状态。
+[exit:note]
 [exit:description]
 
 [%@library uninitialized_move_n]
@@ -35,20 +72,50 @@ template<class InputIterator, class Size, class ForwardIterator>
 [codeblock:end]
 
 [enter:description]
+[para:expects]
+[:en] [=range(result,n)] shall not overlap with [=range(first,n)].
+[:zh_CN] [=range(result,n)] 不能与 [=range(first,n)] 重叠。
+
 [para:effects]
 [:en] Equivalent to:
 [:zh_CN] 等价于：
-
-[codeblock:notation]
+[codeblock:notation [!:var voidify]]
 for (; n > 0; ++result, (void) ++first, --n)
-  ::new (static_cast<void*>(addressof(*result)))
+  ::new ([*voidify](*result))
     typename iterator_traits<ForwardIterator>::value_type(std::move(*first));
 return {first,result};
 [codeblock:end]
+[exit:description]
 
-[para:remarks]
-[:en] If an exception is thrown, some objects in the range
-[=range(first,std::next(first,n))] are left in a valid but unspecified state.
-[:zh_CN] 如果抛出了异常，则范围 [=range(first,std::next(first,n))] 中的一些对象
-将遗留为某个有效但未指明的状态。
+[%@library uninitialized_move_n]
+[codeblock:declaration [!:var no-throw-forward-iterator no-throw-sentinel]]
+namespace ranges {
+  template<InputIterator I, [*no-throw-forward-iterator] O, [*no-throw-sentinel]<O> S>
+      requires Constructible<iter_value_t<O>, iter_rvalue_reference_t<I>>
+    uninitialized_move_n_result<I, O>
+      uninitialized_move_n(I ifirst, iter_difference_t<I> n, O ofirst, S olast);
+}
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [=range(ofirst,olast)] shall not overlap with [=range(ifirst,n)].
+[:zh_CN] [=range(ofirst,olast)] 不能与 [=range(ifirst,n)] 重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto t = uninitialized_move(counted_iterator(ifirst, n),
+                            default_sentinel, ofirst, olast);
+return {t.in.base(), t.out};
+[codeblock:end]
+
+[para]
+[enter:note]
+[:en] If an exception is thrown, some objects in the range [=range(first,n)] are
+left in a valid but unspecified state.
+[:zh_CN] 如果抛出了异常，则范围 [=range(first,n)] 中的一些对象将遗留为某个有效但
+未指明的状态。
+[exit:note]
 [exit:description]

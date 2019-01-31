@@ -14,36 +14,60 @@ template<class ForwardIterator, class T, class Compare>
     equal_range(ForwardIterator first,
                 ForwardIterator last, const T& value,
                 Compare comp);
+
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+           IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+    constexpr subrange<I>
+      equal_range(I first, S last, const T& value, Comp comp = {}, Proj proj = {});
+  template<ForwardRange R, class T, class Proj = identity,
+           IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+             ranges::less<>>
+    constexpr safe_subrange_t<R>
+      equal_range(R&& r, const T& value, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for overloads with
+no parameters by those names.
+[:zh_CN] 对于没有具有名字 [`comp] 和 [`proj] 的形参的各重载，令 [`comp] 为
+[`less{}] 并令 [`proj] 为 [`identity{}]。
+
 [para:requires]
 [:en] The elements [`e] of [=range(first,last)] shall be partitioned with
-respect to the expressions [`e < value] and [`!(value < e)] or [`comp(e, value)]
-and [`!comp(value, e)].
-[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当根据表达式 [`e < value] 和
-[`!(value < e)]，或者 [`comp(e, value)] 和 [`!comp(value, e)] 已分区。
+respect to the expressions [`bool(invoke(comp, invoke(proj, e), value))] and
+[`!bool(invoke(comp, value, invoke(proj, e)))].
+[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当根据表达式
+[`bool(invoke(comp, invoke(proj, e), value))] 和
+[`!bool(invoke(comp, value, invoke(proj, e)))] 已分区。
 
-[:en] Also, for all elements [`e] of [``[first, last)], [`e < value] shall imply
-[`!(value < e)] or [`comp(e, value)] shall imply [`!comp(value, e)].
-[:zh_CN] 并且，对于 [``[first, last)] 中的所有元素 [`e]，[`e < value] 应当蕴含
-[`!(value < e)]，或者 [`comp(e, value)] 应当蕴含 [`!comp(value, e)]。
+[:en] Also, for all elements [`e] of [``[first, last)], [`bool(comp(e, value))]
+shall imply [`!bool(comp(value, e))] for the overloads in namespace [`std].
+[:zh_CN] 并且，对于命名空间 [`std] 中的各重载，对于 [``[first, last)] 中的所有
+元素 [`e]，[`bool(comp(e, value))] 应当蕴含 [`!bool(comp(value, e))]。
 
 [para:returns]
+[list]
+[item]
+[:en] For the overloads in namespace [`std]:
+[:zh_CN] 对于命名空间 [`std] 中的各重载：
 [codeblock:notation]
-make_pair(lower_bound(first, last, value),
-          upper_bound(first, last, value))
+{lower_bound(first, last, value, comp),
+ upper_bound(first, last, value, comp)}
 [codeblock:end]
 
-[:en@~] or
-[:zh_CN@~] 或者
-
+[item]
+[:en] For the overloads in namespace [`ranges]:
+[:zh_CN] 对于命名空间 [`ranges] 中的各重载：
 [codeblock:notation]
-make_pair(lower_bound(first, last, value, comp),
-          upper_bound(first, last, value, comp))
+{ranges::lower_bound(first, last, value, comp, proj),
+ ranges::upper_bound(first, last, value, comp, proj)}
 [codeblock:end]
 
 [para:complexity]
-[:en] At most [$2 * \log_2([`last - first]) + [=O](1)] comparisons.
-[:zh_CN] 最多 [$2 * \log_2([`last - first]) + [=O](1)] 次比较。
+[:en] At most [$2 * \log_2([`last - first]) + [=O](1)] comparisons and
+projections.
+[:zh_CN] 最多 [$2 * \log_2([`last - first]) + [=O](1)] 次比较和投射。
 [exit:description]

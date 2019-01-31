@@ -18,26 +18,50 @@ template<class ExecutionPolicy, class ForwardIterator, class BinaryPredicate>
   ForwardIterator unique(ExecutionPolicy&& exec,
                          ForwardIterator first, ForwardIterator last,
                          BinaryPredicate pred);
+
+namespace ranges {
+  template<Permutable I, Sentinel<I> S, class Proj = identity,
+           IndirectRelation<projected<I, Proj>> C = ranges::equal_to<>>
+    constexpr I unique(I first, S last, C comp = {}, Proj proj = {});
+  template<ForwardRange R, class Proj = identity,
+           IndirectRelation<projected<iterator_t<R>, Proj>> C = ranges::equal_to<>>
+    requires Permutable<iterator_t<R>>
+    constexpr safe_iterator_t<R>
+      unique(R&& r, C comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] The comparison function shall be an equivalence relation.
-[:zh_CN] 比较函数应当提供等价关系。
+[para]
+[:en] Let [`pred] be [`equal_to{}] for the overloads with no parameter [`pred],
+and let [$E] be
+[:zh_CN] 令 [`pred] 对于没有形参 [`pred] 的各重载为 [`equal_to{}]，并令 [$E]：
+[list]
+[item]
+[:en@~] [`bool(pred(*(i - 1), *i))] for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载为 [`bool(pred(*(i - 1), *i))]，
+[item]
+[:en@~] [`bool(invoke(comp, invoke(proj, *(i - 1)), invoke(proj, *i)))] for the
+overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载为
+[`bool(invoke(comp, invoke(proj, *(i - 1)), invoke(proj, *i)))]。
+[list:end]
 
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveAssignable]
+[para:requires]
+[:en] For the overloads in namespace [`std], [`pred] shall be an equivalence
+relation and the type of [`*first] shall meet the [*Cpp17MoveAssignable]
 requirements ([#moveassignable]).
-[:zh_CN] [`*first] 的类型应当符合 [*Cpp17MoveAssignable] 的规定
-（[#moveassignable]）。
+[:en] The type of [`*first] shall satisfy the 
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`pred] 应当为一种等价关系，并且
+[`*first] 的类型应当满足 [*Cpp17MoveAssignable] 的规定（[#moveassignable]）。
 
 [para:effects]
 [:en] For a nonempty range, eliminates all but the first element from every
 consecutive group of equivalent elements referred to by the iterator [`i] in the
-range [=range(first + 1,last)] for which the following conditions hold:
-[`*(i - 1) == *i] or [`pred(*(i - 1), *i) != false].
+range [=range(first + 1,last)] for which [$E] is [`true].
 [:zh_CN] 对于非空范围，清除每个等价元素的连续组中除第一个元素外的所有元素，其中
-元素为由范围 [=range(first + 1,last)] 中的迭代器 [`i] 所指代的，且有以下条件成立
-：[`*(i - 1) == *i] 或者 [`pred(*(i - 1), *i) != false]。
+元素为由范围 [=range(first + 1,last)] 中的迭代器 [`i] 所指代的，且使得 [$E] 为
+[`true]。
 
 [para:returns]
 [:en] The end of the resulting range.
@@ -45,8 +69,10 @@ range [=range(first + 1,last)] for which the following conditions hold:
 
 [para:complexity]
 [:en] For nonempty ranges, exactly [`(last - first) - 1] applications of the
-corresponding predicate.
-[:zh_CN] 对于非空范围，恰好进行 [`(last - first) - 1] 次对应谓词的运用。
+corresponding predicate and no more than twice as many applications of any
+projection.
+[:zh_CN] 对于非空范围，恰好进行 [`(last - first) - 1] 次对应谓词的运用，以及
+不多于两倍的任何投射的运用。
 [exit:description]
 
 [%@library unique_copy]
@@ -72,9 +98,44 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
     unique_copy(ExecutionPolicy&& exec,
                 ForwardIterator1 first, ForwardIterator1 last,
                 ForwardIterator2 result, BinaryPredicate pred);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+           class Proj = identity, IndirectRelation<projected<I, Proj>> C = ranges::equal_to<>>
+    requires IndirectlyCopyable<I, O> &&
+             (ForwardIterator<I> ||
+              (InputIterator<O> && Same<iter_value_t<I>, iter_value_t<O>>) ||
+              IndirectlyCopyableStorable<I, O>)
+    constexpr unique_copy_result<I, O>
+      unique_copy(I first, S last, O result, C comp = {}, Proj proj = {});
+  template<InputRange R, WeaklyIncrementable O, class Proj = identity,
+           IndirectRelation<projected<iterator_t<R>, Proj>> C = ranges::equal_to<>>
+    requires IndirectlyCopyable<iterator_t<R>, O> &&
+             (ForwardIterator<iterator_t<R>> ||
+              (InputIterator<O> && Same<iter_value_t<iterator_t<R>>, iter_value_t<O>>) ||
+              IndirectlyCopyableStorable<iterator_t<R>, O>)
+    constexpr unique_copy_result<safe_iterator_t<R>, O>
+      unique_copy(R&& r, O result, C comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`pred] be [`equal_to{}] for the overloads in namespace [`std] with no
+parameter [`pred], and let [$E] be
+[:zh_CN] 令 [`pred] 对于命名空间 [`std] 中的没有形参 [`pred] 的各重载为
+[`equal_to{}]，并令 [$E]：
+[list]
+[item]
+[:en@~] [`bool(pred(*i, *(i - 1)))] for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载为 [`bool(pred(*i, *(i - 1)))]，
+[item]
+[:en@~] [`bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))] for the
+overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载为
+[`bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))]。
+[list:end]
+
 [para:requires]
 [list]
 [item]
@@ -86,6 +147,15 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
 shall not overlap.
 [:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result+(last-first))] 不能
 有重叠。
+
+[item]
+[:en] For the overloads in namespace [`std]:
+[:zh_CN] 对于命名空间 [`std] 中的各重载：
+
+[list]
+[item]
+[:en] The comparison function shall be an equivalence relation.
+[:zh_CN] 比较函数应当是一种等价关系。
 
 [item]
 [:en] The expression [`*result = *first] shall be valid.
@@ -103,40 +173,48 @@ there are no additional requirements for [`T].
 没有其他的规定。
 
 [:en] Otherwise, if [`OutputIterator] meets the [*Cpp17ForwardIterator]
-requirements and its value type is the same as [`T], then [`T] shall be
-[*Cpp17CopyAssignable] ([#copyassignable]).
+requirements and its value type is the same as [`T], then [`T] shall meet the
+[*Cpp17CopyAssignable] ([#copyassignable]) requirements.
 [:zh_CN] 否则，如果 [`OutputIterator] 满足 [*Cpp17ForwardIterator] 的规定，且其
-值类型与 [`T] 相同，则 [`T] 应当为 [*Cpp17CopyAssignable]（[#copyassignable]）。
+值类型与 [`T] 相同，则 [`T] 应当满足 [*Cpp17CopyAssignable]（[#copyassignable]）
+的规定。
 
-[:en] Otherwise, [`T] shall be both [*Cpp17CopyConstructible]
-([#copyconstructible]) and [*Cpp17CopyAssignable].
-[:zh_CN] 否则，[`T] 应当为 [*Cpp17CopyConstructible]（[#copyconstructible]）且为
-[*Cpp17CopyAssignable]。
+[:en] Otherwise, [`T] shall meet both the [*Cpp17CopyConstructible]
+([#copyconstructible]) and [*Cpp17CopyAssignable] requirements.
+[:zh_CN] 否则，[`T] 应当同时符合 [*Cpp17CopyConstructible]
+（[#copyconstructible]）和 [*Cpp17CopyAssignable] 的规定。
 
 [enter:note]
 [:en] For the overloads with an [`ExecutionPolicy], there may be a performance
-cost if the value type of [`ForwardIterator1] is not both
-[*Cpp17CopyConstructible] and [*Cpp17CopyAssignable].
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，当 [`ForwardIterator1] 的值类型不
-同时为 [*Cpp17CopyConstructible] 和 [*Cpp17CopyAssignable] 时，可能存在性能损耗。
+cost if the value type of [`ForwardIterator1] does not meet both the
+[*Cpp17CopyConstructible] and [*Cpp17CopyAssignable] requirements.
+[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，当 [`ForwardIterator1] 的值类型并不
+同时满足 [*Cpp17CopyConstructible] 和 [*Cpp17CopyAssignable] 的规定时，可能存在
+性能损耗。
 [exit:note]
+[list:end]
 [list:end]
 
 [para:effects]
 [:en] Copies only the first element from every consecutive group of equal
 elements referred to by the iterator [`i] in the range [=range(first,last)]
-for which the following corresponding conditions hold: [`*i == *(i - 1)] or
-[`pred(*i, *(i - 1)) != false].
-[:zh_CN] 对每个等价元素的连续组的第一个元素进行复制，其中元素为由范围
-[=range(first + 1,last)] 中的迭代器 [`i] 所指代的，且有以下条件成立：
-[`*i == *(i - 1)] 或者 [`pred(*i, *(i - 1)) != false]。
+for which [$E] holds.
+[:zh_CN] 对每个相等元素的连续组的第一个元素进行复制，其中元素为由范围
+[=range(first + 1,last)] 中的迭代器 [`i] 所指代的，且使得 [$E] 成立。
 
 [para:returns]
-[:en] The end of the resulting range.
-[:zh_CN] 结果范围的末尾。
+[list]
+[item]
+[:en@~] [`result + [$N]], for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载，返回 [`result + [$N]]，或者
+[item]
+[:en@~] [`{last, result + [$N]}], for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载，返回 [`{last, result + [$N]}]。
+[list:end]
 
 [para:complexity]
-[:en] For nonempty ranges, exactly [`last - first - 1] applications of the
-corresponding predicate.
-[:zh_CN] 对于非空范围，恰好进行 [`last - first - 1] 次对应谓词的运用。
+[:en] Exactly [`last - first - 1] applications of the corresponding predicate
+and no more than twice as many applications of any projection.
+[:zh_CN] 恰好进行 [`last - first - 1] 次对应谓词的运用，以及不多于两倍的任何投射
+的运用。
 [exit:description]

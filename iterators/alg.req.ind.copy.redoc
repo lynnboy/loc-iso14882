@@ -1,0 +1,61 @@
+[section#alg.req.ind.copy
+    [:en] Concept [`IndirectlyCopyable]
+    [:zh_CN] 概念 [`IndirectlyCopyable]
+]
+
+[para]
+[:en] The [`IndirectlyCopyable] concept specifies the relationship between
+a [`Readable] type and a [`Writable] type between which values may be copied.
+[:zh_CN] [`IndirectlyCopyable] 概念指定了可以在其间进行值的复制的一个 [`Readable]
+类型和一个 [`Writable] 类型之间的关系。
+
+[%@library IndirectlyCopyable]
+[codeblock:synopsis]
+template<class In, class Out>
+  concept IndirectlyCopyable =
+    Readable<In> &&
+    Writable<Out, iter_reference_t<In>>;
+[codeblock:end]
+
+[para]
+[:en] The [`IndirectlyCopyableStorable] concept augments [`IndirectlyCopyable]
+with additional requirements enabling the transfer to be performed through an
+intermediate object of the [`Readable] type[=']s value type.
+[:zh_CN] [`IndirectlyCopyableStorable] 概念增强了 [`IndirectlyCopyable]，添加了
+新的规定以使得可以通过 [`Readable] 类型的值类型的一个中间对象来实施值的传送。
+
+[:en] It also requires the capability to make copies of values.
+[:zh_CN] 它还规定了制造值的副本的能力。
+
+[%@library IndirectlyCopyableStorable]
+[codeblock:synopsis]
+template<class In, class Out>
+  concept IndirectlyCopyableStorable =
+    IndirectlyCopyable<In, Out> &&
+    Writable<Out, const iter_value_t<In>&> &&
+    Copyable<iter_value_t<In>> &&
+    Constructible<iter_value_t<In>, iter_reference_t<In>> &&
+    Assignable<iter_value_t<In>&, iter_reference_t<In>>;
+[codeblock:end]
+
+[para]
+[:en] Let [`i] be a dereferenceable value of type [`In].
+[:zh_CN] 令 [`i] 为 [`In] 类型的一个可解引用的值。
+
+[:en] [`In] and [`Out] model [`IndirectlyCopyableStorable<In, Out>] only if
+after the initialization of the object [`obj] in
+[:zh_CN] 仅当以下代码
+
+[codeblock:notation]
+iter_value_t<In> obj(*i);
+[codeblock:end]
+
+[:en@~] [`obj] is equal to the value previously denoted by [`*i].
+[:zh_CN@~] 中的对象 [`obj] 经过初始化之后，[`obj] 等于由 [`*i] 之前所代表的值时，
+[`In] 和 [`Out] 构成 [`IndirectlyCopyableStorable<In, Out>]。
+
+[:en] If [`iter_reference_t<In>] is an rvalue reference type, the resulting
+state of the value denoted by [`*i] is valid but unspecified
+([#lib.types.movedfrom]).
+[:zh_CN] 当 [`iter_reference_t<In>] 为右值引用类型时，由 [`*i] 所代表的值的结果
+状态是有效但未指明的（[#lib.types.movedfrom]）。

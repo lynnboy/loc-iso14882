@@ -1,15 +1,21 @@
 [section#move.iter.nonmember
-    [:en] [`move_iterator] non-member functions
-    [:zh_CN] [`move_iterator] 的非成员函数
+    [:en] Non-member functions
+    [:zh_CN] 非成员函数
 ]
 
 [%@library operator-[!move_iterator]]
 [%@library move_iterator[!operator-]]
 [codeblock:declaration]
 template<class Iterator1, class Iterator2>
-    constexpr auto operator-(
-    const move_iterator<Iterator1>& x,
-    const move_iterator<Iterator2>& y) -> decltype(x.base() - y.base());
+  constexpr auto operator-(const move_iterator<Iterator1>& x,
+                           const move_iterator<Iterator2>& y)
+    -> decltype(x.base() - y.base());
+template<SizedSentinel<Iterator> S>
+  friend constexpr iter_difference_t<Iterator>
+    operator-(const move_sentinel<S>& x, const move_iterator& y);
+template<SizedSentinel<Iterator> S>
+  friend constexpr iter_difference_t<Iterator>
+    operator-(const move_iterator& x, const move_sentinel<S>& y);
 [codeblock:end]
 
 [enter:description]
@@ -22,14 +28,47 @@ template<class Iterator1, class Iterator2>
 [%@library move_iterator[!operator+]]
 [codeblock:declaration]
 template<class Iterator>
-  constexpr move_iterator<Iterator> operator+(
-    typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& x);
+  constexpr move_iterator<Iterator>
+    operator+(iter_difference_t<Iterator> n, const move_iterator<Iterator>& x);
 [codeblock:end]
 
 [enter:description]
+[para:constraints]
+[:en] The expression [`x + n] shall be valid and have type [`Iterator].
+[:zh_CN] 表达式 [`x + n] 应当有效且类型为 [`Iterator]。
+
 [para:returns]
 [:en] [`x + n].
 [:zh_CN] [`x + n]。
+[exit:description]
+
+[%@library iter_move[!move_iterator]]
+[%@library move_iterator[!iter_move]]
+[codeblock:declaration]
+friend constexpr iter_rvalue_reference_t<Iterator>
+  iter_move(const move_iterator& i)
+    noexcept(noexcept(ranges::iter_move(i.current)));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::iter_move(i.current);]
+[:zh_CN] 等价于：[`return ranges::iter_move(i.current);]
+[exit:description]
+
+[%@library iter_swap[!move_iterator]]
+[%@library move_iterator[!iter_swap]]
+[codeblock:declaration]
+template<IndirectlySwappable<Iterator> Iterator2>
+  friend constexpr void
+    iter_swap(const move_iterator& x, const move_iterator<Iterator2>& y)
+      noexcept(noexcept(ranges::iter_swap(x.current, y.current)));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`ranges::iter_swap(x.current, y.current)].
+[:zh_CN] 等价于：[`ranges::iter_swap(x.current, y.current)]。
 [exit:description]
 
 [%@library make_move_iterator]

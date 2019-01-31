@@ -31,10 +31,37 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                    ForwardIterator1 first1, ForwardIterator1 last1,
                    ForwardIterator2 first2, ForwardIterator2 last2,
                    ForwardIterator result, Compare comp);
+
+namespace ranges {
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+           WeaklyIncrementable O, class Comp = ranges::less<>,
+           class Proj1 = identity, class Proj2 = identity>
+    requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+    constexpr set_difference_result<I1, O>
+      set_difference(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                     Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+           class Comp = ranges::less<>, class Proj1 = identity, class Proj2 = identity>
+    requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+    constexpr set_difference_result<safe_iterator_t<R1>, O>
+      set_difference(R1&& r1, R2&& r2, O result,
+                     Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:e] Let [`comp] be [`less{}], [`proj1] be [`identity{}], and [`proj2] be
+[`identity{}], for the overloads with no parameters by those names.
+[:zh_CN] 对于不带有这些名字的形参的重载，令 [`comp] 为 [`less()]，[`proj1] 为
+[`identity{}]，以及 [`proj2] 为 [`identity{}]。
+
 [para:requires]
+[:en] The ranges [=range(first1,last1)] and [=range(first2,last2)] shall be
+sorted with respect to [`comp] and [`proj1] or [`proj2], respectively.
+[:zh_CN] 范围 [=range(first1,last1)] 和 [=range(first2,last2)] 分别应当根据
+[`comp] 和 [`proj1] 或 [`proj2] 有序。
+
 [:en] The resulting range shall not overlap with either of the original ranges.
 [:zh_CN] 结果范围不能与任何一个源范围有重叠。
 
@@ -48,19 +75,32 @@ present in the range [=range(first2,last2)] to the range beginning at [`result].
 [:zh_CN] 所构造的范围中的元素是有序的。
 
 [para:returns]
-[:en] The end of the constructed range.
-[:zh_CN] 所构造的范围的末尾。
+[:en] Let [`result_last] be the end of the constructed range.
+[:zh_CN] 令 [`result_last] 为所构造的范围的末尾。
+
+[:en] Returns
+[:zh_CN] 返回：
+[list]
+[item]
+[:en@~] [`result_last] for the overloads in namespace [`std], or
+[:zh_CN@~] 命名空间 [`std] 中的各重载返回 [`result_last]，或者
+[item]
+[:en@~] [`{last1, result_last}] for the overloads in namespace [`ranges].
+[:zh_CN@~] 命名空间 [`ranges] 中的各重载返回 [`{last1, result_last}]。
+[list:end]
 
 [para:complexity]
-[:en] At most [`2 * ((last1 - first1) + (last2 - first2)) - 1] comparisons.
-[:zh_CN] 最多进行 [`2 * ((last1 - first1) + (last2 - first2)) - 1] 次比较。
+[:en] At most [`2 * ((last1 - first1) + (last2 - first2)) - 1] comparisons and
+applications of each projection.
+[:zh_CN] 最多进行 [`2 * ((last1 - first1) + (last2 - first2)) - 1] 次比较和每种
+投射的运用。
 
 [para:remarks]
 [:en] If [=range(first1,last1)] contains [$m] elements that are equivalent to
 each other and [=range(first2,last2)] contains [$n] elements that are equivalent
-to them, the last [$\max(m - n, 0)] elements from [=range(first1,last1)] shall
-be copied to the output range.
+to them, the last [$\max(m - n, 0)] elements from [=range(first1,last1)] is
+copied to the output range.
 [:zh_CN] 如果 [=range(first1,last1)] 包含 [$m] 个互相等价的元素，而
 [=range(first2,last2)] 包含 [$n] 个与其等价的元素，则 [=range(first1,last1)] 中
-的最后 [$\max(m - n, 0)] 个元素应当被复制到输出范围中。
+的最后 [$\max(m - n, 0)] 个元素被复制到输出范围中。
 [exit:description]

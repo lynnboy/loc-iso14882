@@ -10,32 +10,36 @@ template<class InputIterator, class Predicate>
 template<class ExecutionPolicy, class ForwardIterator, class Predicate>
   bool is_partitioned(ExecutionPolicy&& exec,
                       ForwardIterator first, ForwardIterator last, Predicate pred);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    constexpr bool is_partitioned(I first, S last, Pred pred, Proj proj = {});
+  template<InputRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    constexpr bool is_partitioned(R&& r, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] For the overload with no [`ExecutionPolicy], [`InputIterator][=']s value
-type shall be convertible to [`Predicate][=']s argument type.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，[`InputIterator] 的值类型应当可以
-转换为 [`Predicate] 的实参类型。
-
-[:en] For the overload with an [`ExecutionPolicy], [`ForwardIterator][=']s value
-type shall be convertible to [`Predicate][=']s argument type.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，[`ForwardIterator] 的值类型应当可以
-转换为 [`Predicate] 的实参类型。
+[para]
+[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named
+[`proj].
+[:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]。
 
 [para:returns]
-[:en] [`true] if [=range(first,last)] is empty or if the elements [`e] of
-[=range(first,last)] are partitioned with respect to the expression [`pred(e)].
-[:zh_CN] 如果 [=range(first,last)] 为空，或者如果 [=range(first,last)] 中的元素
-[`e] 根据表达式 [`pred(e)] 进行了分区，则返回 [`true]。
+[:en] [`true] if and only if the elements [`e] of [=range(first,last)] are
+partitioned with respect to the expression
+[`bool(invoke(pred, invoke(proj, e)))].
+[:zh_CN] 当且仅当 [=range(first,last)] 中的各元素 [`e] 根据表达式
+[`bool(invoke(pred, invoke(proj, e)))] 进行了分区时返回 [`true]。
 
 [para:complexity]
 [:en] Linear.
 [:zh_CN] 线性。
 
-[:en] At most [`last - first] applications of [`pred].
-[:zh_CN] 最多进行 [`last - first] 次 [`pred] 的运用。
+[:en] At most [`last - first] applications of [`pred] and [`proj].
+[:zh_CN] 最多进行 [`last - first] 次 [`pred] 和 [`proj] 的运用。
 [exit:description]
 
 [%@library partition]
@@ -47,28 +51,44 @@ template<class ExecutionPolicy, class ForwardIterator, class Predicate>
   ForwardIterator
     partition(ExecutionPolicy&& exec,
               ForwardIterator first, ForwardIterator last, Predicate pred);
+
+namespace ranges {
+  template<Permutable I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    constexpr I
+      partition(I first, S last, Pred pred, Proj proj = {});
+  template<ForwardRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    requires Permutable<iterator_t<R>>
+    constexpr safe_iterator_t<R>
+      partition(R&& r, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named
+[`proj] and let [$E(x)] be [`bool(invoke(pred, invoke(proj, [$x])))].
+[:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]，并令
+[$E(x)] 为 [`bool(invoke(pred, invoke(proj, [$x])))]。
+
 [para:requires]
-[:en] [`ForwardIterator] shall satisfy the [*Cpp17ValueSwappable] requirements
-([#swappable.requirements]).
-[:zh_CN] [`ForwardIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
-（[#swappable.requirements]）。
+[:en] For the overloads in namespace [`std], [`ForwardIterator] shall meet the
+[*Cpp17ValueSwappable] requirements ([#swappable.requirements]).
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`ForwardIterator] 应当满足
+[*Cpp17ValueSwappable] 的规定（[#swappable.requirements]）。
 
 [para:effects]
-[:en] Places all the elements in the range [=range(first,last)] that satisfy
-[`pred] before all the elements that do not satisfy it.
-[:zh_CN] 将范围 [=range(first,last)] 中的所有符合 [`pred] 的元素置于所有不符合
-的元素之前。
+[:en] Places all the elements [`e] in [=range(first,last)] that satisfy
+[$E([`e])] before all the elements that do not.
+[:zh_CN] 将 [=range(first,last)] 中的所有符合 [$E([`e])] 的元素 [`e] 置于所有
+不符合的元素之前。
 
 [para:returns]
-[:en] An iterator [`i] such that for every iterator [`j] in the range
-[=range(first,i)] [`pred(*j) != false], and for every iterator [`k] in the
-range [=range(i,last)], [`pred(*k) == false].
-[:zh_CN] 迭代器 [`i]，使得对于范围 [=range(first,i)] 中的每个迭代器 [`j] 均有
-[`pred(*j) != false]，而对于范围 [=range(i,last)] 中的每个迭代器 [`k] 均有
-[`pred(*k) == false]。
+[:en] An iterator [`i] such that [$E([`*j])] is [`true] for every iterator [`j]
+in [=range(first,i)] and [`false] for every iterator [`j] in [=range(i,last)].
+[:zh_CN] 迭代器 [`i]，使得 [$E([`*j])] 对于 [=range(first,i)] 中的每个迭代器
+[`j] 均为 [`false]，而对于 [=range(i,last)] 中的每个迭代器 [`j] 均为 [`false]。
 
 [para:complexity]
 [:en] Let [$N = [`last - first]]:
@@ -77,13 +97,16 @@ range [=range(i,last)], [`pred(*k) == false].
 [list]
 [item]
 [:en] For the overload with no [`ExecutionPolicy], exactly [$N] applications of
-the predicate.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，恰好进行 [$N] 次谓词的运用。
+the predicate and projection.
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，恰好进行 [$N] 次谓词和投射的运用。
 
-[:en] At most [$N / 2] swaps if [`ForwardIterator] meets the
-[*Cpp17BidirectionalIterator] requirements and at most [$N] swaps otherwise.
-[:zh_CN] 当 [`ForwardIterator] 满足 [*Cpp17BidirectionalIterator] 的规定时，最多
-进行 [$N / 2] 次交换；否则最多进行 [$N] 次交换。
+[:en] At most [$N / 2] swaps if the type of [`first] meets the
+[*Cpp17BidirectionalIterator] requirements for the overloads in namespace [`std]
+or models [`BidirectionalIterator] for the overloads in namespace [`ranges], and
+at most [$N] swaps otherwise.
+[:zh_CN] 当 [`first] 的类型对于命名空间 [`std] 中的各重载满足
+[*Cpp17BidirectionalIterator] 的规定，或对于命名空间 [`ranges] 中的各重载构成
+[`BidirectionalIterator] 时，最多进行 [$N / 2] 次交换；否则最多进行 [$N] 次交换。
 
 [item]
 [:en] For the overload with an [`ExecutionPolicy], [$[=O](N \log N)] swaps and
@@ -102,37 +125,52 @@ template<class ExecutionPolicy, class BidirectionalIterator, class Predicate>
   BidirectionalIterator
     stable_partition(ExecutionPolicy&& exec,
                      BidirectionalIterator first, BidirectionalIterator last, Predicate pred);
+
+namespace ranges {
+  template<BidirectionalIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    requires Permutable<I>
+    I stable_partition(I first, S last, Pred pred, Proj proj = {});
+  template<BidirectionalRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    requires Permutable<iterator_t<R>>
+    safe_iterator_t<R> stable_partition(R&& r, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`BidirectionalIterator] shall satisfy the [*Cpp17ValueSwappable]
-requirements ([#swappable.requirements]).
-[:zh_CN] [`BidirectionalIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
-（[#swappable.requirements]）。
+[para]
+[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named
+[`proj] and let [$E(x)] be [`bool(invoke(pred, invoke(proj, [$x])))].
+[:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]，并令
+[$E(x)] 为 [`bool(invoke(pred, invoke(proj, [$x])))]。
 
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
-([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
-requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+[para:requires]
+[:en] For the overloads in namespace [`std], [`BidirectionalIterator] shall meet
+the [*Cpp17ValueSwappable] requirements ([#swappable.requirements]) and the type
+of [`*first] shall meet the [*Cpp17MoveConstructible] ([#moveconstructible]) and
+[*Cpp17MoveAssignable] ([#moveassignable]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`BidirectionalIterator] 应当满足
+[*Cpp17ValueSwappable] 的规定（[#swappable.requirements]），并且 [`*first] 的
+类型应当满足 [*Cpp17MoveConstructible]（[#moveconstructible]）和
+[*Cpp17MoveAssignable]（[#moveassignable]）的规定。
 
 [para:effects]
-[:en] Places all the elements in the range [=range(first,last)] that satisfy
-[`pred] before all the elements that do not satisfy it.
-[:zh_CN] 将范围 [=range(first,last)] 中的所有符合 [`pred] 的元素置于所有不符合
-的元素之前。
-
-[para:returns]
-[:en] An iterator [`i] such that for every iterator [`j] in the range
-[=range(first,i)], [`pred(*j) != false], and for every iterator [`k] in the
-range [=range(i,last)], [`pred(*k) == false].
-[:zh_CN] 迭代器 [`i]，使得对于范围 [=range(first,i)] 中的每个迭代器 [`j] 均有
-[`pred(*j) != false]，而对于范围 [=range(i,last)] 中的每个迭代器 [`k] 均有
-[`pred(*k) == false]。
+[:en] Places all the elements [`e] in [=range(first,last)] that satisfy
+[$E([`e])] before all the elements that do not.
+[:zh_CN] 将 [=range(first,last)] 中的所有符合 [$E([`e])] 的元素 [`e] 置于所有
+不符合的元素之前。
 
 [:en] The relative order of the elements in both groups is preserved.
-[:zh_CN] 两个组中，元素之间的相对顺序均被保留。
+[:zh_CN] 两个分组中，各元素之间的相对顺序均被保留。
+
+[para:returns]
+[:en] An iterator [`i] such that for every iterator [`j] in [=range(first,i)],
+[$E([`*j])] is [`true], and for every iterator [`j] in the range
+[=range(i,last)], [$E([`*j])] is [`false].
+[:zh_CN] 迭代器 [`i]，使得对于 [=range(first,i)] 中的每个迭代器 [`j]，
+[$E([`*j])] 均为 [`true]，而对于范围 [=range(i,last)] 中的每个迭代器 [`j]，
+[$E([`*j])] 均为 [`false]。
 
 [para:complexity]
 [:en] Let [$N] = [`last - first]:
@@ -140,13 +178,13 @@ range [=range(i,last)], [`pred(*k) == false].
 
 [list]
 [item]
-[:en] For the overload with no [`ExecutionPolicy], at most [$N \log N] swaps,
+[:en] For the overloads with no [`ExecutionPolicy], at most [$N \log N] swaps,
 but only [$[=O](N)] swaps if there is enough extra memory.
 [:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行 [$N \log N] 次交换，但当
 有足够的额外内存时仅进行 [$[=O](N)] 次交换。
 
-[:en] Exactly [$N] applications of the predicate.
-[:zh_CN] 恰好进行 [$N] 次谓词的运用。
+[:en] Exactly [$N] applications of the predicate and projection.
+[:zh_CN] 恰好进行 [$N] 次谓词和投射的运用。
 
 [item]
 [:en] For the overload with an [`ExecutionPolicy], [$[=O](N \log N)] swap and
@@ -169,62 +207,77 @@ template<class ExecutionPolicy, class ForwardIterator, class ForwardIterator1,
     partition_copy(ExecutionPolicy&& exec,
                    ForwardIterator first, ForwardIterator last,
                    ForwardIterator1 out_true, ForwardIterator2 out_false, Predicate pred);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O1, WeaklyIncrementable O2,
+           class Proj = identity, IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    requires IndirectlyCopyable<I, O1> && IndirectlyCopyable<I, O2>
+    constexpr partition_copy_result<I, O1, O2>
+      partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,
+                     Proj proj = {});
+  template<InputRange R, WeaklyIncrementable O1, WeaklyIncrementable O2,
+           class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    requires IndirectlyCopyable<iterator_t<R>, O1> &&
+             IndirectlyCopyable<iterator_t<R>, O2>
+    constexpr partition_copy_result<safe_iterator_t<R>, O1, O2>
+      partition_copy(R&& r, O1 out_true, O2 out_false, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named
+[`proj] and let [$E(x)] be [`bool(invoke(pred, invoke(proj, [$x])))].
+[:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]，并令
+[$E(x)] 为 [`bool(invoke(pred, invoke(proj, [$x])))]。
+
 [para:requires]
+[:en] The input range and output ranges shall not overlap.
+[:zh_CN] 输入范围和各输出范围不能重叠。
 
-[list]
-[item]
-[:en] For the overload with no [`ExecutionPolicy], [`InputIterator][=']s value
-type shall be [*Cpp17CopyAssignable] ([#copyassignable]), and shall be writable
-([#iterator.requirements.general]) to the [`out_true] and [`out_false]
-[`OutputIterator]s, and shall be convertible to [`Predicate][=']s argument type.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，[`InputIterator] 的值类型应当为
-[*Cpp17CopyAssignable]（[#copyassignable]），并且应当可以向 [`OutputIterator]
-[`out_true] 和 [`out_false] 写出（[#iterator.requirements.general]），并且应当
-可以转换为 [`Predicate] 的实参类型。
-
-[item]
-[:en] For the overload with an [`ExecutionPolicy], [`ForwardIterator][=']s value
-type shall be [*Cpp17CopyAssignable], and shall be writable to the [`out_true]
-and [`out_false] [`ForwardIterator]s, and shall be convertible to
-[`Predicate][=']s argument type.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，[`ForwardIterator] 的值类型应当为
-[*Cpp17CopyAssignable]，并且应当可以向 [`ForwardIterator] [`out_true] 和
-[`out_false] 写出，并且应当可以转换为 [`Predicate] 的实参类型。
+[:en] For the overloads in namespace [`std], the expression [`*first] shall be
+writable ([#iterator.requirements.general]) to [`out_true] and [`out_false].
+[:zh_CN] 对于命名空间 [`std] 中的各重载，表达式 [`*first] 应当可以向 [`out_true]
+和 [`out_false] 写出（[#iterator.requirements.general]）。
 
 [enter:note]
-[:en] There may be a performance cost if [`ForwardIterator][=']s value type is
-not [*Cpp17CopyConstructible].
-[:zh_CN] 当 [`ForwardIterator] 的值类型不为 [*Cpp17CopyConstructible] 时，可能
-存在性能损耗。
+[:en] For the overload with an [`ExecutionPolicy], there may be a performance
+cost if [`first][=']s value type does not meet the [*Cpp17CopyConstructible]
+requirements.
+[:zh_CN] 对于带有一个 [`ExecutionPolicy] 的重载，如果 [`first] 的值类型不满足
+[*Cpp17CopyConstructible] 的规定时，可能存在性能损耗。
 [exit:note]
-
-[item]
-[:en] For both overloads, the input range shall not overlap with either of the
-output ranges.
-[:zh_CN] 两种重载中，输入范围均不能与任何一个输出范围有重叠。
-[list:end]
 
 [para:effects]
 [:en] For each iterator [`i] in [=range(first,last)], copies [`*i] to the output
-range beginning with [`out_true] if [`pred(*i)] is [`true], or to the output
+range beginning with [`out_true] if [$E([`*i])] is [`true], or to the output
 range beginning with [`out_false] otherwise.
-[:zh_CN] 对于范围 [=range(first,last)] 中的每个迭代器 [`i]，如果 [`pred(*i)] 为
+[:zh_CN] 对于范围 [=range(first,last)] 中的每个迭代器 [`i]，如果 [$E([`*i])] 为
 [`true]，则将 [`*i] 复制到以 [`out_true] 开始的输出范围，否则就将其复制到以
 [`out_false] 开始的输出范围。
 
 [para:returns]
-[:en] A pair [`p] such that [`p.first] is the end of the output range beginning
-at [`out_true] and [`p.second] is the end of the output range beginning at
-[`out_false].
-[:zh_CN] 对偶 [`p]，其中 [`p.first] 为以 [`out_true] 开始的输出范围的末尾，而
-[`p.second] 为以 [`out_false] 开始的输出范围的末尾。
+[:en] Let [`o1] be the end of the output range beginning at [`out_true], and
+[`o2] the end of the output range beginning at [`out_false].
+[:zh_CN] 令 [`o1] 为以 [`out_true] 开始的输出范围的末尾，而 [`o2] 为以
+[`out_false] 开始的输出范围的末尾。
+
+[:en] Returns
+[:zh_CN] 返回：
+
+[list]
+[item]
+[:en@~] [`{o1, o2}] for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载返回 [`{o1, o2}]，或者
+[item]
+[:en@~] [`{last, o1, o2}] for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载返回 [`{last, o1, o2}]。
+[list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of [`pred].
-[:zh_CN] 恰好进行 [`last - first] 次 [`pred] 的运用。
+[:en] Exactly [`last - first] applications of [`pred] and [`proj].
+[:zh_CN] 恰好进行 [`last - first] 次 [`pred] 和 [`proj] 的运用。
 [exit:description]
 
 [%@library partition_point]
@@ -232,26 +285,38 @@ at [`out_true] and [`p.second] is the end of the output range beginning at
 template<class ForwardIterator, class Predicate>
   constexpr ForwardIterator
     partition_point(ForwardIterator first, ForwardIterator last, Predicate pred);
+
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    constexpr I partition_point(I first, S last, Pred pred, Proj proj = {});
+  template<ForwardRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    constexpr safe_iterator_t<R>
+      partition_point(R&& r, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`ForwardIterator][=']s value type shall be convertible to
-[`Predicate][=']s argument type.
-[:zh_CN] [`ForwardIterator] 的值类型应当可以转换为 [`Predicate] 的实参类型。
+[para]
+[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named
+[`proj] and let [$E(x)] be [`bool(invoke(pred, invoke(proj, [$x])))].
+[:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]，并令
+[$E(x)] 为 [`bool(invoke(pred, invoke(proj, [$x])))]。
 
+[para:requires]
 [:en] The elements [`e] of [=range(first,last)] shall be partitioned with
-respect to the expression [`pred(e)].
-[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当已经根据表达式 [`pred(e)] 进行了
-分区。
+respect to [$E([`e])].
+[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当已经根据 [$E([`e])] 进行了分区。
 
 [para:returns]
-[:en] An iterator [`mid] such that [`all_of(first, mid, pred)] and
-[`none_of(mid, last, pred)] are both true.
-[:zh_CN] 迭代器 [`mid]，使得 [`all_of(first, mid, pred)] 和
-[`none_of(mid, last, pred)] 均为真。
+[:en] An iterator [`mid] such that [$E([`*i])] is [`true] for all iterators [`i]
+in [=range(first,mid)], and [`false] for all iterators [`i] in
+[=range(mid,last)].
+[:zh_CN] 迭代器 [`mid]，使得 [$E([`*i])] 对 [=range(first,mid)] 中的每个迭代器
+[`i] 均为 [`true]，而对 [=range(mid,last)] 中的每个迭代器 [`i] 均为 [`false]。
 
 [para:complexity]
-[:en] [$[=O](\log([`last - first]))] applications of [`pred].
-[:zh_CN] [$[=O](\log([`last - first]))] 次 [`pred] 的运用。
+[:en] [$[=O](\log([`last - first]))] applications of [`pred] and [`proj].
+[:zh_CN] [$[=O](\log([`last - first]))] 次 [`pred] 和 [`proj] 的运用。
 [exit:description]

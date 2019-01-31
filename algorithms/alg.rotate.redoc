@@ -12,6 +12,11 @@ template<class ExecutionPolicy, class ForwardIterator>
   ForwardIterator
     rotate(ExecutionPolicy&& exec,
            ForwardIterator first, ForwardIterator middle, ForwardIterator last);
+
+namespace ranges {
+  template<Permutable I, Sentinel<I> S>
+    constexpr subrange<I> rotate(I first, I middle, S last);
+}
 [codeblock:end]
 
 [enter:description]
@@ -19,16 +24,14 @@ template<class ExecutionPolicy, class ForwardIterator>
 [:en] [=range(first,middle)] and [=range(middle,last)] shall be valid ranges.
 [:zh_CN] [=range(first,middle)] 和 [=range(middle,last)] 应当是有效范围。
 
-[:en] [`ForwardIterator] shall satisfy the [*Cpp17ValueSwappable] requirements
-([#swappable.requirements]).
+[:en] [`ForwardIterator] shall meet the [*Cpp17ValueSwappable] requirements
+([#swappable.requirements]), and the type of [`*first] shall meet the
+[*Cpp17MoveConstructible] ([#moveconstructible]) and [*Cpp17MoveAssignable]
+([#moveassignable]) requirements.
 [:zh_CN] [`ForwardIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
-（[#swappable.requirements]）。
-
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
-([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
-requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+（[#swappable.requirements]），并且 [`*first] 的类型应当满足
+[*Cpp17MoveConstructible]（[#moveconstructible]）和 [*Cpp17MoveAssignable]
+（[#moveassignable]）的规定。
 
 [para:effects]
 [:en] For each non-negative integer [`i < (last - first)], places the element
@@ -37,17 +40,42 @@ from the position [`first + i] into position
 [:zh_CN] 对于每个非负整数 [`i < (last - first)]，将位置 [`first + i] 中的元素
 置于位置 [`first + (i + (last - middle)) % (last - first)] 中。
 
-[para:returns]
-[:en] [`first + (last - middle)].
-[:zh_CN] [`first + (last - middle)]。
-
-[para:remarks]
+[enter:note]
 [:en] This is a left rotate.
 [:zh_CN] 这是左旋操作。
+[exit:note]
+
+[para:returns]
+[list]
+[item]
+[:en@~] [`first + (last - middle)], for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载，返回 [`first + (last - middle)]，或者
+[item]
+[:en@~] [`{first + (last - middle), last}], for the overloads in namespace
+[`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载，返回
+[`{first + (last - middle), last}]。
+[list:end]
 
 [para:complexity]
 [:en] At most [`last - first] swaps.
 [:zh_CN] 最多进行 [`last - first] 次交换。
+[exit:description]
+
+[codeblock:declaration]
+namespace ranges {
+  template<ForwardRange R>
+    requires Permutable<iterator_t<R>>
+    constexpr safe_subrange_t<R> rotate(R&& r, iterator_t<R> middle);
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[`return ranges::rotate(ranges::begin(r), middle, ranges::end(r));]
+[:zh_CN] 等价于：
+[`return ranges::rotate(ranges::begin(r), middle, ranges::end(r));]
 [exit:description]
 
 [%@library rotate_copy]
@@ -61,30 +89,67 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
     rotate_copy(ExecutionPolicy&& exec,
                 ForwardIterator1 first, ForwardIterator1 middle, ForwardIterator1 last,
                 ForwardIterator2 result);
+
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, WeaklyIncrementable O>
+    requires IndirectlyCopyable<I, O>
+    constexpr rotate_copy_result<I, O>
+      rotate_copy(I first, I middle, S last, O result);
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$N] be [`last - first].
+[:zh_CN] 令 [$N] 为 [`last - first]。
+
 [para:requires]
-[:en] The ranges [=range(first,last)] and
-[=range(result,result + (last - first))] shall not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first))]
-不能有重叠。
+[:en] [=range(first,middle)] and [=range(middle,last)] shall be valid ranges.
+[:zh_CN] [=range(first,middle)] 和 [=range(middle,last)] 应当是有效范围。
+
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N])] shall
+not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N])] 不能有重叠。
 
 [para:effects]
 [:en] Copies the range [=range(first,last)] to the range
-[=range(result,result + (last - first))] such that for each non-negative integer
-[`i < (last - first)] the following assignment takes place:
-[`*(result + i) =  *(first + (i + (middle - first)) % (last - first))].
-[:zh_CN] 将范围 [=range(first,last)] 复制到范围
-[=range(result,result + (last - first))] 中，其中对于每个非负整数
-[`i < (last - first)]，都进行了以下赋值：
-[`*(result + i) =  *(first + (i + (middle - first)) % (last - first))]。
+[=range(result,result + [$N])] such that for each non-negative integer [$i < N]
+the following assignment takes place:
+[`*(result + [$i]) =  *(first + ([$i] + (middle - first)) % [$N])].
+[:zh_CN] 将范围 [=range(first,last)] 复制到范围 [=range(result,result + [$N])]
+中，其中对于每个非负整数 [$i < N]，都进行了以下赋值：
+[`*(result + [$i]) =  *(first + ([$i] + (middle - first)) % [$N])]。
 
 [para:returns]
-[:en] [`result + (last - first)].
-[:zh_CN] [`result + (last - first)]。
+[list]
+[item]
+[:en@~] [`result + [$N]], for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载，返回 [`result + [$N]]，或者
+[item]
+[:en@~] [`{last, result + [$N]}], for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载，返回 [`{last, result + [$N]}]。
+[list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] assignments.
-[:zh_CN] 恰好进行 [`last - first] 次赋值。
+[:en] Exactly [$N] assignments.
+[:zh_CN] 恰好进行 [$N] 次赋值。
+[exit:description]
+
+[codeblock:declaration]
+namespace ranges {
+  template<ForwardRange R, WeaklyIncrementable O>
+    requires IndirectlyCopyable<iterator_t<R>, O>
+    constexpr rotate_copy_result<safe_iterator_t<R>, O>
+      rotate_copy(R&& r, iterator_t<R> middle, O result);
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+return ranges::rotate_copy(ranges::begin(r), middle, ranges::end(r), result);
+[codeblock:end]
 [exit:description]

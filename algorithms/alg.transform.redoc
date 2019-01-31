@@ -8,13 +8,13 @@
 template<class InputIterator, class OutputIterator,
          class UnaryOperation>
   constexpr OutputIterator
-    transform(InputIterator first, InputIterator last,
+    transform(InputIterator first1, InputIterator last1,
               OutputIterator result, UnaryOperation op);
 template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
          class UnaryOperation>
   ForwardIterator2
     transform(ExecutionPolicy&& exec,
-              ForwardIterator1 first, ForwardIterator1 last,
+              ForwardIterator1 first1, ForwardIterator1 last1,
               ForwardIterator2 result, UnaryOperation op);
 
 template<class InputIterator1, class InputIterator2,
@@ -30,9 +30,83 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
               ForwardIterator1 first1, ForwardIterator1 last1,
               ForwardIterator2 first2, ForwardIterator result,
               BinaryOperation binary_op);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+           CopyConstructible F, class Proj = identity>
+    requires Writable<O, indirect_result_t<F&, projected<I, Proj>>>
+    constexpr unary_transform_result<I, O>
+      transform(I first1, S last1, O result, F op, Proj proj = {});
+  template<InputRange R, WeaklyIncrementable O, CopyConstructible F,
+           class Proj = identity>
+    requires Writable<O, indirect_result_t<F&, projected<iterator_t<R>, Proj>>>
+    constexpr unary_transform_result<safe_iterator_t<R>, O>
+      transform(R&& r, O result, F op, Proj proj = {});
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+           WeaklyIncrementable O, CopyConstructible F, class Proj1 = identity,
+           class Proj2 = identity>
+    requires Writable<O, indirect_result_t<F&, projected<I1, Proj1>,
+                                           projected<I2, Proj2>>>
+    constexpr binary_transform_result<I1, I2, O>
+      transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+           CopyConstructible F, class Proj1 = identity, class Proj2 = identity>
+    requires Writable<O, indirect_result_t<F&, projected<iterator_t<R1>, Proj1>,
+                                           projected<iterator_t<R2>, Proj2>>>
+    constexpr binary_transform_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+      transform(R1&& r1, R2&& r2, O result,
+                F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en@~] [`last2] be [`first2 + (last1 - first1)] for the overloads with
+parameter [`first2] but no parameter [`last2],
+[:zh_CN] 令 [`last2] 对于带有形参 [`first2] 但没有形参 [`last2] 的重载为
+[`first2 + (last1 - first1)]，
+[item]
+[:en@~] [$N] be [`last1 - first1] for unary transforms, or
+[$\min([`last1 - first1], \ [`last2 - first2])] for binary transforms, and
+[:zh_CN@~] [$N] 对于一元变换为 [`last1 - first1]，或对于二元变换为
+[$\min([`last1 - first1], \ [`last2 - first2])]，以及
+
+[item]
+[:en] [$E] be:
+[:zh_CN] 令 [$E]：
+
+[list]
+[item]
+[:en@~] [`op(*(first1 + (i - result)))] for unary transforms defined in
+namespace [`std],
+[:zh_CN@~] 对于定义于命名空间 [`std] 中的一元变换为
+[`op(*(first1 + (i - result)))]，
+[item]
+[:en@~] [`binary_op(*(first1 + (i - result)), *(first2 + (i - result)))] for
+binary transforms defined in namespace [`std],
+[:zh_CN@~] 对于定义于命名空间 [`std] 中的二元变换为
+[`binary_op(*(first1 + (i - result)), *(first2 + (i - result)))]，
+[item]
+[:en@~] [`invoke(op, invoke(proj, *(first1 + (i - result))))] for unary
+transforms defined in namespace [`ranges], or
+[:zh_CN@~] 对于定义于命名空间 [`ranges] 中的一元变换为
+[`invoke(op, invoke(proj, *(first1 + (i - result))))]，或者
+[item]
+[:en@~]
+[`invoke(binary_op, invoke(proj1, *(first1 + (i - result))),
+invoke(proj2, *(first2 + (i - result))))]
+for binary transforms defined in namespace [`ranges].
+[:zh_CN@~] 对于定义于命名空间 [`ranges] 中的二元变换为
+[`invoke(binary_op, invoke(proj1, *(first1 + (i - result))),
+invoke(proj2, *(first2 + (i - result))))]。
+[list:end]
+[list:end]
+
 [para:requires]
 [:en] [`op] and [`binary_op] shall not invalidate iterators or subranges, or
 modify elements in the ranges
@@ -41,14 +115,14 @@ modify elements in the ranges
 
 [list]
 [item]
-[:en@~] [=crange(first1,last1)],
-[:zh_CN@~] [=crange(first1,last1)]，
+[:en@~] [=crange(first1,first1 + [$N])],
+[:zh_CN@~] [=crange(first1,first1 + [$N])]，
 [item]
-[:en@~] [=crange(first2,first2 + (last1 - first1))], and
-[:zh_CN@~] [=crange(first2,first2 + (last1 - first1))]，以及
+[:en@~] [=crange(first2,first2 + [$N])], and
+[:zh_CN@~] [=crange(first2,first2 + [$N])]，以及
 [item]
-[:en@~] [=crange(result,result + (last1 - first1))].[#:note#fn:$1]
-[:zh_CN@~] [=crange(result,result + (last1 - first1))]。[#:note#fn:$1]
+[:en@~] [=crange(result,result + [$N])].[#:note#fn:$1]
+[:zh_CN@~] [=crange(result,result + [$N])]。[#:note#fn:$1]
 [list:end]
 
 [note:foot#fn:$1]
@@ -57,29 +131,36 @@ modify elements in the ranges
 [note:end]
 
 [para:effects]
-[:en] Assigns through every iterator [`i] in the range [=range(result,result +
-(last1 - first1))] a new corresponding value equal to
-[`op(*(first1 + (i - result)))] or
-[`binary_op(*(first1 + (i - result)), *(first2 + (i - result)))].
-[:zh_CN] 通过范围 [=range(result,result + (last1 - first1))] 中的每个迭代器 [`i]
-，以等于 [`op(*(first1 + (i - result)))] 或
-[`binary_op(*(first1 + (i - result)), *(first2 + (i - result)))] 的一个对应值
-进行赋值。
+[:en] Assigns through every iterator [`i] in the range
+[=range(result,result + [$N])] a new corresponding value equal to [$E].
+[:zh_CN] 通过范围 [=range(result,result + [$N])] 中的每个迭代器 [`i]，以一个新的
+等于 [$E] 的对应值进行赋值。
 
 [para:returns]
-[:en] [`result + (last1 - first1)].
-[:zh_CN] [`result + (last1 - first1)]。
+[list]
+[item]
+[:en@~] [`result + [$N]] for the overloads defined in namespace [`std],
+[:zh_CN@~] 对于定义于命名空间 [`std] 中的重载，返回 [`result + [$N]]，
+[item]
+[:en@~] [`{first1 + [$N], result + [$N]}] for unary transforms defined in
+namespace [`ranges], or
+[:zh_CN@~] 对于定义于命名空间 [`ranges] 中的一元变换，返回
+[`{first1 + [$N], result + [$N]}]，或者
+[item]
+[:en@~] [`{first1 + [$N], first2 + [$N], result + [$N]}] for binary transforms
+defined in namespace [`ranges].
+[:zh_CN@~] 对于定义于命名空间 [`ranges] 中的二元变换，返回
+[`{first1 + [$N], first2 + [$N], result + [$N]}]。
+[list:end]
 
 [para:complexity]
-[:en] Exactly [`last1 - first1] applications of [`op] or [`binary_op].
-[:zh_CN] 恰好进行 [`last1 - first1] 次 [`op] 或 [`binary_op] 的运用。
+[:en] Exactly [$N] applications of [`op] or [`binary_op], and any projections.
+[:zh_CN] 恰好进行 [$N] 次 [`op] 或 [`binary_op]，以及任何投射的运用。
 
 [:en] This requirement also applies to the overload with an [`ExecutionPolicy].
 [:zh_CN] 这项规定同样适用于带有 [`ExecutionPolicy] 的重载。
 
 [para:remarks]
-[:en] [`result] may be equal to [`first] in case of unary transform, or to
-[`first1] or [`first2] in case of binary transform.
-[:zh_CN] 在一元变换中 [`result] 可以等于 [`first]，在二元变换中 [`result] 可以
-等于 [`first1] 或者 [`first2]。
+[:en] [`result] may be equal to [`first1] or [`first2].
+[:zh_CN] [`result] 可以等于 [`first1] 或者 [`first2]。
 [exit:description]

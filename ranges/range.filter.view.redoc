@@ -1,0 +1,100 @@
+[section#range.filter.view
+    [:en] Class template [`filter_view]
+    [:zh_CN] 类模板 [`filter_view]
+]
+
+[codeblock:synopsis [!:var semiregular]]
+namespace std::ranges {
+  template<InputRange V, IndirectUnaryPredicate<iterator_t<V>> Pred>
+    requires View<V> && is_object_v<Pred>
+  class filter_view : public view_interface<filter_view<V, Pred>> {
+  private:
+    V base_ = V();              // [=Expos]
+    [*semiregular]<Pred> pred_;    // [=Expos]
+
+    class iterator;             // [=Expos]
+    class sentinel;             // [=Expos]
+
+  public:
+    filter_view() = default;
+    constexpr filter_view(V base, Pred pred);
+    template<InputRange R>
+      requires ViewableRange<R> && Constructible<V, all_view<R>>
+    constexpr filter_view(R&& r, Pred pred);
+
+    constexpr V base() const;
+
+    constexpr iterator begin();
+    constexpr auto end() {
+      if constexpr (CommonRange<V>)
+        return iterator{*this, ranges::end(base_)};
+      else
+        return sentinel{*this};
+    }
+  };
+
+  template<class R, class Pred>
+    filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
+}
+[codeblock:end]
+
+[%@library filter_view[!filter_view]]
+[codeblock:declaration]
+constexpr filter_view(V base, Pred pred);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`std::move(base)] and initializes [`pred_] with
+[`std::move(pred)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(pred)] 初始化
+[`pred_]。
+[exit:description]
+
+[%@library filter_view[!filter_view]]
+[codeblock:declaration]
+template<InputRange R>
+  requires ViewableRange<R> && Constructible<V, all_view<R>>
+constexpr filter_view(R&& r, Pred pred);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and initializes
+[`pred_] with [`std::move(pred)].
+[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以
+[`std::move(pred)] 初始化 [`pred_]。
+[exit:description]
+
+[%@library base[!filter_view]]
+[codeblock:declaration]
+constexpr V base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return base_;]
+[:zh_CN] 等价于：[`return base_;]
+[exit:description]
+
+[%@library begin[!filter_view]]
+[codeblock:declaration]
+constexpr iterator begin();
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`pred_.has_value()].
+[:zh_CN] [`pred_.has_value()]。
+
+[para:returns]
+[:en] [`{*this, ranges::find_if(base_, ref(*pred_))}].
+[:zh_CN] [`{*this, ranges::find_if(base_, ref(*pred_))}]。
+
+[para:remarks]
+[:en] In order to provide the amortized constant time complexity required by the
+[`Range] concept, this function caches the result within the [`filter_view] for
+use on subsequent calls.
+[:zh_CN] 为了提供由 [`Range] 概念所规定的均摊常量时间复杂度，这个函数在
+[`filter_view] 之内将其结果进行缓存，并在随后的调用中使用之。
+[exit:description]

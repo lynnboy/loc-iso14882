@@ -1,0 +1,87 @@
+[section#range.take.sentinel
+    [:en] Class template [`take_view::sentinel]
+    [:zh_CN] 类模板 [`take_view::sentinel]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class V>
+  template<bool Const>
+  class take_view<V>::sentinel {
+  private:
+    using Base = conditional_t<Const, const V, V>;      // [=Expos]
+    using CI = counted_iterator<iterator_t<Base>>;      // [=Expos]
+    sentinel_t<Base> end_ = sentinel_t<Base>();         // [=Expos]
+  public:
+    sentinel() = default;
+    constexpr explicit sentinel(sentinel_t<Base> end);
+    constexpr sentinel(sentinel<!Const> s)
+      requires Const && ConvertibleTo<sentinel_t<V>, sentinel_t<Base>>;
+
+    constexpr sentinel_t<Base> base() const;
+
+    friend constexpr bool operator==(const sentinel& x, const CI& y);
+    friend constexpr bool operator==(const CI& y, const sentinel& x);
+    friend constexpr bool operator!=(const sentinel& x, const CI& y);
+    friend constexpr bool operator!=(const CI& y, const sentinel& x);
+  };
+}
+[codeblock:end]
+
+[%@library sentinel[!take_view::sentinel]]
+[codeblock:declaration]
+constexpr explicit sentinel(sentinel_t<Base> end);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`end_] with [`end].
+[:zh_CN] 以 [`end] 初始化 [`end_]。
+[exit:description]
+
+[%@library sentinel[!take_view::sentinel]]
+[codeblock:declaration]
+constexpr sentinel(sentinel<!Const> s)
+  requires Const && ConvertibleTo<sentinel_t<V>, sentinel_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`end_] with [`std::move(s.end_)].
+[:zh_CN] 以 [`std::move(s.end_)] 初始化 [`end_]。
+[exit:description]
+
+[%@library base[!take_view::sentinel]]
+[codeblock:declaration]
+constexpr sentinel_t<Base> base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return end_;]
+[:zh_CN] 等价于：[`return end_;]
+[exit:description]
+
+[%@library operator==[!take_view::sentinel]]
+[codeblock:declaration]
+friend constexpr bool operator==(const sentinel& x, const CI& y);
+friend constexpr bool operator==(const CI& y, const sentinel& x);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return y.count() == 0 || y.base() == x.end_;]
+[:zh_CN] 等价于：[`return y.count() == 0 || y.base() == x.end_;]
+[exit:description]
+
+[%@library operator!=[!take_view::sentinel]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const sentinel& x, const CI& y);
+friend constexpr bool operator!=(const CI& y, const sentinel& x);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]

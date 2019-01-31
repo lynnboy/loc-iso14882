@@ -209,7 +209,7 @@ printf("a=%d b=%d", a, b);
 
 [:en]
 However, the first argument must be of a type that can be converted to a
-[`const char*]
+[`const char*].
 [:zh_CN]
 然而，其第一个实参必须具有可以转换为 [`const char*] 的类型。
 [exit:example]
@@ -588,6 +588,139 @@ A function template is not a function.
 [:zh_CN]
 函数模板不是函数。
 [exit:note]
+
+[para]
+[:en]
+[%abbreviated[!template function][%template[!function[!abbreviated]]]]
+An [+abbreviated function template[%template[!function[!abbreviated]]]] is a
+function declaration whose [~parameter-type-list] includes one or more
+placeholders ([#dcl.spec.auto]).
+[:zh_CN]
+[%简写[!函数模板～][%模板[!函数～[!简写～]]]]
+[+简写函数模板[%模板[!函数～[!简写～]]]]是在其[~形参类型列表]中包含一个或多个
+占位符([#dcl.spec.auto]）的函数声明式。
+
+[:en]
+An abbreviated function template is equivalent to a function template
+([#temp.over.link]) whose [~template-parameter-list] includes one invented type
+[~template-parameter] for each occurrence of a placeholder type in the
+[~decl-specifier-seq] of a [~parameter-declaration] in the function[=']s
+parameter-type-list, in order of appearance.
+[:zh_CN]
+简写函数模板等价于一个函数模板（[#temp.over.link]），对于每个出现于该函数的
+形参类型列表中的某个[~形参声明式]的[~声明说明符序列]中的占位符类型，以其出现的
+顺序，在[~模板形参列表]都包含一个虚构的类型[~模板形参]。
+
+[:en]
+For a [~placeholder-type-specifier] of the form [`auto], the invented parameter
+is an unconstrained [~type-parameter].
+[:zh_CN]
+对于形式为 [`auto] 的[~占位符类型说明符]，虚构的形参是一个无约束[~类型形参]。
+
+[:en]
+For a [~placeholder-type-specifier] of the form [~type-constraint] [`auto], the
+invented parameter is a [~type-parameter] with that [~type-constraint].
+[:zh_CN]
+对于形式为“[~类型约束] [`auto]”的[~占位符类型说明符]，虚构的形参是一个带有该
+[~类型约束]的[~类型形参]。
+
+[:en]
+The invented type [~template-parameter] is a template parameter pack if the
+corresponding [~parameter-declaration] declares a function parameter pack
+([#dcl.fct]).
+[:zh_CN]
+当对应的[~形参声明式]所声明的是函数形参包组（[#dcl.fct]）时，虚构的类型[~模板
+形参]是一个模板形参包组。
+
+[:en]
+If the placeholder contains [`decltype(auto)], the program is ill-formed.
+[:zh_CN]
+如果占位符包含了 [`decltype(auto)]，则程序非良构。
+
+[:en]
+The adjusted function parameters of an abbreviated function template are derived
+from the [~parameter-declaration-clause] by replacing each occurrence of a
+placeholder with the name of the corresponding invented [~template-parameter].
+[:zh_CN]
+简写函数模板的调整后的各函数形参，是从其[~形参声明子句]中通过将各个占位符替换为
+其对应的虚构[~模板形参]的名字而得出的。
+
+[enter:example]
+[codeblock]
+template<typename T>     concept C1 = /* ... */;
+template<typename T>     concept C2 = /* ... */;
+template<typename... Ts> concept C3 = /* ... */;
+
+void g1(const C1 auto*, C2 auto&);
+void g2(C1 auto&...);
+void g3(C3 auto...);
+void g4(C3 auto);
+[codeblock:end]
+
+[:en]
+These declarations are functionally equivalent (but not equivalent) to the
+following declarations.
+[:zh_CN]
+这些声明式在功能上等价于（但并不等价于）以下声明式。
+
+[codeblock]
+template<C1 T, C2 U> void g1(const T*, U&);
+template<C1... Ts>   void g2(Ts&...);
+template<C3... Ts>   void g3(Ts...);
+template<C3 T>       void g4(T);
+[codeblock:end]
+
+[:en]
+Abbreviated function templates can be specialized like all function templates.
+[:zh_CN]
+简写函数模板可以和所有函数模板一样被特化。
+
+[codeblock]
+template<> void g1<int>(const int*, const double&); // [:en] OK, specialization of [`g1<int, const double>]
+                                                    // [|:zh_CN] OK，[`g1<int, const double>] 的特化式
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+An abbreviated function template can have a [~template-head].
+简写函数模板可以带有[~模板头]。
+
+[:en]
+The invented [~template-parameters] are appended to the
+[~template-parameter-list] after the explicitly declared [~template-parameters].
+[:zh_CN]
+各个虚构的[~模板形参]被追加到其[~模板形参列表]中明确声明的[~模板形参]的后面。
+
+[enter:example]
+[codeblock]
+template<typename> concept C = /* ... */;
+
+template <typename T, C U>
+  void g(T x, U y, C auto z);
+[codeblock:end]
+
+[:en]
+This is functionally equivalent to each of the following two declarations.
+[:zh_CN]
+这在功能上等价于以下两个声明式。
+
+[codeblock]
+template<typename T, C U, C W>
+  void g(T x, U y, W z);
+
+template<typename T, typename U, typename W>
+  requires C<U> && C<W>
+  void g(T x, U y, W z);
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+A function declaration at block scope shall not declare an abbreviated function
+template.
+[:zh_CN]
+块作用域的函数声明式不能声明简写函数模板。
 
 [para]
 [:en]

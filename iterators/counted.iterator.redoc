@@ -1,0 +1,148 @@
+[section#counted.iterator
+    [:en] Class template [`counted_iterator]
+    [:zh_CN] 类模板 [`counted_iterator]
+]
+
+[para]
+[:en] Class template [`counted_iterator] is an iterator adaptor with the same
+behavior as the underlying iterator except that it keeps track of the distance
+to the end of its range.
+[:zh_CN] 类模板 [`counted_iterator] 是一种迭代器适配器，提供与其底层迭代器相同的
+行为，但它跟踪了到其范围末尾的距离。
+
+[:en] It can be used together with [`default_sentinel] in calls to generic
+algorithms to operate on a range of [$N] elements starting at a given position
+without needing to know the end position a priori.
+[:zh_CN] 可以将其和 [`default_sentinel] 一同用在泛型算法的调用中，以对从某个给定
+位置开始的 [$N] 个元素的范围上进行操作而无需事先知道其末尾位置。
+
+[para]
+[enter:example]
+[codeblock]
+list<string> s;
+// [:en] populate the list [`s] with at least 10 strings
+// [|:zh_CN] 产生列表 [`s] 使其至少具有 10 个字符串
+vector<string> v;
+// [:en] copies 10 strings into [`v]:
+// [|:zh_CN] 向 [`v] 中复制 10 个字符串：
+ranges::copy(counted_iterator(s.begin(), 10), default_sentinel, back_inserter(v));
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en] Two values [`i1] and [`i2] of types [`counted_iterator<I1>] and
+[`counted_iterator<I2>] refer to elements of the same sequence if and only if
+[`next(i1.base(), i1.count())] and [`next(i2.base(), i2.count())] refer to the
+same (possibly past-the-end) element.
+[:zh_CN] 类型分别为 [`counted_iterator<I1>] 和 [`counted_iterator<I2>] 的两个值
+[`i1] 和 [`i2]，当且仅当 [`next(i1.base(), i1.count())] 和
+[`next(i2.base(), i2.count())] 指代相同（可能为越过末尾）元素时，它们指代同一个
+序列中的相同元素。
+
+[%@library counted_iterator]
+[codeblock:synopsis [!:var dereferenceable] [!:mark SeeBelow]]
+  template<Iterator I>
+  class counted_iterator {
+  public:
+    using iterator_type = I;
+
+    constexpr counted_iterator() = default;
+    constexpr counted_iterator(I x, iter_difference_t<I> n);
+    template<class I2>
+      requires ConvertibleTo<const I2&, I>
+        constexpr counted_iterator(const counted_iterator<I2>& x);
+
+    template<class I2>
+      requires Assignable<I&, const I2&>
+        constexpr counted_iterator& operator=(const counted_iterator<I2>& x);
+
+    constexpr I base() const;
+    constexpr iter_difference_t<I> count() const noexcept;
+    constexpr decltype(auto) operator*();
+    constexpr decltype(auto) operator*() const
+      requires [*dereferenceable]<const I>;
+
+    constexpr counted_iterator& operator++();
+    decltype(auto) operator++(int);
+    constexpr counted_iterator operator++(int)
+      requires ForwardIterator<I>;
+    constexpr counted_iterator& operator--()
+      requires BidirectionalIterator<I>;
+    constexpr counted_iterator operator--(int)
+      requires BidirectionalIterator<I>;
+
+    constexpr counted_iterator operator+(iter_difference_t<I> n) const
+      requires RandomAccessIterator<I>;
+    friend constexpr counted_iterator operator+(
+      iter_difference_t<I> n, const counted_iterator& x)
+        requires RandomAccessIterator<I>;
+    constexpr counted_iterator& operator+=(iter_difference_t<I> n)
+      requires RandomAccessIterator<I>;
+
+    constexpr counted_iterator operator-(iter_difference_t<I> n) const
+      requires RandomAccessIterator<I>;
+    template<Common<I> I2>
+      friend constexpr iter_difference_t<I2> operator-(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+    friend constexpr iter_difference_t<I> operator-(
+      const counted_iterator& x, default_sentinel_t);
+    friend constexpr iter_difference_t<I> operator-(
+      default_sentinel_t, const counted_iterator& y);
+    constexpr counted_iterator& operator-=(iter_difference_t<I> n)
+      requires RandomAccessIterator<I>;
+
+    constexpr decltype(auto) operator[](iter_difference_t<I> n) const
+      requires RandomAccessIterator<I>;
+
+    template<Common<I> I2>
+      friend constexpr bool operator==(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+    friend constexpr bool operator==(
+      const counted_iterator& x, default_sentinel_t);
+    friend constexpr bool operator==(
+      default_sentinel_t, const counted_iterator& x);
+
+    template<Common<I> I2>
+      friend constexpr bool operator!=(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+    friend constexpr bool operator!=(
+      const counted_iterator& x, default_sentinel_t y);
+    friend constexpr bool operator!=(
+      default_sentinel_t x, const counted_iterator& y);
+
+    template<Common<I> I2>
+      friend constexpr bool operator<(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+    template<Common<I> I2>
+      friend constexpr bool operator>(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+    template<Common<I> I2>
+      friend constexpr bool operator<=(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+    template<Common<I> I2>
+      friend constexpr bool operator>=(
+        const counted_iterator& x, const counted_iterator<I2>& y);
+
+    friend constexpr iter_rvalue_reference_t<I> iter_move(const counted_iterator& i)
+      noexcept(noexcept(ranges::iter_move(i.current)))
+        requires InputIterator<I>;
+    template<IndirectlySwappable<I> I2>
+      friend constexpr void iter_swap(const counted_iterator& x, const counted_iterator<I2>& y)
+        noexcept(noexcept(ranges::iter_swap(x.current, y.current)));
+
+  private:
+    I current = I();                    // [=Expos]
+    iter_difference_t<I> length = 0;    // [=Expos]
+  };
+
+  template<class I>
+  struct incrementable_traits<counted_iterator<I>> {
+    using difference_type = iter_difference_t<I>;
+  };
+
+  template<InputIterator I>
+  struct iterator_traits<counted_iterator<I>> : iterator_traits<I> {
+    using pointer = void;
+  };
+}
+[codeblock:end]

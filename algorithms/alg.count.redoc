@@ -21,18 +21,60 @@ template<class ExecutionPolicy, class ForwardIterator, class Predicate>
   typename iterator_traits<ForwardIterator>::difference_type
     count_if(ExecutionPolicy&& exec,
              ForwardIterator first, ForwardIterator last, Predicate pred);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, class T, class Proj = identity>
+    requires IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T*>
+    constexpr iter_difference_t<I>
+      count(I first, S last, const T& value, Proj proj = {});
+  template<InputRange R, class T, class Proj = identity>
+    requires IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T*>
+    constexpr iter_difference_t<iterator_t<R>>
+      count(R&& r, const T& value, Proj proj = {});
+  template<InputIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    constexpr iter_difference_t<I>
+      count_if(I first, S last, Pred pred, Proj proj = {});
+  template<InputRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    constexpr iter_difference_t<iterator_t<R>>
+      count_if(R&& r, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$E] be:
+[:zh_CN] 令 [$E]：
+
+[list]
+[item]
+[:en@~] [`*i == value] for the overloads with no parameter [`pred] or [`proj],
+[:zh_CN@~] 对于没有形参 [`pred] 或 [`proj] 的重载为 [`*i == value]，
+[item]
+[:en@~] [`pred(*i) != false] for the overloads with a parameter [`pred] but no
+parameter [`proj],
+[:zh_CN@~] 对于带有一个形参 [`pred] 但没有形参 [`proj] 的重载为
+[`pred(*i) != false]，
+[item]
+[:en@~] [`invoke(proj, *i) == value] for the overloads with a parameter [`proj]
+but no parameter [`pred],
+[:zh_CN@~] 对于带有一个形参 [`proj] 但没有形参 [`pred] 的重载为
+[`invoke(proj, *i) == value]，
+[item]
+[:en@~] [`invoke(pred, invoke(proj, *i)) != false] for the overloads with both
+parameters [`proj] and [`pred].
+[:zh_CN@~] 对于同时带有形参 [`proj] 和 [`pred] 的重载为
+[`invoke(pred, invoke(proj, *i)) != false]。
+[list:end]
+
 [para:effects]
 [:en] Returns the number of iterators [`i] in the range [=range(first,last)] for
-which the following corresponding conditions hold:
-[`*i == value], [`pred(*i) != false].
-[:zh_CN] 返回范围 [=range(first,last)] 中使以下的对应条件成立的迭代器 [`i] 的
-数量：
-[`*i == value]，[`pred(*i) != false]。
+which [$E] holds.
+[:zh_CN] 返回范围 [=range(first,last)] 中使 [$E] 成立的迭代器 [`i] 的数量。
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate.
-[:zh_CN] 恰好进行 [`last - first] 次相应谓词的运用。
+[:en] Exactly [`last - first] applications of the corresponding predicate and
+any projection.
+[:zh_CN] 恰好进行 [`last - first] 次相应谓词和任意投射的运用。
 [exit:description]

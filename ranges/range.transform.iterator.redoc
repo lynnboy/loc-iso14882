@@ -1,0 +1,395 @@
+[section#range.transform.iterator
+    [:en] Class template [`transform_view::iterator]
+    [:zh_CN] 类模板 [`transform_view::iterator]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class V, class F>
+  template<bool Const>
+  class transform_view<V, F>::iterator {
+  private:
+    using Parent =                              // [=Expos]
+      conditional_t<Const, const transform_view, transform_view>;
+    using Base   =                              // [=Expos]
+      conditional_t<Const, const V, V>;
+    iterator_t<Base> current_ =                 // [=Expos]
+      iterator_t<Base>();
+    Parent* parent_ = nullptr;                  // [=Expos]
+  public:
+    using iterator_concept  = [=SeeBelow];
+    using iterator_category = [=SeeBelow];
+    using value_type        =
+      remove_cvref_t<invoke_result_t<F&, iter_reference_t<iterator_t<Base>>>>;
+    using difference_type   = iter_difference_t<iterator_t<Base>>;
+
+    iterator() = default;
+    constexpr iterator(Parent& parent, iterator_t<Base> current);
+    constexpr iterator(iterator<!Const> i)
+      requires Const && ConvertibleTo<iterator_t<V>, iterator_t<Base>>;
+
+    constexpr iterator_t<Base> base() const;
+    constexpr decltype(auto) operator*() const
+    { return invoke(*parent_->fun_, *current_); }
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires ForwardRange<Base>;
+
+    constexpr iterator& operator--() requires BidirectionalRange<Base>;
+    constexpr iterator operator--(int) requires BidirectionalRange<Base>;
+
+    constexpr iterator& operator+=(difference_type n)
+      requires RandomAccessRange<Base>;
+    constexpr iterator& operator-=(difference_type n)
+      requires RandomAccessRange<Base>;
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires RandomAccessRange<Base>
+    { return invoke(*parent_->fun_, current_[n]); }
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<Base>>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<Base>>;
+
+    friend constexpr bool operator<(const iterator& x, const iterator& y)
+      requires RandomAccessRange<Base>;
+    friend constexpr bool operator>(const iterator& x, const iterator& y)
+      requires RandomAccessRange<Base>;
+    friend constexpr bool operator<=(const iterator& x, const iterator& y)
+      requires RandomAccessRange<Base>;
+    friend constexpr bool operator>=(const iterator& x, const iterator& y)
+      requires RandomAccessRange<Base>;
+
+    friend constexpr iterator operator+(iterator i, difference_type n)
+      requires RandomAccessRange<Base>;
+    friend constexpr iterator operator+(difference_type n, iterator i)
+      requires RandomAccessRange<Base>;
+
+    friend constexpr iterator operator-(iterator i, difference_type n)
+      requires RandomAccessRange<Base>;
+    friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+      requires RandomAccessRange<Base>;
+
+    friend constexpr decltype(auto) iter_move(const iterator& i)
+      noexcept(noexcept(invoke(*i.parent_->fun_, *i.current_)))
+    {
+      if constexpr (is_lvalue_reference_v<decltype(*i)>)
+        return std::move(*i);
+      else
+        return *i;
+    }
+
+    friend constexpr void iter_swap(const iterator& x, const iterator& y)
+      noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
+      requires IndirectlySwappable<iterator_t<Base>>;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`iterator::iterator_concept] is defined as follows:
+[:zh_CN] [`iterator::iterator_concept] 的定义如下：
+
+[list]
+[item]
+[:en] If [`V] models [`RandomAccessRange], then [`iterator_concept] denotes
+[`random_access_iterator_tag].
+[:zh_CN] 若 [`V] 构成 [`RandomAccessRange]，则 [`iterator_concept] 代表
+[`random_access_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`V] models [`BidirectionalRange], then [`iterator_concept]
+denotes [`bidirectional_iterator_tag].
+[:zh_CN] 否则，若 [`V] 构成 [`BidirectionalRange]，则 [`iterator_concept] 代表
+[`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`V] models [`ForwardRange], then [`iterator_concept]
+denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`V] 构成 [`ForwardRange]，则 [`iterator_concept] 代表
+[`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_concept] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_concept] 代表 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[:en] Let [`C] denote the type
+[`iterator_traits<iterator_t<Base>>::iterator_category].
+[:zh_CN] 令 [`C] 代表类型
+[`iterator_traits<iterator_t<Base>>::iterator_category]。
+
+[:en] If [`C] models [`DerivedFrom<contiguous_iterator_tag>], then
+[`iterator_category] denotes [`random_access_iterator_tag]; otherwise,
+[`iterator_category] denotes [`C].
+[:zh_CN] 若 [`C] 构成 [`DerivedFrom<bidirectional_iterator_tag>]，则
+[`iterator_category] 代表 [`random_access_iterator_tag]；否则，
+[`iterator_category] 代表 [`C].
+
+[%@library iterator[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator(Parent& parent, iterator_t<Base> current);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`current_] with [`current] and [`parent_] with
+[`addressof(parent)].
+[:zh_CN] 以 [`current] 初始化 [`current_] 并以 [`addressof(parent)] 初始化
+[`parent_]。
+[exit:description]
+
+[%@library iterator[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator(iterator<!Const> i)
+  requires Const && ConvertibleTo<iterator_t<V>, iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`current_] with [`std::move(i.current_)] and [`parent_] with
+[`i.parent_].
+[:zh_CN] 以 [`std::move(i.current_)] 初始化 [`current_] 并以 [`i.parent_] 初始化
+[`parent_]。
+[exit:description]
+
+[%@library base[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator_t<Base> base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return current_;]
+[:zh_CN] 等价于：[`return current_;]
+[exit:description]
+
+[%@library operator++[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator++();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+++current_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator++[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`++current_].
+[:zh_CN] 等价于：[`++current_]。
+[exit:description]
+
+[%@library operator++[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator++(int) requires ForwardRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator--() requires BidirectionalRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+--current_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator--(int) requires BidirectionalRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator+=[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator+=(difference_type n)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+current_ += n;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator-=[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator-=(difference_type n)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+current_ -= n;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator==[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires EqualityComparable<iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ == y.current_;]
+[:zh_CN] 等价于：[`return x.current_ == y.current_;]
+[exit:description]
+
+[%@library operator!=[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const iterator& x, const iterator& y)
+  requires EqualityComparable<iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]
+
+[%@library operator<[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator<(const iterator& x, const iterator& y)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ < y.current_;]
+[:zh_CN] 等价于：[`return x.current_ < y.current_;]
+[exit:description]
+
+[%@library operator>[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator>(const iterator& x, const iterator& y)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return y < x;]
+[:zh_CN] 等价于：[`return y < x;]
+[exit:description]
+
+[%@library operator<=[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator<=(const iterator& x, const iterator& y)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(y < x);]
+[:zh_CN] 等价于：[`return !(y < x);]
+[exit:description]
+
+[%@library operator>=[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator>=(const iterator& x, const iterator& y)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x < y);]
+[:zh_CN] 等价于：[`return !(x < y);]
+[exit:description]
+
+[%@library operator+[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr iterator operator+(iterator i, difference_type n)
+  requires RandomAccessRange<Base>;
+friend constexpr iterator operator+(difference_type n, iterator i)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{*i.parent_, i.current_ + n};]
+[:zh_CN] 等价于：[`return iterator{*i.parent_, i.current_ + n};]
+[exit:description]
+
+[%@library operator-[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr iterator operator-(iterator i, difference_type n)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{*i.parent_, i.current_ - n};]
+[:zh_CN] 等价于：[`return iterator{*i.parent_, i.current_ - n};]
+[exit:description]
+
+[%@library operator-[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+  requires RandomAccessRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ - y.current_;]
+[:zh_CN] 等价于：[`return x.current_ - y.current_;]
+[exit:description]
+
+[%@library iter_swap[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr void iter_swap(const iterator& x, const iterator& y)
+  noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
+  requires IndirectlySwappable<iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`ranges::iter_swap(x.current_, y.current_)].
+[:zh_CN] 等价于 [`ranges::iter_swap(x.current_, y.current_)]。
+[exit:description]

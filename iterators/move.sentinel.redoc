@@ -1,0 +1,56 @@
+[section#move.sentinel
+    [:en] Class template [`move_sentinel]
+    [:zh_CN] 类模板 [`move_sentinel]
+]
+
+[para]
+[:en] Class template [`move_sentinel] is a sentinel adaptor useful for denoting
+ranges together with [`move_iterator].
+[:zh_CN] 类模板 [`move_sentinel] 是一种哨位适配器，和 [`move_iterator] 一同用于
+代表范围。
+
+[:en] When an input iterator type [`I] and sentinel type [`S] model
+[`Sentinel<S, I>], [`move_sentinel<S>] and [`move_iterator<I>] model
+[`Sentinel<move_sentinel<S>, move_iterator<I>>] as well.
+[:zh_CN] 当输入迭代器类型 [`I] 和哨位类型 [`S] 构成 [`Sentinel<S, I>] 时，
+[`move_sentinel<S>] 和 [`move_iterator<I>] 则也构成
+[`Sentinel<move_sentinel<S>, move_iterator<I>>]。
+
+[para]
+[enter:example]
+[:en] A [`move_if] algorithm is easily implemented with [`copy_if] using
+[`move_iterator] and [`move_sentinel]:
+[:zh_CN] 一种 [`move_if] 算法可以很容易地利用 [`move_iterator] 和
+[`move_sentinel] 以 [`copy_if] 来实现：
+
+[codeblock]
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+         IndirectUnaryPredicate<I> Pred>
+  requires IndirectlyMovable<I, O>
+void move_if(I first, S last, O out, Pred pred) {
+  std::ranges::copy_if(move_iterator<I>{first}, move_sentinel<S>{last}, out, pred);
+}
+[codeblock:end]
+[exit:example]
+
+[%@library move_sentinel]
+[codeblock:synopsis]
+namespace std {
+  template<Semiregular S>
+  class move_sentinel {
+  public:
+    constexpr move_sentinel();
+    constexpr explicit move_sentinel(S s);
+    template<class S2>
+      requires ConvertibleTo<const S2&, S>
+        constexpr move_sentinel(const move_sentinel<S2>& s);
+    template<class S2>
+      requires Assignable<S&, const S2&>
+        constexpr move_sentinel& operator=(const move_sentinel<S2>& s);
+
+    constexpr S base() const;
+  private:
+    S last;     // [=Expos]
+  };
+}
+[codeblock:end]

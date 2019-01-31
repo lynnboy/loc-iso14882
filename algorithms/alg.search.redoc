@@ -31,10 +31,6 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
 [codeblock:end]
 
 [enter:description]
-[para:effects]
-[:en] Finds a subsequence of equal values in a sequence.
-[:zh_CN] 查找序列中具有相同值的子序列。
-
 [para:returns]
 [:en] The first iterator [`i] in the range
 [=range(first1,last1 - (last2-first2))] such that for every non-negative integer
@@ -53,6 +49,52 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
 [:en] At most [`(last1 - first1) * (last2 - first2)] applications of the
 corresponding predicate.
 [:zh_CN] 最多进行 [`(last1 - first1) * (last2 - first2)] 次相应谓词的运用。
+[exit:description]
+
+[%@library search]
+[codeblock:declaration]
+namespace ranges {
+  template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+           Sentinel<I2> S2, class Pred = ranges::equal_to<>,
+           class Proj1 = identity, class Proj2 = identity>
+    requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+    constexpr subrange<I1>
+      search(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+             Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<ForwardRange R1, ForwardRange R2, class Pred = ranges::equal_to<>,
+           class Proj1 = identity, class Proj2 = identity>
+    requires IndirectlyComparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+    constexpr safe_subrange_t<R1>
+      search(R1&& r1, R2&& r2, Pred pred = {},
+             Proj1 proj1 = {}, Proj2 proj2 = {});
+}
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[list]
+[item]
+[:en] [`{i, i + (last2 - first2)}], where [`i] is the first iterator in the
+range [=range(first1,last1 - (last2 - first2))] such that for every non-negative
+integer [`n] less than [`last2 - first2] the condition
+[:zh_CN] [`{i, i + (last2 - first2)}]，其中 [`i] 为范围
+[=range(first1,last1 - (last2 - first2))] 中的第一个迭代器，使得对每个小于
+[`last2 - first2] 的整数 [`n]，条件
+[codeblock:notation]
+bool(invoke(pred, invoke(proj1, *(i + n)), invoke(proj2, *(first2 + n))))
+[codeblock:end]
+[:en@~] is [`true]:
+[:zh_CN@~] 均为 [`true]。
+
+[item]
+[:en] Returns [`{last1, last1}] if no such iterator exists.
+[:zh_CN] 如果不存在这种迭代器则返回 [`{last1, last1}]。
+[list:end]
+
+[para:complexity]
+[:en] At most [`(last1 - first1) * (last2 - first2)] applications of the
+corresponding predicate and projections.
+[:zh_CN] 最多进行 [`(last1 - first1) * (last2 - first2)] 次相应谓词和投射的运用。
 [exit:description]
 
 [%@library search_n]
@@ -88,10 +130,6 @@ template<class ExecutionPolicy, class ForwardIterator, class Size, class T,
 [#class.conv]).
 [:zh_CN] 类型 [`Size] 应当可以转换为整型类型（[#conv.integral]，[#class.conv]）。
 
-[para:effects]
-[:en] Finds a subsequence of equal values in a sequence.
-[:zh_CN] 查找序列中具有相同值的子序列。
-
 [para:returns]
 [:en] The first iterator [`i] in the range [=range(first,last-count)] such that
 for every non-negative integer [`n] less than [`count] the following
@@ -107,6 +145,48 @@ corresponding conditions hold:
 [para:complexity]
 [:en] At most [`last - first] applications of the corresponding predicate.
 [:zh_CN] 最多进行 [`last - first] 次相应谓词的运用。
+[exit:description]
+
+[%@library search_n]
+[codeblock:declaration]
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class T,
+           class Pred = ranges::equal_to<>, class Proj = identity>
+    requires IndirectlyComparable<I, const T*, Pred, Proj>
+    constexpr subrange<I>
+      search_n(I first, S last, iter_difference_t<I> count,
+               const T& value, Pred pred = {}, Proj proj = {});
+  template<ForwardRange R, class T, class Pred = ranges::equal_to<>,
+           class Proj = identity>
+    requires IndirectlyComparable<iterator_t<R>, const T*, Pred, Proj>
+    constexpr safe_subrange_t<R>
+      search_n(R&& r, iter_difference_t<iterator_t<R>> count,
+               const T& value, Pred pred = {}, Proj proj = {});
+}
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[list]
+[item]
+[:en] [`{i, i + count}], where [`i] is the first iterator in the range
+[=range(first1,last1 - count)] such that for every non-negative integer [`n]
+less than [`count], the following condition holds:
+[`invoke(pred, invoke(proj1, *(i + n)), value)].
+
+[:zh_CN] [`{i, i + count}]，其中 [`i] 为范围 [=range(first1,last1 - count)] 中的
+第一个迭代器，使得对每个小于 [`count] 的整数 [`n]，以下条件成立：
+[`invoke(pred, invoke(proj1, *(i + n)), value)]。
+
+[item]
+[:en] Returns [`{last1, last1}] if no such iterator is found.
+[:zh_CN] 如果未找到这种迭代器，则返回 [`{last1, last1}]。
+[list:end]
+
+[para:complexity]
+[:en] At most [`last - first] applications of the corresponding predicate and
+projection.
+[:zh_CN] 最多进行 [`last - first] 次相应谓词和投射的运用。
 [exit:description]
 
 [%@library search]

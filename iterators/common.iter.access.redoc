@@ -1,0 +1,78 @@
+[section#common.iter.access
+    [:en] Accessors
+    [:zh_CN] 访问函数
+]
+
+[%@library operator*[!common_iterator]]
+[%@library common_iterator[!operator*]]
+[codeblock:declaration [!:var dereferenceable]]
+decltype(auto) operator*();
+decltype(auto) operator*() const
+  requires [*dereferenceable]<const I>;
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`holds_alternative<I>(v_)].
+[:zh_CN] [`holds_alternative<I>(v_)]。
+
+[para:effects]
+[:en] Equivalent to: [`return *get<I>(v_);]
+[:zh_CN] 等价于：[`return *get<I>(v_);]
+[exit:description]
+
+[%@library operator->[!common_iterator]]
+[%@library common_iterator[!operator->]]
+[codeblock:declaration [!:mark SeeBelow]]
+decltype(auto) operator->() const
+  requires [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] The expression in the requires clause is equivalent to:
+[:zh_CN] [`requires] 子句中的表达式等价于：
+
+[codeblock:notation]
+Readable<const I> &&
+(requires(const I& i) { i.operator->(); } ||
+ is_reference_v<iter_reference_t<I>> ||
+ Constructible<iter_value_t<I>, iter_reference_t<I>>)
+[codeblock:end]
+
+[para:expects]
+[:en] [`holds_alternative<I>(v_)].
+[:zh_CN] [`holds_alternative<I>(v_)]。
+
+[para:effects]
+[list]
+[item]
+[:en] If [`I] is a pointer type or if the expression [`get<I>(v_).operator->()]
+is well-formed, equivalent to: [`return get<I>(v_);]
+[:zh_CN] 若 [`I] 是指针类型，或者若 [`get<I>(v_).operator->()] 良构，则等价于：
+[`return get<I>(v_);]
+[item]
+[:en] Otherwise, if [`iter_reference_t<I>] is a reference type, equivalent to:
+[:zh_CN] 否则，若 [`iter_reference_t<I>] 为引用类型，则等价于：
+[codeblock:notation]
+auto&& tmp = *get<I>(v_);
+return addressof(tmp);
+[codeblock:end]
+[item]
+[:en] Otherwise, equivalent to: [`return \placeholder{proxy}(*get<I>(v_));]
+where [`[*proxy]] is the exposition-only class:
+[:zh_CN] 否则，等价于：[`return \placeholder{proxy}(*get<I>(v_));]，其中
+[`[*proxy]] 为如下这样仅用于阐释的类：
+[codeblock:notation [!:var proxy]]
+class [*proxy] {
+  iter_value_t<I> keep_;
+  [*proxy](iter_reference_t<I>&& x)
+    : keep_(std::move(x)) {}
+public:
+  const iter_value_t<I>* operator->() const {
+    return addressof(keep_);
+  }
+};
+[codeblock:end]
+[list:end]
+[exit:description]

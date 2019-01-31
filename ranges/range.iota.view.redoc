@@ -1,0 +1,231 @@
+[section#range.iota.view
+    [:en] Class template [`iota_view]
+    [:zh_CN] 类模板 [`iota_view]
+]
+
+[codeblock:synopsis [!:var Advanceable Decrementable weakly-equality-comparable-with]]
+namespace std::ranges {
+  template<class I>
+    concept [*Decrementable] =     // [=Expos]
+      [=SeeBelow];
+  template<class I>
+    concept [*Advanceable] =       // [=Expos]
+      [=SeeBelow];
+
+  template<WeaklyIncrementable W, Semiregular Bound = unreachable_sentinel_t>
+    requires [*weakly-equality-comparable-with]<W, Bound>
+  class iota_view : public view_interface<iota_view<W, Bound>> {
+  private:
+    struct iterator;            // [=Expos]
+    struct sentinel;            // [=Expos]
+    W value_ = W();             // [=Expos]
+    Bound bound_ = Bound();     // [=Expos]
+  public:
+    iota_view() = default;
+    constexpr explicit iota_view(W value);
+    constexpr iota_view(type_identity_t<W> value,
+                        type_identity_t<Bound> bound);
+
+    constexpr iterator begin() const;
+    constexpr sentinel end() const;
+    constexpr iterator end() const requires Same<W, Bound>;
+
+    constexpr auto size() const
+      requires (Same<W, Bound> && [*Advanceable]<W>) ||
+               (Integral<W> && Integral<Bound>) ||
+               SizedSentinel<Bound, W>
+    { return bound_ - value_; }
+  };
+
+  template<class W, class Bound>
+    requires (!Integral<W> || !Integral<Bound> || is_signed_v<W> == is_signed_v<Bound>)
+  iota_view(W, Bound) -> iota_view<W, Bound>;
+}
+[codeblock:end]
+
+[para]
+[:en] The exposition-only [`[*Decrementable]] concept is equivalent to:
+[:zh_CN] 仅用于阐释的 [`[*Decrementable]] 概念等价于：
+[codeblock:notation [!:var Decrementable]]
+template<class I>
+  concept [*Decrementable] =
+    Incrementable<I> && requires(I i) {
+      { --i } -> Same<I&>;
+      { i-- } -> Same<I>;
+    };
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] When an object is in the domain of both pre- and post-decrement,
+the object is said to be [+decrementable[%]].
+[:zh_CN] 只要某个对象同时处于前置和后置自减的作用域中，该对象就被称为
+[+可自减[%]]。
+
+[para]
+[:en] Let [`a] and [`b] be equal objects of type [`I].
+[:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的相等对象。
+
+[:en] [`I] models [`[*Decrementable]] only if
+[:zh_CN] 仅当符合以下条件时，[`I] 构成 [`[*Decrementable]]：
+
+[list]
+[item]
+[:en] If [`a] and [`b] are decrementable, then the following are all true:
+[:zh_CN] 若 [`a] 和 [`b] 是可自减的，则以下各项均为真：
+[list]
+[item] [`addressof(--a) == addressof(a)]
+[item] [`bool(a-- == b)]
+[item] [`bool(((void)a--, a) == --b)]
+[item]
+[:en] [`bool(++(--a) == b)].
+[:zh_CN] [`bool(++(--a) == b)]。
+[list:end]
+
+[item]
+[:en] If [`a] and [`b] are incrementable, then [`bool(--(++a) == b)].
+[:zh_CN] 若 [`a] 和 [`b] 是可自增的，则有 [`bool(--(++a) == b)]。
+[list:end]
+[exit:description]
+
+[para]
+[:en] The exposition-only [`[*Advanceable]] concept is equivalent to:
+[:zh_CN] 仅用于阐释的 [`[*Advanceable]] 概念等价于：
+
+[codeblock:declaration [!:var Advanceable Decrementable]]
+template<class I>
+  concept [*Advanceable] =
+    [*Decrementable]<I> && StrictTotallyOrdered<I> &&
+    requires(I i, const I j, const iter_difference_t<I> n) {
+      { i += n } -> Same<I&>;
+      { i -= n } -> Same<I&>;
+      { j +  n } -> Same<I>;
+      { n +  j } -> Same<I>;
+      { j -  n } -> Same<I>;
+      { j -  j } -> Same<iter_difference_t<I>>;
+    };
+[codeblock:end]
+
+[para:~]
+[:en] Let [`a] and [`b] be objects of type [`I] such that [`b] is reachable from
+[`a] after [`n] applications of [`++a], for some value [`n] of type
+[`iter_difference_t<I>], and let [`D] be [`iter_difference_t<I>].
+[:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的对象并使 [`b] 从 [`a] 经过 [`n] 次对
+[`++a] 的运用之后可达，其中 [`n] 为某个 [`iter_difference_t<I>] 类型的值，并令
+[`D] 为 [`iter_difference_t<I>]。
+
+[:en] [`I] models [`[*Advanceable]] only if
+[:zh_CN] 仅当符合以下条件时，[`I] 构成 [`[*Advanceable]]：
+
+[list]
+[item]
+[:en] [`(a += n)] is equal to [`b].
+[:zh_CN] [`(a += n)] 等于 [`b]。
+[item]
+[:en] [`addressof(a += n)] is equal to [`addressof(a)].
+[:zh_CN] [`addressof(a += n)] 等于 [`addressof(a)]。
+[item]
+[:en] [`(a + n)] is equal to [`(a += n)].
+[:zh_CN] [`(a + n)] 等于 [`(a += n)]。
+[item]
+[:en] For any two positive values [`x] and [`y] of type [`D], if
+[`(a + D(x + y))] is well-defined, then [`(a + D(x + y))] is equal to
+[`((a + x) + y)].
+[:zh_CN] 对于任何 [`D] 类型的两个正数值 [`x] 和 [`y]，若 [`(a + D(x + y))] 良构，
+则 [`(a + D(x + y))] 等于 [`((a + x) + y)]。
+[item]
+[:en] [`(a + D(0))] is equal to [`a].
+[:zh_CN] [`(a + D(0))] 等于 [`a]。
+[item]
+[:en] If [`(a + D(n - 1))] is well-defined, then [`(a + n)] is equal to
+[`++(a + D(n - 1))].
+[:zh_CN] 若 [`(a + D(n - 1))] 良构，则 [`(a + n)] 等于 [`++(a + D(n - 1))]。
+[item]
+[:en] [`(b += -n)] is equal to [`a].
+[:zh_CN] [`(b += -n)] 等于 [`a]。
+[item]
+[:en] [`(b -= n)] is equal to [`a].
+[:zh_CN] [`(b -= n)] 等于 [`a]。
+[item]
+[:en] [`addressof(b -= n)] is equal to [`addressof(b)].
+[:zh_CN] [`addressof(b -= n)] 等于 [`addressof(b)]。
+[item]
+[:en] [`(b - n)] is equal to [`(b -= n)].
+[:zh_CN] [`(b - n)] 等于 [`(b -= n)]。
+[item]
+[:en] [`(b - a)] is equal to [`n].
+[:zh_CN] [`(b - a)] 等于 [`n]。
+[item]
+[:en] [`(a - b)] is equal to [`-n].
+[:zh_CN] [`(a - b)] 等于 [`-n]。
+[item]
+[:en] [`bool(a <= b)] is [`true].
+[:zh_CN] [`bool(a <= b)] 为 [`true]。
+[list:end]
+
+[%@library iota_view[!iota_view]]
+[codeblock:declaration]
+constexpr explicit iota_view(W value);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`Bound] denotes [`unreachable_sentinel_t] or [`Bound()] is reachable from
+[`value].
+[:zh_CN] [`Bound] 代表 [`unreachable_sentinel_t] 或者 [`Bound()] 从 [`value]
+可达。
+
+[para:effects]
+[:en] Initializes [`value_] with [`value].
+[:zh_CN] 以 [`value] 初始化 [`value_]。
+[exit:description]
+
+[%@library iota_view[!iota_view]]
+[codeblock:declaration]
+constexpr iota_view(type_identity_t<W> value, type_identity_t<Bound> bound);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`Bound] denotes [`unreachable_sentinel_t] or [`bound] is reachable from
+[`value].
+[:zh_CN] [`Bound] 代表 [`unreachable_sentinel_t] 或者 [`bound] 从 [`value]
+可达。
+
+[para:effects]
+[:en] Initializes [`value_] with [`value] and [`bound_] with [`bound].
+[:zh_CN] 以 [`value] 初始化 [`value_] 并以 [`bound] 初始化 [`bound_]。
+[exit:description]
+
+[%@library begin[!iota_view]]
+[codeblock:declaration]
+constexpr iterator begin() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{value_};]
+[:zh_CN] 等价于：[`return iterator{value_};]
+[exit:description]
+
+[%@library end[!iota_view]]
+[codeblock:declaration]
+constexpr sentinel end() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return sentinel{bound_};]
+[:zh_CN] 等价于：[`return sentinel{bound_};]
+[exit:description]
+
+[%@library end[!iota_view]]
+[codeblock:declaration]
+constexpr iterator end() const requires Same<W, Bound>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{bound_};]
+[:zh_CN] 等价于：[`return iterator{bound_};]
+[exit:description]

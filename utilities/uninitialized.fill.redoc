@@ -10,13 +10,36 @@ template<class ForwardIterator, class T>
 
 [enter:description]
 [para:effects]
-[:en] As if by:
-[:zh_CN] 如同执行：
-
-[codeblock:notation]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
 for (; first != last; ++first)
-  ::new (static_cast<void*>(addressof(*first)))
+  ::new ([*voidify](*first))
     typename iterator_traits<ForwardIterator>::value_type(x);
+[codeblock:end]
+[exit:description]
+
+[%@library uninitialized_fill]
+[codeblock:declaration [!:var no-throw-forward-iterator no-throw-forward-range no-throw-sentinel]]
+namespace ranges {
+  template<[*no-throw-forward-iterator] I, [*no-throw-sentinel]<I> S, class T>
+      requires Constructible<iter_value_t<I>, const T&>
+    I uninitialized_fill(I first, S last, const T& x);
+  template<[*no-throw-forward-range] R, class T>
+      requires Constructible<iter_value_t<iterator_t<R>>, const T&>
+    safe_iterator_t<R> uninitialized_fill(R&& r, const T& x);
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
+for (; first != last; ++first) {
+  ::new ([*voidify](*first)) remove_reference_t<iter_reference_t<I>>(x);
+}
+return first;
 [codeblock:end]
 [exit:description]
 
@@ -28,13 +51,30 @@ template<class ForwardIterator, class Size, class T>
 
 [enter:description]
 [para:effects]
-[:en] As if by:
-[:zh_CN] 如同执行：
-
-[codeblock:notation]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
 for (; n--; ++first)
-  ::new (static_cast<void*>(addressof(*first)))
+  ::new ([*voidify](*first))
     typename iterator_traits<ForwardIterator>::value_type(x);
 return first;
+[codeblock:end]
+[exit:description]
+
+[%@library uninitialized_fill_n]
+[codeblock:declaration [!:var no-throw-forward-iterator]]
+namespace ranges {
+  template<[*no-throw-forward-iterator] I, class T>
+      requires Constructible<iter_value_t<I>, const T&>
+    I uninitialized_fill_n(I first, iter_difference_t<I> n, const T& x);
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return uninitialized_fill(counted_iterator(first, n), default_sentinel, x).base();
 [codeblock:end]
 [exit:description]

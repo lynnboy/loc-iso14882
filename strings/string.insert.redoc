@@ -21,20 +21,12 @@ basic_string& insert(size_type pos1, const basic_string& str, size_type pos2, si
 [codeblock:end]
 
 [enter:description]
-[para:throws]
-[:en] [`out_of_range] if [`pos1 > size()] or [`pos2 > str.size()].
-[:zh_CN] 当 [`pos1 > size()] 或者 [`pos2 > str.size()] 时抛出 [`out_of_range]。
-
 [para:effects]
-[:en] Determines the effective length [`rlen] of the string to insert as the
-smaller of [`n] and [`str.size() - pos2] and calls
-[`insert(pos1, str.data() + pos2, rlen)].
-[:zh_CN] 确定所要插入的字符串的有效长度 [`rlen] 为 [`n] 和 [`str.size() - pos2]
-中的较小值，然后调用 [`insert(pos1, str.data() + pos2, rlen)]。
-
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return insert(pos1, basic_string_view<charT, traits>(str), pos2, n);
+[codeblock:end]
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -45,24 +37,25 @@ template<class T>
 [codeblock:end]
 
 [enter:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true]
+and
+[:zh_CN] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
+[`true]，并且
+[item]
+[:en] [`is_convertible_v<const T&, const charT*>] is [`false].
+[:zh_CN] [`is_convertible_v<const T&, const charT*>] 为 [`false]。
+[list:end]
+
 [para:effects]
 [:en] Equivalent to:
 [:zh_CN] 等价于：
-
 [codeblock:notation]
-{
-  basic_string_view<charT, traits> sv = t;
-  return insert(pos, sv.data(), sv.size());
-}
+basic_string_view<charT, traits> sv = t;
+return insert(pos, sv.data(), sv.size());
 [codeblock:end]
-
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true] and
-[`is_convertible_v<const T&, const charT*>] is [`false].
-[:zh_CN] 除非 [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
-[`true]，并且 [`is_convertible_v<const T&, const charT*>] 为 [`false]，否则这个
-函数不能参与重载决议。
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -73,32 +66,25 @@ template<class T>
 [codeblock:end]
 
 [enter:description]
-[para:throws]
-[:en] [`out_of_range] if [`pos1 > size()] or [`pos2 > sv.size()].
-[:zh_CN] 当 [`pos1 > size()] 或者 [`pos2 > sv.size()] 时抛出 [`out_of_range]。
+[para:constraints]
+[list]
+[item]
+[:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true]
+and
+[:zh_CN] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
+[`true]，并且
+[item]
+[:en] [`is_convertible_v<const T&, const charT*>] is [`false].
+[:zh_CN] [`is_convertible_v<const T&, const charT*>] 为 [`false]。
+[list:end]
 
 [para:effects]
-[:en] Creates a variable, [`sv], as if by
-[`basic_string_view<charT, traits> sv = t].
-[:zh_CN] 如同以 [`basic_string_view<charT, traits> sv = t] 来创建一个变量 [`sv]。
-
-[:en] Determines the effective length [`rlen] of the string to assign as the
-smaller of [`n] and [`sv.size() - pos2] and calls
-[`insert(pos1, sv.data() + pos2, rlen)].
-[:zh_CN] 确定所要赋与的字符串的有效长度 [`rlen] 为 [`n] 和 [`sv.size() - pos2]
-中的较小值，然后调用 [`insert(pos1, sv.data() + pos2, rlen)]。
-
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true] and
-[`is_convertible_v<const T&, const charT*>] is [`false].
-[:zh_CN] 除非 [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
-[`true] 并且 [`is_convertible_v<const T&, const charT*>] 为 [`false]，否则这个
-函数不能参与重载决议。
-
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+basic_string_view<charT, traits> sv = t;
+return insert(pos1, sv.substr(pos2, n));
+[codeblock:end]
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -108,26 +94,29 @@ basic_string& insert(size_type pos, const charT* s, size_type n);
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`s] points to an array of at least [`n] elements of [`charT].
-[:zh_CN] [`s] 指向 [`charT] 的至少 [`n] 个元素的数组。
+[para:expects]
+[:en] [=range(s,s + n)] is a valid range.
+[:zh_CN] [=range(s,s + n)] 是有效范围。
 
 [para:throws]
-[:en] [`out_of_range] if [`pos > size()] or [`length_error] if
-[`size() + n > max_size()].
-[:zh_CN] 当 [`pos > size()] 时抛出 [`out_of_range]，或者当
-[`size() + n > max_size()] 时抛出 [`length_error]。
+[list]
+[item]
+[:en] [`out_of_range] if [`pos > size()],
+[:zh_CN] 当 [`pos > size()] 时抛出 [`out_of_range]，
+[item]
+[:en] [`length_error] if [`n > max_size() - size()], or
+[:zh_CN] 当 [`n > max_size() - size()] 时抛出 [`length_error]，或者
+[item]
+[:en] any exceptions thrown by [`allocator_traits<Allocator>::allocate].
+[:zh_CN] 由 [`allocator_traits<Allocator>::allocate] 所抛出的任何异常。
+[list:end]
 
 [para:effects]
-[:en] Replaces the string controlled by [`*this] with a string of length
-[`size() + n] whose first [`pos] elements are a copy of the initial elements of
-the original string controlled by [`*this] and whose next [`n] elements are a
-copy of the elements in [`s] and whose remaining elements are a copy of the
-remaining elements of the original string controlled by [`*this].
-[:zh_CN] 将由 [`*this] 所控制的字符串替换为长度为 [`size() + n] 的字符串，其前
-[`pos] 个元素为由 [`*this] 所控制的原字符串的开头元素的副本，接下来 [`n] 个元素
-为 [`s] 中的元素的副本，而剩余元素为由 [`*this] 所控制的原字符串的剩余元素的副本
-。
+[:en] Inserts a copy of the range [=range(s,s + n)] immediately before the
+character at position [`pos] if [`pos < size()], or otherwise at the end of the
+string.
+[:zh_CN] 当 [`pos < size()] 时，在紧接位置 [`pos] 处的字符之前插入范围
+[=range(s,s + n)] 的一个副本，否则插入到字符串的末尾。
 
 [para:returns]
 [:en] [`*this].
@@ -141,11 +130,6 @@ basic_string& insert(size_type pos, const charT* s);
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`s] points to an array of at least [`traits::length(s) + 1] elements of
-[`charT].
-[:zh_CN] [`s] 指向 [`charT] 的至少 [`traits::length(s) + 1] 个元素的数组。
-
 [para:effects]
 [:en] Equivalent to: [`return insert(pos, s, traits::length(s));]
 [:zh_CN] 等价于：[`return insert(pos, s, traits::length(s));]
@@ -158,9 +142,24 @@ basic_string& insert(size_type pos, size_type n, charT c);
 [codeblock:end]
 
 [enter:description]
+[para:throws]
+[list]
+[item]
+[:en] [`out_of_range] if [`pos > size()],
+[:zh_CN] 当 [`pos > size()] 时抛出 [`out_of_range]，
+[item]
+[:en] [`length_error] if [`n > max_size() - size()], or
+[:zh_CN] 当 [`n > max_size() - size()] 时抛出 [`length_error]，或者
+[item]
+[:en] any exceptions thrown by [`allocator_traits<Allocator>::allocate].
+[:zh_CN] 由 [`allocator_traits<Allocator>::allocate] 所抛出的任何异常。
+[list:end]
+
 [para:effects]
-[:en] Equivalent to: [`return insert(pos, basic_string(n, c));]
-[:zh_CN] 等价于：[`return insert(pos, basic_string(n, c));]
+[:en] Inserts [`n] copies of [`c] before the character at position [`pos] if
+[`pos < size()], or otherwise at the end of the string.
+[:zh_CN] 当 [`pos < size()] 时，在紧接位置 [`pos] 处的字符之前插入 [`n] 个 [`c]
+的副本，否则插入到字符串的末尾。
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -170,17 +169,17 @@ iterator insert(const_iterator p, charT c);
 [codeblock:end]
 
 [enter:description]
-[para:requires]
+[para:expects]
 [:en] [`p] is a valid iterator on [`*this].
 [:zh_CN] [`p] 为 [`*this] 的有效迭代器。
 
 [para:effects]
-[:en] Inserts a copy of [`c] before the character referred to by [`p].
-[:zh_CN] 在由 [`p] 所指代的字符之前插入一个 [`c] 的副本。
+[:en] Inserts a copy of [`c] at the position [`p].
+[:zh_CN] 在位置 [`p] 插入一个 [`c] 的副本。
 
 [para:returns]
-[:en] An iterator which refers to the copy of the inserted character.
-[:zh_CN] 指代所插入的字符的副本的迭代器。
+[:en] An iterator which refers to the inserted character.
+[:zh_CN] 指代所插入的字符的迭代器。
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -190,18 +189,18 @@ iterator insert(const_iterator p, size_type n, charT c);
 [codeblock:end]
 
 [enter:description]
-[para:requires]
+[para:expects]
 [:en] [`p] is a valid iterator on [`*this].
 [:zh_CN] [`p] 为 [`*this] 的有效迭代器。
 
 [para:effects]
-[:en] Inserts [`n] copies of [`c] before the character referred to by [`p].
-[:zh_CN] 在由 [`p] 所指代的字符之前插入 [`n] 个 [`c] 的副本。
+[:en] Inserts [`n] copies of [`c] at the position [`p].
+[:zh_CN] 在位置 [`p] 插入 [`n] 个 [`c] 的副本。
 
 [para:returns]
-[:en] An iterator which refers to the copy of the first inserted character, or
-[`p] if [`n == 0].
-[:zh_CN] 指代所插入的第一个字符的副本的迭代器，或者当 [`n == 0] 时为 [`p]。
+[:en] An iterator which refers to the first inserted character, or [`p] if
+[`n == 0].
+[:zh_CN] 指代所插入的第一个字符的迭代器，或者当 [`n == 0] 时返回 [`p]。
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -212,12 +211,15 @@ template<class InputIterator>
 [codeblock:end]
 
 [enter:description]
-[para:requires]
+[para:constraints]
+[:en] [`InputIterator] is a type that qualifies as an input iterator
+([#container.requirements.general]).
+[:zh_CN] [`InputIterator] 是可作为输入迭代器
+（[#container.requirements.general]）的类型。
+
+[para:expects]
 [:en] [`p] is a valid iterator on [`*this].
 [:zh_CN] [`p] 为 [`*this] 的有效迭代器。
-
-[:en] [``[first, last)] is a valid range.
-[:zh_CN] [``[first, last)] 为有效的范围。
 
 [para:effects]
 [:en] Equivalent to
@@ -226,10 +228,9 @@ template<class InputIterator>
 [`insert(p - begin(), basic_string(first, last, get_allocator()))]。
 
 [para:returns]
-[:en] An iterator which refers to the copy of the first inserted character, or
-[`p] if [`first == last].
-[:zh_CN] 指代所插入的第一个字符的副本的迭代器，或者当 [`first == last] 时为 [`p]
-。
+[:en] An iterator which refers to the first inserted character, or [`p] if
+[`first == last].
+[:zh_CN] 指代所插入的第一个字符的迭代器，或者当 [`first == last] 时为 [`p]。
 [exit:description]
 
 [%@library insert[!basic_string]]
@@ -240,11 +241,6 @@ iterator insert(const_iterator p, initializer_list<charT> il);
 
 [enter:description]
 [para:effects]
-[:en] As if by [`insert(p, il.begin(), il.end())].
-[:zh_CN] 如同执行 [`insert(p, il.begin(), il.end())]。
-
-[para:returns]
-[:en] An iterator which refers to the copy of the first inserted character, or
-[`p] if [`i1] is empty.
-[:zh_CN] 指代所插入的第一个字符的副本的迭代器，或者当 [`i1] 为空时为 [`p]。
+[:en] Equivalent to: [`return insert(p, il.begin(), il.end());]
+[:zh_CN] 等价于：[`return insert(p, il.begin(), il.end());]
 [exit:description]

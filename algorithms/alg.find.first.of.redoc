@@ -28,20 +28,56 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                   ForwardIterator1 first1, ForwardIterator1 last1,
                   ForwardIterator2 first2, ForwardIterator2 last2,
                   BinaryPredicate pred);
+
+namespace ranges {
+  template<InputIterator I1, Sentinel<I1> S1, ForwardIterator I2, Sentinel<I2> S2,
+           class Proj1 = identity, class Proj2 = identity,
+           IndirectRelation<projected<I1, Proj1>,
+                            projected<I2, Proj2>> Pred = ranges::equal_to<>>
+    constexpr I1 find_first_of(I1 first1, S1 last1, I2 first2, S2 last2,
+                                Pred pred = {},
+                                Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, ForwardRange R2, class Proj1 = identity,
+           class Proj2 = identity,
+           IndirectRelation<projected<iterator_t<R1>, Proj1>,
+                            projected<iterator_t<R2>, Proj2>> Pred = ranges::equal_to<>>
+    constexpr safe_iterator_t<R1>
+      find_first_of(R1&& r1, R2&& r2,
+                    Pred pred = {},
+                    Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$E] be:
+[:zh_CN] 令 [$E]：
+
+[list]
+[item]
+[:en@~] [`*i == *j] for the overloads with no parameter [`pred],
+[:zh_CN@~] 对于没有形参 [`pred] 的重载为 [`*i == *j]，
+[item]
+[:en@~] [`pred(*i, *j) != false] for the overloads with a parameter [`pred] and
+no parameter [`proj1],
+[:zh_CN@~] 对于带有形参 [`pred] 且没有形参 [`proj1] 的重载为
+[`pred(*i, *j) != false]，
+[item]
+[:en@~] [`invoke(pred, invoke(proj1, *i), invoke(proj2, *j)) != false] for the
+overloads with parameters [`pred] and [`proj1].
+[:zh_CN@~] 对于带有形参 [`pred] 和 [`proj1] 的重载为
+[`invoke(pred, invoke(proj, *i), invoke(proj2, *j)) != false]。
+[list:end]
+
 [para:effects]
 [:en] Finds an element that matches one of a set of values.
 [:zh_CN] 查找与一组值相匹配的元素。
 
 [para:returns]
 [:en] The first iterator [`i] in the range [=range(first1,last1)] such that for
-some iterator [`j] in the range [=range(first2,last2)] the following conditions
-hold: [`*i == *j], [`pred(*i,*j) != false].
+some iterator [`j] in the range [=range(first2,last2)] [$E] holds.
 [:zh_CN] 范围 [=range(first1,last1)] 中第一个迭代器 [`i]，使得对于范围
-[=range(first2,last2)] 中的某个迭代器 [`j]，以下的对应条件成立：
-[`*i == *j]，[`pred(*i,*j) != false]。
+[=range(first2,last2)] 中的某个迭代器 [`j]，[$E] 成立。
 
 [:en] Returns [`last1] if [=range(first2,last2)] is empty or if no such iterator
 is found.
@@ -50,6 +86,6 @@ is found.
 
 [para:complexity]
 [:en] At most [`(last1-first1) * (last2-first2)] applications of the
-corresponding predicate.
-[:zh_CN] 最多进行 [`(last1-first1) * (last2-first2)] 次相应谓词的运用。
+corresponding predicate and any projections.
+[:zh_CN] 最多进行 [`(last1-first1) * (last2-first2)] 次相应谓词和任何投射的运用。
 [exit:description]

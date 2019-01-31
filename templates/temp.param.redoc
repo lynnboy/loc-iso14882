@@ -13,12 +13,13 @@ The syntax for [~template-parameter]s is:
 [rule template-parameter [:zh_CN] 模板形参 ]
     [| type-parameter ]
     [| parameter-declaration ]
-    [| constrained-parameter ]
 [rule:end]
 
 [rule type-parameter [:zh_CN] 类型形参 ]
     [| type-parameter-key [`:opt ...] [~:opt identifier] ]
     [| type-parameter-key [~:opt identifier] [`=] type-id ]
+    [| type-constraint [`:opt ...] [~:opt identifier] ]
+    [| type-constraint [~:opt identifier] [`=] type-id ]
     [| template-head type-parameter-key [`:opt ...] [~:opt identifier] ]
     [| template-head type-parameter-key [~:opt identifier] [`=] id-expression ]
 [rule:end]
@@ -26,26 +27,6 @@ The syntax for [~template-parameter]s is:
 [rule type-parameter-key [:zh_CN] 类型形参关键字 ]
     [| [`class] ]
     [| [`typename] ]
-[rule:end]
-
-[rule constrained-parameter [:zh_CN] 受约束形参 ]
-    [| qualified-concept-name [`...] [~:opt identifier] ]
-    [| qualified-concept-name [~:opt identifier] [~:opt default-template-argument] ]
-[rule:end]
-
-[rule qualified-concept-name [:zh_CN] 限定概念名 ]
-    [| [~:opt nested-name-specifier] concept-name ]
-    [| [~:opt nested-name-specifier] partial-concept-id ]
-[rule:end]
-
-[rule partial-concept-id [:zh_CN] 部分概念标识 ]
-    [| concept-name [`<] [~:opt template-argument-list] [`>] ]
-[rule:end]
-
-[rule default-template-argument [:zh_CN] 默认模板实参 ]
-    [| [`=] type-id ]
-    [| [`=] id-expression ]
-    [| [`=] initializer-clause ]
 [rule:end]
 [syntax:end]
 
@@ -310,142 +291,10 @@ S<v> z;                         // [:en] OK due to both adjustment and conversio
 
 [para]
 [:en]
-A [~partial-concept-id] is a [~concept-name] followed by a sequence of
-[~template-argument]s.
+A [~type-parameter] that starts with a [~type-constraint] introduces the
+immediately-declared constraint ([#temp]) of the parameter.
 [:zh_CN]
-[~部分概念标识]是[~概念名]后面跟着一系列的[~模板实参]。
-
-[:en]
-These template arguments are used to form a [~constraint-expression] as
-described below.
-[:zh_CN]
-这些模板实参用于构成[~约束表达式]，如下文所述。
-
-[para]
-[:en]
-A [~constrained-parameter] declares a template parameter whose kind (type,
-non-type, template) and type match that of the prototype parameter
-([#temp.concept]) of the concept designated by the [~qualified-concept-name] in
-the [~constrained-parameter].
-[:zh_CN]
-一个[~受约束形参]声明一个模板形参，其种类（类型、非类型或模板）和类型与由该
-[~受约束形参]中的[~限定概念名]所代表的概念中的原型形参（[#temp.concept]）向匹配。
-
-[:en]
-Let [`X] be the prototype parameter of the designated concept.
-[:zh_CN]
-令 [`X] 为所代表的概念的原型形参。
-
-[:en]
-The declared template parameter is determined by the kind of [`X] (type,
-non-type, template) and the optional ellipsis in the [~constrained-parameter]
-as follows.
-[:zh_CN]
-所声明的模板形参，由 [`X] 的种类（类型、非类型或模板）以及[~受约束形参]中可选的
-省略号，按如下方式确定。
-
-[list]
-[item]
-[:en] If [`X] is a type [~template-parameter], the declared parameter is a type
-[~template-parameter].
-[:zh_CN] 如果 [`X] 是一个类型[~模板形参]，则所声明的形参为类型[~模板形参]。
-
-[item]
-[:en] If [`X] is a non-type [~template-parameter], the declared parameter is a
-non-type [~template-parameter] having the same type as [`X].
-[:zh_CN] 如果 [`X] 是一个非类型[~模板形参]，则所声明的形参是具有与 [`X] 相同类型
-的非类型[~模板形参]。
-
-[item]
-[:en] If [`X] is a template [~template-parameter], the declared parameter is a
-template [~template-parameter] having the same [~template-parameter-list] as
-[`X], excluding default template arguments.
-[:zh_CN] 如果 [`X] 为模板[~模板形参]，则所声明的形参是具有与 [`X] 相同
-[~模板形参列表]，但排除默认模板实参的模板[~模板形参]。
-
-[item]
-[:en] If the [~qualified-concept-name] is followed by an ellipsis, then the
-declared parameter is a template parameter pack ([#temp.variadic]).
-[:zh_CN] 如果[~限定概念名]后面跟着省略号，则所声明的形参是模板形参包组
-（[#temp.variadic]）。
-[list:end]
-
-[enter:example]
-[codeblock]
-template<typename T> concept C1 = true;
-template<template<typename> class X> concept C2 = true;
-template<int N> concept C3 = true;
-template<typename... Ts> concept C4 = true;
-template<char... Cs> concept C5 = true;
-
-template<C1 T> void f1();       // [:en] OK, [`T] is a type [~template-parameter]
-                                // [|:zh_CN] OK，[`T] 为类型[~模板形参]
-template<C2 X> void f2();       // [:en] OK, [`X] is a template with one [~type-parameter]
-                                // [|:zh_CN] OK，[`X] 为带有一个[~类型形参]的模板
-template<C3 N> void f3();       // [:en] OK, [`N] has type [`int]
-                                // [|:zh_CN] OK，[`N] 类型为 [`int]
-template<C4... Ts> void f4();   // [:en] OK, [`Ts] is a template parameter pack of types
-                                // [|:zh_CN] OK，[`Ts] 为一组类型的模板形参包组
-template<C4 T> void f5();       // [:en] OK, [`T] is a type [~template-parameter]
-                                // [|:zh_CN] OK，[`T] 为类型[~模板形参]
-template<C5... Cs> void f6();   // [:en] OK, [`Cs] is a template parameter pack of [`char]s
-                                // [|:zh_CN] OK，[`Cs] 为一组 [`char] 的模板形参包组
-[codeblock:end]
-[exit:example]
-
-[para]
-[:en]
-A [~constrained-parameter] introduces a [~constraint-expression]
-([#temp.constr.decl]).
-[:zh_CN]
-[~受约束形参]引入一个[~约束表达式]（[#temp.constr.decl]）。
-
-[:en]
-The expression is derived from the [~qualified-concept-name] [`Q] in the
-[~constrained-parameter], its designated concept [`C], and the declared template
-parameter [`P].
-[:zh_CN]
-该表达式由[~受约束形参]中的[~限定概念名] [`Q]，其所代表的概念 [`C]，以及所声明的
-形参 [`P] 构成。
-
-[list]
-[item]
-[:en] First, a template argument [`A] is formed from [`P].
-[:zh_CN] 首先，从 [`P] 构成一个模板实参 [`A]。
-
-[:en] If [`P] declares a template parameter pack ([#temp.variadic]) and [`C] is
-a variadic concept ([#temp.concept]), then [`A] is the pack expansion [`P...].
-[:zh_CN] 如果 [`P] 声明了一个模板形参包组([#temp.variadic]），并且 [`C] 是一个
-变参概念（[#temp.concept]），则 [`A] 是包组展开式 [`P...]。
-
-[:en] Otherwise, [`A] is the [~id-expression] [`P].
-[:zh_CN] 否则，[`A] 就是[~标识表达式] [`P]。
-
-[item]
-[:en] Then, an [~id-expression] [`E] is formed as follows.
-[:zh_CN] 然后，以如下方式构成一个[~标识表达式] [`E]。
-
-[:en] If [`Q] is a [~concept-name], then [`E] is [`C<A>].
-[:zh_CN] 如果 [`Q] 是一个[~概念名]，则 [`E] 为 [`C<A>]。
-
-[:en] Otherwise, [`Q] is a [~partial-concept-id] of the form
-[`C<A[$_1], A[$_2], ..., A[$_n]>], and [`E] is
-[`C<A, A[$_1], A[$_2], ..., A[$_n]>].
-[:zh_CN] 否则，[`Q] 为形式为 [`C<A[$_1], A[$_2], ..., A[$_n]>] 的[~部分概念
-标识]，而 [`E] 为 [`C<A, A[$_1], A[$_2], ..., A[$_n]>]。
-
-[item]
-[:en] Finally, if [`P] declares a template parameter pack and [`C] is not a
-variadic concept, [`E] is adjusted to be the [~fold-expression] [`(E && ...)]
-([#expr.prim.fold]).
-[:zh_CN] 最后，如果 [`P] 声明了一个模板形参包组而 [`C] 不是变参概念，则将 [`E]
-调整为[~折叠表达式] [`(E && ...)]（[#expr.prim.fold]）。
-[list:end]
-
-[:en]
-[`E] is the introduced [~constraint-expression].
-[:zh_CN]
-[`E] 即为所引入的[~约束表达式]。
+以一个[~类型约束]开始的[~类型形参]，引入形参的直接声明约束（[#temp]）。
 
 [enter:example]
 [codeblock]
@@ -453,16 +302,25 @@ template<typename T> concept C1 = true;
 template<typename... Ts> concept C2 = true;
 template<typename T, typename U> concept C3 = true;
 
-template<C1 T> struct s1;       // [:en] associates [`C1<T>]
-                                // [|:zh_CN] 关联 [`C1<T>]
-template<C1... T> struct s2;    // [:en] associates [`(C1<T> && ...)]
-                                // [|:zh_CN] 关联 [`(C1<T> && ...)]
-template<C2... T> struct s3;    // [:en] associates [`C2<T...>]
-                                // [|:zh_CN] 关联 [`C2<T...>]
-template<C3<int> T> struct s4;  // [:en] associates [`C3<T, int>]
-                                // [|:zh_CN] 关联 [`C3<T, int>]
+template<C1 T> struct s1;              // [:en] associates [`C1<T>]
+                                       // [|:zh_CN] 关联 [`C1<T>]
+template<C1... T> struct s2;           // [:en] associates [`(C1<T> && ...)]
+                                       // [|:zh_CN] 关联 [`(C1<T> && ...)]
+template<C2... T> struct s3;           // [:en] associates [`(C2<T> && ...)]
+                                       // [|:zh_CN] 关联 [`(C2<T> && ...)]
+template<C3<int> T> struct s4;         // [:en] associates [`C3<T, int>]
+                                       // [|:zh_CN] 关联 [`C3<T, int>]
+template<C3<int>... T> struct s5;      // [:en] associates [`(C3<T, int> && ...)]
+                                       // [|:zh_CN] 关联 [`(C3<T, int> && ...)]
 [codeblock:end]
 [exit:example]
+
+[para]
+[:en] A non-type template parameter declared with a type that contains a
+placeholder type with a [~type-constraint] introduces the immediately-declared
+constraint of the invented type corresponding to the placeholder ([#dcl.fct]).
+[:zh_CN] 以包含带有[~类型约束]的占位符类型的类型所声明的非类型模板形参，为对应于
+该占位符的虚构类型引入了直接声明约束（[#dcl.fct]）。
 
 [para]
 [:en]
@@ -507,30 +365,6 @@ only declaration of the function template in the translation unit.
 [:zh_CN]
 若某个友元函数模板声明式指定了默认[~模板实参]，则该声明式应当是定义式，且应当是
 这个翻译单元中该函数模板的唯一声明式。
-
-[para]
-[:en]
-The default [~template-argument] of a [~constrained-parameter] shall match the
-kind (type, non-type, template) of the declared template parameter.
-[:zh_CN]
-[~受约束形参]的默认[~模板实参]应当与所声明的模板形参的种类（类型、非类型或模板）
-向匹配。
-
-[enter:example]
-[codeblock]
-template<typename T> concept C1 = true;
-template<int N> concept C2 = true;
-template<template<typename> class X> concept C3 = true;
-
-template<typename T> struct S0;
-
-template<C1 T = int> struct S1; // OK
-template<C2 N = 0> struct S2;   // OK
-template<C3 X = S0> struct S3;  // OK
-template<C1 T = 0> struct S4;   // [:en] error: default argument is not a type
-                                // [|:zh_CN] 错误：默认实参不是类型
-[codeblock:end]
-[exit:example]
 
 [para]
 [:en]
@@ -700,6 +534,12 @@ expansion.
 [:zh_CN]
 相似地，如果某个模板形参包组是一个[~类型形参]，并带有包含一个或多个未展开的包组
 的[~模板形参列表]，则它是包组展开式。
+
+[:en]
+A type parameter pack with a [~type-constraint] that contains an unexpanded
+parameter pack is a pack expansion.
+[:zh_CN]
+带有包含未展开形参包组的[~类型约束]的类型形参包组，是包组展开式。
 
 [:en]
 A template parameter pack that is a pack expansion shall not expand a template

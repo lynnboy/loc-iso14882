@@ -4,18 +4,220 @@
 ]
 
 [%@header iterator]
-[codeblock:synopsis]
+[%@library default_sentinel]
+[codeblock:synopsis [!:mark SeeBelow UnSpec] [!:var with-reference can-reference dereferenceable] ]
+#include <concept>
+
 namespace std {
-  // [:en] [#iterator.primitives], primitives
-  // [|:zh_CN] [#iterator.primitives]，原语
-  template<class Iterator> struct iterator_traits;
+  template<class T> using [*with-reference] = T&;  // [=Expos]
+  template<class T> concept [*can-reference]       // [=Expos]
+    = requires { typename [*with-reference]<T>; };
+  template<class T> concept [*dereferenceable]     // [=Expos]
+    = requires(T& t) {
+      { *t } -> [*can-reference];  // [:en] not required to be equality-preserving
+                                   // [|:zh_CN] 不必是维持相等性的
+    };
+
+  // [:en] [#iterator.assoc.types], associated types
+  // [|:zh_CN] [#iterator.assoc.types]，关联类型
+  // [:en] [#incrementable.traits], incrementable traits
+  // [|:zh_CN] [#incrementable.traits]，可增量操作特征
+  template<class> struct incrementable_traits;
+  template<class T>
+    using iter_difference_t = [=SeeBelow];
+
+  // [:en] [#readable.traits], readable traits
+  // [|:zh_CN] [#readable.traits]，可读取特征
+  template<class> struct readable_traits;
+  template<class T>
+    using iter_value_t = [=SeeBelow];
+
+  // [:en] [#iterator.traits], iterator traits
+  // [|:zh_CN] [#iterator.traits]，迭代器特征
+  template<class I> struct iterator_traits;
   template<class T> struct iterator_traits<T*>;
 
+  template<[*dereferenceable] T>
+    using iter_reference_t = decltype(*declval<T&>());
+
+  namespace ranges {
+    // [:en] [#iterator.cust], customization points
+    // [|:zh_CN] [#iterator.cust]，定制化点
+    inline namespace [=UnSpec] {
+      // [#iterator.cust.move], [`iter_move]
+      inline constexpr [=UnSpec] iter_move = [=UnSpec];
+
+      // [#iterator.cust.swap], [`iter_swap]
+      inline constexpr [=UnSpec] iter_swap = [=UnSpec];
+    }
+  }
+
+  template<[*dereferenceable] T>
+    requires requires(T& t) {
+      { ranges::iter_move(t) } -> [*can-reference];
+    }
+  using iter_rvalue_reference_t
+    = decltype(ranges::iter_move(declval<T&>()));
+
+  // [:en] [#iterator.concepts], iterator concepts
+  // [|:zh_CN] [#iterator.concepts]，迭代器的概念
+  // [:en] [#iterator.concept.readable], concept [`Readable]
+  // [|:zh_CN] [#iterator.concept.readable]，概念 [`Readable]
+  template<class In>
+    concept Readable = [=SeeBelow];
+
+  template<Readable T>
+    using iter_common_reference_t =
+      common_reference_t<iter_reference_t<T>, iter_value_t<T>&>;
+
+  // [:en] [#iterator.concept.writable], concept [`Writable]
+  // [|:zh_CN] [#iterator.concept.writable]，概念 [`Writable]
+  template<class Out, class T>
+    concept Writable = [=SeeBelow];
+
+  // [:en] [#iterator.concept.winc], concept [`WeaklyIncrementable]
+  // [|:zh_CN] [#iterator.concept.winc]，概念 [`WeaklyIncrementable]
+  template<class I>
+    concept WeaklyIncrementable = [=SeeBelow];
+
+  // [:en] [#iterator.concept.inc], concept [`Incrementable]
+  // [|:zh_CN] [#iterator.concept.inc]，概念 [`Incrementable]
+  template<class I>
+    concept Incrementable = [=SeeBelow];
+
+  // [:en] [#iterator.concept.iterator], concept [`Iterator]
+  // [|:zh_CN] [#iterator.concept.iterator]，概念 [`Iterator]
+  template<class I>
+    concept Iterator = [=SeeBelow];
+
+  // [:en] [#iterator.concept.sentinel], concept [`Sentinel]
+  // [|:zh_CN] [#iterator.concept.sentinel]，概念 [`Sentinel]
+  template<class S, class I>
+    concept Sentinel = [=SeeBelow];
+
+  // [:en] [#iterator.concept.sizedsentinel], concept [`SizedSentinel]
+  // [|:zh_CN] [#iterator.concept.sizedsentinel]，概念 [`SizedSentinel]
+  template<class S, class I>
+    inline constexpr bool disable_sized_sentinel = false;
+
+  template<class S, class I>
+    concept SizedSentinel = [=SeeBelow];
+
+  // [:en] [#iterator.concept.input], concept [`InputIterator]
+  // [|:zh_CN] [#iterator.concept.input]，概念 [`InputIterator]
+  template<class I>
+    concept InputIterator = [=SeeBelow];
+
+  // [:en] [#iterator.concept.output], concept [`OutputIterator]
+  // [|:zh_CN] [#iterator.concept.output]，概念 [`OutputIterator]
+  template<class I, class T>
+    concept OutputIterator = [=SeeBelow];
+
+  // [:en] [#iterator.concept.forward], concept [`ForwardIterator]
+  // [|:zh_CN] [#iterator.concept.forward]，概念 [`ForwardIterator]
+  template<class I>
+    concept ForwardIterator = [=SeeBelow];
+
+  // [:en] [#iterator.concept.bidir], concept [`BidirectionalIterator]
+  // [|:zh_CN] [#iterator.concept.bidir]，概念 [`BidirectionalIterator]
+  template<class I>
+    concept BidirectionalIterator = [=SeeBelow];
+
+  // [:en] [#iterator.concept.random.access], concept [`RandomAccessIterator]
+  // [|:zh_CN] [#iterator.concept.random.access]，概念 [`RandomAccessIterator]
+  template<class I>
+    concept RandomAccessIterator = [=SeeBelow];
+
+  // [:en] [#iterator.concept.contiguous], concept [`ContiguousIterator]
+  // [|:zh_CN] [#iterator.concept.contiguous]，概念 [`ContiguousIterator]
+  template<class I>
+    concept ContiguousIterator = [=SeeBelow];
+
+  // [:en] [#indirectcallable], indirect callable requirements
+  // [|:zh_CN] [#indirectcallable]，可间接调用规定
+  // [:en] [#indirectcallable.indirectinvocable], indirect callables
+  // [|:zh_CN] [#indirectcallable.indirectinvocable]，可间接调用
+  template<class F, class I>
+    concept IndirectUnaryInvocable = [=SeeBelow];
+
+  template<class F, class I>
+    concept IndirectRegularUnaryInvocable = [=SeeBelow];
+
+  template<class F, class I>
+    concept IndirectUnaryPredicate = [=SeeBelow];
+
+  template<class F, class I1, class I2 = I1>
+    concept IndirectRelation = [=SeeBelow];
+
+  template<class F, class I1, class I2 = I1>
+    concept IndirectStrictWeakOrder = [=SeeBelow];
+
+  template<class F, class... Is>
+    requires (Readable<Is> && ...) && Invocable<F, iter_reference_t<Is>...>
+      using indirect_result_t = invoke_result_t<F, iter_reference_t<Is>...>;
+
+  // [:en] [#projected], projected
+  // [|:zh_CN] [#projected]，投射
+  template<Readable I, IndirectRegularUnaryInvocable<I> Proj>
+    struct projected;
+
+  template<WeaklyIncrementable I, class Proj>
+    struct incrementable_traits<projected<I, Proj>>;
+
+  // [:en] [#alg.req], common algorithm requirements
+  // [|:zh_CN] [#alg.req]，一般算法规定
+  // [:en] [#alg.req.ind.move], concept [`IndirectlyMovable]
+  // [|:zh_CN] [#alg.req.ind.move]，概念 [`IndirectlyMovable]
+  template<class In, class Out>
+    concept IndirectlyMovable = [=SeeBelow];
+
+  template<class In, class Out>
+    concept IndirectlyMovableStorable = [=SeeBelow];
+
+  // [:en] [#alg.req.ind.copy], concept [`IndirectlyCopyable]
+  // [|:zh_CN] [#alg.req.ind.copy]，概念 [`IndirectlyCopyable]
+  template<class In, class Out>
+    concept IndirectlyCopyable = [=SeeBelow];
+
+  template<class In, class Out>
+    concept IndirectlyCopyableStorable = [=SeeBelow];
+
+  // [:en] [#alg.req.ind.swap], concept [`IndirectlySwappable]
+  // [|:zh_CN] [#alg.req.ind.swap]，概念 [`IndirectlySwappable]
+  template<class I1, class I2 = I1>
+    concept IndirectlySwappable = [=SeeBelow];
+
+  // [:en] [#alg.req.ind.cmp], concept [`IndirectlyComparable]
+  // [|:zh_CN] [#alg.req.ind.cmp]，概念 [`IndirectlyComparable]
+  template<class I1, class I2, class R, class P1 = identity, class P2 = identity>
+    concept IndirectlyComparable = [=SeeBelow];
+
+  // [:en] [#alg.req.permutable], concept [`Permutable]
+  // [|:zh_CN] [#alg.req.permutable]，概念 [`Permutable]
+  template<class I>
+    concept Permutable = [=SeeBelow];
+
+  // [:en] [#alg.req.mergeable], concept [`Mergeable]
+  // [|:zh_CN] [#alg.req.mergeable]，概念 [`Mergeable]
+  template<class I1, class I2, class Out,
+      class R = ranges::less<>, class P1 = identity, class P2 = identity>
+    concept Mergeable = [=SeeBelow];
+
+  // [:en] [#alg.req.sortable], concept [`Sortable]
+  // [|:zh_CN] [#alg.req.sortable]，概念 [`Sortable]
+  template<class I, class R = ranges::less<>, class P = identity>
+    concept Sortable = [=SeeBelow];
+
+  // [:en] [#iterator.primitives], primitives
+  // [|:zh_CN] [#iterator.primitives]，原语
+  // [:en] [#std.iterator.tags], iterator tags
+  // [|:zh_CN] [#std.iterator.tags]，迭代器标签
   struct input_iterator_tag { };
   struct output_iterator_tag { };
   struct forward_iterator_tag: public input_iterator_tag { };
   struct bidirectional_iterator_tag: public forward_iterator_tag { };
   struct random_access_iterator_tag: public bidirectional_iterator_tag { };
+  struct contiguous_iterator_tag: public random_access_iterator_tag { };
 
   // [:en] [#iterator.operations], iterator operations
   // [|:zh_CN] [#iterator.operations]，迭代器的操作
@@ -34,8 +236,46 @@ namespace std {
       prev(BidirectionalIterator x,
            typename iterator_traits<BidirectionalIterator>::difference_type n = 1);
 
-  // [:en] [#predef.iterators], predefined iterators
-  // [|:zh_CN] [#predef.iterators]，预定义迭代器
+  // [:en] [#range.iter.ops], range iterator operations
+  // [|:zh_CN] [#range.iter.ops]，范围迭代器操作
+  namespace ranges {
+    // [#range.iter.op.advance], [`ranges::advance]
+    template<Iterator I>
+      constexpr void advance(I& i, iter_difference_t<I> n);
+    template<Iterator I, Sentinel<I> S>
+      constexpr void advance(I& i, S bound);
+    template<Iterator I, Sentinel<I> S>
+      constexpr iter_difference_t<I> advance(I& i, iter_difference_t<I> n, S bound);
+
+    // [#range.iter.op.distance], [`ranges::distance]
+    template<Iterator I, Sentinel<I> S>
+      constexpr iter_difference_t<I> distance(I first, S last);
+    template<Range R>
+      constexpr iter_difference_t<iterator_t<R>> distance(R&& r);
+
+    // [#range.iter.op.next], [`ranges::next]
+    template<Iterator I>
+      constexpr I next(I x);
+    template<Iterator I>
+      constexpr I next(I x, iter_difference_t<I> n);
+    template<Iterator I, Sentinel<I> S>
+      constexpr I next(I x, S bound);
+    template<Iterator I, Sentinel<I> S>
+      constexpr I next(I x, iter_difference_t<I> n, S bound);
+
+    // [#range.iter.op.prev], [`ranges::prev]
+    template<BidirectionalIterator I>
+      constexpr I prev(I x);
+    template<BidirectionalIterator I>
+      constexpr I prev(I x, iter_difference_t<I> n);
+    template<BidirectionalIterator I>
+      constexpr I prev(I x, iter_difference_t<I> n, I bound);
+  }
+
+  // [:en] [#predef.iterators], predefined iterators and sentinels
+  // [|:zh_CN] [#predef.iterators]，预定义的迭代器和哨位
+  // [:en] [#reverse.iterators], reverse iterators
+  // [|:zh_CN] [#reverse.iterators]，反向迭代器
   template<class Iterator> class reverse_iterator;
 
   template<class Iterator1, class Iterator2>
@@ -76,18 +316,23 @@ namespace std {
   template<class Iterator>
     constexpr reverse_iterator<Iterator> make_reverse_iterator(Iterator i);    
 
+  // [:en] [#insert.iterators], insert iterators
+  // [|:zh_CN] [#insert.iterators]，插入迭代器
   template<class Container> class back_insert_iterator;
   template<class Container>
-    back_insert_iterator<Container> back_inserter(Container& x);
+    constexpr back_insert_iterator<Container> back_inserter(Container& x);
 
   template<class Container> class front_insert_iterator;
   template<class Container>
-    front_insert_iterator<Container> front_inserter(Container& x);
+    constexpr front_insert_iterator<Container> front_inserter(Container& x);
 
   template<class Container> class insert_iterator;
   template<class Container>
-    insert_iterator<Container> inserter(Container& x, typename Container::iterator i);
+    constexpr insert_iterator<Container>
+      inserter(Container& x, iterator_t<Container> i);
 
+  // [:en] [#move.iterators], move iterators and sentinels
+  // [|:zh_CN] [#move.iterators]，移动迭代器和哨位
   template<class Iterator> class move_iterator;
   template<class Iterator1, class Iterator2>
     constexpr bool operator==(
@@ -118,10 +363,44 @@ namespace std {
   template<class Iterator>
     constexpr move_iterator<Iterator> make_move_iterator(Iterator i);
 
+  template<Semiregular S> class move_sentinel;
+
+  // [:en] [#iterators.common], common iterators
+  // [|:zh_CN] [#iterators.common]，公共迭代器
+  template<Iterator I, Sentinel<I> S>
+    requires (!Same<I, S>)
+      class common_iterator;
+
+  template<class I, class S>
+    struct incrementable_traits<common_iterator<I, S>>;
+
+  template<InputIterator I, class S>
+    struct iterator_traits<common_iterator<I, S>>;
+
+  // [:en] [#default.sentinels], default sentinels
+  // [|:zh_CN] [#default.sentinels]，默认哨位
+  struct default_sentinel_t;
+  inline constexpr default_sentinel_t default_sentinel{};
+
+  // [:en] [#iterators.counted], counted iterators
+  // [|:zh_CN] [#iterators.counted]，计数迭代器
+  template<Iterator I> class counted_iterator;
+
+  template<class I>
+    struct incrementable_traits<counted_iterator<I>>;
+
+  template<InputIterator I>
+    struct iterator_traits<counted_iterator<I>>;
+
+  // [:en] [#unreachable.sentinels], unreachable sentinels
+  // [|:zh_CN] [#unreachable.sentinels]，不可达哨位
+  struct unreachable_sentinel_t;
+  inline constexpr unreachable_sentinel_t unreachable_sentinel{};
+
   // [:en] [#stream.iterators], stream iterators
   // [|:zh_CN] [#stream.iterators]，流迭代器
   template<class T, class charT = char, class traits = char_traits<charT>,
-      class Distance = ptrdiff_t>
+           class Distance = ptrdiff_t>
   class istream_iterator;
   template<class T, class charT, class traits, class Distance>
     bool operator==(const istream_iterator<T,charT,traits,Distance>& x,
@@ -172,9 +451,9 @@ namespace std {
   // [|:zh_CN] [#iterator.container]，容器访问
   template<class C> constexpr auto size(const C& c) -> decltype(c.size());
   template<class T, size_t N> constexpr size_t size(const T (&array)[N]) noexcept;
-  template<class C> constexpr auto empty(const C& c) -> decltype(c.empty());
-  template<class T, size_t N> constexpr bool empty(const T (&array)[N]) noexcept;
-  template<class E> constexpr bool empty(initializer_list<E> il) noexcept;
+  template<class C> [[nodiscard]] constexpr auto empty(const C& c) -> decltype(c.empty());
+  template<class T, size_t N> [[nodiscard]] constexpr bool empty(const T (&array)[N]) noexcept;
+  template<class E> [[nodiscard]] constexpr bool empty(initializer_list<E> il) noexcept;
   template<class C> constexpr auto data(C& c) -> decltype(c.data());
   template<class C> constexpr auto data(const C& c) -> decltype(c.data());
   template<class T, size_t N> constexpr T* data(T (&array)[N]) noexcept;

@@ -1,0 +1,115 @@
+[section#range.take.view
+    [:en] Class template [`take_view]
+    [:zh_CN] 类模板 [`take_view]
+]
+
+[codeblock:synopsis [!:var simple-view]]
+namespace std::ranges {
+  template<View V>
+  class take_view : public view_interface<take_view<V>> {
+  private:
+    V base_ = V();                                      // [=Expos]
+    iter_difference_t<iterator_t<V>> count_ = 0;        // [=Expos]
+    template<bool> struct sentinel;                     // [=Expos]
+  public:
+    take_view() = default;
+    constexpr take_view(V base, iter_difference_t<iterator_t<V>> count);
+    template<ViewableRange R>
+      requires Constructible<V, all_view<R>>
+    constexpr take_view(R&& r, iter_difference_t<iterator_t<V>> count);
+
+    constexpr V base() const;
+
+    constexpr auto begin() requires (![*simple-view]<V>) {
+      if constexpr (SizedRange<V>) {
+        if constexpr (RandomAccessRange<V>)
+          return ranges::begin(base_);
+        else
+          return counted_iterator{ranges::begin(base_), size()};
+      } else
+        return counted_iterator{ranges::begin(base_), count_};
+    }
+
+    constexpr auto begin() const requires Range<const V> {
+      if constexpr (SizedRange<const V>) {
+        if constexpr (RandomAccessRange<const V>)
+          return ranges::begin(base_);
+        else
+          return counted_iterator{ranges::begin(base_), size()};
+      } else
+        return counted_iterator{ranges::begin(base_), count_};
+    }
+
+    constexpr auto end() requires (![*simple-view]<V>) {
+      if constexpr (SizedRange<V>) {
+        if constexpr (RandomAccessRange<V>)
+          return ranges::begin(base_) + size();
+        else
+          return default_sentinel;
+      } else
+        return sentinel<false>{ranges::end(base_)};
+    }
+
+    constexpr auto end() const requires Range<const V> {
+      if constexpr (SizedRange<const V>) {
+        if constexpr (RandomAccessRange<const V>)
+          return ranges::begin(base_) + size();
+        else
+          return default_sentinel;
+      } else
+        return sentinel<true>{ranges::end(base_)};
+    }
+
+    constexpr auto size() requires SizedRange<V> {
+      auto n = ranges::size(base_);
+      return ranges::min(n, static_cast<decltype(n)>(count_));
+    }
+
+    constexpr auto size() const requires SizedRange<const V> {
+      auto n = ranges::size(base_);
+      return ranges::min(n, static_cast<decltype(n)>(count_));
+    }
+  };
+
+  template<Range R>
+    take_view(R&&, iter_difference_t<iterator_t<R>>)
+      -> take_view<all_view<R>>;
+}
+[codeblock:end]
+
+[%@library take_view[!take_view]]
+[codeblock:declaration]
+constexpr take_view(V base, iter_difference_t<iterator_t<V>> count);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`base] and [`count_] with [`count].
+[:zh_CN] 以 [`base] 初始化 [`base_] 并以 [`count] 初始化 [`count_]。
+[exit:description]
+
+[%@library take_view[!take_view]]
+[codeblock:declaration]
+template<ViewableRange R>
+  requires Constructible<V, all_view<R>>
+constexpr take_view(R&& r, iter_difference_t<iterator_t<V>> count);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`count_]
+with [`count].
+[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以 [`count]
+初始化 [`count_]。
+[exit:description]
+
+[%@library base[!take_view]]
+[codeblock:declaration]
+constexpr V base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return base_;]
+[:zh_CN] 等价于：[`return base_;]
+[exit:description]

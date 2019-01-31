@@ -1,0 +1,179 @@
+[section#range.transform.view
+    [:en] Class template [`transform_view]
+    [:zh_CN] 类模板 [`transform_view]
+]
+
+[codeblock:synopsis [!:var semiregular]]
+namespace std::ranges {
+  template<InputRange V, CopyConstructible F>
+    requires View<V> && is_object_v<F> &&
+             RegularInvocable<F&, iter_reference_t<iterator_t<V>>>
+  class transform_view : public view_interface<transform_view<V, F>> {
+  private:
+    template<bool> struct iterator;             // [=Expos]
+    template<bool> struct sentinel;             // [=Expos]
+
+    V base_ = V();                              // [=Expos]
+    [*semiregular]<F> fun_;                        // [=Expos]
+
+  public:
+    transform_view() = default;
+    constexpr transform_view(V base, F fun);
+    template<InputRange R>
+      requires ViewableRange<R> && Constructible<V, all_view<R>>
+    constexpr transform_view(R&& r, F fun);
+
+    constexpr V base() const;
+
+    constexpr iterator<false> begin();
+    constexpr iterator<true> begin() const
+      requires Range<const V> &&
+               RegularInvocable<const F&, iter_reference_t<iterator_t<const V>>>;
+
+    constexpr sentinel<false> end();
+    constexpr iterator<false> end() requires CommonRange<V>;
+    constexpr sentinel<true> end() const
+      requires Range<const V> &&
+               RegularInvocable<const F&, iter_reference_t<iterator_t<const V>>>;
+    constexpr iterator<true> end() const
+      requires CommonRange<const V> &&
+               RegularInvocable<const F&, iter_reference_t<iterator_t<const V>>>;
+
+    constexpr auto size() requires SizedRange<V> { return ranges::size(base_); }
+    constexpr auto size() const requires SizedRange<const V>
+    { return ranges::size(base_); }
+  };
+
+  template<class R, class F>
+    transform_view(R&&, F) -> transform_view<all_view<R>, F>;
+}
+[codeblock:end]
+
+[%@library transform_view[!transform_view]]
+[codeblock:declaration]
+constexpr transform_view(V base, F fun);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`std::move(base)] and [`fun_] with
+[`std::move(fun)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(fun)] 初始化
+[`fun_]。
+[exit:description]
+
+[%@library transform_view[!transform_view]]
+[codeblock:declaration]
+template<InputRange R>
+  requires ViewableRange<R> && Constructible<V, all_view<R>>
+constexpr transform_view(R&& r, F fun);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`fun_]
+with [`std::move(fun)].
+[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以
+[`std::move(fun)] 初始化 [`fun_]。
+[exit:description]
+
+[%@library base[!transform_view]]
+[codeblock:declaration]
+constexpr V base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return base_;]
+[:zh_CN] 等价于：[`return base_;]
+[exit:description]
+
+[%@library begin[!transform_view]]
+[codeblock:declaration]
+constexpr iterator<false> begin();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return iterator<false>{*this, ranges::begin(base_)};
+[codeblock:end]
+[exit:description]
+
+[%@library begin[!transform_view]]
+[codeblock:declaration]
+constexpr iterator<true> begin() const
+  requires Range<const V> &&
+           RegularInvocable<const F&, iter_reference_t<iterator_t<const V>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return iterator<true>{*this, ranges::begin(base_)};
+[codeblock:end]
+[exit:description]
+
+[%@library end[!transform_view]]
+[codeblock:declaration]
+constexpr sentinel<false> end();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return sentinel<false>{ranges::end(base_)};
+[codeblock:end]
+[exit:description]
+
+[%@library end[!transform_view]]
+[codeblock:declaration]
+constexpr iterator<false> end() requires CommonRange<V>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return iterator<false>{*this, ranges::end(base_)};
+[codeblock:end]
+[exit:description]
+
+[%@library end[!transform_view]]
+[codeblock:declaration]
+constexpr sentinel<true> end() const
+  requires Range<const V> &&
+           RegularInvocable<const F&, iter_reference_t<iterator_t<const V>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return sentinel<true>{ranges::end(base_)};
+[codeblock:end]
+[exit:description]
+
+[%@library end[!transform_view]]
+[codeblock:declaration]
+constexpr iterator<true> end() const
+  requires CommonRange<const V> &&
+           RegularInvocable<const F&, iter_reference_t<iterator_t<const V>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return iterator<true>{*this, ranges::end(base_)};
+[codeblock:end]
+[exit:description]

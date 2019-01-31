@@ -5,97 +5,269 @@
 
 [para]
 [%@library iterator_traits]
-[:en] To implement algorithms only in terms of iterators, it is often necessary
-to determine the value and difference types that correspond to a particular
+[:en] To implement algorithms only in terms of iterators, it is sometimes
+necessary to determine the iterator category that corresponds to a particular
 iterator type.
-[:zh_CN] 如果只依据迭代器来实现算法，通常需要确定对应于特定迭代器类型的值和差
-类型。
+[:zh_CN] 为实现仅依据迭代器的算法，有时候需要确定对应于特定迭代器类型的迭代器
+类别。
 
-[:en] Accordingly, it is required that if [`Iterator] is the type of an
-iterator, the types
-[:zh_CN] 据此，如果 [`Iterator] 为迭代器的类型，则要求类型
+[:en] Accordingly, it is required that if [`I] is the type of an iterator, the
+type
+[:zh_CN] 据此，若 [`I] 是迭代器的类型，则要求类型
 
-[%@library difference_type[!iterator_traits]]
-[%@library iterator_traits[!difference_type]]
-[%@library value_type[!iterator_traits]]
-[%@library iterator_traits[!value_type]]
 [%@library iterator_category[!iterator_traits]]
-[%@library iterator_traits[!iterator_category]]
 [codeblock:notation]
-iterator_traits<Iterator>::difference_type
-iterator_traits<Iterator>::value_type
-iterator_traits<Iterator>::iterator_category
+iterator_traits<I>::iterator_category
 [codeblock:end]
 
-[:en@~] be defined as the iterator[=']s difference type, value type and iterator
-category, respectively.
-[:zh_CN@~] 分别被定义为该迭代器的差类型、值类型和迭代器类别。
+[:en@~] be defined as the iterator[=']s iterator category.
+[:zh_CN@~] 被定义为该迭代器的迭代器类别。
 
 [:en] In addition, the types
 [:zh_CN] 此外，类型
 
-[%@library reference[!iterator_traits]]
-[%@library iterator_traits[!reference]]
 [%@library pointer[!iterator_traits]]
 [%@library iterator_traits[!pointer]]
+[%@library reference[!iterator_traits]]
+[%@library iterator_traits[!reference]]
 [codeblock:notation]
-iterator_traits<Iterator>::reference
-iterator_traits<Iterator>::pointer
+iterator_traits<I>::pointer
+iterator_traits<I>::reference
 [codeblock:end]
 
-[:en@~] shall be defined as the iterator[=']s reference and pointer types, that
-is, for an iterator object [`a], the same type as the type of [`*a] and [`a->],
-respectively.
-[:zh_CN@~] 应当分别被定义为该迭代器的引用和指针类型，就是说，对于迭代器对象 [`a]
-，它们分别于 [`*a] 和 [`a->] 的类型相同。
+[:en@~] shall be defined as the iterator[=']s pointer and reference types; that
+is, for an iterator object [`a] of class type, the same type as
+[`decltype(a.operator->())] and [`decltype(*a)], respectively.
+[:zh_CN@~] 应当分别被定义为该迭代器的指针和引用类型，就是说，对于类类型的迭代器
+对象 [`a]，它们分别与 [`decltype(a.operator->())] 和 [`decltype(*a)] 的类型相同。
 
-[:en] In the case of an output iterator, the types
-[:zh_CN] 对于输出迭代器的情况，类型
+[:en] The type [`iterator_traits<I>::pointer] shall be [`void] for an iterator
+of class type [`I] that does not support [`operator->].
+[:zh_CN] 对于不支持 [`operator->] 的类类型的迭代器 [`I]，类型
+[`iterator_traits<I>::pointer] 应当为 [`void]。
+
+[:en] Additionally, in the case of an output iterator, the types
+[:zh_CN] 此外，对于输出迭代器的情况，类型
 
 [codeblock:notation]
-iterator_traits<Iterator>::difference_type
-iterator_traits<Iterator>::value_type
-iterator_traits<Iterator>::reference
-iterator_traits<Iterator>::pointer
+iterator_traits<I>::value_type
+iterator_traits<I>::difference_type
+iterator_traits<I>::reference
 [codeblock:end]
 
 [:en@~] may be defined as [`void].
 [:zh_CN@~] 可以被定义为 [`void]。
 
 [para]
-[:en] If [`Iterator] has valid ([#temp.deduct]) member types [`difference_type],
-[`value_type], [`pointer], [`reference], and [`iterator_category],
-[`iterator_traits<Iterator>] shall have the following as publicly accessible
-members:
-[:zh_CN] 如果 [`Iterator] 具有有效（[#temp.deduct]）的成员类型
-[`difference_type]，[`value_type]，[`pointer]，[`reference]，和
-[`iterator_category]，则 [`iterator_traits<Iterator>] 应当具有下列公用可访问成员
-：
+[:en] The definitions in this subclause make use of the following
+exposition-only concepts:
+[:zh_CN] 本子条款中的各定义式利用了以下的仅用于阐释的概念：
 
-[codeblock:notation]
-  using difference_type   = typename Iterator::difference_type;
-  using value_type        = typename Iterator::value_type;
-  using pointer           = typename Iterator::pointer;
-  using reference         = typename Iterator::reference;
-  using iterator_category = typename Iterator::iterator_category;
+[codeblock:synopsis [!:var cpp17-iterator can-reference cpp17-input-iterator
+cpp17-forward-iterator cpp17-iterator cpp17-bidirectional-iterator
+cpp17-random-access-iterator]]
+template<class I>
+concept [*cpp17-iterator] =
+  Copyable<I> && requires(I i) {
+    {   *i } -> [*can-reference];
+    {  ++i } -> Same<I&>;
+    { *i++ } -> [*can-reference];
+  };
+
+template<class I>
+concept [*cpp17-input-iterator] =
+  [*cpp17-iterator]<I> && EqualityComparable<I> && requires(I i) {
+    typename incrementable_traits<I>::difference_type;
+    typename readable_traits<I>::value_type;
+    typename common_reference_t<iter_reference_t<I> &&,
+                                typename readable_traits<I>::value_type &>;
+    *i++;
+    typename common_reference_t<decltype(*i++) &&,
+                                typename readable_traits<I>::value_type &>;
+    requires SignedIntegral<typename incrementable_traits<I>::difference_type>;
+  };
+
+template<class I>
+concept [*cpp17-forward-iterator] =
+  [*cpp17-input-iterator]<I> && Constructible<I> &&
+  is_lvalue_reference_v<iter_reference_t<I>> &&
+  Same<remove_cvref_t<iter_reference_t<I>>, typename readable_traits<I>::value_type> &&
+  requires(I i) {
+    {  i++ } -> const I&;
+    { *i++ } -> Same<iter_reference_t<I>>;
+  };
+
+template<class I>
+concept [*cpp17-bidirectional-iterator] =
+  [*cpp17-forward-iterator]<I> && requires(I i) {
+    {  --i } -> Same<I&>;
+    {  i-- } -> const I&;
+    { *i-- } -> Same<iter_reference_t<I>>;
+  };
+
+template<class I>
+concept [*cpp17-random-access-iterator] =
+  [*cpp17-bidirectional-iterator]<I> && StrictTotallyOrdered<I> &&
+  requires(I i, typename incrementable_traits<I>::difference_type n) {
+    { i += n } -> Same<I&>;
+    { i -= n } -> Same<I&>;
+    { i +  n } -> Same<I>;
+    { n +  i } -> Same<I>;
+    { i -  n } -> Same<I>;
+    { i -  i } -> Same<decltype(n)>;
+    {  i[n]  } -> iter_reference_t<I>;
+  };
 [codeblock:end]
 
-[:en] Otherwise, [`iterator_traits<Iterator>] shall have no members by any of
-the above names.
-[:zh_CN] 否则，[`iterator_traits<Iterator>] 应当没有具有以上任何名字的成员。
+[para]
+[:en] The members of a specialization [`iterator_traits<I>] generated from the
+[`iterator_traits] primary template are computed as follows:
+[:zh_CN] 从 [`iterator_traits] 主模板生成的特例 [`iterator_traits<I>] 的各个成员
+是以如下方式计算的：
+
+[list]
+[item]
+[:en] If [`I] has valid ([#temp.deduct]) member types [`difference_type],
+[`value_type], [`reference], and [`iterator_category], then
+[`iterator_traits<I>] has the following publicly accessible members:
+[:zh_CN] 如果 [`I] 具有有效（[#temp.deduct]）的成员类型 [`difference_type]，
+[`value_type]，[`reference]，和 [`iterator_category]，则
+[`iterator_traits<I>] 应当具有下列可公开访问的成员：
+
+[codeblock:notation [!:mark SeeBelow]]
+  using iterator_category = typename I::iterator_category;
+  using value_type        = typename I::value_type;
+  using difference_type   = typename I::difference_type;
+  using pointer           = [=SeeBelow];
+  using reference         = typename I::reference;
+[codeblock:end]
+
+[:en] If the [~qualified-id] [`I::pointer] is valid and denotes a type, then
+[`iterator_traits<I>::pointer] names that type; otherwise, it names [`void].
+[:zh_CN] 如果[~限定标识] [`I::pointer] 有效并代表某个类型，则
+[`iterator_traits<I>::pointer] 指名这个类型；否则它指名 [`void]。
+
+[item]
+[:en] Otherwise, if [`I] satisfies the exposition-only concept
+[`[*cpp17-input-iterator]], [`iterator_traits<I>] has the following publicly
+accessible members:
+[:zh_CN] 否则，如果 [`I] 符合仅用于阐释的概念 [`[*cpp17-input-iterator]]，则
+[`iterator_traits<I>] 具有下列可公开访问的成员：
+
+[codeblock:notation [!:mark SeeBelow]]
+  using iterator_category = [=SeeBelow];
+  using value_type        = typename readable_traits<I>::value_type;
+  using difference_type   = typename incrementable_traits<I>::difference_type;
+  using pointer           = [=SeeBelow];
+  using reference         = [=SeeBelow];
+[codeblock:end]
+
+[list]
+[item]
+[:en] If the [~qualified-id] [`I::pointer] is valid and denotes a type,
+[`pointer] names that type.
+[:zh_CN] 如果[~限定标识] [`I::pointer] 有效并代表某个类型，则 [`pointer] 指名
+这个类型。
+
+[:en] Otherwise, if [`decltype(declval<I&>().operator->())] is well-formed, then
+[`pointer] names that type.
+[:zh_CN] 否则，如果 [`decltype(declval<I&>().operator->())] 良构，则 [`pointer]
+指名这个类型。
+
+[:en] Otherwise, [`pointer] names [`void].
+[:zh_CN] 否则，[`pointer] 指名 [`void]。
+
+[item]
+[:en] If the [~qualified-id] [`I::reference] is valid and denotes a type,
+[`reference] names that type.
+[:zh_CN] 如果[~限定标识] [`I::reference] 有效并代表某个类型，则 [`reference]
+指名这个类型。
+
+[:en] Otherwise, [`reference] names [`iter_reference_t<I>].
+[:zh_CN] 否则，[`reference] 指名 [`iter_reference_t<I>]。
+
+[item]
+[:en] If the [~qualified-id] [`I::iterator_category] is valid and denotes a
+type, [`iterator_category] names that type.
+[:zh_CN] 如果[~限定标识] [`I::iterator_category] 有效并代表某个类型，则
+[`iterator_category] 指名这个类型。
+
+[:en] Otherwise, [`iterator_category] names:
+[:zh_CN] 否则，[`iterator_category]：
+
+[list]
+[item]
+[:en@~] [`random_access_iterator_tag] if [`I] satisfies
+[`[*cpp17-random-access-iterator]], or otherwise
+[:zh_CN@~] 当 [`I] 符合 [`[*cpp17-random-access-iterator]] 时，指名
+[`random_access_iterator_tag]，或
+
+[item]
+[:en@~] [`bidirectional_iterator_tag] if [`I] satisfies
+[`[*cpp17-bidirectional-iterator]], or otherwise
+[:zh_CN@~] 当 [`I] 符合 [`[*cpp17-bidirectional-iterator]] 时，指名
+[`bidirectional_iterator_tag]，或
+
+[item]
+[:en@~] [`forward_iterator_tag] if [`I] satisfies [`[*cpp17-forward-iterator]],
+or otherwise
+[:zh_CN@~] 当 [`I] 符合 [`[*cpp17-forward-iterator]] 时，指名
+[`forward_iterator_tag]，
+
+[item]
+[:en@~] [`input_iterator_tag].
+[:zh_CN@~] 否则指名 [`input_iterator_tag]。
+[list:end]
+[list:end]
+
+[item]
+[:en] Otherwise, if [`I] satisfies the exposition-only concept
+[`[*cpp17-iterator]], then [`iterator_traits<I>] has the following publicly
+accessible members:
+[:zh_CN] 否则，如果 [`I] 符合仅用于阐释的概念 [`[*cpp17-iterator]]，则
+[`iterator_traits<I>] 具有下列可公开访问的成员：
+
+[codeblock:notation [!:mark SeeBelow]]
+  using iterator_category = output_iterator_tag;
+  using value_type        = void;
+  using difference_type   = [=SeeBelow];
+  using pointer           = void;
+  using reference         = void;
+[codeblock:end]
+
+[:en] If the [~qualified-id] [`incrementable_traits<I>::difference_type] is
+valid and denotes a type, then [`difference_type] names that type; otherwise,
+it names [`void].
+[:zh_CN] 如果[~限定标识] [`incrementable_traits<I>::difference_type] 有效并代表
+某个类型，则 [`difference_type] 指名这个类型；否则它指名 [`void]。
+
+[item]
+[:en] Otherwise, [`iterator_traits<I>] has no members by any of the above names.
+[:zh_CN] 否则，[`iterator_traits<I>] 没有具有以上任何名字的成员。
+[list:end]
 
 [para]
-[:en] It is specialized for pointers as
-[:zh_CN] 它为指针进行特化为
+[:en] Explicit or partial specializations of [`iterator_traits] may have a
+member type [`iterator_concept] that is used to indicate conformance to the
+iterator concepts ([#iterator.concepts]).
+[:zh_CN] [`iterator_traits] 的显式或部分特化式可以具有一个成员类型
+[`iterator_concept]，用于指出其所符合的迭代器概念（[#iterator.concepts]）。
+
+[para]
+[:en] [`iterator_traits] is specialized for pointers as
+[:zh_CN] [`iterator_traits] 为指针进行特化为
 
 [codeblock:synopsis]
 namespace std {
-  template<class T> struct iterator_traits<T*> {
-    using difference_type   = ptrdiff_t;
+  template<class T>
+    requires is_object_v<T>
+  struct iterator_traits<T*> {
+    using iterator_concept  = contiguous_iterator_tag;
+    using iterator_category = random_access_iterator_tag;
     using value_type        = remove_cv_t<T>;
+    using difference_type   = ptrdiff_t;
     using pointer           = T*;
     using reference         = T&;
-    using iterator_category = random_access_iterator_tag;
   };
 }
 [codeblock:end]
@@ -107,13 +279,13 @@ following:
 [:zh_CN] 为实现通用的 [`reverse] 函数，[=Cpp] 程序可以这样做：
 
 [codeblock]
-template <class BidirectionalIterator>
-void reverse(BidirectionalIterator first, BidirectionalIterator last) {
-  typename iterator_traits<BidirectionalIterator>::difference_type n =
+template<class BI>
+void reverse(BI first, BI last) {
+  typename iterator_traits<BI>::difference_type n =
     distance(first, last);
   --n;
   while(n > 0) {
-    typename iterator_traits<BidirectionalIterator>::value_type
+    typename iterator_traits<BI>::value_type
      tmp = *first;
     *first++ = *--last;
     *last = tmp;

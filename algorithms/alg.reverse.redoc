@@ -1,4 +1,4 @@
- -[section#alg.reverse
+[section#alg.reverse
     [:en] Reverse
     [:zh_CN] 反转
 ]
@@ -10,20 +10,35 @@ template<class BidirectionalIterator>
 template<class ExecutionPolicy, class BidirectionalIterator>
   void reverse(ExecutionPolicy&& exec,
                BidirectionalIterator first, BidirectionalIterator last);
+
+namespace ranges {
+  template<BidirectionalIterator I, Sentinel<I> S>
+    requires Permutable<I>
+    constexpr I reverse(I first, S last);
+  template<BidirectionalRange R>
+    requires Permutable<iterator_t<R>>
+    constexpr safe_iterator_t<R> reverse(R&& r);
+}
 [codeblock:end]
 
 [enter:description]
 [para:requires]
-[:en] [`BidirectionalIterator] shall satisfy the [*Cpp17ValueSwappable]
+[:en] [`BidirectionalIterator] shall meet the [*Cpp17ValueSwappable]
 requirements ([#swappable.requirements]).
 [:zh_CN] [`BidirectionalIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
 （[#swappable.requirements]）。
 
 [para:effects]
 [:en] For each non-negative integer [`i < (last - first) / 2], applies
-[`iter_swap] to all pairs of iterators [`first + i], [`(last - i) - 1].
+[`std::iter_swap], or [`ranges::iter_swap] for the overloads in namespace
+[`ranges], to all pairs of iterators [`first + i], [`(last - i) - 1].
 [:zh_CN] 对于每个非负整数 [`i < (last - first) / 2]，对每一对迭代器 [`first + i]
-和 [`(last - i) - 1] 运用 [`iter_swap]。
+和 [`(last - i) - 1]，运用 [`iter_swap]，或者对于命名空间 [`ranges] 中的各重载，
+运用 [`ranges::iter_swap]。
+
+[para:returns]
+[:en] [`last] for the overloads in namespace [`ranges].
+[:zh_CN] 对于命名空间 [`ranges] 中的各重载，返回 [`last]。
 
 [para:complexity]
 [:en] Exactly [`(last - first)/2] swaps.
@@ -41,30 +56,49 @@ template<class ExecutionPolicy, class BidirectionalIterator, class ForwardIterat
     reverse_copy(ExecutionPolicy&& exec,
                  BidirectionalIterator first, BidirectionalIterator last,
                  ForwardIterator result);
+
+namespace ranges {
+  template<BidirectionalIterator I, Sentinel<I> S, WeaklyIncrementable O>
+    requires IndirectlyCopyable<I, O>
+    constexpr reverse_copy_result<I, O>
+      reverse_copy(I first, S last, O result);
+  template<BidirectionalRange R, WeaklyIncrementable O>
+    requires IndirectlyCopyable<iterator_t<R>, O>
+    constexpr reverse_copy_result<safe_iterator_t<R>, O>
+      reverse_copy(R&& r, O result);
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$N] be [`last - first].
+[:zh_CN] 令 [$N] 为 [`last - first]。
+
 [para:requires]
-[:en] The ranges [=range(first,last)] and [=range(result,result+(last - first))]
-shall not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result+(last - first))]
-不能有重叠。
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N])] shall
+not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N])] 不能有重叠。
 
 [para:effects]
 [:en] Copies the range [=range(first,last)] to the range
-[=range(result,result + (last - first))] such that for every non-negative
-integer [`i < (last - first)] the following assignment takes place:
-[`*(result + (last - first) - 1 - i) = *(first + i)].
-[:zh_CN] 将范围 [=range(first,last)] 复制到范围
-[=range(result,result + (last - first))] 中，其中对于每个非负整数
-[`i < (last - first)]，都进行了以下赋值：
-[`*(result + (last - first) - 1 - i) = *(first + i)]。
+[=range(result,result + [$N])] such that for every non-negative integer
+[`i < [$N]] the following assignment takes place:
+[`*(result + [$N] - 1 - i) = *(first + i)].
+[:zh_CN] 将范围 [=range(first,last)] 复制到范围 [=range(result,result + [$N])]
+中，其中对于每个非负整数 [`i < [$N]]，都进行了以下赋值：
+[`*(result + [$N] - 1 - i) = *(first + i)]。
 
 [para:returns]
-[:en] [`result + (last - first)].
-[:zh_CN] [`result + (last - first)]。
+[list]
+[item]
+[:en@~] [`result + [$N]], for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载，返回 [`result + [$N]]，或者
+[item]
+[:en@~] [`{last, result + [$N]}], for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载，返回 [`{last, result + [$N]}]。
+[list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] assignments.
-[:zh_CN] 恰好进行 [`last - first] 次赋值。
+[:en] Exactly [$N] assignments.
+[:zh_CN] 恰好进行 [$N] 次赋值。
 [exit:description]

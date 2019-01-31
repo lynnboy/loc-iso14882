@@ -20,34 +20,53 @@ template<class ExecutionPolicy, class RandomAccessIterator, class Compare>
   void nth_element(ExecutionPolicy&& exec,
                    RandomAccessIterator first, RandomAccessIterator nth,
                    RandomAccessIterator last, Compare comp);
+
+namespace ranges {
+  template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+           class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    constexpr I
+      nth_element(I first, I nth, S last, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`RandomAccessIterator] shall satisfy the [*Cpp17ValueSwappable]
-requirements ([#swappable.requirements]).
-[:zh_CN] [`RandomAccessIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
-（[#swappable.requirements]）。
+[para]
+[:en] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for the overloads
+with no parameters by those names.
+[:zh_CN] 对于没有具有名字 [`comp] 和 [`proj] 的形参的各重载，令 [`comp] 为
+[`less{}] 并令 [`proj] 为 [`identity{}]。
 
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
-([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
-requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+[para:requires]
+[:en] [=range(first,nth)] and [=range(nth,last)] shall be valid ranges.
+[:zh_CN] [=range(first,nth)] 和 [=range(nth,last)] 都应当是有效范围。
+
+[:en] For the overloads in namespace [`std], [`RandomAccessIterator] shall meet
+the [*Cpp17ValueSwappable] requirements ([#swappable.requirements]) and the type
+of [`*first] shall meet the [*Cpp17MoveConstructible] ([#moveconstructible]) and
+[*Cpp17MoveAssignable] ([#moveassignable]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`RandomAccessIterator] 应当满足
+[*Cpp17ValueSwappable] 的规定（[#swappable.requirements]），而 [`*first] 的类型
+应当满足 [*Cpp17MoveConstructible]（[#moveconstructible]）和
+[*Cpp17MoveAssignable]（[#moveassignable]）的规定。
 
 [para]
 [:en] After [`nth_element] the element in the position pointed to by [`nth] is
-the element that would be in that position if the whole range were sorted,
-unless [`nth == last].
+the element that would be in that position if the whole range were sorted with
+respect to [`comp] and [`proj], unless [`nth == last].
 [:zh_CN] [`nth_element] 之后，除非 [`nth == last]，由 [`nth] 所指向的位置中的
-元素，是当整个序列排序后将会置于该位置的元素。
+元素，是当整个序列根据 [`comp] 和 [`proj] 排序后将会置于该位置的元素。
 
 [:en] Also for every iterator [`i] in the range [=range(first,nth)] and every
-iterator [`j] in the range [=range(nth,last)] it holds that: [`!(*j < *i)] or
-[`comp(*j, *i) == false].
+iterator [`j] in the range [=range(nth,last)] it holds that:
+[`bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))] is [`false].
 [:zh_CN] 并且对于范围 [=range(first,nth)] 中的每个迭代器 [`i] 以及范围
-[=range(nth,last)] 中的每个迭代器 [`j]，以下条件成立：[`!(*j < *i)] 或
-[`comp(*j, *i) == false]。
+[=range(nth,last)] 中的每个迭代器 [`j]，以下条件成立：
+[`bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))] 为 [`false]。
+
+[para:returns]
+[:en] [`last] for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`last]。
 
 [para:complexity]
 [:en] For the overloads with no [`ExecutionPolicy], linear on average.
@@ -57,4 +76,23 @@ iterator [`j] in the range [=range(nth,last)] it holds that: [`!(*j < *i)] or
 predicate, and [$[=O](N \log N)] swaps, where [$N = [`last - first]].
 [:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，[$[=O]] 次对相应谓词的应用，以及
 [$[=O](N \log N)] 次交换，其中 [$N = [`last - first]]。
+[exit:description]
+
+[codeblock:declaration]
+namespace ranges {
+  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    constexpr safe_iterator_t<R>
+      nth_element(R&& r, iterator_t<R> nth, Comp comp = {}, Proj proj = {});
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+return ranges::nth_element(ranges::begin(r), nth, ranges::end(r), comp, proj);
+[codeblock:end]
 [exit:description]

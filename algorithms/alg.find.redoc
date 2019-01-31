@@ -25,22 +25,73 @@ template<class InputIterator, class Predicate>
   constexpr InputIterator find_if_not(InputIterator first, InputIterator last,
                                       Predicate pred);
 template<class ExecutionPolicy, class ForwardIterator, class Predicate>
-  ForwardIterator find_if_not(ExecutionPolicy&& exec, ForwardIterator first, ForwardIterator last,
+  ForwardIterator find_if_not(ExecutionPolicy&& exec,
+                              ForwardIterator first, ForwardIterator last,
                               Predicate pred);
+
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, class T, class Proj = identity>
+    requires IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T*>
+    constexpr I find(I first, S last, const T& value, Proj proj = {});
+  template<InputRange R, class T, class Proj = identity>
+    requires IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T*>
+    constexpr safe_iterator_t<R>
+      find(R&& r, const T& value, Proj proj = {});
+  template<InputIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    constexpr I find_if(I first, S last, Pred pred, Proj proj = {});
+  template<InputRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    constexpr safe_iterator_t<R>
+      find_if(R&& r, Pred pred, Proj proj = {});
+  template<InputIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectUnaryPredicate<projected<I, Proj>> Pred>
+    constexpr I find_if_not(I first, S last, Pred pred, Proj proj = {});
+  template<InputRange R, class Proj = identity,
+           IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+    constexpr safe_iterator_t<R>
+      find_if_not(R&& r, Pred pred, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$E] be:
+[:zh_CN] 令 [$E]：
+
+[list]
+[item]
+[:en@~] [`*i == value] for [`find],
+[:zh_CN@~] 对于 [`find] 为 [`*i == value]，
+[item]
+[:en@~] [`pred(*i) != false] for [`find_if],
+[:zh_CN@~] 对于 [`find_if] 为 [`pred(*i) != false]，
+[item]
+[:en@~] [`pred(*i) == false] for [`find_if_not],
+[:zh_CN@~] 对于 [`find_if_not] 为 [`pred(*i) == false]，
+[item]
+[:en@~] [`invoke(proj, *i) == value] for [`ranges::find],
+[:zh_CN@~] 对于 [`ranges::find] 为 [`invoke(proj, *i) == value]，
+[item]
+[:en@~] [`invoke(pred, invoke(proj, *i)) != false] for [`ranges::find_if],
+[:zh_CN@~] 对于 [`ranges::find_if] 为
+[`invoke(pred, invoke(proj, *i)) != false]，
+[item]
+[:en@~] [`invoke(pred, invoke(proj, *i)) == false] for [`ranges::find_if_not].
+[:zh_CN@~] 对于 [`ranges::find_if_not] 为
+[`invoke(pred, invoke(proj, *i)) == false]。
+[list:end]
+
 [para:returns]
-[:en] The first iterator [`i] in the range [=range(first,last)] for which the
-following corresponding conditions hold: [`*i == value], [`pred(*i) != false],
-[`pred(*i) == false].
-[:zh_CN] 范围 [=range(first,last)] 中第一个使以下的对应条件成立的迭代器 [`i]：
-[`*i == value]，[`pred(*i) != false]，[`pred(*i) == false]。
+[:en] The first iterator [`i] in the range [=range(first,last)] for which
+[$E] is [`true].
+[:zh_CN] 范围 [=range(first,last)] 中第一个使 [$E] 为 [`true] 的迭代器 [`i]。
 
 [:en] Returns [`last] if no such iterator is found.
 [:zh_CN] 如果未找到这种迭代器则返回 [`last]。
 
 [para:complexity]
-[:en] At most [`last - first] applications of the corresponding predicate.
-[:zh_CN] 最多进行 [`last - first] 次相应谓词的运用。
+[:en] At most [`last - first] applications of the corresponding predicate and
+any projection.
+[:zh_CN] 最多进行 [`last - first] 次相应谓词和任何投射的运用。
 [exit:description]

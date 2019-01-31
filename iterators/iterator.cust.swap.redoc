@@ -1,0 +1,89 @@
+[section#iterator.cust.swap
+    [:] [`iter_swap]
+]
+
+[%@library iter_swap]
+[para]
+[:en] The name [`iter_swap] denotes a customization point object
+([#customization.point.object]) that exchanges the values ([#concept.swappable])
+denoted by its arguments.
+[:zh_CN] 名字 [`iter_swap] 代表一个定制化点对象，
+（[#customization.point.object]），将其实参所代表的值进行互换
+（[#concept.swappable]）。
+
+[para]
+[:en] Let [`[*iter-exchange-move]] be the exposition-only function:
+[:zh_CN] 令 [`[*iter-exchange-move]] 为仅用于阐释的函数：
+
+[codeblock:declaration [!:var iter-exchange-move]]
+template<class X, class Y>
+  constexpr iter_value_t<remove_reference_t<X>> [*iter-exchange-move](X&& x, Y&& y)
+    noexcept(noexcept(iter_value_t<remove_reference_t<X>>(iter_move(x))) &&
+      noexcept(*x = iter_move(y)));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+iter_value_t<remove_reference_t<X>> old_value(iter_move(x));
+*x = iter_move(y);
+return old_value;
+[codeblock:end]
+[exit:description]
+
+[:en] The expression [`ranges::iter_swap(E1, E2)] for some subexpressions [`E1]
+and [`E2] is expression-equivalent to the following:
+[:zh_CN] 表达式 [`ranges::iter_swap(E1, E2)] 对于某些子表达式 [`E1] 和 [`E2] 与
+下列各项按表达式等价：
+
+[list]
+[item]
+[:en] [`(void)iter_swap(E1, E2)], if that expression is valid, with overload
+resolution performed in a context that includes the declaration
+[:zh_CN] 当 [`(void)iter_swap(E1, E2)] 有效时为该表达式，其重载决议在包含声明式
+
+[codeblock:notation]
+template<class I1, class I2>
+  void iter_swap(I1, I2) = delete;
+[codeblock:end]
+
+[:en@~] and does not include a declaration of [`ranges::iter_swap].
+[:zh_CN@~] 且不包含 [`ranges::iter_move] 的声明式的语境中进行。
+
+[:en] If the function selected by overload resolution does not exchange the
+values denoted by [`E1] and [`E2], the program is ill-formed with no diagnostic
+required.
+[:zh_CN] 如果由重载决议所选择的函数并不交换由 [`E1] 和 [`E2] 所代表的值，则程序
+非良构且无须诊断。
+
+[item]
+[:en] Otherwise, if the types of [`E1] and [`E2] each model [`Readable], and if
+the reference types of [`E1] and [`E2] model [`SwappableWith]
+([#concept.swappable]), then [`ranges::swap(*E1, *E2)].
+[:zh_CN] 否则，如果 [`E1] 和 [`E2] 的类型都构成了 [`Readable]，并且如果 [`E1] 和
+[`E2] 的引用类型都构成了 [`SwappableWith]（[#concept.swappable]），则为
+[`ranges::swap(*E1, *E2)]。
+
+[item]
+[:en] Otherwise, if the types [`T1] and [`T2] of [`E1] and [`E2] model
+[`IndirectlyMovableStorable<T1, T2>] and [`IndirectlyMovableStorable<T2, T1>],
+then [`(void)(*E1 = [*iter-exchange-move](E2, E1))], except that [`E1] is
+evaluated only once.
+[:zh_CN] 否则，如果 [`E1] 和 [`E2] 的类型 [`T1] 和 [`T2] 构成了
+[`IndirectlyMovableStorable<T1, T2>] 和 [`IndirectlyMovableStorable<T2, T1>]，则
+为 [`(void)(*E1 = [*iter-exchange-move](E2, E1))]，但 [`E1] 仅被求值一次。
+
+[item]
+[:en] Otherwise, [`ranges::iter_swap(E1, E2)] is ill-formed.
+[:zh_CN] 否则，[`ranges::iter_swap(E1, E2)] 非良构。
+
+[enter:note]
+[:en] This case can result in substitution failure when
+[`ranges::iter_swap(E1, E2)] appears in the immediate context of a template
+instantiation.
+[:zh_CN] 这种情况可能在当 [`ranges::iter_swap(E1, E2)] 出现于模板实例化的直接
+语境中时导致发生替换失败。
+[exit:note]
+[list:end]

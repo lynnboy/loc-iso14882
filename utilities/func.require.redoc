@@ -79,46 +79,101 @@ implicitly converted to [`R].
 [%call wrapper]
 [%call wrapper[!simple]]
 [%call wrapper[!forwarding]]
-Every call wrapper ([#func.def]) shall be [*Cpp17MoveConstructible].
+Every call wrapper ([#func.def]) is [*Cpp17MoveConstructible].
 [:zh_CN]
 [%调用包装器]
 [%调用包装器[!简单～]]
 [%调用包装器[!转发～]]
-每个调用包装器（[#func.def]）均应为 [*Cpp17MoveConstructible]。
+每个调用包装器（[#func.def]）均为 [*Cpp17MoveConstructible]。
 
 [:en]
-A [+forwarding call wrapper[%forwarding call wrapper]] is a call wrapper that
-can be called with an arbitrary argument list and delivers the arguments to the
-wrapped callable object as references.
+A [+argument forwarding call wrapper] is a call wrapper that can be called with
+an arbitrary argument list and delivers the arguments to the wrapped callable
+object as references.
 [:zh_CN]
-[+转发调用包装器[%转发调用包装器]]是可以用任意实参列表调用，并将其实参以引用递交
-给所包装的可调用对象的调用包装器。
+[+实参转发调用包装器]是可以用任意实参列表调用，并将其实参以引用递交给所包装的
+可调用对象的调用包装器。
 
 [:en]
-This forwarding step shall ensure that rvalue arguments are delivered as rvalue
-references and lvalue arguments are delivered as lvalue references.
+This forwarding step delivers rvalue arguments as rvalue references and lvalue
+arguments as lvalue references.
 [:zh_CN]
-转发步骤中应当确保右值实参以右值引用递交而左值实参以左值引用递交。
+转发步骤中将右值实参以右值引用传递，并将左值实参以左值引用传递。
 
 [:en]
-A [+simple call wrapper[%simple call wrapper]] is a forwarding call wrapper that
-is [*Cpp17CopyConstructible] and [*Cpp17CopyAssignable] and whose copy
-constructor, move constructor, copy assignment operator, and move assignment
-operator do not throw exceptions.
+A [+simple call wrapper] is an argument forwarding call wrapper that is
+[*Cpp17CopyConstructible] and [*Cpp17CopyAssignable] and whose copy constructor,
+move constructor, copy assignment operator, and move assignment operator do not
+throw exceptions.
 [:zh_CN]
-[+简单调用包装器[%简单调用包装器]]是 [*Cpp17CopyConstructible] 且
-[*Cpp17CopyAssignable] 的转发调用包装器，且其复制构造函数、移动构造函数、
-复制赋值运算符和移动赋值运算符并不抛出异常。
+[+简单调用包装器]是 [*Cpp17CopyConstructible] 且 [*Cpp17CopyAssignable] 的实参
+转发调用包装器，且其复制构造函数、移动构造函数、复制赋值运算符和移动赋值运算符
+并不抛出异常。
 
 [enter:note]
 [:en]
-In a typical implementation forwarding call wrappers have an overloaded function
-call operator of the form
+In a typical implementation, argument forwarding call wrappers have an
+overloaded function call operator of the form
 [:zh_CN]
-在典型实现中转发调用包装器具有如下形式的重载函数调用运算符
+在典型实现中实参转发调用包装器具有如下形式的重载函数调用运算符
 
 [codeblock:notation [!:var cv-qual] ]
 template<class... UnBoundArgs>
   R operator()(UnBoundArgs&&... unbound_args) [*cv-qual];
 [codeblock:end]
 [exit:note]
+
+[para]
+[:en]
+[%call wrapper[!perfect forwarding]]
+A [+perfect forwarding call wrapper] is an argument forwarding call wrapper that
+forwards its state entities to the underlying call expression.
+[:zh_CN]
+[%调用包装器[!完美转发～]]
+[+完美转发调用包装器]是将各状态实体转发给底层调用表达式的实参转发调用包装器。
+
+[:en] This forwarding step delivers a state entity of type [`T] as [$cv] [`T&]
+when the call is performed on an lvalue of the call wrapper type and
+as [$cv] [`T&&] otherwise, where [$cv] represents the cv-qualifiers of the call
+wrapper and where [$cv] shall be neither [`volatile] nor [`const volatile].
+[:zh_CN] 这个转发步骤，如果其调用是在调用包装器类型的左值上所实施的，则将 [`T]
+类型的状态实体以 [$cv] [`T&] 的方式传递，否则就以 [$cv] [`T&&] 来传递，其中
+[$cv] 代表该调用包装器的 cv 限定符，而且 [$cv] 不能为 [`volatile] 或
+[`const volatile]。
+
+[para]
+[:en] A [+call pattern] defines the semantics of invoking a perfect forwarding
+call wrapper.
+[:zh_CN] [+调用模式]定义了调用一个完美转发调用包装器的语义。
+
+[:en] A postfix call performed on a perfect forwarding call wrapper is
+expression-equivalent ([#defns.expression-equivalent]) to an expression [`e]
+determined from its call pattern [`cp] by replacing all occurrences of the
+arguments of the call wrapper and its state entities with references as
+described in the corresponding forwarding steps.
+[:zh_CN] 在完美转发调用包装器上实施的后缀调用，与从其调用模式 [`cp] 中所确定的
+表达式 [`e] 表达式等价（[#defns.expression-equivalent]），其中将所有出现的调用
+包装器的实参及其各状态实体，都暗中对应的转发步骤中所述替换为引用。
+
+[para]
+[:en] The copy/move constructor of a perfect forwarding call wrapper has the
+same apparent semantics as if memberwise copy/move of its state entities were
+performed ([#class.copy.ctor]).
+[:zh_CN] 完美转发调用包装器的复制/移动构造函数，所具有的语义如同对其各个状态实体
+实施的按成员复制/移动（[#class.copy.ctor]）。
+
+[enter:note]
+[:en] This implies that each of the copy/move constructors has the same
+exception-specification as the corresponding implicit definition and is declared
+as [`constexpr] if the corresponding implicit definition would be considered to
+be constexpr.
+[:zh_CN] 这意味着，其复制/移动构造函数各个都与其所对应的隐含定义具有相同的异常
+说明，并且当其对应的隐含定义可被当成 constexpr 时也被声明为 [`constexpr]。
+[exit:note]
+
+[para]
+[:en] Perfect forwarding call wrappers returned by a given standard library
+function template have the same type if the types of their corresponding state
+entities are the same.
+[:zh_CN] 由给定的标准程序库函数模板所返回的完美转发调用包装器，如果它们的对应
+状态实体都相同，则它们的类型相同。

@@ -10,25 +10,50 @@ template<class RandomAccessIterator>
 template<class RandomAccessIterator, class Compare>
   constexpr void push_heap(RandomAccessIterator first, RandomAccessIterator last,
                            Compare comp);
+
+namespace ranges {
+  template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+           class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    constexpr I
+      push_heap(I first, S last, Comp comp = {}, Proj proj = {});
+  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    constexpr safe_iterator_t<R>
+      push_heap(R&& r, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] The range [=range(first,last - 1)] shall be a valid heap.
-[:zh_CN] 范围 [=range(first,last - 1)] 应当是有效的堆。
+[para]
+[:e] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for the overloads
+with no parameters by those names.
+[:zh_CN] 对于不带有这些名字的形参的重载，令 [`comp] 为 [`less()]，[`proj] 为
+[`identity{}]。
 
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
-([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
-requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+[para:requires]
+[:en] The range [=range(first,last - 1)] shall be a valid heap with respect to
+[`comp] and [`proj].
+[:zh_CN] 范围 [=range(first,last - 1)] 应当根据 [`comp] 和 [`proj] 是有效的堆。
+
+[:en] For the overloads in namespace [`std], the type of [`*first] shall meet
+the [*Cpp17MoveConstructible] ([#moveconstructible]) and [*Cpp17MoveAssignable]
+([#moveassignable]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`*first] 的类型应当满足
+[*Cpp17MoveConstructible]（[#moveconstructible]）和 [*Cpp17MoveAssignable]
+（[#moveassignable]）的规定。
 
 [para:effects]
 [:en] Places the value in the location [`last - 1] into the resulting heap
 [=range(first,last)].
 [:zh_CN] 将位置 [`last - 1] 中的值置于结果堆 [=range(first,last)] 中。
 
+[para:returns]
+[:en] [`last] for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`last]。
+
 [para:complexity]
-[:en] At most [$\log([`last - first])] comparisons.
-[:zh_CN] 最多进行 [$\log([`last - first])] 次比较。
+[:en] At most [$\log([`last - first])] comparisons and twice as many
+projections.
+[:zh_CN] 最多进行 [$\log([`last - first])] 次比较以及两倍于此的投射。
 [exit:description]

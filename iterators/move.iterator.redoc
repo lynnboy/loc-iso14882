@@ -10,11 +10,12 @@ namespace std {
   class move_iterator {
   public:
     using iterator_type     = Iterator;
-    using iterator_category = typename iterator_traits<Iterator>::iterator_category;
-    using value_type        = typename iterator_traits<Iterator>::value_type;
-    using difference_type   = typename iterator_traits<Iterator>::difference_type;
+    using iterator_concept  = input_iterator_tag;
+    using iterator_category = [=SeeBelow];
+    using value_type        = iter_value_t<Iterator>;
+    using difference_type   = iter_difference_t<Iterator>;
     using pointer           = Iterator;
-    using reference         = [=SeeBelow];
+    using reference         = iter_rvalue_reference_t<Iterator>;
 
     constexpr move_iterator();
     constexpr explicit move_iterator(Iterator i);
@@ -26,7 +27,7 @@ namespace std {
     constexpr pointer operator->() const;
 
     constexpr move_iterator& operator++();
-    constexpr move_iterator operator++(int);
+    constexpr auto operator++(int);
     constexpr move_iterator& operator--();
     constexpr move_iterator operator--(int);
 
@@ -34,7 +35,33 @@ namespace std {
     constexpr move_iterator& operator+=(difference_type n);
     constexpr move_iterator operator-(difference_type n) const;
     constexpr move_iterator& operator-=(difference_type n);
-    constexpr [=UnSpec] operator[](difference_type n) const;
+    constexpr reference operator[](difference_type n) const;
+
+    template<Sentinel<Iterator> S>
+      friend constexpr bool
+        operator==(const move_iterator& x, const move_sentinel<S>& y);
+    template<Sentinel<Iterator> S>
+      friend constexpr bool
+        operator==(const move_sentinel<S>& x, const move_iterator& y);
+    template<Sentinel<Iterator> S>
+      friend constexpr bool
+        operator!=(const move_iterator& x, const move_sentinel<S>& y);
+    template<Sentinel<Iterator> S>
+      friend constexpr bool
+        operator!=(const move_sentinel<S>& x, const move_iterator& y);
+    template<SizedSentinel<Iterator> S>
+      friend constexpr iter_difference_t<Iterator>
+        operator-(const move_sentinel<S>& x, const move_iterator& y);
+    template<SizedSentinel<Iterator> S>
+      friend constexpr iter_difference_t<Iterator>
+        operator-(const move_iterator& x, const move_sentinel<S>& y);
+    friend constexpr iter_rvalue_reference_t<Iterator>
+      iter_move(const move_iterator& i)
+        noexcept(noexcept(ranges::iter_move(i.current)));
+    template<IndirectlySwappable<Iterator> Iterator2>
+      friend constexpr void
+        iter_swap(const move_iterator& x, const move_iterator<Iterator2>& y)
+          noexcept(noexcept(ranges::iter_swap(x.current, y.current)));
 
   private:
     Iterator current;   // [=Expos]
@@ -60,24 +87,30 @@ namespace std {
       const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
 
   template<class Iterator1, class Iterator2>
-    constexpr auto operator-(
-      const move_iterator<Iterator1>& x,
-      const move_iterator<Iterator2>& y) -> decltype(x.base() - y.base());
+    constexpr auto operator-(const move_iterator<Iterator1>& x,
+                             const move_iterator<Iterator2>& y)
+      -> decltype(x.base() - y.base());
   template<class Iterator>
-    constexpr move_iterator<Iterator> operator+(
-      typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& x);
+    constexpr move_iterator<Iterator>
+      operator+(iter_difference_t<Iterator> n, const move_iterator<Iterator>& x);
   template<class Iterator>
     constexpr move_iterator<Iterator> make_move_iterator(Iterator i);
 }
 [codeblock:end]
 
 [para]
-[:en] Let [`[*R]] be [`iterator_traits<Iterator>::reference].
-[:zh_CN] 令 [`[*R]] 为 [`iterator_traits<Iterator>::reference]。
+[:en] The member [~typedef-name] [`iterator_category] denotes
+[:zh_CN] 成员 [~typedef-名] [`iterator_category]
 
-[:en] If [`is_reference_v<[*R]>] is [`true], the template specialization
-[`move_iterator<Iterator>] shall define the nested type named [`reference] as a
-synonym for [`remove_reference_t<[*R]>&&], otherwise as a synonym for [`[*R]].
-[:zh_CN] 如果 [`is_reference_v<[*R]>] 为 [`true]，则模板特例
-[`move_iterator<Iterator>] 应当将名为 [`reference] 的嵌套类型定义为
-[`remove_reference_t<[*R]>&&] 的同义词，否则就定义为 [`[*R]] 的同义词。
+[list]
+[item]
+[:en@~] [`random_access_iterator_tag] if the type
+[`iterator_traits<Iterator>::iterator_category] models
+[`DerivedFrom<random_access_iterator_tag>], and
+[:zh_CN@~] 当类型 [`iterator_traits<Iterator>::iterator_category] 构成
+[`DerivedFrom<random_access_iterator_tag>] 时，代表
+[`random_access_iterator_tag]，
+[item]
+[:en@~] [`iterator_traits<Iterator>::iterator_category] otherwise.
+[:zh_CN@~] 否则代表 [`iterator_traits<Iterator>::iterator_category]。
+[list:end]

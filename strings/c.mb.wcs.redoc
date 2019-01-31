@@ -6,10 +6,11 @@
 [para]
 [%@header cstdlib][%@header cwchar]
 [enter:note]
-[:en] The headers [`<cstdlib>] ([#cstdlib.syn]) and [`<cwchar>] ([#cwchar.syn])
-declare the functions described in this subclause.
-[:zh_CN] 头文件 [`<cstdlib>]（[#cstdlib.syn]）和 [`<cwchar>]（[#cwchar.syn]）
-声明了本子条款中所描述的各个函数。
+[:en] The headers [`<cstdlib>] ([#cstdlib.syn]), [`<cuchar>] ([#cuchar.syn]),
+and [`<cwchar>] ([#cwchar.syn]) declare the functions described in this
+subclause.
+[:zh_CN] 头文件 [`<cstdlib>]（[#cstdlib.syn]），[`<cuchar>]（[#cuchar.syn]），和
+[`<cwchar>]（[#cwchar.syn]）声明了本子条款中所描述的各个函数。
 [exit:note]
 
 [%@library mbsinit]
@@ -85,3 +86,123 @@ value.
 
 [para:xref]
 [:] ISO C 7.29.6.3
+
+[%@library mbrtoc8]
+[codeblock:declaration]
+size_t mbrtoc8(char8_t* pc8, const char* s, size_t n, mbstate_t* ps);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`s] is a null pointer, equivalent to [`mbrtoc8(nullptr, "", 1, ps)].
+[:zh_CN] 若 [`s] 为空指针，则等价于 [`mbrtoc8(nullptr, "", 1, ps)]。
+
+[:en] Otherwise, the function inspects at most [`n] bytes beginning with the
+byte pointed to by [`s] to determine the number of bytes needed to complete
+the next multibyte character (including any shift sequences).
+[:zh_CN] 否则，该函数检查从由 [`s] 所指向的字节开始的最多 [`n] 个字节，以确定为
+完成下一个多字节字符所需的字节数（包括任何换档序列）。
+
+[:en] If the function determines that the next multibyte character is complete
+and valid, it determines the values of the corresponding UTF-8 code units and
+then, if [`pc8] is not a null pointer, stores the value of the first (or only)
+such code unit in the object pointed to by [`pc8].
+[:zh_CN] 如果函数确认了下一个多字节字符完整并有效，则它确定其对应的各 UTF-8 编码
+单元的，然后，若 [`pc8] 不是空指针，则将这些编码单元的第一个（或仅有的一个）存储
+到 [`pc8] 所指向的对象之中。
+
+[:en] Subsequent calls will store successive UTF-8 code units without consuming
+any additional input until all the code units have been stored.
+[:zh_CN] 后续的调用将会存储其后的各个 UTF-8 编码单元，直到所有编码单元都被存储，
+但并不会消耗额外的输入。
+
+[:en] If the corresponding Unicode character is U+0000, the resulting state
+described is the initial conversion state.
+[:zh_CN] 如果对应的 Unicode 字符是 U+0000，则给出的结果状态为初始转换状态。
+
+[para:returns]
+[:en] The first of the following that applies (given the current conversion
+state):
+[:zh_CN] （给定当前转换状态），以下各项中第一条符合条件的：
+
+[list]
+[item]
+[:en] [`0], if the next [`n] or fewer bytes complete the multibyte character
+that corresponds to the U+0000 Unicode character (which is the value stored).
+[:zh_CN] 如果随后的 [`n] 个或更少的字节完成了对应于 Unicode 字符 U+0000（即为所
+存储的值）的多字节字符，则返回 [`0]。
+[item]
+[:en] between [`1] and [`n] inclusive, if the next n or fewer bytes complete a
+valid multibyte character (which is the value stored); the value returned is the
+number of bytes that complete the multibyte character.
+[:zh_CN] 如果随后的 [`n] 个或更少的字节完成了有效的多字节字符（即为所存储的值），
+则返回 [`1] 到 [`n] 之间（含边界）的值；所返回的值为完成该多字节字符的字节数量。
+[item]
+[:en] [`(size_t)(-3)], if the next character resulting from a previous call has
+been stored (no bytes from the input have been consumed by this call).
+[:zh_CN] 如果从上次调用所得的下一个字符已经被存储（即本次调用未从输入中消耗任何
+字节），则返回 [`(size_t)(-3)]。
+[item]
+[:en] [`(size_t)(-2)], if the next [`n] bytes contribute to an incomplete (but
+potentially valid) multibyte character, and all [`n] bytes have been processed
+(no value is stored).
+[:zh_CN] 如果随后的 [`n] 个字节参与构成某个不完整（但有可能有效）的多字节字符，
+并且全部 [`n] 个字节都以被处理（未存储任何值），则返回 [`(size_t)(-2)]。
+[item]
+[:en] [`(size_t)(-1)], if an encoding error occurs, in which case the next [`n]
+or fewer bytes do not contribute to a complete and valid multibyte character (no
+value is stored); the value of the macro [`EILSEQ] is stored in [`errno], and
+the conversion state is unspecified.
+[:zh_CN] 如果发生了编码错误，这种情况下随后的 [`n] 个或更少的字节无法参与构成
+完整并有效的多字节字符（未存储任何值），则返回 [`(size_t)(-1)]；将宏 [`EILSEQ]
+的值存储到 [`errno] 之中，而转换状态是未指明的。
+[list:end]
+[exit:description]
+
+[%@library c8rtomb]
+[codeblock:declaration]
+size_t c8rtomb(char* s, char8_t c8, mbstate_t* ps);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`s] is a null pointer, equivalent to [`c8rtomb(buf, u8'\0', ps)]
+where [`buf] is an internal buffer.
+[:zh_CN] 若 [`s] 为空指针，则等价于 [`c8rtomb(buf, u8'\0', ps)]，其中 [`buf] 为
+一个内部缓冲区。
+
+[:en] Otherwise, if [`c8] completes a sequence of valid UTF-8 code units,
+determines the number of bytes needed to represent the multibyte character
+(including any shift sequences), and stores the multibyte character
+representation in the array whose first element is pointed to by [`s].
+[:zh_CN] 否则，若 [`c8] 完成了一个有效 UTF-8 编码单元的序列，则确定用以表示该
+多字节字符的字节数（包括任何换档序列），并将该多字节字符表示存储到以 [`s] 所指向
+为首元素的数组之中。
+
+[:en] At most [`MB_CUR_MAX] bytes are stored.
+[:zh_CN] 最多存储 [`MB_CUR_MAX] 个字节。
+
+[:en] If the multibyte character is a null character, a null byte is stored,
+preceded by any shift sequence needed to restore the initial shift state;
+the resulting state described is the initial conversion state.
+[:zh_CN] 如果多字节字符是空字符，则存储一个空字节，其之前存储用以恢复初始换档
+状态所需的任何换档序列；给出的结果状态为初始转换状态。
+
+[para:returns]
+[:en] The number of bytes stored in the array object (including any shift
+sequences).
+[:zh_CN] 向数组对象中存储的字节数（包括任何换档序列）。
+
+[:en] If [`c8] does not contribute to a sequence of [`char8_t] corresponding to
+a valid multibyte character, the value of the macro [`EILSEQ] is stored in
+[`errno], [`(size_t) (-1)] is returned, and the conversion state is unspecified.
+[:zh_CN] 如果 [`c8] 并不参与构成对应于有效多字节字符的 [`char8_t] 的序列，则将宏
+[`EILSEQ] 的值存储到 [`errno] 之中，返回 [`(size_t) (-1)]，而转换状态是未指明的。
+
+[para:remarks]
+[:en] Calls to [`c8rtomb] with a null pointer argument for [`s] may introduce a
+data race ([#res.on.data.races]) with other calls to [`c8rtomb] with a null
+pointer argument for [`s].
+[:zh_CN] 以空指针作为 [`s] 的实参调用 [`c8rtomb]，可能会引入与其他的以空指针作为
+[`s] 的实参的对 [`c8rtomb] 的调用之间的数据竞争（[#res.on.data.races]）。
+[exit:description]

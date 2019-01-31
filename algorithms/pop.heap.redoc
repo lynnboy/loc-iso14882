@@ -10,31 +10,54 @@ template<class RandomAccessIterator>
 template<class RandomAccessIterator, class Compare>
   constexpr void pop_heap(RandomAccessIterator first, RandomAccessIterator last,
                           Compare comp);
+
+namespace ranges {
+  template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+           class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    constexpr I
+      pop_heap(I first, S last, Comp comp = {}, Proj proj = {});
+  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    constexpr safe_iterator_t<R>
+      pop_heap(R&& r, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:e] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for the overloads
+with no parameters by those names.
+[:zh_CN] 对于不带有这些名字的形参的重载，令 [`comp] 为 [`less()]，[`proj] 为
+[`identity{}]。
+
 [para:requires]
-[:en] The range [=range(first,last)] shall be a valid non-empty heap.
-[:zh_CN] 范围 [=range(first,last)] 应当是有效的非空堆。
+[:en] The range [=range(first,last)] shall be a valid non-empty heap with
+respect to [`comp] and [`proj].
+[:zh_CN] 范围 [=range(first,last)] 应当根据 [`comp] 和 [`proj] 是有效的非空堆。
 
-[:en] [`RandomAccessIterator] shall satisfy the [*Cpp17ValueSwappable]
-requirements ([#swappable.requirements]).
-[:zh_CN] [`RandomAccessIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
-（[#swappable.requirements]）。
-
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
-([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
-requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+[:en] For the overloads in namespace [`std], [`RandomAccessIterator] shall meet
+the [*Cpp17ValueSwappable] requirements ([#swappable.requirements]) and the type
+of [`*first] shall meet the [*Cpp17MoveConstructible] ([#moveconstructible]) and
+[*Cpp17MoveAssignable] ([#moveassignable]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`RandomAccessIterator] 应当满足
+[*Cpp17ValueSwappable] 的规定（[#swappable.requirements]），并且 [`*first] 的
+类型应当满足 [*Cpp17MoveConstructible]（[#moveconstructible]）和 
+[*Cpp17MoveAssignable]（[#moveassignable]）的规定。
 
 [para:effects]
 [:en] Swaps the value in the location [`first] with the value in the location
-[`last - 1] and makes [=range(first,last - 1)] into a heap.
+[`last - 1] and makes [=range(first,last - 1)] into a heap with respect to
+[`comp] and [`proj].
 [:zh_CN] 将位置 [`first] 中的值与位置 [`last - 1] 中的值进行交换，再使
-[=range(first,last - 1)] 成为堆。
+[=range(first,last - 1)] 根据 [`comp] 和 [`proj] 成堆。
+
+[para:returns]
+[:en] [`last] for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`last]。
 
 [para:complexity]
-[:en] At most [$2 \log([`last - first])] comparisons.
-[:zh_CN] 最多进行 [$2 \log([`last - first])] 次比较。
+[:en] At most [$2 \log([`last - first])] comparisons and twice as many
+projections.
+[:zh_CN] 最多进行 [$2 \log([`last - first])] 次比较以及两倍于此的投射。
 [exit:description]

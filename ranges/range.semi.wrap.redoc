@@ -1,0 +1,61 @@
+[section#range.semi.wrap
+    [:en] Semiregular wrapper
+    [:zh_CN] 半正规包装器
+]
+
+[para]
+[:en] Many of the types in this subclause are specified in terms of an
+exposition-only class template [`[*semiregular]].
+[:zh_CN] 本子条款中的许多类型，都是基于仅用于阐释的类模板 [`[*semiregular]] 来
+指定的。
+
+[:en] [`[*semiregular]<T>] behaves exactly like [`optional<T>] with the
+following differences:
+[:zh_CN] [`[*semiregular]<T>] 的行为与 [`optional<T>] 十分相似，但具有以下区别：
+
+[list]
+[item]
+[:en] [`[*semiregular]<T>] constrains its type parameter [`T] with
+[`[*CopyConstructible]<T> && is_object_v<T>].
+[:zh_CN] [`[*semiregular]<T>] 以 [`[*CopyConstructible]<T> && is_object_v<T>] 来
+对其类型形参 [`T] 进行约束。
+
+[item]
+[:en] If [`T] models [`DefaultConstructible], the default constructor of
+[`[*semiregular]<T>] is equivalent to:
+[:zh_CN] 如果 [`T] 构成了 [`DefaultConstructible]，则 [`[*semiregular]<T>] 的
+默认构造函数等价于：
+[codeblock:notation [!:var semiregular]]
+constexpr [*semiregular]() noexcept(is_nothrow_default_constructible_v<T>)
+  : [*semiregular]{in_place}
+{ }
+[codeblock:end]
+
+[item]
+[:en] If [`Assignable<T&, const T&>] is not satisfied, the copy assignment
+operator is equivalent to:
+[:zh_CN] 如果未能符合 [`Assignable<T&, const T&>]，则其复制赋值运算符等价于：
+[codeblock:notation [!:var semiregular]]
+[*semiregular]& operator=(const [*semiregular]& that)
+  noexcept(is_nothrow_copy_constructible_v<T>)
+{
+  if (that) emplace(*that);
+  else reset();
+  return *this;
+}
+[codeblock:end]
+
+[item]
+[:en] If [`Assignable<T&, T>] is not satisfied, the move assignment operator is
+equivalent to:
+[:zh_CN] 如果未能满足 [`Assignable<T&, T>]，则其移动赋值运算符等价于：
+[codeblock:notation [!:var semiregular]]
+[*semiregular]& operator=([*semiregular]&& that)
+  noexcept(is_nothrow_move_constructible_v<T>)
+{
+  if (that) emplace(std::move(*that));
+  else reset();
+  return *this;
+}
+[codeblock:end]
+[list:end]

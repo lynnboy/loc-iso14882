@@ -27,21 +27,38 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                             ForwardIterator1 first1, ForwardIterator1 last1,
                             ForwardIterator2 first2, ForwardIterator2 last2,
                             Compare comp);
+
+namespace ranges {
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+           class Proj1 = identity, class Proj2 = identity,
+           IndirectStrictWeakOrder<projected<I1, Proj1>,
+                                   projected<I2, Proj2>> Comp = ranges::less<>>
+    constexpr bool
+      lexicographical_compare(I1 first1, S1 last1, I2 first2, S2 last2,
+                              Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, InputRange R2, class Proj1 = identity,
+           class Proj2 = identity,
+           IndirectStrictWeakOrder<projected<iterator_t<R1>, Proj1>,
+                                   projected<iterator_t<R2>, Proj2>> Comp = ranges::less<>>
+    constexpr bool
+      lexicographical_compare(R1&& r1, R2&& r2, Comp comp = {},
+                              Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
 [para:returns]
-[:en] [`true] if the sequence of elements defined by the range
+[:en] [`true] if and only if the sequence of elements defined by the range
 [=range(first1,last1)] is lexicographically less than the sequence of elements
-defined by the range [=range(first2,last2)] and [`false] otherwise.
-[:zh_CN] 如果由范围 [=range(first1,last1)] 所定义的元素序列按字典序小于由范围
-[=range(first2,last2)] 所定义的元素序列，则返回 [`true]，否则返回 [`false]。
+defined by the range [=range(first2,last2)].
+[:zh_CN] 当且仅当由范围 [=range(first1,last1)] 所定义的元素序列按字典序小于由
+范围 [=range(first2,last2)] 所定义的元素序列时返回 [`true]。
 
 [para:complexity]
 [:en] At most [$2 \min([`last1 - first1], [`last2 - first2])] applications of
-the corresponding comparison.
+the corresponding comparison and each projection, if any.
 [:zh_CN] 最多进行 [$2 \min([`last1 - first1], [`last2 - first2])] 次对应比较
-的运用。
+的运用和（如果有）每种投射。
 
 [para:remarks]
 [:en] If two sequences have the same number of elements and their corresponding
@@ -50,9 +67,9 @@ less than the other.
 [:zh_CN] 如果两个序列具有相同数量的元素，并且它们的对应元素（如果有则）等价，则
 两个序列按字典序没有任何一个小于另一个。
 
-[:en] If one sequence is a prefix of the other, then the shorter sequence is
-lexicographically less than the longer sequence.
-[:zh_CN] 如果一个序列是另一个的前缀，则较短的序列按字典序小于较长的序列。
+[:en] If one sequence is a proper prefix of the other, then the shorter sequence
+is lexicographically less than the longer sequence.
+[:zh_CN] 如果一个序列是另一个的真前缀，则较短的序列按字典序小于较长的序列。
 
 [:en] Otherwise, the lexicographical comparison of the sequences yields the same
 result as the comparison of the first corresponding pair of elements that are
@@ -62,13 +79,15 @@ not equivalent.
 
 [para]
 [enter:example]
-[:en] The following sample implementation satisfies these requirements:
-[:zh_CN] 下面的示范实现能够符合这些规定：
+[:en] [`ranges::lexicographical_compare(I1, S1, I2, S2, Comp, Proj1, Proj2)]
+could be implemented as:
+[:zh_CN] [`ranges::lexicographical_compare(I1, S1, I2, S2, Comp, Proj1, Proj2)]
+可以实现为：
 
 [codeblock:notation]
 for ( ; first1 != last1 && first2 != last2 ; ++first1, (void) ++first2) {
-  if (*first1 < *first2) return true;
-  if (*first2 < *first1) return false;
+  if (invoke(comp, invoke(proj1, *first1), invoke(proj2, *first2))) return true;
+  if (invoke(comp, invoke(proj2, *first2), invoke(proj1, *first1))) return false;
 }
 return first1 == last1 && first2 != last2;
 [codeblock:end]

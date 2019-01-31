@@ -1,0 +1,58 @@
+[section#alg.req.ind.move
+    [:en] Concept [`IndirectlyMovable]
+    [:zh_CN] 概念 [`IndirectlyMovable]
+]
+
+[para]
+[:en] The [`IndirectlyMovable] concept specifies the relationship between
+a [`Readable] type and a [`Writable] type between which values may be moved.
+[:zh_CN] [`IndirectlyMovable] 概念指定了可以在其间进行值的移动的一个 [`Readable]
+类型和一个 [`Writable] 类型之间的关系。
+
+[%@library IndirectlyMovable]
+[codeblock:synopsis]
+template<class In, class Out>
+  concept IndirectlyMovable =
+    Readable<In> &&
+    Writable<Out, iter_rvalue_reference_t<In>>;
+[codeblock:end]
+
+[para]
+[:en] The [`IndirectlyMovableStorable] concept augments [`IndirectlyMovable]
+with additional requirements enabling the transfer to be performed through an
+intermediate object of the [`Readable] type[=']s value type.
+[:zh_CN] [`IndirectlyMovableStorable] 概念增强了 [`IndirectlyMovable]，添加了
+新的规定以使得可以通过 [`Readable] 类型的值类型的一个中间对象来实施值的传送。
+
+[%@library IndirectlyMovableStorable]
+[codeblock:synopsis]
+template<class In, class Out>
+  concept IndirectlyMovableStorable =
+    IndirectlyMovable<In, Out> &&
+    Writable<Out, iter_value_t<In>> &&
+    Movable<iter_value_t<In>> &&
+    Constructible<iter_value_t<In>, iter_rvalue_reference_t<In>> &&
+    Assignable<iter_value_t<In>&, iter_rvalue_reference_t<In>>;
+[codeblock:end]
+
+[para]
+[:en] Let [`i] be a dereferenceable value of type [`In].
+[:zh_CN] 令 [`i] 为 [`In] 类型的一个可解引用的值。
+
+[:en] [`In] and [`Out] model [`IndirectlyMovableStorable<In, Out>] only if after
+the initialization of the object [`obj] in
+[:zh_CN] 仅当以下代码
+
+[codeblock:notation]
+iter_value_t<In> obj(ranges::iter_move(i));
+[codeblock:end]
+
+[:en@~] [`obj] is equal to the value previously denoted by [`*i].
+[:zh_CN@~] 中的对象 [`obj] 经过初始化之后，[`obj] 等于由 [`*i] 之前所代表的值时，
+[`In] 和 [`Out] 构成 [`IndirectlyMovableStorable<In, Out>]。
+
+[:en] If [`iter_rvalue_reference_t<In>] is an rvalue reference type, the
+resulting state of the value denoted by [`*i] is valid but unspecified
+([#lib.types.movedfrom]).
+[:zh_CN] 当 [`iter_rvalue_reference_t<In>] 为右值引用类型时，由 [`*i] 所代表的值
+的结果状态是有效但未指明的（[#lib.types.movedfrom]）。

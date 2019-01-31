@@ -20,6 +20,15 @@ namespace std {
                                         // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                 ForwardIterator first, ForwardIterator last, Predicate pred);
 
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr bool all_of(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr bool all_of(R&& r, Pred pred, Proj proj = {});
+  }
+
   // [:en] [#alg.any_of], any of
   // [|:zh_CN] [#alg.any_of]，任意……为……（any of）
   template<class InputIterator, class Predicate>
@@ -28,6 +37,15 @@ namespace std {
     bool any_of(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                         // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                 ForwardIterator first, ForwardIterator last, Predicate pred);
+
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr bool any_of(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr bool any_of(R&& r, Pred pred, Proj proj = {});
+  }
 
   // [:en] [#alg.none_of], none of
   // [|:zh_CN] [#alg.none_of]，没有……为……（none of）
@@ -38,6 +56,15 @@ namespace std {
                                          // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                  ForwardIterator first, ForwardIterator last, Predicate pred);
 
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr bool none_of(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr bool none_of(R&& r, Pred pred, Proj proj = {});
+  }
+
   // [:en] [#alg.foreach], for each
   // [|:zh_CN] [#alg.foreach]，对每个……（for each）
   template<class InputIterator, class Function>
@@ -46,6 +73,24 @@ namespace std {
     void for_each(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                           // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                   ForwardIterator first, ForwardIterator last, Function f);
+
+  namespace ranges {
+    template<class I, class F>
+    struct for_each_result {
+      I in;
+      F fun;
+    };
+
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryInvocable<projected<I, Proj>> Fun>
+      constexpr for_each_result<I, Fun>
+        for_each(I first, S last, Fun f, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryInvocable<projected<iterator_t<R>, Proj>> Fun>
+      constexpr for_each_result<safe_iterator_t<R>, Fun>
+        for_each(R&& r, Fun f, Proj proj = {});
+  }
+
   template<class InputIterator, class Size, class Function>
     InputIterator for_each_n(InputIterator first, Size n, Function f);
   template<class ExecutionPolicy, class ForwardIterator, class Size, class Function>
@@ -80,6 +125,30 @@ namespace std {
                                 ForwardIterator first, ForwardIterator last,
                                 Predicate pred);
 
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class T, class Proj = identity>
+      requires IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T*>
+      constexpr I find(I first, S last, const T& value, Proj proj = {});
+    template<InputRange R, class T, class Proj = identity>
+      requires IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T*>
+      constexpr safe_iterator_t<R>
+        find(R&& r, const T& value, Proj proj = {});
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr I find_if(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr safe_iterator_t<R>
+        find_if(R&& r, Pred pred, Proj proj = {});
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr I find_if_not(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr safe_iterator_t<R>
+        find_if_not(R&& r, Pred pred, Proj proj = {});
+  }
+
   // [:en] [#alg.find.end], find end
   // [|:zh_CN] [#alg.find.end]，尾部查找
   template<class ForwardIterator1, class ForwardIterator2>
@@ -105,6 +174,21 @@ namespace std {
                ForwardIterator1 first1, ForwardIterator1 last1,
                ForwardIterator2 first2, ForwardIterator2 last2,
                BinaryPredicate pred);
+
+  namespace ranges {
+    template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2, Sentinel<I2> S2,
+             class Pred = ranges::equal_to<>, class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+      constexpr subrange<I1>
+        find_end(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+                 Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<ForwardRange R1, ForwardRange R2,
+             class Pred = ranges::equal_to<>, class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+      constexpr safe_subrange_t<R1>
+        find_end(R1&& r1, R2&& r2, Pred pred = {},
+                 Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
 
   // [:en] [#alg.find.first.of], find first
   // [|:zh_CN] [#alg.find.first.of]，查找首个
@@ -132,6 +216,23 @@ namespace std {
                     ForwardIterator2 first2, ForwardIterator2 last2,
                     BinaryPredicate pred);
 
+  namespace ranges {
+    template<InputIterator I1, Sentinel<I1> S1, ForwardIterator I2, Sentinel<I2> S2,
+             class Proj1 = identity, class Proj2 = identity,
+             IndirectRelation<projected<I1, Proj1>,
+                              projected<I2, Proj2>> Pred = ranges::equal_to<>>
+      constexpr I1 find_first_of(I1 first1, S1 last1, I2 first2, S2 last2,
+                                 Pred pred = {},
+                                 Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, ForwardRange R2, class Proj1 = identity, class Proj2 = identity,
+             IndirectRelation<projected<iterator_t<R1>, Proj1>,
+                              projected<iterator_t<R2>, Proj2>> Pred = ranges::equal_to<>>
+      constexpr safe_iterator_t<R1>
+        find_first_of(R1&& r1, R2&& r2,
+                      Pred pred = {},
+                      Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   // [:en] [#alg.adjacent.find], adjacent find
   // [|:zh_CN] [#alg.adjacent.find]，邻接查找
   template<class ForwardIterator>
@@ -153,6 +254,17 @@ namespace std {
                     ForwardIterator first, ForwardIterator last,
                     BinaryPredicate pred);
 
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectRelation<projected<I, Proj>> Pred = ranges::equal_to<>>
+      constexpr I adjacent_find(I first, S last, Pred pred = {},
+                                Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectRelation<projected<iterator_t<R>, Proj>> Pred = ranges::equal_to<>>
+      constexpr safe_iterator_t<R>
+        adjacent_find(R&& r, Pred pred = {}, Proj proj = {});
+  }
+
   // [:en] [#alg.count], count
   // [|:zh_CN] [#alg.count]，计数
   template<class InputIterator, class T>
@@ -171,6 +283,25 @@ namespace std {
       count_if(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                        // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                ForwardIterator first, ForwardIterator last, Predicate pred);
+
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class T, class Proj = identity>
+      requires IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T*>
+      constexpr iter_difference_t<I>
+        count(I first, S last, const T& value, Proj proj = {});
+    template<InputRange R, class T, class Proj = identity>
+      requires IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T*>
+      constexpr iter_difference_t<iterator_t<R>>
+        count(R&& r, const T& value, Proj proj = {});
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr iter_difference_t<I>
+        count_if(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr iter_difference_t<iterator_t<R>>
+        count_if(R&& r, Pred pred, Proj proj = {});
+  }
 
   // [:en] [#mismatch], mismatch
   // [|:zh_CN] [#mismatch]，查找不匹配
@@ -219,6 +350,29 @@ namespace std {
                ForwardIterator2 first2, ForwardIterator2 last2,
                BinaryPredicate pred);
 
+  namespace ranges {
+    template<class I1, class I2>
+    struct mismatch_result {
+      I1 in1;
+      I2 in2;
+    };
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             class Proj1 = identity, class Proj2 = identity,
+             IndirectRelation<projected<I1, Proj1>,
+                              projected<I2, Proj2>> Pred = ranges::equal_to<>>
+      constexpr mismatch_result<I1, I2>
+        mismatch(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+                 Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2,
+             class Proj1 = identity, class Proj2 = identity,
+             IndirectRelation<projected<iterator_t<R1>, Proj1>,
+                              projected<iterator_t<R2>, Proj2>> Pred = ranges::equal_to<>>
+      constexpr mismatch_result<safe_iterator_t<R1>, safe_iterator_t<R2>>
+        mismatch(R1&& r1, R2&& r2, Pred pred = {},
+                 Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   // [:en] [#alg.equal], equal
   // [|:zh_CN] [#alg.equal]，相等
   template<class InputIterator1, class InputIterator2>
@@ -258,6 +412,20 @@ namespace std {
                ForwardIterator2 first2, ForwardIterator2 last2,
                BinaryPredicate pred);
 
+  namespace ranges {
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             class Pred = ranges::equal_to<>, class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+      constexpr bool equal(I1 first1, S1 last1, I2 first2, S2 last2,
+                           Pred pred = {},
+                           Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, class Pred = ranges::equal_to<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+      constexpr bool equal(R1&& r1, R2&& r2, Pred pred = {},
+                           Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   // [:en] [#alg.is_permutation], is permutation
   // [|:zh_CN] [#alg.is_permutation]，是排列（is permutation）
   template<class ForwardIterator1, class ForwardIterator2>
@@ -275,6 +443,21 @@ namespace std {
     constexpr bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1,
                                   ForwardIterator2 first2, ForwardIterator2 last2,
                                   BinaryPredicate pred);
+
+  namespace ranges {
+    template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+             Sentinel<I2> S2, class Pred = ranges::equal_to<>, class Proj1 = identity,
+             class Proj2 = identity>
+      requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+      constexpr bool is_permutation(I1 first1, S1 last1, I2 first2, S2 last2,
+                                    Pred pred = {},
+                                    Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<ForwardRange R1, ForwardRange R2, class Pred = ranges::equal_to<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+      constexpr bool is_permutation(R1&& r1, R2&& r2, Pred pred = {},
+                                    Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
 
   // [:en] [#alg.search], search
   // [|:zh_CN] [#alg.search]，搜索
@@ -301,6 +484,23 @@ namespace std {
              ForwardIterator1 first1, ForwardIterator1 last1,
              ForwardIterator2 first2, ForwardIterator2 last2,
              BinaryPredicate pred);
+
+  namespace ranges {
+    template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+             Sentinel<I2> S2, class Pred = ranges::equal_to<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+      constexpr subrange<I1>
+        search(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+               Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<ForwardRange R1, ForwardRange R2, class Pred = ranges::equal_to<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyComparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+      constexpr safe_subrange_t<R1>
+        search(R1&& r1, R2&& r2, Pred pred = {},
+               Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   template<class ForwardIterator, class Size, class T>
     ForwardIterator
       search_n(ForwardIterator first, ForwardIterator last,
@@ -325,6 +525,21 @@ namespace std {
                Size count, const T& value,
                BinaryPredicate pred);
 
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class T,
+             class Pred = ranges::equal_to<>, class Proj = identity>
+      requires IndirectlyComparable<I, const T*, Pred, Proj>
+      constexpr subrange<I>
+        search_n(I first, S last, iter_difference_t<I> count,
+                 const T& value, Pred pred = {}, Proj proj = {});
+    template<ForwardRange R, class T, class Pred = ranges::equal_to<>,
+             class Proj = identity>
+      requires IndirectlyComparable<iterator_t<R>, const T*, Pred, Proj>
+      constexpr safe_subrange_t<R>
+        search_n(R&& r, iter_difference_t<iterator_t<R>> count,
+                 const T& value, Pred pred = {}, Proj proj = {});
+  }
+
   template <class ForwardIterator, class Searcher>
     ForwardIterator
       search(ForwardIterator first, ForwardIterator last, const Searcher& searcher);
@@ -344,12 +559,41 @@ namespace std {
   template<class InputIterator, class Size, class OutputIterator>
     constexpr OutputIterator copy_n(InputIterator first, Size n,
                                     OutputIterator result);
+
+  namespace ranges {
+    template<class I, class O>
+    struct copy_result {
+      I in;
+      O out;
+    };
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
+      requires IndirectlyCopyable<I, O>
+      constexpr copy_result<I, O>
+        copy(I first, S last, O result);
+    template<InputRange R, WeaklyIncrementable O>
+      requires IndirectlyCopyable<iterator_t<R>, O>
+      constexpr copy_result<safe_iterator_t<R>, O>
+        copy(R&& r, O result);
+  }
+
   template<class ExecutionPolicy, class ForwardIterator1, class Size,
            class ForwardIterator2>
     ForwardIterator2 copy_n(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                                     // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                             ForwardIterator1 first, Size n,
                             ForwardIterator2 result);
+
+  namespace ranges {
+    template<class I, class O>
+    using copy_n_result = copy_result<I, O>;
+
+    template<InputIterator I, WeaklyIncrementable O>
+      requires IndirectlyCopyable<I, O>
+      constexpr copy_n_result<I, O>
+        copy_n(I first, iter_difference_t<I> n, O result);
+  }
+
   template<class InputIterator, class OutputIterator, class Predicate>
     constexpr OutputIterator copy_if(InputIterator first, InputIterator last,
                                      OutputIterator result, Predicate pred);
@@ -359,10 +603,41 @@ namespace std {
                                                      // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                              ForwardIterator1 first, ForwardIterator1 last,
                              ForwardIterator2 result, Predicate pred);
+
+  namespace ranges {
+    template<class I, class O>
+    using copy_if_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      requires IndirectlyCopyable<I, O>
+      constexpr copy_if_result<I, O>
+        copy_if(I first, S last, O result, Pred pred, Proj proj = {});
+    template<InputRange R, WeaklyIncrementable O, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires IndirectlyCopyable<iterator_t<R>, O>
+      constexpr copy_if_result<safe_iterator_t<R>, O>
+        copy_if(R&& r, O result, Pred pred, Proj proj = {});
+  }
+
   template<class BidirectionalIterator1, class BidirectionalIterator2>
     constexpr BidirectionalIterator2
       copy_backward(BidirectionalIterator1 first, BidirectionalIterator1 last,
                     BidirectionalIterator2 result);
+
+  namespace ranges {
+    template<class I1, class I2>
+    using copy_backward_result = copy_result<I1, I2>;
+
+    template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2>
+      requires IndirectlyCopyable<I1, I2>
+      constexpr copy_backward_result<I1, I2>
+        copy_backward(I1 first, S1 last, I2 result);
+    template<BidirectionalRange R, BidirectionalIterator I>
+      requires IndirectlyCopyable<iterator_t<R>, I>
+      constexpr copy_backward_result<safe_iterator_t<R>, I>
+        copy_backward(R&& r, I result);
+  }
 
   // [:en] [#alg.move], move
   // [|:zh_CN] [#alg.move]，移动
@@ -375,10 +650,39 @@ namespace std {
                                                   // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                           ForwardIterator1 first, ForwardIterator1 last,
                           ForwardIterator2 result);
+
+  namespace ranges {
+    template<class I, class O>
+    using move_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
+      requires IndirectlyMovable<I, O>
+      constexpr move_result<I, O>
+        move(I first, S last, O result);
+    template<InputRange R, WeaklyIncrementable O>
+      requires IndirectlyMovable<iterator_t<R>, O>
+      constexpr move_result<safe_iterator_t<R>, O>
+        move(R&& r, O result);
+  }
+
   template<class BidirectionalIterator1, class BidirectionalIterator2>
     constexpr BidirectionalIterator2
       move_backward(BidirectionalIterator1 first, BidirectionalIterator1 last,
                     BidirectionalIterator2 result);
+
+  namespace ranges {
+    template<class I1, class I2>
+    using move_backward_result = copy_result<I1, I2>;
+
+    template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2>
+      requires IndirectlyMovable<I1, I2>
+      constexpr move_backward_result<I1, I2>
+        move_backward(I1 first, S1 last, I2 result);
+    template<BidirectionalRange R, BidirectionalIterator I>
+      requires IndirectlyMovable<iterator_t<R>, I>
+      constexpr move_backward_result<safe_iterator_t<R>, I>
+        move_backward(R&& r, I result);
+  }
 
   // [:en] [#alg.swap], swap
   // [|:zh_CN] [#alg.swap]，交换
@@ -390,6 +694,21 @@ namespace std {
                                                          // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                                  ForwardIterator1 first1, ForwardIterator1 last1,
                                  ForwardIterator2 first2);
+
+  namespace ranges {
+    template<class I1, class I2>
+    using swap_ranges_result = mismatch_result<I1, I2>;
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2>
+      requires IndirectlySwappable<I1, I2>
+      constexpr swap_ranges_result<I1, I2>
+        swap_ranges(I1 first1, S1 last1, I2 first2, S2 last2);
+    template<InputRange R1, InputRange R2>
+      requires IndirectlySwappable<iterator_t<R1>, iterator_t<R2>>
+      constexpr swap_ranges_result<safe_iterator_t<R1>, safe_iterator_t<R2>>
+        swap_ranges(R1&& r1, R2&& r2);
+  }
+
   template<class ForwardIterator1, class ForwardIterator2>
     constexpr void iter_swap(ForwardIterator1 a, ForwardIterator2 b);
 
@@ -397,7 +716,7 @@ namespace std {
   // [|:zh_CN] [#alg.transform]，变换
   template<class InputIterator, class OutputIterator, class UnaryOperation>
     constexpr OutputIterator
-      transform(InputIterator first, InputIterator last,
+      transform(InputIterator first1, InputIterator last1,
                 OutputIterator result, UnaryOperation op);
   template<class InputIterator1, class InputIterator2, class OutputIterator,
            class BinaryOperation>
@@ -410,7 +729,7 @@ namespace std {
     ForwardIterator2
       transform(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                         // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
-                ForwardIterator1 first, ForwardIterator1 last,
+                ForwardIterator1 first1, ForwardIterator1 last1,
                 ForwardIterator2 result, UnaryOperation op);
   template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
            class ForwardIterator, class BinaryOperation>
@@ -420,6 +739,45 @@ namespace std {
                 ForwardIterator1 first1, ForwardIterator1 last1,
                 ForwardIterator2 first2, ForwardIterator result,
                 BinaryOperation binary_op);
+
+  namespace ranges {
+    template<class I, class O>
+    using unary_transform_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+             CopyConstructible F, class Proj = identity>
+      requires Writable<O, indirect_result_t<F&, projected<I, Proj>>>
+      constexpr unary_transform_result<I, O>
+        transform(I first1, S last1, O result, F op, Proj proj = {});
+    template<InputRange R, WeaklyIncrementable O, CopyConstructible F,
+             class Proj = identity>
+      requires Writable<O, indirect_result_t<F&, projected<iterator_t<R>, Proj>>>
+      constexpr unary_transform_result<safe_iterator_t<R>, O>
+        transform(R&& r, O result, F op, Proj proj = {});
+
+    template<class I1, class I2, class O>
+    struct binary_transform_result {
+      I1 in1;
+      I2 in2;
+      O  out;
+    };
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             WeaklyIncrementable O, CopyConstructible F, class Proj1 = identity,
+             class Proj2 = identity>
+      requires Writable<O, indirect_result_t<F&, projected<I1, Proj1>,
+                                             projected<I2, Proj2>>>
+      constexpr binary_transform_result<I1, I2, O>
+        transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                  F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+             CopyConstructible F, class Proj1 = identity, class Proj2 = identity>
+      requires Writable<O, indirect_result_t<F&, projected<iterator_t<R1>, Proj1>,
+                                             projected<iterator_t<R2>, Proj2>>>
+      constexpr binary_transform_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+        transform(R1&& r1, R2&& r2, O result,
+                  F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
 
   // [:en] [#alg.replace], replace
   // [|:zh_CN] [#alg.replace]，替换
@@ -439,6 +797,29 @@ namespace std {
                                             // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                     ForwardIterator first, ForwardIterator last,
                     Predicate pred, const T& new_value);
+
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class T1, class T2, class Proj = identity>
+      requires Writable<I, const T2&> &&
+               IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T1*>
+      constexpr I
+        replace(I first, S last, const T1& old_value, const T2& new_value, Proj proj = {});
+    template<InputRange R, class T1, class T2, class Proj = identity>
+      requires Writable<iterator_t<R>, const T2&> &&
+               IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T1*>
+      constexpr safe_iterator_t<R>
+        replace(R&& r, const T1& old_value, const T2& new_value, Proj proj = {});
+    template<InputIterator I, Sentinel<I> S, class T, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      requires Writable<I, const T&>
+      constexpr I replace_if(I first, S last, Pred pred, const T& new_value, Proj proj = {});
+    template<InputRange R, class T, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires Writable<iterator_t<R>, const T&>
+      constexpr safe_iterator_t<R>
+        replace_if(R&& r, Pred pred, const T& new_value, Proj proj = {});
+  }
+
   template<class InputIterator, class OutputIterator, class T>
     constexpr OutputIterator replace_copy(InputIterator first, InputIterator last,
                                           OutputIterator result,
@@ -461,6 +842,42 @@ namespace std {
                                      ForwardIterator2 result,
                                      Predicate pred, const T& new_value);
 
+  namespace ranges {
+    template<class I, class O>
+    using replace_copy_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, class T1, class T2, OutputIterator<const T2&> O,
+             class Proj = identity>
+      requires IndirectlyCopyable<I, O> &&
+               IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T1*>
+      constexpr replace_copy_result<I, O>
+        replace_copy(I first, S last, O result, const T1& old_value, const T2& new_value,
+                     Proj proj = {});
+    template<InputRange R, class T1, class T2, OutputIterator<const T2&> O,
+             class Proj = identity>
+      requires IndirectlyCopyable<iterator_t<R>, O> &&
+               IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T1*>
+      constexpr replace_copy_result<safe_iterator_t<R>, O>
+        replace_copy(R&& r, O result, const T1& old_value, const T2& new_value,
+                     Proj proj = {});
+
+    template<class I, class O>
+    using replace_copy_if_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, class T, OutputIterator<const T&> O,
+             class Proj = identity, IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      requires IndirectlyCopyable<I, O>
+      constexpr replace_copy_if_result<I, O>
+        replace_copy_if(I first, S last, O result, Pred pred, const T& new_value,
+                        Proj proj = {});
+    template<InputRange R, class T, OutputIterator<const T&> O, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires IndirectlyCopyable<iterator_t<R>, O>
+      constexpr replace_copy_if_result<safe_iterator_t<R>, O>
+        replace_copy_if(R&& r, O result, Pred pred, const T& new_value,
+                        Proj proj = {});
+  }
+
   // [:en] [#alg.fill], fill
   // [|:zh_CN] [#alg.fill]，填充
   template<class ForwardIterator, class T>
@@ -476,6 +893,15 @@ namespace std {
     ForwardIterator fill_n(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                                    // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                            ForwardIterator first, Size n, const T& value);
+
+  namespace ranges {
+    template<class T, OutputIterator<const T&> O, Sentinel<O> S>
+      constexpr O fill(O first, S last, const T& value);
+    template<class T, OutputRange<const T&> R>
+      constexpr safe_iterator_t<R> fill(R&& r, const T& value);
+    template<class T, OutputIterator<const T&> O>
+      constexpr O fill_n(O first, iter_difference_t<O> n, const T& value);
+  }
 
   // [:en] [#alg.generate], generate
   // [|:zh_CN] [#alg.generate]，生成
@@ -493,6 +919,18 @@ namespace std {
     ForwardIterator generate_n(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                                        // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                                ForwardIterator first, Size n, Generator gen);
+
+  namespace ranges {
+    template<Iterator O, Sentinel<O> S, CopyConstructible F>
+      requires Invocable<F&> && Writable<O, invoke_result_t<F&>>
+      constexpr O generate(O first, S last, F gen);
+    template<class R, CopyConstructible F>
+      requires Invocable<F&> && OutputRange<R, invoke_result_t<F&>>
+      constexpr safe_iterator_t<R> generate(R&& r, F gen);
+    template<Iterator O, CopyConstructible F>
+      requires Invocable<F&> && Writable<O, invoke_result_t<F&>>
+      constexpr O generate_n(O first, iter_difference_t<O> n, F gen);
+  }
 
   // [:en] [#alg.remove], remove
   // [|:zh_CN] [#alg.remove]，移除
@@ -512,6 +950,26 @@ namespace std {
                                                       // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                               ForwardIterator first, ForwardIterator last,
                               Predicate pred);
+
+  namespace ranges {
+    template<Permutable I, Sentinel<I> S, class T, class Proj = identity>
+      requires IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T*>
+      constexpr I remove(I first, S last, const T& value, Proj proj = {});
+    template<ForwardRange R, class T, class Proj = identity>
+      requires Permutable<iterator_t<R>> &&
+               IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T*>
+      constexpr safe_iterator_t<R>
+        remove(R&& r, const T& value, Proj proj = {});
+    template<Permutable I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr I remove_if(I first, S last, Pred pred, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires Permutable<iterator_t<R>>
+      constexpr safe_iterator_t<R>
+        remove_if(R&& r, Pred pred, Proj proj = {});
+  }
+
   template<class InputIterator, class OutputIterator, class T>
     constexpr OutputIterator
       remove_copy(InputIterator first, InputIterator last,
@@ -535,6 +993,37 @@ namespace std {
                      ForwardIterator1 first, ForwardIterator1 last,
                      ForwardIterator2 result, Predicate pred);
 
+  namespace ranges {
+    template<class I, class O>
+    using remove_copy_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, class T,
+             class Proj = identity>
+      requires IndirectlyCopyable<I, O> &&
+               IndirectRelation<ranges::equal_to<>, projected<I, Proj>, const T*>
+      constexpr remove_copy_result<I, O>
+        remove_copy(I first, S last, O result, const T& value, Proj proj = {});
+    template<InputRange R, WeaklyIncrementable O, class T, class Proj = identity>
+      requires IndirectlyCopyable<iterator_t<R>, O> &&
+               IndirectRelation<ranges::equal_to<>, projected<iterator_t<R>, Proj>, const T*>
+      constexpr remove_copy_result<safe_iterator_t<R>, O>
+        remove_copy(R&& r, O result, const T& value, Proj proj = {});
+
+    template<class I, class O>
+    using remove_copy_if_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+             class Proj = identity, IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      requires IndirectlyCopyable<I, O>
+      constexpr remove_copy_if_result<I, O>
+        remove_copy_if(I first, S last, O result, Pred pred, Proj proj = {});
+    template<InputRange R, WeaklyIncrementable O, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires IndirectlyCopyable<iterator_t<R>, O>
+      constexpr remove_copy_if_result<safe_iterator_t<R>, O>
+        remove_copy_if(R&& r, O result, Pred pred, Proj proj = {});
+  }
+
   // [:en] [#alg.unique], unique
   // [|:zh_CN] [#alg.unique]，唯一
   template<class ForwardIterator>
@@ -551,6 +1040,18 @@ namespace std {
                                                    // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                            ForwardIterator first, ForwardIterator last,
                            BinaryPredicate pred);
+
+  namespace ranges {
+    template<Permutable I, Sentinel<I> S, class Proj = identity,
+             IndirectRelation<projected<I, Proj>> C = ranges::equal_to<>>
+      constexpr I unique(I first, S last, C comp = {}, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectRelation<projected<iterator_t<R>, Proj>> C = ranges::equal_to<>>
+      requires Permutable<iterator_t<R>>
+      constexpr safe_iterator_t<R>
+        unique(R&& r, C comp = {}, Proj proj = {});
+  }
+
   template<class InputIterator, class OutputIterator>
     constexpr OutputIterator
       unique_copy(InputIterator first, InputIterator last,
@@ -572,6 +1073,28 @@ namespace std {
                   ForwardIterator1 first, ForwardIterator1 last,
                   ForwardIterator2 result, BinaryPredicate pred);
 
+  namespace ranges {
+    template<class I, class O>
+    using unique_copy_result = copy_result<I, O>;
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+             class Proj = identity, IndirectRelation<projected<I, Proj>> C = ranges::equal_to<>>
+      requires IndirectlyCopyable<I, O> &&
+               (ForwardIterator<I> ||
+                (InputIterator<O> && Same<iter_value_t<I>, iter_value_t<O>>) ||
+                IndirectlyCopyableStorable<I, O>)
+      constexpr unique_copy_result<I, O>
+        unique_copy(I first, S last, O result, C comp = {}, Proj proj = {});
+    template<InputRange R, WeaklyIncrementable O, class Proj = identity,
+             IndirectRelation<projected<iterator_t<R>, Proj>> C = ranges::equal_to<>>
+      requires IndirectlyCopyable<iterator_t<R>, O> &&
+               (ForwardIterator<iterator_t<R>> ||
+                (InputIterator<O> && Same<iter_value_t<iterator_t<R>>, iter_value_t<O>>) ||
+                IndirectlyCopyableStorable<iterator_t<R>, O>)
+      constexpr unique_copy_result<safe_iterator_t<R>, O>
+        unique_copy(R&& r, O result, C comp = {}, Proj proj = {});
+  }
+
   // [:en] [#alg.reverse], reverse
   // [|:zh_CN] [#alg.reverse]，反转
   template<class BidirectionalIterator>
@@ -580,6 +1103,16 @@ namespace std {
     void reverse(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                          // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                  BidirectionalIterator first, BidirectionalIterator last);
+
+  namespace ranges {
+    template<BidirectionalIterator I, Sentinel<I> S>
+      requires Permutable<I>
+      constexpr I reverse(I first, S last);
+    template<BidirectionalRange R>
+      requires Permutable<iterator_t<R>>
+      constexpr safe_iterator_t<R> reverse(R&& r);
+  }
+
   template<class BidirectionalIterator, class OutputIterator>
     constexpr OutputIterator
       reverse_copy(BidirectionalIterator first, BidirectionalIterator last,
@@ -590,6 +1123,20 @@ namespace std {
                                            // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                    BidirectionalIterator first, BidirectionalIterator last,
                    ForwardIterator result);
+
+  namespace ranges {
+    template<class I, class O>
+    using reverse_copy_result = copy_result<I, O>;
+
+    template<BidirectionalIterator I, Sentinel<I> S, WeaklyIncrementable O>
+      requires IndirectlyCopyable<I, O>
+      constexpr reverse_copy_result<I, O>
+        reverse_copy(I first, S last, O result);
+    template<BidirectionalRange R, WeaklyIncrementable O>
+      requires IndirectlyCopyable<iterator_t<R>, O>
+      constexpr reverse_copy_result<safe_iterator_t<R>, O>
+        reverse_copy(R&& r, O result);
+  }
 
   // [:en] [#alg.rotate], rotate
   // [|:zh_CN] [#alg.rotate]，旋转
@@ -603,6 +1150,15 @@ namespace std {
                            ForwardIterator first,
                            ForwardIterator middle,
                            ForwardIterator last);
+
+  namespace ranges {
+    template<Permutable I, Sentinel<I> S>
+      constexpr subrange<I> rotate(I first, I middle, S last);
+    template<ForwardRange R>
+      requires Permutable<iterator_t<R>>
+      constexpr safe_subrange_t<R> rotate(R&& r, iterator_t<R> middle);
+  }
+
   template<class ForwardIterator, class OutputIterator>
     constexpr OutputIterator
       rotate_copy(ForwardIterator first, ForwardIterator middle,
@@ -613,6 +1169,20 @@ namespace std {
                                           // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                   ForwardIterator1 first, ForwardIterator1 middle,
                   ForwardIterator1 last, ForwardIterator2 result);
+
+  namespace ranges {
+    template<class I, class O>
+    using rotate_copy_result = copy_result<I, O>;
+
+    template<ForwardIterator I, Sentinel<I> S, WeaklyIncrementable O>
+      requires IndirectlyCopyable<I, O>
+      constexpr rotate_copy_result<I, O>
+        rotate_copy(I first, I middle, S last, O result);
+    template<ForwardRange R, WeaklyIncrementable O>
+      requires IndirectlyCopyable<iterator_t<R>, O>
+      constexpr rotate_copy_result<safe_iterator_t<R>, O>
+        rotate_copy(R&& r, iterator_t<R> middle, O result);
+  }
 
   // [:en] [#alg.random.sample], sample
   // [|:zh_CN] [#alg.random.sample]，抽样
@@ -628,6 +1198,19 @@ namespace std {
     void shuffle(RandomAccessIterator first,
                  RandomAccessIterator last,
                  UniformRandomBitGenerator&& g);
+
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Gen>
+      requires Permutable<I> &&
+               UniformRandomBitGenerator<remove_reference_t<Gen>> &&
+               ConvertibleTo<invoke_result_t<Gen&>, iter_difference_t<I>>
+      I shuffle(I first, S last, Gen&& g);
+    template<RandomAccessRange R, class Gen>
+      requires Permutable<iterator_t<R>> &&
+               UniformRandomBitGenerator<remove_reference_t<Gen>> &&
+               ConvertibleTo<invoke_result_t<Gen&>, iter_difference_t<iterator_t<R>>>
+      safe_iterator_t<R> shuffle(R&& r, Gen&& g);
+  }
 
   // [:en] [#alg.shift], shift
   // [|:zh_CN] [#alg.shift]，移位
@@ -671,6 +1254,18 @@ namespace std {
               RandomAccessIterator first, RandomAccessIterator last,
               Compare comp);
 
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        sort(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        sort(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class RandomAccessIterator>
     void stable_sort(RandomAccessIterator first, RandomAccessIterator last);
   template<class RandomAccessIterator, class Compare>
@@ -685,6 +1280,17 @@ namespace std {
                                              // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                      RandomAccessIterator first, RandomAccessIterator last,
                      Compare comp);
+
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      I stable_sort(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      safe_iterator_t<R>
+        stable_sort(R&& r, Comp comp = {}, Proj proj = {});
+  }
 
   template<class RandomAccessIterator>
     constexpr void partial_sort(RandomAccessIterator first,
@@ -706,6 +1312,20 @@ namespace std {
                       RandomAccessIterator first,
                       RandomAccessIterator middle,
                       RandomAccessIterator last, Compare comp);
+
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        partial_sort(I first, I middle, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        partial_sort(R&& r, iterator_t<R> middle, Comp comp = {},
+                     Proj proj = {});
+  }
+
   template<class InputIterator, class RandomAccessIterator>
     constexpr RandomAccessIterator
       partial_sort_copy(InputIterator first, InputIterator last,
@@ -733,6 +1353,26 @@ namespace std {
                         RandomAccessIterator result_first,
                         RandomAccessIterator result_last,
                         Compare comp);
+
+  namespace ranges {
+    template<InputIterator I1, Sentinel<I1> S1, RandomAccessIterator I2, Sentinel<I2> S2,
+             class Comp = ranges::less<>, class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyCopyable<I1, I2> && Sortable<I2, Comp, Proj2> &&
+               IndirectStrictWeakOrder<Comp, projected<I1, Proj1>, projected<I2, Proj2>>
+      constexpr I2
+        partial_sort_copy(I1 first, S1 last, I2 result_first, S2 result_last,
+                          Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, RandomAccessRange R2, class Comp = ranges::less<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires IndirectlyCopyable<iterator_t<R1>, iterator_t<R2>> &&
+               Sortable<iterator_t<R2>, Comp, Proj2> &&
+               IndirectStrictWeakOrder<Comp, projected<iterator_t<R1>, Proj1>,
+                                       projected<iterator_t<R2>, Proj2>>
+      constexpr safe_iterator_t<R2>
+        partial_sort_copy(R1&& r, R2&& result_r, Comp comp = {},
+                          Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   template<class ForwardIterator>
     constexpr bool is_sorted(ForwardIterator first, ForwardIterator last);
   template<class ForwardIterator, class Compare>
@@ -747,6 +1387,16 @@ namespace std {
                                            // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                    ForwardIterator first, ForwardIterator last,
                    Compare comp);
+
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr bool is_sorted(I first, S last, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr bool is_sorted(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class ForwardIterator>
     constexpr ForwardIterator
       is_sorted_until(ForwardIterator first, ForwardIterator last);
@@ -765,6 +1415,16 @@ namespace std {
                                               // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                       ForwardIterator first, ForwardIterator last,
                       Compare comp);
+
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr I is_sorted_until(I first, S last, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr safe_iterator_t<R>
+        is_sorted_until(R&& r, Comp comp = {}, Proj proj = {});
+  }
 
   // [:en] [#alg.nth.element], Nth element
   // [|:zh_CN] [#alg.nth.element]，第 N 位元素
@@ -785,6 +1445,18 @@ namespace std {
                      RandomAccessIterator first, RandomAccessIterator nth,
                      RandomAccessIterator last, Compare comp);
 
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        nth_element(I first, I nth, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        nth_element(R&& r, iterator_t<R> nth, Comp comp = {}, Proj proj = {});
+  }
+
   // [:en] [#alg.binary.search], binary search
   // [|:zh_CN] [#alg.binary.search]，折半检索
   template<class ForwardIterator, class T>
@@ -796,6 +1468,18 @@ namespace std {
       lower_bound(ForwardIterator first, ForwardIterator last,
                   const T& value, Compare comp);
 
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+      constexpr I lower_bound(I first, S last, const T& value, Comp comp = {},
+                              Proj proj = {});
+    template<ForwardRange R, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+               ranges::less<>>
+      constexpr safe_iterator_t<R>
+        lower_bound(R&& r, const T& value, Comp comp = {}, Proj proj = {});
+  }
+
   template<class ForwardIterator, class T>
     constexpr ForwardIterator
       upper_bound(ForwardIterator first, ForwardIterator last,
@@ -805,6 +1489,17 @@ namespace std {
       upper_bound(ForwardIterator first, ForwardIterator last,
                   const T& value, Compare comp);
 
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+      constexpr I upper_bound(I first, S last, const T& value, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+               ranges::less<>>
+      constexpr safe_iterator_t<R>
+        upper_bound(R&& r, const T& value, Comp comp = {}, Proj proj = {});
+  }
+
   template<class ForwardIterator, class T>
     constexpr pair<ForwardIterator, ForwardIterator>
       equal_range(ForwardIterator first, ForwardIterator last,
@@ -813,6 +1508,18 @@ namespace std {
     constexpr pair<ForwardIterator, ForwardIterator>
       equal_range(ForwardIterator first, ForwardIterator last,
                   const T& value, Compare comp);
+
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+      constexpr subrange<I>
+        equal_range(I first, S last, const T& value, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+               ranges::less<>>
+      constexpr safe_subrange_t<R>
+        equal_range(R&& r, const T& value, Comp comp = {}, Proj proj = {});
+  }
 
   template<class ForwardIterator, class T>
     constexpr bool
@@ -823,6 +1530,18 @@ namespace std {
       binary_search(ForwardIterator first, ForwardIterator last,
                     const T& value, Compare comp);
 
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+      constexpr bool binary_search(I first, S last, const T& value, Comp comp = {},
+                                   Proj proj = {});
+    template<ForwardRange R, class T, class Proj = identity,
+             IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+               ranges::less<>>
+      constexpr bool binary_search(R&& r, const T& value, Comp comp = {},
+                                   Proj proj = {});
+  }
+
   // [:en] [#alg.partitions], partitions
   // [|:zh_CN] [#alg.partitions]，分区
   template<class InputIterator, class Predicate>
@@ -831,6 +1550,15 @@ namespace std {
     bool is_partitioned(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                                 // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                         ForwardIterator first, ForwardIterator last, Predicate pred);
+
+  namespace ranges {
+    template<InputIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr bool is_partitioned(I first, S last, Pred pred, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr bool is_partitioned(R&& r, Pred pred, Proj proj = {});
+  }
 
   template<class ForwardIterator, class Predicate>
     constexpr ForwardIterator partition(ForwardIterator first,
@@ -842,6 +1570,19 @@ namespace std {
                               ForwardIterator first,
                               ForwardIterator last,
                               Predicate pred);
+
+  namespace ranges {
+    template<Permutable I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr I
+        partition(I first, S last, Pred pred, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires Permutable<iterator_t<R>>
+      constexpr safe_iterator_t<R>
+        partition(R&& r, Pred pred, Proj proj = {});
+  }
+
   template<class BidirectionalIterator, class Predicate>
     BidirectionalIterator stable_partition(BidirectionalIterator first,
                                            BidirectionalIterator last,
@@ -852,6 +1593,18 @@ namespace std {
                                            BidirectionalIterator first,
                                            BidirectionalIterator last,
                                            Predicate pred);
+
+  namespace ranges {
+    template<BidirectionalIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      requires Permutable<I>
+      I stable_partition(I first, S last, Pred pred, Proj proj = {});
+    template<BidirectionalRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires Permutable<iterator_t<R>>
+      safe_iterator_t<R> stable_partition(R&& r, Pred pred, Proj proj = {});
+  }
+
   template<class InputIterator, class OutputIterator1,
            class OutputIterator2, class Predicate>
     constexpr pair<OutputIterator1, OutputIterator2>
@@ -866,10 +1619,44 @@ namespace std {
                      ForwardIterator first, ForwardIterator last,
                      ForwardIterator1 out_true, ForwardIterator2 out_false,
                      Predicate pred);
+
+  namespace ranges {
+    template<class I, class O1, class O2>
+    struct partition_copy_result {
+      I  in;
+      O1 out1;
+      O2 out2;
+    };
+
+    template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O1, WeaklyIncrementable O2,
+             class Proj = identity, IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      requires IndirectlyCopyable<I, O1> && IndirectlyCopyable<I, O2>
+      constexpr partition_copy_result<I, O1, O2>
+        partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,
+                       Proj proj = {});
+    template<InputRange R, WeaklyIncrementable O1, WeaklyIncrementable O2,
+             class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      requires IndirectlyCopyable<iterator_t<R>, O1> &&
+               IndirectlyCopyable<iterator_t<R>, O2>
+      constexpr partition_copy_result<safe_iterator_t<R>, O1, O2>
+        partition_copy(R&& r, O1 out_true, O2 out_false, Pred pred, Proj proj = {});
+  }
+
   template<class ForwardIterator, class Predicate>
     constexpr ForwardIterator
       partition_point(ForwardIterator first, ForwardIterator last,
                       Predicate pred);
+
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectUnaryPredicate<projected<I, Proj>> Pred>
+      constexpr I partition_point(I first, S last, Pred pred, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectUnaryPredicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr safe_iterator_t<R>
+        partition_point(R&& r, Pred pred, Proj proj = {});
+  }
 
   // [:en] [#alg.merge], merge
   // [|:zh_CN] [#alg.merge]，归并
@@ -901,6 +1688,25 @@ namespace std {
             ForwardIterator2 first2, ForwardIterator2 last2,
             ForwardIterator result, Compare comp);
 
+  namespace ranges {
+    template<class I1, class I2, class O>
+    using merge_result = binary_transform_result<I1, I2, O>;
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             WeaklyIncrementable O, class Comp = ranges::less<>, class Proj1 = identity,
+             class Proj2 = identity>
+      requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+      constexpr merge_result<I1, I2, O>
+        merge(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+              Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, WeaklyIncrementable O, class Comp = ranges::less<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+      constexpr merge_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+        merge(R1&& r1, R2&& r2, O result,
+              Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   template<class BidirectionalIterator>
     void inplace_merge(BidirectionalIterator first,
                        BidirectionalIterator middle,
@@ -922,6 +1728,18 @@ namespace std {
                        BidirectionalIterator middle,
                        BidirectionalIterator last, Compare comp);
 
+  namespace ranges {
+    template<BidirectionalIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      I inplace_merge(I first, I middle, S last, Comp comp = {}, Proj proj = {});
+    template<BidirectionalRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      safe_iterator_t<R>
+        inplace_merge(R&& r, iterator_t<R> middle, Comp comp = {},
+                      Proj proj = {});
+  }
+
   // [:en] [#alg.set.operations], set operations
   // [|:zh_CN] [#alg.set.operations]，集合运算
   template<class InputIterator1, class InputIterator2>
@@ -942,6 +1760,21 @@ namespace std {
                   ForwardIterator1 first1, ForwardIterator1 last1,
                   ForwardIterator2 first2, ForwardIterator2 last2,
                   Compare comp);
+
+  namespace ranges {
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             class Proj1 = identity, class Proj2 = identity,
+             IndirectStrictWeakOrder<projected<I1, Proj1>, projected<I2, Proj2>> Comp =
+               ranges::less<>>
+      constexpr bool includes(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {},
+                              Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, class Proj1 = identity,
+             class Proj2 = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R1>, Proj1>,
+                                     projected<iterator_t<R2>, Proj2>> Comp = ranges::less<>>
+      constexpr bool includes(R1&& r1, R2&& r2, Comp comp = {},
+                              Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
 
   template<class InputIterator1, class InputIterator2, class OutputIterator>
     constexpr OutputIterator
@@ -970,6 +1803,25 @@ namespace std {
                 ForwardIterator2 first2, ForwardIterator2 last2,
                 ForwardIterator result, Compare comp);
 
+  namespace ranges {
+    template<class I1, class I2, class O>
+    using set_union_result = binary_transform_result<I1, I2, O>;
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             WeaklyIncrementable O, class Comp = ranges::less<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+      constexpr set_union_result<I1, I2, O>
+        set_union(I1 first1, S1 last1, I2 first2, S2 last2, O result, Comp comp = {},
+                  Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+             class Comp = ranges::less<>, class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+      constexpr set_union_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+        set_union(R1&& r1, R2&& r2, O result, Comp comp = {},
+                  Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   template<class InputIterator1, class InputIterator2, class OutputIterator>
     constexpr OutputIterator
       set_intersection(InputIterator1 first1, InputIterator1 last1,
@@ -996,6 +1848,25 @@ namespace std {
                        ForwardIterator1 first1, ForwardIterator1 last1,
                        ForwardIterator2 first2, ForwardIterator2 last2,
                        ForwardIterator result, Compare comp);
+
+  namespace ranges {
+    template<class I1, class I2, class O>
+    using set_intersection_result = binary_transform_result<I1, I2, O>;
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             WeaklyIncrementable O, class Comp = ranges::less<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+      constexpr set_intersection_result<I1, I2, O>
+        set_intersection(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                         Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+             class Comp = ranges::less<>, class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+      constexpr set_intersection_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+        set_intersection(R1&& r1, R2&& r2, O result,
+                         Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
 
   template<class InputIterator1, class InputIterator2, class OutputIterator>
     constexpr OutputIterator
@@ -1024,6 +1895,25 @@ namespace std {
                      ForwardIterator2 first2, ForwardIterator2 last2,
                      ForwardIterator result, Compare comp);
 
+  namespace ranges {
+    template<class I, class O>
+    using set_difference_result = copy_result<I, O>;
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             WeaklyIncrementable O, class Comp = ranges::less<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+      constexpr set_difference_result<I1, O>
+        set_difference(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                       Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+             class Comp = ranges::less<>, class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+      constexpr set_difference_result<safe_iterator_t<R1>, O>
+        set_difference(R1&& r1, R2&& r2, O result,
+                       Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   template<class InputIterator1, class InputIterator2, class OutputIterator>
     constexpr OutputIterator
       set_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
@@ -1051,6 +1941,26 @@ namespace std {
                                ForwardIterator2 first2, ForwardIterator2 last2,
                                ForwardIterator result, Compare comp);
 
+  namespace ranges {
+    template<class I1, class I2, class O>
+    using set_symmetric_difference_result = binary_transform_result<I1, I2, O>;
+
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             WeaklyIncrementable O, class Comp = ranges::less<>,
+             class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+      constexpr set_symmetric_difference_result<I1, I2, O>
+        set_symmetric_difference(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                                 Comp comp = {}, Proj1 proj1 = {},
+                                 Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, WeaklyIncrementable O,
+             class Comp = ranges::less<>, class Proj1 = identity, class Proj2 = identity>
+      requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+      constexpr set_symmetric_difference_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+        set_symmetric_difference(R1&& r1, R2&& r2, O result, Comp comp = {},
+                                 Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   // [:en] [#alg.heap.operations], heap operations
   // [|:zh_CN] [#alg.heap.operations]，堆运算：
   template<class RandomAccessIterator>
@@ -1059,11 +1969,35 @@ namespace std {
     constexpr void push_heap(RandomAccessIterator first, RandomAccessIterator last,
                              Compare comp);
 
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        push_heap(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        push_heap(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class RandomAccessIterator>
     constexpr void pop_heap(RandomAccessIterator first, RandomAccessIterator last);
   template<class RandomAccessIterator, class Compare>
     constexpr void pop_heap(RandomAccessIterator first, RandomAccessIterator last,
                             Compare comp);
+
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        pop_heap(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        pop_heap(R&& r, Comp comp = {}, Proj proj = {});
+  }
 
   template<class RandomAccessIterator>
     constexpr void make_heap(RandomAccessIterator first, RandomAccessIterator last);
@@ -1071,11 +2005,35 @@ namespace std {
     constexpr void make_heap(RandomAccessIterator first, RandomAccessIterator last,
                              Compare comp);
 
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        make_heap(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        make_heap(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class RandomAccessIterator>
     constexpr void sort_heap(RandomAccessIterator first, RandomAccessIterator last);
   template<class RandomAccessIterator, class Compare>
     constexpr void sort_heap(RandomAccessIterator first, RandomAccessIterator last,
                              Compare comp);
+
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr I
+        sort_heap(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr safe_iterator_t<R>
+        sort_heap(R&& r, Comp comp = {}, Proj proj = {});
+  }
 
   template<class RandomAccessIterator>
     constexpr bool is_heap(RandomAccessIterator first, RandomAccessIterator last);
@@ -1091,6 +2049,16 @@ namespace std {
                                          // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                  RandomAccessIterator first, RandomAccessIterator last,
                  Compare comp);
+
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr bool is_heap(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr bool is_heap(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class RandomAccessIterator>
     constexpr RandomAccessIterator
       is_heap_until(RandomAccessIterator first, RandomAccessIterator last);
@@ -1110,6 +2078,16 @@ namespace std {
                     RandomAccessIterator first, RandomAccessIterator last,
                     Compare comp);
 
+  namespace ranges {
+    template<RandomAccessIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr I is_heap_until(I first, S last, Comp comp = {}, Proj proj = {});
+    template<RandomAccessRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr safe_iterator_t<R>
+        is_heap_until(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   // [:en] [#alg.min.max], minimum and maximum
   // [|:zh_CN] [#alg.min.max]，最大值与最小值
   template<class T> constexpr const T& min(const T& a, const T& b);
@@ -1120,6 +2098,20 @@ namespace std {
   template<class T, class Compare>
     constexpr T min(initializer_list<T> t, Compare comp);
 
+  namespace ranges {
+    template<class T, class Proj = identity,
+             IndirectStrictWeakOrder<projected<const T*, Proj>> Comp = ranges::less<>>
+      constexpr const T& min(const T& a, const T& b, Comp comp = {}, Proj proj = {});
+    template<Copyable T, class Proj = identity,
+             IndirectStrictWeakOrder<projected<const T*, Proj>> Comp = ranges::less<>>
+      constexpr T min(initializer_list<T> r, Comp comp = {}, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      requires IndirectlyCopyableStorable<iterator_t<R>, iter_value_t<iterator_t<R>>*>
+      constexpr iter_value_t<iterator_t<R>>
+        min(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class T> constexpr const T& max(const T& a, const T& b);
   template<class T, class Compare>
     constexpr const T& max(const T& a, const T& b, Compare comp);
@@ -1128,6 +2120,20 @@ namespace std {
   template<class T, class Compare>
     constexpr T max(initializer_list<T> t, Compare comp);
 
+  namespace ranges {
+    template<class T, class Proj = identity,
+             IndirectStrictWeakOrder<projected<const T*, Proj>> Comp = ranges::less<>>
+      constexpr const T& max(const T& a, const T& b, Comp comp = {}, Proj proj = {});
+    template<Copyable T, class Proj = identity,
+             IndirectStrictWeakOrder<projected<const T*, Proj>> Comp = ranges::less<>>
+      constexpr T max(initializer_list<T> r, Comp comp = {}, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      requires IndirectlyCopyableStorable<iterator_t<R>, iter_value_t<iterator_t<R>>*>
+      constexpr iter_value_t<iterator_t<R>>
+        max(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class T> constexpr pair<const T&, const T&> minmax(const T& a, const T& b);
   template<class T, class Compare>
     constexpr pair<const T&, const T&> minmax(const T& a, const T& b, Compare comp);
@@ -1135,6 +2141,28 @@ namespace std {
     constexpr pair<T, T> minmax(initializer_list<T> t);
   template<class T, class Compare>
     constexpr pair<T, T> minmax(initializer_list<T> t, Compare comp);
+
+  namespace ranges {
+    template<class T>
+    struct minmax_result {
+      T min;
+      T max;
+    };
+
+    template<class T, class Proj = identity,
+             IndirectStrictWeakOrder<projected<const T*, Proj>> Comp = ranges::less<>>
+      constexpr minmax_result<const T&>
+        minmax(const T& a, const T& b, Comp comp = {}, Proj proj = {});
+    template<Copyable T, class Proj = identity,
+             IndirectStrictWeakOrder<projected<const T*, Proj>> Comp = ranges::less<>>
+      constexpr minmax_result<T>
+        minmax(initializer_list<T> r, Comp comp = {}, Proj proj = {});
+    template<InputRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      requires IndirectlyCopyableStorable<iterator_t<R>, iter_value_t<iterator_t<R>>*>
+      constexpr minmax_result<iter_value_t<iterator_t<R>>>
+        minmax(R&& r, Comp comp = {}, Proj proj = {});
+  }
 
   template<class ForwardIterator>
     constexpr ForwardIterator min_element(ForwardIterator first, ForwardIterator last);
@@ -1150,6 +2178,17 @@ namespace std {
                                                         // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                                 ForwardIterator first, ForwardIterator last,
                                 Compare comp);
+
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr I min_element(I first, S last, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr safe_iterator_t<R>
+        min_element(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class ForwardIterator>
     constexpr ForwardIterator max_element(ForwardIterator first, ForwardIterator last);
   template<class ForwardIterator, class Compare>
@@ -1164,6 +2203,17 @@ namespace std {
                                                         // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                                 ForwardIterator first, ForwardIterator last,
                                 Compare comp);
+
+ namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr I max_element(I first, S last, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr safe_iterator_t<R>
+        max_element(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class ForwardIterator>
     constexpr pair<ForwardIterator, ForwardIterator>
       minmax_element(ForwardIterator first, ForwardIterator last);
@@ -1180,6 +2230,17 @@ namespace std {
       minmax_element(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads]
                                              // [|:zh_CN] 参见 [#algorithms.parallel.overloads]
                      ForwardIterator first, ForwardIterator last, Compare comp);
+
+  namespace ranges {
+    template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+             IndirectStrictWeakOrder<projected<I, Proj>> Comp = ranges::less<>>
+      constexpr minmax_result<I>
+        minmax_element(I first, S last, Comp comp = {}, Proj proj = {});
+    template<ForwardRange R, class Proj = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R>, Proj>> Comp = ranges::less<>>
+      constexpr minmax_result<safe_iterator_t<R>>
+        minmax_element(R&& r, Comp comp = {}, Proj proj = {});
+  }
 
   // [:en] [#alg.clamp], bounded value
   // [|:zh_CN] [#alg.clamp]，有界值
@@ -1214,6 +2275,23 @@ namespace std {
                               ForwardIterator2 first2, ForwardIterator2 last2,
                               Compare comp);
 
+  namespace ranges {
+    template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+             class Proj1 = identity, class Proj2 = identity,
+             IndirectStrictWeakOrder<projected<I1, Proj1>, projected<I2, Proj2>> Comp =
+               ranges::less<>>
+      constexpr bool
+        lexicographical_compare(I1 first1, S1 last1, I2 first2, S2 last2,
+                                Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<InputRange R1, InputRange R2, class Proj1 = identity,
+             class Proj2 = identity,
+             IndirectStrictWeakOrder<projected<iterator_t<R1>, Proj1>,
+                                     projected<iterator_t<R2>, Proj2>> Comp = ranges::less<>>
+      constexpr bool
+        lexicographical_compare(R1&& r1, R2&& r2, Comp comp = {},
+                                Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
   // [:en] [#alg.3way], three-way comparison algorithms
   // [|:zh_CN] [#alg.3way]，三路比较算法
   template<class T, class U>
@@ -1237,11 +2315,38 @@ namespace std {
   template<class BidirectionalIterator, class Compare>
     constexpr bool next_permutation(BidirectionalIterator first,
                                     BidirectionalIterator last, Compare comp);
+
+  namespace ranges {
+    template<BidirectionalIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr bool
+        next_permutation(I first, S last, Comp comp = {}, Proj proj = {});
+    template<BidirectionalRange R, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr bool
+        next_permutation(R&& r, Comp comp = {}, Proj proj = {});
+  }
+
   template<class BidirectionalIterator>
     constexpr bool prev_permutation(BidirectionalIterator first,
                                     BidirectionalIterator last);
   template<class BidirectionalIterator, class Compare>
     constexpr bool prev_permutation(BidirectionalIterator first,
                                     BidirectionalIterator last, Compare comp);
+
+  namespace ranges {
+    template<BidirectionalIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<I, Comp, Proj>
+      constexpr bool
+        prev_permutation(I first, S last, Comp comp = {}, Proj proj = {});
+    template<BidirectionalRange R, class Comp = ranges::less<>,
+             class Proj = identity>
+      requires Sortable<iterator_t<R>, Comp, Proj>
+      constexpr bool
+        prev_permutation(R&& r, Comp comp = {}, Proj proj = {});
+  }
 }
 [codeblock:end]

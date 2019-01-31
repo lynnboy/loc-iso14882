@@ -1,0 +1,368 @@
+[section#range.join.iterator
+    [:en] Class [`join_view::iterator]
+    [:zh_CN] 类 [`join_view::iterator]
+]
+
+[%@library iterator[!join_view]]
+[codeblock:synopsis [!:var has-arrow]]
+namespace std::ranges {
+template<class V>
+  template<bool Const>
+  struct join_view<V>::iterator {
+  private:
+    using Parent =                                              // [=Expos]
+      conditional_t<Const, const join_view, join_view>;
+    using Base   = conditional_t<Const, const V, V>;            // [=Expos]
+
+    static constexpr bool ref_is_glvalue =                      // [=Expos]
+      is_reference_v<iter_reference_t<iterator_t<Base>>>;
+
+    iterator_t<Base> outer_ = iterator_t<Base>();               // [=Expos]
+    iterator_t<iter_reference_t<iterator_t<Base>>> inner_ =     // [=Expos]
+      iterator_t<iter_reference_t<iterator_t<Base>>>();
+    Parent* parent_ = nullptr;                                  // [=Expos]
+
+    constexpr void satisfy();                                   // [=Expos]
+  public:
+    using iterator_concept  = [=SeeBelow];
+    using iterator_category = [=SeeBelow];
+    using value_type        =
+      iter_value_t<iterator_t<iter_reference_t<iterator_t<Base>>>>;
+    using difference_type   = [=SeeBelow];
+
+    iterator() = default;
+    constexpr iterator(Parent& parent, iterator_t<V> outer);
+    constexpr iterator(iterator<!Const> i)
+      requires Const &&
+               ConvertibleTo<iterator_t<V>, iterator_t<Base>> &&
+               ConvertibleTo<iterator_t<InnerRng>,
+                             iterator_t<iter_reference_t<iterator_t<Base>>>>;
+
+    constexpr decltype(auto) operator*() const { return *inner_; }
+
+    constexpr iterator_t<Base> operator->() const
+      requires [*has-arrow]<iterator_t<Base>>;
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int)
+      requires ref_is_glvalue && ForwardRange<Base> &&
+               ForwardRange<iter_reference_t<iterator_t<Base>>>;
+
+    constexpr iterator& operator--()
+      requires ref_is_glvalue && BidirectionalRange<Base> &&
+               BidirectionalRange<iter_reference_t<iterator_t<Base>>>;
+
+    constexpr iterator operator--(int)
+      requires ref_is_glvalue && BidirectionalRange<Base> &&
+               BidirectionalRange<iter_reference_t<iterator_t<Base>>>;
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires ref_is_glvalue && EqualityComparable<iterator_t<Base>> &&
+               EqualityComparable<iterator_t<iter_reference_t<iterator_t<Base>>>>;
+
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires ref_is_glvalue && EqualityComparable<iterator_t<Base>> &&
+               EqualityComparable<iterator_t<iter_reference_t<iterator_t<Base>>>>;
+
+    friend constexpr decltype(auto) iter_move(const iterator& i)
+    noexcept(noexcept(ranges::iter_move(i.inner_))) {
+      return ranges::iter_move(i.inner_);
+    }
+
+    friend constexpr void iter_swap(const iterator& x, const iterator& y)
+      noexcept(noexcept(ranges::iter_swap(x.inner_, y.inner_)));
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`iterator::iterator_concept] is defined as follows:
+[:zh_CN] [`iterator::iterator_concept] 的定义如下：
+
+[list]
+[item]
+[:en] If [`ref_is_glvalue] is [`true],
+[:zh_CN] 若 [`ref_is_glvalue] 为 [`true]，
+
+[list]
+[item]
+[:en] If [`Base] and [`iter_reference_t<iterator_t<Base>>] each model
+[`BidirectionalRange], then [`iterator_concept] denotes
+[`bidirectional_iterator_tag].
+[:zh_CN] 若 [`Base] 和 [`iter_reference_t<iterator_t<Base>>] 均构成
+[`BidirectionalRange]，则 [`iterator_concept] 代表 [`bidirectional_iterator_tag]。
+[item]
+[:en] Otherwise, if [`Base] and [`iter_reference_t<iterator_t<Base>>] each model
+[`ForwardRange], then [`iterator_concept] denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`Base] 和 [`iter_reference_t<iterator_t<Base>>] 均构成
+[`ForwardRange]，则 [`iterator_concept] 代表 [`forward_iterator_tag]。
+[list:end]
+
+[item]
+[:en] Otherwise, [`iterator_concept] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_concept] 代表 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[:en] [`iterator::iterator_category] is defined as follows:
+[:zh_CN] [`iterator::iterator_category] 的定义如下：
+
+[list]
+[item]
+[:en] Let [`OUTERC] denote the type
+[`iterator_traits<iterator_t<Base>>::iterator_category], and let [`INNERC]
+denote
+[`iterator_traits<iterator_t<iter_reference_t<iterator_t<Base>>>>::iterator_category].
+[:zh_CN] 令 [`OUTERC] 代表类型
+[`iterator_traits<iterator_t<Base>>::iterator_category]，并令 [`INNERC] 代表
+[`iterator_traits<iterator_t<iter_reference_t<iterator_t<Base>>>>::iterator_category]。
+
+[item]
+[:en] If [`ref_is_glvalue] is [`true],
+[:zh_CN] 若 [`ref_is_glvalue] 为 [`true]，
+
+[list]
+[item]
+[:en] If [`OUTERC] and [`INNERC] each model
+[`DerivedFrom<bidirectional_iterator_tag>], [`iterator_category] denotes
+[`bidirectional_iterator_tag].
+[:zh_CN] 若 [`OUTERC] 和 [`INNERC] 均构成
+[`DerivedFrom<bidirectional_iterator_tag>]，则 [`iterator_category] 代表
+[`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`OUTERC] and [`INNERC] each model
+[`DerivedFrom<forward_iterator_tag>], [`iterator_category] denotes
+[`forward_iterator_tag].
+[:zh_CN] 否则，若 [`OUTERC] 和 [`INNERC] 均构成
+[`DerivedFrom<forward_iterator_tag>]，则 [`iterator_category] 代表
+[`forward_iterator_tag]。
+[list:end]
+
+[item]
+[:en] Otherwise, [`iterator_category] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_category] 代表 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[:en] [`iterator::difference_type] denotes the type:
+[:zh_CN] [`iterator::difference_type] 代表类型：
+[codeblock:notation]
+common_type_t<
+  iter_difference_t<iterator_t<Base>>,
+  iter_difference_t<iterator_t<iter_reference_t<iterator_t<Base>>>>>
+[codeblock:end]
+
+[para]
+[:en] [`join_view] iterators use the [`satisfy] function to skip over empty
+inner ranges.
+[:zh_CN] [`join_view] 迭代器使用 [`satisfy] 函数以跳过空的内部范围。
+
+[codeblock:declaration]
+constexpr void satisfy();       // [=Expos]
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto update_inner = [this](iter_reference_t<iterator_t<Base>> x) -> decltype(auto) {
+  if constexpr (ref_is_glvalue) // [:en] [`x] is a reference
+                                // [|:zh_CN] [`x] 是引用
+    return (x);                 // [:en] [`(x)] is an lvalue
+                                // [|:zh_CN] [`(x)] 是左值
+  else
+    return (parent_->inner_ = view::all(x));
+};
+
+for (; outer_ != ranges::end(parent_->base_); ++outer_) {
+  auto& inner = update_inner(*outer_);
+  inner_ = ranges::begin(inner);
+  if (inner_ != ranges::end(inner))
+    return;
+}
+if constexpr (ref_is_glvalue)
+  inner_ = iterator_t<iter_reference_t<iterator_t<Base>>>();
+[codeblock:end]
+[exit:description]
+
+[%@library iterator[!join_view::iterator]]
+[codeblock:declaration]
+constexpr iterator(Parent& parent, iterator_t<V> outer)
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`outer_] with [`outer] and [`parent_] with
+[`addressof(parent)]; then calls [`satisfy()].
+[:zh_CN] 以 [`outer] 初始化 [`outer_] 并以 [`addressof(parent)] 初始化
+[`parent_]；然后调用 [`satisfy()]。
+[exit:description]
+
+[%@library iterator[!join_view::iterator]]
+[codeblock:declaration]
+constexpr iterator(iterator<!Const> i)
+  requires Const &&
+           ConvertibleTo<iterator_t<V>, iterator_t<Base>> &&
+           ConvertibleTo<iterator_t<InnerRng>,
+                         iterator_t<iter_reference_t<iterator_t<Base>>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`outer_] with [`std::move(i.outer_)], [`inner_] with
+[`std::move(i.inner_)], and [`parent_] with [`i.parent_].
+[:zh_CN] 以 [`std::move(i.outer_)] 初始化 [`outer_]，以 [`std::move(i.inner_)]
+初始化 [`inner_]，并以 [`i.parent_] 初始化 [`parent_]。
+[exit:description]
+
+[%@library operator->[!join_view::iterator]]
+[codeblock:declaration [!:var has-arrow]]
+constexpr iterator_t<Base> operator->() const
+  requires [*has-arrow]<iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`return inner_;]
+[:zh_CN] 等价于 [`return inner_;]
+[exit:description]
+
+[%@library operator++[!join_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator++();
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`[*inner-range]] be:
+[:zh_CN] 令 [`[*inner-range]] 为：
+[list]
+[item]
+[:en] If [`ref_is_glvalue] is [`true], [`*outer_].
+[:zh_CN] 当 [`ref_is_glvalue] 为 [`true] 时，为 [`*outer_]。
+[item]
+[:en] Otherwise, [`parent_->inner_].
+[:zh_CN] 否则，为 [`parent_->inner_]。
+[list:end]
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var inner-range]]
+auto&& inner_rng = [*inner-range];
+if (++inner_ == ranges::end(inner_rng)) {
+  ++outer_;
+  satisfy();
+}
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator++[!join_view::iterator]]
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`++*this].
+[:zh_CN] 等价于：[`++*this]。
+[exit:description]
+
+[%@library operator++[!join_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator++(int)
+  requires ref_is_glvalue && ForwardRange<Base> &&
+           ForwardRange<iter_reference_t<iterator_t<Base>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!join_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator--()
+  requires ref_is_glvalue && BidirectionalRange<Base> &&
+           BidirectionalRange<iter_reference_t<iterator_t<Base>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+if (outer_ == ranges::end(parent_->base_))
+  inner_ = ranges::end(*--outer_);
+while (inner_ == ranges::begin(*outer_))
+  inner_ = ranges::end(*--outer_);
+--inner_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!join_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator--(int)
+  requires ref_is_glvalue && BidirectionalRange<Base> &&
+           BidirectionalRange<iter_reference_t<iterator_t<Base>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator==[!join_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires ref_is_glvalue && EqualityComparable<iterator_t<Base>> &&
+           EqualityComparable<iterator_t<iter_reference_t<iterator_t<Base>>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.outer_ == y.outer_ && x.inner_ == y.inner_;]
+[:zh_CN] 等价于：[`return x.outer_ == y.outer_ && x.inner_ == y.inner_;]
+[exit:description]
+
+[%@library operator!=[!join_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const iterator& x, const iterator& y)
+  requires ref_is_glvalue && EqualityComparable<iterator_t<Base>> &&
+           EqualityComparable<iterator_t<iter_reference_t<iterator_t<Base>>>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]
+
+[%@library iter_swap[!join_view::iterator]]
+[codeblock:declaration]
+friend constexpr void iter_swap(const iterator& x, const iterator& y)
+  noexcept(noexcept(ranges::iter_swap(x.inner_, y.inner_)));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::iter_swap(x.inner_, y.inner_);]
+[:zh_CN] 等价于：[`return ranges::iter_swap(x.inner_, y.inner_);]
+[exit:description]

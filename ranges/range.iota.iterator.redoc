@@ -1,0 +1,361 @@
+[section#range.iota.iterator
+    [:en] Class [`iota_view::iterator]
+    [:zh_CN] 类 [`iota_view::iterator]
+]
+
+[codeblock:synopsis [!:var Advanceable Decrementable]]
+namespace std::ranges {
+  template<class W, class Bound>
+  struct iota_view<W, Bound>::iterator {
+  private:
+    W value_ = W();             // [=Expos]
+  public:
+    using iterator_category = [=SeeBelow];
+    using value_type = W;
+    using difference_type = iter_difference_t<W>;
+
+    iterator() = default;
+    constexpr explicit iterator(W value);
+
+    constexpr W operator*() const noexcept(is_nothrow_copy_constructible_v<W>);
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires Incrementable<W>;
+
+    constexpr iterator& operator--() requires [*Decrementable]<W>;
+    constexpr iterator operator--(int) requires [*Decrementable]<W>;
+
+    constexpr iterator& operator+=(difference_type n)
+      requires [*Advanceable]<W>;
+    constexpr iterator& operator-=(difference_type n)
+      requires [*Advanceable]<W>;
+    constexpr W operator[](difference_type n) const
+      requires [*Advanceable]<W>;
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<W>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<W>;
+
+    friend constexpr bool operator<(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<W>;
+    friend constexpr bool operator>(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<W>;
+    friend constexpr bool operator<=(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<W>;
+    friend constexpr bool operator>=(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<W>;
+
+    friend constexpr iterator operator+(iterator i, difference_type n)
+      requires [*Advanceable]<W>;
+    friend constexpr iterator operator+(difference_type n, iterator i)
+      requires [*Advanceable]<W>;
+
+    friend constexpr iterator operator-(iterator i, difference_type n)
+      requires [*Advanceable]<W>;
+    friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+      requires [*Advanceable]<W>;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`iterator::iterator_category] is defined as follows:
+[:zh_CN] [`iterator::iterator_category] 的定义如下：
+
+[list]
+[item]
+[:en] If [`W] models [`[*Advanceable]], then [`iterator_category] is
+[`random_access_iterator_tag].
+[:zh_CN] 若 [`W] 构成 [`[*Advanceable]]，则 [`iterator_category] 为
+[`random_access_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`W] models [`[*Decrementable]], then [`iterator_category]
+is [`bidirectional_iterator_tag].
+[:zh_CN] 否则，若 [`W] 构成 [`[*Decrementable]]，则 [`iterator_category] 为
+[`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`W] models [`Incrementable], then [`iterator_category]
+is [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`W] 构成 [`Incrementable]，则 [`iterator_category] 为
+[`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_category] is [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_category] 为 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[enter:note]
+[:en] Overloads for [`iter_move] and [`iter_swap] are omitted intentionally.
+[:zh_CN] 有意忽略了对 [`iter_move] 和 [`iter_swap] 的重载。
+[exit:note]
+
+[%@library iterator[!iota_view::iterator]]
+[codeblock:declaration]
+constexpr explicit iterator(W value);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`value_] with [`value].
+[:zh_CN] 以 [`value] 初始化 [`value_]。
+[exit:description]
+
+[%@library operator*[!iota_view::iterator]]
+[codeblock:declaration]
+constexpr W operator*() const noexcept(is_nothrow_copy_constructible_v<W>);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return value_;]
+[:zh_CN] 等价于：[`return value_;]
+
+[para]
+[enter:note]
+[:en] The [`noexcept] clause is needed by the default [`iter_move]
+implementation.
+[:zh_CN] [`noexcept] 子句是由于 [`iter_move] 的默认实现所需要的。
+[exit:note]
+[exit:description]
+
+[%@library operator++[!iota_view::iterator]]
+[codeblock:declaration]
+constexpr iterator& operator++();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+++value_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator++[!iota_view::iterator]]
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`++*this].
+[:zh_CN] 等价于：[`++*this]。
+[exit:description]
+
+[%@library operator++[!iota_view::iterator]]
+[codeblock:declaration]
+constexpr iterator operator++(int) requires Incrementable<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!iota_view::iterator]]
+[codeblock:declaration [!:var Decrementable]]
+constexpr iterator& operator--() requires [*Decrementable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+--value_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator--[!iota_view::iterator]]
+[codeblock:declaration [!:var Decrementable]]
+constexpr iterator operator--(int) requires [*Decrementable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[exit:description]
+
+[%@library operator+=[!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+constexpr iterator& operator+=(difference_type n)
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+value_ += n;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator-=[!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+constexpr iterator& operator-=(difference_type n)
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+value_ -= n;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator`[`][!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+constexpr W operator[](difference_type n) const
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return value_ + n;]
+[:zh_CN] 等价于：[`return value_ + n;]
+[exit:description]
+
+[%@library operator==[!iota_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires EqualityComparable<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.value_ == y.value_;]
+[:zh_CN] 等价于：[`return x.value_ == y.value_;]
+[exit:description]
+
+[%@library operator!=[!iota_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const iterator& x, const iterator& y)
+  requires EqualityComparable<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]
+
+[%@library operator<[!iota_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator<(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.value_ < y.value_;]
+[:zh_CN] 等价于：[`return x.value_ < y.value_;]
+[exit:description]
+
+[%@library operator>[!iota_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator>(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return y < x;]
+[:zh_CN] 等价于：[`return y < x;]
+[exit:description]
+
+[%@library operator<=[!iota_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator<=(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(y < x);]
+[:zh_CN] 等价于：[`return !(y < x);]
+[exit:description]
+
+[%@library operator>=[!iota_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator>=(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x < y);]
+[:zh_CN] 等价于：[`return !(x < y);]
+[exit:description]
+
+[%@library operator+[!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+friend constexpr iterator operator+(iterator i, difference_type n)
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{i.value_ + n};]
+[:zh_CN] 等价于：[`return iterator{i.value_ + n};]
+[exit:description]
+
+[%@library operator+[!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+friend constexpr iterator operator+(difference_type n, iterator i)
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return i + n;]
+[:zh_CN] 等价于：[`return i + n;]
+[exit:description]
+
+[%@library operator-[!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+friend constexpr iterator operator-(iterator i, difference_type n)
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return i + -n;]
+[:zh_CN] 等价于：[`return i + -n;]
+[exit:description]
+
+[%@library operator-[!iota_view::iterator]]
+[codeblock:declaration [!:var Advanceable]]
+friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+  requires [*Advanceable]<W>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.value_ - y.value_;]
+[:zh_CN] 等价于：[`return x.value_ - y.value_;]
+[exit:description]

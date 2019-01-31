@@ -1,0 +1,90 @@
+[section#range.refinements
+    [:en] Common range refinements
+    [:zh_CN] 一般的范围精化概念
+]
+
+[para]
+[:en] The [`OutputRange] concept specifies requirements of a [`Range] type for
+which [`ranges::begin] returns a model of [`OutputIterator]
+([#iterator.concept.output]).
+[:zh_CN] [`OutputRange] 概念对 [`ranges::begin] 所返回的类型构成
+[`OutputIterator]（[#iterator.concept.output]）的 [`Range] 类型指定了一些规定。
+
+[:en] [`InputRange], [`ForwardRange], [`BidirectionalRange], and
+[`RandomAccessRange] are defined similarly.
+[:zh_CN] 也类似地定义了[`InputRange]，[`ForwardRange]，[`BidirectionalRange]，
+以及 [`RandomAccessRange]。
+
+[%@librry OutputRange]
+[%@librry InputRange]
+[%@librry ForwardRange]
+[%@librry BidirectionalRange]
+[%@librry RandomAccessRange]
+[codeblock:declaration]
+template<class R, class T>
+  concept OutputRange =
+    Range<R> && OutputIterator<iterator_t<R>, T>;
+
+template<class T>
+  concept InputRange =
+    Range<T> && InputIterator<iterator_t<T>>;
+
+template<class T>
+  concept ForwardRange =
+    InputRange<T> && ForwardIterator<iterator_t<T>>;
+
+template<class T>
+  concept BidirectionalRange =
+    ForwardRange<T> && BidirectionalIterator<iterator_t<T>>;
+
+template<class T>
+  concept RandomAccessRange =
+    BidirectionalRange<T> && RandomAccessIterator<iterator_t<T>>;
+[codeblock:end]
+
+[para]
+[:en] [`ContiguousRange] additionally requires that the [`ranges::data]
+customization point ([#range.prim.data]) is usable with the range.
+[:zh_CN] [`ContiguousRange] 额外规定了可以对范围使用 [`ranges::data] 定制化点
+（[#range.prim.data]）。
+
+[%@librry ContiguousRange]
+[codeblock:declaration]
+template<class T>
+  concept ContiguousRange =
+    RandomAccessRange<T> && ContiguousIterator<iterator_t<T>> &&
+    requires(T& t) {
+      { ranges::data(t) } -> Same<add_pointer_t<iter_reference_t<iterator_t<T>>>>;
+    };
+[codeblock:end]
+
+[para]
+[:en] The [`CommonRange] concept specifies requirements of a [`Range] type for
+which [`ranges::begin] and [`ranges::end] return objects of the same type.
+[:zh_CN] [`CommonRange] 概念针对 [`Range] 类型规定，[`ranges::begin] 和
+[`ranges::end] 返回的对象具有相同类型。
+
+[enter:example]
+[:en] The standard containers ([#containers]) model [`CommonRange].
+[:zh_CN] 标准容器（[#containers]）均构成 [`CommonRange]。
+[exit:example]
+
+[%@librry CommonRange]
+[codeblock:declaration]
+template<class T>
+  concept CommonRange =
+    Range<T> && Same<iterator_t<T>, sentinel_t<T>>;
+[codeblock:end]
+
+[para]
+[:en] The [`ViewableRange] concept specifies the requirements of a [`Range] type
+that can be converted to a [`View] safely.
+[:zh_CN] [`ViewableRange] 概念为可以安全地转换为 [`View] 的 [`Range] 类型做出了
+规定。
+
+[%@librry ViewableRange]
+[codeblock:declaration [!:var forwarding-range]]
+template<class T>
+  concept ViewableRange =
+    Range<T> && ([*forwarding-range]<T> || View<decay_t<T>>);
+[codeblock:end]

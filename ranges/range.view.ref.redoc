@@ -1,0 +1,68 @@
+[section#range.view.ref
+    [`[*ref-view]]
+]
+
+[codeblock:synopsis [!:var ref-view not-same-as]]
+namespace std::ranges {
+  template<Range R>
+    requires is_object_v<R>
+  class [*ref-view] : public view_interface<[*ref-view]<R>> {
+  private:
+    R* r_ = nullptr;            // [=Expos]
+  public:
+    constexpr [*ref-view]() noexcept = default;
+
+    template<[*not-same-as]<[*ref-view]> T>
+      requires [=SeeBelow]
+    constexpr [*ref-view](T&& t);
+
+    constexpr R& base() const { return *r_; }
+
+    constexpr iterator_t<R> begin() const { return ranges::begin(*r_); }
+    constexpr sentinel_t<R> end() const { return ranges::end(*r_); }
+
+    constexpr bool empty() const
+      requires requires { ranges::empty(*r_); }
+    { return ranges::empty(*r_); }
+
+    constexpr auto size() const requires SizedRange<R>
+    { return ranges::size(*r_); }
+
+    constexpr auto data() const requires ContiguousRange<R>
+    { return ranges::data(*r_); }
+
+    friend constexpr iterator_t<R> begin([*ref-view] r)
+    { return r.begin(); }
+
+    friend constexpr sentinel_t<R> end([*ref-view] r)
+    { return r.end(); }
+  };
+}
+[codeblock:end]
+
+[%@library [`[*ref-view]][![`[*ref-view]]]]
+[codeblock:declaration]
+template<[*not-same-as]<[*ref-view]> T>
+  requires [=SeeBelow]
+constexpr [*ref-view](T&& t);
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] Let [`[*FUN]] denote the exposition-only functions
+[:zh_CN] 令 [`[*FUN]] 代表仅用于阐释的函数
+[codeblock:notation [!:var FUN]]
+void [*FUN](R&);
+void [*FUN](R&&) = delete;
+[codeblock:end]
+
+[:en] The expression in the [~requires-clause] is equivalent to
+[:zh_CN] [~requires-子句]中的表达式等价于：
+[codeblock:notation [!:var FUN]]
+ConvertibleTo<T, R&> && requires { [*FUN](declval<T>()); }
+[codeblock:end]
+
+[para:effects]
+[:en] Initializes [`r_] with [`addressof(static_cast<R&>(std::forward<T>(t)))].
+[:zh_CN] 以 [`addressof(static_cast<R&>(std::forward<T>(t)))] 初始化 [`r_]。
+[exit:description]

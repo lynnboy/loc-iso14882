@@ -1,0 +1,170 @@
+[section#range.split.inner
+    [:en] Class template [`split_view::inner_iterator]
+    [:zh_CN] 类模板 [`split_view::inner_iterator]
+]
+
+[codeblock:synopsis [!:var current]]
+namespace std::ranges {
+  template<class V, class Pattern>
+  template<bool Const>
+  struct split_view<V, Pattern>::inner_iterator {
+  private:
+    using Base =
+      conditional_t<Const, const V, V>;                 // [=Expos]
+    inner_iterator<Const> i_ = inner_iterator<Const>(); // [=Expos]
+    bool incremented_ = false;                          // [=Expos]
+  public:
+    using iterator_concept  = typename inner_iterator<Const>::iterator_concept;
+    using iterator_category = [=SeeBelow];
+    using value_type        = iter_value_t<iterator_t<Base>>;
+    using difference_type   = iter_difference_t<iterator_t<Base>>;
+
+    inner_iterator() = default;
+    constexpr explicit inner_iterator(inner_iterator<Const> i);
+
+    constexpr decltype(auto) operator*() const { return *i_.[*current]; }
+
+    constexpr inner_iterator& operator++();
+    constexpr decltype(auto) operator++(int) {
+      if constexpr (ForwardRange<V>) {
+        auto tmp = *this;
+        ++*this;
+        return tmp;
+      } else
+        ++*this;
+    }
+
+    friend constexpr bool operator==(const inner_iterator& x, const inner_iterator& y)
+      requires ForwardRange<Base>;
+    friend constexpr bool operator!=(const inner_iterator& x, const inner_iterator& y)
+      requires ForwardRange<Base>;
+
+    friend constexpr bool operator==(const inner_iterator& x, default_sentinel_t);
+    friend constexpr bool operator==(default_sentinel_t, const inner_iterator& x);
+    friend constexpr bool operator!=(const inner_iterator& x, default_sentinel_t y);
+    friend constexpr bool operator!=(default_sentinel_t y, const inner_iterator& x);
+
+    friend constexpr decltype(auto) iter_move(const inner_iterator& i)
+    noexcept(noexcept(ranges::iter_move(i.i_.[*current]))) {
+      return ranges::iter_move(i.i_.[*current]);
+    }
+
+    friend constexpr void iter_swap(const inner_iterator& x, const inner_iterator& y)
+      noexcept(noexcept(ranges::iter_swap(x.i_.[*current], y.i_.[*current])))
+      requires IndirectlySwappable<iterator_t<Base>>;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The [~typedef-name] [`iterator_category] denotes [`forward_iterator_tag]
+if [`iterator_traits<iterator_t<Base>>::iterator_category] models
+[`DerivedFrom<forward_iterator_tag>], and [`input_iterator_tag] otherwise.
+[:zh_CN] 当 [`iterator_traits<iterator_t<Base>>::iterator_category] 构成
+[`DerivedFrom<forward_iterator_tag>] 时，[~typedef-名] [`iterator_category] 代表
+[`forward_iterator_tag]，否则代表 [`input_iterator_tag]。
+
+[%@library inner_iterator[!split_view::inner_iterator]]
+[codeblock:declaration]
+constexpr explicit inner_iterator(outer_iterator<Const> i);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`i_] with [`i].
+[:zh_CN] 以 [`i] 初始化 [`i_]。
+[exit:description]
+
+[%@library operator++[!split_view::inner_iterator]]
+[codeblock:declaration]
+constexpr inner_iterator& operator++() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var current]]
+incremented_ = true;
+if constexpr (!ForwardRange<Base>) {
+  if constexpr (Pattern::size() == 0) {
+    return *this;
+  }
+}
+++i_.[*current];
+return *this;
+[codeblock:end]
+[exit:description]
+
+[%@library operator==[!split_view::inner_iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const inner_iterator& x, const inner_iterator& y)
+  requires ForwardRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.i_.current_ == y.i_.current_;]
+[:zh_CN] 等价于：[`return x.i_.current_ == y.i_.current_;]
+[exit:description]
+
+[%@library operator!=[!split_view::inner_iterator]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const inner_iterator& x, const inner_iterator& y)
+  requires ForwardRange<Base>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]
+
+[%@library operator==[!split_view::inner_iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const inner_iterator& x, default_sentinel_t);
+friend constexpr bool operator==(default_sentinel_t, const inner_iterator& x);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var current]]
+auto cur = x.i_.[*current];
+auto end = ranges::end(x.i_.parent_->base_);
+if (cur == end) return true;
+auto [pcur, pend] = subrange{x.i_.parent_->pattern_};
+if (pcur == pend) return x.incremented_;
+do {
+  if (*cur != *pcur) return false;
+  if (++pcur == pend) return true;
+} while (++cur != end);
+return false;
+[codeblock:end]
+[exit:description]
+
+[%@library operator!=[!split_view::inner_iterator]]
+[codeblock:declaration]
+friend constexpr bool operator!=(const inner_iterator& x, default_sentinel_t y);
+friend constexpr bool operator!=(default_sentinel_t y, const inner_iterator& x);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x == y);]
+[:zh_CN] 等价于：[`return !(x == y);]
+[exit:description]
+
+[%@library iter_swap[!split_view::inner_iterator]]
+[codeblock:declaration [!:var current]]
+friend constexpr void iter_swap(const inner_iterator& x, const inner_iterator& y)
+  noexcept(noexcept(ranges::iter_swap(x.i_.[*current], y.i_.[*current])))
+  requires IndirectlySwappable<iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`ranges::iter_swap(x.i_.[*current], y.i_.[*current])].
+[:zh_CN] 等价于 [`ranges::iter_swap(x.i_.[*current], y.i_.[*current])]。
+[exit:description]

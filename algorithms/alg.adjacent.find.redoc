@@ -22,30 +22,64 @@ template<class ExecutionPolicy, class ForwardIterator, class BinaryPredicate>
     adjacent_find(ExecutionPolicy&& exec,
                   ForwardIterator first, ForwardIterator last,
                   BinaryPredicate pred);
+
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+           IndirectRelation<projected<I, Proj>> Pred = ranges::equal_to<>>
+    constexpr I adjacent_find(I first, S last, Pred pred = {},
+                              Proj proj = {});
+  template<ForwardRange R, class Proj = identity,
+           IndirectRelation<projected<iterator_t<R>, Proj>> Pred = ranges::equal_to<>>
+    constexpr safe_iterator_t<R>
+      adjacent_find(R&& r, Pred pred = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$E] be:
+[:zh_CN] 令 [$E]：
+
+[list]
+[item]
+[:en@~] [`*i == *(i + 1)] for the overloads with no parameter [`pred],
+[:zh_CN@~] 对于没有形参 [`pred] 的重载为 [`*i == *(i + 1)]，
+[item]
+[:en@~] [`pred(*i, *(i + 1)) != false] for the overloads with a parameter
+[`pred] and no parameter [`proj],
+[:zh_CN@~] 对于带有形参 [`pred] 且没有形参 [`proj] 的重载为
+[`pred(*i, *(i + 1)) != false]，
+[item]
+[:en@~] [`invoke(pred, invoke(proj, *i), invoke(proj, *(i + 1))) != false] for
+the overloads with both parameters [`pred] and [`proj].
+[:zh_CN@~] 对于同时带有形参 [`pred] 和 [`proj] 的重载为
+[`invoke(pred, invoke(proj, *i), invoke(proj, *(i + 1))) != false]。
+[list:end]
+
 [para:returns]
 [:en] The first iterator [`i] such that both [`i] and [`i + 1] are in the range
-[=range(first,last)] for which the following corresponding conditions hold:
-[`*i == *(i + 1)], [`pred(*i, *(i + 1)) != false].
+[=range(first,last)] for which [$E] holds.
 [:zh_CN] 第一个迭代器 [`i]，使得 [`i] 和 [`i + 1] 都处于范围
-[=range(first,last)] 中，且以下对应条件成立：
-[`*i == *(i + 1)]，[`pred(*i, *(i + 1)) != false]。
+[=range(first,last)] 中，且 [$E] 成立。
 
 [:en] Returns [`last] if no such iterator is found.
 [:zh_CN] 如果未找到这种迭代器，则返回 [`last]。
 
 [para:complexity]
 [:en] For the overloads with no [`ExecutionPolicy], exactly
-[`min((i - first) + 1, (last - first) - 1)] applications of the corresponding
-predicate, where [`i] is [`adjacent_find][=']s return value.
 [:zh_CN] 对于没有 [`ExecutionPolicy] 的重载，恰好进行
-[`min((i - first) + 1, (last - first) - 1)] 次相应谓词的运用，其中 [`i] 为
-[`adjacent_find] 的返回值。
+
+[math]
+\min([`(i = first) + 1], \ [`(last - first) - 1])
+[math:end]
+
+[:en@~] applications of the corresponding predicate, where [`i] is
+[`adjacent_find][=']s return value.
+[:zh_CN@~] 次相应谓词的运用，其中 [`i] 为 [`adjacent_find] 的返回值。
 
 [:en] For the overloads with an [`ExecutionPolicy], [$[=O]([`last - first])]
-applications of the corresponding predicate.
+applications of the corresponding predicate, and no more than twice as many
+applications of any projection.
 [:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，则为 [$[=O]([`last - first])] 次
-相应谓词的运用。
+相应谓词的运用，以及不多于两倍的任何投射的运用。
 [exit:description]

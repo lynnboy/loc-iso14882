@@ -42,9 +42,55 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
              ForwardIterator1 first1, ForwardIterator1 last1,
              ForwardIterator2 first2, ForwardIterator2 last2,
              BinaryPredicate pred);
+
+namespace ranges {
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+           class Pred = ranges::equal_to<>, class Proj1 = identity, class Proj2 = identity>
+    requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+    constexpr bool equal(I1 first1, S1 last1, I2 first2, S2 last2,
+                         Pred pred = {},
+                         Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, InputRange R2, class Pred = ranges::equal_to<>,
+           class Proj1 = identity, class Proj2 = identity>
+    requires IndirectlyComparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+    constexpr bool equal(R1&& r1, R2&& r2, Pred pred = {},
+                         Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let:
+[:zh_CN] 令：
+
+[list]
+[item]
+[:en@~] [`last2] be [`first2 + (last1 - first1)] for the overloads with no
+parameter [`last2] or [`r2],
+[:zh_CN@~] [`last2] 对于没有形参 [`last2] 或 [`r2] 的重载为
+[`first2 + (last1 - first1)]，
+
+[item]
+[:en@~] [`pred] be [`equal_to{}] for the overloads with no parameter [`pred],
+[:zh_CN@~] [`pred] 对于没有形参 [`pred] 的重载为 [`equal_to{}]，
+
+[item]
+[:en] [$E] be:
+[:zh_CN] 令 [$E]：
+[list]
+[item]
+[:en@~] [`pred(*i, *(first2 + (i - first1)))] for the overloads with
+no parameter [`proj1],
+[:zh_CN@~] 对于没有形参 [`proj1] 的重载为 [`pred(*i, *(first2 + (i - first1)))]，
+[item]
+[:en@~]
+[`invoke(pred, invoke(proj1, *i), invoke(proj2, *(first2 + (i - first1))))]
+for the overloads with parameter [`proj1].
+[:zh_CN@~] 对于带有形参 [`proj1] 的重载为
+[`invoke(pred, invoke(proj1, *i), invoke(proj2, *(first2 + (i - first1))))]。
+[list:end]
+[list:end]
+
 [para:remarks]
 [:en] If [`last2] was not given in the argument list, it denotes
 [`first2 + (last1 - first1)] below.
@@ -55,59 +101,49 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
 [:en] If [`last1 - first1 != last2 - first2], return [`false].
 [:zh_CN] 如果 [`last1 - first1 != last2 - first2],，则返回 [`false]。
 
-[:en] Otherwise return [`true] if for every iterator [`i] in the range
-[=range(first1,last1)] the following corresponding conditions hold:
-[`*i == *(first2 + (i - first1))],
-[`pred(*i, *(first2 + (i - first1))) != false].
-[:zh_CN] 否则如果对于范围 [=range(first1,last1)] 中的每个迭代器 [`i]，以下的对应
-条件均成立则返回 [`true]：
-[`*i == *(first2 + (i - first1))]，
-[`pred(*i, *(first2 + (i - first1))) != false]。
+[:en] Otherwise return [`true] if [$E] holds for every iterator [`i] in the
+range [=range(first1,last1)].
+[:zh_CN] 否则如果 [$E] 对于范围 [=range(first1,last1)] 中的每个迭代器 [`i] 均
+成立，则返回 [`true]。
 
 [:en] Otherwise, returns [`false].
 [:zh_CN] 否则，返回 [`false]。
 
 [para:complexity]
-[list]
-[item]
-[:en] For the overloads with no [`ExecutionPolicy],
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，
+[:en] If the types of [`first1], [`last1], [`first2], and [`last2]:
+[:zh_CN] 如果 [`first1]，[`last1]，[`first2]，和 [`last2] 的类型：
 
 [list]
 [item]
-[:en] if [`InputIterator1] and [`InputIterator2] meet the
-[*Cpp17RandomAccessIterator] requirements ([#random.access.iterators]) and
-[`last1 - first1 != last2 - first2], then no applications of the corresponding
-predicate; otherwise,
-[:zh_CN] 如果 [`InputIterator1] 和 [`InputIterator2] 满足
-[*Cpp17RandomAccessIterator] 的规定（[#random.access.iterators]），并且
-[`last1 - first1 != last2 - first2]，则不对相应谓词进行运用；否则，
-
+[:en@~] meet the [*Cpp17RandomAccessIterator] requirements
+([#random.access.iterators]) for the overloads in namespace [`std], or
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载满足 [*Cpp17RandomAccessIterator] 的
+规定（[#random.access.iterators]），或者
 [item]
-[:en] at most [$min([`last1 - first1], [`last2 - first2])] applications of the
-corresponding predicate.
-[:zh_CN] 最多进行 [$min([`last1 - first1], [`last2 - first2])] 次相应谓词的运用。
+[:en@~] pairwise model [`SizedSentinel] ([#iterator.concept.sizedsentinel]) for
+the overloads in namespace [`ranges],
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载配对构成了 [`SizedSentinel]
+（[#iterator.concept.sizedsentinel]），
 [list:end]
+
+[:en@~] and [`last1 - first1 != last2 - first2], then no applications of the
+corresponding predicate and each projection; otherwise,
+[:zh_CN@~] 并且有 [`last1 - first1 != last2 - first2]，则不对相应谓词和各个投射
+进行运用；否则，
+
+[list]
+[item]
+[:en] For the overloads with no [`ExecutionPolicy], at most
+[$\min([`last1 - first1], \ [`last2 - first2])] applications of the
+corresponding predicate and any projections.
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行
+[$\min([`last1 - first1], \ [`last2 - first2])] 次相应谓词和任何投射的运用。
 
 [item]
 [:en] For the overloads with an [`ExecutionPolicy],
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，
-
-[list]
-[item]
-[:en] if [`ForwardIterator1] and [`ForwardIterator2] meet the
-[*Cpp17RandomAccessIterator] requirements and
-[`last1 - first1 != last2 - first2], then no applications of the corresponding
-predicate; otherwise,
-[:zh_CN] 如果 [`ForwardIterator1] 和 [`ForwardIterator2] 满足
-[*Cpp17RandomAccessIterator] 的规定，并且 [`last1 - first1 != last2 - first2]，
-则不对相应谓词进行运用；否则，
-
-[item]
-[:en] [$[=O](\min([`last1 - first1], [`last2 - first2]))] applications of the
+[$[=O](\min([`last1 - first1], \ [`last2 - first2]))] applications of the
 corresponding predicate.
-[:zh_CN] [$[=O](\min([`last1 - first1], [`last2 - first2]))] 次相应谓词的运用。
-[list:end]
-
+[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，
+[$[=O](\min([`last1 - first1], \ [`last2 - first2]))] 次相应谓词的运用。
 [list:end]
 [exit:description]

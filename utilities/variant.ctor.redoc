@@ -21,7 +21,7 @@ constexpr variant() noexcept([=SeeBelow]);
 [`T][_0].
 [:zh_CN] 构造一个 [`variant] 并持有一个经过值初始化的 [`T][_0] 类型的值。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`valueless_by_exception()] is [`false] and [`index()] is [`0].
 [:zh_CN] [`valueless_by_exception()] 为 [`false] 并且 [`index()] 且 [`0]。
 
@@ -54,7 +54,7 @@ requirements for a constexpr function.
 
 [%@library variant[![:en]constructor[:zh_CN]构造函数]]
 [codeblock:declaration]
-variant(const variant& w);
+constexpr variant(const variant& w);
 [codeblock:end]
 
 [enter:description]
@@ -73,15 +73,20 @@ alternative as [`w] and direct-initializes the contained value with
 [:zh_CN] 对于所有 [$i]，由 [`T][$_i] 的直接初始化所抛出的任何异常。
 
 [para:remarks]
-[:en] This function shall be defined as deleted unless
+[:en] This constructor shall be defined as deleted unless
 [`is_copy_constructible_v<T[$_i]>] is [`true] for all [$i].
 [:zh_CN] 除非 [`is_copy_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]，
-否则这个函数应当被定义为弃置的。
+否则这个构造函数应当被定义为弃置的。
+
+[:en] If [`is_trivially_copy_constructible_v<T[$_i]>] is [`true] for all [$i],
+this constructor is trivial.
+[:zh_CN] 若 [`is_trivially_copy_constructible_v<T[$_i]>] 对于所有的 [$i] 均为
+[`true]，则这个构造函数是平凡的。
 [exit:description]
 
 [%@library variant[![:en]constructor[:zh_CN]构造函数]]
 [codeblock:declaration [!:mark SeeBelow] ]
-variant(variant&& w) noexcept([=SeeBelow]);
+constexpr variant(variant&& w) noexcept([=SeeBelow]);
 [codeblock:end]
 
 [enter:description]
@@ -100,8 +105,8 @@ alternative as [`w] and direct-initializes the contained value with
 [:zh_CN] 对于所有 [$i]，由 [`T][$_i] 的移动构造所抛出的任何异常。
 
 [para:remarks]
-[:en] The expression inside [`noexcept] is equivalent to the logical AND of
-[`is_nothrow_move_constructible_v<T[$_i]>] for all [$i].
+[:en] The expression inside [`noexcept] is equivalent to the logical [$:sc AND]
+of [`is_nothrow_move_constructible_v<T[$_i]>] for all [$i].
 [:zh_CN] [`noexcept] 中的表达式等价于
 [`is_nothrow_default_constructible_v<T[$_i]>] 对于所有 [$i] 的逻辑与。
 
@@ -109,6 +114,11 @@ alternative as [`w] and direct-initializes the contained value with
 [`is_move_constructible_v<T[$_i]>] is [`true] for all [$i].
 [:zh_CN] 除非 [`is_move_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]，
 否则这个函数不能参与重载决议。
+
+[:en] If [`is_trivially_move_constructible_v<T[$_i]>] is [`true] for all [$i],
+this constructor is trivial.
+[:zh_CN] 若 [`is_trivially_move_constructible_v<T[$_i]>] 对于所有的 [$i] 均为
+[`true]，则这个构造函数是平凡的。
 [exit:description]
 
 [%@library variant[![:en]constructor[:zh_CN]构造函数]]
@@ -119,9 +129,14 @@ template<class T> constexpr variant(T&& t) noexcept([=SeeBelow]);
 [enter:description]
 [para]
 [:en] Let [`T][$_j] be a type that is determined as follows: build an
-imaginary function [`[*FUN](T[$_i])] for each alternative type [`T][$_i].
+imaginary function [`[*FUN](T[$_i])] for each alternative type [`T][$_i] for
+which [`T[$_i] x`[`] = {std::forward<T>(t)};] is well-formed for some invented
+variable [`x] and, if [`T[$_i]] is [$cv] [`bool], [`remove_cvref_t<T>] is
+[`bool].
 [:zh_CN] 令 [`T][$_j] 为这样所确定的类型：为每个候选类型 [`T][$_i] 构建一个
-虚构的函数 [`[*FUN](T[$_i])]。
+虚构的函数 [`[*FUN](T[$_i])]，其中，对于某个虚构的变量 [`x]，
+[`T[$_i] x`[`] = {std::forward<T>(t)};] 良构，且当 [`T[$_i]] 为 [$cv] [`bool] 时，
+[`remove_cvref_t<T>] 为 [`bool]。
 
 [:en] The overload [`[*FUN](T[$_j])] selected by overload resolution for the
 expression [`[*FUN](std::forward<T>(t))] defines the alternative [`T][$_j]
@@ -136,7 +151,7 @@ with [`std::forward<T>(t)].
 [:zh_CN] 初始化 [`*this] 以持有候选类型 [`T][$_j]，并如同以
 [`std::forward<T>(t)] 进行直接非列表初始化一样直接初始化其所包含的值。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`holds_alternative<T[$_j]>(*this)] is [`true].
 [:zh_CN] [`holds_alternative<T[$_j]>(*this)] 为 [`true]。
 
@@ -210,7 +225,7 @@ object of type [`T] with the arguments [`std::forward<Args>(args)...].
 [:zh_CN] 如同以实参 [`std::forward<Args>(args)...] 进行直接非列表初始化一个 [`T]
 类型的对象一样初始化其所包含的值。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`holds_alternative<T>(*this)] is [`true].
 [:zh_CN] [`holds_alternative<T>(*this)] 为 [`true]。
 
@@ -220,9 +235,9 @@ object of type [`T] with the arguments [`std::forward<Args>(args)...].
 
 [para:remarks]
 [:en] This function shall not participate in overload resolution unless there is
-exactly one occurrence of [`T] in [`Types...] and
-[`is_constructible_v<T, Args...>] is [`true].
-[:zh_CN] 除非 [`Types...] 中 [`T] 恰好出现一次，且
+exactly one occurrence of [`T] in [`Types] and [`is_constructible_v<T, Args...>]
+is [`true].
+[:zh_CN] 除非 [`Types] 中 [`T] 恰好出现一次，且
 [`is_constructible_v<T, Args...>] 为 [`true]，否则这个函数不能参与重载决议。
 
 [:en] If [`T][=']s selected constructor is a constexpr constructor, this
@@ -244,7 +259,7 @@ object of type [`T] with the arguments [`il, std::forward<Args>(args)...].
 [:zh_CN] 如同以实参 [`il, std::forward<Args>(args)...] 进行直接非列表初始化一个
 [`T] 类型的对象一样初始化其所包含的值。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`holds_alternative<T>(*this)] is [`true].
 [:zh_CN] [`holds_alternative<T>(*this)] 为 [`true]。
 
@@ -254,9 +269,9 @@ object of type [`T] with the arguments [`il, std::forward<Args>(args)...].
 
 [para:remarks]
 [:en] This function shall not participate in overload resolution unless there is
-exactly one occurrence of [`T] in [`Types...] and
+exactly one occurrence of [`T] in [`Types] and
 [`is_constructible_v<T, initializer_list<U>&, Args...>] is [`true].
-[:zh_CN] 除非 [`Types...] 中 [`T] 恰好出现一次，且
+[:zh_CN] 除非 [`Types] 中 [`T] 恰好出现一次，且
 [`is_constructible_v<T, initializer_list<U>&, Args...>] 为 [`true]，否则这个函数
 不能参与重载决议。
 
@@ -278,7 +293,7 @@ object of type [`T][$_I] with the arguments [`std::forward<Args>(args)...].
 [:zh_CN] 如同以实参 [`std::forward<Args>(args)...] 进行直接非列表初始化一个
 [`T][$_I] 类型的对象一样初始化其所包含的值。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`index()] is [`I].
 [:zh_CN] [`index()] 为 [`I]。
 
@@ -319,7 +334,7 @@ object of type [`T][$_I] with the arguments [`il, std::forward<Args>(args)...].
 [:zh_CN] 如同以实参 [`il, std::forward<Args>(args)...] 进行直接非列表初始化一个
 [`T][$_I] 类型的对象一样初始化其所包含的值。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`index()] is [`I].
 [:zh_CN] [`index()] 为 [`I]。
 

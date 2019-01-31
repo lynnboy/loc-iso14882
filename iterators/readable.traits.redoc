@@ -1,0 +1,102 @@
+[section#readable.traits
+    [:en] Readable traits
+    [:zh_CN] 可读特征
+]
+
+[para]
+[:en] To implement algorithms only in terms of readable types, it is often
+necessary to determine the value type that corresponds to a particular readable
+type.
+[:zh_CN] 为实现仅针对可读类型的算法，经常需要确定对应于特定可读类型的值类型。
+
+[:en] Accordingly, it is required that if [`R] is the name of a type that models
+the [`Readable] concept ([#iterator.concept.readable]), the type
+[:zh_CN] 据此，若 [`R] 是构成了 [`Readable] 概念（[#iterator.concept.readable]）
+的某个类型的名字，则要求类型
+
+[codeblock:notation]
+iter_value_t<R>
+[codeblock:end]
+
+[:en@~] be defined as the readable type[=']s value type.
+[:zh_CN@~] 被定义为该可读类型的值类型。
+
+[%@library readable_traits]
+[codeblock:synopsis [!:var cond-value-type] [!:mark SeeBelow] ]
+  template<class> struct [*cond-value-type] { };   // [=Expos]
+  template<class T>
+    requires is_object_v<T>
+  struct [*cond-value-type] {
+    using value_type = remove_cv_t<T>;
+  };
+
+  template<class> struct readable_traits { };
+
+  template<class T>
+  struct readable_traits<T*>
+    : [*cond-value-type]<T> { };
+
+  template<class I>
+    requires is_array_v<I>
+  struct readable_traits<I> {
+    using value_type = remove_cv_t<remove_extent_t<I>>;
+  };
+
+  template<class I>
+  struct readable_traits<const I>
+    : readable_traits<I> { };
+
+  template<class T>
+    requires requires { typename T::value_type; }
+  struct readable_traits<T>
+    : [*cond-value-type]<typename T::value_type> { };
+
+  template<class T>
+    requires requires { typename T::element_type; }
+  struct readable_traits<T>
+    : [*cond-value-type]<typename T::element_type> { };
+
+  template<class T> using iter_value_t = [=SeeBelow];
+[codeblock:end]
+
+[%@library iter_value_t]
+[para]
+[:en] The type [`iter_value_t<I>] denotes
+[:zh_CN] 类型 [`iter_value_t<I>]：
+
+[list]
+[item]
+[:en] [`readable_traits<I>::value_type] if [`iterator_traits<I>] names a
+specialization generated from the primary template, and
+[:zh_CN] 当 [`iterator_traits<I>] 指名其主模板生成的特例时，代表
+[`readable_traits<I>::value_type]，
+
+[item]
+[:en] [`iterator_traits<I>::value_type] otherwise.
+[:zh_CN] 否则代表 [`iterator_traits<I>::value_type]。
+[list:end]
+
+[para]
+[:en] Class template [`readable_traits] may be specialized on program-defined
+types.
+[:zh_CN] 类模板 [`readable_traits] 可以对程序定义的类型进行特化。
+
+[para]
+[enter:note]
+[:en] Some legacy output iterators define a nested type named [`value_type] that
+is an alias for [`void].
+[:zh_CN] 一些遗留的输出迭代器中定义了名为 [`value_type] 的嵌套类型，作为 [`void]
+的别名。
+
+[:en] These types are not [`Readable] and have no associated value types.
+[:zh_CN] 这些类型并非 [`Readable]，并且没有关联的值类型。
+[exit:note]
+
+[para]
+[enter:note]
+[:en] Smart pointers like [`shared_ptr<int>] are [`Readable] and have an
+associated value type, but a smart pointer like [`shared_ptr<void>] is not
+[`Readable] and has no associated value type.
+[:zh_CN] 如 [`shared_ptr<int>] 这样的智能指针都是 [`Readable] 并具有关联的值类型，
+但如 [`shared_ptr<void>] 这样的智能指针并非 [`Readable] 且没有关联的值类型。
+[exit:note]

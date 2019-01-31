@@ -15,8 +15,11 @@ The simple type specifiers are
 [rule simple-type-specifier [:zh_CN] 简单类型说明符 ]
     [| [~:opt nested-name-specifier] type-name ]
     [| nested-name-specifier [`template] simple-template-id ]
+    [| decltype-specifier ]
+    [| placeholder-type-specifier ]
     [| [~:opt nested-name-specifier] template-name ]
     [| [`char] ]
+    [| [`char8_t] ]
     [| [`char16_t] ]
     [| [`char32_t] ]
     [| [`wchar_t] ]
@@ -29,26 +32,19 @@ The simple type specifiers are
     [| [`float] ]
     [| [`double] ]
     [| [`void] ]
-    [| [`auto] ]
-    [| decltype-specifier ]
 [rule:end]
 
 [rule type-name [:zh_CN] 类型名 ]
     [| class-name ]
     [| enum-name ]
     [| typedef-name ]
-    [| simple-template-id ]
-[rule:end]
-
-[rule decltype-specifier [:zh_CN] decltype-说明符 ]
-    [| [`decltype] [`(] expression [`)] ]
-    [| [`decltype] [`(] [`auto] [`)] ]
 [rule:end]
 [syntax:end]
 
 [para]
 [:en]
 [%type specifier[![`char]]]
+[%type specifier[![`char8_t]]]
 [%type specifier[![`char16_t]]]
 [%type specifier[![`char32_t]]]
 [%type specifier[![`wchar_t]]]
@@ -61,14 +57,13 @@ The simple type specifiers are
 [%type specifier[![`float]]]
 [%type specifier[![`double]]]
 [%type specifier[![`void]]]
-[%type specifier[![`auto]]]
-[%type specifier[![`decltype]]]
 [%[~type-name]]
 [%[~lambda-introducer]]
-The [~simple-type-specifier] [`auto] is a placeholder for a type to be deduced
+A [~placeholder-type-specifier] is a placeholder for a type to be deduced
 ([#dcl.spec.auto]).
 [:zh_CN]
 [%类型说明符[![`char]]]
+[%类型说明符[![`char8_t]]]
 [%类型说明符[![`char16_t]]]
 [%类型说明符[![`char32_t]]]
 [%类型说明符[![`wchar_t]]]
@@ -81,11 +76,9 @@ The [~simple-type-specifier] [`auto] is a placeholder for a type to be deduced
 [%类型说明符[![`float]]]
 [%类型说明符[![`double]]]
 [%类型说明符[![`void]]]
-[%类型说明符[![`auto]]]
-[%类型说明符[![`decltype]]]
 [%[~类型名]]
 [%[~lambda-引导符]]
-[~简单类型说明符] [`auto] 是将要被推断的类型的占位符（[#dcl.spec.auto]）。
+[~占位符类型说明符] 是将要被推断的类型的占位符（[#dcl.spec.auto]）。
 
 [:en]
 [%deduction[!class template arguments]]
@@ -130,12 +123,17 @@ type determined from an expression, or one of the fundamental types
                                 [:zh_CN] 被指名的类型
 [|] [~simple-template-id]   [|] [:en] the type as defined in [#temp.names]
                                 [:zh_CN] 根据 [#temp.names] 中定义的类型
-[|] [~template-name]        [|] [:en] placeholder for a type to be deduced
-                                [:zh_CN] 所推断的类型的占位符
+[|] [~decltype-specifier]   [|] [:en] the type as defined in [#dcl.type.decltype]
+                                [:zh_CN] 根据 [#dcl.type.decltype] 中定义的类型
+[|] [~placeholder-type-specifier]   [|] [:en] the type as defined in [#dcl.spec.auto]
+                                [:zh_CN] 根据 [#dcl.spec.auto] 中定义的类型
+[|] [~template-name]        [|] [:en] the type as defined in [#dcl.type.class.deduct]
+                                [:zh_CN] 根据 [#dcl.type.class.deduct] 中定义的类型
 
 [|] [`char]                     [|] ["char]
 [|] [`unsigned char]            [|] ["unsigned char]
 [|] [`signed char]              [|] ["signed char]
+[|] [`char8_t]                  [|] ["char8_t]
 [|] [`char16_t]                 [|] ["char16_t]
 [|] [`char32_t]                 [|] ["char32_t]
 [|] [`bool]                     [|] ["bool]
@@ -167,12 +165,6 @@ type determined from an expression, or one of the fundamental types
 [|] [`double]                   [|] ["double]
 [|] [`long double]              [|] ["long double]
 [|] [`void]                     [|] ["void]
-[|] [`auto]                     [|] [:en] placeholder for a type to be deduced
-                                    [:zh_CN] 所推断的类型的占位符
-[|] [`decltype(auto)]           [|] [:en] placeholder for a type to be deduced
-                                    [:zh_CN] 所推断的类型的占位符
-[|] [`decltype(][~expression][`)]   [|] [:en] the type as defined below
-                                        [:zh_CN] 如下文所定义的类型
 [table:end]
 
 [para]
@@ -195,201 +187,4 @@ The [`signed] specifier forces [`char] objects to be signed; it is redundant in
 other contexts.
 [:zh_CN]
 [`signed] 说明符强迫 [`char] 对象为有符号的；它在其他语境中是多余的。
-[exit:note]
-
-[para]
-[:en]
-[%type specifier[![`decltype]]]
-For an expression [`e], the type denoted by [`decltype(e)] is defined as
-follows:
-[:zh_CN]
-[%类型说明符[![`decltype]]]
-对于表达式 [`e]，由  [`decltype(e)] 所代表的类型定义如下：
-
-[list]
-[item]
-[:en]
-if [`e] is an unparenthesized [~id-expression] naming a structured binding
-([#dcl.struct.bind]), [`decltype(e)] is the referenced type as given in the
-specification of the structured binding declaration;
-[:zh_CN]
-若 [`e] 为没有括号的[~标识表达式]，并指名某个结构化绑定（[#dcl.decomp]），则
-[`decltype(e)] 为这个结构化绑定声明式的说明中所给定的被引用类型；
-
-[item]
-[:en]
-otherwise, if [`e] is an unparenthesized [~id-expression] naming a non-type
-[~template-parameter] ([#temp.param]), [`decltype(e)] is the type of the
-[~template-parameter] after performing any necessary type deduction
-([#dcl.spec.auto], [#dcl.type.class.deduct]);
-[:zh_CN]
-否则，若 [`e] 为指名某个非类型[~模板形参]（[#temp.param]）的没有括号的
-[~标识表达式]，则 [`decltype(e)] 为该[~模板形参]进行所需的任何类型推断之后的类型
-（[#dcl.spec.auto]，[#dcl.type.class.deduct]）；
-
-[item]
-[:en]
-otherwise, if [`e] is an unparenthesized [~id-expression] or an unparenthesized
-class member access ([#expr.ref]), [`decltype(e)] is the type of the entity
-named by [`e].
-[:zh_CN]
-否则，若 [`e] 为没有括号的[~标识表达式]，或没有括号的类成员访问（[#expr.ref]），
-则 [`decltype(e)] 为被 [`e] 所指名的实体的类型。
-
-[:en]
-If there is no such entity, or if [`e] names a set of overloaded functions, the
-program is ill-formed;
-[:zh_CN]
-若没有这种实体，或者若 [`e] 指名了重载函数的集合，则程序非良构；
-
-[item]
-[:en]
-otherwise, if [`e] is an xvalue, [`decltype(e)] is [`T&&], where [`T] is the
-type of [`e];
-[:zh_CN]
-否则，若 [`e] 是临限值，则 [`decltype(e)] 为 [`T&&]，其中 [`T] 为 [`e] 的类型；
-
-[item]
-[:en]
-otherwise, if [`e] is an lvalue, [`decltype(e)] is [`T&], where [`T] is the type
-of [`e];
-[:zh_CN]
-否则，若 [`e] 是左值，则 [`decltype(e)] 为 [`T&]，其中 [`T] 为 [`e] 的类型；
-
-[item]
-[:en]
-otherwise, [`decltype(e)] is the type of [`e].
-[:zh_CN]
-否则，[`decltype(e)] 为 [`e] 的类型。
-[list:end]
-
-[:en]
-The operand of the [`decltype] specifier is an unevaluated operand
-([#expr.prop]).
-[:zh_CN]
-[`decltype] 说明符的操作数是免求值操作数（[#expr.prop]）。
-
-[para:~]
-[enter:example]
-[codeblock]
-const int&& foo();
-int i;
-struct A { double x; };
-const A* a = new A();
-decltype(foo()) x1 = 17;        // [:en] type is [`const int&&]
-                                // [|:zh_CN] 类型为 [`const int&&]
-decltype(i) x2;                 // [:en] type is [`int]
-                                // [|:zh_CN] 类型为 [`int]
-decltype(a->x) x3;              // [:en] type is [`double]
-                                // [|:zh_CN] 类型为 [`double]
-decltype((a->x)) x4 = x3;       // [:en] type is [`const double&]
-                                // [|:zh_CN] 类型为 [`const double&]
-[codeblock:end]
-[exit:example]
-
-[enter:note]
-[:en]
-The rules for determining types involving [`decltype(auto)] are specified in
-[#dcl.spec.auto].
-[:zh_CN]
-涉及 [`decltype(auto)] 的类型确定规则在 [#dcl.spec.auto] 中说明。
-[exit:note]
-
-[para]
-[:en]
-If the operand of a [~decltype-specifier] is a prvalue, the temporary
-materialization conversion is not applied ([#conv.rval]) and no result object is
-provided for the prvalue.
-[:zh_CN]
-当 [~decltype-说明符]的操作数是纯右值时，不实施临时对象实体化转换（[#conv.rval]）
-，且不会为该纯右值提供结果对象。
-
-[:en]
-The type of the prvalue may be incomplete or an abstract class type.
-[:zh_CN]
-该纯右值的类型可以是不完整的或者为抽象类类型。
-
-[enter:note]
-[:en]
-As a result, storage is not allocated for the prvalue and it is not destroyed.
-[:zh_CN]
-结果是，不会为这个纯右值分配存储，而且它也不会被销毁。
-
-[:en]
-Thus, a class type is not instantiated as a result of being the type of a
-function call in this context. 
-[:zh_CN]
-因而，类类型不会因为作为这种语境中的函数调用的类型而导致其被实例化。
-
-[:en]
-In this context, the common purpose of writing the expression is merely to refer
-to its type.
-[:zh_CN]
-在这种语境中写出表达式的目的，通常仅仅为了涉指它的类型。
-
-[:en]
-In that sense, a [~decltype-specifier] is analogous to a use of a
-[~typedef-name], so the usual reasons for requiring a complete type do not
-apply.
-[:zh_CN]
-出于这种考虑，[~decltype-说明符]类似于使用一个 [~typedef-名]，因此在通常情况下的
-须要完整类型的理由并不适用。
-
-[:en]
-In particular, it is not necessary to allocate storage for a temporary object or
-to enforce the semantic constraints associated with invoking the type[=']s
-destructor.
-[:zh_CN]
-尤其是，它不必为临时对象分配存储，或者施加与调用该类型的析构函数相关的语义约束。
-[exit:note]
-
-[enter:note]
-[:en]
-Unlike the preceding rule, parentheses have no special meaning in this context.
-[:zh_CN]
-和前一条规则不同，括号在这种语境中并没有特殊的含义。
-[exit:note]
-
-[enter:example]
-[codeblock]
-template<class T> struct A { ~A() = delete; };
-template<class T> auto h()
-  -> A<T>;
-template<class T> auto i(T)     // [:en] identity
-                                // [|:zh_CN] 等同
-  -> T;
-template<class T> auto f(T)     // #1
-  -> decltype(i(h<T>()));       // [:en] forces completion of [`A<T>] and implicitly uses [`A<T>::~A()]
-                                // [|:zh_CN] 迫使 [`A<T>] 是完整的，并且由于使用 [`h()] 而
-                                // [:en@~] for the temporary introduced by the use of [`h()].
-                                // [|:zh_CN@~] 引入的临时对象导致隐式使用了 [`A<T>::~A()]。
-                                // [:en] (A temporary is not introduced as a result of the use of [`i()].)
-                                // [|:zh_CN]（对 [`i()] 的使用并未导致临时对象的引入。）
-template<class T> auto f(T)     // #2
-  -> void;
-auto g() -> void {
-  f(42);                        // [:en] OK: calls #2. [:en] (#1 is not a viable candidate: type deduction
-                                // [|:zh_CN] OK：调用 #2。[|:zh_CN]（#1 并非可行的候选项：因为在它的
-                                // [:en@~] fails ([#temp.deduct]) because [`A<int>::~A()] is implicitly used in its
-                                // [|:zh_CN@~] [~decltype-说明符]中隐式使用了 [`A<int>::~A()] 而导致类型推断
-                                // [:en@~] [~decltype-specifier])
-                                // [|:zh_CN@~] 失败（[#temp.deduct]）。
-}
-template<class T> auto q(T)
-  -> decltype((h<T>()));        // [:en] does not force completion of [`A<T>]; [`A<T>::~A()] is not implicitly
-                                // [|:zh_CN] 不强制要求 [`A<T>] 是完整的；这个[~decltype-说明符]
-                                // [:en@~] used within the context of this [~decltype-specifier]
-                                // [|:zh_CN@~] 的语境中，并未隐式使用 [`A<T>::~A()]
-void r() {
-  q(42);                        // [:en] error: deduction against [`q] succeeds, so overload resolution selects
-                                // [|:zh_CN] 错误：对 [`q] 的推断完成，因此重载决议选择了特例
-                                // [:en@~] the specialization ["[`q(T) -> decltype((h<T>()))]] with [`T][$=][`int].
-                                // [|:zh_CN@~] “[`q(T) -> decltype((h<T>()))]”，其中 [`T][$=][`int]。
-                                // [:en] The return type is [`A<int>], so a temporary is introduced and its
-                                // [|:zh_CN] 返回类型为 [`A<int>]，由此引入一个临时对象并使用了
-                                // [:en@~] destructor is used, so the program is ill-formed.
-                                // [|:zh_CN@~] 它的析构函数，因此程序是非良构的。
-}
-[codeblock:end]
-[exit:example]
 [exit:note]

@@ -13,30 +13,49 @@ template<class ForwardIterator, class T, class Compare>
   constexpr bool
     binary_search(ForwardIterator first, ForwardIterator last,
                   const T& value, Compare comp);
+
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+           IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = ranges::less<>>
+    constexpr bool binary_search(I first, S last, const T& value, Comp comp = {},
+                                 Proj proj = {});
+  template<ForwardRange R, class T, class Proj = identity,
+           IndirectStrictWeakOrder<const T*, projected<iterator_t<R>, Proj>> Comp =
+             ranges::less<>>
+    constexpr bool binary_search(R&& r, const T& value, Comp comp = {},
+                                 Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for overloads with
+no parameters by those names.
+[:zh_CN] 对于没有具有名字 [`comp] 和 [`proj] 的形参的各重载，令 [`comp] 为
+[`less{}] 并令 [`proj] 为 [`identity{}]。
+
 [para:requires]
 [:en] The elements [`e] of [=range(first,last)] shall be partitioned with
-respect to the expressions [`e < value] and [`!(value < e)] or [`comp(e, value)]
-and [`!comp(value, e)].
-[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当根据表达式 [`e < value] 和
-[`!(value < e)]，或者 [`comp(e, value)] 和 [`!comp(value, e)] 已分区。
+respect to the expressions [`bool(invoke(comp, invoke(proj, e), value))] and
+[`!bool(invoke(comp, value, invoke(proj, e)))].
+[:zh_CN] [=range(first,last)] 中的元素 [`e] 应当根据表达式
+[`bool(invoke(comp, invoke(proj, e), value))] 和
+[`!bool(invoke(comp, value, invoke(proj, e)))] 已分区。
 
-[:en] Also, for all elements [`e] of [``[first, last)], [`e < value] shall imply
-[`!(value < e)] or [`comp(e, value)] shall imply [`!comp(value, e)].
-[:zh_CN] 并且，对于 [``[first, last)] 中的所有元素 [`e]，[`e < value] 应当蕴含
-[`!(value < e)]，或者 [`comp(e, value)] 应当蕴含 [`!comp(value, e)]。
+[:en] Also, for all elements [`e] of [``[first, last)], [`bool(comp(e, value))]
+shall imply [`!bool(comp(value, e))] for the overloads in namespace [`std].
+[:zh_CN] 并且，对于命名空间 [`std] 中的各重载，对于 [``[first, last)] 中的所有
+元素 [`e]，[`bool(comp(e, value))] 应当蕴含 [`!bool(comp(value, e))]。
 
 [para:returns]
-[:en] [`true] if there is an iterator [`i] in the range [=range(first,last)]
-that satisfies the corresponding conditions: [`!(*i < value) && !(value < *i)]
-or [`comp(*i, value) == false && comp(value, *i) == false].
-[:zh_CN] 如果 [=range(first,last)] 中存在符合以下对应条件的迭代器 [`i] 则返回
-[`true]：[`!(*i < value) && !(value < *i)]
-或者 [`comp(*i, value) == false && comp(value, *i) == false]。
+[:en] [`true] if and only if for some iterator [`i] in the range
+[=range(first,last)], [`!bool(invoke(comp, invoke(proj, *i), value)) &&
+!bool(invoke(comp, value, invoke(proj, *i)))] is [`true].
+[:zh_CN] 当且仅当 [=range(first,last)] 中的某个迭代器 [`i] 使得
+[`!bool(invoke(comp, invoke(proj, *i), value)) &&
+!bool(invoke(comp, value, invoke(proj, *i)))] 为 [`true] 时返回 [`true]。
 
 [para:complexity]
-[:en] At most [$\log_2([`last - first]) + [=O](1)] comparisons.
-[:zh_CN] 最多 [$\log_2([`last - first]) + [=O](1)] 次比较。
+[:en] At most [$\log_2([`last - first]) + [=O](1)] comparisons and projections.
+[:zh_CN] 最多 [$\log_2([`last - first]) + [=O](1)] 次比较和投射。
 [exit:description]

@@ -6,7 +6,7 @@
 [%@library operator=[!variant]]
 [%@library variant[!operator=]]
 [codeblock:declaration]
-variant& operator=(const variant& rhs);
+constexpr variant& operator=(const variant& rhs);
 [codeblock:end]
 
 [enter:description]
@@ -61,7 +61,7 @@ value contained in [`*this].
 [:en] [`*this].
 [:zh_CN] [`*this]。
 
-[para:postconditions]
+[para:ensures]
 [:en] [`index() == rhs.index()].
 [:zh_CN] [`index() == rhs.index()]。
 
@@ -71,12 +71,19 @@ value contained in [`*this].
 for all [$i].
 [:zh_CN] 除非 [`is_copy_constructible_v<T[$_i]> && is_copy_assignable_v<T[$_i]>]
 对于所有 [$i] 均为 [`true]，否则这个函数不能参与重载决议。
+
+[:en] If [`is_trivially_copy_constructible_v<T[$_i]> &&
+is_trivially_copy_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
+is true for all [$i], this assignment operator is trivial.
+[:zh_CN] 若 [`is_trivially_copy_constructible_v<T[$_i]> &&
+is_trivially_copy_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
+对于所有 [$i] 均为真，则这个赋值运算符是平凡的。
 [exit:description]
 
 [%@library operator=[!variant]]
 [%@library variant[!operator=]]
 [codeblock:declaration [!:mark SeeBelow] ]
-variant& operator=(variant&& rhs) noexcept([=SeeBelow]);
+constexpr variant& operator=(variant&& rhs) noexcept([=SeeBelow]);
 [codeblock:end]
 
 [enter:description]
@@ -112,12 +119,19 @@ to the value contained in [`*this].
 [:zh_CN] [`*this]。
 
 [para:remarks]
-[:en] This operator shall be defined as deleted unless
+[:en] This function shall not participate in overload resolution unless
 [`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] is [`true]
 for all [$i].
 [:zh_CN] 除非
 [`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] 对于所有 [$i]
-均为 [`true]，否则这个运算符应当被定义为弃置的。
+均为 [`true]，否则这个函数不能参与重载决议。
+
+[:en] If [`is_trivially_move_constructible_v<T[$_i]> &&
+is_trivially_move_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
+is true for all [$i], this assignment operator is trivial.
+[:zh_CN] 若 [`is_trivially_move_constructible_v<T[$_i]> &&
+is_trivially_move_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
+对于所有 [$i] 均为真，则这个赋值运算符是平凡的。
 
 [:en] The expression inside [`noexcept] is equivalent to:
 [`is_nothrow_move_constructible_v<T[$_i]> &&
@@ -129,7 +143,7 @@ is_nothrow_move_assignable_v<T[$_i]>]。
 [list]
 [item]
 [:en] If an exception is thrown during the call to [`T][$_j][=']s move
-construction (with [$j] being [`rhs.index())], the [`variant] will hold no
+construction (with [$j] being [`rhs.index()]), the [`variant] will hold no
 value.
 [:zh_CN] 如果在调用 [`T][$_j] 的移动构造中抛出了异常（其中 [$j] 为
 [`rhs.index()]），则这个 [`variant] 将不持有值。
@@ -151,10 +165,15 @@ template<class T> variant& operator=(T&& t) noexcept([=SeeBelow]);
 
 [enter:description]
 [para]
-[:en] Let [`T][$_j] be a type that is determined as follows: build an
-imaginary function [`[$FUN](T[$_i])] for each alternative type [`T][$_i].
+[:en] Let [`T][$_j] be a type that is determined as follows: build an imaginary
+function [`[$FUN](T[$_i])] for each alternative type [`T][$_i] for which
+[`T[$_i] x`[`] = {std::forward<T>(t)};] is well-formed for some invented
+variable [`x] and, if [`T[$_i]] is [$cv] [`bool], [`remove_cvref_t<T>] is
+[`bool].
 [:zh_CN] 令 [`T][$_j] 为如下所确定的类型：为每个候选类型 [`T][$_i] 构建一个
-虚构的函数 [`[$FUN](T[$_i])]。
+虚构的函数 [`[$FUN](T[$_i])]，其中，对于某个虚构的变量 [`x]，
+[`T[$_i] x`[`] = {std::forward<T>(t)};] 良构，且当 [`T[$_i]] 为 [$cv] [`bool] 时，
+[`remove_cvref_t<T>] 为 [`bool]。
 
 [:en] The overload [`[$FUN](T[$_j])] selected by overload resolution for
 the expression [`[$FUN](std::forward<T>(t))] defines the alternative [`T][$_j]
@@ -183,7 +202,7 @@ value contained in [`*this].
 [:zh_CN] 否则，等价于 [`operator=(variant(std::forward<T>(t)))]。
 [list:end]
 
-[para:postconditions]
+[para:ensures]
 [:en] [`holds_alternative<T[$_j]>(*this)] is [`true], with [`T][$_j] selected by
 the imaginary function overload resolution described above.
 [:zh_CN] [`holds_alternative<T[$_j]>(*this)] 为 [`true]，其中 [`T][$_j] 为由上述

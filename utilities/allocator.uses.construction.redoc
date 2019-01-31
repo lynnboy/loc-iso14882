@@ -4,54 +4,269 @@
 ]
 
 [para]
-[:en]
-[+Uses-allocator construction[%uses-allocator construction]] with allocator
-[`Alloc] refers to the construction of an object [`obj] of type [`T], using
-constructor arguments [`v1, v2, ..., vN] of types [`V1, V2, ..., VN],
-respectively, and an allocator [`alloc] of type [`Alloc], according to the
-following rules:
-[:zh_CN]
-以分配器 [`Alloc] 进行的[+使用分配器的构造]代表对 [`T] 类型的对象 [`obj] 进行
-的构造，使用类型分别为 [`V1, V2, ..., VN] 的实参 [`v1, v2, ..., vN]，以及
-[`Alloc] 类型的分配器 [`alloc] 进行，并遵循下列规则：
+[:en] [+Uses-allocator construction[%uses-allocator construction]] with
+allocator [`alloc] and constructor arguments [`args...] refers to the
+construction of an object of type [`T] such that [`alloc] is passed to the
+constructor of [`T] if [`T] uses an allocator type compatible with [`alloc].
+[:zh_CN] 以分配器 [`alloc] 和构造函数实参 [`args...] 所进行的[+带分配器的构造]，
+代表对 [`T] 类型的对象所进行的构造，当 [`T] 使用某个与 [`alloc] 兼容的分配器类型
+时，其将 [`alloc] 传递给 [`T] 的构造函数。
+
+[:en] When applied to the construction of an object of type [`T], it is
+equivalent to initializing it with the value of the expression
+[`make_obj_using_allocator<T>(alloc, args...)], described below.
+[:zh_CN] 当运用于某个 [`T] 类型的对象的构造时，它等价于以表达式
+[`make_obj_using_allocator<T>(alloc, args...)] 的值所进行的初始化，描述如下。
+
+[para]
+[:en] The following utility functions support three conventions for passing
+[`alloc] to a constructor:
+[:zh_CN] 下列各工具函数支持将 [`alloc] 传递给构造函数的三种方案：
 
 [list]
 [item]
-[:en] if [`uses_allocator_v<T, Alloc>] is [`false] and
-[`is_constructible_v<T, V1, V2, ..., VN>] is [`true], then [`obj] is
-initialized as [`obj(v1, v2, ..., vN)];
-[:zh_CN] 如果 [`uses_allocator_v<T, Alloc>] 为 [`false] 而
-[`is_constructible_v<T, V1, V2, ..., VN>] 为 [`true]，则 [`obj] 以
-[`obj(v1, v2, ..., vN)] 进行初始化；
-
+[:en] If [`T] does not use an allocator compatible with [`alloc], then [`alloc]
+is ignored.
+[:zh_CN] 如果 [`T] 并未使用与 [`alloc] 兼容的分配器，则忽略 [`alloc]。
 [item]
-[:en] otherwise, if [`uses_allocator_v<T, Alloc>] is [`true] and
-[`is_constructible_v<T, allocator_arg_t, Alloc, V1, V2, ..., VN>] is [`true],
-then [`obj] is initialized as [`obj(allocator_arg, alloc, v1, v2, ..., vN)];
-[:zh_CN] 否则，如果 [`uses_allocator_v<T, Alloc>] 为 [`true] 而
-[`is_constructible_v<T, allocator_arg_t, Alloc, V1, V2, ..., VN>] 为 [`true]，则
-[`obj] 以 [`obj(allocator_arg, alloc, v1, v2, ..., vN)] 进行初始化；
-
+[:en] Otherwise, if [`T] has a constructor invocable as
+[`T(allocator_arg, alloc, args...)] (leading-allocator convention), then
+uses-allocator construction chooses this constructor form.
+[:zh_CN] 否则，如果 [`T] 带有可以以 [`T(allocator_arg, alloc, args...)] 的形式
+进行调用（开头分配器方案），则带分配器构造就选择这种构造函数形式。
 [item]
-[:en] otherwise, if [`uses_allocator_v<T, Alloc>] is [`true] and
-[`is_constructible_v<T, V1, V2, ..., VN, Alloc>] is [`true], then [`obj] is
-initialized as [`obj(v1, v2, ..., vN, alloc)];
-[:zh_CN] 否则，如果 [`uses_allocator_v<T, Alloc>] 为 [`true] 而
-[`is_constructible_v<T, V1, V2, ..., VN, Alloc>] 为 [`true]，则 [`obj] 以
-[`obj(v1, v2, ..., vN, alloc)] 进行初始化；
+[:en] Otherwise, if [`T] has a constructor invocable as [`T(args..., alloc)]
+(trailing-allocator convention), then uses-allocator construction chooses this
+constructor form.
+[:zh_CN] 否则，如果 [`T] 带有可以以 [`T(args..., alloc)] 的形式进行调用（末尾
+分配器方案），则带分配器构造就选择这种构造函数形式。
+[list:end]
 
-[item]
-[:en] otherwise, the request for uses-allocator construction is ill-formed.
-[:zh_CN] 否则，要求进行使用分配器的构造是非良构的。
+[para]
+[:en] The [`uses_allocator_construction_args] function template takes an
+allocator and argument list and produces (as a tuple) a new argument list
+matching one of the above conventions.
+[:zh_CN] [`uses_allocator_construction_args] 函数模板接受一个分配器和实参列表并
+（以元组的形式）产生一个新的与上述方案之一相匹配的实参列表。
+
+[:en] Additionally, overloads are provided that treat specializations of [`pair]
+such that uses-allocator construction is applied individually to the [`first]
+and [`second] data members.
+[:zh_CN] 此外，还提供了用于处理 [`pair] 的特例的重载，可以对其 [`first] 和
+[`second] 数据成员各自分别实施带分配器构造。
+
+[:en] The [`make_obj_using_allocator] and
+[`uninitialized_construct_using_allocator] function templates apply the modified
+constructor arguments to construct an object of type [`T] as a return value or
+in-place, respectively.
+[:zh_CN] [`make_obj_using_allocator] 和
+[`uninitialized_construct_using_allocator] 函数模板，分别以返回值或就地的方式，
+运用改动后的构造函数实参来构造一个 [`T] 类型的对象。
 
 [enter:note]
-[:en] An error will result if [`uses_allocator_v<T, Alloc>] is [`true] but the
-specific constructor does not take an allocator.
-[:zh_CN] 当 [`uses_allocator_v<T, Alloc>] 为 [`true] 但特定的构造函数不接受
-分配器时将导致发生错误。
-
-[:en] This definition prevents a silent failure to pass the allocator to an
-element.
-[:zh_CN] 本条定义防止将分配器传给某个元素而导致的静默的失败。
+[:en] For [`uses_allocator_construction_args] and [`make_obj_using_allocator],
+type [`T] is not deduced and must therefore be specified explicitly by the
+caller.
+[:zh_CN] [`uses_allocator_construction_args] 和 [`make_obj_using_allocator] 不对
+类型 [`T] 进行推断，它必须由调用方明确指定。
 [exit:note]
+
+[%@library uses_allocator_construction_args]
+[codeblock:declaration]
+template <class T, class Alloc, class... Args>
+  auto uses_allocator_construction_args(const Alloc& alloc, Args&&... args) -> [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`T] is not a specialization of [`pair].
+[:zh_CN] [`T] 不是 [`pair] 的特例。
+
+[para:returns]
+[:en] A [`tuple] value determined as follows:
+[:zh_CN] 以如下方式确定一个 [`tuple] 值：
+
+[list]
+[item]
+[:en] If [`uses_allocator_v<T, Alloc>] is [`false] and
+[`is_constructible_v<T, Args...>] is [`true], return
+[`forward_as_tuple(std::forward<Args>(args)...)].
+[:zh_CN] 如果 [`uses_allocator_v<T, Alloc>] 为 [`false] 且
+[`is_constructible_v<T, Args...>] 为 [`true]，则返回
+[`forward_as_tuple(std::forward<Args>(args)...)]。
+
+[item]
+[:en] Otherwise, if [`uses_allocator_v<T, Alloc>] is [`true] and
+[`is_constructible_v<T, allocator_arg_t, Alloc, Args...>] is [`true], return
+[:zh_CN] 否则，如果 [`uses_allocator_v<T, Alloc>] 为 [`true] 且
+[`is_constructible_v<T, allocator_arg_t, Alloc, Args...>] 为 [`true]，则返回
+[codeblock:notation]
+tuple<allocator_arg_t, const Alloc&, Args&&...>(
+  allocator_arg, alloc, std::forward<Args>(args)...)
+[codeblock:end]
+
+[item]
+[:en] Otherwise, if [`uses_allocator_v<T, Alloc>] is [`true] and
+[`is_constructible_v<T, Args..., Alloc>] is [`true], return
+[`forward_as_tuple(std::forward<Args>(args)..., alloc)].
+[:zh_CN] 否则，如果 [`uses_allocator_v<T, Alloc>] 为 [`true] 且
+[`is_constructible_v<T, Args..., Alloc>] 为 [`true]，则返回
+[`forward_as_tuple(std::forward<Args>(args)..., alloc)]。
+
+[item]
+[:en] Otherwise, the program is ill-formed.
+[:zh_CN] 否则，程序非良构。
 [list:end]
+
+[enter:note]
+[:en] This definition prevents a silent failure to pass the allocator to a
+constructor of a type for which [`uses_allocator_v<T, Alloc>] is [`true].
+[:zh_CN] 本条定义防止将分配器传给某个使得 [`uses_allocator_v<T, Alloc>] 为
+[`true] 的类型的构造函数而导致的静默的失败。
+[exit:note]
+[exit:description]
+
+[%@library uses_allocator_construction_args]
+[codeblock:declaration]
+template <class T, class Alloc, class Tuple1, class Tuple2>
+  auto uses_allocator_construction_args(const Alloc& alloc, piecewise_construct_t,
+                                        Tuple1&& x, Tuple2&& y) -> [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`T] is a specialization of [`pair].
+[:zh_CN] [`T] 是 [`pair] 的特例。
+
+[para:effects]
+[:en] For [`T] specified as [`pair<T1, T2>], equivalent to:
+[:zh_CN] 设 [`T] 为 [`pair<T1, T2>]，等价于：
+
+[codeblock:notation]
+return make_tuple(
+  piecewise_construct,
+  apply([&alloc](auto&&... args1) {
+          return uses_allocator_construction_args<T1>(
+            alloc, std::forward<decltype(args1)>(args1)...);
+        }, std::forward<Tuple1>(x)),
+  apply([&alloc](auto&&... args2) {
+          return uses_allocator_construction_args<T2>(
+            alloc, std::forward<decltype(args2)>(args2)...);
+        }, std::forward<Tuple2>(y)));
+[codeblock:end]
+[exit:description]
+
+[%@library uses_allocator_construction_args]
+[codeblock:declaration]
+template <class T, class Alloc>
+  auto uses_allocator_construction_args(const Alloc& alloc) -> [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`T] is a specialization of [`pair].
+[:zh_CN] [`T] 是 [`pair] 的特例。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return uses_allocator_construction_args<T>(alloc, piecewise_construct,
+                                           tuple<>{}, tuple<>{});
+[codeblock:end]
+[exit:description]
+
+[%@library uses_allocator_construction_args]
+[codeblock:declaration]
+template <class T, class Alloc, class U, class V>
+  auto uses_allocator_construction_args(const Alloc& alloc, U&& u, V&& v) -> [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`T] is a specialization of [`pair].
+[:zh_CN] [`T] 是 [`pair] 的特例。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return uses_allocator_construction_args<T>(alloc, piecewise_construct,
+                                           forward_as_tuple(std::forward<U>(u)),
+                                           forward_as_tuple(std::forward<V>(v)));
+[codeblock:end]
+[exit:description]
+
+[%@library uses_allocator_construction_args]
+[codeblock:declaration]
+template <class T, class Alloc, class U, class V>
+  auto uses_allocator_construction_args(const Alloc& alloc, const pair<U,V>& pr) -> [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`T] is a specialization of [`pair].
+[:zh_CN] [`T] 是 [`pair] 的特例。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return uses_allocator_construction_args<T>(alloc, piecewise_construct,
+                                           forward_as_tuple(pr.first),
+                                           forward_as_tuple(pr.second));
+[codeblock:end]
+[exit:description]
+
+[%@library uses_allocator_construction_args]
+[codeblock:declaration]
+template <class T, class Alloc, class U, class V>
+  auto uses_allocator_construction_args(const Alloc& alloc, pair<U,V>&& pr) -> [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`T] is a specialization of [`pair].
+[:zh_CN] [`T] 是 [`pair] 的特例。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return uses_allocator_construction_args<T>(alloc, piecewise_construct,
+                                           forward_as_tuple(std::move(pr).first),
+                                           forward_as_tuple(std::move(pr).second));
+[codeblock:end]
+[exit:description]
+
+[%@library make_obj_using_allocator]
+[codeblock:declaration]
+template <class T, class Alloc, class... Args>
+  T make_obj_using_allocator(const Alloc& alloc, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return make_from_tuple<T>(uses_allocator_construction_args<T>(
+                            alloc, std::forward<Args>(args)...));
+[codeblock:end]
+[exit:description]
+
+[%@library uninitialized_construct_using_allocator]
+[codeblock:declaration]
+template <class T, class Alloc, class... Args>
+  T* uninitialized_construct_using_allocator(T* p, const Alloc& alloc, Args&&... args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return ::new(static_cast<void*>(p))
+  T(make_obj_using_allocator<T>(alloc, std::forward<Args>(args)...));
+[codeblock:end]
+[exit:description]

@@ -32,14 +32,39 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
           ForwardIterator1 first1, ForwardIterator1 last1,
           ForwardIterator2 first2, ForwardIterator2 last2,
           ForwardIterator result, Compare comp);
+
+namespace ranges {
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+           WeaklyIncrementable O, class Comp = ranges::less<>, class Proj1 = identity,
+           class Proj2 = identity>
+    requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+    constexpr merge_result<I1, I2, O>
+      merge(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+            Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+  template<InputRange R1, InputRange R2, WeaklyIncrementable O, class Comp = ranges::less<>,
+           class Proj1 = identity, class Proj2 = identity>
+    requires Mergeable<iterator_t<R1>, iterator_t<R2>, O, Comp, Proj1, Proj2>
+    constexpr merge_result<safe_iterator_t<R1>, safe_iterator_t<R2>, O>
+      merge(R1&& r1, R2&& r2, O result,
+            Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:en] Let [$N] be [`(last1 - first1) + (last2 - first2)].
+[:zh_CN] 令 [$N] 为 [`(last1 - first1) + (last2 - first2)]。
+
+[:e] Let [`comp] be [`less{}], [`proj1] be [`identity{}], and [`proj2] be
+[`identity{}], for the overloads with no parameters by those names.
+[:zh_CN] 对于不带有这些名字的形参的重载，令 [`comp] 为 [`less()]，[`proj1] 为
+[`identity{}]，以及 [`proj2] 为 [`identity{}]。
+
 [para:requires]
 [:en] The ranges [=range(first1,last1)] and [=range(first2,last2)] shall be
-sorted with respect to [`operator<] or [`comp].
-[:zh_CN] 范围 [=range(first1,last1)] 和 [=range(first2,last2)] 都应当根据
-[`operator<] 或 [`comp] 有序。
+sorted with respect to [`comp] and [`proj1] or [`proj2], respectively.
+[:zh_CN] 范围 [=range(first1,last1)] 和 [=range(first2,last2)] 分别应当根据
+[`comp] 和 [`proj1] 或 [`proj2] 有序。
 
 [:en] The resulting range shall not overlap with either of the original ranges.
 [:zh_CN] 结果范围不能与任何一个源范围有重叠。
@@ -47,27 +72,40 @@ sorted with respect to [`operator<] or [`comp].
 [para:effects]
 [:en] Copies all the elements of the two ranges [=range(first1,last1)] and
 [=range(first2,last2)] into the range [=range(result,result_last)], where
-[`result_last] is [`result + (last1 - first1) + (last2 - first2)], such that the
-resulting range satisfies [`is_sorted(result, result_last)] or
-[`is_sorted(result, result_last, comp)], respectively.
+[`result_last] is [`result + [$N]].
 [:zh_CN] 将两个范围 [=range(first1,last1)] 和 [=range(first2,last2)] 中的所有
 元素复制到范围 [=range(result,result_last)] 中，其中 [`result_last] 为
-[`result + (last1 - first1) + (last2 - first2)]，并使得结果范围符合
-[`is_sorted(result, result_last)] 或者 [`is_sorted(result, result_last, comp)]。
+[`result + [$N]]。
+
+[:en] If an element [`a] precedes [`b] in an input range, [`a] is copied into
+the output range before [`b].
+
+[:en] If [`e1] is an element of [=range(first1,last1)] and [`e2] of
+[=range(first2,last2)], [`e2] is copied into the output range before [`e1] if
+and only if [`bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))] is
+[`true].
+[:zh_CN] 若 [`e1] 为 [=range(first1,last1)] 中的元素，而 [`e2] 为
+[=range(first2,last2)] 中的元素，则当且仅当
+[`bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))] 为 [`true] 时，
+[`e2] 在 [`e1] 之前被复制到输出范围之中。
 
 [para:returns]
-[:en] [`result + (last1 - first1) + (last2 - first2)].
-[:zh_CN] [`result + (last1 - first1) + (last2 - first2)]。
+[list]
+[item]
+[:en] [`result_last] for the overloads in namespace [`std], or
+[:zh_CN] 命名空间 [`std] 中的各重载返回 [`result_last]，或者
+[item]
+[:en] [`{last1, last2, result_last}] for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`{last1, last2, result_last}]。
+[list:end]
 
 [para:complexity]
-[:en] Let [$N = [`(last1 - first1) + (last2 - first2)]]:
-[:zh_CN] 令 [$N = [`(last1 - first1) + (last2 - first2)]]：
-
 [list]
 [item]
 [:en] For the overloads with no [`ExecutionPolicy], at most [$N - 1]
-comparisons.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行 [$N - 1] 次比较。
+comparisons and applications of each projection.
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行 [$N - 1] 次比较和每种
+投射的运用。
 
 [item]
 [:en] For the overloads with an [`ExecutionPolicy], [$[=O](N)] comparisons.
@@ -100,25 +138,37 @@ template<class ExecutionPolicy, class BidirectionalIterator, class Compare>
                      BidirectionalIterator first,
                      BidirectionalIterator middle,
                      BidirectionalIterator last, Compare comp);
+
+namespace ranges {
+  template<BidirectionalIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+           class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    I inplace_merge(I first, I middle, S last, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
+[para]
+[:e] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for the overloads
+with no parameters by those names.
+[:zh_CN] 对于不带有这些名字的形参的重载，令 [`comp] 为 [`less()]，以及 [`proj]
+为 [`identity{}]。
+
 [para:requires]
-[:en] The ranges [=range(first,middle)] and [=range(middle,last)] shall be
-sorted with respect to [`operator<] or [`comp].
-[:zh_CN] 范围 [=range(first,middle)] 和 [=range(middle,last)] 应当根据
-[`operator<] 或 [`comp] 有序。
+[:en] [=range(first,middle)] and [=range(middle,last)] shall be valid ranges
+sorted with respect to [`comp] and [`proj].
+[:zh_CN] [=range(first,middle)] 和 [=range(middle,last)] 应当均为有效范围，并
+根据 [`comp] 和 [`proj] 有序。
 
-[:en] [`BidirectionalIterator] shall satisfy the [*Cpp17ValueSwappable]
-requirements ([#swappable.requirements]).
-[:zh_CN] [`BidirectionalIterator] 应当满足 [*Cpp17ValueSwappable]
-（[#swappable.requirements]）的规定。
-
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
+[:en] For the overloads in namespace [`std], [`BidirectionalIterator] shall
+meet the [*Cpp17ValueSwappable] requirements ([#swappable.requirements]) and the
+type of [`*first] shall meet the [*Cpp17MoveConstructible]
 ([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
 requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`BidirectionalIterator] 应当满足
+[*Cpp17ValueSwappable] 的规定（[#swappable.requirements]），并且 [`*first] 的
+类型应当满足 [*Cpp17MoveConstructible]（[#moveconstructible]）和
+[*Cpp17MoveAssignable]（[#moveassignable]）的规定。
 
 [para:effects]
 [:en] Merges two sorted consecutive ranges [=range(first,middle)] and
@@ -127,12 +177,12 @@ requirements.
 [:zh_CN] 对两个连续的范围 [=range(first,middle)] 和 [=range(middle,last)] 进行
 归并，并将归并的结果置于范围 [=range(first,last)] 中。
 
-[:en] The resulting range will be in non-decreasing order; that is, for every
-iterator [`i] in [=range(first,last)] other than [`first], the condition
-[`*i < *(i - 1)] or, respectively, [`comp(*i, *(i - 1))] will be [`false].
-[:zh_CN] 结果范围将具有非降序；就是说，对于 [=range(first,last)] 中除了 [`first]
-之外的每个迭代器 [`i]，条件 [`*i < *(i - 1)] 或者 [`comp(*i, *(i - 1))] 将分别
-为 [`false]。
+[:en] The resulting range is sorted respect to [`comp] and [`proj].
+[:zh_CN] 结果范围根据 [`comp] 和 [`proj] 排序。
+
+[para:returns]
+[:en] [`last] for the overload in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`last]。
 
 [para:complexity]
 [:en] Let [$N = [`last - first]]:
@@ -140,24 +190,39 @@ iterator [`i] in [=range(first,last)] other than [`first], the condition
 
 [list]
 [item]
-[:en] For the overloads with no [`ExecutionPolicy], if enough additional memory
-is available, exactly [$N - 1] comparisons.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，当有足够的额外内存时，恰好进行
-[$N - 1] 次比较。
+[:en] For the overloads with no [`ExecutionPolicy], and if enough additional
+memory is available, exactly [$N - 1] comparisons.
+[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，并且当有足够的额外内存时，恰好
+进行 [$N - 1] 次比较。
 
 [item]
-[:en] For the overloads with no [`ExecutionPolicy], if no additional memory is
-available, [$[=O](N \log N)] comparisons.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，如果没有额外内存，则进行
-[$[=O](N \log N)] 次比较。
-
-[item]
-[:en] For the overloads with an [`ExecutionPolicy], [$[=O](N \log N)]
-comparisons.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，进行 [$[=O](N \log N)] 次比较。
+[:en] Otherwise, [$[=O](N \log N)] comparisons.
+[:zh_CN] 否则，进行 [$[=O](N \log N)] 次比较。
 [list:end]
+
+[:en] In either case, twice as many projections as comparisons.
+[:zh_CN] 任何情况中，都进行两倍于比较次数的投射。
 
 [para:remarks]
 [:en] Stable ([#algorithm.stable]).
 [:zh_CN] 稳定的（[#algorithm.stable]）。
+[exit:description]
+
+[codeblock:declaration]
+namespace ranges {
+  template<BidirectionalRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    safe_iterator_t<R>
+      inplace_merge(R&& r, iterator_t<R> middle, Comp comp = {}, Proj proj = {});
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+return ranges::inplace_merge(ranges::begin(r), middle, ranges::end(r), comp, proj);
+[codeblock:end]
 [exit:description]

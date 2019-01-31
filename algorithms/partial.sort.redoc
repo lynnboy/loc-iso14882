@@ -25,32 +25,72 @@ template<class ExecutionPolicy, class RandomAccessIterator, class Compare>
                     RandomAccessIterator middle,
                     RandomAccessIterator last,
                     Compare comp);
+
+namespace ranges {
+  template<RandomAccessIterator I, Sentinel<I> S, class Comp = ranges::less<>,
+           class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    constexpr I
+      partial_sort(I first, I middle, S last, Comp comp = {}, Proj proj = {});
+}
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`RandomAccessIterator] shall satisfy the [*Cpp17ValueSwappable]
-requirements ([#swappable.requirements]).
-[:zh_CN] [`RandomAccessIterator] 应当满足 [*Cpp17ValueSwappable] 的规定
-（[#swappable.requirements]）。
+[para]
+[:en] Let [`comp] be [`less{}] and [`proj] be [`identity{}] for the overloads
+with no parameters by those names.
+[:zh_CN] 对于没有具有名字 [`comp] 和 [`proj] 的形参的各重载，令 [`comp] 为
+[`less{}] 并令 [`proj] 为 [`identity{}]。
 
-[:en] The type of [`*first] shall satisfy the [*Cpp17MoveConstructible]
-([#moveconstructible]) and [*Cpp17MoveAssignable] ([#moveassignable])
-requirements.
-[:zh_CN] [`*first] 的类型应当满足 [*Cpp17MoveConstructible]
-（[#moveconstructible]）和 [*Cpp17MoveAssignable]（[#moveassignable]）的规定。
+[para:requires]
+[:en] [=range(first,middle)] and [=range(middle,last)] shall be valid ranges.
+[:zh_CN] [=range(first,middle)] 和 [=range(middle,last)] 都应当是有效范围。
+
+[:en] For the overloads in namespace [`std], [`RandomAccessIterator] shall meet
+the [*Cpp17ValueSwappable] requirements ([#swappable.requirements]) and the type
+of [`*first] shall meet the [*Cpp17MoveConstructible] ([#moveconstructible]) and
+[*Cpp17MoveAssignable] ([#moveassignable]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`RandomAccessIterator] 应当满足
+[*Cpp17ValueSwappable] 的规定（[#swappable.requirements]），而 [`*first] 的类型
+应当满足 [*Cpp17MoveConstructible]（[#moveconstructible]）和
+[*Cpp17MoveAssignable]（[#moveassignable]）的规定。
 
 [para:effects]
-[:en] Places the first [`middle - first] sorted elements from the range
-[=range(first,last)] into the range [=range(first,middle)].
-[:zh_CN] 将范围 [=range(first,last)] 中的前 [`middle - first] 个有序元素置于范围
-[=range(first,middle)] 之中。
+[:en] Places the first [`middle - first] elements from the range
+[=range(first,last)] as sorted with respect to [`comp] and [`proj] into the
+range [=range(first,middle)].
+[:zh_CN] 将范围 [=range(first,last)] 中的前 [`middle - first] 个元素当做根据
+[`comp] 和 [`proj] 有序，并置于范围 [=range(first,middle)] 之中。
 
 [:en] The rest of the elements in the range [=range(middle,last)] are placed in
 an [%unspecified] unspecified order.
 [:zh_CN] 范围 [=range(middle,last)] 中的剩余元素以[%未指明的]未指明的顺序放置。
 
+[para:returns]
+[:en] [`last], for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`last]。
+
 [para:complexity]
-[:en] Approximately [`(last - first) * log(middle - first)] comparisons.
-[:zh_CN] 约 [`(last - first) * log(middle - first)] 次比较。
+[:en] Approximately [`(last - first) * log(middle - first)] comparisons, and
+twice as many projections.
+[:zh_CN] 约 [`(last - first) * log(middle - first)] 次比较，以及两倍次数的投射。
+[exit:description]
+
+[codeblock:declaration]
+namespace ranges {
+  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    constexpr safe_iterator_t<R>
+      partial_sort(R&& r, iterator_t<R> middle, Comp comp = {}, Proj proj = {});
+}
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+return ranges::partial_sort(ranges::begin(r), middle, ranges::end(r), comp, proj);
+[codeblock:end]
 [exit:description]

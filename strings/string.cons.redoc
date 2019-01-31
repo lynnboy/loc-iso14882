@@ -9,13 +9,9 @@ explicit basic_string(const Allocator& a) noexcept;
 [codeblock:end]
 
 [enter:description]
-[para:effects]
-[:en] Constructs an object of class [`basic_string].
-[:zh_CN] 构造一个 [`basic_string] 类的对象。
-
-[para:postconditions]
-[:en] [`size()] is [`0] and [`capacity()] is an unspecified value.
-[:zh_CN] [`size()] 为 [`0] 且 [`capacity()] 为某个未指明的值。
+[para:ensures]
+[:en] [`size()] is equal to [`0].
+[:zh_CN] [`size()] 等于 [`0]。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -26,21 +22,12 @@ basic_string(basic_string&& str) noexcept;
 
 [enter:description]
 [para:effects]
-[:en] Constructs an object of class [`basic_string].
-[:zh_CN] 构造一个 [`basic_string] 类的对象。
+[:en] Constructs an object whose value is that of [`str] prior to this call.
+[:zh_CN] 构造一个对象，其值为本次调用之前 [`str] 的值。
 
-[para:postconditions]
-[:en] [`data()] points at the first element of an allocated copy of the array
-whose first element is pointed at by the original value [`str.data()],
-[`size()] is equal to the original value of [`str.size()], and [`capacity()] is
-a value at least as large as [`size()].
-[:zh_CN] [`data()] 指向由 [`str.data()] 的原值指向其第一个元素的数组的已分配副本
-的第一个元素，[`size()] 等于 [`str.size()] 的原值，而 [`capacity()] 为至少与
-[`size()] 一样大的值。
-
-[:en] In the second form, [`str] is left in a valid state with an unspecified
-value.
-[:zh_CN] 第二种形式中，[`str] 被遗留处于具有未指明的值的有效状态。
+[para:remarks]
+[:en] In the second form, [`str] is left in a valid but unspecified state.
+[:zh_CN] 第二种形式中，[`str] 被遗留处于有效但未指明的状态。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -52,26 +39,16 @@ basic_string(const basic_string& str, size_type pos, size_type n,
 [codeblock:end]
 
 [enter:description]
-[para:throws]
-[:en] [`out_of_range] if [`pos > str.size()].
-[:zh_CN] 当 [`pos > str.size()] 时抛出 [`out_of_range]。
-
 [para:effects]
-[:en] Constructs an object of class [`basic_string] and determines the effective
-length [`rlen] of the initial string value as [`str.size() - pos] in the first
-form and as the smaller of [`str.size() - pos] and [`n] in the second form.
-[:zh_CN] 构造类 [`basic_string] 的一个对象，并将其初始字符串值的长度确定为
-（第一个形式）[`str.size() - pos]，或（第二个形式）[`str.size() - pos] 和 [`n]
-中的较小值。
+[:en] Let [`n] be [`npos] for the first overload.
+[:zh_CN] 令 [`n] 对于第一个重载为 [`npos]。
 
-[para:postconditions]
-[:en] [`data()] points at the first element of an allocated copy of [`rlen]
-consecutive elements of the string controlled by [`str] beginning at position
-[`pos], [`size()] is equal to [`rlen], and [`capacity()] is a value at least as
-large as [`size()].
-[:zh_CN] [`data()] 指向由 [`str] 控制的字符串中从位置 [`pos] 开始的 [`rlen] 个
-连续元素的已分配副本的第一个元素，[`size()] 等于 [`rlen]，且 [`capacity()] 为
-至少与 [`size()] 一样大的值。
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+
+[codeblock:notation]
+basic_string(basic_string_view<charT, traits>(str).substr(pos, n), a)
+[codeblock:end]
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -81,6 +58,11 @@ template<class T>
 [codeblock:end]
 
 [enter:description]
+[para:constraints]
+[:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true].
+[:zh_CN] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
+[`true]。
+
 [para:effects]
 [:en] Creates a variable, [`sv], as if by
 [`basic_string_view<charT, traits> sv = t;] and then behaves the same as:
@@ -90,12 +72,6 @@ template<class T>
 [codeblock:notation]
 basic_string(sv.substr(pos, n), a);
 [codeblock:end]
-
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true].
-[:zh_CN] 除非 [`is_convertible_v<const T&, basic_string_view<charT, traits>>] 为
-[`true]，否则这个构造函数不能参与重载决议。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -105,17 +81,7 @@ template<class T>
 [codeblock:end]
 
 [enter:description]
-[para:effects]
-[:en] Creates a variable, [`sv], as if by
-[`basic_string_view<charT, traits> sv = t;] and then behaves the same as
-[`basic_string(sv.data(), sv.size(), a)].
-[:zh_CN] 如同以 [`basic_string_view<charT, traits> sv = t;] 创建一个变量 [`sv]，
-然后其行为与 [`basic_string(sv.data(), sv.size(), a)] 相同。
-
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[:zh_CN] 除非符合以下条件，否则这个构造函数不能参与重载决议
-
+[para:constraints]
 [list]
 [item]
 [:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true]
@@ -126,6 +92,13 @@ and
 [:en] [`is_convertible_v<const T&, const charT*>] is [`false].
 [:zh_CN] [`is_convertible_v<const T&, const charT*>] 为 [`false]。
 [list:end]
+
+[para:effects]
+[:en] Creates a variable, [`sv], as if by
+[`basic_string_view<charT, traits> sv = t;] and then behaves the same as
+[`basic_string(sv.data(), sv.size(), a)].
+[:zh_CN] 如同以 [`basic_string_view<charT, traits> sv = t;] 创建一个变量 [`sv]，
+然后其行为与 [`basic_string(sv.data(), sv.size(), a)] 相同。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -134,34 +107,18 @@ basic_string(const charT* s, size_type n, const Allocator& a = Allocator());
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`s] points to an array of at least [`n] elements of [`charT].
-[:zh_CN] [`s] 指向 [`charT] 的至少 [`n] 个元素的数组。
+[para:expects]
+[:en] [=range(s,s + n)] is a valid range.
+[:zh_CN] [=range(s,s + n)] 为有效范围。
 
 [para:effects]
-[:en] Constructs an object of class [`basic_string] and determines its initial
-string value from the array of [`charT] of length [`n] whose first element is
-designated by [`s].
-[:zh_CN] 构造类 [`basic_string] 的一个对象，并将其初始字符串的值确定为，由 [`s]
-代表其第一个元素的 [`charT] 的长度为 [`n] 的数组。
+[:en] Constructs an object whose initial value is the range [=range(s,s + n)].
+[:zh_CN] 构造一个对象，其初始值为范围 [=range(s,s + n)]。
 
-[para:postconditions]
-[:en] [`data()] points at the first element of an allocated copy of the array
-whose first element is pointed at by [`s], [`size()] is equal to [`n], and
-[`capacity()] is a value at least as large as [`size()].
-[:zh_CN] [`data()] 指向由 [`s] 指向其第一个元素的数组的已分配副本的第一个元素，
-[`size()] 等于 [`n]，且 [`capacity()] 为至少与 [`size()] 一样大的值。
-
-[para:remarks]
-[:en] Shall not participate in overload resolution if [`Allocator] is a type
-that does not qualify as an allocator ([#container.requirements.general]).
-[:zh_CN] 当 [`Allocator] 不能被当做分配器（[#container.requirements.general]）的
-类型时，不能参与重载决议。
-
-[enter:note]
-[:en] This affects class template argument deduction.
-[:zh_CN] 这会影响类模板实参推断。
-[exit:note]
+[para:ensures]
+[:en] [`size()] is equal to [`n], and [`traits::compare(data(), s, n)] is equal
+to [`0].
+[:zh_CN] [`size()] 等于 [`n]，且 [`traits::compare(data(), s, n)] 等于 [`0]。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -170,37 +127,20 @@ basic_string(const charT* s, const Allocator& a = Allocator());
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`s] points to an array of at least [`traits::length(s) + 1] elements of
-[`charT].
-[:zh_CN] [`s] 指向 [`charT] 的至少 [`traits::length(s) + 1] 个元素的数组。
-
-[para:effects]
-[:en] Constructs an object of class [`basic_string] and determines its initial
-string value from the array of [`charT] of length [`traits::length(s)] whose
-first element is designated by [`s].
-[:zh_CN] 构造类 [`basic_string] 的一个对象，并将其初始字符串的值确定为，由 [`s]
-代表其第一个元素的 [`charT] 的长度为 [`traits::length(s)] 的数组。
-
-[para:postconditions]
-[:en] [`data()] points at the first element of an allocated copy of the array
-whose first element is pointed at by [`s], [`size()] is equal to
-[`traits::length(s)], and [`capacity()] is a value at least as large as
-[`size()].
-[:zh_CN] [`data()] 指向由 [`s] 指向其第一个元素的数组的已分配副本的第一个元素，
-[`size()] 等于 [`traits::length(s)]，且 [`capacity()] 为至少与 [`size()] 一样大
-的值。
-
-[para:remarks]
-[:en] Shall not participate in overload resolution if [`Allocator] is a type
-that does not qualify as an allocator ([#container.requirements.general]).
-[:zh_CN] 当 [`Allocator] 不能被当做分配器（[#container.requirements.general]）的
-类型时，不能参与重载决议。
+[para:constraints]
+[:en] [`Allocator] is a type that qualifies as an allocator
+([#container.requirements.general]).
+[:zh_CN] [`Allocator] 是可被当做分配器（[#container.requirements.general]）的
+类型。
 
 [enter:note]
 [:en] This affects class template argument deduction.
 [:zh_CN] 这会影响类模板实参推断。
 [exit:note]
+
+[para:effects]
+[:en] Equivalent to: [`basic_string(s, traits::length(s), a)].
+[:zh_CN] 等价于：[`basic_string(s, traits::length(s), a)]。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -209,23 +149,20 @@ basic_string(size_type n, charT c, const Allocator& a = Allocator());
 [codeblock:end]
 
 [enter:description]
-[para:requires]
-[:en] [`n < npos].
-[:zh_CN] [`n < npos]。
+[para:constraints]
+[:en] [`Allocator] is a type that qualifies as an allocator
+([#container.requirements.general]).
+[:zh_CN] [`Allocator] 是可被当做分配器（[#container.requirements.general]）的
+类型。
+
+[enter:note]
+[:en] This affects class template argument deduction.
+[:zh_CN] 这会影响类模板实参推断。
+[exit:note]
 
 [para:effects]
-[:en] Constructs an object of class [`basic_string] and determines its initial
-string value by repeating the char-like object [`c] for all [`n] elements.
-[:zh_CN] 构造类 [`basic_string] 的一个对象，并将其初始字符串的值确定为，通过重复
-字符式对象 [`c] 作为其所有 [`n] 个元素。
-
-[para:postconditions]
-[:en] [`data()] points at the first element of an allocated array of [`n]
-elements, each storing the initial value [`c], [`size()] is equal to [`n], and
-[`capacity()] is a value at least as large as [`size()].
-[:zh_CN] [`data()] 指向 [`n] 个元素的已分配数组的第一个元素，每个元素均存储
-初始值 [`c]，[`size()] 等于 [`n]，且 [`capacity()] 为至少与 [`size()] 一样大的值
-。
+[:en] Constructs an object whose value consists of [`n] copies of [`c].
+[:zh_CN] 构造一个对象，其值由 [`n] 个 [`c] 的副本所构成。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -235,21 +172,17 @@ template<class InputIterator>
 [codeblock:end]
 
 [enter:description]
+[para:constraints]
+[:en] [`InputIterator] is a type that qualifies as an input iterator
+([#container.requirements.general]).
+[:zh_CN] [`InputIterator] 是可以被当做输入迭代器
+（[#container.requirements.general]）的类型。
+
 [para:effects]
-[:en] If [`InputIterator] is an integral type, equivalent to
-[:zh_CN] 如果 [`InputIterator] 是整型类型，则等价于
-
-[codeblock:notation]
-basic_string(static_cast<size_type>(begin), static_cast<value_type>(end), a);
-[codeblock:end]
-
-[para]
-[:en]
-Otherwise constructs a string from the values in the range [[`begin], [`end]),
-as indicated in the Sequence Requirements table (see [#sequence.reqmts]).
-[:zh_CN]
-否则根据序列的规定表格（参见 [#sequence.reqmts]）所指定的方式，从范围
-[[`begin], [`end]) 中的值构造一个字符串。
+[:en] Constructs a string from the values in the range [=range(begin,end)], as
+indicated in [#containers.sequence.requirements].
+[:zh_CN] 从范围 [=range(begin,end)] 中的值构造一个字符串，如
+[#containers.sequence.requirements] 所述。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -259,8 +192,8 @@ basic_string(initializer_list<charT> il, const Allocator& a = Allocator());
 
 [enter:description]
 [para:effects]
-[:en] Same as [`basic_string(il.begin(), il.end(), a)].
-[:zh_CN] 与 [`basic_string(il.begin(), il.end(), a)] 相同。
+[:en] Equivalent to [`basic_string(il.begin(), il.end(), a)].
+[:zh_CN] 等价于 [`basic_string(il.begin(), il.end(), a)]。
 [exit:description]
 
 [%@library basic_string[![:en]constructor[:zh_CN]构造函数]]
@@ -271,25 +204,14 @@ basic_string(basic_string&& str, const Allocator& alloc);
 
 [enter:description]
 [para:effects]
-[:en] Constructs an object of class [`basic_string].
-[:zh_CN] 构造一个 [`basic_string] 类的对象。
+[:en] Constructs an object whose value is that of [`str] prior to this call.
+[:zh_CN] 构造一个对象，其值为本次调用之前 [`str] 的值。
 
 [:en] The stored allocator is constructed from [`alloc].
 [:zh_CN] 以 [`alloc] 来构造其所存储的分配器。
 
-[para:postconditions]
-[:en] [`data()] points at the first element of an allocated copy of the array
-whose first element is pointed at by the original value of [`str.data()],
-[`size()] is equal to the original value of [`str.size()], [`capacity()] is a
-value at least as large as [`size()], and [`get_allocator()] is equal to
-[`alloc].
-[:zh_CN] [`data()] 指向由 [`str.data()] 的原值指向其第一个元素的数组的已分配副本
-的第一个元素，[`size()] 等于 [`str.size()] 的原值，[`capacity()] 为至少与
-[`size()] 一样大的值，且 [`get_allocator()] 等于 [`alloc]。
-
-[:en] In the second form, [`str] is left in a valid state with an unspecified
-value.
-[:zh_CN] 第二种形式中，[`str] 被遗留处于具有为指明的值的有效状态。
+[:en] In the second form, [`str] is left in a valid but unspecified state.
+[:zh_CN] 第二种形式中，[`str] 被遗留处于有效但未指明的状态。
 
 [para:throws]
 [:en] The second form throws nothing if [`alloc == str.get_allocator()].
@@ -306,12 +228,12 @@ template<class InputIterator,
 [codeblock:end]
 
 [enter:description]
-[para:remarks]
-[:en] Shall not participate in overload resolution if [`InputIterator] is a type
-that does not qualify as an input iterator, or if [`Allocator] is a type that
-does not qualify as an allocator ([#container.requirements.general]).
-[:zh_CN] 当 [`InputIterator] 是不能作为输入迭代器的类型，或当 [`Allocator] 是
-不能作为分配器的类型（[#container.requirements.general]）时，不能参与重载决议。
+[para:constraints]
+[:en] [`InputIterator] is a type that qualifies as an input iterator, and
+[`Allocator] is a type that qualifies as an allocator
+([#container.requirements.general]).
+[:zh_CN] [`InputIterator] 是可被当做输入迭代器的类型，且 [`Allocator] 是可被当做
+分配器（[#container.requirements.general]）的类型。
 [exit:description]
 
 [codeblock:declaration [!:mark SeeBelow] ]
@@ -331,11 +253,11 @@ template<class charT,
 [codeblock:end]
 
 [enter:description]
-[para:remarks]
-[:en] Shall not participate in overload resolution if [`Allocator] is a type
-that does not qualify as an allocator ([#container.requirements.general]).
-[:zh_CN] 当 [`Allocator] 不能被当做分配器（[#container.requirements.general]）的
-类型时，不能参与重载决议。
+[para:constraints]
+[:en] [`Allocator] is a type that qualifies as an allocator
+([#container.requirements.general]).
+[:zh_CN] [`Allocator] 是可被当做分配器（[#container.requirements.general]）的
+类型。
 [exit:description]
 
 [%@library operator=[!basic_string]]
@@ -345,20 +267,16 @@ basic_string& operator=(const basic_string& str);
 [codeblock:end]
 
 [enter:description]
+[para:effects]
+[:en] If [`*this] and [`str] are the same object, has no effect.
+[:zh_CN] 如果 [`*this] 和 [`str] 为同一个对象，则没有效果。
+
+[:en] Otherwise, replace the value of [`*this] with a copy of [`str].
+[:zh_CN] 否则，将 [`*this] 的值替换为 [`str] 的副本。
+
 [para:returns]
 [:en] [`*this].
 [:zh_CN] [`*this]。
-
-[para:postconditions]
-[:en] If [`*this] and [`str] are the same object, the member has no effect.
-[:zh_CN] 如果 [`*this] 和 [`str] 为同一个对象，则该成员没有效果。
-
-[:en] Otherwise, [`data()] points at the first element of an allocated copy of
-the array whose first element is pointed at by [`str.data()], [`size()] is equal
-to [`str.size()], and [`capacity()] is a value at least as large as [`size()].
-[:zh_CN] 否则，[`data()] 指向由 [`str.data()] 指向其第一个元素的数组的已分配副本
-的第一个元素，[`size()] 等于 [`str.size()]，且 [`capacity()] 为至少与 [`size()]
-一样大的值。
 [exit:description]
 
 [%@library operator=[!basic_string]]
@@ -389,21 +307,7 @@ template<class T>
 [codeblock:end]
 
 [enter:description]
-[para:effects]
-[:en] Equivalent to:
-[:zh_CN] 等价于
-
-[codeblock:notation]
-{
-  basic_string_view<charT, traits> sv = t;
-  return assign(sv);
-}
-[codeblock:end]
-
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非符合以下条件，否则这个函数不能参与重载决议
-
+[para:constraints]
 [list]
 [item]
 [:en] [`is_convertible_v<const T&, basic_string_view<charT, traits>>] is [`true]
@@ -414,6 +318,14 @@ and
 [:en] [`is_convertible_v<const T&, const charT*>] is [`false].
 [:zh_CN] [`is_convertible_v<const T&, const charT*>] 为 [`false]。
 [list:end]
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于
+[codeblock:notation]
+basic_string_view<charT, traits> sv = t;
+return assign(sv);
+[codeblock:end]
 [exit:description]
 
 [%@library operator=[!basic_string]]
@@ -423,14 +335,9 @@ basic_string& operator=(const charT* s);
 [codeblock:end]
 
 [enter:description]
-[para:returns]
-[:en] [`*this = basic_string(s)].
-[:zh_CN] [`*this = basic_string(s)]。
-
-[para:remarks]
-[%@library length[!char_traits]]
-[:en] Uses [`traits::length()].
-[:zh_CN] 使用了 [`traits::length()]。
+[para:effects]
+[:en] Equivalent to: [`return *this = basic_string_view<charT, traits>(s);]
+[:zh_CN] 等价于：[`return *this = basic_string_view<charT, traits>(s);]
 [exit:description]
 
 [%@library operator=[!basic_string]]
@@ -440,9 +347,12 @@ basic_string& operator=(charT c);
 [codeblock:end]
 
 [enter:description]
-[para:returns]
-[:en] [`*this = basic_string(1, c)].
-[:zh_CN] [`*this = basic_string(1, c)]。
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return *this = basic_string_view<charT, traits>(addressof(c), 1);
+[codeblock:end]
 [exit:description]
 
 [%@library operator=[!basic_string]]
@@ -453,10 +363,9 @@ basic_string& operator=(initializer_list<charT> il);
 
 [enter:description]
 [para:effects]
-[:en] As if by: [`*this = basic_string(il);]
-[:zh_CN] 如同执行：[`*this = basic_string(il);]
-
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return *this = basic_string_view<charT, traits>(il.begin(), il.size());
+[codeblock:end]
 [exit:description]

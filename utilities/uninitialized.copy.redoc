@@ -10,19 +10,53 @@ template<class InputIterator, class ForwardIterator>
 [codeblock:end]
 
 [enter:description]
-[para:effects]
-[:en] As if by:
-[:zh_CN] 如同执行：
+[para:expects]
+[:en] [=range(result,last - first)] shall not overlap with [=range(first,last)].
+[:zh_CN] [=range(result,last - first)] 不能与 [=range(first,last)] 重叠。
 
-[codeblock:notation]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
 for (; first != last; ++result, (void) ++first)
-  ::new (static_cast<void*>(addressof(*result)))
+  ::new ([*voidify](*result))
     typename iterator_traits<ForwardIterator>::value_type(*first);
 [codeblock:end]
 
 [para:returns]
 [:en] [`result].
 [:zh_CN] [`result]。
+[exit:description]
+
+[%@library uninitialized_copy]
+[codeblock:declaration [!:var no-throw-forward-iterator no-throw-forward-range no-throw-sentinel]]
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S1,
+           [*no-throw-forward-iterator] O, [*no-throw-sentinel]<O> S2>
+      requires Constructible<iter_value_t<O>, iter_reference_t<I>>
+    uninitialized_copy_result<I, O>
+      uninitialized_copy(I ifirst, S1 ilast, O ofirst, S2 olast);
+  template<InputRange IR, [*no-throw-forward-range] OR>
+      requires Constructible<iter_value_t<iterator_t<OR>>, iter_reference_t<iterator_t<IR>>>
+    uninitialized_copy_result<safe_iterator_t<IR>, safe_iterator_t<OR>>
+      uninitialized_copy(IR&& input_range, OR&& output_range);
+}
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [=range(ofirst,olast)] shall not overlap with [=range(ifirst,ilast)].
+[:zh_CN] [=range(ofirst,olast)] 不能与 [=range(ifirst,ilast)] 重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
+for (; ifirst != ilast && ofirst != olast; ++ofirst, (void)++ifirst) {
+  ::new ([*voidify](*ofirst)) remove_reference_t<iter_reference_t<O>>(*ifirst);
+}
+return {ifirst, ofirst};
+[codeblock:end]
 [exit:description]
 
 [%@library uninitialized_copy_n]
@@ -32,13 +66,16 @@ template<class InputIterator, class Size, class ForwardIterator>
 [codeblock:end]
 
 [enter:description]
-[para:effects]
-[:en] As if by:
-[:zh_CN] 如同执行：
+[para:expects]
+[:en] [=range(result,n)] shall not overlap with [=range(first,n)].
+[:zh_CN] [=range(result,n)] 不能与 [=range(first,n)] 重叠。
 
-[codeblock:notation]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation [!:var voidify]]
 for ( ; n > 0; ++result, (void) ++first, --n) {
-  ::new (static_cast<void*>(addressof(*result)))
+  ::new ([*voidify](*result))
     typename iterator_traits<ForwardIterator>::value_type(*first);
 }
 [codeblock:end]
@@ -46,4 +83,29 @@ for ( ; n > 0; ++result, (void) ++first, --n) {
 [para:returns]
 [:en] [`result].
 [:zh_CN] [`result]。
+[exit:description]
+
+[%@library uninitialized_copy_n]
+[codeblock:declaration [!:var no-throw-forward-iterator no-throw-sentinel]]
+namespace ranges {
+  template<InputIterator I, [*no-throw-forward-iterator] O, [*no-throw-sentinel]<O> S>
+      requires Constructible<iter_value_t<O>, iter_reference_t<I>>
+    uninitialized_copy_n_result<I, O>
+      uninitialized_copy_n(I ifirst, iter_difference_t<I> n, O ofirst, S olast);
+}
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [=range(ofirst,olast)] shall not overlap with [=range(ifirst,n)].
+[:zh_CN] [=range(ofirst,olast)] 不能与 [=range(ifirst,n)] 重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto t = uninitialized_copy(counted_iterator(ifirst, n),
+                            default_sentinel, ofirst, olast);
+return {t.in.base(), t.out};
+[codeblock:end]
 [exit:description]

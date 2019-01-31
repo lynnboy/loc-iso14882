@@ -107,124 +107,127 @@ sequence headed by [$A].
 值，则 [$A] 同步于 [$B]。
 
 [para]
-[:en] There shall be a single total order [$S] on all [`memory_order::seq_cst]
-operations, consistent with the ["happens before] order and modification orders
-for all affected locations, such that each [`memory_order::seq_cst] operation
-[$B] that loads a value from an atomic object [$M] observes one of the following
-values:
-[:zh_CN] 在全部的 [`memory_order::seq_cst] 操作中应当存在单个的全序 [$S]，它由
-“发生早于”顺序和在所有受影响的位置上的改动顺序构成，并使得从某个原子性对象 [$M]
-中加载值的每个 [`memory_order::seq_cst] 操作 [$B]，将观察到以下值之一：
+[:en] An atomic operation [$A] on some atomic object [$M] is [+coherence-ordered
+before] another atomic operation [$B] on [$M] if
+[:zh_CN] 以下情况下，称在原子性对象 [$M] 上的原子性操作 [$A] [+按一致性顺序早于]
+[$M] 上的另一个原子性操作 [$B]：
 
 [list]
 [item]
-[:en] the result of the last modification [$A] of [$M] that precedes [$B] in
-[$S], if it exists, or
-[:zh_CN] 在 [$S] 中处于 [$B] 之前的最后一次对 [$M] 的改动 [$A] 的结果（如果其
-存在），或者
+[:en] [$A] is a modification, and [$B] reads the value stored by [$A], or
+[:zh_CN] [$A] 是一次改动操作，而 [$B] 读取由 [$A] 所存储的值，或者
 
 [item]
-[:en] if [$A] exists, the result of some modification of [$M] that is not
-[`memory_order::seq_cst] and that does not happen before [$A], or
-[:zh_CN] 当 [$A] 存在时，某个并非 [`memory_order::seq_cst] 且并不发生早于 [$A] 的
-[$M] 的改动的结果。
+[:en] [$A] precedes [$B] in the modification order of [$M], or
+[:zh_CN] [$A] 在 [$M] 的改动顺序中先于 [$B]，或者
 
 [item]
-[:en] if [$A] does not exist, the result of some modification of [$M] that is
-not [`memory_order::seq_cst].
-[:zh_CN] 当 [$A] 不存在时，某个并非 [`memory_order::seq_cst] 的 [$M] 的改动的结果
-。
+[:en] [$A] and [$B] are not the same atomic read-modify-write operation, and
+there exists an atomic modification [$X] of [$M] such that [$A] reads the value
+stored by [$X] and [$X] precedes [$B] in the modification order of [$M], or
+[:zh_CN] [$A] 和 [$B] 并非相同的读-改-写操作，并且存在 [$M] 上的原子性操作 [$X]
+使得 [$A] 读取由 [$X] 所存储的值，而 [$X] 在 [$M] 的改动顺序中先于 [$B]，或者
+
+[item]
+[:en] there exists an atomic modification [$X] of [$M] such that [$A] is
+coherence-ordered before [$X] and [$X] is coherence-ordered before [$B].
+[:zh_CN] 存在 [$M] 上的原子性操作 [$X] 使得 [$A] 按一致性顺序早于 [$X] 且 [$X]
+按一致性顺序早于 [$B]。
 [list:end]
 
+[para]
+[:en] There is a single total order [$S] on all [`memory_order::seq_cst]
+operations, including fences, that satisfies the following constraints.
+[:zh_CN] 在全部的 [`memory_order::seq_cst] 操作中应当存在单个的全序 [$S]，它包含
+符合下列约束的各种屏障：
+
+[:en] First, if [$A] and [$B] are [`memory_order::seq_cst] operations and [$A]
+strongly happens before [$B], then [$A] precedes [$B] in [$S].
+[:zh_CN] 首先，若 [$A] 和 [$B] 均为 [`memory_order::seq_cst] 操作，且 [$A]
+强发生早于 [$B]，则 [$A] 在 [$S] 中处于 [$B] 之前。
+
+[:en] Second, for every pair of atomic operations [$A] and [$B] on an object
+[$M], where [$A] is coherence-ordered before [$B], the following four conditions
+are required to be satisfied by [$S]:
+[:zh_CN] 然后，对于对象 [$M] 上的每一对原子性操作 [$A] 和 [$B]，其中 [$A]
+按一致性顺序早于 [$B]，则 [$S] 应当遵循以下四个条件：
+
+[list]
+[item]
+[:en] if [$A] and [$B] are both [`memory_order::seq_cst] operations, then [$A]
+precedes [$B] in [$S]; and
+[:zh_CN] 若 [$A] 和 [$B] 均为 [`memory_order::seq_cst] 操作，则 [$A] 在 [$S] 中
+先于 [$B]；并且
+
+[item]
+[:en] if [$A] is a [`memory_order::seq_cst] operation and [$B] happens before
+a [`memory_order::seq_cst] fence [$Y], then [$A] precedes [$Y] in [$S]; and
+[:zh_CN] 若 [$A] 为 [`memory_order::seq_cst] 操作，且 [$B] 发生早于某个
+[`memory_order::seq_cst] 屏障 [$Y]，则 [$A] 在 [$S] 中先于 [$Y]；并且
+
+[item]
+[:en] if a [`memory_order::seq_cst] fence [$X] happens before [$A] and [$B] is a
+[`memory_order::seq_cst] operation, then [$X] precedes [$B] in [$S]; and
+[:zh_CN] 若某个 [`memory_order::seq_cst] 屏障 [$X] 发生早于 [$A]，且 [$B] 为
+[`memory_order::seq_cst] 操作，则 [$X] 在 [$S] 中先于 [$B]；并且
+
+[item]
+[:en] if a [`memory_order::seq_cst] fence [$X] happens before [$A] and [$B]
+happens before a [`memory_order::seq_cst] fence [$Y], then [$X] precedes [$Y] in
+[$S].
+[:zh_CN] 若某个 [`memory_order::seq_cst] 屏障 [$X] 发生早于 [$A]，且 [$B] 发生
+早于某个 [`memory_order::seq_cst] 屏障 [$Y]，则 [$X] 在 [$S] 中先于 [$Y]。
+[list:end]
+
+[para]
 [enter:note]
-[:en] Although it is not explicitly required that [$S] include locks, it can
-always be extended to an order that does include lock and unlock operations,
-since the ordering between those is already included in the ["happens before]
-ordering.
-[:zh_CN] 虽然并未明确要求 [$S] 中包含锁定，但当然可以将这个顺序扩展使其确实包含
-锁定和解锁操作，这是因为这些操作之间的顺序已经包含到“发生早于”顺序之中了。
+[:en] This definition ensures that [$S] is consistent with the modification
+order of any atomic object [$M].
+[:zh_CN] 这条定义确保了 [$S] 和任何原子性对象 [$M] 的改动顺序相一致。
+
+[:en] It also ensures that a [`memory_order::seq_cst] load [$A] of [$M] gets its
+value either from the last modification of [$M] that precedes [$A] in [$S] or
+from some non-[`memory_order::seq_cst] modification of [$M] that does not happen
+before any modification of [$M] that precedes [$A] in [$S].
+[:zh_CN] 它还保证了对 [$M] 的 [`memory_order::seq_cst] 加载操作 [$A]，要么读取到
+在 [$S] 中先于 [$A] 的 [$M] 的最后一次改动操作的值，要么读取到并非发生早于在
+[$S] 中先于 [$A] 的 [$M] 的任何改动操作的对 [$M] 的非 [`memory_order::seq_cst]
+的改动操作的值。
 [exit:note]
 
 [para]
-[:en] For an atomic operation [$B] that reads the value of an atomic object
-[$M], if there is a [`memory_order::seq_cst] fence [$X] sequenced before [$B],
-then [$B] observes either the last [`memory_order::seq_cst] modification of [$M]
-preceding [$X] in the total order [$S] or a later modification of [$M] in its
-modification order.
-[:zh_CN] 对于读取原子性对象 [$M] 的值的原子性操作 [$B]，如果存在按顺序早于 [$B]
-的 [`memory_order::seq_cst] 的屏障 [$X]，则 [$B] 将要么观察到在全序 [$S] 中处于
-[$X] 之前的最后一次对 [$M] 的 [`memory_order::seq_cst] 改动，要么观察到 [$M] 的
-改动顺序中最后一次改动的效果。
+[enter:note]
+[:en] We do not require that [$S] be consistent with ["happens before]
+([#intro.races]).
+[:zh_CN] 并不要求 [$S] 与“发生早于”关系（[#intro.races]）保持一致。
 
-[para]
-[:en] For atomic operations [$A] and [$B] on an atomic object [$M], where [$A]
-modifies [$M] and [$B] takes its value, if there is a [`memory_order::seq_cst]
-fence [$X] such that [$A] is sequenced before [$X] and [$B] follows [$X] in
-[$S], then [$B] observes either the effects of [$A] or a later modification of
-[$M] in its modification order.
-[:zh_CN] 对于在原子性对象 [$M] 上的原子性操作 [$A] 和 [$B]，其中 [$A] 改动 [$M]
-而 [$B] 获取其值，如果存在 [`memory_order::seq_cst] 屏障 [$X] 使得 [$A] 按顺序
-早于 [$X] 且在 [$S] 中 [$B] 处于 [$X] 之后，则 [$B] 将要么观察到 [$A] 的效果，
-要么观察到 [$M] 的改动顺序中最后一次改动的效果。
+[:en] This allows more efficient implementation of [`memory_order::acquire] and
+[`memory_order::release] on some machine architectures.
+[:zh_CN] 这样就允许在某些机器架构上能够更高效地实现 [`memory_order::acquire] 和
+[`memory_order::release]。
 
-[para]
-[:en] For atomic operations [$A] and [$B] on an atomic object [$M], where [$A]
-modifies [$M] and [$B] takes its value, if there are [`memory_order::seq_cst]
-fences [$X] and [$Y] such that [$A] is sequenced before [$X], [$Y] is sequenced
-before [$B], and [$X] precedes [$Y] in [$S], then [$B] observes either the
-effects of [$A] or a later modification of [$M] in its modification order.
-[:zh_CN] 对于在原子性对象 [$M] 上的原子性操作 [$A] 和 [$B]，其中 [$A] 改动 [$M]
-而 [$B] 获取其值，如果存在 [`memory_order::seq_cst] 屏障 [$X] 和 [$Y]，使得 [$A]
-按顺序早于 [$X]，[$Y] 按顺序早于 [$B]，且在 [$S] 中 [$X] 处于 [$Y] 之后，则 [$B]
-将要么观察到 [$A] 的效果，要么观察到 [$M] 的改动顺序中最后一次改动的效果。
-
-[para]
-[:en] For atomic modifications [$A] and [$B] of an atomic object [$M], [$B]
-occurs later than [$A] in the modification order of [$M] if:
-[:zh_CN] 对于在原子性对象 [$M] 上的原子性操作 [$A] 和 [$B]，以下情况下使得在
-[$M] 的改动顺序中 [$B] 晚于 [$A] 发生：
-
-[list]
-[item]
-[:en] there is a [`memory_order::seq_cst] fence [$X] such that [$A] is sequenced
-before [$X], and [$X] precedes [$B] in [$S], or
-[:zh_CN] 存在 [`memory_order::seq_cst] 屏障 [$X] 使得 [$A] 按顺序早于 [$X]，并且
-在 [$S] 中 [$X] 处于 [$B] 之前，或者
-
-[item]
-[:en] there is a [`memory_order::seq_cst] fence [$Y] such that [$Y] is sequenced
-before [$B], and [$A] precedes [$Y] in [$S], or
-[:zh_CN] 存在 [`memory_order::seq_cst] 屏障 [$Y] 使得 [$Y] 按顺序早于 [$B]，并且
-在 [$S] 中 [$A] 处于 [$Y] 之前，或者
-
-[item]
-[:en] there are [`memory_order::seq_cst] fences [$X] and [$Y] such that [$A] is
-sequenced before [$X], [$Y] is sequenced before [$B], and [$X] precedes [$Y] in
-[$S].
-[:zh_CN] 存在 [`memory_order::seq_cst] 屏障 [$X] 和 [$Y]，使得 [$A] 按顺序早于
-[$X]，[$Y] 按顺序早于 [$B]，并且在 [$S] 中 [$X] 处于 [$Y] 之前。
-[list:end]
+[:en] It can produce surprising results when these are mixed with
+[`memory_order::seq_cst] accesses.
+[:zh_CN] 而当这些操作与 [`memory_order::seq_cst] 的访问混合使用时可能会导致出人
+意料的结果。
+[exit:note]
 
 [para]
 [enter:note]
 [:en] [`memory_order::seq_cst] ensures sequential consistency only for a program
-that is free of data races and uses exclusively [`memory_order::seq_cst]
+that is free of data races and uses exclusively [`memory_order::seq_cst] atomic
 operations.
 [:zh_CN] [`memory_order::seq_cst] 仅对没有数据竞争且完全使用
-[`memory_order::seq_cst] 操作的程序保证顺序一致性。
+[`memory_order::seq_cst] 原子性操作的程序保证顺序一致性。
 
 [:en] Any use of weaker ordering will invalidate this guarantee unless extreme
 care is used.
 [:zh_CN] 除非极端小心，否则任何对较弱顺序性的使用，都会使这项保证失效。
 
-[:en] In particular, [`memory_order::seq_cst] fences ensure a total order only
-for the fences themselves.
-[:zh_CN] 尤其是，[`memory_order::seq_cst] 屏障仅对这些屏障自身保证存在全序。
-
-[:en] Fences cannot, in general, be used to restore sequential consistency for
-atomic operations with weaker ordering specifications.
-[:zh_CN] 一般来说，使用屏障并不能使带有较弱顺序性规定的原子性操作之间恢复其顺序
-一致性。
+[:en] In many cases, [`memory_order::seq_cst] atomic operations are reorderable
+with respect to other atomic operations performed by the same thread.
+[:zh_CN] 许多情况下，[`memory_order::seq_cst] 原子性操作都可以针对由同一个线程所
+实施的其他原子性操作进行重排序。
 [exit:note]
 
 [para]
