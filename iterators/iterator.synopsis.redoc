@@ -5,6 +5,7 @@
 
 [%@header iterator]
 [%@library default_sentinel]
+[%@library unreachable_sentinel]
 [codeblock:synopsis [!:mark SeeBelow UnSpec] [!:var with-reference can-reference dereferenceable] ]
 #include <concept>
 
@@ -44,10 +45,10 @@ namespace std {
     // [:en] [#iterator.cust], customization points
     // [|:zh_CN] [#iterator.cust]，定制化点
     inline namespace [=UnSpec] {
-      // [#iterator.cust.move], [`iter_move]
+      // [#iterator.cust.move], [`ranges::iter_move]
       inline constexpr [=UnSpec] iter_move = [=UnSpec];
 
-      // [#iterator.cust.swap], [`iter_swap]
+      // [#iterator.cust.swap], [`ranges::iter_swap]
       inline constexpr [=UnSpec] iter_swap = [=UnSpec];
     }
   }
@@ -316,6 +317,11 @@ namespace std {
   template<class Iterator>
     constexpr reverse_iterator<Iterator> make_reverse_iterator(Iterator i);    
 
+  template<class Iterator1, class Iterator2>
+      requires (!SizedSentinel<Iterator1, Iterator2>)
+    inline constexpr bool disable_sized_sentinel<reverse_iterator<Iterator1>,
+                                                 reverse_iterator<Iterator2>> = true;
+
   // [:en] [#insert.iterators], insert iterators
   // [|:zh_CN] [#insert.iterators]，插入迭代器
   template<class Container> class back_insert_iterator;
@@ -334,6 +340,7 @@ namespace std {
   // [:en] [#move.iterators], move iterators and sentinels
   // [|:zh_CN] [#move.iterators]，移动迭代器和哨位
   template<class Iterator> class move_iterator;
+
   template<class Iterator1, class Iterator2>
     constexpr bool operator==(
       const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
@@ -360,6 +367,7 @@ namespace std {
   template<class Iterator>
     constexpr move_iterator<Iterator> operator+(
       typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& x);
+
   template<class Iterator>
     constexpr move_iterator<Iterator> make_move_iterator(Iterator i);
 
@@ -447,8 +455,6 @@ namespace std {
   template<class C> constexpr auto crbegin(const C& c) -> decltype(std::rbegin(c));
   template<class C> constexpr auto crend(const C& c) -> decltype(std::rend(c));
 
-  // [:en] [#iterator.container], container access
-  // [|:zh_CN] [#iterator.container]，容器访问
   template<class C> constexpr auto size(const C& c) -> decltype(c.size());
   template<class T, size_t N> constexpr size_t size(const T (&array)[N]) noexcept;
   template<class C> [[nodiscard]] constexpr auto empty(const C& c) -> decltype(c.empty());

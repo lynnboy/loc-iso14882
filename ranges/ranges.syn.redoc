@@ -5,7 +5,7 @@
 
 [%@library <ranges>]
 [codeblock:synopsis [!:mark UnSpec SeeBelow]
-    [!:var fowarding-range tiny-range weakly-equality-comparable-with]]
+    [!:var forwarding-range tiny-range weakly-equality-comparable-with]]
 #include <initializer_list>
 #include <iterator>
 
@@ -22,8 +22,6 @@ namespace std::ranges {
     inline constexpr [=UnSpec] crbegin = [=UnSpec];
     inline constexpr [=UnSpec] crend = [=UnSpec];
 
-    // [:en] [#range.prim], range primitives
-    // [|:zh_CN] [#range.prim]，范围原语
     inline constexpr [=UnSpec] size = [=UnSpec];
     inline constexpr [=UnSpec] empty = [=UnSpec];
     inline constexpr [=UnSpec] data = [=UnSpec];
@@ -38,7 +36,7 @@ namespace std::ranges {
   template<class T>
     using sentinel_t = decltype(ranges::end(declval<T&>()));
 
-  template<[*fowarding-range] R>
+  template<[*forwarding-range] R>
     using safe_iterator_t = iterator_t<R>;
 
   template<class T>
@@ -62,8 +60,8 @@ namespace std::ranges {
   template<class T>
     concept View = [=SeeBelow];
 
-  // [:en] [#range.refinements], common range refinements
-  // [|:zh_CN] [#range.refinements]，一般的范围精炼概念
+  // [:en] [#range.refinements], other range refinements
+  // [|:zh_CN] [#range.refinements]，其他范围精炼概念
   template<class R, class T>
     concept OutputRange = [=SeeBelow];
 
@@ -91,7 +89,7 @@ namespace std::ranges {
   // [:en] [#view.interface], class template [`view_interface]
   // [|:zh_CN] [#view.interface]，类模板 [`view_interface]
   template<class D>
-    requires is_class_v<D>
+    requires is_class_v<D> && Same<D, remove_cv_t<D>>
   class view_interface;
 
   // [:en] [#range.subrange], sub-ranges
@@ -105,6 +103,33 @@ namespace std::ranges {
   template<[*forwarding-range] R>
     using safe_subrange_t = subrange<iterator_t<R>>;
 
+  // [:en] [#range.empty], empty view
+  // [|:zh_CN] [#range.empty]，空视图
+  template<class T>
+    requires is_object_v<T>
+  class empty_view;
+
+  namespace view {
+    template<class T>
+      inline constexpr empty_view<T> empty{};
+  }
+
+  // [:en] [#range.single], single view
+  // [|:zh_CN] [#range.single]，单对象视图
+  template<CopyConstructible T>
+    requires is_object_v<T>
+  class single_view;
+
+  namespace view { inline constexpr [=UnSpec] single = [=UnSpec]; }
+
+  // [:en] [#range.iota], iota view
+  // [|:zh_CN] [#range.iota]，iota 视图
+  template<WeaklyIncrementable W, Semiregular Bound = unreachable_sentinel_t>
+    requires [*weakly-equality-comparable-with]<W, Bound>
+  class iota_view;
+
+  namespace view { inline constexpr [=UnSpec] iota = [=UnSpec]; }
+
   // [:en] [#range.all], all view
   // [|:zh_CN] [#range.all]，全视图
   namespace view { inline constexpr [=UnSpec] all = [=UnSpec]; }
@@ -115,7 +140,7 @@ namespace std::ranges {
   // [:en] [#range.filter], filter view
   // [|:zh_CN] [#range.filter]，过滤视图
   template<InputRange V, IndirectUnaryPredicate<iterator_t<V>> Pred>
-    requires View<V>
+    requires View<V> && is_object_v<Pred>
   class filter_view;
 
   namespace view { inline constexpr [=UnSpec] filter = [=UnSpec]; }
@@ -128,14 +153,6 @@ namespace std::ranges {
   class transform_view;
 
   namespace view { inline constexpr [=UnSpec] transform = [=UnSpec]; }
-
-  // [:en] [#range.iota], iota view
-  // [|:zh_CN] [#range.iota]，iota 视图
-  template<WeaklyIncrementable W, Semiregular Bound = unreachable_sentinel_t>
-    requires [*weakly-equality-comparable-with]<W, Bound>
-  class iota_view;
-
-  namespace view { inline constexpr [=UnSpec] iota = [=UnSpec]; }
 
   // [:en] [#range.take], take view
   // [|:zh_CN] [#range.take]，采取视图
@@ -152,25 +169,6 @@ namespace std::ranges {
   class join_view;
 
   namespace view { inline constexpr [=UnSpec] join = [=UnSpec]; }
-
-  // [:en] [#range.empty], empty view
-  // [|:zh_CN] [#range.empty]，空视图
-  template<class T>
-    requires is_object_v<T>
-  class empty_view;
-
-  namespace view {
-    template<class T>
-      inline constexpr empty_view<T> empty {};
-  }
-
-  // [:en] [#range.single], single view
-  // [|:zh_CN] [#range.single]，单对象视图
-  template<CopyConstructible T>
-    requires is_object_v<T>
-  class single_view;
-
-  namespace view { inline constexpr [=UnSpec] single = [=UnSpec]; }
 
   // [:en] [#range.split], split view
   // [|:zh_CN] [#range.split]，分割视图
