@@ -118,10 +118,10 @@ complete object                         完整对象
 complete type                           完整类型
 compliance                              遵从性
 composite pointer type                  组合指针类型
-compound assignment expression          组合赋值表达式
-compound assignment operator            组合赋值运算符
-compound statement                      组合语句
-compound type                           组合类型
+compound assignment expression          复合赋值表达式
+compound assignment operator            复合赋值运算符
+compound statement                      复合语句
+compound type                           复合类型
 concept                                 概念
 concurrent                              并发的
 concurrency                             并发性
@@ -284,7 +284,7 @@ floating-point                          浮点
 floating-point promotion                浮点提升
 fold expression                         折叠表达式
 for statement                           for 语句
-forward declaration                     前向声明
+forward declaration                     前置声明式
 forward progress                        向前进展，进展
 fraction                                小数，分数
 free store                              自由存储
@@ -402,7 +402,7 @@ linkage specification                   连接说明
 list                                    列表
 list-initialization                     列表初始化
 literal                                 字面量
-literal type                            字面量类型
+literal type                            字面类型
 local                                   局部，局部的
 local class                             局部类
 local lambda expression                 局部 lambda 表达式
