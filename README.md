@@ -603,7 +603,7 @@ sequential consistency                  顺序一致性
 shift operator                          移位运算符
 side effect                             副作用
 signal                                  信号
-signal handler                          信号处理器
+signal handler                          信号处理函数
 signature                               签名
 signed                                  有符号
 signed integer type                     有符号整数类型
