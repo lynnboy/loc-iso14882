@@ -18,20 +18,24 @@
 
 [para]
 [:en]
-No translation unit shall contain more than one definition of any variable,
-function, class type, enumeration type, or template.
+A variable, function, class type, enumeration type, or template shall not be
+defined where a prior definition is necessarily reachable ([#module.reach]); no
+diagnostic is required if the prior declaration is in another translation unit.
 [:zh_CN]
-任何翻译单元中所包含的任意一个变量、函数、类类型、枚举类型或者模板的定义式不能
-多于一个。
+当某个变量、函数、类类型、枚举类型或者模板的一个之前的定义式必需可达时
+（[#module.reach]），不能对其进行定义；若之前的声明式处于其他翻译单元，则无须
+诊断。
 
 [para]
 [:en]
 [%expression[!potentially evaluated]]
-An expression is [+potentially evaluated] unless it is an unevaluated operand
-([#expr.prop]) or a subexpression thereof.
+An expression or conversion is [+potentially evaluated] unless it is an
+unevaluated operand ([#expr.prop]), a subexpression thereof, or a conversion in
+an initialization or conversion sequence in such a context.
 [:zh_CN]
 [%表达式[!潜在求值的～]]
-表达式是[+潜在求值的]，除非它是免求值操作数（[#expr.prop]）或其子表达式。
+表达式或转换是[+潜在求值的]，除非它是免求值操作数（[#expr.prop]）或其子表达式，
+或者这种语境中的初始化或转换序列之中的转换。
 
 [:en]
 The set of [+potential results] of an expression [`e] is defined as follows:
@@ -55,19 +59,28 @@ contains the potential results of that operand.
 
 [item]
 [:en]
-If [`e] is a class member access expression ([#expr.ref]), the set contains the
-potential results of the object expression.
+If [`e] is a class member access expression ([#expr.ref]) of the form
+[`e1 . [`:opt template] e2] naming a non-static data member, the set contains
+the potential results of [`e1].
 [:zh_CN]
-若 [`e] 是类成员访问表达式（[#expr.ref]），则该集合包含其对象表达式的潜在结果。
+若 [`e] 是形式为“[`e1 . [`:opt template] e2]”的指名了某个非静态数据成员的类成员
+访问表达式（[#expr.ref]），则该集合包含 [`e1] 的潜在结果。
 
 [item]
 [:en]
-If [`e] is a pointer-to-member expression ([#expr.mptr.oper]) whose second
-operand is a constant expression, the set contains the potential results of the
-object expression.
+If [`e] is a class member access expression naming a static data member, the set
+contains the [~id-expression] designating the data member.
 [:zh_CN]
-若 [`e] 是第二个操作数为常量的成员指针表达式（[#expr.mptr.oper]），则该集合包含
-其对象表达式的潜在结果。
+若 [`e] 是指名了某个静态数据成员的类成员访问表达式，则该集合包含代表该数据成员的
+[~标识表达式]。
+
+[item]
+[:en]
+If [`e] is a pointer-to-member expression ([#expr.mptr.oper]) of the form
+[`e1 .* e2], the set contains the potential results of [`e1].
+[:zh_CN]
+若 [`e] 是形式为“[`e1 .* e2]”的成员指针表达式（[#expr.mptr.oper]），则该集合包含
+[`e1] 的潜在结果。
 
 [item]
 [:en]
@@ -128,79 +141,97 @@ int n = b ? (1, S::x)           // [:en] [`S::x] is not odr-used here
 
 [para]
 [:en]
-[%function[!named by an expression]]
-A function is [+named by an expression] as follows:
+A function is [+named by[%function[!named by expression or conversion]]]
+an expression or conversion as follows:
 [:zh_CN]
-[%函数[!被表达式指名]]
-以下情况下函数[+被表达式指名]：
+以下情况下函数[+被表达式或转换指名[%函数[!被表达式或转换指名]]]：
 
 [list]
 [item]
 [:en]
-A function whose name appears in an expression is named by that expression if it
-is the unique lookup result or the selected member of a set of overloaded
-functions ([#basic.lookup], [#over.match], [#over.over]), unless it is a pure
-virtual function and either its name is not explicitly qualified or the
-expression forms a pointer to member ([#expr.unary.op]).
+A function is named by an expression or conversion if it is the unique result of
+a name lookup or the selected member of a set of overloaded functions
+([#basic.lookup], [#over.match], [#over.over]) in an overload resolution
+performed as part of forming that expression or conversion, unless it is a pure
+virtual function and either the expression is not an [~id-expression] naming the
+function with an explicitly qualified name or the expression forms a pointer to
+member ([#expr.unary.op]).
 [:zh_CN]
-名字出现于某表达式中的函数，如果它是唯一的查找结果或者重载函数集合中所选择的成员
-（[#basic.lookup]，[#over.match]，[#over.over]），则它被该表达式所指名，除非它是
-纯虚函数并且要么其名字并未被明确限定要么表达式构成了成员指针（[#expr.unary.op]）
-。
+如果为构成某个表达式或转换的一部分所进行的重载决议之中，某个函数是某次名字查找的
+唯一结果，或者是某个重载函数集合中所选中的成员（[#basic.lookup]，[#over.match]，
+[#over.over]），则这个函数被该表达式或转换所指名，除非它是纯虚函数并且要么该
+表达式并非一个带有显式限定名的指名该函数的[~标识表达式]，要么该表达式构成了
+成员指针（[#expr.unary.op]）。
 
 [enter:note]
 [:en]
 This covers taking the address of functions ([#conv.func], [#expr.unary.op]),
 calls to named functions ([#expr.call]), operator overloading ([#over]),
-user-defined conversions ([#class.conv.fct]), allocation functions for placement
+user-defined conversions ([#class.conv.fct]), allocation functions for
 [~new-expression]s ([#expr.new]), as well as non-default initialization
 ([#dcl.init]).
 [:zh_CN]
 这条也覆盖了获取函数的地址（[#conv.func]，[#expr.unary.op]），对具名函数
 （[#expr.call]），运算符重载（[#over]），用户定义的转换（[#class.conv.fct]），
-放置式 [~new-表达式]的分配函数（[#expr.new]）的调用，以及非默认初始化
-（[#dcl.init]）等情况。
+[~new-表达式]的分配函数（[#expr.new]）的调用，以及非默认初始化（[#dcl.init]）等
+情况。
 
 [:en]
 A constructor selected to copy or move an object of class type is considered to
-be named by an expression even if the call is actually elided by the
-implementation ([#class.copy.elision]).
+be named by an expression or conversion even if the call is actually elided by
+the implementation ([#class.copy.elision]).
 [:zh_CN]
 选择用于复制或移动类类型的对象的构造函数，即便其调用实际上被实现所消除
-（[#class.copy.elision]），也认为它是被表达式所指名的。
+（[#class.copy.elision]），也认为它是被表达式或转换所指名的。
 [exit:note]
 
 [item]
 [:en]
-An allocation or deallocation function for a class is named by a
-[~new-expression] as specified in [#expr.new] and [#class.free].
+A deallocation function for a class is named by a [~new-expression] if it is the
+single matching deallocation function for the allocation function selected by
+overload resolution, as specified in [#expr.new].
 [:zh_CN]
-根据 [#expr.new] 和 [#class.free] 所述由 [~new-表达式]指名类的分配和回收函数。
+如果某个类的回收函数，根据 [#expr.new] 所述，对于某个 [~new-表达式]是唯一与由
+重载决议所选中的分配函数相匹配的回收函数，则它被该表达式指名。
 
 [item]
 [:en]
-A deallocation function for a class is named by a delete expression as specified
-in [#expr.delete] and [#class.free].
+A deallocation function for a class is named by a [~delete-表达式] if it is the
+selected usual deallocation function as specified in [#expr.delete] and
+[#class.free].
 [:zh_CN]
-根据 [#expr.delete] 和 [#class.free] 所述由 delete 表达式指名类的回收函数。
+如果某个类的回收函数，根据 [#expr.delete] 和 [#class.free] 所述，对于某个
+[~delete-表达式]是所选中的常规回收函数，则它被该表达式指名。
 [list:end]
 
 [para]
 [:en]
-A variable [`x] whose name appears as a potentially-evaluated expression [`ex]
-is [+odr-used[%odr-use]] by [`ex] unless applying the lvalue-to-rvalue
-conversion ([#conv.lval]) to [`x] yields a constant expression ([#expr.const])
-that does not invoke a function other than a trivial special member function
-([#special]) and, if [`x] is an object, [`ex] is an element of the set of
-potential results of an expression [`e], where either the lvalue-to-rvalue
-conversion ([#conv.lval]) is applied to [`e], or [`e] is a discarded-value
-expression ([#expr.prop]).
+A variable [`x] whose name appears as a potentially-evaluated expression [`e] is
+[+odr-used[%odr-use]] by [`e] unless
 [:zh_CN]
-变量 [`x] 当其名字用作潜在求值表达式 [`ex] 时，即被 [`ex] 所 [+ODR 式使用]，但
-不包括以下情况：对 [`x] 实施左值向右值转换（[#conv.lval]）后产生一个不调用除了
-平凡特殊成员函数（[#special]）以外的函数的常量表达式（[#expr.const]），以及当
-[`x] 是对象时，[`ex] 为某个表达式 [`e] 的潜在结果集合的元素，而要么对 [`e] 实施
-了左值向右值转换（[#conv.lval]），要么 [`e] 是个弃值表达式（[#expr.prop]）。
+变量 [`x] 当其名字用作潜在求值表达式 [`e] 时，即被 [`e] 所 [+ODR 式使用]，但
+不包括以下情况：
+
+[list]
+[item]
+[:en@~] [`x] is a reference that is usable in constant expressions
+([#expr.const]), or
+[:zh_CN@~] [`x] 是个可用于常量表达式之中的引用（[#expr.const]），或
+[item]
+[:en@~] [`x] is a variable of non-reference type that is usable in constant
+expressions and has no mutable subobjects, and [`e] is an element of the set of
+potential results of an expression of non-volatile-qualified non-class type to
+which the lvalue-to-rvalue conversion ([#conv.lval]) is applied, or
+[:zh_CN@~] [`x] 是个非引用类型的可用于常量表达式之中且不包含可改动子对象的变量，
+并且 [`e] 是某个未被 volatile 限定的非类类型表达式并实施了左值向右值转换
+（[#conv.lval]）后的潜在结果集合的某个元素，或者
+[item]
+[:en@~] [`x] is a variable of non-reference type, and [`e] is an element of the
+set of potential results of a discarded-value expression ([#expr.prop]) to which
+the lvalue-to-rvalue conversion is not applied.
+[:zh_CN@~] [`x] 是个非引用类型的变量，并且 [`e] 是某个弃值表达式（[#expr.prop]）
+并实施了左值向右值转换后的潜在结果集合的某个元素。
+[list:end]
 
 [para]
 [:en]
@@ -225,9 +256,10 @@ A virtual member function is odr-used if it is not pure.
 若虚成员函数不是纯虚函数，它即被 ODR 式使用。
 
 [:en]
-A function is odr-used if it is named by a potentially-evaluated expression.
+A function is odr-used if it is named by a potentially-evaluated expression or
+conversion.
 [:zh_CN]
-若函数被潜在求值表达式所指名，它即被 ODR 式使用。
+若函数被潜在求值表达式或转换所指名，它即被 ODR 式使用。
 
 [:en]
 A non-placement allocation or deallocation function for a class is odr-used by
@@ -283,11 +315,11 @@ A local entity ([#basic]) is [+odr-usable] in a declarative region
 [list]
 [item]
 [:en]
-the local entity is either not [`*this], or an enclosing class or non-lambda
+either the local entity is not [`*this], or an enclosing class or non-lambda
 function parameter scope exists and, if the innermost such scope is a function
 parameter scope, it corresponds to a non-static member function, and
 [:zh_CN]
-该局部实体要么不是 [`*this]，要么存在某个外围的类或非 lambda 函数形参作用域，
+要么该局部实体不是 [`*this]，要么存在某个外围的类或非 lambda 函数形参作用域，
 以及当最内层的这种作用域是一个函数形参作用域时它对应于某个非静态成员函数，以及
 
 [item]
@@ -311,10 +343,12 @@ the intervening declarative region is a block scope, or
 [:en@~]
 the intervening declarative region is the function parameter scope of a
 [~lambda-expression] that has a [~simple-capture] naming the entity or has a
-[~capture-default].
+[~capture-default], and the block scope of the [~lambda-expression] is also an
+intervening declarative region.
 [:zh_CN@~]
-该介入的声明区是某个[~lambda-表达式]的函数形参声明区，且其带有指名该实体的
-[~简单捕获符]或者带有[~默认捕获符]。
+该介入的声明区是某个[~lambda-表达式]的函数形参声明区，其带有指名该实体的
+[~简单捕获符]或者带有[~默认捕获符]，并且该 [~lambda-表达式]的块作用域同样是一个
+介入的声明区。
 [list:end]
 [list:end]
 
@@ -327,14 +361,18 @@ odr-usable, the program is ill-formed.
 [enter:example]
 [codeblock]
 void f(int n) {
-  [] { n = 1; };                // [:en] error, [`n] is not odr-usable due to intervening lambda-expression
-                                // [|:zh_CN] 错误，[`n] 由于介入的 lambda-表达式而不可 ODR 式使用
+  [] { n = 1; };                // [:en] error: [`n] is not odr-usable due to intervening lambda-expression
+                                // [|:zh_CN] 错误：[`n] 由于介入的 lambda-表达式而不可被 ODR 式使用
   struct A {
-    void f() { n = 2; }         // [:en] error, [`n] is not odr-usable due to intervening function definition scope
-                                // [|:zh_CN] 错误，[`n] 由于介入的函数定义式作用域而不可 ODR 式使用
+    void f() { n = 2; }         // [:en] error: [`n] is not odr-usable due to intervening function definition scope
+                                // [|:zh_CN] 错误：[`n] 由于介入的函数定义式作用域而不可被 ODR 式使用
   };
-  void g(int = n);              // [:en] error, [`n] is not odr-usable due to intervening function parameter scope
-                                // [|:zh_CN] 错误，[`n] 由于介入的函数形参作用域而不可 ODR 式使用
+  void g(int = n);              // [:en] error: [`n] is not odr-usable due to intervening function parameter scope
+                                // [|:zh_CN] 错误：[`n] 由于介入的函数形参作用域而不可被 ODR 式使用
+  [=](int k = n) {};            // [:en] error: [`n] is not odr-usable due to being
+                                // [|:zh_CN] 错误：[`n] 由于处于 [~lambda-表达式]的
+                                // [:en@~] outside the block scope of the [~lambda-expression]
+                                // [|:zh_CN@~] 块作用域之外而不可被 ODR 式使用
   [&] { [n]{ return n; }; };    // OK
 }
 [codeblock:end]
@@ -347,7 +385,7 @@ or variable that is odr-used in that program outside of a discarded statement
 ([#stmt.if]); no diagnostic required.
 [:zh_CN]
 每个程序中所包含的被该程序所 ODR 式使用的任何非内联函数或变量在弃用语句
-（[#stmt.if]）之外进行的定义应该恰好唯一；无须诊断。
+（[#stmt.if]）之外的定义式应该恰好唯一；无须诊断。
 
 [:en]
 The definition can appear explicitly in the program, it can be found in the
@@ -355,24 +393,44 @@ standard or a user-defined library, or (when appropriate) it is implicitly
 defined (see [#class.default.ctor], [#class.copy.ctor], [#class.dtor], and
 [#class.copy.assign]).
 [:zh_CN]
-该定义可以明确出现在程序中，可以在标准或用户定义程序库中找到，或（适当地）被隐式
-定义（见 [#class.default.ctor]，[#class.copy.ctor]，[#class.dtor]，和
+该定义式可以明确出现在程序中，可以在标准或用户定义程序库中找到，或（适当地）被
+隐式定义（见 [#class.default.ctor]，[#class.copy.ctor]，[#class.dtor]，和
 [#class.copy.assign]）。
 
 [:en]
-An inline function or variable shall be defined in every translation unit in
-which it is odr-used outside of a discarded statement.
+A definition of an inline function or variable shall be reachable in every
+translation unit in which it is odr-used outside of a discarded statement.
 [:zh_CN]
-内联的函数或变量应该在每个于弃用语句之外 ODR 式使用它的翻译单元中进行定义。
+内联的函数或变量的一个定义式，应该在每个于弃用语句之外 ODR 式使用它的翻译单元中
+可达。
+
+[enter:example]
+[codeblock]
+auto f() {
+  struct A {};
+  return A{};
+}
+decltype(f()) g();
+auto x = g();
+[codeblock:end]
+
+[:en]
+A program containing this translation unit is ill-formed because [`g]
+is odr-used but not defined, and cannot be defined in any other translation unit
+because the local class [`A] cannot be named outside this translation unit.
+[:zh_CN]
+包含这个翻译单元的程序非良构，因为 [`g] 被 ODR 式使用但并未定义，而且由于局部类
+[`A] 无法在这个翻译单元之外被指名，导致也无法在任何其他翻译单元中予以定义。
+[exit:example]
 
 [para]
 [:en]
 [%type[!incomplete]]
-Exactly one definition of a class is required in a translation unit if the class
-is used in a way that requires the class type to be complete.
+A definition of a class is required to be reachable in every context in which
+the class is used in a way that requires the class type to be complete.
 [:zh_CN]
 [%类型[!不完整～]]
-当对某个类的使用方式需要其类类型完整时，在翻译单元中需要该类的恰好一个定义式。
+对某个类的使用方式需要其类类型完整的每个语境中，都要求该类的一个定义式可达。
 
 [enter:example]
 [:en]
@@ -509,16 +567,26 @@ template ([#temp]), non-static function template ([#temp.fct]), concept
 ([#temp.concept]), static data member of a class template ([#temp.static]),
 member function of a class template ([#temp.mem.func]), or template
 specialization for which some template parameters are not specified
-([#temp.spec], [#temp.class.spec]) in a program provided that each definition
-appears in a different translation unit, and provided the definitions satisfy
-the following requirements.
+([#temp.spec], [#temp.class.spec]) in a program provided that no prior
+definition is necessarily reachable ([#module.reach]) at the point where a
+definition appears, and provided the definitions satisfy the following
+requirements.
 [:zh_CN]
 类类型（[#class]），枚举类型（[#dcl.enum]），具有外部连接的内联函数
 （[#dcl.inline]），具有外部链接的内联变量（[#dcl.inline]），类模板（[#temp]），
 非静态函数模板（[#temp.fct]），概念（[#temp.concept]），类模板的静态数据成员
 （[#temp.static]），类模板的成员函数（[#temp.mem.func]），或者未指明某些模板形参
 的模板特例（[#temp.spec]，[#temp.class.spec]），在程序中可以有多个定义式，只要
-这些定义式出现于不同翻译单元中，并且这些定义式满足如下规定。
+出现这些定义式之处不存在必需可达的之前的定义式（[#module.reach]），并且这些
+定义式满足如下规定。
+
+[:en]
+There shall not be more than one definition of an entity that is attached to
+a named module ([#module.unit]); no diagnostic is required unless a prior
+definition is reachable at a point where a later definition appears.
+[:zh_CN]
+附属某个具名模块（[#module.unit]）的实体不能有多于一个定义式；除非在某个之前的
+定义式可达之处出现了一个新的定义式，否则无须诊断。
 
 [:en]
 Given such an entity named [`D] defined in more than one translation unit, then

@@ -67,8 +67,39 @@ in the calling thread of execution.
 
 [para]
 [:en] The invocations of element access functions in parallel algorithms invoked
+with an execution policy object of type [`execution::unsequenced_policy] are
+permitted to execute in an unordered fashion in the calling thread of execution,
+unsequenced with respect to one another in the calling thread of execution.
+[:zh_CN] 在以 [`execution::unsequenced_policy] 类型的执行策略对象调用的并行算法
+中，对成员访问函数的调用，允许在调用方执行线程之中以无序的方式执行，并相在
+调用方执行线程中互为无顺序的。
+
+[enter:note]
+[:en] This means that multiple function object invocations may be interleaved on
+a single thread of execution, which overrides the usual guarantee from
+[#intro.execution] that function executions do not overlap with one another.
+[:zh_CN] 这意味着单个执行线程中的多次函数对象的调用也可以交错进行，这一点取代了
+[#intro.execution] 中关于函数执行不能互相交叠的一般性保证。
+[exit:note]
+
+[:en] The behavior of a program is undefined if it invokes
+a vectorization-unsafe standard library function from user code called from
+a [`execution::unsequenced_policy] algorithm.
+[:zh_CN] 如果在某个 [`execution::unsequenced_policy] 算法所调用的用户代码中调用
+了向量化不安全的标准程序库函数，则程序的行为是未定义的。
+
+[enter:note]
+[:en] Because [`execution::unsequenced_policy] allows the execution of element
+access functions to be interleaved on a single thread of execution, blocking
+synchronization, including the use of mutexes, risks deadlock.
+[:zh_CN] 由于 [`execution::unsequenced_policy] 允许单个执行线程中对元素访问函数
+的执行交错进行，因此有阻塞的同步操作（包括使用互斥体）存在死锁风险。
+[exit:note]
+
+[para]
+[:en] The invocations of element access functions in parallel algorithms invoked
 with an execution policy object of type [`execution::parallel_policy] are
-permitted to execute in either the invoking thread of execution or in a thread
+permitted to execute either in the invoking thread of execution or in a thread
 of execution implicitly created by the library to support parallel algorithm
 execution.
 [:zh_CN] 在以 [`execution::parallel_policy] 类型的执行策略对象调用的并行算法中，
@@ -149,10 +180,10 @@ incremented correctly.
 
 [para]
 [:en] The invocations of element access functions in parallel algorithms invoked
-with an execution policy of type [`execution::parallel_unsequenced_policy] are
-permitted to execute in an unordered fashion in unspecified threads of
-execution, and unsequenced with respect to one another within each thread of
-execution.
+with an execution policy object of type
+[`execution::parallel_unsequenced_policy] are permitted to execute in
+an unordered fashion in unspecified threads of execution, and unsequenced with
+respect to one another within each thread of execution.
 [:zh_CN] 在以 [`execution::parallel_unsequenced_policy] 类型的执行策略对象调用的
 并行算法中，对成员访问函数的调用，允许在一组未指明的执行线程中以无序方式执行，
 并且在每个执行线程之内互相之间也是无顺序的。
@@ -166,70 +197,34 @@ weakly parallel forward progress guarantees.
 [enter:note]
 [:en] This means that multiple function object invocations may be interleaved on
 a single thread of execution, which overrides the usual guarantee from
-[#intro.execution] that function executions do not interleave with one another.
+[#intro.execution] that function executions do not overlap with one another.
 [:zh_CN] 这意味着对函数对象的对此调用可能在单个执行线程之中被交错执行，而这推翻
-了 [#intro.execution] 中的函数执行互相之间不会交错执行的常规保证。
+了 [#intro.execution] 中的函数执行互相之间不会发生交叠的常规保证。
 [exit:note]
 
-[:en] Since [`execution::parallel_unsequenced_policy] allows the execution of
+[:en] The behavior of a program is undefined if it invokes
+a vectorization-unsafe standard library function from user code called from
+a [`execution::parallel_unsequenced_policy] algorithm.
+[:zh_CN] 如果在某个 [`execution::parallel_unsequenced_policy] 算法所调用的
+用户代码中调用了向量化不安全的标准程序库函数，则程序的行为是未定义的。
+
+[enter:note]
+[:en] Because [`execution::parallel_unsequenced_policy] allows the execution of
 element access functions to be interleaved on a single thread of execution,
 blocking synchronization, including the use of mutexes, risks deadlock.
 [:zh_CN] 由于 [`execution::parallel_unsequenced_policy] 允许对成员访问函数的执行
 在单个执行线程中交错执行，因此有阻塞的同步操作，包括使用互斥体，具有死锁的风险。
-
-[:en] Thus, the synchronization with [`execution::parallel_unsequenced_policy]
-is restricted as follows:
-[:zh_CN] 从而，对 [`execution::parallel_unsequenced_policy] 下的同步操作有如下
-限制条件：
-
-[:en] A standard library function is [+vectorization-unsafe] if it is specified
-to synchronize with another function invocation, or another function invocation
-is specified to synchronize with it, and if it is not a memory allocation or
-deallocation function.
-[:zh_CN] 如果某个标准程序库函数被指定为同步于另一个函数调用，或者另一个函数调用
-被指定为同步于它，且它并不是内存分配或回收函数，则它是[+向量化不安全]的函数。
-
-[:en] Vectorization-unsafe standard library functions may not be invoked by user
-code called from [`execution::parallel_unsequenced_policy] algorithms.
-[:zh_CN] 非向量化安全的标准程序库函数不能从
-[`execution::parallel_unsequenced_policy] 算法所调用的用户代码中进行调用。
-
-[enter:note]
-[:en] Implementations must ensure that internal synchronization inside standard
-library functions does not prevent forward progress when those functions are
-executed by threads of execution with weakly parallel forward progress
-guarantees.
-[:zh_CN] 各实现必须确保标准程序库函数之内的内部同步操作，在这些函数被具有弱并行
-向前进展保证的执行线程所执行时，不会妨碍其向前进展。
 [exit:note]
 
-[enter:example]
-[codeblock]
-int x = 0;
-std::mutex m;
-int a[] = {1,2};
-std::for_each(std::execution::par_unseq, std::begin(a), std::end(a), [&](int) {
-  std::lock_guard<mutex> guard(m); // [:en] incorrect: [`lock_guard] constructor calls [`m.lock()]
-                                   // [|:zh_CN] 不正确：[`lock_guard] 的构造函数调用了 [`m.lock()]
-  ++x;
-});
-[codeblock:end]
-
-[:en] The above program may result in two consecutive calls to [`m.lock()] on
-the same thread of execution (which may deadlock), because the applications of
-the function object are not guaranteed to run on different threads of execution.
-[:zh_CN] 上面的程序可能导致在同一个执行线程上对 [`m.lock()] 的两次连续调用（这
-将会死锁），这是因为对函数对象的运用并不保证会在不同的执行线程上运行。
-[exit:example]
-
+[para]
 [enter:note]
-[:en] The semantics of the [`execution::parallel_policy] or the
-[`execution::parallel_unsequenced_policy] invocation allow the implementation to
-fall back to sequential execution if the system cannot parallelize an algorithm
-invocation due to lack of resources.
-[:zh_CN] [`execution::parallel_policy] 或
-[`execution::parallel_unsequenced_policy] 下调用的语义，允许实现在系统由于缺乏
-资源而无法并行化算法的执行时回退为顺序执行。
+[:en] The semantics of invocation with [`execution::unsequenced_policy],
+[`execution::parallel_policy], or [`execution::parallel_unsequenced_policy]
+allow the implementation to fall back to sequential execution if the system
+cannot parallelize an algorithm invocation, e.g., due to lack of resources.
+[:zh_CN] 以 [`execution::unsequenced_policy]、[`execution::parallel_policy] 或
+[`execution::parallel_unsequenced_policy] 进行调用的语义，允许实现在系统（比如
+由于缺乏资源而）无法将算法的执行并行化时回退为顺序执行。
 [exit:note]
 
 [para]
