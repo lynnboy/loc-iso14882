@@ -21,9 +21,47 @@ A translation unit consists of a sequence of declarations.
 
 [syntax]
 [rule translation-unit [:zh_CN] 翻译单元 ]
-    [| [~:opt declaration-seq] ]
+    [| [~:opt top-level-declaration-seq] ]
+    [| [~:opt global-module-fragment] module-declaration [~:opt top-level-declaration-seq]
+        [~:opt private-module-fragment] ]
+[rule:end]
+
+[rule private-module-fragment [:zh_CN] 私有模块分段 ]
+    [| [`module] [`:] [`private] [`;] [~:opt top-level-declaration-seq] ]
+[rule:end]
+
+[rule top-level-declaration-seq [:zh_CN] 顶层声明式序列 ]
+    [| top-level-declaration ]
+    [| top-level-declaration-seq top-level-declaration ]
+[rule:end]
+
+[rule top-level-declaration [:zh_CN] 顶层声明式 ]
+    [| module-import-declaration ]
+    [| declaration ]
 [rule:end]
 [syntax:end]
+
+[para]
+[:en]
+A [~private-module-fragment] shall appear only in a primary module interface
+unit ([#module.unit]).
+[:zh_CN]
+[~私有模块分段]只能出现在主模块接口单元（[#module.unit]）中。
+
+[:en]
+A module unit with a [~private-module-fragment] shall be the only module unit
+of its module; no diagnostic is required.
+[:zh_CN]
+带有[~私有模块分段]的模块单元应当是其模块的唯一模块单元；无须诊断。
+
+[para]
+[:en]
+A token sequence beginning with [`:opt export] [`module] or
+[`:opt export] [`import] and not immediately followed by [`::] is never
+interpreted as the [~declaration] of a [~top-level-declaration].
+[:zh_CN]
+以“[`:opt export] [`module]”或“[`:opt export] [`import]”开头且后面未紧跟 [`::]
+的记号序列，不会被解释为[~顶层声明式]的[~声明式]。
 
 [para]
 [:en]
@@ -45,6 +83,15 @@ scopes of the same translation unit.
 [:zh_CN]
 若某个名字具有[%连接[!外部～]][+外部连接]，则其所代表的实体可以用其他翻译单元中
 的作用域，或相同翻译单元中的其他作用域中的名字来代表。
+
+[item]
+[:en]
+When a name has [+module linkage[%linkage[!module]]], the entity it denotes can
+be referred to by names from other scopes of the same module unit
+([#module.unit]) or from scopes of other module units of that same module.
+[:zh_CN]
+若某个名字具有[+模块连接[%连接[!模块～]]]，则其所代表的实体可以用相同模块单元的
+其他作用域，或相同模块的其他模块单元的作用域中的名字来代表。
 
 [item]
 [:en]
@@ -79,19 +126,28 @@ it is the name of
 [list]
 [item]
 [:en@~]
-a variable, function or function template that is explicitly declared [`static];
-or,
+a variable, variable template, function, or function template that is explicitly
+declared [`static]; or,
 [:zh_CN@~]
-被明确声明为 [`static] 的变量、函数或函数模板；或者
+被明确声明为 [`static] 的变量、变量模板、函数或函数模板；或者
 
 [item]
 [:en@~]
-a non inline variable of non-volatile const-qualified type that is neither
-explicitly declared [`extern] nor previously declared to have external linkage;
-or
+a non-template variable of non-volatile const-qualified type, unless
 [:zh_CN@~]
-既未被明确声明为 [`extern] 也未曾被声明为具有外部连接的，非 volatile 的
-const 限定的类型的非内联变量；或者
+非 volatile 的 const 限定的类型的非模板变量，排除以下情况：
+[list]
+[item]
+[:en@~] it is explicitly declared [`extern], or
+[:zh_CN@~] 它被显式声明为 [`extern]，或
+[item]
+[:en@~] it is inline or exported, or
+[:zh_CN@~] 它被内联或导出，或
+[item]
+[:en@~] it was previously declared and the prior declaration did not have
+internal linkage; or
+[:zh_CN@~] 它之前已被声明且其之前的声明式并不具有内部连接；或者
+[list:end]
 
 [item]
 [:en@~]
@@ -99,6 +155,15 @@ a data member of an anonymous union.
 [:zh_CN@~]
 匿名联合的数据成员。
 [list:end]
+
+[enter:note]
+[:en]
+An instantiated variable template that has const-qualified type can have
+external or module linkage, even if not declared [`extern].
+[:zh_CN]
+具有 const 限定的类型的已实例化的变量模板，即使未被声明为 [`extern] 也可以具有
+外部或模块连接。
+[exit:note]
 
 [para]
 [:en]
@@ -113,11 +178,11 @@ All other namespaces have external linkage.
 其他任何命名空间均具有外部连接。
 
 [:en]
-A name having namespace scope that has not been given internal linkage above has
-the same linkage as the enclosing namespace if it is the name of
+A name having namespace scope that has not been given internal linkage above and
+that is the name of
 [:zh_CN]
-具有命名空间作用域的名字，当未被以上述方式给定内部连接时，若它是下列各项之一的
-名字，则具有与其外围命名空间相同的连接：
+具有命名空间作用域的名字，尚未被以上述方式给定内部连接，若它是下列各项之一的
+名字：
 
 [list]
 [item]
@@ -156,9 +221,30 @@ purposes ([#dcl.typedef]); or
 
 [item]
 [:en@~]
-a template.
+a template
 [:zh_CN@~]
-模板。
+模板
+[list:end]
+
+[:en@~]
+has its linkage determined as follows:
+[:zh_CN@~]
+则其连接以如下方式确定：
+
+[list]
+[item]
+[:en@~] if the enclosing namespace has internal linkage, the name has internal
+linkage;
+[:zh_CN@~] 当其外围命名空间具有内部连接时，该名字具有内部连接；
+[item]
+[:en@~] otherwise, if the declaration of the name is attached to a named module
+([#module.unit]) and is not exported ([#module.interface]), the name has module
+linkage;
+[:zh_CN@~] 否则，若该名字的声明式附属与某个具名模块（[#module.unit]）但未被导出
+（[#module.interface]），则该名字具有模块连接；
+[item]
+[:en@~] otherwise, the name has external linkage.
+[:zh_CN@~] 否则，该名字具有外部连接。
 [list:end]
 
 [para]
@@ -182,14 +268,22 @@ declared by a block scope [`extern] declaration have linkage.
 具有连接。
 
 [:en]
-If there is a visible declaration of an entity with linkage having the same name
-and type, ignoring entities declared outside the innermost enclosing namespace
-scope, the block scope declaration declares that same entity and receives the
-linkage of the previous declaration.
+If such a declaration is attached to a named module, the program is ill-formed.
 [:zh_CN]
-若忽略其最内层外围命名空间作用域之外所声明的实体后，某个具有相同名字和类型的有
-连接实体的声明式是可见的，则此块作用域声明式就对同一个实体进行声明，并获得其之前
-所声明的连接。
+如果这样的声明式附属与某个具名模块，则程序员非良构。
+
+[:en]
+If there is a visible declaration of an entity with linkage, ignoring entities
+declared outside the innermost enclosing namespace scope, such that the block
+scope declaration would be a (possibly ill-formed) redeclaration if the two
+declarations appeared in the same declarative region, the block scope
+declaration declares that same entity and receives the linkage of the previous
+declaration.
+[:zh_CN]
+若忽略其最内层外围命名空间作用域之外所声明的实体后，某个有连接实体的声明式是
+可见的，并在当该声明式和块作用域声明式出现于相同的声明区时将导致块作用域声明式
+变为（可能非良构的）重复声明式，则此块作用域声明式就对同一个实体进行声明，并获得
+其之前所声明的连接。
 
 [:en]
 If there is more than one such matching entity, the program is ill-formed.
@@ -213,10 +307,13 @@ and external linkage, the program is ill-formed.
 
 [codeblock]
 static void f();
+extern "C" void h();
 static int i = 0;               // #1
 void g() {
   extern void f();              // [:en] internal linkage
                                 // [|:zh_CN] 内部连接
+  extern void h();              // [:en] C language linkage
+                                // [|:zh_CN] C 语言连接
   int i;                        // [:en] #2: [`i] has no linkage
                                 // [|:zh_CN] #2：[`i] 无连接
   {
@@ -296,107 +393,6 @@ has no linkage.
 
 [para]
 [:en]
-A type is said to have linkage if and only if:
-[:zh_CN]
-当且仅当如下情况时称类型具有连接：
-
-[list]
-[item]
-[:en]
-it is a class or enumeration type that is named (or has a name for linkage
-purposes ([#dcl.typedef])) and the name has linkage; or
-[:zh_CN]
-它是有名字（或为连接而带有名字（[#dcl.typedef]））的类或枚举，且其名字有连接；
-或者
-
-[item]
-[:en]
-it is an unnamed class or unnamed enumeration that is a member of a class with
-linkage; or
-[:zh_CN]
-它是无名类或无名枚举且为某个有连接的类的成员；或者
-
-[item]
-[:en]
-it is a specialization of a class template ([#temp])[#:note#fn:$1]; or
-[:zh_CN]
-它是类模板的特例（[#temp]）[#:note#fn:$1]；或者
-
-[note:foot#fn:$1]
-[:en]
-A class template has the linkage of the innermost enclosing class or namespace
-in which it is declared.
-[:zh_CN]
-类模板具有与声明了它的最内层外围类或命名空间相同的连接。
-[note:end]
-
-[item]
-[:en@~]
-it is a fundamental type ([#basic.fundamental]); or
-[:zh_CN@~]
-它是基础类型（[#basic.fundamental]）；或者
-
-[item]
-[:en@~]
-it is a compound type ([#basic.compound]) other than a class or enumeration,
-compounded exclusively from types that have linkage; or
-[:zh_CN@~]
-它是仅由有连接的类型复合而成的，除类或枚举以外的复合类型（[#basic.compound]）；
-或者
-
-[item]
-[:en@~]
-it is a cv-qualified ([#basic.type.qualifier]) version of a type that has
-linkage.
-[:zh_CN@~]
-它是有连接类型的 cv 限定的（[#basic.type.qualifier]）版本。
-[list:end]
-
-[enter:note]
-[:en]
-In other words, a type without linkage contains a class or enumeration that
-cannot be named outside its translation unit.
-[:zh_CN]
-也就是说，无连接的类型包括不能在其翻译单元之外被提名的类或枚举。
-
-[:en]
-Classes with linkage may contain members whose types do not have linkage.
-[:zh_CN]
-有连接的类可能会包含无连接的类型的成员。
-
-[:en]
-Typedef names are ignored in the determination of whether a type has linkage.
-[:zh_CN]
-当确定类型是否具有连接时 typedef 名是被忽略的。
-[exit:note]
-
-[para:~]
-[enter:example]
-[codeblock]
-template <class T> struct B {
-  void g(T) { }
-  void h(T);
-  friend void i(B, T) { }
-};
-
-void f() {
-  struct A { int x; };  // [:en] no linkage
-                        // [|:zh_CN] 无连接
-  A a = { 1 };
-  B<A> ba;              // [:en] declares [`B<A>::g(A)] and [`B<A>::h(A)]
-                        // [|:zh_CN] 声明了 [`B<A>::g(A)] 和 [`B<A>::h(A)]
-  ba.g(a);              // [:en] OK
-                        // [|:zh_CN] OK
-  ba.h(a);              // [:en] error: [`B<A>::h(A)] not defined; [`A] cannot be named in another translation unit
-                        // [|:zh_CN] 错误：未定义 [`B<A>::h(A)]；无法在其他翻译单元中指名 [`A]
-  i(ba, a);             // [:en] OK
-                        // [|:zh_CN] OK
-}
-[codeblock:end]
-[exit:example]
-
-[para]
-[:en]
 Two names that are the same ([#basic]) and that are declared in different scopes
 shall denote the same variable, function, type, template or namespace if
 [:zh_CN]
@@ -406,10 +402,12 @@ shall denote the same variable, function, type, template or namespace if
 [list]
 [item]
 [:en]
-both names have external linkage or else both names have internal linkage and
-are declared in the same translation unit; and
+both names have external or module linkage and are declared in declarations
+attached to the same module, or else both names have internal linkage and are
+declared in the same translation unit; and
 [:zh_CN]
-两个名字都具有外部连接，或者都具有内部连接且声明于相同翻译单元中；且
+两个名字都具有外部或模块连接且均在附属与相同模块的声明式中所声明，或者都具有
+内部连接且声明于相同翻译单元中；且
 
 [item]
 [:en]
@@ -432,6 +430,71 @@ are the same.
 [:zh_CN]
 若两个名字都代表函数模板，则其签名（[#temp.over.link]）应当相同。
 [list:end]
+
+[:en]
+If multiple declarations of the same name with external linkage would declare
+the same entity except that they are attached to different modules, the program
+is ill-formed; no diagnostic is required.
+[:zh_CN]
+如果同一个具有外部连接的名字的多个声明式，除附属与不同模块之外声明了同一个实体，
+则程序非良构；无须诊断。
+
+[enter:note]
+[:en]
+[~using-declaration]s, typedef declarations, and [~alias-declaration]s do not
+declare entities, but merely introduce synonyms.
+[:zh_CN]
+[~using-声明式]、typedef 声明式和别名声明式并不声明实体而仅仅引入了同义词。
+
+[:en]
+Similarly, [~using-directive]s do not declare entities.
+[:zh_CN]
+雷斯蒂，[~using-指令]并不声明实体。
+[exit:note]
+
+[para]
+[:en]
+If a declaration would redeclare a reachable declaration attached to a different
+module, the program is ill-formed.
+[:zh_CN]
+如果某个声明式重新声明了某个附属与不同模块的声明式，则程序非良构。
+
+[enter:example]
+[:en] [`"decls.h"]:
+[:zh_CN] [`"decls.h"]：
+[codeblock]
+int f();            // [:en] #1, attached to the global module
+int g();            // [:en] #2, attached to the global module
+[codeblock:end]
+
+[:en] Module interface of [`M]:
+[:zh_CN] [`M] 的模块接口：
+[codeblock]
+module;
+#include "decls.h"
+export module M;
+export using ::f;   // [:en] OK: does not declare an entity, exports #1
+int g();            // [:en] error: matches #2, but attached to [`M]
+export int h();     // #3
+export int k();     // #4
+[codeblock:end]
+
+[:en] Other translation unit:
+[:zh_CN] 另一个翻译单元：
+[codeblock]
+import M;
+static int h();     // [:en] error: matches #3
+int k();            // [:en] error: matches #4
+[codeblock:end]
+[exit:example]
+
+[:en]
+As a consequence of these rules, all declarations of an entity are attached to
+the same module; the entity is said to be [+attached[%attached[!entity]]] to
+that module.
+[:zh_CN]
+这些规则的结果是，一个实体的所有声明式均附属于同一个模块；该实体被称为[+附属
+[%附属[!实体]]]于这个模块。
 
 [para]
 [:en]
