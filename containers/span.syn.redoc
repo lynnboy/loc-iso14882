@@ -9,25 +9,35 @@
 namespace std {
   // [:en] constants
   // [|:zh_CN] 常量
-  inline constexpr ptrdiff_t dynamic_extent = -1;
+  inline constexpr size_t dynamic_extent = numeric_limits<size_t>::max();
 
   // [:en] [#views.span], class template span
   // [:zh_CN] [#views.span]，类模板 span
-  template<class ElementType, ptrdiff_t Extent = dynamic_extent>
+  template<class ElementType, size_t Extent = dynamic_extent>
     class span;
 
   // [:en] [#span.objectrep], views of object representation
   // [|:zh_CN] [#span.objectrep]，对象表示的视图
-  template<class ElementType, ptrdiff_t Extent>
-    span<const byte,
-         Extent == dynamic_extent ? dynamic_extent
-                                  : static_cast<ptrdiff_t>(sizeof(ElementType)) * Extent>
+  template<class ElementType, size_t Extent>
+    span<const byte, Extent == dynamic_extent ? dynamic_extent : sizeof(ElementType) * Extent>
       as_bytes(span<ElementType, Extent> s) noexcept;
 
-  template<class ElementType, ptrdiff_t Extent>
-    span<byte,
-         Extent == dynamic_extent ? dynamic_extent
-                                  : static_cast<ptrdiff_t>(sizeof(ElementType)) * Extent>
+  template<class ElementType, size_t Extent>
+    span<byte, Extent == dynamic_extent ? dynamic_extent : sizeof(ElementType) * Extent>
       as_writable_bytes(span<ElementType, Extent> s) noexcept;
+
+  // [:en] [#span.tuple], tuple interface
+  // [|:zh_CN] [#span.tuple]，tuple 接口
+  template<class T> class tuple_size;
+  template<size_t I, class T> class tuple_element;
+  template<class ElementType, size_t Extent>
+    struct tuple_size<span<ElementType, Extent>>;
+  template<class ElementType>
+    struct tuple_size<span<ElementType, dynamic_extent>>;       // [:en] not defined
+                                                                // [|:zh_CN] 未予定义
+  template<size_t I, class ElementType, size_t Extent>
+    struct tuple_element<I, span<ElementType, Extent>>;
+  template<size_t I, class ElementType, size_t Extent>
+    constexpr ElementType& get(span<ElementType, Extent>) noexcept;
 }
 [codeblock:end]

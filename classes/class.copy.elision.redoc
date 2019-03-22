@@ -97,6 +97,17 @@ object directly into the exception object
 
 [item]
 [:en]
+in a coroutine ([#dcl.fct.def.coroutine]), a copy of a coroutine parameter
+can be omitted and references to that copy replaced with references to the
+corresponding parameter if the meaning of the program will be unchanged except
+for the execution of a constructor and destructor for the parameter copy object
+[:zh_CN]
+在协程（[#dcl.fct.def.coroutine]）中，如果除了协程形参副本对象的构造函数和
+析构函数的执行之外不改变程序的意义，则可以省略掉协程形参的副本，并将对该副本的
+引用替换为对其对应形参的引用。
+
+[item]
+[:en]
 when the [~exception-declaration] of an exception handler ([#except]) declares
 an object of the same type (except for cv-qualification) as the exception object
 ([#except.throw]), the copy operation can be omitted by treating the
@@ -118,19 +129,19 @@ There cannot be a move from the exception object because it is always an lvalue.
 [list:end]
 
 [:en]
-Copy elision is required where an expression is evaluated in a context requiring
-a constant expression ([#expr.const]) and in constant initialization
+Copy elision is not permitted where an expression is evaluated in a context
+requiring a constant expression ([#expr.const]) and in constant initialization
 ([#basic.start.static]).
 [:zh_CN]
 在需要常量表达式的语境中（[#expr.const]）以及常量初始化（[#basic.start.static]）
-之中对表达式求值时，要求实施复制消除。
+之中对表达式求值时，不允许实施复制消除。
 
 [enter:note]
 [:en]
-Copy elision might not be performed if the same expression is evaluated in
-another context.
+Copy elision might be performed if the same expression is evaluated in another
+context.
 [:zh_CN]
-同样的表达式在别的语境中求值并不一定会实施复制消除。
+同样的表达式在别的语境中求值可能会实施复制消除。
 [exit:note]
 
 [para]
@@ -205,14 +216,15 @@ instead of a copy operation:
 [list]
 [item]
 [:en]
-If the [~expression] in a [`return] statement ([#stmt.return]) is a (possibly
-parenthesized) [~id-expression] that names an object with automatic storage
-duration declared in the body or [~parameter-declaration-clause] of the
-innermost enclosing function or [~lambda-expression], or
+If the [~expression] in a [`return] or [`co_return] statement ([#stmt.return])
+is a (possibly parenthesized) [~id-expression] that names an object with
+automatic storage duration declared in the body or
+[~parameter-declaration-clause] of the innermost enclosing function or
+[~lambda-expression], or
 [:zh_CN]
-当 [`return] 语句（[#stmt.return]）的[~表达式]是（可能带有括号的）[~标识表达式]，
-并指名其最内层外围函数或[~lambda-表达式]的函数体或[~形参声明子句]所声明的具有
-自动存储期的对象时，或者
+当 [`return] 或 [`co_return] 语句（[#stmt.return]）的[~表达式]是（可能带有括号的）
+[~标识表达式]，并指名其最内层外围函数或[~lambda-表达式]的函数体或[~形参声明子句]
+所声明的具有自动存储期的对象时，或者
 
 [item]
 [:en]
@@ -227,19 +239,22 @@ whose scope does not extend beyond the end of the innermost enclosing
 [list:end]
 
 [:en]
-overload resolution to select the constructor for the copy is first performed as
-if the object were designated by an rvalue.
+overload resolution to select the constructor for the copy or the
+[`return_value] overload to call is first performed as if the object were
+designated by an rvalue.
 [:zh_CN]
-首先按照如同该对象是被右值所代表那样实施重载决议以选择复制所需的构造函数。
+首先按照如同该对象是被右值所代表那样实施重载决议，以选择复制所需的构造函数或所要
+调用的 [`return_value] 重载。
 
 [:en]
 If the first overload resolution fails or was not performed, or if the type of
-the first parameter of the selected constructor is not an rvalue reference to
-the object[=']s type (possibly cv-qualified), overload resolution is performed
-again, considering the object as an lvalue.
+the first parameter of the selected constructor or the [`return_value] overload
+is not an rvalue reference to the object[=']s type (possibly cv-qualified),
+overload resolution is performed again, considering the object as an lvalue.
 [:zh_CN]
-若第一次重载决议失败或者未进行，或者若被选择的构造函数的第一个形参的类型并不是
-该对象的（可能被 cv 限定的）类型的右值引用，则把该对象作为左值再次实施重载决议。
+若第一次重载决议失败或者未进行，或者若被选择的构造函数或 [`return_value] 重载的
+第一个形参的类型并不是该对象的（可能被 cv 限定的）类型的右值引用，则把该对象作为
+左值再次实施重载决议。
 
 [enter:note]
 [:en]
@@ -249,11 +264,12 @@ elision will occur.
 无论是否发生复制消除，都要进行这种两阶段重载决议。
 
 [:en]
-It determines the constructor to be called if elision is not performed, and the
-selected constructor must be accessible even if the call is elided.
+It determines the constructor or the [`return_value] overload to be called if
+elision is not performed, and the selected constructor or the [`return_value]
+overload must be accessible even if the call is elided.
 [:zh_CN]
-它确定了不实施消除时所调用的构造函数，且被选择的构造函数即使在其调用被消除时也
-应当是可访问的。
+它确定了不实施消除时所调用的构造函数或 [`return_value] 重载，且被选择的构造函数
+或 [`return_value] 重载即使在其调用被消除时也应当是可访问的。
 [exit:note]
 
 [para]

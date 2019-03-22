@@ -33,17 +33,19 @@ to [`span::iterator] and [`span::const_iterator] as well.
 [%@library span]
 [codeblock:synopsis [!:mark ImpDef SeeBelow ] ]
 nnamespace std {
-  template<class ElementType, ptrdiff_t Extent = dynamic_extent>
+  template<class ElementType, size_t Extent = dynamic_extent>
   class span {
   public:
     // [:en] constants and types
     // [|:zh_CN] 常量和类型
     using element_type = ElementType;
     using value_type = remove_cv_t<ElementType>;
-    using index_type = ptrdiff_t;
+    using index_type = size_t;
     using difference_type = ptrdiff_t;
     using pointer = element_type*;
+    using const_pointer = const element_type*;
     using reference = element_type&;
+    using const_reference = const element_type&;
     using iterator = [%@impdef [:en] type of [`span::iterator] [:zh_CN] [`span::iterator] 的类型][=ImpDef];
     using const_iterator = [%@impdef [:en] type of [`span::const_iterator] [:zh_CN] [`span::const_iterator] 的类型][=ImpDef];
     using reverse_iterator = std::reverse_iterator<iterator>;
@@ -66,7 +68,7 @@ nnamespace std {
     template<class Container>
       constexpr span(const Container& cont);
     constexpr span(const span& other) noexcept = default;
-    template<class OtherElementType, ptrdiff_t OtherExtent>
+    template<class OtherElementType, size_t OtherExtent>
       constexpr span(const span<OtherElementType, OtherExtent>& s) noexcept;
 
     ~span() noexcept = default;
@@ -75,11 +77,11 @@ nnamespace std {
 
     // [:en] [#span.sub], subviews
     // [|:zh_CN] [#span.sub]，子视图
-    template<ptrdiff_t Count>
+    template<size_t Count>
       constexpr span<element_type, Count> first() const;
-    template<ptrdiff_t Count>
+    template<size_t Count>
       constexpr span<element_type, Count> last() const;
-    template<ptrdiff_t Offset, ptrdiff_t Count = dynamic_extent>
+    template<size_t Offset, size_t Count = dynamic_extent>
       constexpr span<element_type, [=SeeBelow]> subspan() const;
 
     constexpr span<element_type, dynamic_extent> first(index_type count) const;
@@ -91,12 +93,13 @@ nnamespace std {
     // [|:zh_CN] [#span.obs]，探查函数
     constexpr index_type size() const noexcept;
     constexpr index_type size_bytes() const noexcept;
-    constexpr bool empty() const noexcept;
+    [[nodiscard]] constexpr bool empty() const noexcept;
 
     // [:en] [#span.elem], element access
     // [|:zh_CN] [#span.elem]，元素访问
     constexpr reference operator[](index_type idx) const;
-    constexpr reference operator()(index_type idx) const;
+    constexpr reference front() const;
+    constexpr reference back() const;
     constexpr pointer data() const noexcept;
 
     // [:en] [#span.iterators], iterator support
@@ -135,8 +138,3 @@ nnamespace std {
 [:en] [`ElementType] is required to be a complete object type that is not an
 abstract class type.
 [:zh_CN] 要求 [`ElementType] 为并非抽象类类型的完整对象类型。
-
-[para]
-[:en] If [`Extent] is negative and not equal to [`dynamic_extent], the program
-is ill-formed.
-[:zh_CN] 如果 [`Extent] 为负数且不等于 [`dynamic_extent]，则程序非良构。
