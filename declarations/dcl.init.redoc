@@ -326,10 +326,12 @@ entity of reference type is ill-formed.
 [para]
 [enter:note]
 [:en]
-Every object of static storage duration is zero-initialized at program startup
-before any other initialization takes place.
+For every object of static storage duration, static initialization
+([#basic.start.static]) is performed at program startup before any other
+initialization takes place.
 [:zh_CN]
-每个静态存储期的对象都在程序启动时发生任何其他初始化之前进行零初始化。
+对于每个静态存储期的对象，都在程序启动时发生任何其他初始化之前进行静态初始化
+（[#basic.start.static]）。
 
 [:en]
 In some cases, additional initialization is done later.
@@ -510,15 +512,53 @@ If the initializer is [`()], the object is value-initialized.
 
 [item]
 [:en]
-Otherwise, if the destination type is an array, the program is ill-formed.
+Otherwise, if the destination type is an array, the object is initialized as
+follows.
 [:zh_CN]
-否则，若目标类型为数组，则程序是非良构的。
+否则，若目标类型为数组，则对象进行如下初始化。
+
+[:en]
+Let [$x_1], [$\dotsc], [$x_k] be the elements of the [~expression-list].
+[:zh_CN]
+令 [$x_1], [$\dotsc], [$x_k] 为[~表达式列表]中的各个元素。
+
+[:en]
+If the destination type is an array of unknown bound, it is defined as having
+[$k] elements.
+[:zh_CN]
+若目标类型为未知边界的数组，则它被定义为具有 [$k] 个元素。
+
+[:en]
+Let [$n] denote the array size after this potential adjustment.
+[:zh_CN]
+令 [$n] 代表经过这项潜在调整之后的数组大小。
+
+[:en]
+If [$k] is greater than [$n], the program is ill-formed.
+[:zh_CN]
+若 [$k] 大于 [$n]，则程序非良构。
+
+[:en]
+Otherwise, the [$i][^th] array element is copy-initialized with [$x_i] for each
+[$1 \leq i \leq k], and value-initialized for each [$k < i \leq n].
+[:zh_CN]
+否则，对第 [$i] 个数组元素，对于每个 [$1 \leq i \leq k]，以 [$x_i] 进行复制
+初始化，而对于每个 [$k < i \leq n] 则进行值初始化。
+
+[:en]
+For each [$1 \leq i < j \leq n], every value computation and side effect
+associated with the initialization of the [$i][^th] element of the array
+is sequenced before those associated with the initialization of the
+[$j][^th] element.
+[:zh_CN]
+对于每对 [$1 \leq i < j \leq n]，与数组的第 [$i] 个元素的初始化相关联的每个
+值计算和副作用，均按顺序早于与第 [$j] 个元素的初始化相关联的值计算与副作用。
 
 [item]
 [:en]
-If the destination type is a (possibly cv-qualified) class type:
+Otherwise, if the destination type is a (possibly cv-qualified) class type:
 [:zh_CN]
-若目标类型为（可能被 cv 限定的）类类型：
+否则，若目标类型为（可能被 cv 限定的）类类型：
 
 [list]
 [item]
@@ -555,17 +595,100 @@ one is chosen through overload resolution ([#over.match]).
 （[#over.match]）选取其中最佳的一个。
 
 [:en]
-The constructor so selected is called to initialize the object, with the
-initializer expression or [~expression-list] as its argument(s).
+Then:
 [:zh_CN]
-所选取的构造函数被以初始化式表达式或[~表达式列表]作为实参进行调用，以初始化该
-对象。
+然后：
+
+[list]
+[item]
+[:en]
+If overload resolution is successful, the selected constructor is called to
+initialize the object, with the initializer expression or [~expression-list] as
+its argument(s).
+[:zh_CN]
+如果重载决议成功，则所选取的构造函数被以初始化式表达式或[~表达式列表]作为实参
+进行调用，以初始化该对象。
+
+[item]
+[:en]
+Otherwise, if no constructor is viable, the destination type is a (possibly
+cv-qualified) aggregate class [`A], and the initializer is a parenthesized
+[~expression-list], the object is initialized as follows.
+[:zh_CN]
+否则，若没有可行的构造函数，目标类型为（可能被 cv 限定的）聚合类型 [`A]，并且
+初始化式是带有括号的[~表达式列表]，则以如下方式初始化该对象。
 
 [:en]
-If no constructor applies, or the overload resolution is ambiguous, the
-initialization is ill-formed.
+Let [$e_1], [$\dotsc], [$e_n] be the elements of the aggregate
+([#dcl.init.aggr]).
 [:zh_CN]
-若没有适用的构造函数，或重载决议有歧义，则该初始化非良构。
+令 [$e_1], [$\dotsc], [$e_n] 为聚合的各个元素（[#dcl.init.aggr]）。
+
+[:en]
+Let [$x_1], [$\dotsc], [$x_k] be the elements of the [~expression-list].
+[:zh_CN]
+令 [$x_1], [$\dotsc], [$x_k] 为[~表达式列表]的各个元素。
+
+[:en]
+If [$k] is greater than [$n], the program is ill-formed.
+[:zh_CN]
+如果 [$k] 大于 [$n]，则程序非良构。
+
+[:en]
+The element [$e_i] is copy-initialized with [$x_i] for [$1 \leq i \leq k].
+[:zh_CN]
+元素 [$e_i] 对于 [$1 \leq i \leq k] 以 [$x_i] 进行复制初始化。
+
+[:en]
+The remaining elements are initialized with their default member initializers,
+if any, and otherwise are value-initialized.
+[:zh_CN]
+剩余各元素均以其默认成员初始化式（如果有）进行初始化，否则进行值初始化。
+
+[:en]
+For each [$1 \leq i < j \leq n], every value computation and side effect
+associated with the initialization of [$e_i] is sequenced before those
+associated with the initialization of [$e_j].
+[:zh_CN]
+对于每对 [$1 \leq i < j \leq n]，与 [$e_i] 的初始化相关联的每个值计算和副作用，
+均按顺序早于与 [$e_j] 的初始化相关联的值计算与副作用。
+
+[enter:note]
+[:en]
+By contrast with direct-list-initialization, narrowing conversions
+([#dcl.init.list]) are permitted, designators are not permitted, a temporary
+object bound to a reference does not have its lifetime extended
+([#class.temporary]), and there is no brace elision.
+[:zh_CN]
+与直接列表初始化相比，这里允许进行窄化转换（[#dcl.init.list]），不允许使用定名符，
+与绑定到引用的临时对象的生存期并不会被扩展（[#class.temporary]），而且没有
+花括号省略。
+
+[enter:example]
+[codeblock]
+struct A {
+  int a;
+  int&& r;
+};
+
+int f();
+int n = 10;
+
+A a1{1, f()};                   // OK, lifetime is extended
+A a2(1, f());                   // well-formed, but dangling reference
+A a3{1.0, 1};                   // error: narrowing conversion
+A a4(1.0, 1);                   // well-formed, but dangling reference
+A a5(1.0, std::move(n));        // OK
+[codeblock:end]
+[exit:example]
+[exit:note]
+
+[item]
+[:en]
+Otherwise, the initialization is ill-formed.
+[:zh_CN]
+否则，该初始化非良构。
+[list:end]
 
 [item]
 [:en]
@@ -708,10 +831,11 @@ The same [~identifier] shall not appear in multiple [~designator]s of a
 [para]
 [:en]
 An object whose initialization has completed is deemed to be constructed, even
-if no constructor of the object[=']s class is invoked for the initialization.
+if the object is of non-class type or no constructor of the object[=']s class is
+invoked for the initialization.
 [:zh_CN]
-初始化完成的对象被视为是已经构造的，即使在初始化过程并未调用该对象的任何构造函数
-也是如此。
+初始化完成的对象被视为是已经构造的，即使该对象具有非类类型，或在初始化过程并未
+调用该对象的任何构造函数也是如此。
 
 [enter:note]
 [:en]
@@ -722,6 +846,22 @@ initialization ([#dcl.init.aggr]) or by an inherited constructor
 这样的对象可能是值初始化的，或者通过聚合初始化（[#dcl.init.aggr]）或某个继承构造
 函数（[#class.inhctor.init]）进行的初始化。
 [exit:note]
+
+[:en]
+Destroying an object of class type invokes the destructor of the class.
+[:zh_CN]
+销毁类类型的对象时将调用该类的析构函数。
+
+[:en]
+Destroying a scalar type has no effect other than ending the lifetime of the
+object ([#basic.life]).
+[:zh_CN]
+销毁标量类型，除了结束对象的生存期（[#basic.life]）外没有任何效果。
+
+[:en]
+Destroying an array destroys each element in reverse subscript order.
+[:zh_CN]
+销毁数组时将以下标相反顺序销毁其各个元素。
 
 [para]
 [:en]

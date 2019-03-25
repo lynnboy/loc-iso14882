@@ -1,0 +1,478 @@
+[section#dcl.fct.def.coroutine
+    [:en] Coroutine definitions
+    [:zh_CN] 协程定义式
+
+[%  [:en] definition[!coroutine]
+    [:zh_CN] 定义式[!协程] ]
+]
+
+[para]
+[:en]
+A function is a [+coroutine] if it contains [~coroutine-return-statement]
+([#stmt.return.coroutine]), an [~await-expression] ([#expr.await]),
+or a [~yield-expression] ([#expr.yield]).
+[:zh_CN]
+如果函数包含[~协程返回语句]（[#stmt.return.coroutine]），[~等待表达式]
+（[#expr.await]），或者[~产出表达式]（[#expr.yield]），则它是[+协程]。
+
+[:en]
+The [~parameter-declaration-clause] of the coroutine shall not terminate with
+an ellipsis that is not part of a [~parameter-declaration].
+[:zh_CN]
+协程的[~形参声明子句]不能以并非某个[~形参声明式]的一部分的省略号结尾。
+
+[para]
+[enter:example]
+[codeblock]
+task<int> f();
+
+task<void> g1() {
+  int i = co_await f();
+  std::cout << "f() => " << i << std::endl;
+}
+
+template <typename... Args>
+task<void> g2(Args&&...) {      // [:en] OK, ellipsis is a pack expansion
+                                // [|:zh_CN] OK，省略号为包组展开式
+  int i = co_await f();
+  std::cout << "f() => " << i << std::endl;
+}
+
+task<void> g3(int a, ...) {     // [:en] error: variable parameter list not allowed
+                                // [|:zh_CN] 错误：不允许使用可变形参列表
+  int i = co_await f();
+  std::cout << "f() => " << i << std::endl;
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+[%promise type[%coroutine[!promise type]]]
+The [+promise type[%coroutine[!promise type]]] of a coroutine is
+[`std::coroutine_traits<R, P[$_1], [$\dotsc], P[$_n]>::promise_type], where
+[`R] is the return type of the function, and [$[`P]_1 \dotsc [`P]_n] are the
+sequence of types of the function parameters, preceded by the type of the
+implicit object parameter ([#over.match.funcs]) if the coroutine is a non-static
+member function.
+[:zh_CN]
+[%许诺类型[%协程[!许诺类型]]]
+协程的[+许诺类型[%协程[!许诺类型]]]为
+[`std::coroutine_traits<R, P[$_1], [$\dotsc], P[$_n]>::promise_type]，其中 [`R]
+为函数的返回类型，[$[`P]_1 \dotsc [`P]_n] 为函数各形参的类型的序列，当协程为
+非静态成员函数时其前面再加上隐含对象实参（[#over.match.funcs]）。
+
+[:en]
+The promise type shall be a class type.
+[:zh_CN]
+许诺类型应当为类类型。
+
+[para]
+[:en]
+In the following, [$[`p]_i] is an lvalue of type [$[`P]_i], where [$[`p]_1]
+denotes [`*this] and [$[`p]_{i+1}] denotes the [$i][^th] function parameter
+for a non-static member function, and [$[`p]_i] denotes the [$i][^th] function
+parameter otherwise.
+[:zh_CN]
+下文中，[$[`p]_i] 为类型 [$[`P]_i] 的左值，其中对于非静态成员函数，[$[`p]_1]
+代表 [`*this] 而 [$[`p]_{i+1}] 代表第 [$i] 个函数形参，否则 [$[`p]_i] 代表第
+[$i] 个函数形参。
+
+[para]
+[:en]
+A coroutine behaves as if its [~function-body] were replaced by:
+[:zh_CN]
+协程的行为如同其[~函数体]被替换为：
+
+[codeblock:notation
+    [!:var promise final-suspend]
+    [!:gram function-body promise-type promise-constructor-arguments]
+]
+{
+    [~promise-type] [*promise] [~promise-constructor-arguments] ;
+    co_await [*promise].initial_suspend() ;
+    try {
+        [~function-body]
+    } catch ( ... ) {
+        [*promise].unhandled_exception() ;
+    }
+[*final-suspend] :
+    co_await [*promise].final_suspend() ;
+}
+[codeblock:end]
+
+[:en] where
+[:zh_CN] 其中
+
+[list]
+[item]
+[:en] the [~await-expression] containing the call to [`initial_suspend] is the
+[+initial suspend point], and
+[:zh_CN] 包含对 [`initial_suspend] 的调用的[~等待表达式]为其[+初始悬挂点]，且
+
+[item]
+[:en] the [~await-expression] containing the call to [`final_suspend] is the
+[+final suspend point], and
+[:zh_CN] 包含对 [`final_suspend] 的调用的[~等待表达式]为其[+最终悬挂点]，且
+
+[item]
+[:en] [*promise-type] denotes the promise type, and
+[:zh_CN] [*promise-type] 代表其许诺类型，且
+
+[item]
+[:en] the object denoted by the exposition-only name [*[`promise]] is the
+[+promise object] of the coroutine, and
+[:zh_CN] 由仅用于阐释的名字 [*[`promise]] 所代表的对象为该函数的[+许诺对象]，且
+
+[item]
+[:en] the label denoted by the name [*[`final-suspend]] is defined for
+exposition only ([#stmt.return.coroutine]), and
+[:zh_CN] 由名字 [*[`final-suspend]] 所代表的标号是仅为阐释而定义的
+（[#stmt.return.coroutine]），且
+
+[item]
+[:en] [*promise-constructor-arguments] is determined as follows: overload
+resolution is performed on a promise constructor call created by assembling an
+argument list with lvalues [$[`p]_1 \dotsc [`p]_n].
+[:zh_CN] [*promise-constructor-arguments] 的确定如下：通过以各个左值
+[$[`p]_1 \dotsc [`p]_n] 所编成的实参列表创建对许诺构造函数的调用，并对其实施
+重载。
+
+[:en] If a viable constructor is found ([#over.match.viable]), then
+[*promise-constructor-arguments] is [`(p[$_1], [$\dotsc], p[$_n])], otherwise
+[*promise-constructor-arguments] is empty.
+[:zh_CN] 如果找到了一个可行的构造函数（[#over.match.viable]），则
+[*promise-constructor-arguments] 为 [`(p[$_1], [$\dotsc], p[$_n])]，否则
+[*promise-constructor-arguments] 为空。
+[list:end]
+
+[para]
+[:en]
+The [~unqualified-id]s [`return_void] and [`return_value] are looked up in the
+scope of the promise type.
+[:zh_CN]
+在许诺类型的作用域中查找[~未限定标识] [`return_void] 和 [`return_value]。
+
+[:en]
+If both are found, the program is ill-formed.
+[:zh_CN]
+如果同时找到了二者，则程序非良构。
+
+[enter:note]
+[:en]
+If the [~unqualified-id] [`return_void] is found, flowing off the end of a
+coroutine is equivalent to a [`co_return] with no operand.
+[:zh_CN]
+如果找到了[~未限定标识] [`return_void]，则控制流过协程的末尾就等价于没有操作数的
+[`co_return]。
+
+[:en]
+Otherwise, flowing off the end of a coroutine results in undefined behavior
+([#stmt.return.coroutine]).
+[:zh_CN]
+否则，控制流过协程的末尾将导致未定义的行为（[#stmt.return.coroutine]）。
+[exit:note]
+
+[para]
+[:en]
+The expression [`[*promise].get_return_object()] is used to initialize the
+glvalue result or prvalue result object of a call to a coroutine.
+[:zh_CN]
+表达式 [`[*promise].get_return_object()] 用于为协程的调用的泛左值结果或纯右值
+结果进行初始化。
+
+[:en]
+The call to [`get_return_object] is sequenced before the call to
+[`initial_suspend] and is invoked at most once.
+[:zh_CN]
+对 [`get_return_object] 的调用按顺序早于对 [`initial_suspend] 的调用，且最多进行
+一次调用。
+
+[para]
+[:en]
+A suspended coroutine can be resumed to continue execution by invoking
+a resumption member function ([#coroutine.handle.resumption]) of a coroutine
+handle ([#coroutine.handle]) that refers to the coroutine.
+[:zh_CN]
+可以通过对代表协程的协程句柄（[#coroutine.handle]）调用其恢复成员函数
+（[#coroutine.handle.resumption]），来恢复已挂起的协程继续其执行。
+
+[:en]
+The function that invoked a resumption member function is called the
+[+resumer[%coroutine[!resumer]]].
+[:zh_CN]
+调用恢复成员函数的函数被称为[+恢复方[%协程[!恢复方]]]。
+
+[:en]
+Invoking a resumption member function for a coroutine that is not suspended
+results in undefined behavior.
+[:zh_CN]
+调用某个并未挂起的协程的恢复成员函数将造成未定义行为。
+
+[para]
+[:en]
+An implementation may need to allocate additional storage for a coroutine.
+[:zh_CN]
+实现可能需要为协程分配额外的存储。
+
+[:en]
+This storage is known as the [+coroutine state] and is obtained by calling
+a non-array allocation function ([#basic.stc.dynamic.allocation]).
+[:zh_CN]
+这个存储被称为[+协程状态]，是通过调用非数组分配函数来获得的
+（[#basic.stc.dynamic.allocation]）。
+
+[:en]
+The allocation function[=']s name is looked up in the scope of the promise type.
+[:zh_CN]
+在许诺类型的作用域中查找分配函数的名字。
+
+[:en]
+If this lookup fails, the allocation function[=']s name is looked up in the
+global scope.
+[:zh_CN]
+如果此查找失败，则在全局作用域中查找分配函数的名字。
+
+[:en]
+If the lookup finds an allocation function in the scope of the promise type,
+overload resolution is performed on a function call created by assembling an
+argument list.
+[:zh_CN]
+如果在许诺类型的作用域中找到了一个分配函数，则通过编成实参列表来创建一次函数调用
+并对其实施重载决议。
+
+[:en]
+The first argument is the amount of space requested, and has type [`std::size_t].
+[:zh_CN]
+第一个实参是所请求的空间的大小，类型为 [`std::size_t]。
+
+[:en]
+The lvalues [$[`p]_1 \dotsc [`p]_n] are the succeeding arguments.
+[:zh_CN]
+各左值 [$[`p]_1 \dotsc [`p]_n] 为其之后的各个实参。
+
+[:en]
+If no viable function is found ([#over.match.viable]), overload resolution is
+performed again on a function call created by passing just the amount of space
+required as an argument of type [`std::size_t].
+[:zh_CN]
+如果未找到可行函数（[#over.match.viable]），则对仅传递所需空间大小为一个
+[`std::size_t] 类型的实参而创建的函数调用上，再次进行重载决议。
+
+[para]
+[:en]
+The [~unqualified-id] [`get_return_object_on_allocation_failure] is looked up in
+the scope of the promise type by class member access lookup
+([#basic.lookup.classref]).
+[:zh_CN]
+在许诺类型的作用域中通过类成员访问查找（[#basic.lookup.classref]）来查找
+[~未限定标识] [`get_return_object_on_allocation_failure]。
+
+[:en]
+If any declarations are found, then the result of a call to an allocation
+function used to obtain storage for the coroutine state is assumed to return
+[`nullptr] if it fails to obtain storage, and if a global allocation function is
+selected, the [`::operator new(size_t, nothrow_t)] form is used.
+[:zh_CN]
+如果找到了任何声明式，则用来获取协程状态的存储的分配函数的调用的结果，当其获取
+存储失败时假定它将返回 [`nullptr]，而若所选中的是某个全局分配函数，则使用
+[`::operator new(size_t, nothrow_t)] 的调用形式。
+
+[:en]
+The allocation function used in this case shall have a non-throwing
+[~noexcept-specification].
+[:zh_CN]
+这种情况下所用的分配函数应当带有无抛出 [~noexcept-说明]。
+
+[:en]
+If the allocation function returns [`nullptr], the coroutine returns control to
+the caller of the coroutine and the return value is obtained by a call to
+[`T::get_return_object_on_allocation_failure()], where [`T] is the promise type.
+[:zh_CN]
+如果分配函数返回了 [`nullptr]，则协程将控制返回给该协程的调用方，其返回值是通过
+调用 [`T::get_return_object_on_allocation_failure()] 获得的，其中 [`T] 为其许诺
+类型。
+
+[para:~]
+[enter:example]
+[codeblock]
+#include <iostream>
+#include <coroutine>
+
+// [:en] [`::operator new(size_t, nothrow_t)] will be used if allocation is needed
+// [|:zh_CN] 当需要分配时将调用 [`::operator new(size_t, nothrow_t)]
+struct generator {
+  struct promise_type;
+  using handle = std::coroutine_handle<promise_type>;
+  struct promise_type {
+    int current_value;
+    static auto get_return_object_on_allocation_failure() { return generator{nullptr}; }
+    auto get_return_object() { return generator{handle::from_promise(*this)}; }
+    auto initial_suspend() { return std::suspend_always{}; }
+    auto final_suspend() { return std::suspend_always{}; }
+    void unhandled_exception() { std::terminate(); }
+    void return_void() {}
+    auto yield_value(int value) {
+      current_value = value;
+      return std::suspend_always{};
+    }
+  };
+  bool move_next() { return coro ? (coro.resume(), !coro.done()) : false; }
+  int current_value() { return coro.promise().current_value; }
+  generator(generator const&) = delete;
+  generator(generator && rhs) : coro(rhs.coro) { rhs.coro = nullptr; }
+  ~generator() { if (coro) coro.destroy(); }
+private:
+  generator(handle h) : coro(h) {}
+  handle coro;
+};
+generator f() { co_yield 1; co_yield 2; }
+int main() {
+  auto g = f();
+  while (g.move_next()) std::cout << g.current_value() << std::endl;
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en]
+The coroutine state is destroyed when control flows off the end of the coroutine
+or the [`destroy] member function ([#coroutine.handle.resumption]) of a
+coroutine handle ([#coroutine.handle]) that refers to the coroutine is invoked.
+[:zh_CN]
+当控制流过协程的末尾，或者对代表这个协程的协程句柄（[#coroutine.handle]）调用其
+[`destroy] 成员函数（[#coroutine.handle.resumption]）时，销毁协程状态。
+
+[:en]
+In the latter case objects with automatic storage duration that are in scope at
+the suspend point are destroyed in the reverse order of the construction.
+[:zh_CN]
+后一种情况下，在挂起点处于作用域中的各个具有自动存储期的对象，以它们构造的相反
+顺序销毁。
+
+[:en]
+The storage for the coroutine state is released by calling a non-array
+deallocation function ([#basic.stc.dynamic.deallocation]).
+[:zh_CN]
+协程状态的存储是通过调用一个非数组回收函数（[#basic.stc.dynamic.deallocation]）
+来释放的。
+
+[:en]
+If [`destroy] is called for a coroutine that is not suspended, the program has
+undefined behavior.
+[:zh_CN]
+如果对并未挂起的协程调用 [`destroy]，则程序具有未定义行为。
+
+[para]
+[:en]
+The deallocation function[=']s name is looked up in the scope of the promise
+type.
+[:zh_CN]
+在许诺类型的作用域中查找回收函数的名字。
+
+[:en]
+If this lookup fails, the deallocation function[=']s name is looked up in the
+global scope.
+[:zh_CN]
+如果此查找失败，则在全局作用域中查找回收函数的名字。
+
+[:en]
+If deallocation function lookup finds both a usual deallocation function with
+only a pointer parameter and a usual deallocation function with both a pointer
+parameter and a size parameter, then the selected deallocation function shall be
+the one with two parameters.
+[:zh_CN]
+如果回收函数的查找同时找到了一个只有一个指针形参的常规回收函数，和一个同时具有
+一个指针形参和一个大小形参的常规回收函数，则选中的回收函数应当是具有两个形参的
+函数。
+
+[:en]
+Otherwise, the selected deallocation function shall be the function with one
+parameter.
+[:zh_CN]
+否则，选中的回收函数应当是具有一个形参的函数。
+
+[:en]
+If no usual deallocation function is found, the program is ill-formed.
+[:zh_CN]
+如果未找到任何常规回收函数，则程序非良构。
+
+[:en]
+The selected deallocation function shall be called with the address of the block
+of storage to be reclaimed as its first argument.
+[:zh_CN]
+应当以所要释放的存储块的地址为其第一个实参来调用所选中的回收函数。
+
+[:en]
+If a deallocation function with a parameter of type [`std::size_t] is used, the
+size of the block is passed as the corresponding argument.
+[:zh_CN]
+如果使用了带有 [`std::size_t] 类型形参的回收函数，则将该块的大小作为其对应实参
+予以传递。
+
+[para]
+[:en]
+When a coroutine is invoked, a copy is created for each coroutine parameter.
+[:zh_CN]
+当调用协程时，要为其每个协程形参创建一个副本。
+
+[:en]
+Each such copy is an object with automatic storage duration that is
+direct-initialized from an lvalue referring to the corresponding parameter if
+the parameter is an lvalue reference, and from an xvalue referring to it
+otherwise.
+[:zh_CN]
+每个这样的副本都是具有自动存储期的对象，若其对应形参是左值引用，则从一个指代该
+形参的左值，否则就从一个代表该形参的临限值，进行直接初始化
+
+[:en]
+A reference to a parameter in the function-body of the coroutine and in the call
+to the coroutine promise constructor is replaced by a reference to its copy.
+[:zh_CN]
+在协程的函数体中，以及在对协程许诺构造函数的调用中，对形参的涉指都被替换为对其
+副本的涉指。
+
+[:en]
+The initialization and destruction of each parameter copy occurs in the context
+of the called coroutine.
+[:zh_CN]
+各个形参副本的初始化和销毁，都在被调用的协程的语境中进行。
+
+[:en]
+Initializations of parameter copies are sequenced before the call to the
+coroutine promise constructor and indeterminately sequenced with respect to
+each other.
+[:zh_CN]
+形参副本的初始化，按顺序早于对协程许诺构造函数的调用，而互相之间则顺序不确定。
+
+[:en]
+The lifetime of parameter copies ends immediately after the lifetime of the
+coroutine promise object ends.
+[:zh_CN]
+形参副本的生存期，紧跟协程许诺对象的生存期结束之后结束。
+
+[enter:note]
+[:en]
+If a coroutine has a parameter passed by reference, resuming the coroutine after
+the lifetime of the entity referred to by that parameter has ended is likely to
+result in undefined behavior.
+[:zh_CN]
+如果协程带有一个按引用传递的形参，则当该形参所指代的实体生存期已经结束之后，恢复
+这个协程很可能会导致未定义行为。
+[exit:note]
+
+[para]
+[:en]
+If the evaluation of the expression [`[*promise].unhandled_exception()] exits
+via an exception, the coroutine is considered suspended at the final suspend
+point.
+[:zh_CN]
+如果表达式 [`[*promise].unhandled_exception()] 的求值以抛出异常而退出，则协程
+被认为在其最终悬挂点挂起。
+
+[para]
+[:en]
+The expression [`co_await [*promise].final_suspend()] shall not be
+potentially-throwing ([#except.spec]).
+[:zh_CN]
+表达式 [`co_await [*promise].final_suspend()] 不能是潜在抛出（[#except.spec]）的。

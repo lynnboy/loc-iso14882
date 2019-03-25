@@ -40,8 +40,11 @@ follows:
 
 [list]
 [item]
-[:en] [`T][$_1] and [`T][$_2] may have differing [~ref-qualifier]s; and
-[:zh_CN] [`T][$_1] 和 [`T][$_2] 可以有不同的[~引用限定符]；并且
+[:en] [`T][$_1] and [`T][$_2] may have differing [~ref-qualifier]s;
+[:zh_CN] [`T][$_1] 和 [`T][$_2] 可以有不同的[~引用限定符]；
+[item]
+[:en] [`T][$_1] and [`T][$_2] may have differing exception specifications; and
+[:zh_CN] [`T][$_1] 和 [`T][$_2] 可以有不同的异常说明；并且
 [item]
 [:en] if [`T][$_2] has a parameter of type [`const C&], the corresponding
 parameter of [`T][$_1] may be of type [`C&].
@@ -96,8 +99,8 @@ struct S {
                                         // [|:zh_CN] 非良构：默认实参
   void operator=(const S&) = default;   // [:en] ill-formed: non-matching return type
                                         // [|:zh_CN] 非良构：返回类型不匹配
-  ~S() throw(int) = default;            // [:en] deleted: exception specification does not match
-                                        // [|:zh_CN] 被弃置：异常说明不匹配
+  ~S() throw(int) = default;            // [:en] OK, despite mismatched exception specification
+                                        // [|:zh_CN] OK，尽管其异常说明不匹配
 private:
   int i;
   S(S&);                                // [:en] OK: private copy constructor
@@ -105,6 +108,19 @@ private:
 };
 S::S(S&) = default;                     // [:en] OK: defines copy constructor
                                         // [|:zh_CN] OK：定义复制构造函数
+
+struct T {
+  T();
+  T(T &&) noexcept(false);
+};
+struct U {
+  T t;
+  U();
+  U(U &&) noexcept = default;
+};
+U u1;
+U u2 = static_cast<U&&>(u1);            // [:en] OK, calls [`std::terminate] if [`T::T(T&&)] throws
+                                        // [|:zh_CN] OK，当 [`T::T(T&&)] 抛出异常时调用 [`std::terminate]
 [codeblock:end]
 [exit:example]
 
