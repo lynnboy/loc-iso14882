@@ -57,7 +57,8 @@ atomic                                  原子性
 attribute                               特性标注，特性
 attribute declaration                   特性标注声明
 automatic storage duration              自动存储期
-base characteristic						基础特征
+await-expression                        等待表达式
+base characteristic                     基础特征
 basic character set                     基本字符集
 basic source character set              基本源字符集
 basic execution character set           基本执行字符集
@@ -420,7 +421,7 @@ lower bound                             下界
 lvalue                                  左值
 lvalue-to-rvalue conversion             左值向右值转换
 macro                                   宏
-materialize                             实体化
+materialize                             实质化
 member                                  成员
 member function                         成员函数
 member type                             成员类型
@@ -464,7 +465,7 @@ non-allocating form                     非分配形式
 non-throwing exception specification    无抛出异常说明
 non-vacuous initialization              非无为初始化
 normative                               规范性的
-normalized								正规化的
+normalized                              正规化的
 null                                    空
 null character                          空字符
 null member pointer conversion          空成员指针转换
@@ -545,6 +546,7 @@ preprocessing directive                 预处理指令
 primary expression                      初等表达式
 private                                 私有
 program                                 程序
+promise                                 承诺
 protected                               受保护
 prototype                               原型
 prvalue                                 纯右值
@@ -578,6 +580,7 @@ remainder operator                      求余运算符
 representation                          表示
 requirement                             规定，要求
 restriction                             限制，要求
+resumption                              恢复
 return                                  返回
 return statement                        return 语句，返回语句
 return type                             返回类型
@@ -638,10 +641,11 @@ struct                                  结构
 structure tag                           结构标记
 structured binding declaration          结构化绑定声明式
 subexpression                           子表达式
-subnormal								次正规的
+subnormal                               次正规的
 subobject                               子对象
 subscript operator                      下标运算符
 substatement                            子语句
+suspension                              暂停
 switch statement                        switch 语句
 synchronization                         同步
 synchronize                             同步
@@ -660,7 +664,7 @@ template template parameter             模板模板形参
 template type parameter                 模板类型形参
 temporary                               临时对象
 temporary expression                    临时对象表达式
-temporary materialization conversion    临时对象实体化转换
+temporary materialization conversion    临时对象实质化转换
 terminate                               终止
 thread                                  线程
 thread_local specifier                  thread_local 说明符
@@ -749,4 +753,5 @@ while statement                         while 语句
 whitespace                              空白，空格
 wide character                          宽字符
 xvalue                                  临限值
+yield-expression                        产出表达式
 zero-initialization                     零初始化
