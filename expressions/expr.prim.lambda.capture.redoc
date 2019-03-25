@@ -333,14 +333,15 @@ the scope containing the [~lambda-expression].
 [:zh_CN]
 由某个 [~lambda-表达式]所捕获的实体，是在包含该 [~lambda-表达式]的作用域中被
 ODR 式使用的（[#basic.def.odr]）。
-    
+
+[enter:note]
 [:en]
-If a [~lambda-expression] explicitly captures an entity that is not odr-usable
-or captures a structured-binding (explicitly or implicitly), the program is
-ill-formed.
+As a consequence, if a [~lambda-expression] explicitly captures an entity that
+is not odr-usable, the program is ill-formed ([#basic.def.odr]).
 [:zh_CN]
-如果 [~lambda-表达式]所捕获的实体并非可 ODR 式使用的，或者（显式或隐式）捕获了
-结构化绑定，则程序非良构。
+其结果为，如果 [~lambda-表达式]所捕获的实体并非可 ODR 式使用的，则程序非良构
+（[#basic.def.odr]）。
+[exit:note]
 
 [enter:example]
 [%Bond[!James Bond]]
@@ -400,11 +401,23 @@ struct s2 {
 [exit:example]
 
 [para]
+[enter:note]
 [:en]
-A [~lambda-expression] appearing in a default argument shall not implicitly or
-explicitly capture any entity.
+Because local entities are not odr-usable within a default argument
+([#basic.def.odr]), a [~lambda-expression] appearing in a default argument
+cannot implicitly or explicitly capture any local entity.
 [:zh_CN]
-出现于默认实参中的 [~lambda-表达式]，不应隐式或显式捕获任何实体。
+由于局部实体在默认实参之内并非可 ODR 式使用的（[#basic.def.odr]），因此在默认
+实参中出现的 [~lambda-表达式]不能隐式或显式捕获任何局部实体。
+
+[:en]
+Such a [~lambda-expression] can still have an [~init-capture] if any
+full-expression in its [~initializer] satisfies the constraints of an expression
+appearing in a default argument ([#dcl.fct.default]).
+[:zh_CN]
+这样的 [~lambda-表达式]仍然可以带有[~带初始化捕获符]，只要其[~初始化式]中的任何
+全表达式均符合对于默认实参中出现的表达式的约束（[#dcl.fct.default]）。
+[exit:note]
 
 [enter:example]
 [codeblock]
@@ -418,6 +431,9 @@ void f2() {
                                                 // [|:zh_CN] 非良构
   void g4(int = ([=]{ return 0; })());          // OK
   void g5(int = ([]{ return sizeof i; })());    // OK
+  void g6(int = ([x=1]{ return x; })());        // OK
+  void g7(int = ([x=i]{ return x; })());        // [:en] ill-formed
+                                                // [|:zh_CN] 非良构
 }
 [codeblock:end]
 [exit:example]
