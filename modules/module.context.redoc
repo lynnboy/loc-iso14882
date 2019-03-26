@@ -1,0 +1,162 @@
+[section#module.context
+    [:en] Global module fragment
+    [:zh_CN] 全局模块分段
+]
+
+[para]
+[:en]
+The [+instantiation context] is a set of points within the program that
+determines which names are visible to argument-dependent name lookup
+([#basic.lookup.argdep]) and which declarations are reachable ([#module.reach])
+in the context of a particular declaration or template instantiation.
+[:zh_CN]
+[+实例化语境]是程序中的一组位置，决定哪些名字对于依赖于实参的名字查找
+（[#basic.lookup.argdep]）可见，以及哪些声明式在特定的声明式或模板实例化式的语境
+中可达（[#module.reach]）。
+
+[para]
+[:en]
+During the implicit definition of a defaulted special member function
+([#special]), the instantiation context is the union of the instantiation
+context from the definition of the class and the instantiation context of the
+program construct that resulted in the implicit definition of the special member
+function.
+[:zh_CN]
+在对预置的特殊成员函数进行隐式定义时（[#special]），其实例化语境是其类的定义式的
+实例化语境，和导致该特殊成员函数的隐式定义的程序构造的实例化语境的合并。
+
+[para]
+[:en]
+During the implicit instantiation of a template whose point of instantiation is
+specified as that of an enclosing specialization ([#temp.point]), the
+instantiation context is the union of the instantiation context of the enclosing
+specialization and, if the template is defined in a module interface unit of a
+module [$M] and the point of instantiation is not in a module interface unit of
+[$M], the point at the end of the [~top-level-declaration-seq] of the primary
+module interface unit of [$M] (prior to the [~private-module-fragment], if any).
+[:zh_CN]
+若某个模板的实例化点由其某个外围特例的实例化点所决定（[#temp.point]），则在其
+隐式实例化时，其实例化语境是其外围特例的实例化语境，以及如果该模板是在模块 [$M]
+的某个模块接口单元中定义的，而其实例化点并不在 [$M] 的某个模块接口单元之中，则
+包括 [$M] 的主模块接口单元的[~顶层声明式序列]的末尾（在[~私有模块分段]之前，如果
+有的话）位置，二者的合并。
+
+[para]
+[:en]
+During the implicit instantiation of a template that is implicitly instantiated
+because it is referenced from within the implicit definition of a defaulted
+special member function, the instantiation context is the instantiation context
+of the defaulted special member function.
+[:zh_CN]
+若某个模板由于被某个预置的特殊成员函数的隐式定义式之中所引用而导致其被隐式实例化，
+则在其隐式实例化时，其实例化语境是这个预置的特殊成员函数的实例化语境。
+
+[para]
+[:en]
+During the instantiation of any other template specialization, the instantiation
+context comprises the point of instantiation of the template.
+[:zh_CN]
+在任何其他的模板特例实例化时，其实例化语境由该模板的实例化点所组成。
+
+[para]
+[:en]
+In any other case, the instantiation context at a point within the program
+comprises that point.
+[:zh_CN]
+其他任何情况下，在程序中的某处的实例化语境就由该位置所组成。
+
+[para]
+[enter:example]
+[:en] Translation unit #1:
+[:zh_CN] 翻译单元 #1：
+[codeblock]
+export module stuff;
+export template<typename T, typename U> void foo(T, U u) { auto v = u; }
+export template<typename T, typename U> void bar(T, U u) { auto v = *u; }
+[codeblock:end]
+
+[:en] Translation unit #2:
+[:zh_CN] 翻译单元 #2：
+[codeblock]
+export module M1;
+import "defn.h";        // [:en] provides [`struct X {};]
+                        // [|:zh_CN] 提供 [`struct X {};]
+import stuff;
+export template<typename T> void f(T t) {
+  X x;
+  foo(t, x);
+}
+[codeblock:end]
+
+[:en] Translation unit #3:
+[:zh_CN] 翻译单元 #3：
+[codeblock]
+export module M2;
+import "decl.h";        // [:en] provides [`struct X;] (not a definition)
+                        // [|:zh_CN] 提供 [`struct X;]（并非定义式）
+import stuff;
+export template<typename T> void g(T t) {
+  X *x;
+  bar(t, x);
+}
+[codeblock:end]
+
+[:en] Translation unit #4:
+[:zh_CN] 翻译单元 #4：
+[codeblock]
+import M1;
+import M2;
+void test() {
+  f(0);
+  g(0);
+}
+[codeblock:end]
+
+[:en]
+The call to [`f(0)] is valid; the instantiation context of [`foo<int, X>]
+comprises
+[:zh_CN]
+对 [`f(0)] 的调用有效；[`foo<int, X>] 的实例化语境包括：
+
+[list]
+[item]
+[:en@~] the point at the end of translation unit #1,
+[:zh_CN@~] 翻译单元 #1 的末尾位置，
+[item]
+[:en@~] the point at the end of translation unit #2, and
+[:zh_CN@~]翻译单元 #2 的末尾位置，以及
+[item]
+[:en@~] the point of the call to [`f(0)],
+[:zh_CN@~] 对 [`f(0)] 进行调用的位置，
+[list:end]
+
+[:en@~]
+so the definition of [`X] is reachable ([#module.reach]).
+[:zh_CN@~]
+因而 [`X] 的定义式是可达的（[#module.reach]）。
+
+[para:~]
+[:en]
+It is unspecified whether the call to [`g(0)] is valid: the instantiation
+context of [`bar<int, X>] comprises
+[:zh_CN]
+对 [`g(0)] 的调用是否有效是未指明的：[`bar<int, X>] 的实例化语境包括：
+
+[list]
+[item]
+[:en@~] the point at the end of translation unit #1,
+[:zh_CN@~] 翻译单元 #1 的末尾位置，
+[item]
+[:en@~] the point at the end of translation unit #3,
+[:zh_CN@~] 翻译单元 #3 的末尾位置，以及
+[item]
+[:en@~] the point of the call to [`g(0)],
+[:zh_CN@~] 对 [`g(0)] 进行调用的位置，
+[list:end]
+
+[:en@~]
+so the definition of [`X] is not necessarily reachable, as described in
+[#module.reach].
+[:zh_CN@~]
+因而 [`X] 的定义式不必是可达的，如 [#module.reach] 所述。
+[exit:example]

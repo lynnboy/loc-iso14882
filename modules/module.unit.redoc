@@ -1,0 +1,293 @@
+[section#module.unit
+    [:en] Module units and purviews
+    [:zh_CN] 模块单元和视野
+]
+
+[syntax]
+[rule module-declaration [:zh_CN] 模块声明式 ]
+    [| [`:opt export] [`module] module-name [~:opt module-partition] [~:opt attribute-specifier-seq] [`;] ]
+[rule:end]
+
+[rule module-name [:zh_CN] 模块名 ]
+    [| [~:opt module-name-qualifier] identifier ]
+[rule:end]
+
+[rule module-partition [:zh_CN] 模块分区 ]
+    [| [`:] [~:opt module-name-qualifier] identifier ]
+[rule:end]
+
+[rule module-name-qualifier [:zh_CN] 模块名限定符 ]
+    [| identifier [`.] ]
+    [| [~:opt module-name-qualifier] identifier [`.] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A [+module unit] is a translation unit that contains a [~module-declaration].
+[:zh_CN]
+[+模块单元]是包含[~模块声明式]的翻译单元。
+
+[:en]
+A [+named module[%module[!named]]][%named module[%module[!named]]] is the
+collection of module units with the same [~module-name].
+[:zh_CN]
+[+具名模块[%模块[!具名～]]][%具名模块[%模块[!具名～]]]是具有相同的[~模块名]的
+模块单元的集合。
+
+[:en]
+The identifiers [`module] and [`import] shall not appear as [~identifier]s in a
+[~module-name] or [~module-partition].
+[:zh_CN]
+标识符 [`module] 和 [`import] 不能用作[~模块名]或[~模块分区]中的[~标识符]。
+
+[:en]
+The optional [~attribute-specifier-seq] appertains to the [~module-declaration].
+[:zh_CN]
+可选的[~特性说明符序列]属于[~模块声明式]。
+
+[para]
+[:en]
+A [+module interface unit] is a module unit whose [~module-declaration] contains
+the [`export] keyword; any other module unit is a [+module implementation unit].
+[:zh_CN]
+[+模块接口单元]是其[~模块声明式]包含 [`export] 关键字的模块单元；其他的任何模块
+单元都是[+模块实现单元]。
+
+[:en]
+A named module shall contain exactly one module interface unit with no
+[~module-partition], known as the [+primary module interface unit] of the
+module; no diagnostic is required.
+[:zh_CN]
+一个具名模块应当恰好包含一个没有[~模块分区]的模块接口单元，被称为该模块的
+[+主模块接口单元]；无须诊断。
+
+[para]
+[:en]
+A [+module partition] is a module unit whose [~module-declaration] contains
+a [~module-partition].
+[:zh_CN]
+[+模块分区]是其[~模块声明式]包含[~模块分区]的模块单元。
+
+[:en]
+A named module shall not contain multiple module partitions with the same
+[~module-partition].
+[:zh_CN]
+一个具名模块不能包含多个具有相同[~模块分区]的模块分区。
+
+[:en]
+All module partitions of a module that are module interface units shall be
+directly or indirectly exported by the primary module interface unit
+([#module.import]).
+[:zh_CN]
+一个模块的所有模块接口单元的模块分区都应当直接或间接被其主模块接口单元所导出
+（[#module.import]）。
+
+[:en]
+No diagnostic is required for a violation of these rules.
+[:zh_CN]
+这些规则的违反无须诊断。
+
+[enter:note]
+[:en]
+Module partitions can be imported only by other module units in the same module.
+[:zh_CN]
+模块分区只能被同一个模块的其他模块单元所导入。
+
+[:en]
+The division of a module into module units is not visible outside the module.
+[:zh_CN]
+模块分为模块分区的方式对于模块之外是不可见的。
+[exit:note]
+
+[para]
+[enter:example]
+[:en] Translation unit #1:
+[:zh_CN] 翻译单元 #1：
+[codeblock]
+export module A;
+export import :Foo;
+export int baz();
+[codeblock:end]
+
+[:en] Translation unit #2:
+[:zh_CN] 翻译单元 #2：
+[codeblock]
+export module A:Foo;
+import :Internals;
+export int foo() { return 2 * (bar() + 1); }
+[codeblock:end]
+
+[:en] Translation unit #3:
+[:zh_CN] 翻译单元 #3：
+[codeblock]
+module A:Internals;
+int bar();
+[codeblock:end]
+
+[:en] Translation unit #4:
+[:zh_CN] 翻译单元 #4：
+[codeblock]
+module A;
+import :Internals;
+int bar() { return baz() - 10; }
+int baz() { return 30; }
+[codeblock:end]
+
+[:en]
+Module [`A] contains four translation units:
+[:zh_CN]
+模块 [`A] 包含四个翻译单元：
+
+[list]
+[item]
+[:en@~] a primary module interface unit,
+[:zh_CN@~] 主模块接口单元，
+[item]
+[:en@~] a module partition [`A:Foo], which is a module interface unit forming
+part of the interface of module [`A],
+[:zh_CN@~] 模块分区 [`A:Foo]，作为一个模块接口单元构成了模块 [`A] 的接口的一部分，
+[item]
+[:en@~] a module partition [`A:Internals], which does not contribute to the
+external interface of module [`A], and
+[:zh_CN@~] 模块分区 [`A:Internals]，它并不参与模块 [`A] 的外部接口，以及
+[item]
+[:en@~] a module implementation unit providing a definition of [`bar] and
+[`baz], which cannot be imported because it does not have a partition name.
+[:zh_CN@~] 一个模块实现单元，提供了 [`bar] 和 [`baz] 的定义式，它不能被导入，
+这是因为它并没有分区名。
+[list:end]
+[exit:example]
+
+[para]
+[:en]
+A [+module unit purview[%purview[!module unit]]][%module unit purview[%purview
+[!module unit]]] is the sequence of [~token]s starting at the
+[~module-declaration] and extending to the end of the translation unit.
+[:zh_CN]
+[+模块单元的视野[%视野[!模块单元]]]是从[~模块声明式]开始并扩展直到翻译单元末尾的
+[~记号]的序列。
+
+[:en]
+The [+purview[%purview[!named module]]] of a named module [`M] is the set of
+module unit purviews of [`M][=']s module units.
+[:zh_CN]
+具名模块 [`M] 的[+视野[%视野[!具名模块]]]是 [`M] 的各个模块单元的模块单元视野的
+集合。
+
+[para]
+[:en]
+The [+global module[%module[!global]]][%global module[%module[!global]]] is the
+collection of all [~global-module-fragment]s and all translation units that are
+not module units.
+[:zh_CN]
+[+全局模块[%模块[!全局～]]][%全局模块[%模块[!全局～]]]是所有的[~全局模块分段]和
+所有并非模块单元的翻译单元的集合。
+
+[:en]
+Declarations appearing in such a context are said to be in the [+purview
+[%purview[!global module]]] of the global module.
+[:zh_CN]
+称在这种语境中出现的声明式处于全局模块的[+视野[%视野[!全局模块]]]之中。
+
+[enter:note]
+[:en]
+The global module has no name, no module interface unit, and is not introduced
+by any [~module-declaration].
+[:zh_CN]
+全局模块没有名字，没有模块接口单元，也并非由任何[~模块声明式]所引入。
+[exit:note]
+
+[para]
+[:en]
+A [+module] is either a named module or the global module.
+[:zh_CN]
+[+模块]是具名模块或者全局模块。
+
+[:en]
+A declaration is [+attached[%attached[!declaration]]] to a module as follows:
+[:zh_CN]
+声明式以如下方式[+附属[%附属[!声明式]]]于某个模块：
+
+[list]
+[item]
+[:en]
+If the declaration
+[:zh_CN]
+若该声明式
+[list]
+[item]
+[:en@~] is a replaceable global allocation or deallocation function
+([#new.delete.single], [#new.delete.array]), or
+[:zh_CN@~] 是可替代的全局分配或回收函数（[#new.delete.single]，
+[#new.delete.array]），或
+[item]
+[:en@~] is a [~namespace-declaration] with external linkage, or
+[:zh_CN@~] 是具有外部连接的[~命名空间声明式]，或
+[item]
+[:en@~] appears within a [~linkage-specification],
+[:zh_CN@~] 出现于[~连接说明]之内，
+[list:end]
+[:en@~] it is attached to the global module.
+[:zh_CN@~] 则它附属于全局模块。
+
+[item]
+[:en]
+Otherwise, the declaration is attached to the module in whose purview it appears.
+[:zh_CN]
+否则，该声明式附属于视野中包括它的那个模块。
+[list:end]
+
+[para]
+[:en]
+A [~module-declaration] that contains neither [`export] nor a
+[~module-partition] implicitly imports the primary module interface unit of the
+module as if by a [~module-import-declaration].
+[:zh_CN]
+既不包含 [`export] 也不包含[~模块分区]的[~模块声明式]，隐式导入主模块接口单元，
+如同一条[~模块导入声明式]一样。
+
+[enter:example]
+[:en] Translation unit #1:
+[:zh_CN] Translation unit #1：
+[codeblock]
+module B:Y;                     // [:en] does not implicitly import [`B]
+                                // [|:zh_CN] 并未隐式导入 [`B]
+int y();
+[codeblock:end]
+
+[:en] Translation unit #2:
+[:zh_CN] Translation unit #2：
+[codeblock]
+export module B;
+import :Y;                      // [:en] OK, does not create interface dependency cycle
+                                // [|:zh_CN] OK，并未造成接口依赖循环
+int n = y();
+[codeblock:end]
+
+[:en] Translation unit #3:
+[:zh_CN] Translation unit #3：
+[codeblock]
+module B:X1;                    // [:en] does not implicitly import [`B]
+                                // [|:zh_CN] 并未隐式导入 [`B]
+int &a = n;                     // [:en] error: [`n] not visible here
+                                // [|:zh_CN] 错误：[`n] 在此处不可见
+[codeblock:end]
+
+[:en] Translation unit #4:
+[:zh_CN] Translation unit #4：
+[codeblock]
+module B:X2;                    // [:en] does not implicitly import [`B]
+                                // [|:zh_CN] 并未隐式导入 [`B]
+import B;
+int &b = n;                     // OK
+[codeblock:end]
+
+[:en] Translation unit #5:
+[:zh_CN] Translation unit #5：
+[codeblock]
+module B;                       // [:en] implicitly imports [`B]
+                                // [|:zh_CN] 隐式导入 [`B]
+int &c = n;                     // OK
+[codeblock:end]
+[exit:example]

@@ -54,6 +54,7 @@ assignment operator                     赋值运算符
 associated class                        关联类
 associated namespace                    关联命名空间
 atomic                                  原子性
+attach to module                        附属于模块
 attribute                               特性标注，特性
 attribute declaration                   特性标注声明
 automatic storage duration              自动存储期
@@ -243,6 +244,8 @@ equivalence                             等价
 error                                   错误，误差
 escape character                        转义字符
 escape sequence                         转义序列
+export declaration                      导出声明式
+exported declaration                    被导出声明式
 extended integer type                   扩充整数类型
 extended signed integer type            扩充有符号整数类型
 extended unsigned integer type          扩充无符号整数类型
@@ -347,6 +350,7 @@ implicit type conversion                隐式类型转换
 implicit conversion sequence            隐式转换序列
 implicitly captured                     隐式捕获
 implicitly declared function            隐式声明的函数
+import declaration                      导入声明式
 impose                                  施加
 incomplete-defined object type          定义不完整的对象类型
 incomplete type                         不完整类型
@@ -452,6 +456,7 @@ namespace alias                         命名空间别名
 namespace definition                    命名空间定义式
 namespace scope                         命名空间作用域
 narrow character                        窄字符
+necessarily reachable                   必定可达
 nest                                    嵌套
 nested class                            嵌套类
 nested name                             嵌套名
@@ -554,6 +559,7 @@ pseudo destructor call                  伪析构函数调用
 public                                  公用，公开
 punctuator                              标点，标点符号
 pure virtual function                   纯虚函数
+purview                                 视野
 qualification                           限定，限定性
 qualified name                          限定名
 qualifier                               限定符
