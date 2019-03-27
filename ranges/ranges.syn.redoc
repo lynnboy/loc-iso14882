@@ -36,9 +36,6 @@ namespace std::ranges {
   template<class T>
     using sentinel_t = decltype(ranges::end(declval<T&>()));
 
-  template<[*forwarding-range] R>
-    using safe_iterator_t = iterator_t<R>;
-
   template<class T>
     concept Range = [=SeeBelow];
 
@@ -100,8 +97,16 @@ namespace std::ranges {
     requires (K == subrange_kind::sized || !SizedSentinel<S, I>)
   class subrange;
 
-  template<[*forwarding-range] R>
-    using safe_subrange_t = subrange<iterator_t<R>>;
+  // [:en] [#range.dangling], dangling iterator handling
+  // [|:zh_CN] [#range.dangling]，悬挂迭代器处理
+  struct dangling;
+
+  template<Range R>
+    using safe_iterator_t = conditional_t<[*forwarding-range]<R>, iterator_t<R>, dangling>;
+
+  template<Range R>
+    using safe_subrange_t =
+      conditional_t<[*forwarding-range]<R>, subrange<iterator_t<R>>, dangling>;
 
   // [:en] [#range.empty], empty view
   // [|:zh_CN] [#range.empty]，空视图
@@ -136,6 +141,10 @@ namespace std::ranges {
 
   template<ViewableRange R>
     using all_view = decltype(view::all(declval<R>()));
+
+  template<Range R>
+    requires is_object_v<R>
+  class ref_view;
 
   // [:en] [#range.filter], filter view
   // [|:zh_CN] [#range.filter]，过滤视图
@@ -177,7 +186,7 @@ namespace std::ranges {
 
   template<InputRange V, ForwardRange Pattern>
     requires View<V> && View<Pattern> &&
-             IndirectlyComparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to<>> &&
+             IndirectlyComparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
              (ForwardRange<V> || [*tiny-range]<Pattern>)
   class split_view;
 

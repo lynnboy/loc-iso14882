@@ -643,8 +643,8 @@ storage duration                        存储期
 storage management                      存储管理
 strict                                  严格的
 string                                  字符串
-struct                                  结构
-structure tag                           结构标记
+struct                                  结构体
+structure tag                           结构体标签
 structured binding declaration          结构化绑定声明式
 subexpression                           子表达式
 subnormal                               次正规的
@@ -715,8 +715,8 @@ undefined                               未定义的
 underlying type                         底层类型
 unevaluated operand                     免求值操作数
 unexpanded parameter pack               未展开形参包组
-union                                   联合
-union-like class                        类似联合的类
+union                                   联合体
+union-like class                        类似联合体的类
 universal character name                通用字符名
 unnamed class                           无名类
 unnamed enumeration                     无名枚举

@@ -1,0 +1,57 @@
+[section#range.dangling
+    [:en] Dangling iterator handling
+    [:zh_CN] 悬挂迭代器处理
+]
+
+[para]
+[:en]
+The tag type [`dangling] is used together with the template aliases
+[`safe_iterator_t] and [`safe_subrange_t] to indicate that an algorithm that
+typically returns an iterator into or subrange of a [`Range] argument
+does not return an iterator or subrange which could potentially reference a
+range whose lifetime has ended for a particular rvalue [`Range] argument
+which does not model [`[*forwarding-range]] ([#range.range]).
+[:zh_CN]
+标签类型 [`dangling] 与模板别名 [`safe_iterator_t] 和 [`safe_subrange_t] 一起
+使用，用以标明通常返回某个 [`Range] 实参之中的迭代器或其子范围的算法，对于某个
+并未构成 [`[*forwarding-range]]（[#range.range]）的右值 [`Range] 实参，所返回的
+迭代器或子范围并不会引用一个生存期已结束的范围。
+
+[codeblock:synopsis]
+namespace std {
+  struct dangling {
+    constexpr dangling() noexcept = default;
+    template<class... Args>
+      constexpr dangling(Args&&...) noexcept { }
+  };
+}
+[codeblock:end]
+
+[para]
+[enter:example]
+[codeblock]
+vector<int> f();
+auto result1 = ranges::find(f(), 42);                                   // \#1
+static_assert(Same<decltype(result1), dangling>);
+auto vec = f();
+auto result2 = ranges::find(vec, 42);                                   // \#2
+static_assert(Same<decltype(result2), vector<int>::iterator>);
+auto result3 = ranges::find(subrange{vec}, 42);                         // \#3
+static_assert(Same<decltype(result3), vector<int>::iterator>);
+[codeblock:end]
+
+[:en]
+The call to [`ranges::find] at #1 returns [`dangling] since [`f()] is an rvalue
+[`vector]; the [`vector] could potentially be destroyed before a returned
+iterator is dereferenced.
+[:zh_CN]
+由于 [`f()] 是一个 [`vector] 右值，因此在 #1 处调用 [`ranges::find] 返回的是
+[`dangling]；这个 [`vector] 可能会在返回的迭代器被解引用之前就被销毁。
+
+[:en]
+However, the calls at #2 and #3 both return iterators since the lvalue [`vec]
+and specializations of [`subrange] model [`[*forwarding-range]].
+[:zh_CN]
+但是，由于 [`vec] 是左值且 [`subrange] 的特例构成 [`[*forwarding-range]]，因此
+在 #2 和 #3 处的调用所返回的都是迭代器。
+[exit:example]
