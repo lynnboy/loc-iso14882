@@ -59,6 +59,7 @@ attribute                               特性标注，特性
 attribute declaration                   特性标注声明
 automatic storage duration              自动存储期
 await-expression                        等待表达式
+awaitable                               可等待体
 base characteristic                     基础特征
 basic character set                     基本字符集
 basic source character set              基本源字符集
@@ -255,6 +256,7 @@ exception                               异常
 exception handler                       异常处理器
 exception specification                 异常说明
 execute                                 执行，运行
+execution agent                         执行代理
 execution character set                 执行字符集
 execution step                          执行步骤
 explicit                                显式，明确

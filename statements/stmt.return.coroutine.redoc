@@ -1,0 +1,87 @@
+[section#stmt.return.coroutine
+    [:en] The [`co_return] statement
+    [:zh_CN] [`co_return] 语句
+[:]
+[%[`co_return]]
+[%  [:en] coroutine return[%[`co_return]]
+    [:zh_CN] 协程返回[%[`co_return]] ]
+]
+
+[syntax]
+[rule coroutine-return-statement [:zh_CN] 协程返回语句 ]
+    [| [`co_return] [~:opt expr-or-braced-init-list] [`;] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A coroutine returns to its caller or resumer ([#dcl.fct.def.coroutine]) by the
+[`co_return] statement or when suspended ([#expr.await]).
+[:zh_CN]
+协程用 [`co_return] 语句或当其暂停（[#expr.await]）时返回其调用方或恢复方
+（[#dcl.fct.def.coroutine]）。
+
+[:en]
+A coroutine shall not return to its caller or resumer by a [`return] statement
+([#stmt.return]).
+[:zh_CN]
+协程不能用 [`return] 语句（[#stmt.return]）返回其调用方或恢复方。
+
+[para]
+[:en]
+The [~expr-or-braced-init-list] of a [`co_return] statement is called its
+operand.
+[:zh_CN]
+[`co_return] 语句的[~表达式或花括号初始化列表]称为其操作数。
+
+[:en]
+Let [*p] be an lvalue naming the coroutine promise object
+([#dcl.fct.def.coroutine]).
+[:zh_CN]
+令 [*p] 为指名协程承诺对象（[#dcl.fct.def.coroutine]）的左值。
+
+[:en]
+A [`co_return] statement is equivalent to:
+[:zh_CN]
+[`co_return] 语句等价于：
+
+[codeblock:notation]
+{ [$S]; goto [*final-suspend]; }
+[codeblock:end]
+
+[:en@~]
+where [`[*final-suspend]] is the exposition-only label defined in
+[#dcl.fct.def.coroutine] and [*S] is defined as follows:
+[:zh_CN@~]
+其中 [`[*final-suspend]] 为在 [#dcl.fct.def.coroutine] 中仅为阐释目的所定义的
+标号，而 [*S] 的定义如下：
+
+[list]
+[item]
+[:en]
+[*S] is [*p][`.return_value([~expr-or-braced-init-list])], if the operand is
+a [~braced-init-list] or an expression of non-[`void] type;
+[:zh_CN]
+如果操作数是一个[~花括号初始化列表]或一个非 [`void] 类型的表达式，则 [*S] 为
+“[*p][`.return_value([~expr-or-braced-init-list])]”；
+
+[item]
+[:en]
+[*S] is [`{] [~:opt expression] [`;] [*p][`.return_void(); }], otherwise;
+[:zh_CN]
+否则 [*S] 为“[`{] [~:opt expression] [`;] [*p][`.return_void(); }]”。
+[list:end]
+
+[:en]
+[*S] shall be a prvalue of type [`void].
+[:zh_CN]
+[*S] 应当是 [`void] 类型的纯右值。
+
+[para]
+[:en]
+If [*p][`.return_void()] is a valid expression, flowing off the end of a
+coroutine is equivalent to a [`co_return] with no operand; otherwise flowing off
+the end of a coroutine results in undefined behavior.
+[:zh_CN]
+如果 [*p][`.return_void()] 是有效表达式，则控制流出协程的末尾，等价于没有操作数
+的 [`co_return]；否则控制流出协程的末尾导致未定义行为。
