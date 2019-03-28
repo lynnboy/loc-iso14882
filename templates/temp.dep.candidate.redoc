@@ -7,32 +7,22 @@
 [:en]
 [%functions[!candidate]]
 For a function call where the [~postfix-expression] is a dependent name, the
-candidate functions are found using the usual lookup rules
-([#basic.lookup.unqual], [#basic.lookup.argdep]) except that:
+candidate functions are found using the usual lookup rules from the template
+definition context ([#basic.lookup.unqual], [#basic.lookup.argdep]).
 [:zh_CN]
 [%函数[!候选～]]
-对于[~后缀表达式]为待决名字的函数调用，使用常规查找规则（[#basic.lookup.unqual]，
-[#basic.lookup.argdep]）查找其候选函数，但有以下例外：
+对于[~后缀表达式]为待决名字的函数调用，使用常规查找规则在函数定义语境中查找其
+候选函数（[#basic.lookup.unqual]，[#basic.lookup.argdep]）。
 
-[list]
-[item]
-[:en]
-For the part of the lookup using unqualified name lookup
-([#basic.lookup.unqual]), only function declarations from the template
-definition context are found.
-[:zh_CN]
-在使用未限定名查找（[#basic.lookup.unqual]）的查找部分中，只能找到模板定义语境中
-的函数声明式。
-
-[item]
+[enter:note]
 [:en]
 For the part of the lookup using associated namespaces ([#basic.lookup.argdep]),
-only function declarations found in either the template definition context or
-the template instantiation context are found.
+function declarations found in the template instantiation context are found by
+this lookup, as described in [#basic.lookup.argdep].
 [:zh_CN]
-在使用关联命名空间（[#basic.lookup.argdep]）的查找部分中，只能找到函数定义语境或
-模板实例化语境中的函数声明式。
-[list:end]
+在使用关联命名空间（[#basic.lookup.argdep]）的查找部分中，这次查找能够找到模板
+实例化语境中所找到的函数声明式，如 [#basic.lookup.argdep] 所述。
+[exit:note]
 
 [:en]
 If the call would be ill-formed or would find a better match had the lookup
@@ -44,3 +34,207 @@ template instantiation contexts, then the program has undefined behavior.
 当在关联命名空间中进行查找时，若考察所有翻译单元中这些命名空间所引入的带有外部
 连接的全部函数声明式，而不只考察在模板定义和模板实例化语境中所找到的那些声明式，
 将使得该调用非良构，或将找到某个更好的匹配，则程序带有未定义行为。
+
+[para]
+[enter:example]
+[:en] Source file [`"X.h"]:
+[:zh_CN] 源文件 [`"X.h"]：
+[codeblock]
+namespace Q {
+  struct X { };
+}
+[codeblock:end]
+
+[:en] Source file [`"G.h"]:
+[:zh_CN] 源文件 [`"G.h"]：
+[codeblock]
+namespace Q {
+  void g_impl(X, X);
+}
+[codeblock:end]
+
+[:en] Module interface unit of [`M1]:
+[:zh_CN] [`M1] 的模块接口单元：
+[codeblock]
+module;
+#include "X.h"
+#include "G.h"
+export module M1;
+export template<typename T>
+void g(T t) {
+  g_impl(t, Q::X{ });   // [:en] ADL in definition context finds [`Q::g_impl], [`g_impl] not discarded
+                        // [|:zh_CN] ADL 在定义语境中找到了 [`Q::g_impl]，[`g_impl] 未被丢弃
+}
+[codeblock:end]
+
+[:en] Module interface unit of [`M2]:
+[:zh_CN] [`M2] 的模块接口单元：
+[codeblock]
+module;
+#include "X.h"
+export module M2;
+import M1;
+void h(Q::X x) {
+   g(x);                // OK
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:example]
+[:en] Module interface unit of [`Std]:
+[:zh_CN] [`Std] 的模块接口单元：
+[codeblock]
+export module Std;
+export template<typename Iter>
+void indirect_swap(Iter lhs, Iter rhs)
+{
+  swap(*lhs, *rhs);     // [:en] [`swap] not found by unqualified lookup, can be found only via ADL
+                        // [|:zh_CN] [`swap] 不能被未限定查找找到，只能通过 ADL 找到
+}
+[codeblock:end]
+
+[:en] Module interface unit of [`M]:
+[:zh_CN] [`M] 的模块接口单元：
+[codeblock]
+export module M;
+import Std;
+
+struct S { /* ...*/ };
+void swap(S&, S&);      // #1
+
+void f(S* p, S* q)
+{
+  indirect_swap(p, q);  // [:en] finds #1 via ADL in instantiation context
+                        // [|:zh_CN] 通过 ADL 在实例化语境中的找到了 #1
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:example]
+[:en] Source file [`"X.h"]:
+[:zh_CN] 源文件 [`"X.h"]：
+[codeblock]
+struct X { /* ... */ };
+X operator+(X, X);
+[codeblock:end]
+
+[:en] Module interface unit of [`F]:
+[:zh_CN] [`F] 的模块接口单元：
+[codeblock]
+export module F;
+export template<typename T>
+void f(T t) {
+  t + t;
+}
+[codeblock:end]
+
+[:en] Module interface unit of [`M]:
+[:zh_CN] [`M] 的模块接口单元：
+[codeblock]
+module;
+#include "X.h"
+export module M;
+import F;
+void g(X x) {
+  f(x);             // [:en] OK: instantiates [`f] from [`F],
+                    // [|:zh_CN] OK：实例化 [`F] 中的 [`f]，
+                    // [:en@~] [`operator+] is visible in instantiation context
+                    // [|:zh_CN@~] [`operator+] 在实例化语境中可见
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:example]
+[:en] Module interface unit of [`A]:
+[:zh_CN] [`A] 的模块接口单元：
+[codeblock]
+export module A;
+export template<typename T>
+void f(T t) {
+  cat(t, t);         // #1
+  dog(t, t);         // #2
+}
+[codeblock:end]
+
+[:en] Module interface unit of [`B]:
+[:zh_CN] [`B] 的模块接口单元：
+[codeblock]
+export module B;
+import A;
+export template<typename T, typename U>
+void g(T t, U u) {
+  f(t);
+}
+[codeblock:end]
+
+[:en] Source file [`"foo.h"], not an importable header:
+[:zh_CN] 源文件 [`"foo.h"]，不是可导入头文件：
+[codeblock]
+struct foo {
+  friend int cat(foo, foo);
+};
+int dog(foo, foo);
+[codeblock:end]
+
+[:en] Module interface unit of [`C1]:
+[:zh_CN] [`C1] 的模块接口单元：
+[codeblock]
+module;
+#include "foo.h" // [:en] [`dog] not referenced, discarded
+                 // [|:zh_CN] [`dog] 未被引用，弃用
+export module C1;
+import B;
+export template<typename T>
+void h(T t) {
+  g(foo{ }, t);
+}
+[codeblock:end]
+
+[:en] Translation unit:
+[:zh_CN] 翻译单元：
+[codeblock]
+import C1;
+void i() {
+   h(0);        // [:en] error: [`dog] not found at #2
+                // [|:zh_CN] 错误：在 #2 处未找到 [`dog]
+}
+[codeblock:end]
+
+[:en] Importable header [`"bar.h"]:
+[:zh_CN] 可导入头文件 [`"bar.h"]：
+[codeblock]
+struct bar {
+  friend int cat(bar, bar);
+};
+int dog(bar, bar);
+[codeblock:end]
+
+[:en] Module interface unit of [`C2]:
+[:zh_CN] [`C2] 的模块接口单元：
+[codeblock]
+module;
+#include "bar.h" // [:en] imports header unit [`"bar.h"]
+                 // [|:zh_CN] 导入头文件单元 [`"bar.h"]
+export module C2;
+import B;
+export template<typename T>
+void j(T t) {
+  g(bar{ }, t);
+}
+[codeblock:end]
+
+[:en] Translation unit:
+[:zh_CN] 翻译单元：
+[codeblock]
+import C2;
+void k() {
+   j(0);        // [:en] OK, [`dog] found in instantiation context:
+                // [|:zh_CN] OK，在实例化语境中找到了 [`dog]：
+                // [:en@~] visible at end of module interface unit of [`C2]
+                // [|:zh_CN@~] 其在 [`C2] 的模块接口单元末尾可见
+}
+[codeblock:end]
+[exit:example]

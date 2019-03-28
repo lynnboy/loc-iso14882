@@ -44,6 +44,135 @@ using [`x.allocate(n * sizeof(Tp), alignof(Tp))].
 [:zh_CN] 无。
 [exit:description]
 
+[%@library allocate_bytes[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!allocate_bytes]]
+[codeblock:declaration]
+void* allocate_bytes(size_t nbytes, size_t alignment = alignof(max_align_t));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return memory_rsrc->allocate(nbytes, alignment);]
+[:zh_CN] 等价于：[`return memory_rsrc->allocate(nbytes, alignment);]
+
+[para]
+[enter:note]
+[:en] The return type is [`void*] (rather than, e.g., [`byte*]) to support
+conversion to an arbitrary pointer type [`U*] by [`static_cast<U*>], thus
+facilitating construction of a [`U] object in the allocated memory.
+[:zh_CN] 返回类型为 [`void*]（而不是如 [`byte*] 等），以支持用
+[`static_cast<U*>] 转换为任意的指针类型 [`U*]，从而提供了在所分配内存中构造一个
+[`U] 对象的设施。
+[exit:note]
+[exit:description]
+
+[%@library deallocate_bytes[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!deallocate_bytes]]
+[codeblock:declaration]
+void deallocate_bytes(void* p, size_t nbytes, size_t alignment = alignof(max_align_t));
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`memory_rsrc->deallocate(p, nbytes, alignment)].
+[:zh_CN] 等价于 [`memory_rsrc->deallocate(p, nbytes, alignment)]。
+[exit:description]
+
+[%@library allocate_object[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!allocate_object]]
+[codeblock:declaration]
+template<class T>
+  T* allocate_object(size_t n = 1);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Allocates memory suitable for holding an array of [`n] objects of type
+[`T], as follows:
+[:zh_CN] 分配适于持有一个 [`n] 个 [`T] 类型的对象的数组，方式如下：
+
+[list]
+[item]
+[:en@~] if [`SIZE_MAX / sizeof(T) < n], throws [`length_error],
+[:zh_CN@~] 如果 [`SIZE_MAX / sizeof(T) < n]，则抛出 [`length_error]，
+[list]
+[item]
+[:en@~] otherwise equivalent to:
+[:zh_CN@~] 否则等价于：
+[codeblock:notation]
+return static_cast<T*>(allocate_bytes(n*sizeof(T), alignof(T)));
+[codeblock:end]
+[list:end]
+
+[para]
+[enter:note]
+[:en] [`T] is not deduced and must therefore be provided as a template argument.
+[:zh_CN] [`T] 未进行推断，因而必须作为模板实参提供。
+[exit:note]
+[exit:description]
+
+[%@library deallocate_object[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!deallocate_object]]
+[codeblock:declaration]
+template<class T>
+  void deallocate_object(T* p, size_t n = 1);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to [`deallocate_bytes(p, n*sizeof(T), alignof(T))].
+[:zh_CN] 等价于 [`deallocate_bytes(p, n*sizeof(T), alignof(T))]。
+[exit:description]
+
+[%@library new_object[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!new_object]]
+[codeblock:declaration]
+template<class T, class CtorArgs...>
+  T* new_object(CtorArgs&&... ctor_args);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Allocates and constructs an object of type [`T], as follows.
+[:zh_CN] 分配并构造一个 [`T] 类型的对象，方式如下。
+
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+T* p = allocate_object<T>();
+try {
+  construct(p, std::forward<CtorArgs>(ctor_args)...);
+} catch (...) {
+  deallocate_object(p);
+  throw;
+}
+return p;
+[codeblock:end]
+
+[para]
+[enter:note]
+[:en] [`T] is not deduced and must therefore be provided as a template argument.
+[:zh_CN] [`T] 未进行推断，因而必须作为模板实参提供。
+[exit:note]
+[exit:description]
+
+[%@library new_object[!polymorphic_allocator]]
+[%@library polymorphic_allocator[!new_object]]
+[codeblock:declaration]
+template<class T>
+  void delete_object(T* p);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+destroy(p);
+deallocate_object(p);
+[codeblock:end]
+[exit:description]
+
 [%@library construct[!polymorphic_allocator]]
 [%@library polymorphic_allocator[!construct]]
 [codeblock:declaration]
