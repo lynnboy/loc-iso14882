@@ -416,7 +416,7 @@ local lambda expression                 局部 lambda 表达式
 local scope                             局部作用域
 local variable                          局部变量
 locale                                  地域
-locale-specific                         特定于地域的
+locale-specific                         地域特有的
 lock                                    锁，锁定
 lock-free                               无锁
 logical and operator                    逻辑与运算符
