@@ -327,7 +327,7 @@ global                                  全局的
 global namespace                        全局命名空间
 global object                           全局对象
 global scope                            全局作用域
-global variable                         全局对象
+global variable                         全局变量
 glvalue                                 泛左值
 goto statement                          goto 语句
 grammar                                 文法
