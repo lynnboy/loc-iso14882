@@ -87,9 +87,9 @@ built-in operator                       内建运算符
 byte                                    字节
 cache                                   高速缓存
 call                                    调用
-capture                                 捕获
-capture by copy                         复制捕获
-captured by reference                   引用捕获
+capture                                 俘获
+capture by copy                         按复制俘获
+captured by reference                   按引用俘获
 carry a dependency to                   传递依赖给
 case label                              case 标号
 cast                                    强制转换，类型强制转换
@@ -264,7 +264,7 @@ explicit instantiation declaration      显式实例化生命式
 explicit specialization                 显式特化式
 explicit specifier                      explicit 说明符
 explicit type conversion                显式类型转换
-explicitly captured                     显式捕获
+explicitly captured                     显式俘获
 explicitly defaulted function           显式预置的函数
 exponent                                指数
 expression                              表达式
@@ -350,7 +350,7 @@ implementation limits                   实现限额
 implicit                                隐式，暗中，隐含
 implicit type conversion                隐式类型转换
 implicit conversion sequence            隐式转换序列
-implicitly captured                     隐式捕获
+implicitly captured                     隐式俘获
 implicitly declared function            隐式声明的函数
 import declaration                      导入声明式
 impose                                  施加
