@@ -15,21 +15,86 @@ in a function declaration or to the declaration of a class or enumeration.
 声明式之上。
 
 [:en]
-It shall appear at most once in each [~attribute-list] and no
-[~attribute-argument-clause] shall be present.
+It shall appear at most once in each [~attribute-list].
 [:zh_CN]
-它在每个[~特性列表]中最多出现一次，且不能带有[~特性实参子句]。
+它在每个[~特性列表]中最多出现一次。
+
+[:en]
+An [~attribute-argument-clause] may be present and, if present, shall have the
+form:
+[:zh_CN]
+可以包含[~特性实参子句]，而若其存在，应当具有以下形式：
+
+[syntax:explanation]
+[`(] [~string-literal] [`)]
+[syntax:end]
+
+[para]
+[:en]
+A name or entity declared without the [`nodiscard] attribute can later be
+redeclared with the attribute and vice-versa.
+[:zh_CN]
+未以 [`nodiscard] 特性声明的名字或实体，可以随后以该特性重新声明，反之亦然。
+
+[enter:note]
+[:en]
+Thus, an entity initially declared without the attribute can be marked as
+[`nodiscard] by a subsequent redeclaration.
+[:zh_CN]
+因此，最初声明没有次特性的实体可以被随后的重复声明标为 [`nodiscard]。
+
+[:en]
+However, after an entity is marked as [`nodiscard], later redeclarations do not
+remove the [`nodiscard] from the entity.
+[:zh_CN]
+不过，在实体被标为 [`nodiscard] 之后，后面的重复声明并不会从实体中移除
+[`nodiscard]。
+[exit:note]
+
+[:en]
+Redeclarations using different forms of the attribute (with or without the
+[~attribute-argument-clause] or with different [~attribute-argument-clause]s)
+are allowed.
+[:zh_CN]
+允许使用不同形式（带有或不带有[~特性实参子句]或带有不同的[~特性实参子句]）的特性
+进行重复声明。
+
+[para]
+[:en]
+A [+nodiscard type[%type[!nodiscard]]][%nodiscard type[%type[!nodiscard]]] is
+a (possibly cv-qualified) class or enumeration type marked [`nodiscard] in a
+reachable declaration.
+[:zh_CN]
+[+nodiscard 类型[%类型[!nodiscard ～]]][%nodiscard 类型[%类型[!nodiscard ～]]]
+是在某个可达声明式中被标为 [`nodiscard] 的（可能被 cv 限定的）类或枚举类型。
+
+[:en]
+A [+nodiscard call[%call[!nodiscard]]][%nodiscard call[%call[!nodiscard]]] is
+either
+[:zh_CN]
+[+nodiscard 调用[%调用[!nodiscard ～]]][%nodiscard 调用[%调用[!nodiscard ～]]]
+为以下之一：
+
+[list]
+[item]
+[:en] a function call expression ([#expr.call]) that calls a function declared
+[`nodiscard] in a reachable declaration or whose return type is a nodiscard
+type, or
+[:zh_CN] 函数调用表达式（[#expr.call]），它调用了在可达声明式中被声明为
+[`nodiscard] 的函数，或其返回类型为 nodiscard 类型，或者
+
+[item]
+[:en] an explicit type conversion ([#expr.static.cast], [#expr.cast],
+[#expr.type.conv]) that constructs an object through a constructor declared
+[`nodiscard] in a reachable declaration, or that initializes an object of a
+nodiscard type.
+[:zh_CN] 显式类型转换（[#expr.static.cast]，[#expr.cast]，[#expr.type.conv]），
+它通过在可达声明式中被声明为 [`nodiscard] 的构造函数来构造对象，或它初始化某个
+nodiscard 类型的对象。
+[list:end]
 
 [para]
 [enter:note]
-[:en]
-A nodiscard call is a function call expression that calls a function previously
-declared [`nodiscard], or whose return type is a possibly cv-qualified class or
-enumeration type marked [`nodiscard].
-[:zh_CN]
-对之前声明为 [`nodiscard]，或其返回类型为可能被 cv 限定的带有 [`nodiscard] 标记
-的类或枚举的函数所进行的调用，是 nodiscard 调用。
-
 [:en]
 Appearance of a nodiscard call as a potentially-evaluated discarded-value
 expression ([#expr.prop]) is discouraged unless explicitly cast to [`void].
@@ -47,15 +112,43 @@ This is typically because discarding the return value of a nodiscard call has
 surprising consequences.
 [:zh_CN]
 这通常是因为放弃 nodiscard 调用的返回值会有意外的后果。
+
+[:en] 
+The [~string-literal] in a [`nodiscard] [~attribute-argument-clause] is intended
+to be used in the message of the warning as the rationale for why the result
+should not be discarded.
+[:zh_CN]
+[`nodiscard] 的[~特性实参子句]中的[~字符串字面量]的作用是用在警告消息之中，以
+提示为何其结果不能被丢弃的理由。
 [exit:note]
 
 [para]
 [enter:example]
 [codeblock]
+struct [[nodiscard]] my_scopeguard { /* ... */ };
+struct my_unique {
+  my_unique() = default;                                // [:en] does not acquire resource
+                                                        // [|:zh_CN] 并未获取资源
+  [[nodiscard]] my_unique(int fd) { /* ... */ }         // [:en] acquires resource
+                                                        // [|:zh_CN] 获取资源
+  ~my_unique() noexcept { /* ... */ }                   // [:en] releases resource, if any
+                                                        // [|:zh_CN] 释放资源（如果有）
+  /* ... */
+};
 struct [[nodiscard]] error_info { /*...*/ };
 error_info enable_missile_safety_mode();
 void launch_missiles();
 void test_missiles() {
+  my_scopeguard();              // [:en] warning encouraged
+                                // [|:zh_CN] 鼓励给出警告
+  (void)my_scopeguard(),        // [:en] warning not encouraged, cast to [`void]
+                                // [|:zh_CN] 不鼓励给出警告，强制转换为 [`void]
+    launch_missiles();          // [:en] comma operator, statement continues
+                                // [|:zh_CN] 逗号运算符，语句继续
+  my_unique(42);                // [:en] warning encouraged
+                                // [|:zh_CN] 鼓励给出警告
+  my_unique();                  // [:en] warning not encouraged
+                                // [|:zh_CN] 不鼓励给出警告
   enable_missile_safety_mode(); // [:en] warning encouraged
                                 // [|:zh_CN] 鼓励给出警告
   launch_missiles();
