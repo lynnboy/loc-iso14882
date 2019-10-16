@@ -18,14 +18,33 @@ The declaration of such a function is followed by a comment ending in [=Expos].
 
 [para]
 [:en]
-The following function is defined for exposition only to aid in the
-specification of the library:
+The following are defined for exposition only to aid in the specification of the
+library:
 [:zh_CN]
-下面的函数仅用于阐释而定义，以助于对程序库的说明：
+下面各项仅用于阐释目的而定义，以助于对程序库的说明：
 
 [%@library [*decay-copy]]
 [codeblock:notation [!:var decay-copy]]
 template<class T> constexpr decay_t<T> [*decay-copy](T&& v)
     noexcept(is_nothrow_convertible_v<T, decay_t<T>>)           // [=Expos]
   { return std::forward<T>(v); }
+
+constexpr auto [*synth-three-way] =
+  []<class T, class U>(const T& t, const U& u)
+    requires requires {
+      { t < u } -> convertible_to<bool>;
+      { u < t } -> convertible_to<bool>;
+    }
+  {
+    if constexpr (three_way_comparable_with<T, U>) {
+      return t <=> u;
+    } else {
+      if (t < u) return weak_ordering::less;
+      if (u < t) return weak_ordering::greater;
+      return weak_ordering::equivalent;
+    }
+  };
+
+template<class T, class U=T>
+using [*synth-three-way-result] = decltype([*synth-three-way](declval<T&>(), declval<U&>()));
 [codeblock:end]

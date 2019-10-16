@@ -1,0 +1,46 @@
+[section#diff.cpp17.over
+    [:en] [#over]: overloading
+    [:zh_CN] [#over]：重载
+]
+
+[para:diff] [#over.match.oper]
+[=Change]
+[:en] Equality and inequality expressions can now find reversed and rewritten
+candidates.
+[:zh_CN] 现在可以为相等和不相等表达式找到反转和重写的候选函数。
+
+[=Rationale]
+[:en] Improve consistency of equality with three-way comparison and make it
+easier to write the full complement of equality operations.
+[:zh_CN] 改进利用三路比较的相等的一致性，并使之更易于编写完全补足的相等性操作。
+
+[=Effect]
+[:en] Equality and inequality expressions between two objects of different types,
+where one is convertible to the other, could invoke a different operator.
+[:zh_CN] 两个不同类型对象（其一可以转换为另一个）之间的相等和不相等表达式，可能
+调用不同的运算符。
+
+[:en] Equality and inequality expressions between two objects of the same type
+could become ambiguous.
+[:zh_CN] 两个相同类型对象之间的相等和不相等表达式可能发生歧义。
+
+[codeblock]
+struct A {
+  operator int() const;
+};
+
+bool operator==(A, int);        // #1
+// [:en] #2 is built-in candidate: [`bool operator==(int, int);]
+// [|:zh_CN] #2 为内建候选函数：[`bool operator==(int, int);]
+// [:en] #3 is built-in candidate: [`bool operator!=(int, int);]
+// [|:zh_CN] #3 为内建候选函数：[`bool operator!=(int, int);]
+
+int check(A x, A y) {
+  return (x == y) +             // [:en] ill-formed; previously well-formed
+                                // [|:zh_CN] 非良构；之前是良构的
+    (10 == x) +                 // [:en] calls #1, previously selected #2
+                                // [|:zh_CN] 调用 #1，之前选择 #2
+    (10 != x);                  // [:en] calls #1, previously selected #3
+                                // [|:zh_CN] 调用 #1，之前选择 #3
+}
+[codeblock:end]

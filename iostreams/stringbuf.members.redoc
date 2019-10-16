@@ -3,49 +3,191 @@
     [:zh_CN] 成员函数
 ]
 
-[%@library str[!basic_stringbuf]]
-[%@library basic_stringbuf[!str]]
+[para]
+[:en] The member functions getting the underlying character sequence all refer
+to a [`high_mark] value, where [`high_mark] represents the position one past the
+highest initialized character in the buffer.
+[:zh_CN] 所有获取底层字符序列的成员函数都依赖于一个 [`high_mark] 值，[`high_mark]
+表示缓冲区中已初始化字符的最高位之后一个位置。
+
+[:en] Characters can be initialized by writing to the stream, by constructing
+the [`basic_stringbuf] passing a [`basic_string] argument, or by calling one of
+the [`str] member functions passing a [`basic_string] as an argument.
+[:zh_CN] 初始化字符，可用通过向流写入，通过传递一个 [`basic_string] 来构造
+[`basic_stringbuf]，或者通过以一个 [`basic_string] 为实参来调用成员函数 [`str]
+之一来达成。
+
+[:en] In the latter case, all characters initialized prior to the call are now
+considered uninitialized (except for those characters re-initialized by the new
+[`basic_string]).
+[:zh_CN] 最后一种情况中，这次调用之前的已初始化字符均被当做尚未初始化（但会被
+新的 [`basic_string] 重新初始化一些字符）。
+
 [codeblock:declaration]
-basic_string<charT, traits, Allocator> str() const;
+void init_buf_ptrs(); // [=Expos]
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes the input and output sequences from [`buf] according to [`mode].
+[:zh_CN] 根据 [`mode] 来从 [`buf] 初始化输入和输出序列。
+
+[para:ensures]
+[list]
+[item]
+[:en] If [`ios_base::out] is set in [`mode], [`pbase()] points to [`buf.front()]
+and [`epptr() >= pbase() + buf.size()] is [`true];
+[:zh_CN] 若 [`mode] 中设置了 [`ios_base::out]，则 [`pbase()] 指向 [`buf.front()]
+且 [`epptr() >= pbase() + buf.size()] 为 [`true]；
+[list]
+[item]
+[:en@~] in addition, if [`ios_base::ate] is set in [`mode],
+[`pptr() == pbase() + buf.size()] is [`true],
+[:zh_CN@~] 此外，若 [`mode] 中设置了 [`ios_base::ate]，则
+[`pptr() == pbase() + buf.size()] 为 [`true]，
+[item]
+[:en@~] otherwise [`pptr() == pbase()] is [`true].
+[:zh_CN@~] 否则 [`pptr() == pbase()] 为 [`true]。
+[list:end]
+
+[item]
+[:en] If [`ios_base::in] is set in [`mode], [`eback()] points to [`buf.front()],
+and [`(gptr() == eback() && egptr() == eback() + buf.size())] is [`true].
+[:zh_CN] 若 [`mode] 中设置了 [`ios_base::in]，则 [`eback()] 指向 [`buf.front()]，
+且 [`(gptr() == eback() && egptr() == eback() + buf.size())] 为 [`true]。
+[list:end]
+
+[para]
+[enter:note]
+[:en] For efficiency reasons, stream buffer operations might violate invariants
+of [`buf] while it is held encapsulated in the [`basic_stringbuf], e.g., by
+writing to characters in the range
+[=range(buf.data() + buf.size(),buf.data() + buf.capacity()].
+[:zh_CN] 处于效率原因，流缓冲区操作在其维持 [`basic_stringbuf] 中的封装时，可能
+违反 [`buf] 的不变式，例如当向范围
+[=range(buf.data() + buf.size(),buf.data() + buf.capacity()] 中写入字符时。
+
+[:en] All operations retrieving a [`basic_string] from [`buf] ensure that the
+[`basic_string] invariants hold on the returned value.
+[:zh_CN] 所有从 [`buf] 中获取 [`basic_string] 的操作都保证在其返回值中维持
+[`basic_string] 的不变式。
+[exit:note]
+[exit:description]
+
+[%get_allocator[!basic_stringbuf]]
+[%basic_stringbuf[!get_allocator]]
+[codeblock:declaration]
+allocator_type get_allocator() const noexcept;
 [codeblock:end]
 
 [enter:description]
 [para:returns]
-[:en] A [`basic_string] object whose content is equal to the [`basic_stringbuf]
-underlying character sequence.
-[:zh_CN] 一个 [`basic_string] 对象，其内容等于 [`basic_stringbuf] 的底层
-字符序列。
+[:en] [`buf.get_allocator()].
+[:zh_CN] [`buf.get_allocator()]。
+[exit:description]
 
-[:en] If the [`basic_stringbuf] was created only in input mode, the resultant
-[`basic_string] contains the character sequence in the range
-[=range(eback(),egptr()].
-[:zh_CN] 如果该 [`basic_stringbuf] 对象仅以输入模式创建，则结果 [`basic_string]
-包含范围 [=range(eback(),egptr()] 中的字符序列。
+[%@library str[!basic_stringbuf]]
+[%@library basic_stringbuf[!str]]
+[codeblock:declaration]
+basic_string<charT, traits, Allocator> str() const &;
+[codeblock:end]
 
-[:en] If the [`basic_stringbuf] was created with [`which & ios_base::out] being
-nonzero then the resultant [`basic_string] contains the character sequence in
-the range [=range(pbase(),high_mark], where [`high_mark] represents the position
-one past the highest initialized character in the buffer.
-[:zh_CN] 如果该 [`basic_stringbuf] 创建时 [`which & ios_base::out] 非零，则结果
-[`basic_string] 包含范围 [=range(pbase(),high_mark] 中的字符序列，其中
-[`high_mark] 表示越过缓冲区中初始化过的最高位置字符的位置。
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return basic_string<charT, traits, Allocator>(view(), get_allocator());
+[codeblock:end]
+[exit:description]
 
-[:en] Characters can be initialized by writing to the stream, by constructing
-the [`basic_stringbuf] with a [`basic_string], or by calling the
-[`str(basic_string)] member function.
-[:zh_CN] 可以通过向流中写入，通过以一个 [`basic_string] 构造 [`basic_stringbuf]，
-或者通过调用成员函数 [`str(basic_string)]，来初始化各个字符。
+[%@library str[!basic_stringbuf]]
+[%@library basic_stringbuf[!str]]
+[codeblock:declaration]
+template<class SAlloc>
+  basic_string<charT, traits, SAlloc> str(const SAlloc& sa) const;
+[codeblock:end]
 
-[:en] In the case of calling the [`str(basic_string)] member function, all
-characters initialized prior to the call are now considered uninitialized
-(except for those characters re-initialized by the new [`basic_string]).
-[:zh_CN] 对于调用成员函数 [`str(basic_string)] 的情况，进行调用之前所初始化的
-全部字符都被认为是未初始化的（除了被新的 [`basic_string] 重新初始化的那些字符）。
+[enter:description]
+[para:constraints]
+[:en] [`SAlloc] is a type that qualifies as an allocator
+([#container.requirements.general]).
+[:zh_CN] [`SAlloc] 是被当做分配器的类型（[#container.requirements.general]）。
 
-[:en] Otherwise the [`basic_stringbuf] has been created in neither input nor
-output mode and a zero length [`basic_string] is returned.
-[:zh_CN] 否则该 [`basic_stringbuf] 既不是以输入也不是以输出模式创建的，并返回
-一个长度为零的 [`basic_string]。
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+return basic_string<charT, traits, SAlloc>(view(), sa);
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+basic_string<charT, traits, Allocator> str() &&;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] A [`basic_string<charT, traits, Allocator>] object move constructed from
+the [`basic_stringbuf][=']s underlying character sequence in [`buf].
+[:zh_CN] 从 [`basic_stringbuf] 的 [`buf] 中的底层字符序列移动构造的一个
+[`basic_string<charT, traits, Allocator>] 对象。
+
+[:en] This can be achieved by first adjusting [`buf] to have the same content as
+[`view()].
+[:zh_CN] 这可以通过首先将 [`buf] 调整为与 [`view()] 具有相同内容来达成。
+
+[para:ensures]
+[:en] The underlying character sequence [`buf] is empty and [`pbase()], [`pptr()],
+[`epptr()], [`eback()], [`gptr()], and [`egptr()] are initialized as if by
+calling [`init_buf_ptrs()] with an empty [`buf].
+[:zh_CN] 底层字符序列 [`buf] 为空，且 [`pbase()]、[`pptr()]、[`epptr()]、
+[`eback()]、[`gptr()] 和 [`egptr()] 均如通过以空的 [`buf] 调用 [`init_buf_ptrs()]
+进行了初始化。
+[exit:description]
+
+[%@library view[!basic_stringbuf]]
+[%@library basic_stringbuf[!view]]
+[codeblock:declaration]
+basic_string_view<charT, traits> view() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`sv] be [`basic_string_view<charT, traits>].
+[:zh_CN] 令 [`sv] 为 [`basic_string_view<charT, traits>]。
+
+[para:returns]
+[:en] A [`sv] object referring to the [`basic_stringbuf][=']s underlying
+character sequence in [`buf]:
+[:zh_CN] 指代 [`basic_stringbuf] 的 [`buf] 中的底层字符序列的 [`sv] 对象：
+
+[list]
+[item]
+[:en] If [`ios_base::out] is set in [`mode], then
+[`sv(pbase(), high_mark-pbase())] is returned.
+[:zh_CN] 若 [`mode] 中设置了 [`ios_base::out]，则返回
+[`sv(pbase(), high_mark-pbase())]。
+
+[item]
+[:en] Otherwise, if [`ios_base::in] is set in [`mode], then
+[`sv(eback(), egptr()-eback())] is returned.
+[:zh_CN] 否则，若 [`mode] 中设置了 [`ios_base::in]，则返回
+[`sv(eback(), egptr()-eback())]。
+
+[item]
+[:en] Otherwise, [`sv()] is returned.
+[:zh_CN] 否则，返回 [`sv()]。
+[list:end]
+
+[para]
+[enter:note]
+[:en] Using the returned [`sv] object after destruction or invalidation of the
+character sequence underlying [`*this] is undefined behavior, unless
+[`sv.empty()] is [`true].
+[:zh_CN] 在 [`*this] 的底层字符序列被销毁或失效之后使用返回的 [`sv] 对象，除非
+[`sv.empty()] 为 [`true]，否则是未定义行为。
+[exit:note]
 [exit:description]
 
 [%@library str[!basic_stringbuf]]
@@ -56,24 +198,47 @@ void str(const basic_string<charT, traits, Allocator>& s);
 
 [enter:description]
 [para:effects]
-[:en] Copies the content of [`s] into the [`basic_stringbuf] underlying
-character sequence and initializes the input and output sequences according to
-[`mode].
-[:zh_CN] 将 [`s] 的内容复制到 [`basic_stringbuf] 的底层字符序列中，并根据
-[`mode] 来初始化其输入序列和输出序列。
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+buf = s;
+init_buf_ptrs();
+[codeblock:end]
+[exit:description]
 
-[para:ensures]
-[:en] If [`mode & ios_base::out] is nonzero, [`pbase()] points to the first
-underlying character and [`epptr() >= pbase() + s.size()] holds; in addition, if
-[`mode & ios_base::ate] is nonzero, [`pptr() == pbase() + s.size()] holds,
-otherwise [`pptr() == pbase()] is [`true].
-[:zh_CN] 如果 [`mode & ios_base::out] 非零，则 [`pbase()] 指向第一个底层字符，且
-满足 [`epptr() >= pbase() + s.size()]；而且，如果 [`mode & ios_base::ate] 非零，
-则满足 [`pptr() == pbase() + s.size()]，否则 [`pptr() == pbase()] 为 [`true]。
+[%@library str[!basic_stringbuf]]
+[%@library basic_stringbuf[!str]]
+[codeblock:declaration]
+template<class SAlloc>
+  void str(const basic_string<charT, traits, SAlloc>& s);
+[codeblock:end]
 
-[:en] If [`mode & ios_base::in] is nonzero, [`eback()] points to the first
-underlying character, and both [`gptr() == eback()] and
-[`egptr() == eback() + s.size()] hold.
-[:zh_CN] 如果 [`mode & ios_base::in] 非零，则 [`eback()] 指向第一个底层字符，且
-同时满足 [`gptr() == eback()] 和 [`egptr() == eback() + s.size()]。
+[enter:description]
+[para:constraints]
+[:en] [`is_same_v<SAlloc,Allocator>] is [`false].
+[:zh_CN] [`is_same_v<SAlloc,Allocator>] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+buf = s;
+init_buf_ptrs();
+[codeblock:end]
+[exit:description]
+
+[%@library str[!basic_stringbuf]]
+[%@library basic_stringbuf[!str]]
+[codeblock:declaration]
+void str(basic_string<charT, traits, Allocator>&& s);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+buf = std::move(s);
+init_buf_ptrs();
+[codeblock:end]
 [exit:description]

@@ -208,6 +208,16 @@ construction from the local automatic object to [`t2] that is elided.
 
 [para]
 [:en]
+An [%implicitly movable entity[%entity[!implicitly movable]]][+implicitly
+movable entity[%entity[!implicitly movable]]] is a variable of automatic storage
+duration that is either a non-volatile object or an rvalue reference to a
+non-volatile object type.
+[:zh_CN]
+[%隐含可移动实体[%实体[!隐含可移动～]]][+隐含可移动实体[%实体[!隐含可移动～]]]
+是具有自动存储期的变量，它或为非 volatile 对象或为到非 volatile 对象类型的右值
+引用。
+
+[:en]
 In the following copy-initialization contexts, a move operation might be used
 instead of a copy operation:
 [:zh_CN]
@@ -216,45 +226,42 @@ instead of a copy operation:
 [list]
 [item]
 [:en]
-If the [~expression] in a [`return] or [`co_return] statement ([#stmt.return])
-is a (possibly parenthesized) [~id-expression] that names an object with
-automatic storage duration declared in the body or
+If the [~expression] in a [`return] ([#stmt.return]) or [`co_return]
+([#stmt.return.coroutine]) statement is a (possibly parenthesized)
+[~id-expression] that names an implicitly movable entity declared in the body or
 [~parameter-declaration-clause] of the innermost enclosing function or
 [~lambda-expression], or
 [:zh_CN]
-当 [`return] 或 [`co_return] 语句（[#stmt.return]）的[~表达式]是（可能带有括号的）
-[~标识表达式]，并指名其最内层外围函数或[~lambda-表达式]的函数体或[~形参声明子句]
-所声明的具有自动存储期的对象时，或者
+当 [`return]（[#stmt.return]）或 [`co_return]（[#stmt.return.coroutine]）语句的
+[~表达式]是（可能带有括号的）[~标识表达式]，并指名其最内层外围函数或
+[~lambda-表达式]的函数体或[~形参声明子句]所声明的隐含可移动实体时，或者
 
 [item]
 [:en]
-if the operand of a [~throw-expression] ([#expr.throw]) is the name of a
-non-volatile automatic object (other than a function or catch-clause parameter)
-whose scope does not extend beyond the end of the innermost enclosing
-[~try-block] (if there is one),
+if the operand of a [~throw-expression] ([#expr.throw]) is a (possibly
+parenthesized) [~id-expression] that names an implicitly movable entity whose
+scope does not extend beyond the [~compound-statement] of the innermost
+[~try-block] or [~function-try-block] (if any) whose [~compound-statement] or
+[~ctor-initializer] encloses the [~throw-expression],
 [:zh_CN]
-当 [~throw-表达式]（[#expr.throw]）的操作数所指名的是某个（并非函数或捕获子句的
-形参的）非 volatile 自动对象，且其作用域并不扩展超过其最内层外围 [~try-块]（如果
-有的话）时，
+当 [~throw-表达式]（[#expr.throw]）的操作数是（可能带有括号的）[~标识表达式]，并
+指名某个隐含可移动实体，其作用域并不扩展超过其最内层的其[~复合语句]或[~构造函数
+初始化式]包围该 [~throw-表达式]的外围 [~try-块]或[~函数-try-块]（如果有）时，
 [list:end]
 
 [:en]
 overload resolution to select the constructor for the copy or the
-[`return_value] overload to call is first performed as if the object were
-designated by an rvalue.
+[`return_value] overload to call is first performed as if the expression or
+operand were an rvalue.
 [:zh_CN]
-首先按照如同该对象是被右值所代表那样实施重载决议，以选择复制所需的构造函数或所要
-调用的 [`return_value] 重载。
+首先按照如同该表达式或操作数是被右值所代表那样实施重载决议，以选择复制所需的
+构造函数或所要调用的 [`return_value] 重载。
 
 [:en]
-If the first overload resolution fails or was not performed, or if the type of
-the first parameter of the selected constructor or the [`return_value] overload
-is not an rvalue reference to the object[=']s type (possibly cv-qualified),
-overload resolution is performed again, considering the object as an lvalue.
+If the first overload resolution fails or was not performed, overload resolution
+is performed again, considering the expression or operand as an lvalue.
 [:zh_CN]
-若第一次重载决议失败或者未进行，或者若被选择的构造函数或 [`return_value] 重载的
-第一个形参的类型并不是该对象的（可能被 cv 限定的）类型的右值引用，则把该对象作为
-左值再次实施重载决议。
+若第一次重载决议失败或者未进行，则把该表达式或操作数作为左值再次实施重载决议。
 
 [enter:note]
 [:en]
@@ -265,7 +272,7 @@ elision will occur.
 
 [:en]
 It determines the constructor or the [`return_value] overload to be called if
-elision is not performed, and the selected constructor or the [`return_value]
+elision is not performed, and the selected constructor or [`return_value]
 overload must be accessible even if the call is elided.
 [:zh_CN]
 它确定了不实施消除时所调用的构造函数或 [`return_value] 重载，且被选择的构造函数
@@ -305,6 +312,33 @@ Weird g() {
   Weird w;
   return w;             // [:en] OK: first overload resolution fails, second overload resolution selects [`Weird(Weird&)]
                         // [|:zh_CN] OK：第一次重载决议失败，第二次重载决议选择了 [`Weird(Weird&)]
+}
+[codeblock:end]
+[exit:example]
+
+[para]
+[enter:example]
+[codeblock]
+template<class T> void g(const T&);
+
+template<class T> void f() {
+  T x;
+  try {
+    T y;
+    try { g(x); }
+    catch (...) {
+      if (/*...*/)
+        throw x;        // [:en] does not move
+                        // [|:zh_CN] 不会移动
+      throw y;          // [:en] moves
+                        // [|:zh_CN] 会移动
+    }
+    g(y);
+  } catch(...) {
+    g(x);
+    g(y);               // [:en] error: [`y] is not in scope
+                        // [|:zh_CN] 错误：[`y] 未在作用域中
+  }
 }
 [codeblock:end]
 [exit:example]

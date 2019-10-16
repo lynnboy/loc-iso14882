@@ -69,14 +69,14 @@ the buffer.
 [:en]
 In Tables [#tab:container.req], [#tab:container.rev.req], and
 [#tab:container.opt] [`X] denotes a container class containing objects of type
-[`T], [`a] and [`b] denote values of type [`X], [`u] denotes an identifier, [`r]
-denotes a non-const value of type [`X], and [`rv] denotes a non-const rvalue of
-type [`X].
+[`T], [`a] and [`b] denote values of type [`X], [`i] and [`j] denote values of
+type (possibly const) [`X::iterator], [`u] denotes an identifier, [`r] denotes a
+non-const value of type [`X], and [`rv] denotes a non-const rvalue of type [`X].
 [:zh_CN]
 在表 [#tab:container.req]，[#tab:container.rev.req]，和 [#tab:container.opt] 中，
-[`X] 代表包含 [`T] 类型的对象的容器类，[`a] 和 [`b] 代表 [`X] 类型的值，[`u]
-代表一个标识符，[`r] 代表类型 [`X] 的非 const 值，而 [`rv] 代表类型 [`X] 的非
-const 的右值。
+[`X] 代表包含 [`T] 类型的对象的容器类，[`a] 和 [`b] 代表 [`X] 类型的值，[`i] 和
+[`j] 代表（可能为 const 的）[`X::iterator] 类型的值，[`u] 代表一个标识符，[`r]
+代表类型 [`X] 的非 const 值，而 [`rv] 代表类型 [`X] 的非 const 的右值。
 
 [table:grid#container.req
     [:en] Container requirements
@@ -266,6 +266,16 @@ const 的右值。
 [|] [:en] constant
     [:zh_CN] 常量
 [-]
+[|] i <=> j
+[|] [:en] [`strong_ordering] if [`X::iterator] meets the random access iterator
+    requirements, otherwise [`strong_equality]
+    [:zh_CN] 若 [`X::iterator] 满足随机访问迭代器的规定则为 [`strong_ordering]，
+    否则为 [`strong_equality]
+[|]
+[|]
+[|] [:en] constant
+    [:zh_CN] 常量
+[-]
 [|] a == b
 [|] [:en] convertible to [`bool]
     [:zh_CN] 可以转换为 [`bool]
@@ -394,6 +404,7 @@ i < j
 i <= j
 i >= j
 i > j
+i <=> j
 i - j
 [codeblock:end]
 
@@ -683,12 +694,12 @@ change the values of, objects within that container.
 [:en]
 A [%container[!contiguous]] [+contiguous container] is a container whose member
 types [`iterator] and [`const_iterator] meet the [*Cpp17RandomAccessIterator]
-requirements ([#random.access.iterators]) and model [`ContiguousIterator]
+requirements ([#random.access.iterators]) and model [`contiguous_iterator]
 ([#iterator.concept.contiguous]).
 [:zh_CN]
 [%容器[!连续～]][+连续容器]是容器，其成员类型 [`iterator] 和 [`const_iterator]
 满足 [*Cpp17RandomAccessIterator] 的规定（[#random.access.iterators]），并构成
-[`ContiguousIterator]（[#iterator.concept.contiguous]）。
+[`contiguous_iterator]（[#iterator.concept.contiguous]）。
 
 [para]
 [:en]
@@ -705,13 +716,14 @@ the semantics described in [#:tab container.opt] unless otherwise stated.
 语义。
 
 [:en]
-If the iterators passed to [`lexicographical_compare] meet the constexpr
-iterator requirements ([#iterator.requirements.general]) then the operations
-described in [#:tab container.opt] are implemented by constexpr functions.
+If the iterators passed to [`lexicographical_compare_three_way] meet the
+constexpr iterator requirements ([#iterator.requirements.general]) then the
+operations described in [#:tab container.opt] are implemented by constexpr
+functions.
 [:zh_CN]
-如果传递给 [`lexicographical_compare] 的迭代器符合 constexpr 迭代器的规定
-（[#iterator.requirements.general]），则 [#:tab container.opt] 中所描述的各操作
-都实现为 constexpr 函数。
+如果传递给 [`lexicographical_compare_three_way] 的迭代器符合 constexpr 迭代器的
+规定（[#iterator.requirements.general]），则 [#:tab container.opt] 中所描述的各
+操作都实现为 constexpr 函数。
 
 [table:grid#container.opt
     [:en] Optional container operations
@@ -729,7 +741,7 @@ described in [#:tab container.opt] are implemented by constexpr functions.
         [:en] Operational semantics
         [:zh_CN] 操作性语义
     ]
-    [|@code
+    [|
         [:en] Assertion/note [br] pre-/post-condition
         [:zh_CN] 断言/注解 [br] 前/后条件
     ]
@@ -739,40 +751,15 @@ described in [#:tab container.opt] are implemented by constexpr functions.
     ]
 ]
 
-[|] a < b
-[|] [:en] convertible to [`bool]
-    [:zh_CN] 可以转换为 [`bool]
-[|] lexicographical_compare(a.begin(), a.end(), b.begin(), b.end())
+[|] a <=> b
+[|] [`[*synth-three-way-result]<value_type>]
+[|] [`lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), [*synth-three-way])]
 [|] [para:expects]
-    [:en] [`<] is defined for values of type (possibly [`const]) [`T].
-    [:zh_CN] [`<] 对（可能为 [`const] 的）[`T] 类型的值有定义。
-
-    [:en] [`<] is a total ordering relationship.
-    [:zh_CN] [`<] 是全序关系。
-[|] [:en] linear
-    [:zh_CN] 线性
-[-]
-[|] a > b
-[|] [:en] convertible to [`bool]
-    [:zh_CN] 可以转换为 [`bool]
-[|] b < a
-[|]
-[|] [:en] linear
-    [:zh_CN] 线性
-[-]
-[|] a <= b
-[|] [:en] convertible to [`bool]
-    [:zh_CN] 可以转换为 [`bool]
-[|] !(a > b)
-[|]
-[|] [:en] linear
-    [:zh_CN] 线性
-[-]
-[|] a >= b
-[|] [:en] convertible to [`bool]
-    [:zh_CN] 可以转换为 [`bool]
-[|] !(a < b)
-[|]
+    [:en] Either [`<=>] is defined for values of type (possibly const) [`T], or
+    [`<] is defined for values of type (possibly const) [`T] and [`<] is a total
+    ordering relationship.
+    [:zh_CN] 要么 [`<=>] 对（可能为 [`const] 的）[`T] 类型的值有定义，要么 [`<]
+    对（可能为 [`const] 的）[`T] 类型的值有定义且 [`<] 为全序关系。
 [|] [:en] linear
     [:zh_CN] 线性
 [-]
@@ -780,9 +767,9 @@ described in [#:tab container.opt] are implemented by constexpr functions.
 
 [:en]
 [enter:note]
-The algorithm [`lexicographical_compare()] is defined in [#algorithms].
+The algorithm [`lexicographical_compare_three_way] is defined in [#algorithms].
 [:zh_CN]
-算法 [`lexicographical_compare()] 在 [#algorithms] 中定义。
+算法 [`lexicographical_compare_three_way] 在 [#algorithms] 中定义。
 [exit:note]
 
 [para]

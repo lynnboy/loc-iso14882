@@ -41,7 +41,7 @@ same (possibly past-the-end) element.
 
 [%@library counted_iterator]
 [codeblock:synopsis [!:var dereferenceable] [!:mark SeeBelow]]
-  template<Iterator I>
+  template<input_or_output_iterator I>
   class counted_iterator {
   public:
     using iterator_type = I;
@@ -49,14 +49,15 @@ same (possibly past-the-end) element.
     constexpr counted_iterator() = default;
     constexpr counted_iterator(I x, iter_difference_t<I> n);
     template<class I2>
-      requires ConvertibleTo<const I2&, I>
+      requires convertible_to<const I2&, I>
         constexpr counted_iterator(const counted_iterator<I2>& x);
 
     template<class I2>
-      requires Assignable<I&, const I2&>
+      requires assignable_from<I&, const I2&>
         constexpr counted_iterator& operator=(const counted_iterator<I2>& x);
 
-    constexpr I base() const;
+    constexpr I base() const & requires copy_constructible<I>;
+    constexpr I base() &&;
     constexpr iter_difference_t<I> count() const noexcept;
     constexpr decltype(auto) operator*();
     constexpr decltype(auto) operator*() const
@@ -65,23 +66,23 @@ same (possibly past-the-end) element.
     constexpr counted_iterator& operator++();
     decltype(auto) operator++(int);
     constexpr counted_iterator operator++(int)
-      requires ForwardIterator<I>;
+      requires forward_iterator<I>;
     constexpr counted_iterator& operator--()
-      requires BidirectionalIterator<I>;
+      requires bidirectional_iterator<I>;
     constexpr counted_iterator operator--(int)
-      requires BidirectionalIterator<I>;
+      requires bidirectional_iterator<I>;
 
     constexpr counted_iterator operator+(iter_difference_t<I> n) const
-      requires RandomAccessIterator<I>;
+      requires random_access_iterator<I>;
     friend constexpr counted_iterator operator+(
       iter_difference_t<I> n, const counted_iterator& x)
-        requires RandomAccessIterator<I>;
+        requires random_access_iterator<I>;
     constexpr counted_iterator& operator+=(iter_difference_t<I> n)
-      requires RandomAccessIterator<I>;
+      requires random_access_iterator<I>;
 
     constexpr counted_iterator operator-(iter_difference_t<I> n) const
-      requires RandomAccessIterator<I>;
-    template<Common<I> I2>
+      requires random_access_iterator<I>;
+    template<common_with<I> I2>
       friend constexpr iter_difference_t<I2> operator-(
         const counted_iterator& x, const counted_iterator<I2>& y);
     friend constexpr iter_difference_t<I> operator-(
@@ -89,44 +90,24 @@ same (possibly past-the-end) element.
     friend constexpr iter_difference_t<I> operator-(
       default_sentinel_t, const counted_iterator& y);
     constexpr counted_iterator& operator-=(iter_difference_t<I> n)
-      requires RandomAccessIterator<I>;
+      requires random_access_iterator<I>;
 
     constexpr decltype(auto) operator[](iter_difference_t<I> n) const
-      requires RandomAccessIterator<I>;
+      requires random_access_iterator<I>;
 
-    template<Common<I> I2>
+    template<common_with<I> I2>
       friend constexpr bool operator==(
         const counted_iterator& x, const counted_iterator<I2>& y);
     friend constexpr bool operator==(
       const counted_iterator& x, default_sentinel_t);
-    friend constexpr bool operator==(
-      default_sentinel_t, const counted_iterator& x);
-
-    template<Common<I> I2>
-      friend constexpr bool operator!=(
-        const counted_iterator& x, const counted_iterator<I2>& y);
-    friend constexpr bool operator!=(
-      const counted_iterator& x, default_sentinel_t y);
-    friend constexpr bool operator!=(
-      default_sentinel_t x, const counted_iterator& y);
-
-    template<Common<I> I2>
-      friend constexpr bool operator<(
-        const counted_iterator& x, const counted_iterator<I2>& y);
-    template<Common<I> I2>
-      friend constexpr bool operator>(
-        const counted_iterator& x, const counted_iterator<I2>& y);
-    template<Common<I> I2>
-      friend constexpr bool operator<=(
-        const counted_iterator& x, const counted_iterator<I2>& y);
-    template<Common<I> I2>
-      friend constexpr bool operator>=(
+    template<common_with<I> I2>
+      friend constexpr strong_ordering operator<=>(
         const counted_iterator& x, const counted_iterator<I2>& y);
 
     friend constexpr iter_rvalue_reference_t<I> iter_move(const counted_iterator& i)
       noexcept(noexcept(ranges::iter_move(i.current)))
-        requires InputIterator<I>;
-    template<IndirectlySwappable<I> I2>
+        requires input_iterator<I>;
+    template<indirectly_swappable<I> I2>
       friend constexpr void iter_swap(const counted_iterator& x, const counted_iterator<I2>& y)
         noexcept(noexcept(ranges::iter_swap(x.current, y.current)));
 
@@ -140,7 +121,7 @@ same (possibly past-the-end) element.
     using difference_type = iter_difference_t<I>;
   };
 
-  template<InputIterator I>
+  template<input_iterator I>
   struct iterator_traits<counted_iterator<I>> : iterator_traits<I> {
     using pointer = void;
   };

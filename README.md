@@ -203,6 +203,7 @@ deleted function                        弃置函数
 dependency-ordered before               按依赖序早于
 dependent name                          待决名字
 derived class                           派生类
+designated initializer                  定名初始化式
 destroy                                 销毁
 destruction                             销毁
 destructor                              析构函数
@@ -214,6 +215,7 @@ direct base class                       直接基类
 direct-initialization                   直接初始化
 direct-list-initialization              直接列表初始化
 directive                               指令
+directive-introducing token             指令发起记号
 disambiguation                          歧义消解
 discarded-value expression              弃值表达式
 discarded statement                     弃用语句
@@ -227,9 +229,11 @@ dynamic initialization                  动态初始化
 dynamic storage duration                动态存储期
 elaborated type specifier               详述类型说明符
 element                                 元素
+eligible special member function        合格的特殊成员函数
 empty declaration                       空声明
 empty statement                         空语句
 encode                                  编码
+endian                                  端序
 entity                                  实体
 enclosing class                         外围类
 enclosing namespace                     外围命名空间
@@ -554,6 +558,7 @@ primary expression                      初等表达式
 private                                 私有
 program                                 程序
 promise                                 承诺
+prospective destructor                  预期析构函数
 protected                               受保护
 prototype                               原型
 prvalue                                 纯右值

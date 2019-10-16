@@ -81,29 +81,51 @@ or, if not that,
 
 [item]
 [:en@~]
-[`L1] converts to type ["array of [`N1 T]], [`L2] converts to type ["array of
-[`N2 T]], and [`N1] is smaller than [`N2],
+[`L1] and [`L2] convert arrays of the same element type, and either the number
+of elements [$n_1] initialized by [`L1] is less than the number of elements
+[$n_2] initialized by [`L2], or [$n_1 = n_2] and [`L2] converts to an array of
+unknown bound and [`L1] does not,
 [:zh_CN@~]
-[`L1] 转换为类型“[`T] 的 [`N1] 个元素的数组”，[`L2] 转换为类型“[`T] 的 [`N2] 个
-元素的数组”，且 [`N1] 小于 [`N2]，
+[`L1] 和 [`L2] 转换为相同元素类型的数组，且要么由 [`L1] 初始化的元素数量 [$n_1]
+小于由 [`L2] 初始化的元素数量 [$n_2]，要么 [$n_1 = n_2] 且 [`L2] 转换为未知边界
+的数组而 [`L1] 不是，
 [list:end]
 
 [:en@~]
 even if one of the other rules in this paragraph would otherwise apply.
 [:zh_CN@~]
-无论是否本段落中的其他规则也适用。
+而无论是否本段落中的其他规则也适用。
 
 [enter:example]
 [codeblock]
-  void f1(int);                                 // #1
-  void f1(std::initializer_list<long>);         // #2
-  void g1() { f1({42}); }                       // [:en] chooses #2
+void f1(int);                                   // #1
+void f1(std::initializer_list<long>);           // #2
+void g1() { f1({42}); }                         // [:en] chooses #2
                                                 // [|:zh_CN] 选择 #2
 
-  void f2(std::pair<const char*, const char*>); // #3
-  void f2(std::initializer_list<std::string>);  // #4
-  void g2() { f2({"foo","bar"}); }              // [:en] chooses #4
+void f2(std::pair<const char*, const char*>);   // #3
+void f2(std::initializer_list<std::string>);    // #4
+void g2() { f2({"foo","bar"}); }                // [:en] chooses #4
                                                 // [|:zh_CN] 选择 #4
+[codeblock:end]
+[exit:example]
+
+[enter:example]
+[codeblock]
+void f(int    (&&)[] );         // #1
+void f(double (&&)[] );         // #2
+void f(int    (&&)[2]);         // #3
+
+f( {1} );           // [:en] Calls #1: Better than #2 due to conversion, better than #3 due to bounds
+                    // [|:zh_CN] 调用 #1：因转换而优于 #2，因边界而优于 #3
+f( {1.0} );         // [:en] Calls #2: Identity conversion is better than floating-integral conversion
+                    // [|:zh_CN] 调用 #2：同等转换优于浮点整型转换
+f( {1.0, 2.0} );    // [:en] Calls #2: Identity conversion is better than floating-integral conversion
+                    // [|:zh_CN] 调用 #2：同等转换优于浮点整型转换
+f( {1, 2} );        // [:en] Calls #3: Converting to array of known bound is better than to unknown bound,
+                    // [|:zh_CN] 调用 #3：转换为已知边界数组优于转换为未知边界数组，
+                    // [:en@~] and an identity conversion is better than floating-integral conversion
+                    // [|:zh_CN@~] 且同等转换优于浮点整型转换
 [codeblock:end]
 [exit:example]
 
@@ -139,14 +161,12 @@ not that,
 
 [item]
 [:en]
-[`S1] and [`S2] include reference bindings ([#dcl.init.ref]) and neither refers
-to an implicit object parameter of a non-static member function declared without
-a [~ref-qualifier], and [`S1] binds an rvalue reference to an rvalue and [`S2]
-binds an lvalue reference
+[`S1] and [`S2] differ only in their qualification conversion ([#conv.qual]) and
+yield similar types [`T1] and [`T2], respectively, where [`T1] can be converted
+to [`T2] by a qualification conversion.
 [:zh_CN]
-[`S1] 和 [`S2] 均包含引用绑定（[#dcl.init.ref]）且均不指代声明时没有[~引用限定符]
-的非静态成员函数的隐含对象形参，并且 [`S1] 将右值引用绑定到右值而 [`S2] 绑定左值
-引用。
+[`S1] 和 [`S2] 仅在它们的限定性转换（[#conv.qual]）上有所不同，且分别产生相似的
+类型 [`T1] 和 [`T2]，其中 [`T1] 可以经由限定性转换转换为 [`T2]。
 
 [enter:example]
 [codeblock]

@@ -40,16 +40,24 @@ Constant expressions can be evaluated during translation.
 
 [para]
 [:en]
-A [+constant initializer] for a variable or temporary object [`o] is an
-initializer for which interpreting its full-expression as a
-[~constant-expression] results in a constant expression, except that if [`o] is
-an object, such an initializer may also invoke constexpr constructors for [`o]
-and its subobjects even if those objects are of non-literal class types.
+A variable or temporary object [`o] is [+constant-initialized] if
 [:zh_CN]
-变量或临时对象 [`o] 的[+常量初始化式]，是初始化式，当将其全表达式作为一个
-[~常量表达式]来进行解释时得到一个常量表达式，不过当 [`o] 是对象时，这种初始化式
-可以为 [`o] 及其子对象调用 constexpr 构造函数，即便这些对象具有非字面类类型
-也是如此。
+满足以下条件时，变量或临时对象 [`o] 被[+常量初始化]：
+
+[list]
+[item]
+[:en] either it has an initializer or its default-initialization results in some
+initialization being performed, and
+[:zh_CN] 要么它带有一个初始化式，要么其默认初始化导致进行某种初始化，并且
+
+[item]
+[:en] its initialization full-expression is a constant expression when
+interpreted as a [~constant-expression], except that if [`o] is an object, the
+initialization full-expression may also invoke constexpr constructors for [`o]
+and its subobjects even if those objects are of non-literal class types.
+[:zh_CN] 其初始化全表达式当作为[~常量表达式]解释时是常量表达式，不过当 [`o] 是
+对象时，初始化全表达式还可以为 [`o] 及其子对象调用 constexpr 构造函数，即便这些
+对象具有非字面类类型也是如此。
 
 [enter:note]
 [:en]
@@ -64,46 +72,68 @@ returns [`true].
 在这种求值之中时，[`std::is_constant_evaluated()]（[#meta.const.eval]）将返回
 [`true]。
 [exit:note]
+[list:end]
 
 [para]
 [:en]
 A variable is [+usable in constant expressions] after its initializing
-declaration is encountered if it is a constexpr variable, or it is of reference
-type or of const-qualified integral or enumeration type, and its initializer is
-a constant initializer.
+declaration is encountered if it is a constexpr variable, or it is a
+constant-initialized variable of reference type or of const-qualified integral
+or enumeration type.
 [:zh_CN]
-如果变量是 constexpr 变量，或者它是引用类型或 const 限定的整型或枚举类型，且其
-初始化式是常量初始化式，则遇到其进行初始化的声明式之后，它[+可被用在常量表达式
-之中]。
+如果变量是 constexpr 变量，或者它是引用类型或 const 限定的整型或枚举类型的被常量
+初始化的变量，则遇到其进行初始化的声明式之后，它[+可被用在常量表达式之中]。
+
+[:en]
+An object or reference is [+usable in constant expressions] if it is
+[:zh_CN]
+以下情况下，对象或引用[+可被用在常量表达式之中]：
+
+[list]
+[item]
+[:en@~] a variable that is usable in constant expressions, or
+[:zh_CN@~] 可被用在常量表达式之中的变量，或
+[item]
+[:en@~] a template parameter object ([#temp.param]), or
+[:zh_CN@~] 临时形参对象（[#temp.param]），或
+[item]
+[:en@~] a string literal object ([#lex.string]), or
+[:zh_CN@~] 字符串字面量对象（[#lex.string]），或
+[item]
+[:en@~] a non-mutable subobject or reference member of any of the above, or
+[:zh_CN@~] 以上任一的非 mutable 子对象或引用成员，或
+[item]
+[:en@~] a complete temporary object of non-volatile const-qualified integral or
+enumeration type that is initialized with a constant expression.
+[:zh_CN@~] 非 volatile 且 const 限定的整型或枚举类型的完整临时对象，并以一个
+常量表达式所初始化。
+[list:end]
 
 [para]
 [:en]
 An expression [`e] is a [+core constant expression[%expression[!core constant]]]
 [%core constant expression[%expression[!core constant]]]unless the evaluation
 of [`e], following the rules of the abstract machine ([#intro.execution]), would
-evaluate one of the following expressions:
+evaluate one of the following:
 [:zh_CN]
 表达式 [`e] 是[+核心常量表达式[%表达式[!核心常量～]]][%核心常量表达式[%表达式
 [!核心常量～]]]，但根据抽象机器的规则（[#intro.execution]）对 [`e] 进行求值中，
-不能包含对下列表达式的求值：
+不能包含下列求值：
 
 [list]
 [item]
 [:en]
-[`this] ([#expr.prim.this]), except in a constexpr function or a constexpr
-constructor that is being evaluated as part of [`e];
+[`this] ([#expr.prim.this]), except in a constexpr function ([#dcl.constexpr])
+that is being evaluated as part of [`e];
 [:zh_CN]
 [`this]（[#expr.prim.this]），但作为 [`e] 的求值的一部分而求值的 constexpr 函数
-或 constexpr 构造函数中的不算作其中；
+（[#dcl.constexpr]）中的不算作其中；
 
 [item]
 [:en]
-an invocation of a function other than a constexpr constructor for a literal
-class, a constexpr function, or an implicit invocation of a trivial
-destructor ([#class.dtor])
+an invocation of a non-constexpr function
 [:zh_CN]
-除了为字面类调用 constexpr 构造函数，constexpr 函数，或隐式调用的平凡析构函数
-（[#class.dtor]）之外，进行了函数调用
+进行了非 constexpr 函数的调用
 
 [enter:note]
 [:en]
@@ -119,19 +149,31 @@ Overload resolution ([#over.match]) is applied as usual
 
 [item]
 [:en]
-an invocation of an undefined constexpr function or an undefined constexpr
-constructor;
+an invocation of an undefined constexpr function;
 [:zh_CN]
-调用未定义的 constexpr 函数或未定义的 constexpr 构造函数；
+进行了未定义的 constexpr 函数的调用；
 
 [item]
 [:en]
-an invocation of an instantiated constexpr function or constexpr constructor
-that fails to satisfy the requirements for a constexpr function or constexpr
-constructor ([#dcl.constexpr]);
+an invocation of an instantiated constexpr function that fails to satisfy the
+requirements for a constexpr function;
 [:zh_CN]
-调用无法满足对 constexpr 函数或 constexpr 构造函数的要求的 constexpr 函数或
-constexpr 构造函数（[#dcl.constexpr]）；
+调用无法满足对 constexpr 函数的要求的 constexpr 函数；
+
+[item]
+[:en]
+an invocation of a virtual function ([#class.virtual]) for an object unless
+[:zh_CN]
+为某个对象调用虚函数（[#class.virtual]），除非
+
+[list]
+[item]
+[:en@~] the object is usable in constant expressions or
+[:zh_CN@~] 该对象可被用在常量表达式中，或
+[item]
+[:en@~] its lifetime began within the evaluation of [`e];
+[:zh_CN@~] 其生存期开始于 [`e] 的求值之中；
+[list:end]
 
 [item]
 [:en]
@@ -194,6 +236,13 @@ refers to a non-active member of a union or a subobject thereof;
 
 [item]
 [:en]
+an lvalue-to-rvalue conversion that is applied to an object with an
+indeterminate value ([#basic.indet]);
+[:zh_CN]
+对具有不确定值的对象（[#basic.indet]）实施左值向右值转换；
+
+[item]
+[:en]
 an invocation of an implicitly-defined copy/move constructor or copy/move
 assignment operator for a union whose active member (if any) is mutable, unless
 the lifetime of the union object began within the evaluation of [`e];
@@ -224,12 +273,6 @@ its lifetime began within the evaluation of [`e];
 
 [item]
 [:en]
-a checked contract ([#dcl.attr.contract]) whose predicate evaluates to [`false];
-[:zh_CN]
-谓词求值为 [`false] 的受检查契约（[#dcl.attr.contract]）；
-
-[item]
-[:en]
 in a [~lambda-expression], a reference to [`this] or to a variable with
 automatic storage duration defined outside that [~lambda-expression], where the
 reference would be an odr-use ([#basic.def.odr], [#expr.prim.lambda]);
@@ -243,10 +286,10 @@ reference would be an odr-use ([#basic.def.odr], [#expr.prim.lambda]);
 void g() {
   const int n = 0;
   [=] {
-    constexpr int i = n;   // [:en] OK, [`n] is not odr-used here
-                           // [|:zh_CN] OK，这里 [`n] 并未被 ODR 式使用
-    constexpr int j = *&n; // [:en] ill-formed, [`&n] would be an odr-use of [`n]
-                           // [|:zh_CN] 非良构，[`&n] 可能是对 [`n] 的 ODR 式使用
+    constexpr int i = n;        // [:en] OK, [`n] is not odr-used here
+                                // [|:zh_CN] OK，这里 [`n] 并未被 ODR 式使用
+    constexpr int j = *&n;      // [:en] ill-formed, [`&n] would be an odr-use of [`n]
+                                // [|:zh_CN] 非良构，[`&n] 可能是对 [`n] 的 ODR 式使用
   };
 }
 [codeblock:end]
@@ -291,12 +334,6 @@ a [`reinterpret_cast] ([#expr.reinterpret.cast]);
 
 [item]
 [:en]
-a pseudo-destructor call ([#expr.prim.id.dtor]);
-[:zh_CN]
-伪析构函数调用（[#expr.prim.id.dtor]）；
-
-[item]
-[:en]
 modification of an object ([#expr.ass], [#expr.post.incr], [#expr.pre.incr])
 unless it is applied to a non-volatile lvalue of literal type that refers to a
 non-volatile object whose lifetime began within the evaluation of [`e];
@@ -307,15 +344,37 @@ volatile 的字面类型的左值，并且它指代某个生存期开始于 [`e]
 
 [item]
 [:en]
-a [~new-expression] ([#expr.new]);
+a [~new-expression] ([#expr.new]), unless the selected allocation function is
+a replaceable global allocation function ([#new.delete.single],
+[#new.delete.array]) and the allocated storage is deallocated within the
+evaluation of [`e];
 [:zh_CN]
-[~new-表达式]（[#expr.new]）；
+[~new-表达式]（[#expr.new]），除非所选中的分配函数为可替换的全局分配函数
+（[#new.delete.single]，[#new.delete.array]），并且所分配的存储在 [`e] 的求值
+之内被回收；
 
 [item]
 [:en]
-a [~delete-expression] ([#expr.delete]);
+a [~delete-expression] ([#expr.delete]), unless it deallocates a region of
+storage allocated within the evaluation of [`e];
 [:zh_CN]
-[~delete-表达式]（[#expr.delete]）；
+[~delete-表达式]（[#expr.delete]），除非其回收在 [`e] 的求值之中所分配的存储区域；
+
+[item]
+[:en]
+a call to an instance of [`std::allocator<T>::allocate] ([#allocator.members]),
+unless the allocated storage is deallocated within the evaluation of [`e];
+[:zh_CN]
+对 [`std::allocator<T>::allocate]（[#allocator.members]）的某个实例的调用，除非
+所分配的存储在 [`e] 的求值之中被回收；
+
+[item]
+[:en]
+a call to an instance of [`std::allocator<T>::deallocate] ([#allocator.members]),
+unless it deallocates a region of storage allocated within the evaluation of [`e];
+[:zh_CN]
+对 [`std::allocator<T>::deallocate]（[#allocator.members]）的某个实例的调用，
+除非它回收 [`e] 的求值之中所分配的存储区域；
 
 [item]
 [:en]
@@ -340,10 +399,16 @@ or equality ([#expr.eq]) operator where the result is unspecified;
 [item]
 [:en]
 a [~throw-expression] ([#expr.throw]) or a dynamic cast ([#expr.dynamic.cast])
-or [`typeid] ([#expr.typeid]) expression that would throw an expression; or
+or [`typeid] ([#expr.typeid]) expression that would throw an expression;
 [:zh_CN]
 [~throw-表达式]（[#expr.throw]）或者可能抛出异常的动态强制转换
-（[#expr.dynamic.cast]）或 [`typeid]（[#expr.typeid]）表达式；或者
+（[#expr.dynamic.cast]）或 [`typeid]（[#expr.typeid]）表达式；
+
+[item]
+[:en]
+an [~asm-declaration] ([#dcl.asm]); or
+[:zh_CN]
+[~asm-声明式]（[#dcl.asm]）；或者
 
 [item]
 [:en]
@@ -417,6 +482,71 @@ constexpr int y = h(1);             // [:en] OK: initializes [`y] with the value
 
 [para]
 [:en]
+For the purposes of determining whether an expression is a core constant
+expression, the evaluation of a call to a member function of [`std::allocator<T>]
+as defined in [#allocator.members], where [`T] is a literal type, does not
+disqualify the expression from being a core constant expression, even if the
+actual evaluation of such a call would otherwise fail the requirements for a
+core constant expression.
+[:zh_CN]
+在确定某个表达式是否是核心常量表达式时，对 [#allocator.members] 中所定义的
+[`std::allocator<T>]（其中 [`T] 为字面类型）的成员函数的调用的求值，并不会导致
+表达式无法成为核心常量表达式，即便对这样的调用的实际求值其实不满足对核心常量
+表达式的规定也是如此。
+
+[:en]
+Similarly, the evaluation of a call to [`std::destroy_at],
+[`std::ranges::destroy_at], [`std::construct_at], or [`std::ranges::construct_at]
+is a valid core constant expression unless:
+[:zh_CN]
+类似地，对 [`std::destroy_at]，[`std::ranges::destroy_at]，[`std::construct_at]，
+或 [`std::ranges::construct_at] 的调用的求值是有效的核心常量表达式，除非以下情况：
+
+[list]
+[item]
+[:en] for a call to [`std::construct_at] or [`std::ranges::construct_at], the
+first argument, of type [`T*], does not point to storage allocated with
+[`std::allocator<T>] or the evaluation of the underlying constructor call is not
+a core constant expression, or
+[:zh_CN] 对于对 [`std::construct_at] 或 [`std::ranges::construct_at] 的调用，其
+首个实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储，或者对底层
+构造函数的调用的求值并非核心常量表达式，或者
+
+[item]
+[:en] for a call to [`std::destroy_at] or [`std::ranges::destroy_at], the first
+argument, of type [`T*], does not point to storage allocated with
+[`std::allocator<T>] or the evaluation of the underlying destructor call is not
+a core constant expression.
+[:zh_CN] 对于对 [`std::destroy_at] 或 [`std::ranges::destroy_at] 的调用，其首个
+实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储，或者对底层
+析构函数的调用的求值并非核心常量表达式。
+[list:end]
+
+[para]
+[:en]
+An object [`a] is said to have [+constant destruction[%destruction[!constant]]]
+[%constant destruction[%destruction[!constant]]] if:
+[:zh_CN]
+以下情况下，称对象 [`a] 具有[+常量销毁[%销毁[!常量～]]][%常量销毁[%销毁[!常量～]]]：
+
+[list]
+[item]
+[:en] it is not of class type nor (possibly multi-dimensional) array thereof, or
+[:zh_CN] 它不为类类型或其（可能多维的）数组，或者
+[item]
+[:en] it is of class type or (possibly multi-dimensional) array thereof, that
+class type has a constexpr destructor, and for a hypothetical expression [`e]
+whose only effect is to destroy [`a], [`e] would be a core constant expression
+if the lifetime of [`a] and its non-mutable subobjects (but not its mutable
+subobjects) were considered to start within [`e].
+[:zh_CN] 它为类类型或其（可能多维的）数组，此类类型具有 constexpr 析构函数，并且
+对于仅有效果为销毁 [`a] 的虚构的表达式 [`e]，如果 [`a] 及其非 mutable 子对象
+（但不包括其 mutable 子对象）的生存期被当做开始于 [`e] 之内，则 [`e] 可为核心
+常量表达式。
+[list:end]
+
+[para]
+[:en]
 An [+integral constant expression[%expression[!integral constant]]][%integral
 constant expression[%expression[!integral constant]]] is an expression of
 integral or unscoped enumeration type, implicitly converted to a prvalue, where
@@ -457,10 +587,10 @@ private:
 };
 template<int> struct X { };
 constexpr A a = alignof(int);
-alignas(a) int n;              // [:en] error: ambiguous conversion
-                               // [|:zh_CN] 错误：有歧义的转换
-struct B { int n : a; };       // [:en] error: ambiguous conversion
-                               // [|:zh_CN] 错误：有歧义的转换
+alignas(a) int n;               // [:en] error: ambiguous conversion
+                                // [|:zh_CN] 错误：有歧义的转换
+struct B { int n : a; };        // [:en] error: ambiguous conversion
+                                // [|:zh_CN] 错误：有歧义的转换
 [codeblock:end]
 [exit:example]
 
@@ -635,10 +765,10 @@ execution.
 [enter:example]
 [codeblock]
 bool f() {
-    char array[1 + int(1 + 0.2 - 0.1 - 0.1)];  // [:en] Must be evaluated during translation
-                                               // [|:zh_CN] 必须在翻译过程中求值
-    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);   // [:en] May be evaluated at runtime
-                                               // [|:zh_CN] 可以在运行时求值
+    char array[1 + int(1 + 0.2 - 0.1 - 0.1)];   // [:en] Must be evaluated during translation
+                                                // [|:zh_CN] 必须在翻译过程中求值
+    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);    // [:en] May be evaluated at runtime
+                                                // [|:zh_CN] 可以在运行时求值
     return sizeof(array) == size;
 }
 [codeblock:end]

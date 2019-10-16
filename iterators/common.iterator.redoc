@@ -42,20 +42,20 @@ fun(CI(counted_iterator(s.begin(), 10)), CI(default_sentinel));
 [%@library common_iterator]
 [codeblock:synopsis [!:var dereferenceable] [!:mark SeeBelow]]
 namespace std {
-  template<Iterator I, Sentinel<I> S>
-    requires (!Same<I, S>)
+  template<input_or_output_iterator I, sentinel_for<I> S>
+    requires (!same_as<I, S>)
   class common_iterator {
   public:
     constexpr common_iterator() = default;
     constexpr common_iterator(I i);
     constexpr common_iterator(S s);
     template<class I2, class S2>
-      requires ConvertibleTo<const I2&, I> && ConvertibleTo<const S2&, S>
+      requires convertible_to<const I2&, I> && convertible_to<const S2&, S>
         constexpr common_iterator(const common_iterator<I2, S2>& x);
 
     template<class I2, class S2>
-      requires ConvertibleTo<const I2&, I> && ConvertibleTo<const S2&, S> &&
-               Assignable<I&, const I2&> && Assignable<S&, const S2&>
+      requires convertible_to<const I2&, I> && convertible_to<const S2&, S> &&
+               assignable_from<I&, const I2&> && assignable_from<S&, const S2&>
         common_iterator& operator=(const common_iterator<I2, S2>& x);
 
     decltype(auto) operator*();
@@ -67,28 +67,24 @@ namespace std {
     common_iterator& operator++();
     decltype(auto) operator++(int);
 
-    template<class I2, Sentinel<I> S2>
-      requires Sentinel<S, I2>
+    template<class I2, sentinel_for<I> S2>
+      requires sentinel_for<S, I2>
     friend bool operator==(
       const common_iterator& x, const common_iterator<I2, S2>& y);
-    template<class I2, Sentinel<I> S2>
-      requires Sentinel<S, I2> && EqualityComparableWith<I, I2>
+    template<class I2, sentinel_for<I> S2>
+      requires sentinel_for<S, I2> && equality_comparable_with<I, I2>
     friend bool operator==(
-      const common_iterator& x, const common_iterator<I2, S2>& y);
-    template<class I2, Sentinel<I> S2>
-      requires Sentinel<S, I2>
-    friend bool operator!=(
       const common_iterator& x, const common_iterator<I2, S2>& y);
 
-    template<SizedSentinel<I> I2, SizedSentinel<I> S2>
-      requires SizedSentinel<S, I2>
+    template<sized_sentinel_for<I> I2, sized_sentinel_for<I> S2>
+      requires sized_sentinel_for<S, I2>
     friend iter_difference_t<I2> operator-(
       const common_iterator& x, const common_iterator<I2, S2>& y);
 
     friend iter_rvalue_reference_t<I> iter_move(const common_iterator& i)
       noexcept(noexcept(ranges::iter_move(declval<const I&>())))
-        requires InputIterator<I>;
-    template<IndirectlySwappable<I> I2, class S2>
+        requires input_iterator<I>;
+    template<indirectly_swappable<I> I2, class S2>
       friend void iter_swap(const common_iterator& x, const common_iterator<I2, S2>& y)
         noexcept(noexcept(ranges::iter_swap(declval<const I&>(), declval<const I2&>())));
 
@@ -101,7 +97,7 @@ namespace std {
     using difference_type = iter_difference_t<I>;
   };
 
-  template<InputIterator I, class S>
+  template<input_iterator I, class S>
   struct iterator_traits<common_iterator<I, S>> {
     using iterator_concept = [=SeeBelow];
     using iterator_category = [=SeeBelow];

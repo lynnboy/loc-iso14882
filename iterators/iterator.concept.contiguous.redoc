@@ -1,30 +1,44 @@
 [section#iterator.concept.contiguous
-    [:en] Concept [`ContiguousIterator]
-    [:zh_CN] 概念 [`ContiguousIterator]
+    [:en] Concept [`contiguous_iterator]
+    [:zh_CN] 概念 [`contiguous_iterator]
 ]
 
 [para]
-[:en] The [`ContiguousIterator] concept provides a guarantee that the denoted
+[:en] The [`contiguous_iterator] concept provides a guarantee that the denoted
 elements are stored contiguously in memory.
-[:zh_CN] [`ContiguousIterator] 概念提供了所代表的各个元素在内存正连续存储的保证。
+[:zh_CN] [`contiguous_iterator] 概念提供了所代表的各个元素在内存正连续存储的保证。
 
-[%@library ContiguousIterator]
+[%@library contiguous_iterator]
 [codeblock:synopsis [!:var ITER_CONCEPT]]
 template<class I>
-  concept ContiguousIterator =
-    RandomAccessIterator<I> &&
-    DerivedFrom<[*ITER_CONCEPT](I), contiguous_iterator_tag> &&
+  concept contiguous_iterator =
+    random_access_iterator<I> &&
+    derived_from<[*ITER_CONCEPT](I), contiguous_iterator_tag> &&
     is_lvalue_reference_v<iter_reference_t<I>> &&
-    Same<iter_value_t<I>, remove_cvref_t<iter_reference_t<I>>>;
+    same_as<iter_value_t<I>, remove_cvref_t<iter_reference_t<I>>> &&
+    requires(const I& i) {
+      { to_address(i) } -> same_as<add_pointer_t<iter_reference_t<I>>>;
+    };
 [codeblock:end]
 
 [para]
-[:en] Let [`a] and [`b] be dereferenceable iterators of type [`I] such that [`b]
-is reachable from [`a], and let [`D] be [`iter_difference_t<I>].
-[:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的可解引用迭代器，使得从 [`a] 可达 [`b]，
-并令 [`D] 为 [`iter_difference_t<I>]。
+[:en] Let [`a] and [`b] be dereferenceable iterators and [`c] be
+non-dereferenceable iterator of type [`I] such that [`b] is reachable from [`a]
+and [`c] is reachable from [`b], and let [`D] be [`iter_difference_t<I>].
+[:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的可解引用迭代器，[`c] 为不可解引用迭代器，
+使得从 [`a] 可达 [`b]，从 [`b] 可达 [`c]，并令 [`D] 为 [`iter_difference_t<I>]。
 
-[:en] The type [`I] models [`ContiguousIterator] only if
-[`addressof(*(a + D(b - a)))] is equal to [`addressof(*a) + D(b - a)].
-[:zh_CN] 仅当 [`addressof(*(a + D(b - a)))] 等于 [`addressof(*a) + D(b - a)] 时，
-[`I] 构成 [`ContiguousIterator]。
+[:en] The type [`I] models [`contiguous_iterator] only if
+[:zh_CN] 仅当满足以下条件时，[`I] 构成 [`contiguous_iterator]：
+
+[list]
+[item]
+[:en@~] [`to_address(a) == addressof(*a)],
+[:zh_CN@~] [`to_address(a) == addressof(*a)]，
+[item]
+[:en@~] [`to_address(b) == to_address(a) + D(b - a)], and
+[:zh_CN@~] [`to_address(b) == to_address(a) + D(b - a)]，并且
+[item]
+[:en@~] [`to_address(c) == to_address(a) + D(c - a)].
+[:zh_CN@~] [`to_address(c) == to_address(a) + D(c - a)]。
+[list:end]

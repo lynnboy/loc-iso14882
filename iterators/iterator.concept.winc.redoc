@@ -1,33 +1,206 @@
 [section#iterator.concept.winc
-    [:en] Concept [`WeaklyIncrementable]
-    [:zh_CN] 概念 [`WeaklyIncrementable]
+    [:en] Concept [`weakly_incrementable]
+    [:zh_CN] 概念 [`weakly_incrementable]
 ]
 
 [para]
-[:en] The [`WeaklyIncrementable] concept specifies the requirements on types
+[:en] The [`weakly_incrementable] concept specifies the requirements on types
 that can be incremented with the pre- and post-increment operators.
-[:zh_CN] [`WeaklyIncrementable] 概念针对可以用前缀和后缀增量运算符进行增量操作的
-类型给出了规定。
+[:zh_CN] [`weakly_incrementable] 概念针对可以用前缀和后缀增量运算符进行增量操作
+的类型给出了规定。
 
 [:en] The increment operations are not required to be equality-preserving,
-nor is the type required to be [`EqualityComparable].
+nor is the type required to be [`equality_comparable].
 [:zh_CN] 这些增量操作并未被要求是维持相等性的，也未要求该类型为
-[`EqualityComparable]。
+[`equality_comparable]。
 
-[%@library WeaklyIncrementable]
+[%@library weakly_incrementable]
 [codeblock:synopsis]
+template<class T>
+  inline constexpr bool [*is-integer-like] = [=SeeBelow];            // [=Expos]
+
+template<class T>
+  inline constexpr bool [*is-signed-integer-like] = [=SeeBelow];     // [=Expos]
+
 template<class I>
-  concept WeaklyIncrementable =
-    Semiregular<I> &&
+  concept weakly_incrementable =
+    default_constructible<I> && movable<I> &&
     requires(I i) {
       typename iter_difference_t<I>;
-      requires SignedIntegral<iter_difference_t<I>>;
-      { ++i } -> Same<I&>; // [:en] not required to be equality-preserving
-                           // [|:zh_CN] 不必是维持相等性的
-      i++; // [:en] not required to be equality-preserving
-           // [|:zh_CN] 不必是维持相等性的
+      requires [*is-signed-integer-like]<iter_difference_t<I>>;
+      { ++i } -> same_as<I&>;   // [:en] not required to be equality-preserving
+                                // [|:zh_CN] 不必是维持相等性的
+      i++;                      // [:en] not required to be equality-preserving
+                                // [|:zh_CN] 不必是维持相等性的
     };
 [codeblock:end]
+
+[para]
+[:en] A type [`I] is an [+integer-class type[%type[!integer-class]]]
+[%integer-class type[%type[!integer-class]]] if it is in a set of
+implementation-defined class types that behave as integer types do, as defined
+in below.
+[:zh_CN] 如果类型 [`I] 属于由实现定义的行为类似于整数类型的类类型集合（如下文
+定义），则它是[+整数类类型[%类型[!整数类～]]][%整数类类型[%类型[!整数类～]]]。
+
+[para]
+[:en] The range of representable values of an integer-class type is the
+continuous set of values over which it is defined.
+[:zh_CN] 整数类类型的可表示的值的范围，是其所定义的值的连续集合。
+
+[:en] The values 0 and 1 are part of the range of every integer-class type.
+[:zh_CN] 值 0 和 1 是每个整数式类类型的范围的一部分。
+
+[:en] If any negative numbers are part of the range, the type is a
+[+signed-integer-class type[%type[!signed-integer-class]]]
+[%signed-integer-class type[%type[!signed-integer-class]]]; otherwise, it is an
+[+unsigned-integer-class type[%type[!unsigned-integer-class]]]
+[%unsigned-integer-class type[%type[!unsigned-integer-class]]].
+[:zh_CN] 若有任何负数属于其范围，则类型为
+[+有符号整数类类型[%类型[!有符号整数类～]]]
+[%有符号整数类类型[%类型[!有符号整数类～]]]；否则为
+[+无符号整数类类型[%类型[!无符号整数类～]]]
+[%无符号整数类类型[%类型[!无符号整数类～]]]。
+
+[para]
+[:en] For every integer-class type [`I], let [`B(I)] be a hypothetical extended
+integral type of the same signedness with the smallest width
+([#basic.fundamental]) capable of representing the same range of values.
+[:zh_CN] 对于每个整数类类型 [`I]，令 [`B(I)] 为虚构的具有相同符号性的扩展整型
+类型，并具有足以表示相同值的范围的最小宽度（[#basic.fundamental]）。
+
+[:en] The width of [`I] is equal to the width of [`B(I)].
+[:zh_CN] [`I] 的宽度等于 [`B(I)] 的宽度。
+
+[para]
+[:en] Let [`a] and [`b] be objects of integer-class type [`I], let [`x] and [`y]
+be objects of type [`B(I)] as described above that represent the same values as
+[`a] and [`b] respectively, and let [`c] be an lvalue of any integral type.
+[:zh_CN] 令 [`a] 和 [`b] 为整数类类型 [`I] 的对象，令 [`x] 和 [`y] 为如上述的
+类型 [`B(I)] 的对象并分别与 [`a] 和 [`b] 表示相同的值，并令 [`c] 为任意整型类型
+的左值。
+
+[list]
+[item]
+[:en] For every unary operator [`@] for which the expression [`@x] is
+well-formed, [`@a] shall also be well-formed and have the same value, effects,
+and value category as [`@x] provided that value is representable by [`I].
+[:zh_CN] 对于使表达式 [`@x] 良构的每个一元运算符 [`@]，[`@a] 应当同样良构，且与
+[`x] 具有相同的值，效果和值类别，只要该值可由 [`I] 表示。
+
+[:en] If [`@x] has type [`bool], so too does [`@a];
+[:zh_CN] 若 [`@x] 类型为 [`bool]，则 [`@a] 也是如此；
+[:en@~] if [`@x] has type [`B(I)], then [`@a] has type [`I].
+[:zh_CN@~] 若 [`@x] 类型为 [`B(I)]，则 [`@a] 类型为 [`I]。
+
+[item]
+[:en] For every assignment operator [`@=] for which [`c @= x] is well-formed,
+[`c @= a] shall also be well-formed and shall have the same value and effects as
+[`c @= x].
+[:zh_CN] 对于使 [`c @= x] 良构的每个赋值运算符 [`@=]，则 [`c @= a] 应当同样良构，
+且与 [`c @= x] 具有相同的值和效果。
+
+[:en] The expression [`c @= a] shall be an lvalue referring to [`c].
+[:zh_CN] 表达式 [`c @= a] 应当为指代 [`c] 的左值。
+
+[item]
+[:en] For every binary operator [`@] for which [`x @ y] is well-formed, [`a @ b]
+shall also be well-formed and shall have the same value, effects, and value
+category as [`x @ y] provided that value is representable by [`I].
+[:zh_CN] 对于使 [`x @ y] 良构的每个二元运算符 [`@]，[`a @ b] 应当同样良构，且与
+[`x @ y] 具有相同的值，效果和值类别，只要该值可由 [`I] 表示。
+
+[:en] If [`x @ y] has type [`bool], so too does [`a @ b];
+[:zh_CN] 若 [`x @ y] 类型为 [`bool]，则 [`a @ b] 也是如此；
+[:en@~] if [`x @ y] has type [`B(I)], then [`a @ b] has type [`I].
+[:zh_CN@~] 若 [`x @ y] 类型为 [`B(I)]，则 [`a @ b] 类型为 [`I]。
+[list:end]
+
+[para]
+[:en] All integer-class types are explicitly convertible to all integral types
+and implicitly and explicitly convertible from all integral types.
+[:zh_CN] 所有的整数类类型，都可现实转换为所有的整型类型，并可从所有整型类型隐式
+和显式转换。
+
+[para]
+[:en] All integer-class types are contextually convertible to [`bool] as if by
+[`bool(a != I(0))], where [`a] is an instance of the integral-class type [`I].
+[:zh_CN] 所有的整数类类型，都可按语境转换为 [`bool]，行为如同 [`bool(a != I(0))]，
+其中 [`a] 为整型类类型 [`I] 的实例。
+
+[para]
+[:en] All integer-class types model [`regular] ([#concepts.object]) and
+[`totally_ordered] ([#concept.totallyordered]).
+[:zh_CN] 所有的整数类类型都构成 [`regular]（[#concepts.object]）和
+[`totally_ordered]（[#concept.totallyordered]）。
+
+[para]
+[:en] A value-initialized object of integer-class type has value 0.
+[:zh_CN] 整数类类型的经过值初始化的对象具有 0 值。
+
+[para]
+[:en] For every (possibly cv-qualified) integer-class type [`I],
+[`numeric_limits<I>] is specialized such that:
+[:zh_CN] 对每个（可能 cv 限定的）整数类类型 [`I]，均对 [`numeric_limits<I>] 进行
+如下特化：
+
+[list]
+[item]
+[:en@~] [`numeric_limits<I>::is_specialized] is [`true],
+[:zh_CN@~] [`numeric_limits<I>::is_specialized] 为 [`true]，
+[item]
+[:en@~] [`numeric_limits<I>::is_signed] is [`true] if and only if [`I] is a
+signed-integer-class type,
+[:zh_CN@~] 当且仅当 [`I] 为有符号整数类类型时，[`numeric_limits<I>::is_signed]
+为 [`true]，
+[item]
+[:en@~] [`numeric_limits<I>::is_integer] is [`true],
+[:zh_CN@~] [`numeric_limits<I>::is_integer] 为 [`true]，
+[item]
+[:en@~] [`numeric_limits<I>::is_exact] is [`true],
+[:zh_CN@~] [`numeric_limits<I>::is_exact] 为 [`true]，
+[item]
+[:en@~] [`numeric_limits<I>::digits] is equal to the width of the integer-class
+type,
+[:zh_CN@~] [`numeric_limits<I>::digits] 等于整数类类型的宽度，
+[item]
+[:en@~] [`numeric_limits<I>::digits10] is equal to
+[`static_cast<int>(digits * log10(2))], and
+[:zh_CN@~] [`numeric_limits<I>::digits10] 等于
+[`static_cast<int>(digits * log10(2))]，以及
+[item]
+[:en@~] [`numeric_limits<I>::min()] and [`numeric_limits<I>::max()] return the
+lowest and highest representable values of [`I], respectively, and
+[`numeric_limits<I>::lowest()] returns [`numeric_limits<I>::min()].
+[:zh_CN@~] [`numeric_limits<I>::min()] 和 [`numeric_limits<I>::max()] 分别返回
+[`I] 的最低和最高可表示值，而 [`numeric_limits<I>::lowest()] 返回
+[`numeric_limits<I>::min()]。
+[list:end]
+
+[para]
+[:en] A type [`I] is [+integer-like] if it models [`integral<I>] or if it is an
+integer-class type.
+[:zh_CN] 若类型 [`I] 构成 [`integral<I>] 或其为整数类类型，则它是[+整数式]类型。
+
+[:en] A type [`I] is [+signed-integer-like] if it models [`signed_integral<I>]
+or if it is a signed-integer-class type.
+[:zh_CN] 若类型 [`I] 构成 [`signed_integral<I>] 或其为有符号整数类类型，则它是
+[+有符号整数式]类型。
+
+[:en] A type [`I] is [+unsigned-integer-like] if it models [`unsigned_integral<I>]
+or if it is an unsigned-integer-class type.
+[:zh_CN] 若类型 [`I] 构成 [`unsigned_integral<I>] 或其为无符号整数类类型，则它是
+[+无符号整数式]类型。
+
+[para]
+[:en] [`[*is-integer-like]<I>] is [`true] if and only if [`I] is an integer-like
+type.
+[:zh_CN] 当且仅当 [`I] 是整数式类型时，[`[*is-integer-like]<I>] 为 [`true]。
+
+[:en] [`[*is-signed-integer-like]<I>] is [`true] if and only if I is a
+signed-integer-like type.
+[:zh_CN] 当且仅当 [`I] 是有符号整数式类型时，[`[*is-signed-integer-like]<I>] 为
+[`true]。
 
 [para]
 [:en] Let [`i] be an object of type [`I].
@@ -37,8 +210,8 @@ template<class I>
 to be [+incrementable[%]].
 [:zh_CN] 当 [`i] 同时处于前缀和后缀增量的定义域中时，称 [`i] [+可增量[%]]。
 
-[:en] [`I] models [`WeaklyIncrementable<I>] only if
-[:zh_CN] 仅当符合以下条件时 [`I] 构成 [`WeaklyIncrementable<I>]：
+[:en] [`I] models [`weakly_incrementable<I>] only if
+[:zh_CN] 仅当符合以下条件时 [`I] 构成 [`weakly_incrementable<I>]：
 
 [list]
 [item]
@@ -58,10 +231,10 @@ next element.
 
 [para]
 [enter:note]
-[:en] For [`WeaklyIncrementable] types, [`a] equals [`b] does not imply that
+[:en] For [`weakly_incrementable] types, [`a] equals [`b] does not imply that
 [`++a] equals [`++b].
-[:zh_CN] 对于 [`WeaklyIncrementable] 的类型，[`a] 等于 [`b] 并不蕴含 [`++a] 等于
-[`++b]。
+[:zh_CN] 对于 [`weakly_incrementable] 的类型，[`a] 等于 [`b] 并不蕴含 [`++a]
+等于 [`++b]。
 
 [:en] (Equality does not guarantee the substitution property or referential
 transparency.)
