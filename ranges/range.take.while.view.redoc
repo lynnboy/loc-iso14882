@@ -1,0 +1,72 @@
+[section#range.take.while.view
+    [:en] Class template [`take_while_view]
+    [:zh_CN] 类模板 [`take_while_view]
+]
+
+[codeblock:synopsis [!:var simple-view]]
+namespace std::ranges {
+  template<view R, class Pred>
+  requires input_range<R> && is_object_v<Pred> &&
+    indirect_unary_predicate<const Pred, iterator_t<R>>
+  class take_while_view : public view_interface<take_while_view<R, Pred>> {
+    template<bool> class sentinel;                      // [=Expos]
+
+    R base_;                                            // [=Expos]
+    [*semiregular-box]<Pred> pred_;                        // [=Expos]
+
+  public:
+    take_while_view() = default;
+    constexpr take_while_view(R base, Pred pred);
+
+    constexpr R base() const;
+    constexpr const Pred& pred() const;
+
+    constexpr auto begin() requires (![*simple-view]<R>)
+    { return ranges::begin(base_); }
+
+    constexpr auto begin() const requires range<const R>
+    { return ranges::begin(base_); }
+
+    constexpr auto end() requires (![*simple-view]<R>)
+    { return sentinel<false>(ranges::end(base_), addressof(*pred_)); }
+
+    constexpr auto end() const requires range<const R>
+    { return sentinel<true>(ranges::end(base_), addressof(*pred_)); }
+  };
+
+  template<class R, class Pred>
+    take_while_view(R&&, Pred) -> take_while_view<all_view<R>, Pred>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr take_while_view(R base, Pred pred);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`std::move(base)] and [`pred_] with
+[`std::move(pred)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(pred)] 初始化
+[`pred_]。
+[exit:description]
+
+[codeblock:declaration]
+constexpr V base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return base_;]
+[:zh_CN] 等价于：[`return base_;]
+[exit:description]
+
+[codeblock:declaration]
+constexpr const Pred& pred() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return *pred_;]
+[:zh_CN] 等价于：[`return *pred_;]
+[exit:description]

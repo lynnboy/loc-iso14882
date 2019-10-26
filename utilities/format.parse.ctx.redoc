@@ -1,0 +1,157 @@
+[section#format.parse.ctx
+    [:en] Class template [`basic_format_parse_context]
+    [:zh_CN] 类模板 [`basic_format_parse_context]
+]
+
+[%@library basic_format_parse_context]
+[%@library char_type[!basic_format_parse_context]]
+[%@library basic_format_parse_context[!char_type]]
+[%@library const_iterator[!basic_format_parse_context]]
+[%@library basic_format_parse_context[!const_iterator]]
+[%@library iterator[!basic_format_parse_context]]
+[%@library basic_format_parse_context[!iterator]]
+[codeblock:synopsis]
+namespace std {
+  template<class charT>
+  class basic_format_parse_context {
+  public:
+    using char_type = charT;
+    using const_iterator = typename basic_string_view<charT>::const_iterator;
+    using iterator = const_iterator;
+
+  private:
+    iterator begin_;                                    // [=Expos]
+    iterator end_;                                      // [=Expos]
+    enum indexing { unknown, manual, automatic };       // [=Expos]
+    indexing indexing_;                                 // [=Expos]
+    size_t next_arg_id_;                                // [=Expos]
+    size_t num_args_;                                   // [=Expos]
+
+  public:
+    constexpr explicit basic_format_parse_context(basic_string_view<charT> fmt,
+                                                  size_t num_args = 0) noexcept;
+    basic_format_parse_context(const basic_format_parse_context&) = delete;
+    basic_format_parse_context& operator=(const basic_format_parse_context&) = delete;
+
+    constexpr const_iterator begin() const noexcept;
+    constexpr const_iterator end() const noexcept;
+    constexpr void advance_to(const_iterator it);
+
+    constexpr size_t next_arg_id();
+    constexpr void check_arg_id(size_t id);
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] An instance of [`basic_format_parse_context] holds the format string
+parsing state consisting of the format string range being parsed and the
+argument counter for automatic indexing.
+[:zh_CN] [`basic_format_parse_context] 的实例中持有格式字符串解析状态，包括所
+解析的格式字符串范围，以及用于自动索引的实参计数器。
+
+[%@library basic_format_parse_context[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr explicit basic_format_parse_context(basic_string_view<charT> fmt,
+                                              size_t num_args = 0) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`begin_] with [`fmt.begin()], [`end_] with [`fmt.end()],
+[`indexing_] with [`unknown], [`next_arg_id_] with [`0], and [`num_args_] with
+[`num_args].
+[:zh_CN] 以 [`fmt.begin()] 初始化 [`begin_]，以 [`fmt.end()] 初始化 [`end_]，以
+[`unknown] 初始化 [`indexing_]，以 [`0] 初始化 [`next_arg_id_]，并以 [`num_args]
+初始化 [`num_args_]。
+[exit:description]
+
+[%@library basic_format_parse_context[!begin]]
+[%@library begin[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr const_iterator begin() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`begin_].
+[:zh_CN] [`begin_]。
+[exit:description]
+
+[%@library basic_format_parse_context[!end]]
+[%@library end[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr const_iterator end() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`end_].
+[:zh_CN] [`end_]。
+[exit:description]
+
+[%@library basic_format_parse_context[!advance_to]]
+[%@library advance_to[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr void advance_to(const_iterator it);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`end()] is reachable from [`it].
+[:zh_CN] 从 [`it] 可达 [`end()]。
+
+[para:effects]
+[:en] Equivalent to: [`begin_ = it;]
+[:zh_CN] 等价于：[`begin_ = it;]
+[exit:description]
+
+[%@library basic_format_parse_context[!next_arg_id]]
+[%@library next_arg_id[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr size_t next_arg_id();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`indexing_ != manual], equivalent to:
+[:zh_CN] 当 [`indexing_ != manual] 时，等价于：
+[codeblock:notation]
+if (indexing_ == unknown)
+  indexing_ = automatic;
+return next_arg_id_++;
+[codeblock:end]
+
+[para:throws]
+[:en] [`format_error] if [`indexing_ == manual] which indicates mixing of
+automatic and manual argument indexing.
+[:zh_CN] 当 [`indexing_ == manual] 时抛出 [`format_error]，这指出混合了自动和
+手动实参索引。
+[exit:description]
+
+[%@library basic_format_parse_context[!check_arg_id]]
+[%@library check_arg_id[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr void check_arg_id(size_t id);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`indexing_ != manual], equivalent to:
+[:zh_CN] 当 [`indexing_ != manual] 时，等价于：
+[codeblock:notation]
+if (indexing_ == unknown)
+  indexing_ = manual;
+[codeblock:end]
+
+[para:throws]
+[:en] [`format_error] if [`indexing_ == manual] which indicates mixing of
+automatic and manual argument indexing.
+[:zh_CN] 当 [`indexing_ == manual] 时抛出 [`format_error]，这指出混合了自动和
+手动实参索引。
+
+[para:remarks]
+[:en] Call expressions where [`id >= num_args_] are not core constant
+expressions ([#expr.const]).
+[:zh_CN] [`id >= num_args_] 的调用表达式不是核心常量表达式（[#expr.const]）。
+[exit:description]

@@ -1,0 +1,77 @@
+[section#thread.stoptoken.intro
+    [:en] Introduction
+    [:zh_CN] 导言
+]
+
+[para]
+[:en] This clause describes components that can be used to asynchonously request
+that an operation stops execution in a timely manner, typically because the
+result is no longer required.
+[:zh_CN] 本条款描述的组件，用于异步地请求某个操作停止以长时间方式执行，通常由于
+其结果已经不再被需要。
+
+[:en] Such a request is called a [+stop request].
+[:zh_CN] 这种请求被称为[+停止请求]。
+
+[para]
+[:en] [`stop_source], [`stop_token], and [`stop_callback] implement semantics of
+shared ownership of a [+stop state].
+[:zh_CN] [`stop_source]，[`stop_token] 和 [`stop_callback] 实现对一个[+停止状态]
+的共享所有权语义。
+
+[:en] Any [`stop_source], [`stop_token], or [`stop_callback] that shares
+ownership of the same stop state is an [+associated] [`stop_source],
+[`stop_token], or [`stop_callback], respectively.
+[:zh_CN] 共享相同停止状态的所有权的 [`stop_source]，[`stop_token]，和
+[`stop_callback]，分别是[+关联的] [`stop_source]，[`stop_token]，和
+[`stop_callback]。
+
+[:en] The last remaining owner of the stop state automatically releases the
+resources associated with the stop state.
+[:zh_CN] 停止状态的最后一个留存的所有者将自动释放与停止状态关联的资源。
+
+[para]
+[:en] A [`stop_token] can be passed to an operation which can either
+[:zh_CN] 可以将 [`stop_token] 传递给某个操作，它可以
+
+[list]
+[item]
+[:en@~] actively poll the token to check if there has been a stop request, or
+[:zh_CN@~] 积极地轮询令牌以检查是否已出现一个停止请求，或
+[item]
+[:en@~] register a callback using the [`stop_callback] class template which will
+be called in the event that a stop request is made.
+[:zh_CN@~] 使用 [`stop_callback] 类模板来注册一个回调，它将于发生做出停止请求的
+事件时被调用。
+[list:end]
+
+[:en] A stop request made via a [`stop_source] will be visible to all associated
+[`stop_token] and [`stop_source] objects.
+[:zh_CN] 通过某个 [`stop_source] 做出的停止请求，将在所有关联的 [`stop_token] 和
+[`stop_source] 对象上可见。
+
+[:en] Once a stop request has been made it cannot be withdrawn (a subsequent
+stop request has no effect).
+[:zh_CN] 停止请求一旦做出就无法被撤销（后续的停止请求没有效果）。
+
+[para]
+[:en] Callbacks registered via a [`stop_callback] object are called when a stop
+request is first made by any associated [`stop_source] object.
+[:zh_CN] 通过某个 [`stop_callback] 对象注册的各个回调，都将于任何关联的
+[`stop_source] 对象上做出停止请求时被调用。
+
+[para]
+[:en] Calls to the functions [`request_stop], [`stop_requested], and
+[`stop_possible] do not introduce data races.
+[:zh_CN] 对函数 [`request_stop]，[`stop_requested] 和 [`stop_possible] 的调用
+不会引入数据竞争。
+
+[:en] A call to [`request_stop] that returns [`true] synchronizes with a call to
+[`stop_requested] on an associated [`stop_token] or [`stop_source] object that
+returns [`true].
+[:zh_CN] 对返回 [`true] 的 [`request_stop] 的调用，同步于在关联的 [`stop_token]
+或 [`stop_source] 对象上对返回 [`true] 的 [`stop_requested] 的调用。
+
+[:en] Registration of a callback synchronizes with the invocation of that
+callback.
+[:zh_CN] 回调的注册同步于该回调的调用。

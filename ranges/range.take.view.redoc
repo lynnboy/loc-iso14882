@@ -5,26 +5,26 @@
 
 [codeblock:synopsis [!:var simple-view]]
 namespace std::ranges {
-  template<View V>
+  template<view V>
   class take_view : public view_interface<take_view<V>> {
   private:
     V base_ = V();                                      // [=Expos]
-    iter_difference_t<iterator_t<V>> count_ = 0;        // [=Expos]
+    range_difference_t<V> count_ = 0;                   // [=Expos]
     // [:en] [#range.take.sentinel], class template [`take_view::sentinel]
     // [|:zh_CN] [#range.take.sentinel]，类模板 [`take_view::sentinel]
     template<bool> struct sentinel;                     // [=Expos]
   public:
     take_view() = default;
-    constexpr take_view(V base, iter_difference_t<iterator_t<V>> count);
-    template<ViewableRange R>
-      requires Constructible<V, all_view<R>>
-    constexpr take_view(R&& r, iter_difference_t<iterator_t<V>> count);
+    constexpr take_view(V base, range_difference_t<V> count);
+    template<viewable_range R>
+      requires constructible_from<V, all_view<R>>
+    constexpr take_view(R&& r, range_difference_t<V> count);
 
     constexpr V base() const;
 
     constexpr auto begin() requires (![*simple-view]<V>) {
-      if constexpr (SizedRange<V>) {
-        if constexpr (RandomAccessRange<V>)
+      if constexpr (sized_range<V>) {
+        if constexpr (random_access_range<V>)
           return ranges::begin(base_);
         else
           return counted_iterator{ranges::begin(base_), size()};
@@ -32,9 +32,9 @@ namespace std::ranges {
         return counted_iterator{ranges::begin(base_), count_};
     }
 
-    constexpr auto begin() const requires Range<const V> {
-      if constexpr (SizedRange<const V>) {
-        if constexpr (RandomAccessRange<const V>)
+    constexpr auto begin() const requires range<const V> {
+      if constexpr (sized_range<const V>) {
+        if constexpr (random_access_range<const V>)
           return ranges::begin(base_);
         else
           return counted_iterator{ranges::begin(base_), size()};
@@ -43,8 +43,8 @@ namespace std::ranges {
     }
 
     constexpr auto end() requires (![*simple-view]<V>) {
-      if constexpr (SizedRange<V>) {
-        if constexpr (RandomAccessRange<V>)
+      if constexpr (sized_range<V>) {
+        if constexpr (random_access_range<V>)
           return ranges::begin(base_) + size();
         else
           return default_sentinel;
@@ -52,9 +52,9 @@ namespace std::ranges {
         return sentinel<false>{ranges::end(base_)};
     }
 
-    constexpr auto end() const requires Range<const V> {
-      if constexpr (SizedRange<const V>) {
-        if constexpr (RandomAccessRange<const V>)
+    constexpr auto end() const requires range<const V> {
+      if constexpr (sized_range<const V>) {
+        if constexpr (random_access_range<const V>)
           return ranges::begin(base_) + size();
         else
           return default_sentinel;
@@ -62,26 +62,26 @@ namespace std::ranges {
         return sentinel<true>{ranges::end(base_)};
     }
 
-    constexpr auto size() requires SizedRange<V> {
+    constexpr auto size() requires sized_range<V> {
       auto n = ranges::size(base_);
       return ranges::min(n, static_cast<decltype(n)>(count_));
     }
 
-    constexpr auto size() const requires SizedRange<const V> {
+    constexpr auto size() const requires sized_range<const V> {
       auto n = ranges::size(base_);
       return ranges::min(n, static_cast<decltype(n)>(count_));
     }
   };
 
-  template<Range R>
-    take_view(R&&, iter_difference_t<iterator_t<R>>)
+  template<range R>
+    take_view(R&&, range_difference_t<R>)
       -> take_view<all_view<R>>;
 }
 [codeblock:end]
 
 [%@library take_view[!take_view]]
 [codeblock:declaration]
-constexpr take_view(V base, iter_difference_t<iterator_t<V>> count);
+constexpr take_view(V base, range_difference_t<V> count);
 [codeblock:end]
 
 [enter:description]
@@ -92,16 +92,16 @@ constexpr take_view(V base, iter_difference_t<iterator_t<V>> count);
 
 [%@library take_view[!take_view]]
 [codeblock:declaration]
-template<ViewableRange R>
-  requires Constructible<V, all_view<R>>
-constexpr take_view(R&& r, iter_difference_t<iterator_t<V>> count);
+template<viewable_range R>
+  requires constructible_from<V, all_view<R>>
+constexpr take_view(R&& r, range_difference_t<V> count);
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`count_]
+[:en] Initializes [`base_] with [`views::all(std::forward<R>(r))] and [`count_]
 with [`count].
-[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以 [`count]
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_] 并以 [`count]
 初始化 [`count_]。
 [exit:description]
 

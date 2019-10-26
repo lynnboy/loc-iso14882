@@ -4,284 +4,144 @@
 ]
 
 [para]
-[:en]
-Each [`format] overload specified in this subclause calls [`to_stream]
-unqualified, so as to enable argument dependent lookup
-([#basic.lookup.argdep]).
-[:zh_CN]
-本子条款中的各个 [`format] 重载，都对 [`to_stream] 进行未限定的调用，以启用
-依赖于实参的名字查找（[#basic.lookup.argdep]）。
+[:en] Each [`formatter] ([#format.formatter]) specialization in the chrono
+library ([#time.syn]) meets the [*Formatter] requirements
+([#formatter.requirements]).
+[:zh_CN] 时间程序库（[#time.syn]）中的所有 [`formatter]（[#format.formatter]）
+特化式都满足 [*Formatter] 的规定（[#formatter.requirements]）。
 
-[%:begin@library#format format]
+[:en] The [`parse] member functions of these formatters interpret the format
+specification as a [~@fmt chrono-format-spec] according to the following syntax:
+[:zh_CN] 这些格式化器的 [`parse] 成员函数将格式说明根据以下语法解释为
+[~@fmt 时间格式说明]。
 
-[codeblock:declaration]
-template<class charT, class Streamable>
-  basic_string<charT>
-    format(const charT* fmt, const Streamable& s);
-[codeblock:end]
+[syntax]
+[rule@fmt chrono-format-spec [:zh_CN] 时间格式说明 ]
+    [| [~:opt fill-and-align] [~:opt width] [~:opt precision] [~:opt chrono-specs] ]
+[rule:end]
 
-[enter:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
+[rule@fmt chrono-specs [:zh_CN] 时间说明 ]
+    [| conversion-spec ]
+    [| chrono-specs conversion-spec ]
+    [| chrono-specs literal-char ]
+[rule:end]
 
-[codeblock:notation]
-to_stream(declval<basic_ostream<charT>&>(), fmt, s)
-[codeblock:end]
+[rule@fmt literal-char [:zh_CN] 字面字符 ]
+    [|:descriptive
+        [:en] any character other than [`{] or [`}]
+        [:zh_CN] 除 [`{] 或 [`}] 之外的任何字符
+    ]
+[rule:end]
 
-[:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+[rule@fmt conversion-spec [:zh_CN] 转换说明 ]
+    [| [`%] [~:opt modifier] type ]
+[rule:end]
 
-[para:effects]
-[:en] Constructs a local variable of type [`basic_ostringstream<charT>]
-(named [`os] for exposition purposes).
-[:zh_CN] 构造一个 [`basic_ostringstream<charT>] 类型的局部变量（为阐释目的将其
-命名为 [`os]）。
+[rule@fmt modifier [:zh_CN] 修饰符 ]
+    [| [`E] [`O] ]
+[rule:end]
 
-[:en] Executes [`os.exceptions(ios::failbit | ios::badbit)].
-[:zh_CN] 执行 [`os.exceptions(ios::failbit | ios::badbit)]。
+[rule:oneof type [:zh_CN] 类型 ]
+    [| a A b B c C d D e F g G h H I j m M n ]
+    [| p r R S t T u U V w W x X y Y z Z % ]
+[rule:end]
+[syntax:end]
 
-[:en] Then calls [`to_stream(os, fmt, s)].
-[:zh_CN] 然后调用 [`to_stream(os, fmt, s)]。
+[:en] The productions [~@fmt fill-and-align], [~@fmt width], and
+[~@fmt precision] are described in [#format.string].
+[:zh_CN] 产生式[~@fmt 填充与对齐]、[~@fmt 宽度]和[~@fmt 精度]在 [#format.string]
+中描述。
 
-[para:returns]
-[:en] [`os.str()].
-[:zh_CN] [`os.str()]。
-[exit:description]
+[:en] Giving a [~@fmt precision] specification in the [~@fmt chrono-format-spec]
+is valid only for [`std::chrono::duration] types where the representation type
+[`Rep] is a floating-point type.
+[:zh_CN] 在[~@fmt 时间格式说明]中给出[~@fmt 精度]说明，仅对于表示类型 [`Rep] 为
+浮点类型的 [`std::chrono::duration] 类型有效。
 
-[codeblock:declaration]
-template<class charT, class Streamable>
-  basic_string<charT>
-    format(const locale& loc, const charT* fmt, const Streamable& s);
-[codeblock:end]
+[:en] For all other [`Rep] types, an exception of type [`format_error] is thrown
+if the [~@fmt chrono-format-spec] contains a [~@fmt precision] specification.
+[:zh_CN] 对于所有其他 [`Rep] 类型，当[~@fmt 时间格式说明]包含[~@fmt 精度]说明时
+将抛出 [`format_error] 类型的异常。
 
-[enter:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
-[codeblock:notation]
-to_stream(declval<basic_ostream<charT>&>(), fmt, s)
-[codeblock:end]
-
-[:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
-
-[para:effects]
-[:en] Constructs a local variable of type [`basic_ostringstream<charT>]
-(named [`os] for exposition purposes).
-[:zh_CN] 构造一个 [`basic_ostringstream<charT>] 类型的局部变量（为阐释目的将其
-命名为 [`os]）。
-
-[:en] Executes [`os.exceptions(ios::failbit | ios::badbit)].
-[:zh_CN] 执行 [`os.exceptions(ios::failbit | ios::badbit)]。
-
-[:en] Then calls [`os.imbue(loc)].
-[:zh_CN] 然后调用 [`os.imbue(loc)]。
-
-[:en] Then calls [`to_stream(os, fmt, s)].
-[:zh_CN] 然后调用 [`to_stream(os, fmt, s)]。
-
-[para:returns]
-[:en] [`os.str()].
-[:zh_CN] [`os.str()]。
-[exit:description]
-
-[codeblock:declaration]
-template<class charT, class traits, class Alloc, class Streamable>
-  basic_string<charT, traits, Alloc>
-    format(const basic_string<charT, traits, Alloc>& fmt, const Streamable& s);
-[codeblock:end]
-
-[enter:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
-[codeblock:notation]
-to_stream(declval<basic_ostringstream<charT, traits, Alloc>&>(), fmt.c_str(), s)
-[codeblock:end]
-
-[:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
-
-[para:effects]
-[:en] Constructs a local variable of type [`basic_ostringstream<charT>]
-(named [`os] for exposition purposes).
-[:zh_CN] 构造一个 [`basic_ostringstream<charT>] 类型的局部变量（为阐释目的将其
-命名为 [`os]）。
-
-[:en] Executes [`os.exceptions(ios::failbit | ios::badbit)].
-[:zh_CN] 执行 [`os.exceptions(ios::failbit | ios::badbit)]。
-
-[:en] Then calls [`to_stream(os, fmt.c_str(), s)].
-[:zh_CN] 然后调用 [`to_stream(os, fmt.c_str(), s)]。
-
-[para:returns]
-[:en] [`os.str()].
-[:zh_CN] [`os.str()]。
-[exit:description]
-
-[codeblock:declaration]
-template<class charT, class traits, class Alloc, class Streamable>
-  basic_string<charT, traits, Alloc>
-    format(const locale& loc, const basic_string<charT, traits, Alloc>& fmt, const Streamable& s);
-[codeblock:end]
-
-[enter:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
-[codeblock:notation]
-to_stream(declval<basic_ostringstream<charT, traits, Alloc>&>(), fmt.c_str(), s)
-[codeblock:end]
-
-[:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
-
-[para:effects]
-[:en] Constructs a local variable of type [`basic_ostringstream<charT>]
-(named [`os] for exposition purposes).
-[:zh_CN] 构造一个 [`basic_ostringstream<charT>] 类型的局部变量（为阐释目的将其
-命名为 [`os]）。
-
-[:en] Executes [`os.exceptions(ios::failbit | ios::badbit)].
-[:zh_CN] 执行 [`os.exceptions(ios::failbit | ios::badbit)]。
-
-[:en] Then calls [`os.imbue(loc)].
-[:zh_CN] 然后调用 [`os.imbue(loc)]。
-
-[:en] Then calls [`to_stream(os, fmt.c_str(), s)].
-[:zh_CN] 然后调用 [`to_stream(os, fmt.c_str(), s)]。
-
-[para:returns]
-[:en] [`os.str()].
-[:zh_CN] [`os.str()]。
-[exit:description]
+[:en] All ordinary multibyte characters represented by [~@fmt literal-char] are
+copied unchanged to the output.
+[:zh_CN] [~@fmt 字面字符]所表示的所有普通多字节字符，都无修改地复制到输出中。
 
 [para]
-[:en]
-The [`format] functions call a [`to_stream] function with a [`basic_ostream],
-a formatting string specifier, and a [`Streamable] argument.
-[:zh_CN]
-[`format] 函数以一个 [`basic_ostream]，一个格式化字符串说明符，和一个
-[`Streamable] 实参来调用 [`to_stream]。
+[:en] Each conversion specifier [~@fmt conversion-spec] is replaced by
+appropriate characters as described in [#:tab time.format.spec].
+[:zh_CN] 每个[~@fmt 转换说明]转换说明符，都被替换为 [#:tab time.format.spec] 中
+所述的适当字符。
 
-[:en]
-Each [`to_stream] overload is customized for each [`Streamable] type.
-[:zh_CN]
-各个 [`to_stream] 重载函数是为各个 [`Streamable] 类型定制的。
+[:en] Some of the conversion specifiers depend on the locale that is passed to
+the formatting function if the latter takes one, or the global locale otherwise.
+[:zh_CN] 某些转换说明符，当格式化函数接受一个地域时依赖于它，否则依赖于全局地域。
 
-[:en]
-However all [`to_stream] overloads treat the formatting string specifier
-according to the following specification:
-[:zh_CN]
-不过所有的 [`to_stream] 重载都根据下列的说明来对待其格式化字符串说明符：
+[:en] If the formatted object does not contain the information the conversion
+specifier refers to, an exception of type [`format_error] is thrown.
+[:zh_CN] 当所格式化的对象并不包含转换说明符所指代的信息时，抛出 [`format_error]
+类型的异常。
 
 [para]
-[:en]
-The [`fmt] string consists of zero or more conversion specifiers and ordinary
-multibyte characters.
-[:zh_CN]
-[`fmt] 字符串由零个或更多转换说明符和常规多字节字符所构成。
+[:en] Unless explicitly requested, the result of formatting a chrono type does
+not contain time zone abbreviation and time zone offset information.
+[:zh_CN] 除非明确要求，否则对一个 chrono 类型的格式化并不包含时区简称和时区
+偏移量信息。
 
-[:en]
-A conversion specifier consists of a [`%] character, possibly followed by an
-[`E] or [`O] modifier character (described below), followed by a character that
-determines the behavior of the conversion specifier.
-[:zh_CN]
-转换说明符包括一个 [`%] 字符，可能跟着一个 [`E] 或 [`O] 修饰符（说明见下文），
-再跟着一个确定该转换说明符的行为的字符。
+[:en] If the information is available, the conversion specifiers [`%Z] and [`%z]
+will format this information (respectively).
+[:zh_CN] 当这些信息可用时，转换说明符 [`%Z] 和 [`%z] 分别格式化它们。
 
-[:en]
-All ordinary multibyte characters (excluding the terminating null character)
-are streamed unchanged into the [`basic_ostream].
-[:zh_CN]
-所有的常规多字节字符（不包括终结空字符）都不改动地插入到 [`basic_ostream] 中。
-
-[para]
-[:en]
-Each conversion specifier is replaced by appropriate characters as described in
-[#:tab time.format.spec].
-[:zh_CN]
-各个转换说明符都根据 [#:tab time.format.spec] 所述替换为适当的一组字符。
-
-[:en]
-Some of the conversion specifiers depend on the locale which is imbued to the
-[`basic_ostream].
-[:zh_CN]
-某些转换说明符依赖于 [`basic_ostream] 所浸染的是哪个地域。
-
-[:en]
-If the [`Streamable] object does not contain the information the conversion
-specifier refers to, the value streamed to the [`basic_ostream] is unspecified.
-[:zh_CN]
-如果 [`Streamable] 对象并不包含转换说明符所代表的信息，则向 [`basic_ostream] 中
-插入的值时未指明的。
-
-[para]
-[:en]
-Unless explicitly specified, [`Streamable] types will not contain time zone
-abbreviation and time zone offset information.
-[:zh_CN]
-除非另行指明，[`Streamable] 类型都并不包含时区缩写和时区偏移信息。
-
-[:en]
-If available, the conversion specifiers [`%Z] and [`%z] will format this
-information (respectively).
-[:zh_CN]
-如果有这些信息的话，转换说明符 [`%Z] 和 [`%z] 可以分别对这些信息进行格式化。
-
-[:en]
-If the information is not available, and [`%Z] or [`%z] are contained in [`fmt],
-[`os.setstate(ios_base::failbit)] shall be called.
-[:zh_CN]
-如果这些信息不存在，而 [`fmt] 中包含 [`%Z] 或 [`%z]，则应当调用
-[`os.setstate(ios_base::failbit)]。
+[enter:note]
+[:en] If the information is not available and a [`%Z] or [`%z] conversion
+specifier appears in the [~@fmt chrono-format-spec], an exception of type
+[`format_error] is thrown, as described above.
+[:zh_CN] 若这些信息不可用而[~@fmt 时间格式说明]中出现了转换说明符 [`%Z] 或 [`%z]，
+则抛出 [`format_error] 类型的异常，如上所述。
+[exit:note]
 
 [table:grid#time.format.spec
-    [:en] Meaning of [`format] conversion specifiers
-    [:zh_CN] [`format] 转换说明符的含义
+    [:en] Meaning of conversion specifiers
+    [:zh_CN] 转换说明符的含义
     
     [|@code
         [:en] Specifier
         [:zh_CN] 说明符 ]
     [|  [:en] Replacement
-        [:zh_CN] 替换 ]
+        [:zh_CN] 替换为 ]
 ]
 
 [|] %a
 [|] [:en] The Locale[=']s abbreviated weekday name.
     [:zh_CN] 该地域的简写周日期名。
 
-[:en] If the value does not contain a valid weekday, [`setstate(ios::failbit)]
-is called.
-[:zh_CN] 如果值中不包含有效的周日期，则调用 [`setstate(ios::failbit)]。
+[:en] If the value does not contain a valid weekday, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果值中不包含有效的周日期，则抛出 [`format_error] 类型的异常。
 [-]
 [|] %A
 [|] [:en] The locale[=']s full weekday name.
     [:zh_CN] 该地域的全称周日期名。
 
-[:en] If the value does not contain a valid weekday, [`setstate(ios::failbit)]
-is called.
-[:zh_CN] 如果值中不包含有效的周日期，则调用 [`setstate(ios::failbit)]。
+[:en] If the value does not contain a valid weekday, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果值中不包含有效的周日期，则抛出 [`format_error] 类型的异常。
 [-]
 [|] %b
 [|] [:en] The locale[=']s abbreviated month name.
     [:zh_CN] 该地域的简称月名。
 
-[:en] If the value does not contain a valid month, [`setstate(ios::failbit)]
-is called.
-[:zh_CN] 如果值中不包含有效的月，则调用 [`setstate(ios::failbit)]。
+[:en] If the value does not contain a valid month, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果值中不包含有效的月，则抛出 [`format_error] 类型的异常。
 [-]
 [|] %B
 [|] [:en] The locale[=']s full month name.
-    [:zh_CN] 该地域全称月名。
+    [:zh_CN] 该地域的全称月名。
 
-[:en] If the value does not contain a valid month, [`setstate(ios::failbit)]
-is called.
-[:zh_CN] 如果值中不包含有效的月，则调用 [`setstate(ios::failbit)]。
+[:en] If the value does not contain a valid month, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果值中不包含有效的月，则抛出 [`format_error] 类型的异常。
 [-]
 [|] %c
 [|] [:en] The locale[=']s date and time representation.
@@ -375,7 +235,7 @@ representation.
 [-]
 [|] %j
 [|] [:en] The day of the year as a decimal number.
-    [:zh_CN] 年日期的十进制数字。
+    [:zh_CN] 年内日期的十进制数字。
 
 [:en] Jan 1 is [`001].
 [:zh_CN] 一月一日为 [`001]。
@@ -417,6 +277,14 @@ representation.
 [|] [:en] The locale[=']s equivalent of the AM/PM designations associated with a
 12-hour clock.
     [:zh_CN] 该地域中等价于与 12 小时时钟关联的“AM/PM”指示符。
+[-]
+[|] %q
+[|] [:en] The duration[=']s unit suffix as specified in [#time.duration.io].
+    [:zh_CN] 该时长的单位前缀，如 [#time.duration.io] 所指定。
+[-]
+[|] %Q
+[|] [:en] The duration[=']s numeric value (as if extracted via [`.count()]).
+    [:zh_CN] 该时长的数值（如同通过 [`.count()] 提取）。
 [-]
 [|] %r
 [|] [:en] The locale[=']s 12-hour clock time.
@@ -496,7 +364,7 @@ representation.
 [-]
 [|] %w
 [|] [:en] The weekday as a decimal number ([`0]-[`6]), where Sunday is [`0].
-    [:zh_CN] ISO 周日期的十进制数字（[`0] 到 [`6]），其中周日为 [`0]。
+    [:zh_CN] ISO 周内日期的十进制数字（[`0] 到 [`6]），其中周日为 [`0]。
 
 [:en] The modified command [`%Ow] produces the locale[=']s alternate
 representation.
@@ -564,17 +432,17 @@ digits.
 and minutes: [`-04:30].
 [:zh_CN] 修饰命令 [`%Ez] 和 [`%Oz] 在小时和分钟之间插入一个 [`:]：[`-04:30]。
 
-[:en] If the offset information is not available,
-[`setstate(ios_base::failbit)] shall be called.
-[:zh_CN] 如果没有偏移量信息，则应当调用 [`setstate(ios_base::failbit)]。
+[:en] If the offset information is not available, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果没有偏移量信息，则抛出 [`format_error] 类型的异常。
 [-]
 [|] %Z
 [|] [:en] The time zone abbreviation.
     [:zh_CN] 时区简称。
 
-[:en] If the time zone abbreviation is not available,
-[`setstate(ios_base::failbit)] shall be called.
-[:zh_CN] 如果没有时区简称，则应当调用 [`setstate(ios_base::failbit)]。
+[:en] If the time zone abbreviation is not available, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果没有时区简称，则抛出 [`format_error] 类型的异常。
 [-]
 [|] %%
 [|] [:en] A [`%] character.
@@ -582,4 +450,212 @@ and minutes: [`-04:30].
 [-]
 [table:end]
 
-[%:end#format]
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::sys_time]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::sys_time<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] If [`%Z] is used, it is replaced with [`[*STATICALLY-WIDEN]<charT>("UTC")].
+[:zh_CN] 当使用 [`%Z] 时，它被替换为 [`[*STATICALLY-WIDEN]<charT>("UTC")]。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used, an offset of [`0min] is
+formatted.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，格式化偏移量 [`0min]。
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::utc_time]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::utc_time<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] If [`%Z] is used, it is replaced with [`[*STATICALLY-WIDEN]<charT>("UTC")].
+[:zh_CN] 当使用 [`%Z] 时，它被替换为 [`[*STATICALLY-WIDEN]<charT>("UTC")]。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used, an offset of [`0min] is
+formatted.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，格式化偏移量 [`0min]。
+
+[:en] If the argument represents a time during a leap second insertion, and if a
+seconds field is formatted, the integral portion of that format is
+[`[*STATICALLY-WIDEN]<charT>("60")].
+[:zh_CN] 如果实参表示的是处于闰秒插入期中的时间，且若格式化其秒数字段，则该格式
+的整数部分为 [`[*STATICALLY-WIDEN]<charT>("60")]。
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::tai_time]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::tai_time<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] If [`%Z] is used, it is replaced with [`[*STATICALLY-WIDEN]<charT>("TAT")].
+[:zh_CN] 当使用 [`%Z] 时，它被替换为 [`[*STATICALLY-WIDEN]<charT>("TAT")]。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used, an offset of [`0min] is
+formatted.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，格式化偏移量 [`0min]。
+
+[:en] The date and time formatted are equivalent to those formatted by a
+[`sys_time] initialized with
+[:zh_CN] 其所格式化的日期和时间等价于以如下方式初始化的 [`sys_time] 的格式化
+[codeblock:notation]
+sys_time<Duration>{tp.time_since_epoch()} -
+  (sys_days{1970y/January/1} - sys_days{1958y/January/1})
+[codeblock:end]
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::gps_time]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::gps_time<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] If [`%Z] is used, it is replaced with [`[*STATICALLY-WIDEN]<charT>("GPS")].
+[:zh_CN] 当使用 [`%Z] 时，它被替换为 [`[*STATICALLY-WIDEN]<charT>("GPS")]。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used, an offset of [`0min] is
+formatted.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，格式化偏移量 [`0min]。
+
+[:en] The date and time formatted are equivalent to those formatted by a
+[`sys_time] initialized with
+[:zh_CN] 其所格式化的日期和时间等价于以如下方式初始化的 [`sys_time] 的格式化
+[codeblock:notation]
+sys_time<Duration>{tp.time_since_epoch()} +
+  (sys_days{1980y/January/Sunday[1]} - sys_days{1970y/January/1})
+[codeblock:end]
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::file_time]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::file_time<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] If [`%Z] is used, it is replaced with [`[*STATICALLY-WIDEN]<charT>("UTC")].
+[:zh_CN] 当使用 [`%Z] 时，它被替换为 [`[*STATICALLY-WIDEN]<charT>("UTC")]。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used, an offset of [`0min] is
+formatted.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，格式化偏移量 [`0min]。
+
+[:en] The date and time formatted are equivalent to those formatted by a
+[`sys_time] initialized with [`clock_cast<system_clock>(t)] or by a [`utc_time]
+initialized with [`clock_cast<utc_clock>(t)], where [`t] is the first argument
+to [`format].
+[:zh_CN] 其所格式化的日期和时间等价于以 [`clock_cast<system_clock>(t)] 初始化的
+[`sys_time]，或以 [`clock_cast<utc_clock>(t)] 初始化的 [`utc_time] 的格式化，
+其中 [`t] 为 [`format] 的第一个实参。
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::local_time]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::local_time<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para:remarks]
+[:en] If [`%Z], [`%z], or a modified version of [`%z] is used, an exception of
+type [`format_error] is thrown.
+[:zh_CN] 如果使用了 [`%Z]、[`%z] 或 [`%z] 的经修饰版本，则抛出 [`format_error]
+类型的异常。
+[exit:description]
+
+[%@library [*local-time-format-t]]
+[codeblock:synopsis]
+template<class Duration> struct [*local-time-format-t] {           // [=Expos]
+  local_time<Duration> time;                                    // [=Expos]
+  const string* abbrev;                                         // [=Expos]
+  const seconds* offset_sec;                                    // [=Expos]
+};
+[codeblock:end]
+
+[%@library local_time_format]
+[codeblock:declaration]
+template<class Duration>
+  [*local-time-format-t]<Duration>
+    local_time_format(local_time<Duration> time, const string* abbrev = nullptr,
+                      const seconds* offset_sec = nullptr);
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`{time, abbrev, offset_sec}].
+[:zh_CN] [`{time, abbrev, offset_sec}]。
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::[*local-time-format-t]]]]
+[codeblock:declaration]
+template<class Duration, class charT>
+  struct formatter<chrono::[*local-time-format-t]<Duration>, charT>;
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] Let [`f] be a [`[*local-time-format-t]<Duration>] object passed to
+[`formatter::format].
+[:zh_CN] 令 [`f] 为传递给 [`formatter::format] 的
+[`[*local-time-format-t]<Duration>] 对象。
+
+[para:remarks]
+[:en] If [`%Z] is used, it is replaced with [`*f.abbrev] if [`f.abbrev] is not
+a null pointer value.
+[:zh_CN] 当使用 [`%Z] 时，若 [`f.abbrev] 不是空指针值，则它被替换为 [`*f.abbrev]。
+
+[:en] If [`%Z] is used and [`f.abbrev] is a null pointer value, an exception of
+type [`format_error] is thrown.
+[:zh_CN] 当使用 [`%Z] 时，若 [`f.abbrev] 是空指针值，则抛出 [`format_error] 类型
+的异常。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used, it is formatted with
+the value of [`*f.offset_sec] if [`f.offset_sec] is not a null pointer value.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，若 [`f.offset_sec] 不是
+空指针值，则它被以 [`*f.offset_sec] 的值格式化。
+
+[:en] If [`%z] (or a modified variant of [`%z]) is used and [`f.offset_sec] is
+a null pointer value, then an exception of type [`format_error] is thrown.
+[:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，若 [`f.offset_sec] 是空指针值，
+则抛出 [`format_error] 类型的异常。
+[exit:description]
+
+[%@library formatter[![:en]specializations[:zh_CN]特化式[!chrono::zoned_time]]]
+[codeblock:synopsis]
+template<class Duration, class TimeZonePtr, class charT>
+struct formatter<chrono::zoned_time<Duration, TimeZonePtr>, charT>
+    : formatter<chrono::[*local-time-format-t]<Duration>, charT> {
+  template<class FormatContext>
+    typename FormatContext::iterator
+      format(const chrono::zoned_time<Duration, TimeZonePtr>& tp, FormatContext& ctx);
+};
+[codeblock:end]
+
+[%@library format[!formatter<chrono::zoned_time>]]
+[codeblock:declaration]
+template<class FormatContext>
+  typename FormatContext::iterator
+    format(const chrono::zoned_time<Duration, TimeZonePtr>& tp, FormatContext& ctx);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+sys_info info = tp.get_info();
+return formatter<chrono::[*local-time-format-t]<Duration>, charT>::
+         format({tp.get_local_time(), &info.abbrev, &info.offset}, ctx);
+[codeblock:end]
+[exit:description]

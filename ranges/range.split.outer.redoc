@@ -14,32 +14,32 @@ namespace std::ranges {
     using Base   =                              // [=Expos]
       conditional_t<Const, const V, V>;
     Parent* parent_ = nullptr;                  // [=Expos]
-    iterator_t<Base> current_ =                 // [:en] [=Expos], present only if [`V] models [`ForwardRange]
-                                                // [|:zh_CN] [=Expos]，仅当 [`V] 构成 [`ForwardRange] 时提供
+    iterator_t<Base> current_ =                 // [:en] [=Expos], present only if [`V] models [`forward_range]
+                                                // [|:zh_CN] [=Expos]，仅当 [`V] 构成 [`forward_range] 时提供
       iterator_t<Base>();
 
   public:
     using iterator_concept  =
-      conditional_t<ForwardRange<Base>, forward_iterator_tag, input_iterator_tag>;
+      conditional_t<forward_range<Base>, forward_iterator_tag, input_iterator_tag>;
     using iterator_category = input_iterator_tag;
     // [:en] [#range.split.outer.value], class [`split_view::outer_iterator::value_type]
     // [|:zh_CN] [#range.split.outer.value]，类 [`split_view::outer_iterator::value_type]
     struct value_type;
-    using difference_type   = iter_difference_t<iterator_t<Base>>;
+    using difference_type   = range_difference_t<Base>;
 
     outer_iterator() = default;
     constexpr explicit outer_iterator(Parent& parent)
-      requires (!ForwardRange<Base>);
+      requires (!forward_range<Base>);
     constexpr outer_iterator(Parent& parent, iterator_t<Base> current)
-      requires ForwardRange<Base>;
+      requires forward_range<Base>;
     constexpr outer_iterator(outer_iterator<!Const> i)
-      requires Const && ConvertibleTo<iterator_t<V>, iterator_t<const V>>;
+      requires Const && convertible_to<iterator_t<V>, iterator_t<const V>>;
 
     constexpr value_type operator*() const;
 
     constexpr outer_iterator& operator++();
     constexpr decltype(auto) operator++(int) {
-      if constexpr (ForwardRange<Base>) {
+      if constexpr (forward_range<Base>) {
         auto tmp = *this;
         ++*this;
         return tmp;
@@ -48,14 +48,9 @@ namespace std::ranges {
     }
 
     friend constexpr bool operator==(const outer_iterator& x, const outer_iterator& y)
-      requires ForwardRange<Base>;
-    friend constexpr bool operator!=(const outer_iterator& x, const outer_iterator& y)
-      requires ForwardRange<Base>;
+      requires forward_range<Base>;
 
     friend constexpr bool operator==(const outer_iterator& x, default_sentinel_t);
-    friend constexpr bool operator==(default_sentinel_t, const outer_iterator& x);
-    friend constexpr bool operator!=(const outer_iterator& x, default_sentinel_t y);
-    friend constexpr bool operator!=(default_sentinel_t y, const outer_iterator& x);
   };
 }
 [codeblock:end]
@@ -65,15 +60,15 @@ namespace std::ranges {
 [`[*current]] of [`outer_iterator].
 [:zh_CN] 下文的许多规范说明都涉指了 [`outer_iterator] 的概念上的成员
 [`[*current]]。
-[:en] [`[*current]] is equivalent to [`current_] if [`V] models [`ForwardRange],
+[:en] [`[*current]] is equivalent to [`current_] if [`V] models [`forward_range],
 and [`parent_->current_] otherwise.
-[:zh_CN] [`[*current]] 在 [`V] 构成 [`ForwardRange] 时等价于 [`current_]，否则
+[:zh_CN] [`[*current]] 在 [`V] 构成 [`forward_range] 时等价于 [`current_]，否则
 等价于 [`parent_->current_]。
 
 [%@library outer_iterator[!split_view::outer_iterator]]
 [codeblock:declaration]
 constexpr explicit outer_iterator(Parent& parent)
-  requires (!ForwardRange<Base>);
+  requires (!forward_range<Base>);
 [codeblock:end]
 
 [enter:description]
@@ -85,7 +80,7 @@ constexpr explicit outer_iterator(Parent& parent)
 [%@library outer_iterator[!split_view::outer_iterator]]
 [codeblock:declaration]
 constexpr outer_iterator(Parent& parent, iterator_t<Base> current)
-  requires ForwardRange<Base>;
+  requires forward_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -99,7 +94,7 @@ constexpr outer_iterator(Parent& parent, iterator_t<Base> current)
 [%@library outer_iterator[!split_view::outer_iterator]]
 [codeblock:declaration]
 constexpr outer_iterator(outer_iterator<!Const> i)
-  requires Const && ConvertibleTo<iterator_t<V>, iterator_t<const V>>;
+  requires Const && convertible_to<iterator_t<V>, iterator_t<const V>>;
 [codeblock:end]
 
 [enter:description]
@@ -152,7 +147,7 @@ return *this;
 [%@library operator==[!split_view::outer_iterator]]
 [codeblock:declaration]
 friend constexpr bool operator==(const outer_iterator& x, const outer_iterator& y)
-  requires ForwardRange<Base>;
+  requires forward_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -161,38 +156,13 @@ friend constexpr bool operator==(const outer_iterator& x, const outer_iterator& 
 [:zh_CN] 等价于：[`return x.current_ == y.current_;]
 [exit:description]
 
-[%@library operator!=[!split_view::outer_iterator]]
-[codeblock:declaration]
-friend constexpr bool operator!=(const outer_iterator& x, const outer_iterator& y)
-  requires ForwardRange<Base>;
-[codeblock:end]
-
-[enter:description]
-[para:effects]
-[:en] Equivalent to: [`return !(x == y);]
-[:zh_CN] 等价于：[`return !(x == y);]
-[exit:description]
-
 [%@library operator==[!split_view::outer_iterator]]
 [codeblock:declaration]
 friend constexpr bool operator==(const outer_iterator& x, default_sentinel_t);
-friend constexpr bool operator==(default_sentinel_t, const outer_iterator& x);
 [codeblock:end]
 
 [enter:description]
 [para:effects]
 [:en] Equivalent to: [`return x.[*current] == ranges::end(x.parent_->base_);]
 [:zh_CN] 等价于：[`return x.[*current] == ranges::end(x.parent_->base_);]
-[exit:description]
-
-[%@library operator!=[!split_view::outer_iterator]]
-[codeblock:declaration]
-friend constexpr bool operator!=(const outer_iterator& x, default_sentinel_t y);
-friend constexpr bool operator!=(default_sentinel_t y, const outer_iterator& x);
-[codeblock:end]
-
-[enter:description]
-[para:effects]
-[:en] Equivalent to: [`return !(x == y);]
-[:zh_CN] 等价于：[`return !(x == y);]
 [exit:description]

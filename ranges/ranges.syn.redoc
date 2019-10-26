@@ -31,13 +31,20 @@ namespace std::ranges {
   // [:en] [#range.range], ranges
   // [|:zh_CN] [#range.range]，范围
   template<class T>
-    using iterator_t = decltype(ranges::begin(declval<T&>()));
+    concept range = [=SeeBelow];
 
-  template<class T>
-    using sentinel_t = decltype(ranges::end(declval<T&>()));
-
-  template<class T>
-    concept Range = [=SeeBelow];
+  template<range R>
+    using iterator_t = decltype(ranges::begin(declval<R&>()));
+  template<range R>
+    using sentinel_t = decltype(ranges::end(declval<R&>()));
+  template<range R>
+    using range_difference_t = iter_difference_t<iterator_t<R>>;
+  template<range R>
+    using range_value_t = iter_value_t<iterator_t<R>>;
+  template<range R>
+    using range_reference_t = iter_reference_t<iterator_t<R>>;
+  template<range R>
+    using range_rvalue_reference_t = iter_rvalue_reference_t<iterator_t<R>>;
 
   // [:en] [#range.sized], sized ranges
   // [|:zh_CN] [#range.sized]，有大小范围
@@ -45,7 +52,7 @@ namespace std::ranges {
     inline constexpr bool disable_sized_range = false;
 
   template<class T>
-    concept SizedRange = [=SeeBelow];
+    concept sized_range = [=SeeBelow];
 
   // [:en] [#range.view], views
   // [|:zh_CN] [#range.view]，视图
@@ -55,56 +62,56 @@ namespace std::ranges {
   struct view_base { };
 
   template<class T>
-    concept View = [=SeeBelow];
+    concept view = [=SeeBelow];
 
   // [:en] [#range.refinements], other range refinements
   // [|:zh_CN] [#range.refinements]，其他范围精炼概念
   template<class R, class T>
-    concept OutputRange = [=SeeBelow];
+    concept output_range = [=SeeBelow];
 
   template<class T>
     concept InputRange = [=SeeBelow];
 
   template<class T>
-    concept ForwardRange = [=SeeBelow];
+    concept forward_range = [=SeeBelow];
 
   template<class T>
-    concept BidirectionalRange = [=SeeBelow];
+    concept bidirectional_range = [=SeeBelow];
 
   template<class T>
-    concept RandomAccessRange = [=SeeBelow];
+    concept randomAccess_range = [=SeeBelow];
 
   template<class T>
-    concept ContiguousRange = [=SeeBelow];
+    concept contiguous_range = [=SeeBelow];
 
   template<class T>
-    concept CommonRange = [=SeeBelow];
+    concept common_range = [=SeeBelow];
 
   template<class T>
-    concept ViewableRange = [=SeeBelow];
+    concept viewable_range = [=SeeBelow];
 
   // [:en] [#view.interface], class template [`view_interface]
   // [|:zh_CN] [#view.interface]，类模板 [`view_interface]
   template<class D>
-    requires is_class_v<D> && Same<D, remove_cv_t<D>>
+    requires is_class_v<D> && same_as<D, remove_cv_t<D>>
   class view_interface;
 
   // [:en] [#range.subrange], sub-ranges
   // [|:zh_CN] [#range.subrange]，子范围
   enum class subrange_kind : bool { unsized, sized };
 
-  template<Iterator I, Sentinel<I> S = I, subrange_kind K = [=SeeBelow]>
-    requires (K == subrange_kind::sized || !SizedSentinel<S, I>)
+  template<input_or_output_iterator I, sentinel_for<I> S = I, subrange_kind K = [=SeeBelow]>
+    requires (K == subrange_kind::sized || !sized_sentinel_for<S, I>)
   class subrange;
 
   // [:en] [#range.dangling], dangling iterator handling
   // [|:zh_CN] [#range.dangling]，悬挂迭代器处理
   struct dangling;
 
-  template<Range R>
+  template<range R>
     using safe_iterator_t = conditional_t<[*forwarding-range]<R>, iterator_t<R>, dangling>;
 
-  template<Range R>
+  template<range R>
     using safe_subrange_t =
       conditional_t<[*forwarding-range]<R>, subrange<iterator_t<R>>, dangling>;
 
@@ -114,107 +121,158 @@ namespace std::ranges {
     requires is_object_v<T>
   class empty_view;
 
-  namespace view {
+  namespace views {
     template<class T>
       inline constexpr empty_view<T> empty{};
   }
 
   // [:en] [#range.single], single view
   // [|:zh_CN] [#range.single]，单对象视图
-  template<CopyConstructible T>
+  template<copy_constructible T>
     requires is_object_v<T>
   class single_view;
 
-  namespace view { inline constexpr [=UnSpec] single = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] single = [=UnSpec]; }
 
   // [:en] [#range.iota], iota view
   // [|:zh_CN] [#range.iota]，iota 视图
-  template<WeaklyIncrementable W, Semiregular Bound = unreachable_sentinel_t>
+  template<weakly_incrementable W, semiregular Bound = unreachable_sentinel_t>
     requires [*weakly-equality-comparable-with]<W, Bound>
   class iota_view;
 
-  namespace view { inline constexpr [=UnSpec] iota = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] iota = [=UnSpec]; }
 
   // [:en] [#range.all], all view
   // [|:zh_CN] [#range.all]，全视图
-  namespace view { inline constexpr [=UnSpec] all = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] all = [=UnSpec]; }
 
-  template<ViewableRange R>
-    using all_view = decltype(view::all(declval<R>()));
+  template<viewable_range R>
+    using all_view = decltype(views::all(declval<R>()));
 
-  template<Range R>
+  template<range R>
     requires is_object_v<R>
   class ref_view;
 
   // [:en] [#range.filter], filter view
   // [|:zh_CN] [#range.filter]，过滤视图
-  template<InputRange V, IndirectUnaryPredicate<iterator_t<V>> Pred>
-    requires View<V> && is_object_v<Pred>
+  template<input_range V, indirect_unary_predicate<iterator_t<V>> Pred>
+    requires view<V> && is_object_v<Pred>
   class filter_view;
 
-  namespace view { inline constexpr [=UnSpec] filter = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] filter = [=UnSpec]; }
 
   // [:en] [#range.transform], transform view
   // [|:zh_CN] [#range.transform]，变换视图
-  template<InputRange V, CopyConstructible F>
-    requires View<V> && is_object_v<F> &&
-             RegularInvocable<F&, iter_reference_t<iterator_t<V>>>
+  template<input_range V, copy_constructible F>
+    requires view<V> && is_object_v<F> &&
+             regular_invocable<F&, range_reference_t<V>>
   class transform_view;
 
-  namespace view { inline constexpr [=UnSpec] transform = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] transform = [=UnSpec]; }
 
   // [:en] [#range.take], take view
   // [|:zh_CN] [#range.take]，采取视图
-  template<View> class take_view;
+  template<view> class take_view;
 
-  namespace view { inline constexpr [=UnSpec] take = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] take = [=UnSpec]; }
+
+  // [:en] [#range.take.while], take while view
+  // [|:zh_CN] [#range.take.while]，条件采取视图
+  template<view R, class Pred>
+    requires input_range<R> && is_object_v<Pred> &&
+      indirect_unary_predicate<const Pred, iterator_t<R>>
+    class take_while_view;
+
+  namespace views { inline constexpr [=UnSpec] take_while = [=UnSpec]; }
+
+  // [:en] [#range.drop], drop view
+  // [|:zh_CN] [#range.drop]，丢弃视图
+  template<view R>
+    class drop_view;
+
+  namespace views { inline constexpr [=UnSpec] drop = [=UnSpec]; }
+
+  // [:en] [#range.drop.while], drop while view
+  // [|:zh_CN] [#range.drop.while]，条件丢弃视图
+  template<view R, class Pred>
+    requires input_range<R> && is_object_v<Pred> &&
+      indirect_unary_predicate<const Pred, iterator_t<R>>
+    class drop_while_view;
+
+  namespace views { inline constexpr [=UnSpec] drop_while = [=UnSpec]; }
 
   // [:en] [#range.join], join view
   // [|:zh_CN] [#range.join]，联接视图
-  template<InputRange V>
-    requires View<V> && InputRange<iter_reference_t<iterator_t<V>>> &&
-             (is_reference_v<iter_reference_t<iterator_t<V>>> ||
-              View<iter_value_t<iterator_t<V>>>)
+  template<input_range V>
+    requires view<V> && input_range<range_reference_t<V>> &&
+             (is_reference_v<range_reference_t<V>> ||
+              view<range_value_t<V>>)
   class join_view;
 
-  namespace view { inline constexpr [=UnSpec] join = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] join = [=UnSpec]; }
 
   // [:en] [#range.split], split view
   // [|:zh_CN] [#range.split]，分割视图
   template<class R>
     concept [*tiny-range] = [=SeeBelow];   // \expos
 
-  template<InputRange V, ForwardRange Pattern>
-    requires View<V> && View<Pattern> &&
-             IndirectlyComparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
-             (ForwardRange<V> || [*tiny-range]<Pattern>)
+  template<input_range V, forward_range Pattern>
+    requires view<V> && view<Pattern> &&
+             indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             (forward_range<V> || [*tiny-range]<Pattern>)
   class split_view;
 
-  namespace view { inline constexpr [=UnSpec] split = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] split = [=UnSpec]; }
 
   // [:en] [#range.counted], counted view
   // [|:zh_CN] [#range.counted]，计数视图
-  namespace view { inline constexpr [=UnSpec] counted = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] counted = [=UnSpec]; }
 
   // [:en] [#range.common], common view
-  // [|:zh_CN] [#range.common]，一般视图
-  template<View V>
-    requires (!CommonRange<V>)
+  // [|:zh_CN] [#range.common]，公共视图
+  template<view V>
+    requires (!common_range<V>)
   class common_view;
 
-  namespace view { inline constexpr [=UnSpec] common = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] common = [=UnSpec]; }
 
   // [:en] [#range.reverse], reverse view
   // [|:zh_CN] [#range.reverse]，逆向视图
-  template<View V>
-    requires BidirectionalRange<V>
+  template<view V>
+    requires bidirectional_range<V>
   class reverse_view;
 
-  namespace view { inline constexpr [=UnSpec] reverse = [=UnSpec]; }
+  namespace views { inline constexpr [=UnSpec] reverse = [=UnSpec]; }
+
+  // [:en] [#range.istream], istream view
+  // [|:zh_CN] [#range.istream]，istream 视图
+  template<movable Val, class CharT, class Traits = char_traits<CharT>>
+    requires @\seebelow@
+  class basic_istream_view;
+  template<class Val, class CharT, class Traits>
+    basic_istream_view<Val, CharT, Traits> istream_view(basic_istream<CharT, Traits>& s);
+
+  // [:en] [#range.elements], elements view
+  // [|:zh_CN] [#range.elements]，元素视图
+  template<input_range R, size_t N>
+    requires [=SeeBelow];
+  class elements_view;
+
+  template<class R>
+    using keys_view = elements_view<all_view<R>, 0>;
+  template<class R>
+    using values_view = elements_view<all_view<R>, 1>;
+
+  namespace views {
+    template<size_t N>
+      inline constexpr [=UnSpec] elements = [=UnSpec] ;
+    inline constexpr [=UnSpec] keys = [=UnSpec] ;
+    inline constexpr [=UnSpec] values = [=UnSpec] ;
+  }
 }
 
 namespace std {
-  namespace view = ranges::view;
+  namespace views = ranges::views;
 
   template<class I, class S, ranges::subrange_kind K>
   struct tuple_size<ranges::subrange<I, S, K>>
@@ -229,3 +287,19 @@ namespace std {
   };
 }
 [codeblock:end]
+
+[para]
+[%[`[*make-unsigned-like]]]
+[%[`[*make-unsigned-like-t]]]
+[:en] Within this clause, for some integer-like type [`X]
+([#iterator.concept.winc]), [`[*make-unsigned-like-t](X)] denotes
+[`make_unsigned_t<X>] if [`X] is an integer type; otherwise, it denotes a
+corresponding unspecified unsigned-integer-like type of the same width as [`X].
+[:zh_CN] 本章中，对于整数式类型 [`X]（[#iterator.concept.winc]），当 [`X] 为整数
+类型时，[`[*make-unsigned-like-t](X)] 代表 [`make_unsigned_t<X>]；否则代表与
+[`X] 具有相同宽度的某个未指明的对应无符号整数式类型。
+
+[:en] For an object [`x] of type [`X], [`[*make-unsigned-like](x)] is [`x]
+explicitly converted to [`[*make-unsigned-like-t](X)].
+[:zh_CN] 对于 [`X] 类型的对象 [`x]，[`[*make-unsigned-like](x)] 为 [`x] 显式转换
+到 [`[*make-unsigned-like-t](X)]。

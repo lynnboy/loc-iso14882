@@ -20,13 +20,13 @@ namespace std::ranges {
     using iterator_concept  = [=SeeBelow];
     using iterator_category = [=SeeBelow];
     using value_type        =
-      remove_cvref_t<invoke_result_t<F&, iter_reference_t<iterator_t<Base>>>>;
-    using difference_type   = iter_difference_t<iterator_t<Base>>;
+      remove_cvref_t<invoke_result_t<F&, range_reference_t<Base>>>;
+    using difference_type   = range_difference_t<Base>;
 
     iterator() = default;
     constexpr iterator(Parent& parent, iterator_t<Base> current);
     constexpr iterator(iterator<!Const> i)
-      requires Const && ConvertibleTo<iterator_t<V>, iterator_t<Base>>;
+      requires Const && convertible_to<iterator_t<V>, iterator_t<Base>>;
 
     constexpr iterator_t<Base> base() const;
     constexpr decltype(auto) operator*() const
@@ -34,42 +34,43 @@ namespace std::ranges {
 
     constexpr iterator& operator++();
     constexpr void operator++(int);
-    constexpr iterator operator++(int) requires ForwardRange<Base>;
+    constexpr iterator operator++(int) requires forward_range<Base>;
 
-    constexpr iterator& operator--() requires BidirectionalRange<Base>;
-    constexpr iterator operator--(int) requires BidirectionalRange<Base>;
+    constexpr iterator& operator--() requires bidirectional_range<Base>;
+    constexpr iterator operator--(int) requires bidirectional_range<Base>;
 
     constexpr iterator& operator+=(difference_type n)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     constexpr iterator& operator-=(difference_type n)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     constexpr decltype(auto) operator[](difference_type n) const
-      requires RandomAccessRange<Base>
+      requires random_access_range<Base>;
     { return invoke(*parent_->fun_, current_[n]); }
 
     friend constexpr bool operator==(const iterator& x, const iterator& y)
-      requires EqualityComparable<iterator_t<Base>>;
-    friend constexpr bool operator!=(const iterator& x, const iterator& y)
-      requires EqualityComparable<iterator_t<Base>>;
+      requires equality_comparable<iterator_t<Base>>;
 
     friend constexpr bool operator<(const iterator& x, const iterator& y)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     friend constexpr bool operator>(const iterator& x, const iterator& y)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     friend constexpr bool operator<=(const iterator& x, const iterator& y)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     friend constexpr bool operator>=(const iterator& x, const iterator& y)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
+    friend constexpr compare_three_way_result_t<iterator_t<Base>>
+      operator<=>(const iterator& x, const iterator& y)
+        requires random_access_range<Base> && three_way_comparable<iterator_t<Base>>;
 
     friend constexpr iterator operator+(iterator i, difference_type n)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     friend constexpr iterator operator+(difference_type n, iterator i)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
 
     friend constexpr iterator operator-(iterator i, difference_type n)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
     friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-      requires RandomAccessRange<Base>;
+      requires random_access_range<Base>;
 
     friend constexpr decltype(auto) iter_move(const iterator& i)
       noexcept(noexcept(invoke(*i.parent_->fun_, *i.current_)))
@@ -82,7 +83,7 @@ namespace std::ranges {
 
     friend constexpr void iter_swap(const iterator& x, const iterator& y)
       noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
-      requires IndirectlySwappable<iterator_t<Base>>;
+      requires indirectly_swappable<iterator_t<Base>>;
   };
 }
 [codeblock:end]
@@ -93,21 +94,21 @@ namespace std::ranges {
 
 [list]
 [item]
-[:en] If [`V] models [`RandomAccessRange], then [`iterator_concept] denotes
+[:en] If [`V] models [`random_access_range], then [`iterator_concept] denotes
 [`random_access_iterator_tag].
-[:zh_CN] 若 [`V] 构成 [`RandomAccessRange]，则 [`iterator_concept] 代表
+[:zh_CN] 若 [`V] 构成 [`random_access_range]，则 [`iterator_concept] 代表
 [`random_access_iterator_tag]。
 
 [item]
-[:en] Otherwise, if [`V] models [`BidirectionalRange], then [`iterator_concept]
+[:en] Otherwise, if [`V] models [`bidirectional_range], then [`iterator_concept]
 denotes [`bidirectional_iterator_tag].
-[:zh_CN] 否则，若 [`V] 构成 [`BidirectionalRange]，则 [`iterator_concept] 代表
+[:zh_CN] 否则，若 [`V] 构成 [`bidirectional_range]，则 [`iterator_concept] 代表
 [`bidirectional_iterator_tag]。
 
 [item]
-[:en] Otherwise, if [`V] models [`ForwardRange], then [`iterator_concept]
+[:en] Otherwise, if [`V] models [`forward_range], then [`iterator_concept]
 denotes [`forward_iterator_tag].
-[:zh_CN] 否则，若 [`V] 构成 [`ForwardRange]，则 [`iterator_concept] 代表
+[:zh_CN] 否则，若 [`V] 构成 [`forward_range]，则 [`iterator_concept] 代表
 [`forward_iterator_tag]。
 
 [item]
@@ -121,10 +122,10 @@ denotes [`forward_iterator_tag].
 [:zh_CN] 令 [`C] 代表类型
 [`iterator_traits<iterator_t<Base>>::iterator_category]。
 
-[:en] If [`C] models [`DerivedFrom<contiguous_iterator_tag>], then
+[:en] If [`C] models [`derived_from<contiguous_iterator_tag>], then
 [`iterator_category] denotes [`random_access_iterator_tag]; otherwise,
 [`iterator_category] denotes [`C].
-[:zh_CN] 若 [`C] 构成 [`DerivedFrom<bidirectional_iterator_tag>]，则
+[:zh_CN] 若 [`C] 构成 [`derived_from<bidirectional_iterator_tag>]，则
 [`iterator_category] 代表 [`random_access_iterator_tag]；否则，
 [`iterator_category] 代表 [`C].
 
@@ -144,7 +145,7 @@ constexpr iterator(Parent& parent, iterator_t<Base> current);
 [%@library iterator[!transform_view::iterator]]
 [codeblock:declaration]
 constexpr iterator(iterator<!Const> i)
-  requires Const && ConvertibleTo<iterator_t<V>, iterator_t<Base>>;
+  requires Const && convertible_to<iterator_t<V>, iterator_t<Base>>;
 [codeblock:end]
 
 [enter:description]
@@ -194,7 +195,7 @@ constexpr void operator++(int);
 
 [%@library operator++[!transform_view::iterator]]
 [codeblock:declaration]
-constexpr iterator operator++(int) requires ForwardRange<Base>;
+constexpr iterator operator++(int) requires forward_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -210,7 +211,7 @@ return tmp;
 
 [%@library operator--[!transform_view::iterator]]
 [codeblock:declaration]
-constexpr iterator& operator--() requires BidirectionalRange<Base>;
+constexpr iterator& operator--() requires bidirectional_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -225,7 +226,7 @@ return *this;
 
 [%@library operator--[!transform_view::iterator]]
 [codeblock:declaration]
-constexpr iterator operator--(int) requires BidirectionalRange<Base>;
+constexpr iterator operator--(int) requires bidirectional_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -242,7 +243,7 @@ return tmp;
 [%@library operator+=[!transform_view::iterator]]
 [codeblock:declaration]
 constexpr iterator& operator+=(difference_type n)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -258,7 +259,7 @@ return *this;
 [%@library operator-=[!transform_view::iterator]]
 [codeblock:declaration]
 constexpr iterator& operator-=(difference_type n)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -274,7 +275,7 @@ return *this;
 [%@library operator==[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator==(const iterator& x, const iterator& y)
-  requires EqualityComparable<iterator_t<Base>>;
+  requires equality_comparable<iterator_t<Base>>;
 [codeblock:end]
 
 [enter:description]
@@ -283,22 +284,10 @@ friend constexpr bool operator==(const iterator& x, const iterator& y)
 [:zh_CN] 等价于：[`return x.current_ == y.current_;]
 [exit:description]
 
-[%@library operator!=[!transform_view::iterator]]
-[codeblock:declaration]
-friend constexpr bool operator!=(const iterator& x, const iterator& y)
-  requires EqualityComparable<iterator_t<Base>>;
-[codeblock:end]
-
-[enter:description]
-[para:effects]
-[:en] Equivalent to: [`return !(x == y);]
-[:zh_CN] 等价于：[`return !(x == y);]
-[exit:description]
-
 [%@library operator<[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator<(const iterator& x, const iterator& y)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -310,7 +299,7 @@ friend constexpr bool operator<(const iterator& x, const iterator& y)
 [%@library operator>[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator>(const iterator& x, const iterator& y)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -322,7 +311,7 @@ friend constexpr bool operator>(const iterator& x, const iterator& y)
 [%@library operator<=[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator<=(const iterator& x, const iterator& y)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -334,7 +323,7 @@ friend constexpr bool operator<=(const iterator& x, const iterator& y)
 [%@library operator>=[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator>=(const iterator& x, const iterator& y)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -343,12 +332,25 @@ friend constexpr bool operator>=(const iterator& x, const iterator& y)
 [:zh_CN] 等价于：[`return !(x < y);]
 [exit:description]
 
+[%@library operator<=>[!transform_view::iterator]]
+[codeblock:declaration]
+friend constexpr compare_three_way_result_t<iterator_t<Base>>
+  operator<=>(const iterator& x, const iterator& y)
+    requires random_access_range<Base> && three_way_comparable<iterator_t<Base>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ <=> y.current_;]
+[:zh_CN] 等价于：[`return x.current_ <=> y.current_;]
+[exit:description]
+
 [%@library operator+[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr iterator operator+(iterator i, difference_type n)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 friend constexpr iterator operator+(difference_type n, iterator i)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -360,7 +362,7 @@ friend constexpr iterator operator+(difference_type n, iterator i)
 [%@library operator-[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr iterator operator-(iterator i, difference_type n)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -372,7 +374,7 @@ friend constexpr iterator operator-(iterator i, difference_type n)
 [%@library operator-[!transform_view::iterator]]
 [codeblock:declaration]
 friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-  requires RandomAccessRange<Base>;
+  requires random_access_range<Base>;
 [codeblock:end]
 
 [enter:description]
@@ -385,7 +387,7 @@ friend constexpr difference_type operator-(const iterator& x, const iterator& y)
 [codeblock:declaration]
 friend constexpr void iter_swap(const iterator& x, const iterator& y)
   noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
-  requires IndirectlySwappable<iterator_t<Base>>;
+  requires indirectly_swappable<iterator_t<Base>>;
 [codeblock:end]
 
 [enter:description]

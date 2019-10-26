@@ -1,0 +1,83 @@
+[section#stopcallback.cons
+    [:en] Constructors and destructor
+    [:zh_CN] 构造函数和析构函数
+]
+
+[%@library stop_callback[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class C>
+explicit stop_callback(const stop_token& st, C&& cb)
+  noexcept(is_nothrow_constructible_v<Callback, C>);
+template<class C>
+explicit stop_callback(stop_token&& st, C&& cb)
+  noexcept(is_nothrow_constructible_v<Callback, C>);
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`Callback] and [`C] satisfy [`constructible_from<Callback, C>].
+[:zh_CN] [`Callback] 和 [`C] 满足 [`constructible_from<Callback, C>]。
+
+[para:expects]
+[:en] [`Callback] and [`C] model [`constructible_from<Callback, C>].
+[:zh_CN] [`Callback] 和 [`C] 构成 [`constructible_from<Callback, C>]。
+
+[para:effects]
+[:en] Initializes [`callback] with [`std::forward<C>(cb)].
+[:zh_CN] 以 [`std::forward<C>(cb)] 初始化 [`callback]。
+
+[:en] If [`st.stop_requested()] is [`true], then
+[`std::forward<Callback>(callback)()] is evaluated in the current thread before
+the constructor returns.
+[:zh_CN] 若 [`st.stop_requested()] 为 [`true]，则在构造函数返回前在当前线程中对
+[`std::forward<Callback>(callback)()] 求值。
+
+[:en] Otherwise, if [`st] has ownership of a stop state, acquires shared
+ownership of that stop state and registers the callback with that stop state
+such that [`std::forward<Callback>(callback)()] is evaluated by the first call
+to [`request_stop()] on an associated [`stop_source].
+[:zh_CN] 否则，若 [`st] 拥有某个停止状态的所有权，则获取这个停止状态的共享所有权，
+并将回调以这个停止状态注册，使得 [`std::forward<Callback>(callback)()] 将由在
+首次在某个关联的 [`stop_source] 上调用 [`request_stop()] 时求值。
+
+[para:remarks]
+[:en] If evaluating [`std::forward<Callback>(callback)()] exits via an exception,
+then [`terminate] is called ([#except.terminate]).
+[:zh_CN] 当 [`std::forward<Callback>(callback)()] 的求值由于异常而退出时，调用
+[`terminate]（[#except.terminate]）。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [`callback].
+[:zh_CN] [`callback] 的初始化所抛出的任何异常。
+[exit:description]
+
+[%@library stop_callback[![:en]destructor[:zh_CN]析构函数]]
+[codeblock:declaration]
+~stop_callback();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Unregisters the callback from the owned stop state, if any.
+[:zh_CN] 从所拥有的停止状态（如果有）中注销该回调。
+
+[:en] The destructor does not block waiting for the execution of another
+callback registered by an associated [`stop_callback].
+[:zh_CN] 析构函数不会阻塞于等待由关联的 [`stop_callback] 上所注册的其他回调的
+执行。
+
+[:en] If [`callback] is concurrently executing on another thread, then the
+return from the invocation of [`callback] strongly happens before ([#intro.races])
+[`callback] is destroyed.
+[:zh_CN] 若 [`callback] 在其他线程中并发执行，则从 [`callback] 的调用中返回强
+发生早于（[#intro.races]）[`callback] 的销毁。
+
+[:en] If [`callback] is executing on the current thread, then the destructor
+does not block ([#defns.block]) waiting for the return from the invocation of
+[`callback].
+[:zh_CN] 若 [`callback] 在当前线程中执行，则析构函数不会阻塞（[#defns.block]）于
+等待 [`callback] 的调用返回。
+
+[:en] Releases ownership of the stop state, if any.
+[:zh_CN] 释放停止状态（如果有）的所有权。
+[exit:description]

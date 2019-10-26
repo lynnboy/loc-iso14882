@@ -1,0 +1,198 @@
+[section#cmp.concept
+    [:en] Concept [`three_way_comparable]
+    [:zh_CN] 概念 [`three_way_comparable]
+]
+
+[codeblock:synopsis [!:mark UnSpec] ]
+template<class T, class Cat>
+  concept [*compares-as] =                 // [=Expos]
+    same_as<common_comparison_category_t<T, Cat>, Cat>;
+
+template<class T, class U>
+  concept [*partially-ordered-with] =      // [=Expos]
+    requires(const remove_reference_t<T>& t, const remove_reference_t<U>& u) {
+      { t <  u } -> boolean;
+      { t >  u } -> boolean;
+      { t <= u } -> boolean;
+      { t >= u } -> boolean;
+      { u <  t } -> boolean;
+      { u >  t } -> boolean;
+      { u <= t } -> boolean;
+      { u >= t } -> boolean;
+    };
+[codeblock:end]
+
+[para]
+[:en] Let [`t] and [`u] be lvalues of types [`const remove_reference_t<T>] and
+[`const remove_reference_t<U>], respectively.
+[:zh_CN] 令 [`t] 和 [`u] 分别为类型 [`const remove_reference_t<T>] 和
+[`const remove_reference_t<U>] 的左值。
+
+[:en] [`T] and [`U] model [`[*partially-ordered-with]<T, U>] only if:
+[:zh_CN] 仅当以下情况下，[`T] 和 [`U] 构成 [`[*partially-ordered-with]<T, U>]：
+
+[list]
+[item]
+[:en] [`t < u], [`t <= u], [`t > u], [`t >= u], [`u < t], [`u <= t], [`u > t],
+and [`u >= t] have the same domain.
+[:zh_CN] [`t < u]、[`t <= u]、[`t > u]、[`t >= u]、[`u < t]、[`u <= t]、[`u > t]
+和 [`u >= t] 具有相同的值域。
+
+[item]
+[:en] [`bool(t < u) == bool(u > t)] is [`true],
+[:zh_CN] [`bool(t < u) == bool(u > t)] 为 [`true]，
+[item]
+[:en] [`bool(u < t) == bool(t > u)] is [`true],
+[:zh_CN] [`bool(u < t) == bool(t > u)] 为 [`true]，
+[item]
+[:en] [`bool(t <= u) == bool(u >= t)] is [`true], and
+[:zh_CN] [`bool(t <= u) == bool(u >= t)] 为 [`true]，并且
+[item]
+[:en] [`bool(u <= t) == bool(t >= u)] is [`true].
+[:zh_CN] [`bool(u <= t) == bool(t >= u)] 为 [`true]。
+[list:end]
+
+[codeblock:synopsis]
+template<class T, class Cat = partial_ordering>
+  concept three_way_comparable =
+    [*weakly-equality-comparable-with]<T, T> &&
+    (!convertible_to<Cat, partial_ordering> || [*partially-ordered-with]<T, T>) &&
+    requires(const remove_reference_t<T>& a, const remove_reference_t<T>& b) {
+      { a <=> b } -> [*compares-as]<Cat>;
+    };
+[codeblock:end]
+
+[para]
+[:en] Let [`a] and [`b] be lvalues of type [`const remove_reference_t<T>].
+[:zh_CN] 令 [`a] 和 [`b] 为类型 [`const remove_reference_t<T>] 的左值。
+
+[:en] [`T] and [`Cat] model [`three_way_comparable<T, Cat>] only if:
+[:zh_CN] 仅当以下情况下，[`T] 和 [`Cat] 构成 [`three_way_comparable<T, Cat>]：
+
+[list]
+[item]
+[:en] [`(a <=> b == 0) == bool(a == b)] is [`true];
+[:zh_CN] [`(a <=> b == 0) == bool(a == b)] 为 [`true]；
+
+[item]
+[:en] [`(a <=> b != 0) == bool(a != b)] is [`true];
+[:zh_CN] [`(a <=> b != 0) == bool(a != b)] 为 [`true]；
+
+[item]
+[:en] [`((a <=> b) <=> 0)] and [`(0 <=> (b <=> a))] are equal;
+[:zh_CN] [`((a <=> b) <=> 0)] 和 [`(0 <=> (b <=> a))] 相等；
+
+[item]
+[:en] if [`Cat] is convertible to [`strong_equality], [`T] models
+[`equality_comparable] ([#concept.equalitycomparable]);
+[:zh_CN] 若 [`Cat] 可转换为 [`strong_equality]，则 [`T] 构成
+[`equality_comparable]（[#concept.equalitycomparable]）；
+
+[item]
+[:en] if [`Cat] is convertible to [`partial_ordering]:
+[:zh_CN] 若 [`Cat] 可转换为 [`partial_ordering]，则有：
+[list]
+[item]
+[:en@~] [`(a <=> b < 0) == bool(a < b)] is [`true],
+[:zh_CN@~] [`(a <=> b < 0) == bool(a < b)] 为 [`true]，
+[item]
+[:en@~] [`(a <=> b > 0) == bool(a > b)] is [`true],
+[:zh_CN@~] [`(a <=> b > 0) == bool(a > b)] 为 [`true]，
+[item]
+[:en@~] [`(a <=> b <= 0) == bool(a <= b)] is [`true], and
+[:zh_CN@~] [`(a <=> b <= 0) == bool(a <= b)] 为 [`true]，并且
+[item]
+[:en@~] [`(a <=> b >= 0) == bool(a >= b)] is [`true]; and
+[:zh_CN]@~ [`(a <=> b >= 0) == bool(a >= b)] 为 [`true]；以及
+[list:end]
+
+[item]
+[:en] If [`Cat] is convertible to [`strong_ordering], [`T] models
+[`totally_ordered] ([#concept.totallyordered]).
+[:zh_CN] 若 [`Cat] 可转换为 [`strong_ordering]，则 [`T] 构成 [`totally_ordered]
+（[#concept.totallyordered]）。
+[list:end]
+
+[codeblock:synopsis]
+template<class T, class U, class Cat = partial_ordering>
+  concept three_way_comparable_with =
+    [*weakly-equality-comparable-with]<T, U> &&
+    (!convertible_to<Cat, partial_ordering> || [*partially-ordered-with]<T, U>) &&
+    three_way_comparable<T, Cat> &&
+    three_way_comparable<U, Cat> &&
+    common_reference_with<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
+    three_way_comparable<
+      common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>, Cat> &&
+    requires(const remove_reference_t<T>& t, const remove_reference_t<U>& u) {
+      { t <=> u } -> [*compares-as]<Cat>;
+      { u <=> t } -> [*compares-as]<Cat>;
+    };
+[codeblock:end]
+
+[para]
+[:en] Let [`t] and [`u] be lvalues of types [`const remove_reference_t<T>] and
+[`const remove_reference_t<U>], respectively.
+[:zh_CN] 令 [`t] 和 [`u] 分别为类型 [`const remove_reference_t<T>] 和
+[`const remove_reference_t<U>] 的左值。
+
+[:en] Let [`C] be
+[`common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>].
+[:zh_CN] 令 [`C] 为
+[`common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>]。
+
+[:en] [`T], [`U], and [`Cat] model [`three_way_comparable_with<T, U, Cat>] only
+if:
+[:zh_CN] 仅当以下情况下，[`T]，[`U] 和 [`Cat] 构成
+[`three_way_comparable_with<T, U, Cat>]：
+
+[list]
+[item]
+[:en] [`t <=> u] and [`u <=> t] have the same domain;
+[:zh_CN] [`t <=> u] 和 [`u <=> t] 具有相同的值域；
+
+[item]
+[:en] [`((t <=> u) <=> 0)] and [`(0 <=> (u <=> t))] are equal;
+[:zh_CN] [`((t <=> u) <=> 0)] 和 [`(0 <=> (u <=> t))] 相等；
+
+[item]
+[:en] [`(t <=> u == 0) == bool(t == u)] is [`true];
+[:zh_CN] [`(t <=> u == 0) == bool(t == u)] 为 [`true]；
+
+[item]
+[:en] [`(t <=> u != 0) == bool(t != u)] is [`true];
+[:zh_CN] [`(t <=> u != 0) == bool(t != u)] 为 [`true]；
+
+[item]
+[:en] [`Cat(t <=> u) == Cat(C(t) <=> C(u))] is [`true];
+[:zh_CN] [`Cat(t <=> u) == Cat(C(t) <=> C(u))] 为 [`true]；
+
+[item]
+[:en] if [`Cat] is convertible to [`strong_equality], [`T] and [`U] model
+[`equality_comparable_with<T, U>] ([#concept.equalitycomparable]);
+[:zh_CN] 若 [`Cat] 可转换为 [`strong_equality]，则 [`T] 和 [`U] 构成
+[`equality_comparable_with<T, U>]（[#concept.equalitycomparable]）；
+
+[item]
+[:en] if [`Cat] is convertible to [`partial_ordering]:
+[:zh_CN] 若 [`Cat] 可转换为 [`partial_ordering]，则有：
+[list]
+[item]
+[:en@~] [`(t <=> u < 0) == bool(t < u)] is [`true],
+[:zh_CN@~] [`(t <=> u < 0) == bool(t < u)] 为 [`true]，
+[item]
+[:en@~] [`(t <=> u > 0) == bool(t > u)] is [`true],
+[:zh_CN@~] [`(t <=> u > 0) == bool(t > u)] 为 [`true]，
+[item]
+[:en@~] [`(t <=> u <= 0) == bool(t <= u)] is [`true],
+[:zh_CN@~] [`(t <=> u <= 0) == bool(t <= u)] 为 [`true]，
+[item]
+[:en@~] [`(t <=> u >= 0) == bool(t >= u)] is [`true]; and
+[:zh_CN@~] [`(t <=> u >= 0) == bool(t >= u)] 为 [`true]；以及
+[list:end]
+
+[item]
+[:en] if [`Cat] is convertible to [`strong_ordering], [`T] and [`U] model
+[`totally_ordered_with<T, U>] ([#concept.totallyordered]).
+[:zh_CN] 若 [`Cat] 可转换为 [`strong_ordering]， 则 [`T] 和 [`U] 构成
+[`totally_ordered_with<T, U>]（[#concept.totallyordered]）。
+[list:end]

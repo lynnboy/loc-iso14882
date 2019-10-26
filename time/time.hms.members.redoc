@@ -1,0 +1,267 @@
+[section#time.hms.members
+    [:en] Members
+    [:zh_CN] 成员
+]
+
+[codeblock:declaration]
+static constexpr unsigned fractional_width = [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] [`fractional_width] is the number of fractional decimal digits represented
+by [`precision].
+[:zh_CN] [`fractional_width] 是由 [`precision] 所表示的小数部分的十进制数字个数。
+
+[:en] [`fractional_width] has the value of the smallest possible integer in the
+range [=crange(0,18)] such that [`precision] will exactly represent all values
+of [`Duration].
+[:zh_CN] [`fractional_width] 的值为范围 [=crange(0,18)] 中，可使得 [`precision]
+能精确表示 [`Duration] 的所有值的最小可能整数。
+
+[:en] If no such value of [`fractional_width] exists, then [`fractional_width]
+is 6.
+[:zh_CN] 若不存在这样的 [`fractional_width] 值，则 [`fractional_width] 为 6。
+
+[enter:example]
+[:en] See [#:tab time.hms.width] for some durations, the resulting
+[`fractional_width], and the formatted fractional second output of [`Duration{1}].
+[:zh_CN] 对于某些时长，其结构 [`fractional_width] 以及 [`Duration{1}] 的小数秒的
+格式化输出，参见 [#:tab time.hms.width]。
+
+[table:grid#time.hms.width
+    [:en] Formatted fractional second output
+    [:zh_CN] 小数秒的格式化输出
+
+    [|  [:en] Duration
+        [:zh_CN] 时长 ]
+    [|@code
+        [`fractional_width] ]
+    [|@code
+        [:en] Formatted fractional second output
+        [:zh_CN] 小数秒的格式化输出 ]
+]
+[|] [:en] [`hour], [`minutes], and [`seconds]
+    [:zh_CN] [`hour]，[`minutes]，和 [`seconds]
+[|] 0
+[|]
+[-]
+
+[|] [`milliseconds]
+[|] 3
+[|] 0.001
+[-]
+
+[|] [`microseconds]
+[|] 6
+[|] 0.000001
+[-]
+
+[|] [`nanoseconds]
+[|] 9
+[|] 0.000000001
+[-]
+
+[|] [`duration<int, ratio<1, 2>>]
+[|] 1
+[|] 0.5
+[-]
+
+[|] [`duration<int, ratio<1, 3>>]
+[|] 6
+[|] 0.333333
+[-]
+
+[|] [`duration<int, ratio<1, 4>>]
+[|] 2
+[|] 0.25
+[-]
+
+[|] [`duration<int, ratio<1, 5>>]
+[|] 1
+[|] 0.2
+[-]
+
+[|] [`duration<int, ratio<1, 6>>]
+[|] 6
+[|] 0.166666
+[-]
+
+[|] [`duration<int, ratio<1, 7>>]
+[|] 6
+[|] 0.142857
+[-]
+
+[|] [`duration<int, ratio<1, 8>>]
+[|] 3
+[|] 0.125
+[-]
+
+[|] [`duration<int, ratio<1, 9>>]
+[|] 6
+[|] 0.111111
+[-]
+
+[|] [`duration<int, ratio<1, 10>>]
+[|] 1
+[|] 0.1
+[-]
+
+[|] [`duration<int, ratio<756, 625>>]
+[|] 4
+[|] 0.2096
+[-]
+[table:end]
+[exit:example]
+[exit:description]
+
+[codeblock:declaration]
+using precision = [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] [`precision] is
+[:zh_CN] [`precision] 为
+[codeblock:notation]
+duration<common_type_t<Duration::rep, seconds::rep>, ratio<1, [$10^[`fractional_width]]>>
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+constexpr explicit hh_mm_ss(Duration d);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Constructs an object of type [`hh_mm_ss] which represents the [`Duration d]
+with precision [`precision].
+[:zh_CN] 构造一个表示 [`Duration d] 的精度为 [`precision] 的 [`hh_mm_ss] 类型的
+对象。
+[list]
+[item]
+[:en] Initializes [`is_neg] with [`d < Duration::zero()].
+[:zh_CN] 初始化 [`is_neg] 为 [`d < Duration::zero()]。
+[item]
+[:en] Initializes [`h] with [`duration_cast<chrono::hours>(abs(d))].
+[:zh_CN] 初始化 [`h] 为 [`duration_cast<chrono::hours>(abs(d))]。
+[item]
+[:en] Initializes [`m] with [`duration_cast<chrono::minutes>(abs(d) - hours())].
+[:zh_CN] 初始化 [`m] 为 [`duration_cast<chrono::minutes>(abs(d) - hours())]。
+[item]
+[:en] Initializes [`s] with
+[`duration_cast<chrono::seconds>(abs(d) - hours() - minutes())].
+[:zh_CN] 初始化 [`s] 为
+[`duration_cast<chrono::seconds>(abs(d) - hours() - minutes())]。
+[item]
+[:en] If [`treat_as_floating_point_v<precision::rep>] is [`true], initializes
+[`ss] with [`abs(d) - hours() - minutes() - seconds()].
+[:zh_CN] 若 [`treat_as_floating_point_v<precision::rep>] 为 [`true], 则初始化
+[`ss] 为 [`abs(d) - hours() - minutes() - seconds()]。
+
+[:en] Otherwise, initializes [`ss] with
+[`duration_cast<precision>(abs(d) - hours() - minutes() - seconds())].
+[:zh_CN] 否则，初始化 [`ss] 为
+[`duration_cast<precision>(abs(d) - hours() - minutes() - seconds())]。
+[list:end]
+
+[enter:note]
+[:en] When [`precision::rep] is integral and [`precision::period] is [`ratio<1>],
+[`subseconds()] always returns a value equal to [`0s].
+[:zh_CN] 当 [`precision::rep] 为整型且 [`precision::period] 为 [`ratio<1>]，
+[`subseconds()] 总返回等于 [`0s] 的值。
+[exit:note]
+
+[para:ensures]
+[:en] If [`treat_as_floating_point_v<precision::rep>] is [`true],
+[`to_duration()] returns [`d], otherwise [`to_duration()] returns
+[`duration_cast<precision>(d)].
+[:zh_CN] 若 [`treat_as_floating_point_v<precision::rep>] 为 [`true]，
+[`to_duration()] 返回 [`d],，否则 [`to_duration()] 返回
+[`duration_cast<precision>(d)]。
+[exit:description]
+
+[%@library is_negative[!hh_mm_ss]]
+[%@library hh_mm_ss[!is_negative]]
+[codeblock:declaration]
+constexpr bool is_negative() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`is_neg].
+[:zh_CN] [`is_neg]。
+[exit:description]
+
+[%@library hours[!hh_mm_ss]]
+[%@library hh_mm_ss[!hours]]
+[codeblock:declaration]
+constexpr chrono::hours hours() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`h].
+[:zh_CN] [`h]。
+[exit:description]
+
+[%@library minutes[!hh_mm_ss]]
+[%@library hh_mm_ss[!minutes]]
+[codeblock:declaration]
+constexpr chrono::minutes minutes() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`m].
+[:zh_CN] [`m]。
+[exit:description]
+
+[%@library seconds[!hh_mm_ss]]
+[%@library hh_mm_ss[!seconds]]
+[codeblock:declaration]
+constexpr chrono::seconds seconds() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`s].
+[:zh_CN] [`s]。
+[exit:description]
+
+[%@library subseconds[!hh_mm_ss]]
+[%@library hh_mm_ss[!subseconds]]
+[codeblock:declaration]
+constexpr precision subseconds() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`ss].
+[:zh_CN] [`ss]。
+[exit:description]
+
+[%@library to_duration[!hh_mm_ss]]
+[%@library hh_mm_ss[!to_duration]]
+[codeblock:declaration]
+constexpr precision to_duration() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] If [`is_neg], returns [`-(h + m + s + ss)], otherwise returns
+[`h + m + s + ss].
+[:zh_CN] 若 [`is_neg] 则返回 [`-(h + m + s + ss)]，否则返回 [`h + m + s + ss]。
+[exit:description]
+
+[%@library operator precision[!hh_mm_ss]]
+[%@library hh_mm_ss[!operator precision]]
+[codeblock:declaration]
+constexpr explicit operator precision() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`to_duration()].
+[:zh_CN] [`to_duration()]。
+[exit:description]

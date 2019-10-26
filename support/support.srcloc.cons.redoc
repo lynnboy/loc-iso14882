@@ -1,0 +1,133 @@
+[section#support.srcloc.cons
+    [:en] Creation
+    [:zh_CN] 创建
+]
+
+[codeblock:declaration]
+static consteval source_location current() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[list]
+[item]
+[:en] When invoked by a function call whose [~postfix-expression] is a (possibly
+parenthesized) [~id-expression] naming [`current], returns a [`source_location]
+with an implementation-defined value.
+[:zh_CN] 当由[~后缀表达式]为指名 [`current] 的（可能带括号的）[~标识表达式]某次
+函数调用所调用时，返回一个具有由实现定义的值的 [`source_location]。
+
+[:en] The value should be affected by [`#line]([#cpp.line]) in the same manner
+as for [`__LINE__] and [`__FILE__].
+[:zh_CN] 其值应当与 [`__LINE__] 和 [`__FILE__] 同样受到 [`#line] 的影响
+（[#cpp.line]）。
+
+[:en] The values of the exposition-only data members of the returned
+[`source_location] object are indicated in [#:tab support.srcloc.current].
+[:zh_CN] 所返回的 [`source_location] 对象中的仅用于阐释的数据成员的值，参见
+[#:tab support.srcloc.current]。
+
+[table:listing@shape=?x1@fill=column#support.srcloc.current
+    [:en] Value of object returned by [`current]
+    [:zh_CN] [`current] 的返回对象的值
+    
+    [|@code
+        [:en] Element
+        [:zh_CN] 元素 ]
+    [|  [:en] Value
+        [:zh_CN] 值 ]
+]
+[|] line_
+[|] [:en] A presumed line number ([#cpp.predefined]).
+    [:zh_CN] 假定行号（[#cpp.predefined]）。
+
+    [:en] Line numbers are presumed to be 1-indexed; however, an implementation
+    is encouraged to use 0 when the line number is unknown.
+    [:zh_CN] 行号假定为以一开始；不过当行号未知时推荐实现采用 0 值。
+[-]
+[|] column_
+[|] [:en] An implementation-defined value denoting some offset from the start of
+    the line denoted by [`line_].
+    [:zh_CN] 由实现定义的值，代表 [`line_] 所代表的行中从开头计的偏移量
+    [:en] Column numbers are presumed to be 1-indexed; however, an
+    implementation is encouraged to use 0 when the column number is unknown.
+    [:zh_CN] 列号假定为以一开始；不过当列号未知时推荐实现采用 0 值。
+[-]
+[|] file_name_
+[|] [:en] A presumed name of the current source file ([#cpp.predefined]) as an
+    [=ntbs].
+    [:zh_CN] 假定的当前源文件的名字（[#cpp.predefined]），为 [=ntbs]。
+[-]
+[|] function_name_
+[|] [:en] A name of the current function such as in [`__func__]
+    ([#dcl.fct.def.general]) if any, an empty string otherwise.
+    [:zh_CN] 如果存在，则为如 [`__func__] 一样（[#dcl.fct.def.general]）的当前
+    函数的名字，否则为空字符串。
+[table:end]
+
+[item]
+[:en] Otherwise, when invoked in some other way, returns a [`source_location]
+whose data members are initialized with valid but unspecified values.
+[:zh_CN] 否则，当以其他方式调用时，返回一个 [`source_location]，其各数据成员以
+有效但未指明的值初始化。
+[list:end]
+
+[para:remarks]
+[:en] When a default member initializer is used to initialize a non-static data
+member, any calls to [`current] should correspond to the location of the
+constructor or aggregate initialization that initializes the member.
+[:zh_CN] 当用默认成员初始化式来初始化某个非静态数据成员时，任何对 [`current] 的
+调用都应当对应于初始化了该成员的构造函数或聚合初始化的位置。
+
+[para]
+[enter:note]
+[:en] When used as a default argument ([#dcl.fct.default]), the value of the
+[`source_location] will be the location of the call to [`current] at the call
+site.
+[:zh_CN] 当用作默认实参（[#dcl.fct.default]）时，[`source_location] 的值将为
+调用点对 [`current] 进行调用的位置。
+[exit:note]
+[exit:description]
+
+[para]
+[enter:example]
+[codeblock]
+struct s {
+  source_location member = source_location::current();
+  int other_member;
+  s(source_location loc = source_location::current())
+    : member(loc)               // [:en] values of [`member] refer to the location of the calling function ([#dcl.fct.default])
+                                // [|:zh_CN] [`member] 的值指代调用方函数的位置（[#dcl.fct.default]）
+  {}
+  s(int blather) :              // [:en] values of [`member] refer to this location
+                                // [|:zh_CN] [`member] 的值指代这个位置
+    other_member(blather)
+  {}
+  s(double)                     // [:en] values of [`member] refer to this location
+                                // [|:zh_CN] [`member] 的值指代这个位置
+  {}
+};
+void f(source_location a = source_location::current()) {
+  source_location b = source_location::current();       // [:en] values in [`b] refer to this line
+                                                        // [|:zh_CN] [`b] 中的值指代本行
+}
+
+void g() {
+  f();                          // [:en] [`f][=']s first argument corresponds to this line of code
+                                // [|:zh_CN] [`f] 的第一个实参对应于这行代码
+  source_location c = source_location::current();
+  f(c);                         // [:en] [`f][=']s first argument gets the same values as [`c], above
+                                // [|:zh_CN] [`f] 的第一个实参获得与上面 [`c] 相同的值
+}
+[codeblock:end]
+[exit:example]
+
+[codeblock:declaration]
+constexpr source_location() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] The data members are initialized with valid but unspecified values.
+[:zh_CN] 各个数据成员以有效但未指明的值初始化。
+[exit:description]

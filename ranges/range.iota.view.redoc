@@ -3,16 +3,16 @@
     [:zh_CN] 类模板 [`iota_view]
 ]
 
-[codeblock:synopsis [!:var Advanceable Decrementable weakly-equality-comparable-with]]
+[codeblock:synopsis [!:var advanceable decrementable weakly-equality-comparable-with]]
 namespace std::ranges {
   template<class I>
-    concept [*Decrementable] =     // [=Expos]
+    concept [*decrementable] =     // [=Expos]
       [=SeeBelow];
   template<class I>
-    concept [*Advanceable] =       // [=Expos]
+    concept [*advanceable] =       // [=Expos]
       [=SeeBelow];
 
-  template<WeaklyIncrementable W, Semiregular Bound = unreachable_sentinel_t>
+  template<weakly_incrementable W, semiregular Bound = unreachable_sentinel_t>
     requires [*weakly-equality-comparable-with]<W, Bound>
   class iota_view : public view_interface<iota_view<W, Bound>> {
   private:
@@ -31,31 +31,58 @@ namespace std::ranges {
                         type_identity_t<Bound> bound);
 
     constexpr iterator begin() const;
-    constexpr sentinel end() const;
-    constexpr iterator end() const requires Same<W, Bound>;
+    constexpr auto end() const;
+    constexpr iterator end() const requires same_as<W, Bound>;
 
-    constexpr auto size() const
-      requires (Same<W, Bound> && [*Advanceable]<W>) ||
-               (Integral<W> && Integral<Bound>) ||
-               SizedSentinel<Bound, W>
-    { return bound_ - value_; }
+    constexpr auto size() const requires [=SeeBelow];
   };
 
   template<class W, class Bound>
-    requires (!Integral<W> || !Integral<Bound> || is_signed_v<W> == is_signed_v<Bound>)
+    requires (![*is-integer-like]<W> || ![*is-integer-like]<Bound> ||
+      ([*is-signed-integer-like]<W> == [*is-signed-integer-like]<Bound>))
   iota_view(W, Bound) -> iota_view<W, Bound>;
 }
 [codeblock:end]
 
 [para]
-[:en] The exposition-only [`[*Decrementable]] concept is equivalent to:
-[:zh_CN] 仅用于阐释的 [`[*Decrementable]] 概念等价于：
+[:en] Let [`[*IOTA-DIFF-T](W)] be defined as follows:
+[:zh_CN] 令 [`[*IOTA-DIFF-T](W)] 定义如下：
+
+[list]
+[item]
+[:en] If [`W] is not an integral type, or if it is an integral type and
+[`sizeof(iter_difference_t<W>)] is greater than [`sizeof(W)], then
+[`[*IOTA-DIFF-T](W)] denotes [`iter_difference_t<W>].
+[:zh_CN] 若 [`W] 并非整型类型，或者它是整型类型而 [`sizeof(iter_difference_t<W>)]
+大于 [`sizeof(W)]，则 [`[*IOTA-DIFF-T](W)] 代表 [`iter_difference_t<W>]。
+
+[item]
+[:en] Otherwise, [`[*IOTA-DIFF-T](W)] is a signed integer type of width greater
+than the width of [`W] if such a type exists.
+[:zh_CN] 否则，[`[*IOTA-DIFF-T](W)] 为宽度大于 [`W] 的宽度的有符号整数类型（若
+存在这样的类型）。
+
+[item]
+[:en] Otherwise, [`[*IOTA-DIFF-T](W)] is an unspecified signed-integer-like type
+([#iterator.concept.winc]) of width not less than the width of [`W].
+[:zh_CN] 否则，[`[*IOTA-DIFF-T](W)] 为某个未指明的宽度不小于 [`W] 的宽度的有符号
+整数式类型（[#iterator.concept.winc]）。
+
+[enter:note]
+[:en] It is unspecified whether this type satisfies [`weakly_incrementable].
+[:zh_CN] 未指明该类型是否满足 [`weakly_incrementable]。
+[exit:note]
+[list:end]
+
+[para]
+[:en] The exposition-only [`[*decrementable]] concept is equivalent to:
+[:zh_CN] 仅用于阐释的 [`[*decrementable]] 概念等价于：
 [codeblock:notation [!:var Decrementable]]
 template<class I>
-  concept [*Decrementable] =
-    Incrementable<I> && requires(I i) {
-      { --i } -> Same<I&>;
-      { i-- } -> Same<I>;
+  concept [*decrementable] =
+    incrementable<I> && requires(I i) {
+      { --i } -> same_as<I&>;
+      { i-- } -> same_as<I>;
     };
 [codeblock:end]
 
@@ -70,8 +97,8 @@ the object is said to be [+decrementable[%]].
 [:en] Let [`a] and [`b] be equal objects of type [`I].
 [:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的相等对象。
 
-[:en] [`I] models [`[*Decrementable]] only if
-[:zh_CN] 仅当符合以下条件时，[`I] 构成 [`[*Decrementable]]：
+[:en] [`I] models [`[*decrementable]] only if
+[:zh_CN] 仅当符合以下条件时，[`I] 构成 [`[*decrementable]]：
 
 [list]
 [item]
@@ -93,33 +120,34 @@ the object is said to be [+decrementable[%]].
 [exit:description]
 
 [para]
-[:en] The exposition-only [`[*Advanceable]] concept is equivalent to:
-[:zh_CN] 仅用于阐释的 [`[*Advanceable]] 概念等价于：
+[:en] The exposition-only [`[*advanceable]] concept is equivalent to:
+[:zh_CN] 仅用于阐释的 [`[*advanceable]] 概念等价于：
 
-[codeblock:declaration [!:var Advanceable Decrementable]]
+[codeblock:declaration [!:var advanceable decrementable]]
 template<class I>
-  concept [*Advanceable] =
-    [*Decrementable]<I> && StrictTotallyOrdered<I> &&
-    requires(I i, const I j, const iter_difference_t<I> n) {
-      { i += n } -> Same<I&>;
-      { i -= n } -> Same<I&>;
-      { j +  n } -> Same<I>;
-      { n +  j } -> Same<I>;
-      { j -  n } -> Same<I>;
-      { j -  j } -> Same<iter_difference_t<I>>;
+  concept [*advanceable] =
+    [*decrementable]<I> && totally_ordered<I> &&
+    requires(I i, const I j, const [*IOTA-DIFF-T](I) n) {
+      { i += n } -> same_as<I&>;
+      { i -= n } -> same_as<I&>;
+      I(j + n);
+      I(n + j);
+      I(j - n);
+      { j -  j } -> convertible_to<[*IOTA-DIFF-T](I)>;
     };
 [codeblock:end]
 
 [para:~]
-[:en] Let [`a] and [`b] be objects of type [`I] such that [`b] is reachable from
-[`a] after [`n] applications of [`++a], for some value [`n] of type
-[`iter_difference_t<I>], and let [`D] be [`iter_difference_t<I>].
-[:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的对象并使 [`b] 从 [`a] 经过 [`n] 次对
-[`++a] 的运用之后可达，其中 [`n] 为某个 [`iter_difference_t<I>] 类型的值，并令
-[`D] 为 [`iter_difference_t<I>]。
+[:en] Let [`D] be [`[*IOTA-DIFF-T](I)].
+[:zh_CN] 令 [`D] 为 [`[*IOTA-DIFF-T](I)]。
 
-[:en] [`I] models [`[*Advanceable]] only if
-[:zh_CN] 仅当符合以下条件时，[`I] 构成 [`[*Advanceable]]：
+[:en] Let [`a] and [`b] be objects of type [`I] such that [`b] is reachable from
+[`a] after [`n] applications of [`++a], for some value [`n] of type [`D].
+[:zh_CN] 令 [`a] 和 [`b] 为 [`I] 类型的对象并使 [`b] 从 [`a] 经过 [`n] 次对
+[`++a] 的运用之后可达，其中 [`n] 为某个 [`D] 类型的值。
+
+[:en] [`I] models [`[*advanceable]] only if
+[:zh_CN] 仅当符合以下条件时，[`I] 构成 [`[*advanceable]]：
 
 [list]
 [item]
@@ -129,21 +157,22 @@ template<class I>
 [:en] [`addressof(a += n)] is equal to [`addressof(a)].
 [:zh_CN] [`addressof(a += n)] 等于 [`addressof(a)]。
 [item]
-[:en] [`(a + n)] is equal to [`(a += n)].
-[:zh_CN] [`(a + n)] 等于 [`(a += n)]。
+[:en] [`I(a + n)] is equal to [`(a += n)].
+[:zh_CN] [`I(a + n)] 等于 [`(a += n)]。
 [item]
 [:en] For any two positive values [`x] and [`y] of type [`D], if
-[`(a + D(x + y))] is well-defined, then [`(a + D(x + y))] is equal to
-[`((a + x) + y)].
-[:zh_CN] 对于任何 [`D] 类型的两个正数值 [`x] 和 [`y]，若 [`(a + D(x + y))] 良构，
-则 [`(a + D(x + y))] 等于 [`((a + x) + y)]。
+[`I(a + D(x + y))] is well-defined, then [`I(a + D(x + y))] is equal to
+[`I(I(a + x) + y)].
+[:zh_CN] 对于任何 [`D] 类型的两个正数值 [`x] 和 [`y]，若 [`I(a + D(x + y))] 良构，
+则 [`I(a + D(x + y))] 等于 [`I(I(a + x) + y)]。
 [item]
-[:en] [`(a + D(0))] is equal to [`a].
-[:zh_CN] [`(a + D(0))] 等于 [`a]。
+[:en] [`I(a + D(0))] is equal to [`a].
+[:zh_CN] [`I(a + D(0))] 等于 [`a]。
 [item]
-[:en] If [`(a + D(n - 1))] is well-defined, then [`(a + n)] is equal to
-[`++(a + D(n - 1))].
-[:zh_CN] 若 [`(a + D(n - 1))] 良构，则 [`(a + n)] 等于 [`++(a + D(n - 1))]。
+[:en] If [`I(a + D(n - 1))] is well-defined, then [`I(a + n)] is equal to
+[``[`](I c) { return ++c; }(I(a + D(n - 1)))].
+[:zh_CN] 若 [`I(a + D(n - 1))] 良构，则 [`I(a + n)] 等于
+[``[`](I c) { return ++c; }(I(a + D(n - 1)))]。
 [item]
 [:en] [`(b += -n)] is equal to [`a].
 [:zh_CN] [`(b += -n)] 等于 [`a]。
@@ -154,14 +183,14 @@ template<class I>
 [:en] [`addressof(b -= n)] is equal to [`addressof(b)].
 [:zh_CN] [`addressof(b -= n)] 等于 [`addressof(b)]。
 [item]
-[:en] [`(b - n)] is equal to [`(b -= n)].
-[:zh_CN] [`(b - n)] 等于 [`(b -= n)]。
+[:en] [`I(b - n)] is equal to [`(b -= n)].
+[:zh_CN] [`I(b - n)] 等于 [`(b -= n)]。
 [item]
-[:en] [`(b - a)] is equal to [`n].
-[:zh_CN] [`(b - a)] 等于 [`n]。
+[:en] [`D(b - a)] is equal to [`n].
+[:zh_CN] [`D(b - a)] 等于 [`n]。
 [item]
-[:en] [`(a - b)] is equal to [`-n].
-[:zh_CN] [`(a - b)] 等于 [`-n]。
+[:en] [`D(a - b)] is equal to [`D(-n)].
+[:zh_CN] [`D(a - b)] 等于 [`D(-n)]。
 [item]
 [:en] [`bool(a <= b)] is [`true].
 [:zh_CN] [`bool(a <= b)] 为 [`true]。
@@ -178,6 +207,11 @@ constexpr explicit iota_view(W value);
 [`value].
 [:zh_CN] [`Bound] 代表 [`unreachable_sentinel_t] 或者 [`Bound()] 从 [`value]
 可达。
+
+[:en] When [`W] and [`Bound] model [`totally_ordered_with], then
+[`bool(value <= bound)] is [`true].
+[:zh_CN] 当 [`W] 和 [`Bound] 构成 [`totally_ordered_with] 时，
+[`bool(value <= bound)] 为 [`true]。
 
 [para:effects]
 [:en] Initializes [`value_] with [`value].
@@ -214,22 +248,58 @@ constexpr iterator begin() const;
 
 [%@library end[!iota_view]]
 [codeblock:declaration]
-constexpr sentinel end() const;
+constexpr auto end() const;
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Equivalent to: [`return sentinel{bound_};]
-[:zh_CN] 等价于：[`return sentinel{bound_};]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+if constexpr (same_as<Bound, unreachable_sentinel_t>)
+  return unreachable_sentinel;
+else
+  return sentinel{bound_};
+[codeblock:end]
 [exit:description]
 
 [%@library end[!iota_view]]
 [codeblock:declaration]
-constexpr iterator end() const requires Same<W, Bound>;
+constexpr iterator end() const requires same_as<W, Bound>;
 [codeblock:end]
 
 [enter:description]
 [para:effects]
 [:en] Equivalent to: [`return iterator{bound_};]
 [:zh_CN] 等价于：[`return iterator{bound_};]
+[exit:description]
+
+[%@library size[!iota_view]]
+[%@library iota_view[!size]]
+[codeblock:declaration]
+constexpr auto size() const requires [=SeeBelow];
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+if constexpr ([*is-integer-like]<W> && [*is-integer-like]<Bound>)
+  return (value_ < 0)
+    ? ((bound_ < 0)
+      ? [*make-unsigned-like](-value_) - [*make-unsigned-like](-bound_)
+      : [*make-unsigned-like](bound_) + [*make-unsigned-like](-value_))
+    : [*make-unsigned-like](bound_) - [*make-unsigned-like](value_);
+else
+  return [*make-unsigned-like](bound_ - value_);
+[codeblock:end]
+
+[para:remarks]
+[:en] The expression in the [~requires-clause] is equivalent to
+[:zh_CN] [~requires-子句]中的表达式等价于
+[codeblock:notation]
+(same_as<W, Bound> && [*advanceable]<W>) || (integral<W> && integral<Bound>) ||
+  sized_sentinel_for<Bound, W>
+[codeblock:end]
 [exit:description]

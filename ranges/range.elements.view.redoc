@@ -1,0 +1,75 @@
+[section#range.elements.view
+    [:en] Class template [`elements_view]
+    [:zh_CN] 类模板 [`elements_view]
+]
+
+[%@library elements_view]
+[codeblock:synopsis [!:var semiregular-box]]
+namespace std::ranges {
+  template<class T, size_t N>
+  concept [*has-tuple-element] =                   // [=Expos]
+    requires(T t) {
+      typename tuple_size<T>::type;
+      requires N < tuple_size_v<T>;
+      typename tuple_element_t<N, T>;
+      { get<N>(t) } -> const tuple_element_t<N, T>&;
+    };
+
+
+  template<input_range R, size_t N>
+    requires view<R> && [*has-tuple-element]<range_value_t<R>, N> &&
+      [*has-tuple-element]<remove_reference_t<range_reference_t<R>>, N>
+  class elements_view : public view_interface<elements_view<R, N>> {
+  public:
+    elements_view() = default;
+    constexpr explicit elements_view(R base);
+
+    constexpr R base() const;
+
+    constexpr auto begin() requires (![*simple-view]<R>)
+    { return iterator<false>(ranges::begin(base_)); }
+
+    constexpr auto begin() const requires [*simple-view]<R>
+    { return iterator<true>(ranges::begin(base_)); }
+
+    constexpr auto end() requires (![*simple-view]<R>)
+    { return ranges::end(base_); }
+
+    constexpr auto end() const requires [*simple-view]<R>
+    { return ranges::end(base_); }
+
+    constexpr auto size() requires sized_range<R>
+    { return ranges::size(base_); }
+
+    constexpr auto size() const requires sized_range<const R>
+    { return ranges::size(base_); }
+
+  private:
+    template<bool> struct iterator;                     // [=Expos]
+    R base_ = R();                                      // [=Expos]
+  };
+}
+[codeblock:end]
+
+[%@library elements_view[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr explicit elements_view(R base);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`base_] with [`std::move(base)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [`base_]。
+[exit:description]
+
+[%@library base[!elements_view]]
+[%@library elements_view[!base]]
+[codeblock:declaration]
+constexpr R base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return base_;]
+[:zh_CN] 等价于：[`return base_;]
+[exit:description]

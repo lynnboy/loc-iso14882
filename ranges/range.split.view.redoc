@@ -9,20 +9,20 @@ namespace std::ranges {
 
   template<class R>
   concept [*tiny-range] =                          // [=Expos]
-    SizedRange<R> &&
+    sized_range<R> &&
     requires { typename [*require-constant]<remove_reference_t<R>::size()>; } &&
     (remove_reference_t<R>::size() <= 1);
 
-  template<InputRange V, ForwardRange Pattern>
-    requires View<V> && View<Pattern> &&
-             IndirectlyComparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
-             (ForwardRange<V> || [*tiny-range]<Pattern>)
+  template<input_range V, forward_range Pattern>
+    requires view<V> && view<Pattern> &&
+             indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             (forward_range<V> || [*tiny-range]<Pattern>)
   class split_view : public view_interface<split_view<V, Pattern>> {
   private:
     V base_ = V();                              // [=Expos]
     Pattern pattern_ = Pattern();               // [=Expos]
-    iterator_t<V> current_ = iterator_t<V>();   // [:en] [=Expos], present only if [`!ForwardRange<V>]
-                                                // [|:zh_CN] [=Expos]，仅当 [`!ForwardRange] 时给出
+    iterator_t<V> current_ = iterator_t<V>();   // [:en] [=Expos], present only if [`!forward_range<V>]
+                                                // [|:zh_CN] [=Expos]，仅当 [`!forward_range<V>] 时给出
     // [:en] [#range.split.outer], class template [`split_view::outer_iterator]
     // [|:zh_CN] [#range.split.outer]，类模板 [`split_view::outer_iterator]
     template<bool> struct outer_iterator;       // [=Expos]
@@ -33,18 +33,18 @@ namespace std::ranges {
     split_view() = default;
     constexpr split_view(V base, Pattern pattern);
 
-    template<InputRange R, ForwardRange P>
-      requires Constructible<V, all_view<R>> &&
-               Constructible<Pattern, all_view<P>>
+    template<input_range R, forward_range P>
+      requires constructible_from<V, all_view<R>> &&
+               constructible_from<Pattern, all_view<P>>
     constexpr split_view(R&& r, P&& p);
 
-    template<InputRange R>
-      requires Constructible<V, all_view<R>> &&
-               Constructible<Pattern, single_view<iter_value_t<iterator_t<R>>>>
-    constexpr split_view(R&& r, iter_value_t<iterator_t<R>> e);
+    template<input_range R>
+      requires constructible_from<V, all_view<R>> &&
+               constructible_from<Pattern, single_view<range_value_t<R>>>
+    constexpr split_view(R&& r, range_value_t<R> e);
 
     constexpr auto begin() {
-      if constexpr (ForwardRange<V>)
+      if constexpr (forward_range<V>)
         return outer_iterator<[*simple-view]<V>>{*this, ranges::begin(base_)};
       else {
         current_ = ranges::begin(base_);
@@ -52,16 +52,16 @@ namespace std::ranges {
       }
     }
 
-    constexpr auto begin() const requires ForwardRange<V> && ForwardRange<const V> {
+    constexpr auto begin() const requires forward_range<V> && forward_range<const V> {
       return outer_iterator<true>{*this, ranges::begin(base_)};
     }
 
-    constexpr auto end() requires ForwardRange<V> && CommonRange<V> {
+    constexpr auto end() requires forward_range<V> && common_range<V> {
       return outer_iterator<[*simple-view]<V>>{*this, ranges::end(base_)};
     }
 
     constexpr auto end() const {
-      if constexpr (ForwardRange<V> && ForwardRange<const V> && CommonRange<const V>)
+      if constexpr (forward_range<V> && forward_range<const V> && common_range<const V>)
         return outer_iterator<true>{*this, ranges::end(base_)};
       else
         return default_sentinel;
@@ -71,9 +71,9 @@ namespace std::ranges {
   template<class R, class P>
     split_view(R&&, P&&) -> split_view<all_view<R>, all_view<P>>;
 
-  template<InputRange R>
-    split_view(R&&, iter_value_t<iterator_t<R>>)
-      -> split_view<all_view<R>, single_view<iter_value_t<iterator_t<R>>>>;
+  template<input_range R>
+    split_view(R&&, range_value_t<R>)
+      -> split_view<all_view<R>, single_view<range_value_t<R>>>;
 }
 [codeblock:end]
 
@@ -92,32 +92,32 @@ constexpr split_view(V base, Pattern pattern);
 
 [%@library split_view[!split_view]]
 [codeblock:declaration]
-template<InputRange R, ForwardRange P>
-  requires Constructible<V, all_view<R>> &&
-           Constructible<Pattern, all_view<P>>
+template<input_range R, forward_range P>
+  requires constructible_from<V, all_view<R>> &&
+           constructible_from<Pattern, all_view<P>>
 constexpr split_view(R&& r, P&& p);
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`pattern_]
-with [`view::all(std::forward<P>(p))].
-[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以
-[`view::all(std::forward<P>(p))] 初始化 [`pattern_]。
+[:en] Initializes [`base_] with [`views::all(std::forward<R>(r))] and [`pattern_]
+with [`views::all(std::forward<P>(p))].
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_] 并以
+[`views::all(std::forward<P>(p))] 初始化 [`pattern_]。
 [exit:description]
 
 [%@library split_view[!split_view]]
 [codeblock:declaration]
-template<InputRange R>
-  requires Constructible<V, all_view<R>> &&
-           Constructible<Pattern, single_view<iter_value_t<iterator_t<R>>>>
-constexpr split_view(R&& r, iter_value_t<iterator_t<R>> e);
+template<input_range R>
+  requires constructible_from<V, all_view<R>> &&
+           constructible_from<Pattern, single_view<range_value_t<R>>>
+constexpr split_view(R&& r, range_value_t<R> e);
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))] and [`pattern_]
+[:en] Initializes [`base_] with [`views::all(std::forward<R>(r))] and [`pattern_]
 with [`single_view{std::move(e)}].
-[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_] 并以
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_] 并以
 [`single_view{std::move(e)}] 初始化 [`pattern_]。
 [exit:description]

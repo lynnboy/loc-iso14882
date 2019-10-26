@@ -39,100 +39,43 @@ comparison that evaluates to [`false].
 [:zh_CN] 在第一个求值为 [`false] 的比较之后将不再实施任何比较或元素访问。
 [exit:description]
 
-[%@library tuple[!operator!=]]
-[%@library operator!=[!tuple]]
+[%@library tuple[!operator<=>]]
+[%@library operator<=>[!tuple]]
 [codeblock:declaration]
 template<class... TTypes, class... UTypes>
-  constexpr bool operator!=(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
+  constexpr common_comparison_category_t<[*synth-three-way-result]<TTypes, UTypes>...>
+    operator<=>(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
 [codeblock:end]
 
 [enter:description]
-[para:returns]
-[:en] [`!(t == u)].
-[:zh_CN] [`!(t == u)]。
-[exit:description]
+[para:effects]
+[:en] Performs a lexicographical comparison between [`t] and [`u].
+[:zh_CN] 在 [`t] 和 [`u] 直接实施字典序比较。
 
-[%@library tuple[!operator<]]
-[%@library operator<[!tuple]]
-[codeblock:declaration]
-template<class... TTypes, class... UTypes>
-  constexpr bool operator<(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
+[:en] For any two zero-length tuples [`t] and [`u], [`t <=> u] returns
+[`strong_ordering::equal].
+[:zh_CN] 对于任意两个零长度元组 [`t] 和 [`u]，[`t <=> u] 返回
+[`strong_ordering::equal]。
+
+[:en] Otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock:notation]
+if (auto c = [*synth-three-way](get<0>(t), get<0>(u)); c != 0) return c;
+return t[_tail] <=> u[_tail];
 [codeblock:end]
-
-[enter:description]
-[para:requires]
-[:en] For all [`i], where [`0 <= i] and [`i < sizeof...(TTypes)], both
-[`get<i>(t) < get<i>(u)] and [`get<i>(u) < get<i>(t)] are valid expressions
-returning types that are convertible to [`bool].
-[:zh_CN] 对于所有 [`i]，其中 [`0 <= i] 且 [`i < sizeof...(TTypes)]，
-[`get<i>(t) < get<i>(u)] 和 [`get<i>(u) < get<i>(t)] 都为有效表达式，且其返回
-类型可以转换为 [`bool]。
-
-[:en] [`sizeof...(TTypes) == sizeof...(UTypes)].
-[:zh_CN] [`sizeof...(TTypes) == sizeof...(UTypes)]。
-
-[para:returns]
-[:en] The result of a lexicographical comparison between [`t] and [`u].
-[:zh_CN] 在 [`t] 和 [`u] 之间的字典序比较的结果。
-
-[:en] The result is defined as: [`(bool)(get<0>(t) < get<0>(u)) ||
-(!(bool)(get<0>(u) < get<0>(t)) && t][_tail][` < u][_tail][`)], where
-[`r][_tail] for some tuple [`r] is a tuple containing all but the first element
-of [`r].
-[:zh_CN] 其结果定义为：[`(bool)(get<0>(t) < get<0>(u)) ||
-(!(bool)(get<0>(u) < get<0>(t)) && t][_tail][` < u][_tail][`)]，其中某元组 [`r]
-的 [`r][_tail] 是包含除第一个之外的 [`r] 的所有元素的元组。
-
-[:en] For any two zero-length tuples [`e] and [`f], [`e < f] returns [`false].
-[:zh_CN] 对于任意两个零长度元组 [`e] 和 [`f]，[`e < f] 返回 [`false]。
-[exit:description]
-
-[%@library tuple[!operator>]]
-[%@library operator>[!tuple]]
-[codeblock:declaration]
-template<class... TTypes, class... UTypes>
-  constexpr bool operator>(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
-[codeblock:end]
-
-[enter:description]
-[para:returns]
-[:en] [`u < t].
-[:zh_CN] [`u < t]。
-[exit:description]
-
-[%@library tuple[!operator<=]]
-[%@library operator<=[!tuple]]
-[codeblock:declaration]
-template<class... TTypes, class... UTypes>
-  constexpr bool operator<=(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
-[codeblock:end]
-
-[enter:description]
-[para:returns]
-[:en] [`!(u < t)].
-[:zh_CN] [`!(u < t)]。
-[exit:description]
-
-[%@library tuple[!operator>=]]
-[%@library operator>=[!tuple]]
-[codeblock:declaration]
-template<class... TTypes, class... UTypes>
-  constexpr bool operator>=(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
-[codeblock:end]
-
-[enter:description]
-[para:returns]
-[:en] [`!(t < u)].
-[:zh_CN] [`!(t < u)]。
+[:en@~] where [`r][_tail] for some tuple [`r] is a tuple containing all but the
+first element of [`r].
+[:zh_CN@~] 其中对于某个元组 [`r]，[`r][_tail] 为包含 [`r] 除第一个之外所有元素
+的元组。
 [exit:description]
 
 [para]
 [enter:note]
 [:en]
-The above definitions for comparison functions do not require [`t][_tail]
-(or [`u][_tail]) to be constructed.
+The above definitions does not require [`t][_tail] (or [`u][_tail]) to be
+constructed.
 [:zh_CN]
-以上对比较函数的定义并不要求构造 [`t][_tail]（或 [`u][_tail]）。
+以上定义并不要求构造 [`t][_tail]（或 [`u][_tail]）。
 
 [:en]
 It may not even be possible, as [`t] and [`u] are not required to be copy

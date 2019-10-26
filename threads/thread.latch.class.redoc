@@ -1,0 +1,147 @@
+[section#thread.latch.class
+    [:en] Class [`latch]
+    [:zh_CN] 类 [`latch]
+]
+
+[codeblock:synopsis]
+namespace std {
+  class latch {
+  public:
+    constexpr explicit latch(ptrdiff_t expected);
+    ~latch();
+
+    latch(const latch&) = delete;
+    latch& operator=(const latch&) = delete;
+
+    void count_down(ptrdiff_t update = 1);
+    bool try_wait() const noexcept;
+    void wait() const;
+    void arrive_and_wait(ptrdiff_t update = 1);
+
+  private:
+    ptrdiff_t counter;  // [=Expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] A [`latch] maintains an internal counter that is initialized when the
+latch is created.
+[:zh_CN] [`latch] 维护一个当创建门栓时初始化的内部计数器。
+
+[:en] Threads can block on the latch object, waiting for counter to be
+decremented to zero.
+[:zh_CN] 线程会在门栓对象上阻塞，等待其计数减为零。
+
+[para]
+[:en] Concurrent invocations of the member functions of [`latch], other than its
+destructor, do not introduce data races.
+[:zh_CN] 对 [`latch] 的除析构函数之外的成员函数的并发调用不会引入数据竞争。
+
+[%@library latch[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr explicit latch(ptrdiff_t expected);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`expected >= 0] is [`true].
+[:zh_CN] [`expected >= 0] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [`counter] with [`expected].
+[:zh_CN] 以 [`expected] 初始化 [`counter]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library count_down[!latch]]
+[%@library latch[!count_down]]
+[codeblock:declaration]
+void count_down(ptrdiff_t update = 1);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`update >= 0] is [`true], and [`update <= counter] is [`true].
+[:zh_CN] [`update >= 0] 为 [`true]，且 [`update <= counter] 为 [`true]。
+
+[para:effects]
+[:en] Atomically decrements [`counter] by [`update].
+[:zh_CN] 原子性地对 [`counter] 减 [`update]。
+
+[:en] If [`counter] is equal to zero, unblocks all threads blocked on [`*this].
+[:zh_CN] 若 [`counter] 等于零，则对所有在 [`*this] 上阻塞的线程解除阻塞。
+
+[para:sync]
+[:en] Strongly happens before the returns from all calls that are unblocked.
+[:zh_CN] 强发生早于所有被解除阻塞调用的返回。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+[exit:description]
+
+[%@library try_wait[!latch]]
+[%@library latch[!try_wait]]
+[codeblock:declaration]
+bool try_wait() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] With very low probability [`false]..
+[:zh_CN] 非常低概率会返回 [`false]。
+
+[:en] Otherwise [`counter == 0].
+[:zh_CN] 否则返回 [`counter == 0]。
+[exit:description]
+
+[%@library wait[!latch]]
+[%@library latch[!wait]]
+[codeblock:declaration]
+void wait() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] If [`counter] equals zero, returns immediately.
+[:zh_CN] 若 [`counter] 等于零，则立即返回。
+
+[:en] Otherwise, blocks on [`*this] until a call to [`count_down] that
+decrements [`counter] to zero.
+[:zh_CN] 否则，在 [`*this] 上阻塞直到某次使 [`counter] 减为零的对 [`count_down]
+的调用。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+[exit:description]
+
+[%@library arrive_and_wait[!latch]]
+[%@library latch[!arrive_and_wait]]
+[codeblock:declaration]
+void arrive_and_wait(ptrdiff_t update = 1);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+count_down(update);
+wait();
+[codeblock:end]
+[exit:description]

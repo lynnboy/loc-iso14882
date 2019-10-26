@@ -1,0 +1,353 @@
+[section#range.elements.iterator
+    [:en] Class template [`elements_view::iterator]
+    [:zh_CN] 类模板 [`elements_view::iterator]
+]
+
+[codeblock:synopsis [!:var has-arrow]]
+namespace std::ranges {
+  template<class R, size_t N>
+  template<bool Const>
+  class elements_view<R, N>::iterator {                 // [=Expos]
+    using base_t = conditional_t<Const, const R, R>;
+    friend iterator<!Const>;
+
+    iterator_t<base_t> current_;
+  public:
+    using iterator_category = typename iterator_traits<iterator_t<base_t>>::iterator_category;
+    using value_type = remove_cvref_t<tuple_element_t<N, range_value_t<base_t>>>;
+    using difference_type = range_difference_t<base_t>;
+
+    iterator() = default;
+    constexpr explicit iterator(iterator_t<base_t> current);
+    constexpr iterator(iterator<!Const> i)
+      requires Const && convertible_to<iterator_t<R>, iterator_t<base_t>>;
+
+    constexpr iterator_t<base_t> base() const;
+
+    constexpr decltype(auto) operator*() const
+    { return get<N>(*current_); }
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int) requires (!forward_range<base_t>);
+    constexpr iterator operator++(int) requires forward_range<base_t>;
+
+    constexpr iterator& operator--() requires bidirectional_range<base_t>;
+    constexpr iterator operator--(int) requires bidirectional_range<base_t>;
+
+    constexpr iterator& operator+=(difference_type x)
+      requires random_access_range<base_t>;
+    constexpr iterator& operator-=(difference_type x)
+      requires random_access_range<base_t>;
+
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires random_access_range<base_t>
+    { return get<N>(*(current_ + n)); }
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires equality_comparable<iterator_t<base_t>>;
+    friend constexpr bool operator==(const iterator& x, const sentinel_t<base_t>& y);
+
+    friend constexpr bool operator<(const iterator& x, const iterator& y)
+      requires random_access_range<base_t>;
+    friend constexpr bool operator>(const iterator& x, const iterator& y)
+      requires random_access_range<base_t>;
+    friend constexpr bool operator<=(const iterator& y, const iterator& y)
+      requires random_access_range<base_t>;
+    friend constexpr bool operator>=(const iterator& x, const iterator& y)
+      requires random_access_range<base_t>;
+    friend constexpr compare_three_way_result_t<iterator_t<base_t>>
+      operator<=>(const iterator& x, const iterator& y)
+        requires random_access_range<base_t> && three_way_comparable<iterator_t<base_t>>;
+
+    friend constexpr iterator operator+(const iterator& x, difference_type y)
+      requires random_access_range<base_t>;
+    friend constexpr iterator operator+(difference_type x, const iterator& y)
+      requires random_access_range<base_t>;
+    friend constexpr iterator operator-(const iterator& x, difference_type y)
+      requires random_access_range<base_t>;
+    friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+      requires random_access_range<base_t>;
+
+    friend constexpr difference_type
+      operator-(const iterator<Const>& x, const sentinel_t<base_t>& y)
+        requires sized_sentinel_for<sentinel_t<base_t>, iterator_t<base_t>>;
+    friend constexpr difference_type
+      operator-(const sentinel_t<base_t>& x, const iterator<Const>& y)
+        requires sized_sentinel_for<sentinel_t<base_t>, iterator_t<base_t>>;
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit iterator(iterator_t<base_t> current);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`current_] with [`current].
+[:zh_CN] 以 [`current] 初始化 [`current_]。
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator(iterator<!Const> i)
+  requires Const && convertible_to<iterator_t<R>, iterator_t<base_t>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`current_] with [`i.current_].
+[:zh_CN] 以 [`i.current_] 初始化 [`current_]。
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator_t<base_t> base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return current_;]
+[:zh_CN] 等价于：[`return current_;]
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator& operator++();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+++current_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+constexpr void operator++(int) requires (!forward_range<base_t>);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`++current_].
+[:zh_CN] 等价于：[`++current_]。
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator operator++(int) requires forward_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto temp = *this;
+++current_;
+return temp;
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator& operator--() requires bidirectional_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+--current_;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator operator--(int) requires bidirectional_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+auto temp = *this;
+--current_;
+return temp;
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator& operator+=(difference_type n);
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+current_ += n;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator& operator-=(difference_type n)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:notation]
+current_ -= n;
+return *this;
+[codeblock:end]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires equality_comparable<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ == y.current_;]
+[:zh_CN] 等价于：[`return x.current_ == y.current_;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const iterator& x, const sentinel_t<base_t>& y);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ == y;]
+[:zh_CN] 等价于：[`return x.current_ == y;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr bool operator<(const iterator& x, const iterator& y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ < y.current_;]
+[:zh_CN] 等价于：[`return x.current_ < y.current_;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr bool operator>(const iterator& x, const iterator& y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return y < x;]
+[:zh_CN] 等价于：[`return y < x;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr bool operator<=(const iterator& x, const iterator& y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(y < x);]
+[:zh_CN] 等价于：[`return !(y < x);]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr bool operator>=(const iterator& x, const iterator& y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return !(x < y);]
+[:zh_CN] 等价于：[`return !(x < y);]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr compare_three_way_result_t<iterator_t<base_t>>
+  operator<=>(const iterator& x, const iterator& y)
+    requires random_access_range<base_t> && three_way_comparable<iterator_t<base_t>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ <=> y.current_;]
+[:zh_CN] 等价于：[`return x.current_ <=> y.current_;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr iterator operator+(const iterator& x, difference_type y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{x} += y;]
+[:zh_CN] 等价于：[`return iterator{x} += y;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr iterator operator+(difference_type x, const iterator& y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return y + x;]
+[:zh_CN] 等价于：[`return y + x;]
+[exit:description]
+
+[codeblock:declaration]
+constexpr iterator operator-(const iterator& x, difference_type y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return iterator{x} -= y;]
+[:zh_CN] 等价于：[`return iterator{x} -= y;]
+[exit:description]
+
+[codeblock:declaration]
+constexpr difference_type operator-(const iterator& x, const iterator& y)
+  requires random_access_range<base_t>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ - y.current_;]
+[:zh_CN] 等价于：[`return x.current_ - y.current_;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr difference_type
+  operator-(const iterator<Const>& x, const sentinel_t<base_t>& y)
+    requires sized_sentinel_for<sentinel_t<base_t>, iterator_t<base_t>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return x.current_ - y;]
+[:zh_CN] 等价于：[`return x.current_ - y;]
+[exit:description]
+
+[codeblock:declaration]
+friend constexpr difference_type
+  operator-(const sentinel_t<base_t>& x, const iterator<Const>& y)
+    requires sized_sentinel_for<sentinel_t<base_t>, iterator_t<base_t>>;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return -(y - x);]
+[:zh_CN] 等价于：[`return -(y - x);]
+[exit:description]

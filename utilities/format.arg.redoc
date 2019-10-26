@@ -1,0 +1,309 @@
+[section#format.arg
+    [:en] Class template [`basic_format_arg]
+    [:zh_CN] 类模板 [`basic_format_arg]
+]
+
+[%@library basic_format_arg]
+[codeblock:synopsis]
+namespace std {
+  template<class Context>
+  class basic_format_arg {
+  public:
+    class handle;
+
+  private:
+    using char_type = typename Context::char_type;                              // [=Expos]
+
+    variant<monostate, bool, char_type,
+            int, unsigned int, long long int, unsigned long long int,
+            float, double, long double,
+            const char_type*, basic_string_view<char_type>,
+            const void*, handle> value;                                         // [=Expos]
+
+    template<class T> explicit basic_format_arg(const T& v) noexcept;           // [=Expos]
+    explicit basic_format_arg(float n) noexcept;                                // [=Expos]
+    explicit basic_format_arg(double n) noexcept;                               // [=Expos]
+    explicit basic_format_arg(long double n) noexcept;                          // [=Expos]
+    explicit basic_format_arg(const char_type* s);                              // [=Expos]
+
+    template<class traits>
+      explicit basic_format_arg(
+        basic_string_view<char_type, traits> s) noexcept;                       // [=Expos]
+
+    template<class traits, class Allocator>
+      explicit basic_format_arg(
+        const basic_string<char_type, traits, Allocator>& s) noexcept;          // [=Expos]
+
+    explicit basic_format_arg(nullptr_t) noexcept;                              // [=Expos]
+
+    template<class T>
+      explicit basic_format_arg(const T* p) noexcept;                           // [=Expos]
+
+    template<class Visitor, class Ctx>
+      friend auto visit_format_arg(Visitor&& vis,
+                                   basic_format_arg<Ctx> arg);                  // [=Expos]
+
+    template<class Ctx, class... Args>
+      friend [*format-arg-store]<Ctx, Args...>
+        make_format_args(const Args&... args);                                  // [=Expos]
+
+  public:
+    basic_format_arg() noexcept;
+
+    explicit operator bool() const noexcept;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] An instance of [`basic_format_arg] provides access to a formatting
+argument for user-defined formatters.
+[:zh_CN] [`basic_format_arg] 的实例为用户定义的格式化器提供对所格式化的实参的
+访问能力。
+
+[para]
+[:en] The behavior of a program that adds specializations of [`basic_format_arg]
+is undefined.
+[:zh_CN] 添加 [`basic_format_arg] 的特化式的程序的行为未定义。
+
+[%:begin#basic.format.arg.ctor@library basic_format_arg[![:en]constructor[:zh_CN]构造函数]]
+
+[codeblock:declaration]
+basic_format_arg() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:ensures]
+[:en] [`!(*this)].
+[:zh_CN] [`!(*this)]。
+[exit:description]
+
+[codeblock:declaration]
+template<class T> explicit basic_format_arg(const T& v) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] The template specialization
+[:zh_CN] 模板特化式
+[codeblock:notation]
+typename Context::template formatter_type<T>
+[codeblock:end]
+[:en@~] is an enabled specialization of [`formatter] ([#format.formatter]).
+[:zh_CN@~] 是 [`formatter] 的被启用的特例（[#format.formatter]）。
+
+[:en] The extent to which an implementation determines that the specialization
+is enabled is unspecified, except that as a minimum the expression
+[:zh_CN] 实现以何种程度确定一个特化被启用是未指明的，但至少表达式
+[codeblock:notation]
+typename Context::template formatter_type<T>()
+  .format(declval<const T&>(), declval<Context&>())
+[codeblock:end]
+[:en@~] shall be well-formed when treated as an unevaluated operand.
+[:zh_CN@~] 在被当做免求值操作数时应当是良构的。
+
+[para:effects]
+[list]
+[item]
+[:en] if [`T] is [`bool] or [`char_type], initializes [`value] with [`v];
+otherwise,
+[:zh_CN] 若 [`T] 为 [`bool] 或 [`char_type]，则以 [`v] 初始化 [`value]；否则，
+[item]
+[:en] if [`T] is [`char] and [`char_type] is [`wchar_t], initializes [`value]
+with [`static_cast<wchar_t>(v)]; otherwise,
+[:zh_CN] 若 [`T] 为 [`char] 并且 [`char_type] 为 [`wchar_t]，则以
+[`static_cast<wchar_t>(v)] 初始化 [`value]；否则，
+[item]
+[:en] if [`T] is a signed integer type ([#basic.fundamental]) and
+[`sizeof(T) <= sizeof(int)], initializes [`value] with [`static_cast<int>(v)];
+otherwise,
+[:zh_CN] 若 [`T] 为有符号整数类型（[#basic.fundamental]）并且
+[`sizeof(T) <= sizeof(int)]，则以 [`static_cast<int>(v)] 初始化 [`value]；否则，
+[item]
+[:en] if [`T] is an unsigned integer type and
+[`sizeof(T) <= sizeof(unsigned int)], initializes [`value] with
+[`static_cast<unsigned int>(v)]; otherwise,
+[:zh_CN] 若 [`T] 为无符号整数类型并且 [`sizeof(T) <= sizeof(unsigned int)]，则以
+[`static_cast<unsigned int>(v)] 初始化 [`value]；否则，
+[item]
+[:en] if [`T] is a signed integer type and [`sizeof(T) <= sizeof(long long int)],
+initializes [`value] with [`static_cast<long long int>(v)]; otherwise,
+[:zh_CN] 若 [`T] 为有符号整数类型并且 [`sizeof(T) <= sizeof(long long int)]，
+则以 [`static_cast<long long int>(v)] 初始化 [`value]；否则，
+[item]
+[:en] if [`T] is an unsigned integer type and
+[`sizeof(T) <= sizeof(unsigned long long int)], initializes [`value] with
+[`static_cast<unsigned long long int>(v)]; otherwise,
+[:zh_CN] 若 [`T] 为无符号整数类型并且
+[`sizeof(T) <= sizeof(unsigned long long int)]，则以
+[`static_cast<unsigned long long int>(v)] 初始化 [`value]；否则，
+[item]
+[:en] initializes [`value] with [`handle(v)].
+[:zh_CN] 以 [`handle(v)] 初始化 [`value]。
+[list:end]
+[exit:description]
+
+[codeblock:declaration]
+explicit basic_format_arg(float n) noexcept;
+explicit basic_format_arg(double n) noexcept;
+explicit basic_format_arg(long double n) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`value] with [`n].
+[:zh_CN] 以 [`n] 初始化 [`value]。
+[exit:description]
+
+[codeblock:declaration]
+explicit basic_format_arg(const char_type* s);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`s] points to a NTCTS ([#defns.ntcts]).
+[:zh_CN] [`s] 指向一个 NTCTS（[#defns.ntcts]）。
+
+[para:effects]
+[:en] Initializes [`value] with [`s].
+[:zh_CN] 以 [`s] 初始化 [`value]。
+[exit:description]
+
+[codeblock:declaration]
+template<class traits>
+  explicit basic_format_arg(basic_string_view<char_type, traits> s) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`value] with [`s].
+[:zh_CN] 以 [`s] 初始化 [`value]。
+[exit:description]
+
+[codeblock:declaration]
+template<class traits, class Allocator>
+  explicit basic_format_arg(
+    const basic_string<char_type, traits, Allocator>& s) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`value] with
+[`basic_string_view<char_type>(s.data(), s.size())].
+[:zh_CN] 以 [`basic_string_view<char_type>(s.data(), s.size())] 初始化 [`value]。
+[exit:description]
+
+[codeblock:declaration]
+explicit basic_format_arg(nullptr_t) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`value] with [`static_cast<const void*>(nullptr)].
+[:zh_CN] 以 [`static_cast<const void*>(nullptr)] 初始化 [`value]。
+[exit:description]
+
+[codeblock:declaration]
+template<class T> explicit basic_format_arg(T* p) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:constraints]
+[:en] [`is_void_v<T>] is [`true].
+[:zh_CN] [`is_void_v<T>] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [`value] with [`p].
+[:zh_CN] 以 [`p] 初始化 [`value]。
+
+[para]
+[enter:note]
+[:en] Constructing [`basic_format_arg] from a pointer to a member is ill-formed
+unless the user provides an enabled specialization of [`formatter] for that
+pointer to member type.
+[:zh_CN] 从指向某个成员的指针构造 [`basic_format_arg]，除非用户为这个成员指针
+类型提供了一个被启用的 [`formatter] 特例，否则是非良构的。
+[exit:note]
+[exit:description]
+
+[%:end#basic.format.arg.ctor]
+
+[%@library basic_format_arg[!operator bool]]
+[%@library operator bool[!basic_format_arg]]
+[codeblock:declaration]
+explicit operator bool() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`!holds_alternative<monostate>(value)].
+[:zh_CN] [`!holds_alternative<monostate>(value)]。
+[exit:description]
+
+[para]
+[:en] The class [`handle] allows formatting an object of a user-defined type.
+[:zh_CN] 类 [`handle] 允许格式化用户定义类型的对象。
+
+[%@library basic_format_arg::handle]
+[%@library handle[!basic_format_arg]]
+[%@library basic_format_arg[!handle]]
+[codeblock:synopsis]
+namespace std {
+  template<class Context>
+  class basic_format_arg<Context>::handle {
+    const void* ptr_;                                           // [=Expos]
+    void (*format_)(basic_format_parse_context<char_type>&,
+                    Context&, const void*);                     // [=Expos]
+
+    template<class T> explicit handle(const T& val) noexcept;   // [=Expos]
+
+    friend class basic_format_arg<Context>;                     // [=Expos]
+
+  public:
+    void format(basic_format_parse_context<char_type>&, Context& ctx) const;
+  };
+}
+[codeblock:end]
+
+[%@library basic_format_arg::handle[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+template<class T> explicit handle(const T& val) noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`ptr_] with [`addressof(val)] and [`format_] with
+[:zh_CN] 以 [`addressof(val)] 初始化 [`ptr_] 并将 [`format_] 初始化为
+[codeblock:notation]
+[](basic_format_parse_context<char_type>& parse_ctx,
+   Context& format_ctx, const void* ptr) {
+  typename Context::template formatter_type<T> f;
+  parse_ctx.advance_to(f.parse(parse_ctx));
+  format_ctx.advance_to(f.format(*static_cast<const T*>(ptr), format_ctx));
+}
+[codeblock:end]
+[exit:description]
+
+[%@library basic_format_arg::handle[!format]]
+[%@library format[!basic_format_arg::handle]]
+[codeblock:declaration]
+void format(basic_format_parse_context<char_type>& parse_ctx, Context& format_ctx) const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`format_(parse_ctx, format_ctx, ptr_);]
+[:zh_CN] 等价于：[`format_(parse_ctx, format_ctx, ptr_);]
+[exit:description]
+
+[%@library visit_format_arg]
+[codeblock:declaration]
+template<class Visitor, class Context>
+  [=SeeBelow] visit_format_arg(Visitor&& vis, basic_format_arg<Context> arg);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return visit(forward<Visitor>(vis), arg.value);]
+[:zh_CN] 等价于：[`return visit(forward<Visitor>(vis), arg.value);]
+[exit:description]

@@ -1,0 +1,239 @@
+[section#thread.sema.cnt
+    [:en] Class template [`counting_semaphore]
+    [:zh_CN] 类模板 [`counting_semaphore]
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<ptrdiff_t least_max_value = [=ImplDef][%@impldef [:en] value for [`least_max_value] default template argument of [`counting_semaphore][:zh_CN] [`counting_semaphore] 的默认模板实参 [`least_max_value] 的值]>
+  class counting_semaphore {
+  public:
+    static constexpr ptrdiff_t max() noexcept;
+
+    constexpr explicit counting_semaphore(ptrdiff_t desired);
+    ~counting_semaphore();
+
+    counting_semaphore(const counting_semaphore&) = delete;
+    counting_semaphore& operator=(const counting_semaphore&) = delete;
+
+    void release(ptrdiff_t update = 1);
+    void acquire();
+    bool try_acquire() noexcept;
+    template<class Rep, class Period>
+      bool try_acquire_for(const chrono::duration<Rep, Period>& rel_time);
+    template<class Clock, class Duration>
+      bool try_acquire_until(const chrono::time_point<Clock, Duration>& abs_time);
+
+  private:
+    ptrdiff_t counter; // [=Expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Class template [`counting_semaphore] maintains an internal counter that is
+initialized when the semaphore is created.
+[:zh_CN] 类模板 [`counting_semaphore] 维护一个在信号量创建时初始化的内部计数器。
+
+[:en] The counter is decremented when a thread acquires the semaphore, and
+is incremented when a thread releases the semaphore.
+[:zh_CN] 当某个线程获得该信号量时计数器减一，并当线程释放该信号量时增一。
+
+[:en] If a thread tries to acquire the semaphore when the counter is zero,
+the thread will block until another thread increments the counter by releasing
+the semaphore.
+[:zh_CN] 当计数器为零时，若某线程尝试获取该信号量，线程将被阻塞直到另一个线程
+通过释放该信号量而增加计数器。
+
+[para]
+[:en] [`least_max_value] shall be non-negative; otherwise the program is
+ill-formed.
+[:zh_CN] [`least_max_value] 应当为非负数；否则程序非良构。
+
+[para]
+[:en] Concurrent invocations of the member functions of [`counting_semaphore],
+other than its destructor, do not introduce data races.
+[:zh_CN] 对 [`counting_semaphore] 的除析构函数之外的成员函数的并发调用不会引入
+数据竞争。
+
+[%@library max[!counting_semaphore]]
+[%@library counting_semaphore[!max]]
+[codeblock:declaration]
+static constexpr ptrdiff_t max() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] The maximum value of [`counter].
+[:zh_CN] [`counter] 的最大值。
+
+[:en] This value is greater than or equal to [`least_max_value].
+[:zh_CN] 这个值大于或等于 [`least_max_value]。
+[exit:description]
+
+[%@library counting_semaphore[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr explicit counting_semaphore(ptrdiff_t desired);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`desired >= 0] is [`true], and [`desired <= max()] is [`true].
+[:zh_CN] [`desired >= 0] 为 [`true]，且 [`desired <= max()] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [`counter] with [`desired].
+[:zh_CN] 以 [`desired] 初始化 [`counter]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[exit:description]
+
+[%@library release[!counting_semaphore]]
+[%@library counting_semaphore[!release]]
+[codeblock:declaration]
+void release(ptrdiff_t update = 1);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`update >= 0] is [`true], and [`update <= max() - counter] is [`true].
+[:zh_CN] [`update >= 0] 为 [`true]，且 [`update <= max() - counter] 为 [`true]。
+
+[para:effects]
+[:en] Atomically execute [`counter += update].
+[:zh_CN] 原子性地执行 [`counter += update]。
+
+[:en] Then, unblocks any threads that are waiting for [`counter] to be greater
+than zero.
+[:zh_CN] 然后，对所有等待 [`counter] 大于零的线程解除阻塞。
+
+[para:sync]
+[:en] Strongly happens before invocations of [`try_acquire] that observe the
+result of the effects.
+[:zh_CN] 强发生早于观察到其效果的 [`try_acquire] 的调用。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+[exit:description]
+
+[%@library try_acquire[!counting_semaphore]]
+[%@library counting_semaphore[!try_acquire]]
+[codeblock:declaration]
+bool try_acquire() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[list]
+[item]
+[:en] With low probability, returns immediately.
+[:zh_CN] 低概率会立即返回。
+
+[:en] An implementation should ensure that [`try_acquire] does not consistently
+return [`false] in the absence of contending acquisitions.
+[:zh_CN] 实现应当保证 [`try_acquire] 在没有争夺性获取时不会持续返回 [`false]。
+
+[item]
+[:en] Otherwise, atomically check whether [`counter] is greater than zero and,
+if so, decrement [`counter] by one.
+[:zh_CN] 否则，原子性地检查 [`counter] 是否大于零，且当为真时对 [`counter] 减一。
+[list:end]
+
+[para:returns]
+[:en] [`true] if [`counter] was decremented, otherwise [`false].
+[:zh_CN] 当 [`counter] 被减一时返回 [`true]，否则返回 [`false]。
+[exit:description]
+
+[%@library acquire[!counting_semaphore]]
+[%@library counting_semaphore[!acquire]]
+[codeblock:declaration]
+void acquire();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Repeatedly performs the following steps, in order:
+[:zh_CN] 重复地依序实施下列步骤：
+
+[list]
+[item]
+[:en] Evaluates [`try_acquire].
+[:zh_CN] 求值 [`try_acquire]。
+
+[:en] If the result is [`true], returns.
+[:zh_CN] 若结果为 [`true] 则返回。
+
+[item]
+[:en] Blocks on [`*this] until [`counter] is greater than zero.
+[:zh_CN] 在 [`*this] 上阻塞直到 [`counter] 大于零。
+[list:end]
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+[exit:description]
+
+[%@library try_acquire_for[!counting_semaphore]]
+[%@library counting_semaphore[!try_acquire_for]]
+[%@library try_acquire_until[!counting_semaphore]]
+[%@library counting_semaphore[!try_acquire]]
+[codeblock:declaration]
+template<class Rep, class Period>
+  bool try_acquire_for(const chrono::duration<Rep, Period>& rel_time);
+template<class Clock, class Duration>
+  bool try_acquire_until(const chrono::time_point<Clock, Duration>& abs_time);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Repeatedly performs the following steps, in order:
+[:zh_CN] 重复地依序实施下列步骤：
+
+[list]
+[item]
+[:en] Evaluates [`try_acquire].
+[:zh_CN] 求值 [`try_acquire]。
+
+[:en] If the result is [`true], returns [`true].
+[:zh_CN] 若结果为 [`true] 则返回 [`true]。
+
+[item]
+[:en] Blocks on [`*this] until [`counter] is greater than zero or until the
+timeout expires.
+[:zh_CN] 在 [`*this] 上阻塞直到 [`counter] 大于零或直到超时到期。
+
+[:en] If it is unblocked by the timeout expiring, returns [`false].
+[:zh_CN] 若其因超时到期而解除阻塞，则返回 [`false]。
+[list:end]
+
+[:en] The timeout expires ([#thread.req.timing]) when the current time is after
+[`abs_time] (for [`try_acquire_until]) or when at least [`rel_time] has passed
+from the start of the function (for [`try_acquire_for]).
+[:zh_CN] 当（对于 [`try_acquire_until]）当前时间超过 [`abs_time] 时，或当（对于
+[`try_acquire_for]）从函数开始经过了至少 [`rel_time] 时，超时到期
+（[#thread.req.timing]）。
+
+[para:throws]
+[:en] Timeout-related exceptions ([#thread.req.timing]), or [`system_error] when
+a non-timeout-related exception is required ([#thread.req.exception]).
+[:zh_CN] 超时相关异常（[#thread.req.timing]），或当需要与超时不相关的异常时
+（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+[exit:description]

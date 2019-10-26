@@ -5,77 +5,77 @@
 
 [para]
 [:en] The [`subrange] class template combines together an iterator and
-a sentinel into a single object that models the [`View] concept.
-[:zh_CN] 类模板 [`subrange] 将迭代器和哨位的接口组合为一个构成了 [`View] 概念的
+a sentinel into a single object that models the [`view] concept.
+[:zh_CN] 类模板 [`subrange] 将迭代器和哨位的接口组合为一个构成了 [`view] 概念的
 单个对象。
 
-[:en] Additionally, it models the [`SizedRange] concept when the final template
+[:en] Additionally, it models the [`sized_range] concept when the final template
 parameter is [`subrange_kind::sized].
 [:zh_CN] 此外，当最后一个模板形参为 [`subrange_kind::sized] 时，它还构成
-[`SizedRange] 概念。
+[`sized_range] 概念。
 
 [%@library subrange]
 [codeblock:synopsis [!:var pair-like pair-like-convertible-from
     pair-like-convertible-to iterator-sentinel-pair not-same-as forwarding-range]]
 namespace std::ranges {
   template<class T>
-    concept [*pair-like] =                                 // [=Expos]
+    concept [*pair-like] =                                    // [=Expos]
       !is_reference_v<T> && requires(T t) {
         typename tuple_size<T>::type;   // [:en] ensures [`tuple_size<T>] is complete
                                         // [|:zh_CN] 确保 [`tuple_size<T>] 是完整的
-        requires DerivedFrom<tuple_size<T>, integral_constant<size_t, 2>>;
+        requires derived_from<tuple_size<T>, integral_constant<size_t, 2>>;
         typename tuple_element_t<0, remove_const_t<T>>;
         typename tuple_element_t<1, remove_const_t<T>>;
-        { get<0>(t) } -> const tuple_element_t<0, T>&;
-        { get<1>(t) } -> const tuple_element_t<1, T>&;
+        { get<0>(t) } -> convertible_to<const tuple_element_t<0, T>&>;
+        { get<1>(t) } -> convertible_to<const tuple_element_t<1, T>&>;
       };
 
   template<class T, class U, class V>
-    concept [*pair-like-convertible-to] =                  // [=Expos]
-      !Range<T> && [*pair-like]<remove_reference_t<T>> &&
+    concept [*pair-like-convertible-to] =                     // [=Expos]
+      !range<T> && [*pair-like]<remove_reference_t<T>> &&
       requires(T&& t) {
-        { get<0>(std::forward<T>(t)) } -> ConvertibleTo<U>;
-        { get<1>(std::forward<T>(t)) } -> ConvertibleTo<V>;
+        { get<0>(std::forward<T>(t)) } -> convertible_to<U>;
+        { get<1>(std::forward<T>(t)) } -> convertible_to<V>;
       };
 
   template<class T, class U, class V>
-    concept [*pair-like-convertible-from] =                // [=Expos]
-      !Range<T> && [*pair-like]<T> && Constructible<T, U, V>;
+    concept [*pair-like-convertible-from] =                   // [=Expos]
+      !range<T> && [*pair-like]<T> && constructible_from<T, U, V>;
 
   template<class T>
-    concept [*iterator-sentinel-pair] =                    // [=Expos]
-      !Range<T> && [*pair-like]<T> &&
-      Sentinel<tuple_element_t<1, T>, tuple_element_t<0, T>>;
+    concept [*iterator-sentinel-pair] =                       // [=Expos]
+      !range<T> && [*pair-like]<T> &&
+      sentinel_for<tuple_element_t<1, T>, tuple_element_t<0, T>>;
 
-  template<Iterator I, Sentinel<I> S = I, subrange_kind K =
-      SizedSentinel<S, I> ? subrange_kind::sized : subrange_kind::unsized>
-    requires (K == subrange_kind::sized || !SizedSentinel<S, I>)
+  template<input_or_output_iterator I, sentinel_for<I> S = I, subrange_kind K =
+      sized_sentinel_for<S, I> ? subrange_kind::sized : subrange_kind::unsized>
+    requires (K == subrange_kind::sized || !sized_sentinel_for<S, I>)
   class subrange : public view_interface<subrange<I, S, K>> {
   private:
-    static constexpr bool StoreSize =                   // [=Expos]
-      K == subrange_kind::sized && !SizedSentinel<S, I>;
-    I begin_ = I();                                     // [=Expos]
-    S end_ = S();                                       // [=Expos]
-    iter_difference_t<I> size_ = 0;                     // [:en] [=Expos]; present only
-                                                        // [|:zh_CN] [=Expos]；仅当 [`StoreSize] 为
-                                                        // [:en@~] when [`StoreSize] is [`true]
-                                                        // [|:zh_CN@~] [`true] 时提供
+    static constexpr bool StoreSize =                      // [=Expos]
+      K == subrange_kind::sized && !sized_sentinel_for<S, I>;
+    I begin_ = I();                                        // [=Expos]
+    S end_ = S();                                          // [=Expos]
+    [*make-unsigned-like-t](iter_difference_t<I>) size_ = 0;  // [:en] [=Expos]; present only
+                                                           // [|:zh_CN] [=Expos]；仅当 [`StoreSize] 为
+                                                           // [:en@~] when [`StoreSize] is [`true]
+                                                           // [|:zh_CN@~] [`true] 时提供
   public:
     subrange() = default;
 
     constexpr subrange(I i, S s) requires (!StoreSize);
 
-    constexpr subrange(I i, S s, iter_difference_t<I> n)
+    constexpr subrange(I i, S s, [*make-unsigned-like-t](iter_difference_t<I>) n)
       requires (K == subrange_kind::sized);
 
     template<[*not-same-as]<subrange> R>
       requires [*forwarding-range]<R> &&
-        ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
-    constexpr subrange(R&& r) requires (!StoreSize || SizedRange<R>);
+        convertible_to<iterator_t<R>, I> && convertible_to<sentinel_t<R>, S>
+    constexpr subrange(R&& r) requires (!StoreSize || sized_range<R>);
 
     template<[*forwarding-range] R>
-      requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
-    constexpr subrange(R&& r, iter_difference_t<I> n)
+      requires convertible_to<iterator_t<R>, I> && convertible_to<sentinel_t<R>, S>
+    constexpr subrange(R&& r, [*make-unsigned-like-t](iter_difference_t<I>) n)
       requires (K == subrange_kind::sized)
         : subrange{ranges::begin(r), ranges::end(r), n}
     {}
@@ -88,7 +88,7 @@ namespace std::ranges {
     {}
 
     template<[*pair-like-convertible-to]<I, S> PairLike>
-    constexpr subrange(PairLike&& r, iter_difference_t<I> n)
+    constexpr subrange(PairLike&& r, [*make-unsigned-like-t](iter_difference_t<I>) n)
       requires (K == subrange_kind::sized)
       : subrange{std::get<0>(std::forward<PairLike>(r)),
                  std::get<1>(std::forward<PairLike>(r)), n}
@@ -102,36 +102,37 @@ namespace std::ranges {
     constexpr S end() const;
 
     constexpr bool empty() const;
-    constexpr iter_difference_t<I> size() const
+    constexpr [*make-unsigned-like-t](iter_difference_t<I>) size() const
       requires (K == subrange_kind::sized);
 
     [[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) const;
     [[nodiscard]] constexpr subrange prev(iter_difference_t<I> n = 1) const
-      requires BidirectionalIterator<I>;
+      requires bidirectional_iterator<I>;
     constexpr subrange& advance(iter_difference_t<I> n);
 
     friend constexpr I begin(subrange&& r) { return r.begin(); }
     friend constexpr S end(subrange&& r) { return r.end(); }
   };
 
-  template<Iterator I, Sentinel<I> S>
-    subrange(I, S, iter_difference_t<I>) -> subrange<I, S, subrange_kind::sized>;
+  template<input_or_output_iterator I, sentinel_for<I> S>
+    subrange(I, S, [*make-unsigned-like-t](iter_difference_t<I>)) ->
+      subrange<I, S, subrange_kind::sized>;
 
   template<[*iterator-sentinel-pair] P>
     subrange(P) -> subrange<tuple_element_t<0, P>, tuple_element_t<1, P>>;
 
   template<[*iterator-sentinel-pair] P>
-    subrange(P, iter_difference_t<tuple_element_t<0, P>>) ->
+    subrange(P, [*make-unsigned-like-t](iter_difference_t<tuple_element_t<0, P>>)) ->
       subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, subrange_kind::sized>;
 
   template<[*forwarding-range] R>
     subrange(R&&) ->
       subrange<iterator_t<R>, sentinel_t<R>,
-               (SizedRange<R> || SizedSentinel<sentinel_t<R>, iterator_t<R>>)
+               (sized_range<R> || sized_sentinel_for<sentinel_t<R>, iterator_t<R>>)
                  ? subrange_kind::sized : subrange_kind::unsized>;
 
   template<[*forwarding-range] R>
-    subrange(R&&, iter_difference_t<iterator_t<R>>) ->
+    subrange(R&&, [*make-unsigned-like-t](range_difference_t<R>)) ->
       subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;
 
   template<size_t N, class I, class S, subrange_kind K>

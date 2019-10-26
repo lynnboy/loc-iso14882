@@ -1,0 +1,73 @@
+[section#range.istream.view
+    [:en] Class template [`basic_istream_view]
+    [:zh_CN] 类模板 [`basic_istream_view]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class Val, class CharT, class Traits>
+    concept [`stream-extractable] =                // [=Expos]
+      requires(basic_istream<CharT, Traits>& is, Val& t) {
+         is >> t;
+      };
+
+  template<movable Val, class CharT, class Traits>
+    requires default_constructible<Val> &&
+      [`stream-extractable]<Val, CharT, Traits>
+  class basic_istream_view : public view_interface<basic_istream_view<Val, CharT, Traits>> {
+  public:
+    basic_istream_view() = default;
+    constexpr explicit basic_istream_view(basic_istream<CharT, Traits>& stream);
+
+    constexpr auto begin()
+    {
+      if (stream_) {
+        *stream_ >> object_;
+      }
+      return iterator{*this};
+    }
+
+    constexpr default_sentinel_t end() const noexcept;
+
+  private:
+    struct iterator;                                    // [=Expos]
+    basic_istream<CharT, Traits>* stream_{};            // [=Expos]
+    Val object_ = Val();                                // [=Expos]
+  };
+}
+[codeblock:end]
+
+[%@library basic_istream_view[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr explicit basic_istream_view(basic_istream<CharT, Traits>& stream);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Initializes [`stream_] with [`addressof(stream)].
+[:zh_CN] 以 [`addressof(stream)] 初始化 [`stream_]。
+[exit:description]
+
+[%@library end[!basic_istream_view]]
+[%@library basic_istream_view[!end]]
+[codeblock:declaration]
+constexpr default_sentinel_t end() const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return default_sentinel;]
+[:zh_CN] 等价于：[`return default_sentinel;]
+[exit:description]
+
+[%@library istream_view]
+[codeblock:declaration]
+template<class Val, class CharT, class Traits>
+basic_istream_view<Val, CharT, Traits> istream_view(basic_istream<CharT, Traits>& s);
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return basic_istream_view<Val, CharT, Traits>{s};]
+[:zh_CN] 等价于：[`return basic_istream_view<Val, CharT, Traits>{s};]
+[exit:description]

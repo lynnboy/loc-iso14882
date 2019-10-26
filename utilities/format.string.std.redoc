@@ -1,0 +1,640 @@
+[section#format.string.std
+    [:en] Standard format specifiers
+    [:zh_CN] 标准格式说明符
+]
+
+[para]
+[:en] Each [`formatter] specializations described in [#format.formatter.spec]
+for fundamental and string types interprets [~@fmt format-spec] as a
+[~@fmt std-format-spec].
+[:zh_CN] [#format.formatter.spec] 中描述的所有针对基础和字符串类型的 [`formatter]
+的特化式，都将[~@fmt 格式说明]解释为[~@fmt 标准格式说明]。
+
+[enter:note]
+[:en] The format specification can be used to specify such details as field
+width, alignment, padding, and decimal precision.
+[:zh_CN] 格式说明可以用于指定一些细节，如字段宽度，对齐，填充，以及小数精度。
+
+[:en] Some of the formatting options are only supported for arithmetic types.
+[:zh_CN] 某些格式化选项仅支持算术类型。
+[exit:note]
+
+[:en] The syntax of format specifications is as follows:
+[:zh_CN] 格式说明的语法如下：
+
+[syntax]
+[rule@fmt std-format-spec [:zh_CN] 标准格式说明 ]
+    [| [~:opt fill-and-align] [`:opt #] [`:opt 0] [~:opt width] [~:precision] [~:opt type] ]
+[rule:end]
+
+[rule@fmt fill-and-align [:zh_CN] 填充与对齐 ]
+    [| [~:opt fill] align ]
+[rule:end]
+
+[rule@fmt fill [:zh_CN] 填充 ]
+    [|:descriptive
+        [:en] any character other than [`{] or [`}]
+        [:zh_CN] 
+    ]
+[rule:end]
+
+[rule:oneof@fmt align [:zh_CN] 对齐 ]
+    [| < > ^ ]
+[rule:end]
+
+[rule:oneof@fmt sign [:zh_CN] 正负号 ]
+    [| + - [$@normal [:en] space [:zh_CN] 空格 ] ]
+[rule:end]
+
+[rule@fmt width [:zh_CN] 宽度 ]
+    [| positive-integer ]
+    [| [`{] arg-id [`}] ]
+[rule:end]
+
+[rule@fmt precision [:zh_CN] 精度 ]
+    [| [`.] nonnegative-integer ]
+    [| [`.] [`{] arg-id [`}] ]
+[rule:end]
+
+[rule:oneof@fmt type [:zh_CN] 类型 ]
+    [| a A b B c d e E f F g G n o p s x X ]
+[rule:end]
+[syntax:end]
+
+[enter:note]
+[:en] The [~@fmt fill] character can be any character other than [`{] or [`}].
+[:zh_CN] [~@fmt 填充]字符可以为除 [`{] 和 [`}] 之外的任何字符。
+
+[:en] The presence of a fill character is signaled by the character following it,
+which must be one of the alignment options.
+[:zh_CN] 是否出现填充字符是由跟在其后的字符标明的，它必须为对齐选项之一。
+
+[:en] If the second character of [~@fmt std-format-spec] is not a valid
+alignment option, then it is assumed that both the fill character and the
+alignment option are absent.
+[:zh_CN] 如果[~@fmt 标准格式说明]的第二个字符不是有效的对齐选项，则假定填充字符
+和对齐选项都不存在。
+[exit:note]
+
+[para]
+[:en] The meaning of the various alignment options is as specified in
+[#:tab format.align].
+[:zh_CN] 各个对齐选项的含义由 [#:tab format.align] 指定。
+
+[enter:example]
+[codeblock]
+char c = 120;
+string s0 = format("{:6}", 42);         // [:en] value of [`s0] is [`"    42"]
+                                        // [|:zh_CN] [`s0] 的值为 [`"    42"]
+string s1 = format("{:6}", 'x');        // [:en] value of [`s1] is [`"x     "]
+                                        // [|:zh_CN] [`s1] 的值为 [`"x     "]
+string s2 = format("{:*<6}", 'x');      // [:en] value of [`s2] is [`"x*****"]
+                                        // [|:zh_CN] [`s2] 的值为 [`"x*****"]
+string s3 = format("{:*>6}", 'x');      // [:en] value of [`s3] is [`"*****x"]
+                                        // [|:zh_CN] [`s3] 的值为 [`"*****x"]
+string s4 = format("{:*^6}", 'x');      // [:en] value of [`s4] is [`"**x***"]
+                                        // [|:zh_CN] [`s4] 的值为 [`"**x***"]
+string s5 = format("{:6d}", c);         // [:en] value of [`s5] is [`"   120"]
+                                        // [|:zh_CN] [`s5] 的值为 [`"   120"]
+string s6 = format("{:6}", true);       // [:en] value of [`s6] is [`"true  "]
+                                        // [|:zh_CN] [`s6] 的值为 [`"true  "]
+[codeblock:end]
+[exit:example]
+
+[enter:note]
+[:en] Unless a minimum field width is defined, the field width is determined by
+the size of the content and the alignment option has no effect.
+[:zh_CN] 除非定义了最小字段宽度，否则字段宽度是由内容的大小确定的，而对其选项则
+没有效果。
+[exit:note]
+
+[table:grid#format.align
+    [:en] Meaning of [~@fmt align] options
+    [:zh_CN] [~@fmt 对其] 选项的含义
+    [|@code
+        [:en] Option
+        [:zh_CN] 选项 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] <
+[|] [:en] Forces the field to be left-aligned within the available space.
+    [:zh_CN] 强制字段在可用空间内靠左对齐。
+
+    [:en] This is the default for non-arithmetic types, [`charT], and [`bool],
+    unless an integer presentation type is specified.
+    [:zh_CN] 这对于非算术类型，[`charT] 和 [`bool] 是默认选项，除非指定的是整数
+    表现类型。
+[-]
+
+[|] >
+[|] [:en] Forces the field to be right-aligned within the available space.
+    [:zh_CN] 强制字段在可用空间内靠右对齐。
+
+    [:en] This is the default for arithmetic types other than [`charT] and
+    [`bool] or when an integer presentation type is specified.
+    [:zh_CN] 这对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数表现
+    类型时是默认选项。
+[-]
+
+[|] ^
+[|] [:en] Forces the field to be centered within the available space by
+    inserting [$\bigl\lfloor \frac{n}{2} \bigr\rfloor] characters before and
+    [$\bigl\lceil \frac{n}{2} \bigr\rceil] characters after the value, where
+    [$n] is the total number of fill characters to insert.
+    [:zh_CN] 强制字段在可用空间内居中，在值之前插入
+    [$\bigl\lfloor \frac{n}{2} \bigr\rfloor] 各字符，在之后插入
+    [$\bigl\lceil \frac{n}{2} \bigr\rceil] 各字符，其中 [$n] 为所要插入的填充
+    字符的总数。
+[-]
+[table:end]
+
+[para]
+[:en] The [~@fmt sign] option is only valid for arithmetic types other than
+[`charT] and [`bool] or when an integer presentation type is specified.
+[:zh_CN] [~@fmt 正负号]选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定
+的是整数表现类型时有效。
+
+[:en] The meaning of the various options is as specified in [#:tab format.sign].
+[:zh_CN] 各个选项的含义由 [#:tab format.sign] 指定。
+
+[table:grid#format.sign
+    [:en] Meaning of [~@fmt sign] options
+    [:zh_CN] [~@fmt 正负号]选项的含义
+    [|  [:en] Option
+        [:zh_CN] 选项 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] [`+]
+[|] [:en] Indicates that a sign should be used for both non-negative and
+negative numbers.
+    [:zh_CN] 指定应当对于非负数和负数都使用正负号。
+[-]
+
+[|] [`-]
+[|] [:en] Indicates that a sign should be used only for negative numbers (this
+    is the default behavior).
+    [:zh_CN] 指定仅应当对负数都使用正负号（此为默认行为）。
+[-]
+
+[|] [:en] space [:zh_CN] 空格
+[|] [:en] Indicates that a leading space should be used for non-negative numbers,
+    and a minus sign for negative numbers.
+    [:zh_CN] 指定对于非负数应当使用前导空格，而对于负数则使用减号。
+[-]
+[table:end]
+
+[para]
+[:en] The [~@fmt sign] option applies to floating-point infinity and NaN.
+[:zh_CN] [~@fmt 正负号]选项适用于浮点无穷和 NaN 值。
+
+[enter:example]
+[codeblock]
+double inf = numeric_limits<double>::infinity();
+double nan = numeric_limits<double>::quiet_NaN();
+string s0 = format("{0:},{0:+},{0:-},{0: }", 1);        // [:en] value of [`s0] is [`"1,+1,1, 1"]
+                                                        // [|:zh_CN] [`s0] 的值为 [`"1,+1,1, 1"]
+string s1 = format("{0:},{0:+},{0:-},{0: }", -1);       // [:en] value of [`s1] is [`"-1,-1,-1,-1"]
+                                                        // [|:zh_CN] [`s1] 的值为 [`"-1,-1,-1,-1"]
+string s2 = format("{0:},{0:+},{0:-},{0: }", inf);      // [:en] value of [`s2] is [`"inf,+inf,inf, inf"]
+                                                        // [|:zh_CN] [`s2] 的值为 [`"inf,+inf,inf, inf"]
+string s3 = format("{0:},{0:+},{0:-},{0: }", nan);      // [:en] value of [`s3] is [`"nan,+nan,nan, nan"]
+                                                        // [|:zh_CN] [`s3] 的值为 [`"nan,+nan,nan, nan"]
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en] The [`#] option causes the [+alternate form[!alternate form[!format string]]]
+to be used for the conversion.
+[:zh_CN] [`#] 选项导致在转换中采用[+替代形式[!替代形式[!格式字符串]]]。
+
+[:en] This option is only valid for arithmetic types other than [`charT] and
+[`bool] or when an integer presentation type is specified.
+[:zh_CN] 这个选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
+表现时有效。
+
+[:en] For integral types, the alternate form adds the base prefix (if any)
+specified in [#:tab format.type.int] to the output value.
+[:zh_CN] 对于整型类型，替代形式中向输出值中添加 [#:tab format.type.int] 中指定的
+基数前缀（如果有）。
+
+[:en] For floating-point types, the alternate form causes the result of the
+conversion to always contain a decimal-point character, even if no digits follow
+it.
+[:zh_CN] 对于浮点类型，替代形式导致转换的结果总是包含小数点字符，即便其后没有
+任何数字。
+
+[:en] Normally, a decimal-point character appears in the result of these
+conversions only if a digit follows it.
+[:zh_CN] 通常，仅当小数点字符之后有跟着数字时，它才在转换结果中出现。
+
+[:en] In addition, for [`g] and [`G] conversions, trailing zeros are not removed
+from the result.
+[:zh_CN] 此外，对于 [`g] 和 [`G] 转换，不会从结果中移除末尾的零。
+
+[para]
+[:en] The [~@fmt positive-integer] in [~@fmt width] is a decimal integer
+defining the minimum field width.
+[:zh_CN] [~@fmt 宽度]中的[~@fmt 正整数]是定义最小字段宽度的十进制整数。
+
+[:en] If [~@fmt width] is not specified, there is no minimum field width, and
+the field width is determined based on the content of the field.
+[:zh_CN] 如果未指定[~@fmt 宽度]，则没有最小字段宽度，字段的宽度基于该字段内容
+确定。
+
+[para]
+[:en] A zero ([`0]) character preceding the [~@fmt width] field pads the field
+with leading zeros (following any indication of sign or base) to the field width,
+except when applied to an infinity or NaN.
+[:zh_CN] [~@fmt 宽度]字段前的字符零（[`0]），指定（在任何正负号或基数之后）填充
+前导零直到字段宽度，但不适用于无穷或 NaN 值。
+
+[:en] This option is only valid for arithmetic types other than [`charT] and
+[`bool] or when an integer presentation type is specified.
+[:zh_CN] 这个选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
+表现时有效。
+
+[:en] If the [`0] character and an [~@fmt align] option both appear, the [`0]
+character is ignored.
+[:zh_CN] 当同时出现 [`0] 字符和[~@fmt 对齐]选项时，[`0] 字符被忽略。
+
+[enter:example]
+[codeblock]
+char c = 120;
+string s1 = format("{:+06d}", c);       // [:en] value of [`s1] is [`"+00120"]
+                                        // [|:zh_CN] [`s1] 的值为 [`"+00120"]
+string s2 = format("{:#06x}", 0xa);     // [:en] value of [`s2] is [`"0x000a"]
+                                        // [|:zh_CN] [`s2] 的值为 [`"0x000a"]
+string s3 = format("{:<06}", -42);      // [:en] value of [`s3] is [`"-42   "] ([`0] is ignored because of [`<] alignment)
+                                        // [|:zh_CN] [`s3] 的值为 [`"-42   "]（由于 [`<] 对齐而忽略 [`0]）
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en] The [~@fmt nonnegative-integer] in [~@fmt precision] is a decimal integer
+defining the precision or maximum field size.
+[:zh_CN] [~@fmt 精度]中的[~@fmt 非负整数]是定义精度或最大字段大小的十进制整数。
+
+[:en] It can only be used with floating-point and string types.
+[:zh_CN] 它仅可用于浮点和字符串类型。
+
+[:en] For floating-point types this field specifies the formatting precision.
+[:zh_CN] 对于浮点类型，该字段指定格式化精度。
+
+[:en] For string types it specifies how many characters will be used from the
+string.
+[:zh_CN] 对于字符串类型，它指定将从字符串中使用多少字符。
+
+[para]
+[:en] The [~@fmt type] determines how the data should be presented.
+[:zh_CN] [~@fmt 类型]决定如何呈现数据。
+
+[para]
+[:en] The available string presentation types are specified in
+[#:tab format.type.string].
+[:zh_CN] [#:tab format.type.string] 中指定了可用的字符串表现类型。
+
+[table:grid#format.type.string
+    [:en] Meaning of [~@fmt type] options for strings
+    [:zh_CN] 针对字符串的[~@fmt 类型]选项的含义
+    [|  [:en] Type
+        [:zh_CN] 类型 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] [:en] none, [`s]
+    [:zh_CN] 无，[`s]
+[|] [:en] Copies the string to the output.
+    [:zh_CN] 向输出复制字符串。
+[-]
+[table:end]
+
+[para]
+[:en] The meaning of some non-string presentation types is defined in terms of
+a call to [`to_chars].
+[:zh_CN] 一些非字符串表现类型的含义是基于对 [`to_chars] 的调用而定义的。
+
+[:en] In such cases, let [=range(first,last)] be a range large enough to hold
+the [`to_chars] output and [`value] be the formatting argument value.
+[:zh_CN] 此种情况下，令 [=range(first,last)] 为大小足以持有 [`to_chars] 的输出的
+范围，而 [`value] 为所格式化的实参值。
+
+[:en] Formatting is done as if by calling [`to_chars] as specified and copying
+the output through the output iterator of the format context.
+[:zh_CN] 格式化如同通过按规定调用 [`to_chars] 并通过格式化语境的输出迭代器复制其
+输出而完成的。
+
+[enter:note]
+[:en] Additional padding and adjustments are performed prior to copying the
+output through the output iterator as specified by the format specifiers.
+[:zh_CN] 额外的填充和调整，是在通过输出迭代器进行复制之前，根据格式说明符实施的。
+[exit:note]
+
+[para]
+[:en] The available integer presentation types for integral types other than
+[`bool] and [`charT] are specified in [#:tab format.type.int].
+[:zh_CN] [#:tab format.type.int] 中指定了对于除 [`bool] 和 [`charT] 之外的整型
+类型可用的整数表现类型。
+
+[enter:example]
+[codeblock]
+string s0 = format("{}", 42);                           // [:en] value of [`s0] is [`"42"]
+                                                        // [|:zh_CN] [`s0] 的值为 [`"42"]
+string s1 = format("{0:b} {0:d} {0:o} {0:x}", 42);      // [:en] value of [`s1] is [`"101010 42 52 2a"]
+                                                        // [|:zh_CN] [`s1] 的值为 [`"101010 42 52 2a"]
+string s2 = format("{0:#x} {0:#X}", 42);                // [:en] value of [`s2] is [`"0x2a 0X2A"]
+                                                        // [|:zh_CN] [`s2] 的值为 [`"0x2a 0X2A"]
+string s3 = format("{:n}", 1234);                       // [:en] value of [`s3] might be [`"1,234"]
+                                                        // [|:zh_CN] [`s3] 的值为 [`"1,234"]
+                                                        // [:en@~] (depending on the locale)
+                                                        // [|:zh_CN@~] （取决于地域）
+[codeblock:end]
+[exit:example]
+
+[table:grid#format.type.int
+    [:en] Meaning of [~@fmt type] options for integer types
+    [:zh_CN] 针对整数类型的[~@fmt 类型]选项的含义
+    [|  [:en] Type
+        [:zh_CN] 类型 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[%[:en]base prefix[:zh_CN]基数前缀]
+[|] [`b]
+[|] [:en] [`to_chars(first, last, value, 2)]; the base prefix is [`0b].
+    [:zh_CN] [`to_chars(first, last, value, 2)]；基数前缀为 [`0b]。
+[-]
+
+[%[:en]base prefix[:zh_CN]基数前缀]
+[|] [`B]
+[|] [:en] The same as [`b], except that the base prefix is [`0B].
+    [:zh_CN] 与 [`b] 相同，但基数前缀为 [`0B]。
+[-]
+
+[|] [`c]
+[|] [:en] Copies the character [`static_cast<charT>(value)] to the output.
+    [:zh_CN] 将字符 [`static_cast<charT>(value)] 复制到输出。
+
+    [:en] Throws [`format_error] if [`value] is not in the range of
+    representable values for [`charT].
+    [:zh_CN] 当 [`value] 不在 [`charT] 的可表示值范围中时抛出 [`format_error]。
+[-]
+
+[|] [`d]
+[|] [:en] [`to_chars(first, last, value)].
+    [:zh_CN] [`to_chars(first, last, value)]。
+[-]
+
+[%[:en]base prefix[:zh_CN]基数前缀]
+[|] [`o]
+[|] [:en] [`to_chars(first, last, value, 8)]; the base prefix is [`0] if [`value]
+is nonzero and is empty otherwise.
+    [:zh_CN] [`to_chars(first, last, value, 8)]；当 [`value] 非零时基数前缀为
+    [`0]，否则为空。
+[-]
+
+[%[:en]base prefix[:zh_CN]基数前缀]
+[|] [`x]
+[|] [:en] [`to_chars(first, last, value, 16)]; the base prefix is [`0x].
+    [:zh_CN] [`to_chars(first, last, value, 16)]；基数前缀为 [`0x]。
+[-]
+
+[%[:en]base prefix[:zh_CN]基数前缀]
+[|] [`X]
+[|] [:en] The same as [`x], except that it uses uppercase letters for digits
+    above 9 and the base prefix is [`0X].
+    [:zh_CN] 与 [`x] 相同，但对大于 9 的数字采用大写字母，且基数前缀为 [`0X]。
+[-]
+
+[|] [`n]
+[|] [:en] The same as [`d], except that it uses the context[=']s locale to
+    insert the appropriate digit group separator characters.
+    [:zh_CN] 与 [`d] 相同，但采用其语境的地域来插入适当的数字分组字符。
+[-]
+
+[|] [:en] none
+    [:zh_CN] 无
+[|] [:en] The same as [`d].
+    [:zh_CN] 与 [`d] 相同。
+
+    [enter:note]
+    [:en] If the formatting argument type is [`charT] or [`bool], the default is
+    instead [`c] or [`s], respectively.
+    [:zh_CN] 若格式化实参的类型为 [`charT] 或 [`bool]，则默认类型分别 [`c] 和
+    [`s]。
+    [exit:note]
+[-]
+[table:end]
+
+[para]
+[:en] The available [`charT] presentation types are specified in
+[#:tab format.type.char].
+[:zh_CN] [#:tab format.type.char] 中指定了可用的 [`charT] 表现类型。
+
+[table:grid#format.type.char
+    [:en] Meaning of [~@fmt type] options for [`charT]
+    [:zh_CN] 针对 [`charT] 的[~@fmt 类型]选项的含义
+    [|  [:en] Type
+        [:zh_CN] 类型 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] [:en] none, [`c]
+    [:zh_CN] 无，[`c]
+[|] [:en] Copies the character to the output.
+    [:zh_CN] 将字符复制到输出。
+[-]
+
+[|] [`b], [`B], [`d], [`o], [`x], [`X], [`n]
+[|] [:en] As specified in [#:tab format.type.int].
+    [:zh_CN] 如 [#:tab format.type.int] 所指定。
+[-]
+[table:end]
+
+[para]
+[:en] The available [`bool] presentation types are specified in
+[#:tab format.type.bool].
+[:zh_CN] [#:tab format.type.bool] 中指定了可用的 [`bool] 表现类型。
+
+[table:grid#format.type.bool
+    [:en] Meaning of [~@fmt type] options for [`bool]
+    [:zh_CN] 针对 [`bool] 的[~@fmt 类型]选项的含义
+    [|  [:en] Type
+        [:zh_CN] 类型 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] [:en] none, [`s]
+    [:zh_CN] 无，[`s]
+[|] [:en] Copies textual representation, either [`true] or [`false], to the
+    output.
+    [:zh_CN] 将其文本表示，即 [`true] 或 [`false] 复制到输出。
+[-]
+
+[|] [`b], [`B], [`c], [`d], [`o], [`x], [`X], [`n]
+[|] [:en] As specified in [#:tab format.type.int] for the value
+    [`static_cast<unsigned char>(value)].
+    [:zh_CN] 如 [#tab format.type.int] 中对值 [`static_cast<unsigned char>(value)]
+    所指定。
+[-]
+[table:end]
+
+[para]
+[:en] The available floating-point presentation types and their meanings for
+values other than infinity and NaN are specified in [#:tab format.type.float].
+[:zh_CN] [#:tab format.type.float] 指定了对于除无穷和 NaN 之外的可用的浮点表现
+类型及其含义。
+
+[:en] For lower-case presentation types, infinity and NaN are formatted as
+[`inf] and [`nan], respectively.
+[:zh_CN] 对于小写表现类型，无穷和 NaN 分别格式化为 [`inf] 和 [`nan]。
+
+[:en] For upper-case presentation types, infinity and NaN are formatted as
+[`INF] and [`NAN], respectively.
+[:zh_CN] 对于大写表现类型，无穷和 NaN 分别格式化为 [`inf] 和 [`nan]。
+
+[enter:note]
+[:en] In either case, a sign is included if indicated by the [~@fmt sign] option.
+[:zh_CN] 无论哪种情况，当[~@fmt 正负号]选项有所指定时包含正负号。
+[exit:note]
+
+[table:grid#format.type.float
+    [:en] Meaning of [~@fmt type] options for floating-point types
+    [:zh_CN] 针对浮点类型的[~@fmt 类型]选项的含义
+    [|  [:en] Type
+        [:zh_CN] 类型 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] [`a]
+[|] [:en] If [~@fmt precision] is specified, equivalent to
+    [:zh_CN] 当指定了[~@fmt 精度]时，等价于
+[codeblock:notation]
+to_chars(first, last, value, chars_format::hex, precision)
+[codeblock:end]
+[:en@~] where [`precision] is the specified formatting precision; equivalent to
+[:zh_CN@~] 其中 [`precision] 为所指定的格式化精度；否则等价于
+[codeblock:notation]
+to_chars(first, last, value, chars_format::hex)
+[codeblock:end]
+[:en@~] otherwise.
+[:zh_CN@~] 。
+[-]
+
+[|] [`A]
+[|] [:en] The same as [`a], except that it uses uppercase letters for digits
+    above 9 and [`P] to indicate the exponent.
+    [:zh_CN] 与 [`a] 相同，但对大于 9 的数字采用大写字母，且采用 [`P] 指定指数。
+[-]
+
+[|] [`e]
+[|] [:en] Equivalent to
+    [:zh_CN] 等价于
+[codeblock:notation]
+to_chars(first, last, value, chars_format::scientific, precision)
+[codeblock:end]
+[:en@~] where [`precision] is the specified formatting precision, or [`6] if
+[~@fmt precision] is not specified.
+[:zh_CN@~] 其中 [`precision] 为所指定的格式化精度，或当未指定[~@fmt 精度]时为
+[`6]。
+[-]
+
+[|] [`E]
+[|] [:en] The same as [`e], except that it uses [`E] to indicate exponent.
+    [:zh_CN] 与 [`e] 相同，但采用 [`E] 指定指数。
+[-]
+
+[|] [`f], [`F]
+[|] [:en] Equivalent to
+    [:zh_CN] 等价于
+[codeblock:notation]
+to_chars(first, last, value, chars_format::fixed, precision)
+[codeblock:end]
+[:en@~] where [`precision] is the specified formatting precision, or [`6] if
+[~@fmt precision] is not specified.
+[:zh_CN@~] 其中 [`precision] 为所指定的格式化精度，或当未指定[~@fmt 精度]时为
+[`6]。
+[-]
+
+[|] [`g]
+[|] [:en] Equivalent to
+    [:zh_CN] 等价于
+[codeblock:notation]
+to_chars(first, last, value, chars_format::general, precision)
+[codeblock:end]
+[:en@~] where [`precision] is the specified formatting precision, or [`6] if
+[~@fmt precision] is not specified.
+[:zh_CN@~] 其中 [`precision] 为所指定的格式化精度，或当未指定[~@fmt 精度]时为
+[`6]。
+[-]
+
+[|] [`G]
+[|] [:en] The same as [`g], except that it uses [`E] to indicate exponent.
+    [:zh_CN] 与 [`g] 相同，但采用 [`E] 指定指数。
+[-]
+
+[|] [`n]
+[|] [:en] The same as [`g], except that it uses the context[=']s locale to
+    insert the appropriate digit group and decimal radix separator characters.
+    [:zh_CN] 与 [`g] 相同，但采用语境的地域以插入适当的数字分组和小数基数分隔符
+    字符。
+[-]
+
+[|] [:en] none
+    [:zh_CN] 无
+[|] [:en] If [~@fmt precision] is specified, equivalent to
+    [:zh_CN] 当指定了[~@fmt 精度]时，等价于
+[codeblock:notation]
+to_chars(first, last, value, chars_format::general, precision)
+[codeblock:end]
+[:en@~] where [`precision] is the specified formatting precision; equivalent to
+[:zh_CN@~] 其中 [`precision] 为所指定的格式化精度；否则等价于
+[codeblock:notation]
+to_chars(first, last, value)
+[codeblock:end]
+[:en@~] otherwise.
+[:zh_CN@~] 。
+[-]
+
+[table:end]
+
+[para]
+[:en] The available pointer presentation types and their mapping to [`to_chars]
+are specified in [#:tab format.type.ptr].
+[:zh_CN] [#:tab format.type.ptr] 指定了指针表现类型及其与 [`to_chars] 的映射。
+
+[enter:note]
+[:en] Pointer presentation types also apply to [`nullptr_t].
+[:zh_CN] 指针表现类型也适用于 [`nullptr_t]。
+[exit:note]
+
+[table:grid#format.type.ptr
+    [:en] Meaning of [~@fmt type] options for pointer types
+    [:zh_CN] 针对指针类型的[~@fmt 类型]选项的含义
+    [|  [:en] Type
+        [:zh_CN] 类型 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] [:en] none, [`p]
+    [:zh_CN] 无，[`p]
+[|] [:en] If [`uintptr_t] is defined,
+    [:zh_CN] 若定义了 [`uintptr_t]，则为
+[codeblock:notation]
+to_chars(first, last, reinterpret_cast<uintptr_t>(value), 16)
+[codeblock:end]
+[:en@~] with the prefix [`0x] added to the output; otherwise,
+implementation-defined.
+[:zh_CN@~] 并向输出添加 [`0x] 前缀；否则由实现定义。
+[-]
+
+[table:end]

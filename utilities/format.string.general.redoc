@@ -1,0 +1,152 @@
+[section#format.string.general
+    [:en] In general
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] A [+format string] is a (possibly empty) sequence of [+replacement fields
+[%replacement field[!format string]]], [+escape sequences[%escape sequence
+[!format string]]], and characters other than [`{] and [`}].
+[:zh_CN] [+格式字符串]是[+替换字段[%替换字段[!格式字符串]]]，[+转义序列
+[%转义序列[!格式字符串]]]，以及除 [`{] 和 [`}] 之外的字符的（可能为空的）序列。
+
+[:en] Let [`charT] be the character type of the format string.
+[:zh_CN] 令 [`charT] 为格式字符串的字符类型。
+
+[:en] Each character that is not part of a replacement field or an escape
+sequence is copied unchanged to the output.
+[:zh_CN] 并非替换字段或转义序列的一部分的各个字符，都被无改动地复制到输出中。
+
+[:en] An escape sequence is one of [`{{] or [`}}].
+[:zh_CN] 转义序列为 [`{{] 或 [`}}] 之一。
+
+[:en] It is replaced with [`{] or [`}], respectively, in the output.
+[:zh_CN] 在输出分别被替换为 [`{] 和 [`}]。
+
+[:en] The syntax of replacement fields is as follows:
+[:zh_CN] 替换字段的语法如下：
+
+[syntax]
+[rule@fmt replacement-field [:zh_CN] 替换字段 ]
+    [| [`{] [~:opt arg-id] [~:opt format-specifier] [`}] ]
+[rule:end]
+
+[rule@fmt arg-id [:zh_CN] 实参标识 ]
+    [| [`0] ]
+    [| positive-integer ]
+[rule:end]
+
+[rule@fmt positive-integer [:zh_CN] 正整数 ]
+    [| nonzero-digit ]
+    [| positive-integer digit ]
+[rule:end]
+
+[rule@fmt nonnegative-integer [:zh_CN] 非负整数 ]
+    [| digit ]
+    [| nonnegative-integer digit ]
+[rule:end]
+
+[rule:oneof@fmt nonzero-digit [:zh_CN] 非零数字 ]
+    [| 1 2 3 4 5 6 7 8 9 ]
+[rule:end]
+
+[rule:oneof@fmt digit [:zh_CN] 数字 ]
+    [| 0 1 2 3 4 5 6 7 8 9 ]
+[rule:end]
+
+[rule@fmt format-specifier [:zh_CN] 格式说明符 ]
+    [| [`:] format-spec ]
+[rule:end]
+
+[rule@fmt format-spec [:zh_CN] 格式说明 ]
+    [|:descriptive
+        [:en] as specified by the [`formatter] specialization for the argument type
+        [:zh_CN] 由针对实参类型的 [`formatter] 特例所指定
+    ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en] The [~@fmt arg-id] field specifies the index of the argument in [`args]
+whose value is to be formatted and inserted into the output instead of the
+replacement field.
+[:zh_CN] [~@fmt 实参标识]字段指定 [`args] 中所要格式化其值并插入输出中以替代替换
+字段的那个实参的索引号。
+
+[:en] The optional [~@fmt format-specifier] field explicitly specifies a format
+for the replacement value.
+[:zh_CN] 可选的[~@fmt 格式说明符]字段明确指定替换的值的格式。
+
+[para]
+[enter:example]
+[codeblock]
+string s = format("{0}-{{", 8);         // [:en] value of [`s] is [`"8-{"]
+                                        // [|:zh_CN] [`s] 的值为 [`"8-{"]
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en] If all [~@fmt arg-id]s in a format string are omitted (including those in
+the [~@fmt format-spec], as interpreted by the corresponding [`formatter]
+specialization), argument indices 0, 1, 2, [$\ldots] will automatically be used
+in that order.
+[:zh_CN] 当格式字符串中省略了所有的[~@fmt 实参标识]（包括[~@fmt 格式说明]中的
+那些，其由对于的 [`formatter] 特例所解释）时，自动依次使用实参索引号 0，1，2，
+[$\ldots]。
+
+[:en] If some [~@fmt arg-id]s are omitted and some are present, the string is
+not a format string.
+[:zh_CN] 如果有些[~@fmt 实参标识]被省略而另一些没有，则该字符串不是格式字符串。
+
+[enter:note]
+[:en] A format string cannot contain a mixture of automatic and manual indexing.
+[:zh_CN] 格式字符串不能混合包含自动和手动索引。
+[exit:note]
+
+[enter:example]
+[codeblock]
+string s0 = format("{} to {}",   "a", "b"); // [:en] OK, automatic indexing
+                                            // [|:zh_CN] OK，自动索引
+string s1 = format("{1} to {0}", "a", "b"); // [:en] OK, manual indexing
+                                            // [|:zh_CN] OK，手动索引
+string s2 = format("{0} to {}",  "a", "b"); // [:en] not a format string (mixing automatic and manual indexing),
+                                            // [|:zh_CN] 不是格式字符串（混合自动和手动索引），
+                                            // [:en@~] throws [`format_error]
+                                            // [|:zh_CN@~] 抛出 [`format_error]
+string s3 = format("{} to {1}",  "a", "b"); // [:en] not a format string (mixing automatic and manual indexing),
+                                            // [|:zh_CN] 不是格式字符串（混合自动和手动索引），
+                                            // [:en@~] throws [`format_error]
+                                            // [|:zh_CN@~] 抛出 [`format_error]
+[codeblock:end]
+[exit:example]
+
+[para]
+[:en] The [~@fmt format-spec] field contains [+format specifications
+[%format specification[!format string]]] that define how the value should be
+presented.
+[:zh_CN] [~@fmt 格式说明]字段包含[+格式说明[%格式说明[!格式字符串]]]，其定义值
+如何呈现。
+
+[:en] Each type can define its own interpretation of the [~@fmt format-spec]
+field.
+[:zh_CN] 每个类型可以定义自己对[~@fmt 格式说明]字段的解释。
+
+[enter:example]
+[list]
+[item]
+[:en] For arithmetic, pointer, and string types the [~@fmt format-spec] is
+interpreted as a [~@fmt std-format-spec] as described in [#format.string.std].
+[:zh_CN] 对于算术、指针和字符串类型，其[~@fmt 格式说明]被解释为
+[~@fmt 标准格式说明]，如 [#format.string.std] 中所述。
+[item]
+[:en] For chrono types the [~@fmt format-spec] is interpreted as a
+[~@fmt chrono-format-spec] as described in [#time.format].
+[:zh_CN] 对于时间类型，其[~@fmt 格式说明]被解释为[~@fmt 时间格式说明]，如
+[#time.format] 中所述。
+[item]
+[:en] For user-defined [`formatter] specializations, the behavior of the [`parse]
+member function determines how the [~@fmt format-spec] is interpreted.
+[:zh_CN] 对于用户定义的 [`formatter] 特例，其 [`parse] 成员函数的行为决定如何
+解释[~@fmt 格式说明]。
+[list:end]
+[exit:example]

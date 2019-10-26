@@ -5,14 +5,14 @@
 
 [codeblock:synopsis [!:var simple-view]]
 namespace std::ranges {
-  template<InputRange V>
-    requires View<V> && InputRange<iter_reference_t<iterator_t<V>>> &&
-             (is_reference_v<iter_reference_t<iterator_t<V>>> ||
-              View<iter_value_t<iterator_t<V>>>)
+  template<input_range V>
+    requires view<V> && input_range<range_reference_t<V>> &&
+             (is_reference_v<range_reference_t<V>> ||
+              view<range_value_t<V>>)
   class join_view : public view_interface<join_view<V>> {
   private:
     using InnerRng =                    // [=Expos]
-      iter_reference_t<iterator_t<V>>;
+      range_reference_t<V>;
     // [:en] [#range.join.iterator], class template [`join_view::iterator]
     // [|:zh_CN] [#range.join.iterator]，类模板 [`join_view::iterator]
     template<bool Const>
@@ -30,8 +30,8 @@ namespace std::ranges {
     join_view() = default;
     constexpr explicit join_view(V base);
 
-    template<InputRange R>
-      requires ViewableRange<R> && Constructible<V, all_view<R>>
+    template<input_range R>
+      requires viewable_range<R> && constructible_from<V, all_view<R>>
     constexpr explicit join_view(R&& r);
 
     constexpr auto begin() {
@@ -39,28 +39,28 @@ namespace std::ranges {
     }
 
     constexpr auto begin() const
-    requires InputRange<const V> &&
-             is_reference_v<iter_reference_t<iterator_t<const V>>> {
+    requires input_range<const V> &&
+             is_reference_v<range_reference_t<const V>> {
       return iterator<true>{*this, ranges::begin(base_)};
     }
 
     constexpr auto end() {
-      if constexpr (ForwardRange<V> &&
-                    is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
-                    CommonRange<V> && CommonRange<InnerRng>)
+      if constexpr (forward_range<V> &&
+                    is_reference_v<InnerRng> && forward_range<InnerRng> &&
+                    common_range<V> && common_range<InnerRng>)
         return iterator<[*simple-view]<V>>{*this, ranges::end(base_)};
       else
         return sentinel<[*simple-view]<V>>{*this};
     }
 
     constexpr auto end() const
-    requires InputRange<const V> &&
-             is_reference_v<iter_reference_t<iterator_t<const V>>> {
-      if constexpr (ForwardRange<const V> &&
-                    is_reference_v<iter_reference_t<iterator_t<const V>>> &&
-                    ForwardRange<iter_reference_t<iterator_t<const V>>> &&
-                    CommonRange<const V> &&
-                    CommonRange<iter_reference_t<iterator_t<const V>>>)
+    requires input_range<const V> &&
+             is_reference_v<range_reference_t<const V>> {
+      if constexpr (forward_range<const V> &&
+                    is_reference_v<range_reference_t<const V>> &&
+                    forward_range<range_reference_t<const V>> &&
+                    common_range<const V> &&
+                    common_range<range_reference_t<const V>>)
         return iterator<true>{*this, ranges::end(base_)};
       else
         return sentinel<true>{*this};
@@ -85,13 +85,13 @@ constexpr explicit join_view(V base);
 
 [%@library join_view[!join_view]]
 [codeblock:declaration]
-template<InputRange R>
-  requires ViewableRange<R> && Constructible<V, all_view<R>>
+template<input_range R>
+  requires viewable_range<R> && constructible_from<V, all_view<R>>
 constexpr explicit join_view(R&& r);
 [codeblock:end]
 
 [enter:description]
 [para:effects]
-[:en] Initializes [`base_] with [`view::all(std::forward<R>(r))].
-[:zh_CN] 以 [`view::all(std::forward<R>(r))] 初始化 [`base_]。
+[:en] Initializes [`base_] with [`views::all(std::forward<R>(r))].
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_]。
 [exit:description]

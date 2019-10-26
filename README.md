@@ -60,6 +60,7 @@ attribute declaration                   特性标注声明
 automatic storage duration              自动存储期
 await-expression                        等待表达式
 awaitable                               可等待体
+barrier                                 关卡
 base characteristic                     基础特征
 basic character set                     基本字符集
 basic source character set              基本源字符集
@@ -173,6 +174,7 @@ data member                             数据成员
 data race                               数据竞争
 deallocate                              回收
 deallocation function                   回收函数
+decay                                   退化
 declare                                 声明
 declaration                             声明式，声明
 declaration statement                   声明语句
@@ -391,6 +393,8 @@ invalid                                 无效，非法
 invoke                                  调用，执行
 local                                   局部的
 local class                             局部类
+locale                                  地域
+join                                    合并（线程）
 iteration statement                     循环语句，重复语句
 iterator                                迭代器
 jump statement                          跳转语句
@@ -399,6 +403,7 @@ label                                   标号
 labeled statement                       带标号语句
 lambda expression                       lambda 表达式
 language linkage                        语言连接
+latch                                   门栓
 layout-compatible enumeration           布局兼容枚举
 layout-compatible type                  布局兼容类型
 left shift operator                     左移运算符
@@ -612,6 +617,7 @@ scoped enumeration                      有作用域枚举
 scoped enumerator                       有作用域枚举符
 selection statement                     选择语句
 semantics                               语义
+semaphore                               信号量
 sequence                                序列
 sequenced after                         按顺序晚于
 sequenced before                        按顺序早于
@@ -644,6 +650,7 @@ static cast                             静态强制转换
 static initialization                   静态初始化
 static specifier                        static 说明符
 static storage duration                 静态存储期
+stop token                              停止令牌
 storage                                 存储
 storage class specifier                 存储类说明符
 storage duration                        存储期

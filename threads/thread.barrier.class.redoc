@@ -1,0 +1,302 @@
+[section#thread.barrier.class
+    [:en] Class template [`barrier]
+    [:zh_CN] 类模板 [`barrier]
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class CompletionFunction = [=SeeBelow]>
+  class barrier {
+  public:
+    using arrival_token = [=SeeBelow];
+
+    constexpr explicit barrier(ptrdiff_t expected,
+                               CompletionFunction f = CompletionFunction());
+    ~barrier();
+
+    barrier(const barrier&) = delete;
+    barrier& operator=(const barrier&) = delete;
+
+    [[nodiscard]] arrival_token arrive(ptrdiff_t update = 1);
+    void wait(arrival_token&& arrival) const;
+
+    void arrive_and_wait();
+    void arrive_and_drop();
+
+  private:
+    CompletionFunction completion;      // [=Expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Each [+barrier phase] consists of the following steps:
+[:zh_CN] 每个[+关卡阶段]由以下步骤构成：
+
+[list]
+[item]
+[:en] The expected count is decremented by each call to [`arrive] or
+[`arrive_and_drop].
+[:zh_CN] 对 [`arrive] 或 [`arrive_and_drop] 的每次调用使预期计数减一。
+
+[item]
+[:en] When the expected count reaches zero, the phase completion step is run.
+[:zh_CN] 当预期计数达到零时，运行阶段完成步骤。
+
+[:en] For the specialization with the default value of the [`CompletionFunction]
+template parameter, the completion step is run as part of the call to [`arrive]
+or [`arrive_and_drop] that caused the expected count to reach zero.
+[:zh_CN] 对于带有 [`CompletionFunction] 模板形参的默认值的特例，其完成步骤是作为
+导致预期计数达到零的 [`arrive] 或 [`arrive_and_drop] 的调用的一部分而运行的。
+
+[:en] For other specializations, the completion step is run on one of the
+threads that arrived at the barrier during the phase.
+[:zh_CN] 对于其他特例，其完成步骤是在该阶段中到达关卡的线程之一上运行的。
+
+[item]
+[:en] When the completion step finishes, the expected count is reset to what was
+specified by the [`expected] argument to the constructor, possibly adjusted by
+calls to [`arrive_and_drop], and the next phase starts.
+[:zh_CN] 当完成步骤完成时，预期计数被重置为构造函数的 [`expected] 实参所指定的值，
+并可能经由 [`arrive_and_drop] 的调用调整，然后开始下一个阶段。
+[list:end]
+
+[para]
+[:en] Each phase defines a
+[+phase synchronization point[%barrier[!phase synchronization point]]].
+[%phase synchronization point[%barrier[!phase synchronization point]]]
+[:zh_CN] 每个阶段都定义了一个[+阶段同步点[%关卡[!阶段同步点]]][%阶段同步点[%关卡
+[!阶段同步点]]]。
+
+[:en] Threads that arrive at the barrier during the phase can block on the phase
+synchronization point by calling [`wait], and will remain blocked until the
+phase completion step is run.
+[:zh_CN] 阶段中到达关卡的线程，可以通过调用 [`wait] 在阶段同步点上阻塞，并将持续
+阻塞直到阶段完成步骤的运行。
+
+[para]
+[:en] The [+phase completion step] that is executed at the end of each phase has
+the following effects:
+[:zh_CN] 在每个阶段末尾执行的[+阶段完成步骤]具有以下效果：
+
+[list]
+[item]
+[:en] Invokes the completion function, equivalent to [`completion()].
+[:zh_CN] 调用完成函数，等价于 [`completion()]。
+
+[item]
+[:en] Unblocks all threads that are blocked on the phase synchronization point.
+[:zh_CN] 对在阶段同步点上阻塞的所有线程解除阻塞。
+[list:end]
+
+[:en] The end of the completion step strongly happens before the returns from
+all calls that were unblocked by the completion step.
+[:zh_CN] 完成步骤的末尾强发生早于由该完成步骤所解除阻塞的调用的返回。
+
+[:en] For specializations that do not have the default value of the
+[`CompletionFunction] template parameter, the behavior is undefined if any of
+the barrier object[=']s member functions other than [`wait] are called while the
+completion step is in progress.
+[:zh_CN] 对于没有模板形参 [`CompletionFunction] 的默认值的特例，如果当完成步骤
+进行中时调用了该关卡对象除 [`wait] 之外的任何成员函数，则其行为未定义。
+
+[para]
+[:en] Concurrent invocations of the member functions of [`barrier], other than
+its destructor, do not introduce data races.
+[:zh_CN] 对 [`barrier] 的除析构函数之外的成员函数的并发调用不会引入数据竞争。
+
+[:en] The member functions [`arrive] and [`arrive_and_drop] execute atomically.
+[:zh_CN] 成员函数 [`arrive] 和 [`arrive_and_drop] 的执行是原子性的。
+
+[para]
+[:en] [`CompletionFunction] shall meet the [*Cpp17MoveConstructible]
+([#:tab cpp17.moveconstructible]) and [*Cpp17Destructible]
+([#:tab cpp17.destructible]) requirements.
+[:zh_CN] [`CompletionFunction] 应当满足 [*Cpp17MoveConstructible]
+（[#:tab cpp17.moveconstructible]）和 [*Cpp17Destructible]
+（[#:tab cpp17.destructible]）的规定。
+
+[:en] [`is_nothrow_invocable_v<CompletionFunction&>] shall be [`true].
+[:zh_CN] [`is_nothrow_invocable_v<CompletionFunction&>] 应当为 [`true]。
+
+[para]
+[:en] The default value of the [`CompletionFunction] template parameter is
+an unspecified type, such that, in addition to satisfying the requirements of
+[`CompletionFunction], it meets the [*Cpp17DefaultConstructible] requirements
+([#:tab cpp17.defaultconstructible]) and [`completion()] has no effects.
+[:zh_CN] 模板形参 [`CompletionFunction] 的默认值是某个未指明的类型，并且除了使其
+满足 [`CompletionFunction] 的规定之外，还满足 [`Cpp17DefaultConstructible]
+的规定（[#:tab cpp17.defaultconstructible]），且 [`completion()] 没有效果。
+
+[para]
+[:en] [`barrier::arrival_token] is an unspecified type, such that it meets the
+[*Cpp17MoveConstructible] ([#:tab cpp17.moveconstructible]),
+[*Cpp17MoveAssignable] ([#:tab cpp17.moveassignable]), and [*Cpp17Destructible]
+([#:tab cpp17.destructible]) requirements.
+[:zh_CN] [`barrier::arrival_token] 是某个未指明类型，它满足
+[*Cpp17MoveConstructible]（[#:tab cpp17.moveconstructible]），
+[*Cpp17MoveAssignable]（[#:tab cpp17.moveassignable]），和 [*Cpp17Destructible]
+（[#:tab cpp17.destructible]）的规定。
+
+[%@library barrier[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr explicit barrier(ptrdiff_t expected,
+                           CompletionFunction f = CompletionFunction());
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`expected >= 0] is [`true].
+[:zh_CN] [`expected >= 0] 为 [`true]。
+
+[para:effects]
+[:en] Sets both the initial expected count for each barrier phase and the
+current expected count for the first phase to [`expected].
+[:zh_CN] 将各个关卡阶段的初始预期计数和第一个阶段的当前预期计数均设为 [`expected]。
+
+[:en] Initializes [`completion] with [`std::move(f)].
+[:zh_CN] 以 [`std::move(f)] 初始化 [`completion]。
+
+[:en] Starts the first phase.
+[:zh_CN] 开始第一个阶段。
+
+[enter:note]
+[:en] If [`expected] is 0 this object can only be destroyed.
+[:zh_CN] 若 [`expected] 为 0，则该对象仅可被销毁。
+[exit:note]
+
+[para:throws]
+[:en] Any exception thrown by [`CompletionFunction][=']s move constructor.
+[:zh_CN] 由 [`CompletionFunction] 的移动构造函数所抛出的任何异常。
+[exit:description]
+
+[%@library arrive[!barrier]]
+[%@library barrier[!arrive]]
+[codeblock:declaration]
+[[nodiscard]] arrival_token arrive(ptrdiff_t update = 1);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`update > 0] is [`true], and [`update] is less than or equal to the
+expected count for the current barrier phase.
+[:zh_CN] [`update > 0] 为 [`true]，且 [`update] 小于或等于当前关卡阶段的预期计数。
+
+[para:effects]
+[:en] Constructs an object of type [`arrival_token] that is associated with the
+phase synchronization point for the current phase.
+[:zh_CN] 构造一个与当前阶段的阶段同步点关联的 [`arrival_token] 类型的对象。
+
+[:en] Then, decrements the expected count by [`update].
+[:zh_CN] 然后，对预期计数减去 [`update]。
+
+[para:sync]
+[:en] The call to [`arrive] strongly happens before the start of the phase
+completion step for the current phase.
+[:zh_CN] 对 [`arrive] 的调用强发生早于当前阶段的阶段完成步骤的开始。
+
+[para:returns]
+[:en] The constructed [`arrival_token] object.
+[:zh_CN] 所构造的 [`arrival_token] 对象。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+
+[para]
+[enter:note]
+[:en] This call can cause the completion step for the current phase to start.
+[:zh_CN] 调用可能导致当前阶段的完成步骤开始执行。
+[exit:note]
+[exit:description]
+
+[%@library wait[!barrier]]
+[%@library barrier[!wait]]
+[codeblock:declaration]
+void wait(arrival_token&& arrival) const;
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`arrival] is associated with the phase synchronization point for the
+current phase or the immediately preceding phase of the same barrier object.
+[:zh_CN] [`arrival] 与相同关卡对象的当前阶段或紧接的前一个阶段的阶段或同步点相
+关联。
+
+[para:effects]
+[:en] Blocks at the synchronization point associated with [`std::move(arrival)]
+until the phase completion step of the synchronization point[=']s phase is run.
+[:zh_CN] 在与 [`std::move(arrival)] 相关联的同步点上阻塞，直到该同步点的阶段的
+阶段完成步骤的执行。
+
+[enter:note]
+[:en] If [`arrival] is associated with the synchronization point for a previous
+phase, the call returns immediately.
+[:zh_CN] 若 [`arrival] 与前一个阶段的同步点相关联，则调用立即返回。
+[exit:note]
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+[exit:description]
+
+[%@library arrive_and_wait[!barrier]]
+[%@library barrier[!arrive_and_wait]]
+[codeblock:declaration]
+void arrive_and_wait();
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`wait(arrive())].
+[:zh_CN] 等价于：[`wait(arrive())]。
+[exit:description]
+
+[%@library arrive_and_drop[!barrier]]
+[%@library barrier[!arrive_and_drop]]
+[codeblock:declaration]
+void arrive_and_drop();
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] The expected count for the current barrier phase is greater than zero.
+[:zh_CN] 当前关卡阶段的预期计数大于零。
+
+[para:effects]
+[:en] Decrements the initial expected count for all subsequent phases by one.
+[:zh_CN] 对所有候选阶段的初始预期计数减一。
+
+[:en] Then decrements the expected count for the current phase by one.
+[:zh_CN] 然后对当前阶段的预期计数减一。
+
+[para:sync]
+[:en] The call to [`arrive_and_drop] strongly happens before the start of the
+phase completion step for the current phase.
+[:zh_CN] 对 [`arrive_and_drop] 的调用强发生早于当前阶段的阶段完成步骤的开始。
+
+[para:throws]
+[:en] [`system_error] when an exception is required ([#thread.req.exception]).
+[:zh_CN] 当需要时（[#thread.req.exception]）抛出 [`system_error]。
+
+[para:errors]
+[:en] Any of the error conditions allowed for mutex types
+([#thread.mutex.requirements.mutex]).
+[:zh_CN] 允许用于互斥体类型的任何错误条件（[#thread.mutex.requirements.mutex]）。
+
+[para]
+[enter:note]
+[:en] This call can cause the completion step for the current phase to start.
+[:zh_CN] 调用可能导致当前阶段的完成步骤开始执行。
+[exit:note]
+[exit:description]

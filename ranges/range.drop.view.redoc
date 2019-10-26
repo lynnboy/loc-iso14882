@@ -1,0 +1,109 @@
+[section#range.drop.view
+    [:en] Class template [`drop_view]
+    [:zh_CN] 类模板 [`drop_view]
+]
+
+[%@library drop_view]
+[codeblock:synopsis [!:var simple-view]]
+namespace std::ranges {
+  template<view R>
+  class drop_view : public view_interface<drop_view<R>> {
+  public:
+    drop_view() = default;
+    constexpr drop_view(R base, range_difference_t<R> count);
+
+    constexpr R base() const;
+
+    constexpr auto begin()
+      requires (!([*simple-view]<R> && random_access_range<R>));
+    constexpr auto begin() const
+      requires random_access_range<const R>;
+
+    constexpr auto end()
+      requires (![*simple-view]<R>)
+    { return ranges::end(base_); }
+
+    constexpr auto end() const
+      requires range<const R>
+    { return ranges::end(base_); }
+
+    constexpr auto size()
+      requires sized_range<R>
+    {
+      const auto s = ranges::size(base_);
+      const auto c = static_cast<decltype(s)>(count_);
+      return s < c ? 0 : s - c;
+    }
+
+    constexpr auto size() const
+      requires sized_range<const R>
+    {
+      const auto s = ranges::size(base_);
+      const auto c = static_cast<decltype(s)>(count_);
+      return s < c ? 0 : s - c;
+    }
+  private:
+    R base_;                                    // [=Expos]
+    range_difference_t<R> count_;               // [=Expos]
+  };
+
+  template<class R>
+    drop_view(R&&, range_difference_t<R>) -> drop_view<all_view<R>>;
+}
+[codeblock:end]
+
+[%@library drop_view[![:en]constructor[:zh_CN]构造函数]]
+[codeblock:declaration]
+constexpr drop_view(R base, range_difference_t<R> count);
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`count >= 0] is [`true].
+[:zh_CN] [`count >= 0] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [`base_] with [`std::move(base)] and [`count_] with [`count].
+[:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`count] 初始化 [`count_]。
+[exit:description]
+
+[%@library base[!drop_view]]
+[%@library drop_view[!base]]
+[codeblock:declaration]
+constexpr V base() const;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Equivalent to: [`return base_;]
+[:zh_CN] 等价于：[`return base_;]
+[exit:description]
+
+[%@library begin[!drop_view]]
+[%@library drop_view[!begin]]
+[codeblock:declaration]
+constexpr auto begin()
+  requires (!([*simple-view]<R> && random_access_range<R>));
+constexpr auto begin() const
+  requires random_access_range<const R>;
+[codeblock:end]
+
+[enter:description]
+[para:returns]
+[:en] [`ranges::next(ranges::begin(base_), count_, ranges::end(base_))].
+[:zh_CN] [`ranges::next(ranges::begin(base_), count_, ranges::end(base_))]。
+
+[para:remarks]
+[:en] In order to provide the amortized constant-time complexity required by the
+[`range] concept, the first overload caches the result within the [`drop_view]
+for use on subsequent calls.
+[:zh_CN] 为了提供由 [`range] 概念所要求的均摊常量时间复杂度，第一个重载在
+[`drop_view] 中将其结果进行缓存以在后续的调用中使用。
+
+[enter:note]
+[:en] Without this, applying a [`reverse_view] over a [`drop_view] would have
+quadratic iteration complexity.
+[:zh_CN] 不这样的话，在 [`drop_view] 上运用 [`reverse_view] 将具有平方级的循环
+复杂度。
+[exit:note]
+[exit:description]

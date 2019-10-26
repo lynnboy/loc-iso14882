@@ -3,30 +3,38 @@
     [:zh_CN] 视图
 ]
 
+[%@library view]
+[codeblock:declaration]
+template<class T>
+  concept view =
+    range<T> && semiregular<T> && enable_view<T>;
+[codeblock:end]
+
+[enter:description]
 [para]
-[:en] The [`View] concept specifies the requirements of a [`Range] type that has
+[:en] The [`view] concept specifies the requirements of a [`range] type that has
 constant time copy, move, and assignment operators; that is, the cost of these
-operations is not proportional to the number of elements in the [`View].
-[:zh_CN] [`View] 概念对 [`Range] 类型指定了规定，其具有常量时间的复制、移动和
-复制运算符；就是说，这些操作的成本不正比于 [`View] 中的元素的数量。
+operations is not proportional to the number of elements in the [`view].
+[:zh_CN] [`view] 概念对 [`range] 类型指定了规定，其具有常量时间的复制、移动和
+复制运算符；就是说，这些操作的成本不正比于 [`view] 中的元素的数量。
 
 [para]
 [enter:example]
-[:en] Examples of [`View]s are:
-[:zh_CN] [`View] 的例子包括：
+[:en] Examples of [`view]s are:
+[:zh_CN] [`view] 的例子包括：
 
 [list]
 [item]
-[:en] A [`Range] type that wraps a pair of iterators.
-[:zh_CN] 包装一对迭代器的 [`Range] 类型。
+[:en] A [`range] type that wraps a pair of iterators.
+[:zh_CN] 包装一对迭代器的 [`range] 类型。
 [item]
-[:en] A [`Range] type that holds its elements by [`shared_ptr] and shares
+[:en] A [`range] type that holds its elements by [`shared_ptr] and shares
 ownership with all its copies.
 [:zh_CN] 通过 [`shared_ptr] 持有其各个元素并与它的所有其他副本共享所有权的
-[`Range] 类型。
+[`range] 类型。
 [item]
-[:en] A [`Range] type that generates its elements on demand.
-[:zh_CN] 按需生成元素的 [`Range] 类型。
+[:en] A [`range] type that generates its elements on demand.
+[:zh_CN] 按需生成元素的 [`range] 类型。
 [list:end]
 
 [:en] Most containers ([#containers]) are not views since copying the container
@@ -34,33 +42,29 @@ copies the elements, which cannot be done in constant time.
 [:zh_CN] 大多数容器（[#containers]）都不是视图，因为容器的复制都要复制其元素，而
 这无法在常量时间内完成。
 [exit:example]
+[exit:description]
+
+[para]
+[:en] Since the difference between [`range] and [`view] is largely semantic, the
+two are differentiated with the help of [`enable_view].
+[:zh_CN] 由于 [`range] 和 [`view] 之间的差别很大程度上是语义上的，所以借助
+[`enable_view] 来区分二者。
 
 [%@librry enable_view]
-[%@librry View]
 [codeblock:declaration]
 template<class T>
   inline constexpr bool enable_view = [=SeeBelow];
-
-template<class T>
-  concept View =
-    Range<T> && Semiregular<T> && enable_view<T>;
 [codeblock:end]
 
 [enter:description]
-[para]
-[:en] Since the difference between [`Range] and [`View] is largely semantic, the
-two are differentiated with the help of [`enable_view].
-[:zh_CN] 由于 [`Range] 和 [`View] 之间的差别很大程度上是语义上的，所以借助
-[`enable_view] 来区分二者。
-
-[para]
+[para:remarks]
 [:en] For a type [`T], the default value of [`enable_view<T>] is:
 [:zh_CN] 对于类型 [`T]，[`enable_view<T>] 的默认值为：
 
 [list]
 [item]
-[:en] If [`DerivedFrom<T, view_base>] is [`true], [`true].
-[:zh_CN] 当 [`DerivedFrom<T, view_base>] 为 [`true] 时为 [`true]。
+[:en] If [`derived_from<T, view_base>] is [`true], [`true].
+[:zh_CN] 当 [`derived_from<T, view_base>] 为 [`true] 时为 [`true]。
 
 [item]
 [:en] Otherwise, if [`T] is a specialization of class template
@@ -73,12 +77,12 @@ two are differentiated with the help of [`enable_view].
 （[#re.results]）的特例时，为 [`false]。
 
 [item]
-[:en] Otherwise, if both [`T] and [`const T] model [`Range] and
-[`iter_reference_t<iterator_t<T>>] is not the same type as
-[`iter_reference_t<iterator_t<const T>>], [`false].
-[:zh_CN] 否则，如果 [`T] 和 [`const T] 都构成 [`Range] 并且
-[`iter_reference_t<iterator_t<T>>] 与 [`iter_reference_t<iterator_t<const T>>]
-并非相同类型，则为 [`false]。
+[:en] Otherwise, if both [`T] and [`const T] model [`range] and
+[`range_reference_tT>] is not the same type as [`range_reference_t<const T>],
+[`false].
+[:zh_CN] 否则，如果 [`T] 和 [`const T] 都构成 [`range] 并且
+[`range_reference_t<T>] 与 [`range_reference_t<const T>] 并非相同类型，则为
+[`false]。
 
 [enter:note]
 [:en] Deep [`const]-ness implies element ownership, whereas shallow
@@ -93,7 +97,14 @@ two are differentiated with the help of [`enable_view].
 
 [para]
 [:en] Pursuant to [#namespace.std], users may specialize [`enable_view] to
-[`true] for types which model [`View], and [`false] for types which do not.
-[:zh_CN] 根据 [#namespace.std]，用户可以为构成 [`View] 的类型将 [`enable_view]
-特化为 [`true]，而为并非如此的类型特化为 [`false]。
+[`true] for cv-unqualified program-defined types which model [`view], and
+[`false] for types which do not.
+[:zh_CN] 根据 [#namespace.std]，用户可以针对 cv 未限定的程序定义类型中构成
+[`view] 的类型将 [`enable_view] 特化为 [`true]，而为并非如此的类型特化为
+[`false]。
+
+[:en] Such specializations shall be usable in constant expressions ([#expr.const])
+and have type [`const bool].
+[:zh_CN] 这些特化式应当可以在常量表达式（[#expr.const]）中使用，并具有类型
+[`const bool]。
 [exit:note]

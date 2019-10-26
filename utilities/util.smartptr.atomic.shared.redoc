@@ -28,6 +28,10 @@ namespace std {
     bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
                                  memory_order order = memory_order::seq_cst) noexcept;
 
+    void wait(shared_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
+    void notify_one() noexcept;
+    void notify_all() noexcept;
+
     constexpr atomic() noexcept = default;
     atomic(shared_ptr<T> desired) noexcept;
     atomic(const atomic&) = delete;
@@ -281,4 +285,79 @@ and a value of [`memory_order::release] shall be replaced by the value
 [:zh_CN@~] 其中 [`fail_order] 与 [`order] 相同，但 [`memory_order::acq_rel] 值
 应当被替换为 [`memory_order::acquire] 值，且 [`memory_order::release] 值应当被
 替换为 [`memory_order::relaxed] 值。
+[exit:description]
+
+[%@library wait[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!wait]]
+[codeblock:declaration]
+void wait(shared_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:expects]
+[:en] [`order] is neither [`memory_order::release] nor [`memory_order::acq_rel].
+[:zh_CN] [`order] 既不是 [`memory_order::release] 也不是 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Repeatedly performs the following steps, in order:
+[:zh_CN] 重复地依序实施以下步骤：
+
+[list]
+[item]
+[:en] Evaluates [`load(order)] and compares it to [`old].
+[:zh_CN] 求值 [`load(order)] 并将之与 [`old] 比较。
+[item]
+[:en] If the two are not equivalent, returns.
+[:zh_CN] 若二者不等价，则返回。
+[item]
+[:en] Blocks until it is unblocked by an atomic notifying operation or is
+unblocked spuriously.
+[:zh_CN] 阻塞直到其被某个原子性通知操作解除阻塞，或假性解除阻塞。
+[list:end]
+
+[para:remarks]
+[:en] Two [`shared_ptr] objects are equivalent if they store the same pointer
+and either share ownership or are both empty.
+[:zh_CN] 两个 [`shared_ptr] 对象，当它们存储相同指针，且要么共享所有权要么都为空
+时，二者等价。
+
+[:en] This function is an atomic waiting operation ([#atomics.wait]).
+[:zh_CN] 本函数是原子性等待操作（[#atomics.wait]）。
+[exit:description]
+
+[%@library notify_one[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!notify_one]]
+[codeblock:declaration]
+void notify_one() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Unblocks the execution of at least one atomic waiting operation that is
+eligible to be unblocked ([#atomics.wait]) by this call, if any such atomic
+waiting operations exist.
+[:zh_CN] 对至少一个有资格被这次调用解除阻塞的原子性等待操作（[#atomics.wait]）的
+执行解除阻塞（若有任何这种原子性等待操作存在）。
+
+[para:remarks]
+[:en] This function is an atomic notifying operation ([#atomics.wait]).
+[:zh_CN] 本函数是原子性通知操作（[#atomics.wait]）。
+[exit:description]
+
+[%@library notify_all[!atomic<shared_ptr<T>>]]
+[%@library atomic<shared_ptr<T>>[!notify_all]]
+[codeblock:declaration]
+void notify_all() noexcept;
+[codeblock:end]
+
+[enter:description]
+[para:effects]
+[:en] Unblocks the execution of all atomic waiting operations that are eligible
+to be unblocked ([#atomics.wait]) by this call.
+[:zh_CN] 对所有有资格被这次调用解除阻塞的原子性等待操作（[#atomics.wait]）的执行
+解除阻塞。
+
+[para:remarks]
+[:en] This function is an atomic notifying operation ([#atomics.wait]).
+[:zh_CN] 本函数是原子性通知操作（[#atomics.wait]）。
 [exit:description]

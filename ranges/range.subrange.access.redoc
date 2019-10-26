@@ -38,7 +38,7 @@ constexpr bool empty() const;
 
 [%@library size[!subrange]]
 [codeblock:declaration]
-constexpr iter_difference_t<I> size() const
+constexpr [*make-unsigned-like-t](iter_difference_t<I>) size() const
   requires (K == subrange_kind::sized);
 [codeblock:end]
 
@@ -49,8 +49,8 @@ constexpr iter_difference_t<I> size() const
 [:en] If [`StoreSize] is [`true], equivalent to: [`return size_;]
 [:zh_CN] 当 [`StoreSize] 为 [`true] 时，等价于：[`return size_;]
 [item]
-[:en] Otherwise, equivalent to: [`return end_ - begin_;]
-[:zh_CN] 否则，等价于：[`return end_ - begin_;]
+[:en] Otherwise, equivalent to: [`return [*make-unsigned-like](end_ - begin_);]
+[:zh_CN] 否则，等价于：[`return [*make-unsigned-like](end_ - begin_);]
 [list:end]
 [exit:description]
 
@@ -68,12 +68,17 @@ auto tmp = *this;
 tmp.advance(n);
 return tmp;
 [codeblock:end]
+
+[enter:note]
+[:en] If [`I] does not model [`forward_iterator], [`next] can invalidate [`*this].
+[:zh_CN] 若 [`I] 并不构成 [`forward_iterator]，则 [`next] 将使 [`*this] 失效。
+[exit:note]
 [exit:description]
 
 [%@library prev[!subrange]]
 [codeblock:declaration]
 [[nodiscard]] constexpr subrange prev(iter_difference_t<I> n = 1) const
-  requires BidirectionalIterator<I>;
+  requires bidirectional_iterator<I>;
 [codeblock:end]
 
 [enter:description]
@@ -101,7 +106,11 @@ constexpr subrange& advance(iter_difference_t<I> n);
 [:en] If [`StoreSize] is [`true],
 [:zh_CN] 当 [`StoreSize] 为 [`true] 时，为
 [codeblock:notation]
-size_ -= n - ranges::advance(begin_, n, end_);
+auto d = n - ranges::advance(begin_, n, end_);
+if (d >= 0)
+  size_ -= [*make-unsigned-like](d);
+else
+  size_ += [*make-unsigned-like](-d);
 return *this;
 [codeblock:end]
 
