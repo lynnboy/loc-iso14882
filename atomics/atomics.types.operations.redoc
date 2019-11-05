@@ -20,6 +20,35 @@ operations to volatile objects.
 [:zh_CN] 它并不意味着对非 [`volatile] 对象的操作会变为 [`volatile] 的。
 [exit:note]
 
+[%@library ATOMIC_VAR_INIT]
+[codeblock:declaration [!:mark SeeBelow] ]
+#define ATOMIC_VAR_INIT(value) [=SeeBelow]
+[codeblock:end]
+
+[enter:description]
+[para]
+[:en] The macro expands to a token sequence suitable for constant initialization
+of an atomic variable of static storage duration of a type that is
+initialization-compatible with [`value].
+[:zh_CN] 该宏所展开的标记序列，适用于对原子性变量的常量初始化，该变量具有静态
+存储期且具有与 [`value] 初始化兼容的类型。
+
+[enter:note]
+[:en] This operation may need to initialize locks.
+[:zh_CN] 这个操作可能需要初始化一些锁。
+[exit:note]
+
+[:en] Concurrent access to the variable being initialized, even via an atomic
+operation, constitutes a data race.
+[:zh_CN] 对正在初始化的变量进行并发访问，即便是通过原子性操作，也构成数据竞争。
+
+[enter:example]
+[codeblock]
+atomic<int> v = ATOMIC_VAR_INIT(5);
+[codeblock:end]
+[exit:example]
+[exit:description]
+
 [%@library atomic[![:en]constructor[:zh_CN]构造函数]]
 [%@library atomic<T*>[![:en]constructor[:zh_CN]构造函数]]
 [%@library atomic<[*integral]>[![:en]constructor[:zh_CN]构造函数]]
@@ -68,34 +97,6 @@ receiving thread.
 [:en] This results in undefined behavior.
 [:zh_CN] 这将导致未定义的行为。
 [exit:note]
-[exit:description]
-
-[%@library ATOMIC_VAR_INIT]
-[codeblock:declaration [!:mark SeeBelow] ]
-#define ATOMIC_VAR_INIT(value) [=SeeBelow]
-[codeblock:end]
-
-[enter:description]
-[para]
-[:en] The macro expands to a token sequence suitable for constant initialization
-of an atomic variable of static storage duration of a type that is
-initialization-compatible with [`value].
-[:zh_CN] 该宏所展开的标记序列，适用于对原子性变量的常量初始化，该变量具有静态
-存储期且具有与 [`value] 初始化兼容的类型。
-
-[enter:note]
-[:en] This operation may need to initialize locks.
-[:zh_CN] 这个操作可能需要初始化一些锁。
-
-[:en] Concurrent access to the variable being initialized, even via an atomic
-operation, constitutes a data race.
-[:zh_CN] 对正在初始化的变量进行并发访问，即便是通过原子性操作，也构成数据竞争。
-
-[enter:example]
-[codeblock]
-atomic<int> v = ATOMIC_VAR_INIT(5);
-[codeblock:end]
-[exit:example]
 [exit:description]
 
 [%@library is_always_lock_free[!atomic]]
@@ -425,10 +426,10 @@ introduce a data race in the following code:
 
 [codeblock]
 do {
-  p->next = head; // [:en] make new list node point to the current head
-                  // [|:zh_CN] 制造指向当前头部的新列表节点
-} while (!head.compare_exchange_weak(p->next, p)); // [:en] try to insert
-                                                   // [|:zh_CN] 尝试插入
+  p->next = head;                                   // [:en] make new list node point to the current head
+                                                    // [|:zh_CN] 制造指向当前头部的新列表节点
+} while (!head.compare_exchange_weak(p->next, p));  // [:en] try to insert
+                                                    // [|:zh_CN] 尝试插入
 [codeblock:end]
 [exit:example]
 
@@ -531,8 +532,8 @@ do not participate in the value representation of the active member.
 [codeblock]
 union pony {
   double celestia = 0.;
-  short luna; // [:en] padded
-              // [|:zh_CN] 有填充
+  short luna;       // [:en] padded
+                    // [|:zh_CN] 有填充
 };
 atomic<pony> princesses = ATOMIC_VAR_INIT({});
 

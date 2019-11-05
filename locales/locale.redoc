@@ -97,11 +97,12 @@ basic_ostream<charT, traits>&
 operator<< (basic_ostream<charT, traits>& s, Date d) {
   typename basic_ostream<charT, traits>::sentry cerberos(s);
   if (cerberos) {
-    ios_base::iostate err = ios_base::iostate::goodbit;
     tm tmbuf; d.extract(tmbuf);
-    use_facet<time_put<charT, ostreambuf_iterator<charT, traits>>>(
-      s.getloc()).put(s, s, s.fill(), err, &tmbuf, 'x');
-    s.setstate(err);            // [:en] might throw
+    bool failed =
+      use_facet<time_put<charT, ostreambuf_iterator<charT, traits>>>(
+        s.getloc()).put(s, s, s.fill(), &tmbuf, 'x').failed();
+    if (failed)
+      s.setstate(s.badbit);     // [:en] might throw
                                 // [|:zh_CN] 可能会抛出异常
   }
   return s;

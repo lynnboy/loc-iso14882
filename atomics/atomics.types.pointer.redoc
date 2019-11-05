@@ -9,17 +9,28 @@ namespace std {
   template<class T> struct atomic<T*> {
     using value_type = T*;
     using difference_type = ptrdiff_t;
+
     static constexpr bool is_always_lock_free = [%@impdef [:en] whether a given
 [`atomic] type[=']s operations are always lock free [:zh_CN] 给定 [`atomic] 类型
 的操作是否总是无锁的][=ImpDef];
     bool is_lock_free() const volatile noexcept;
     bool is_lock_free() const noexcept;
+
+    atomic() noexcept = default;
+    constexpr atomic(T*) noexcept;
+    atomic(const atomic&) = delete;
+    atomic& operator=(const atomic&) = delete;
+    atomic& operator=(const atomic&) volatile = delete;
+
     void store(T*, memory_order = memory_order::seq_cst) volatile noexcept;
     void store(T*, memory_order = memory_order::seq_cst) noexcept;
+    T* operator=(T*) volatile noexcept;
+    T* operator=(T*) noexcept;
     T* load(memory_order = memory_order::seq_cst) const volatile noexcept;
     T* load(memory_order = memory_order::seq_cst) const noexcept;
     operator T*() const volatile noexcept;
     operator T*() const noexcept;
+
     T* exchange(T*, memory_order = memory_order::seq_cst) volatile noexcept;
     T* exchange(T*, memory_order = memory_order::seq_cst) noexcept;
     bool compare_exchange_weak(T*&, T*, memory_order, memory_order) volatile noexcept;
@@ -40,21 +51,6 @@ namespace std {
     T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) volatile noexcept;
     T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
 
-    void wait(T*, memory_order = memory_order::seq_cst) const volatile noexcept;
-    void wait(T*, memory_order = memory_order::seq_cst) const noexcept;
-    void notify_one() volatile noexcept;
-    void notify_one() noexcept;
-    void notify_all() volatile noexcept;
-    void notify_all() noexcept;
-
-    atomic() noexcept = default;
-    constexpr atomic(T*) noexcept;
-    atomic(const atomic&) = delete;
-    atomic& operator=(const atomic&) = delete;
-    atomic& operator=(const atomic&) volatile = delete;
-    T* operator=(T*) volatile noexcept;
-    T* operator=(T*) noexcept;
-
     T* operator++(int) volatile noexcept;
     T* operator++(int) noexcept;
     T* operator--(int) volatile noexcept;
@@ -67,6 +63,13 @@ namespace std {
     T* operator+=(ptrdiff_t) noexcept;
     T* operator-=(ptrdiff_t) volatile noexcept;
     T* operator-=(ptrdiff_t) noexcept;
+
+    void wait(T*, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(T*, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
   };
 }
 [codeblock:end]
