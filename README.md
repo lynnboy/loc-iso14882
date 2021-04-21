@@ -184,7 +184,7 @@ decltype specifier                      decltype 说明符
 decode                                  解码
 decrement operator                      减量运算符
 deduce                                  推断
-deduction guide                         推断指导
+deduction guide                         推断导引
 default argument                        默认实参
 default argument promotion              默认实参提升
 default constructor                     默认构造函数
