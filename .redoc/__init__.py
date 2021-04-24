@@ -113,7 +113,8 @@ def tcode(_1:str): return f"[.texttt {_1}]"    # TODO: highlighting
 def term(_1:str): return f"[.textit {_1}]"
 def gterm(_1:str): return f"[.textit {_1}]"
 def keyword(_1:str): return tcode(_1) + indextext(idxcode(_1))
-def grammarterm(_1:str): return indexgram(idxgram(_1)) + gterm(_1)
+def grammarterm(_1:str):
+    return indexgram(idxgram(_1)) + gterm(_1) if not incodeblock() else gterm(_1)
 def regrammarterm(_1:str): return gterm(_1)
 def placeholder(_1:str): return f"[.textit {_1}]"    # TODO: highlighting
 def exposid(_1:str): return tcode(placeholder(_1))
@@ -257,3 +258,79 @@ def cvqual(_1:str): return f"[.textit {_1}]"
 def cv(): return "\mathit{cv}" if mathmode() else cvqual('cv')
 def numconst(_1:str): return f"[.textsl {_1}]"
 def logop(_1:str): return f"[.footnotesize {_1}]"
+
+class Context: pass
+class ParserBase: pass
+
+def within(*x):pass
+def at(*x):pass
+
+def section(ctx:Context): pass
+def document(ctx:Context):
+    def attribute(ctx:Context): pass
+    ctx.expects({
+        'attribute': attribute,
+    })
+def include(): pass
+block = {
+    'section': section,
+    'document': document,
+    'include': include,
+}
+def langtag(): pass
+def inlinecode(): pass
+def index(): pass
+def subindex(): pass
+def setkey(): pass
+def see(): pass
+def ref(): pass
+def macro(): pass
+def placeholder(): pass
+def definition(): pass
+def quote(): pass
+def exposid(): pass
+def math(): pass
+def markup(): pass
+def grammarterm(): pass
+def exposid(): pass
+def comment(): pass
+def syntext_alt(): pass
+def table_cell(): pass
+def table_row(): pass
+
+def table(): pass
+def syntax(): pass
+def rule(): pass
+inline = {
+    ':': langtag,
+    '`': inlinecode,
+    '%': see if at(index) else None,
+    '#': ref,
+    '=': macro,
+    '^': placeholder,
+    '+': definition,
+    '*': exposid,
+    '$': math,
+    '.': markup,
+    '"': None, # quote
+    '@': setkey if at(index, subindex) else None,
+    '~': grammarterm,
+    '!': subindex if at(index, subindex, see) else None,
+    '&': None,
+    '*': exposid,
+    '-': table_row if within(table) else None,
+    '/': comment,
+    '|': table_coll if within(table) else syntax_alt if within(rule) else None,
+    '?': None,
+    '\\': None,
+    '<': None,
+    '>': None,
+    ';': None,
+    "'": None,
+    '{': None,
+    '}': None,
+    '_': None,
+}
+class Parser(ParserBase):
+
+    def handle(self): pass
