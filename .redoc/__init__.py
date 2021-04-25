@@ -81,32 +81,32 @@ def customlabel(instruction, args, refid, content, context):
 @applyTo(['%'])
 def indextext(_1):
     return index[generalindex].add(_1)
-@applyTo(['%:lib@raw'])
+@applyTo(['%@lib@raw'])
 def indexlibrary(_1):
     return index[libraryindex].add(_1)
-@applyTo(['%:hdr'])
+@applyTo(['%@hdr'])
 def indexhdr(_1):
     return index[generalindex].add(idxhdr(_1)) + index[headerindex].add(idxhdr(_1))
-@applyTo(['%:concept'])
+@applyTo(['%@concept'])
 def indexconcept(_1):
     return index[conceptindex].add(_1)
-@applyTo(['%:gram'])
+@applyTo(['%@gram'])
 def indexgram(_1):
     return index[grammarindex].add(_1)
-#@applyTo(['%:impldef'])
+#@applyTo(['%@impldef'])
 def indeximpldef(_1):
     return index[impldefindex].add(_1, order = text(_1))
-@applyTo(['%:defn'])
+@applyTo(['%@defn'])
 def indexdefn(_1): return indextext(_1)
 def idxbfpage(_1): return f"[.textbf {_1}]"
-@applyTo(['%:grammar'])
+@applyTo(['%@grammar'])
 def indexgrammar(_1):
     return indextext(_1) + indexgram(_1, styler = idxbfpage)
 
-@applyTo(['%:impldef'])
+@applyTo(['%@impldef'])
 def impldef(_1):
     return indeximpldef(_1) #+ text("implementation-defined")
-@applyTo(['%:impldef@raw'])
+@applyTo(['%@impldef@raw'])
 def impldefplain(_1):
     return index[impldefindex].add(_1) #+ text("implementation-defined")
 
@@ -120,16 +120,16 @@ def idxterm(_:str): return {key: _1, text: term(_1)}
 def idxxname(_:str): return {key: f"__{_1}", text: xname(_1)}
 
 # library index entries
-@applyTo(['%:lib'])
+@applyTo(['%@lib'])
 def indexlibraryglobal(_1:str): return indexlibrary(idxcode(_1))
-@applyTo(['%:lib@ctor'])
+@applyTo(['%@lib@ctor'])
 def indexlibraryctor(_1:str): return indexlibrary(idxcode(_1), sub = text("constructor"))
-@applyTo(['%:lib@dtor'])
+@applyTo(['%@lib@dtor'])
 def indexlibrarydtor(_1:str): return indexlibrary(idxcode(_1), sub = text("destructor"))
-@applyTo(['%:lib@member'])
+@applyTo(['%@lib@member'])
 def indexlibrarymember(_1:str, _2:str):
     return indexlibrary(idxcode(_1), sub=idxcode(_2)) + indexlibrary(idxcode(_2), sub=idxcode(_1))
-@applyTo(['%:lib@zombie'])
+@applyTo(['%@lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
 
 @within(['codeblock'])
@@ -142,7 +142,7 @@ def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
 # index for library headers
 @applyTo(['?libheader'])
 def libheader(_1:str): return indexhdr(_1) + tcode(f"<{_1}>")
-@applyTo(['%:hdr@def'])
+@applyTo(['%@hdr@def'])
 def indexheader(_1:str): return indextext(idxhdr(_1)) + index[headerindex].add(idxhdr(_1), styler=idxbfpage)
 @applyTo(['?libheader@def'])
 def libheaderdef(_1:str): return indexheader(_1) + tcode(f"<{_1}>")
