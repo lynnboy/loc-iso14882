@@ -50,32 +50,63 @@ glossary = {
 # \rSecindex{general}{#1}
 # \rSecindex{library}{#1}
 
-def ref(_1):
+@applyTo(['#', '#:tab', '#:fig', '#:note'])
+def ref(instruction, args, refid, content, context):
     return '__link__0'
 
-def addxref(_1):
-    return glossary[xrefindex].add({key: _1, description: f'({ref(_1)})'})
+@applyTo(['section', 'section:chapter', 'section:annex', 'section:def'])
+def addxref(instruction, args, refid, content, context):
+    return glossary[xrefindex].add({key: refid, description: f'({ref(refid)})'})
+
+@applyTo(['section', 'section:chapter', 'section:annex', 'section:def'])
+def customlabel(instruction, args, refid, content, context):
+    seqNode = '.'.join(context.nestSeq(instruction))
+    seqNo = context.seqNo(instruction)
+    secChar = chr(ord('A'))
+    if instruction == 'section:chapter': reflabel = text(f"Clause {seqNo}")
+    elif instruction == 'section:annex': reflabel = text(f"Annex {secChar}")
+    else: reflabel = seqNode
+    elif instruction == 'section:annex':
+        label = secNumberStyle(text(f"Annex {secChar}"))
+        if len(args) > 0: label += f' {text(f'({args[0]})')}'
+        label += br() + content
+    else: label = content
+    labelrow = headerStyleAtLevel(level = context.nestLevel('section'), contents = [
+        f"{secNumberStyle(seqNode)} {content}",
+        pushRight(tagStyle(f'[=`[]{refid}[=`]]'))
+    ]):
+    return labelrow
 
 # locations
+@applyTo(['%'])
 def indextext(_1):
     return index[generalindex].add(_1)
+@applyTo(['%:lib@raw'])
 def indexlibrary(_1):
     return index[libraryindex].add(_1)
+@applyTo(['%:hdr'])
 def indexhdr(_1):
     return index[generalindex].add(idxhdr(_1)) + index[headerindex].add(idxhdr(_1))
+@applyTo(['%:concept'])
 def indexconcept(_1):
     return index[conceptindex].add(_1)
+@applyTo(['%:gram'])
 def indexgram(_1):
     return index[grammarindex].add(_1)
+#@applyTo(['%:impldef'])
 def indeximpldef(_1):
     return index[impldefindex].add(_1, order = text(_1))
+@applyTo(['%:defn'])
 def indexdefn(_1): return indextext(_1)
 def idxbfpage(_1): return f"[.textbf {_1}]"
+@applyTo(['%:grammar'])
 def indexgrammar(_1):
     return indextext(_1) + indexgram(_1, styler = idxbfpage)
 
+@applyTo(['%:impldef'])
 def impldef(_1):
     return indeximpldef(_1) #+ text("implementation-defined")
+@applyTo(['%:impldef@raw'])
 def impldefplain(_1):
     return index[impldefindex].add(_1) #+ text("implementation-defined")
 
@@ -89,44 +120,76 @@ def idxterm(_:str): return {key: _1, text: term(_1)}
 def idxxname(_:str): return {key: f"__{_1}", text: xname(_1)}
 
 # library index entries
+@applyTo(['%:lib'])
 def indexlibraryglobal(_1:str): return indexlibrary(idxcode(_1))
+@applyTo(['%:lib@ctor'])
 def indexlibraryctor(_1:str): return indexlibrary(idxcode(_1), sub = text("constructor"))
+@applyTo(['%:lib@dtor'])
 def indexlibrarydtor(_1:str): return indexlibrary(idxcode(_1), sub = text("destructor"))
+@applyTo(['%:lib@member'])
 def indexlibrarymember(_1:str, _2:str):
     return indexlibrary(idxcode(_1), sub=idxcode(_2)) + indexlibrary(idxcode(_2), sub=idxcode(_1))
+@applyTo(['%:lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
 
+@within(['codeblock'])
+@applyTo(['?libglobal'])
 def libglobal(_1:str): return indexlibraryglobal(_1) + _1
+@within(['codeblock'])
+@applyTo(['?libmember'])
 def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
 
 # index for library headers
+@applyTo(['?libheader'])
 def libheader(_1:str): return indexhdr(_1) + tcode(f"<{_1}>")
+@applyTo(['%:hdr@def'])
 def indexheader(_1:str): return indextext(idxhdr(_1)) + index[headerindex].add(idxhdr(_1), styler=idxbfpage)
+@applyTo(['?libheader@def'])
 def libheaderdef(_1:str): return indexheader(_1) + tcode(f"<{_1}>")
+@applyTo(['?libheader@no'])
 def libnoheader(_1:str): return indextext(idxhdr(_1), sub=text("absence thereof")) + tcode(f"<{_1}>")
-def libheaderrefx(_1:str, _2:str): return libheader(_1) + iref(_2)
+@applyTo(['?libheaderref#{refid}'])
+def libheaderrefx(_1:str, refid:str): return libheader(_1) + iref(refid)
+@applyTo(['?libheaderref'])
 def libheaderref(_1:str): return libheaderrefx(_1, f"{_1}.syn")
+@applyTo(['?libheaderref@depr'])
 def libdeprheaderref(_1:str): return libheaderrefx(_1, f"depr.{_1}.syn")
 
 # code and definitions embedded in text.
+@applyTo(['`'])
 def tcode(_1:str): return f"[.texttt {_1}]"    # TODO: highlighting
+@applyTo(['+:%'])
 def term(_1:str): return f"[.textit {_1}]"
+@within(['%', '% !', 'codeblock'])
+@applyTo(['~'])
 def gterm(_1:str): return f"[.textit {_1}]"
+@applyTo(['~:fake', '~:loc', '~:fmt'])
+def fakegrammarterm(_1:str): return gterm(_1)
+@applyTo(['`:key'])
 def keyword(_1:str): return tcode(_1) + indextext(idxcode(_1))
-def grammarterm(_1:str):
-    return indexgram(idxgram(_1)) + gterm(_1) if not incodeblock() else gterm(_1)
+@applyTo(['~'])
+def grammarterm(_1:str): return indexgram(idxgram(_1)) + gterm(_1) #if not within('codeblock') else gterm(_1)
+@applyTo(['~:re'])
 def regrammarterm(_1:str): return gterm(_1)
+@applyTo(['^'])
 def placeholder(_1:str): return f"[.textit {_1}]"    # TODO: highlighting
+@applyTo(['*'])
 def exposid(_1:str): return tcode(placeholder(_1))
+@applyTo(['?defnxname'])
 def defnxname(_1:str): return indextext(idxxname(_1)) + xname(_1)
+@applyTo(['?defnlibxname'])
 def defnlibxname(_1:str): return indexlibrary(idxxname(_1)) + xname(_1)
 
+@applyTo(['+'])
 def defn(_1:str): return defnx(_1, _1)
+@applyTo(['+ %'])
 def defnx(_1:str, _2:str): return indexdefn(_2) + f"[.textit {_1}]"
+@applyTo(['+:adj %!'])
 def defnadj(_1:str, _2:str):        # TODO: multilang
     return indextext(f"{_1} {_2}", see={key:_2, sub:{key:_1}})
         + indexdefn(_2, sub=_1) + f"[.textit {_1} {_2}]"
 
+@applyTo('br')
 def brk(): return '[=newline]'
 def Cpp(): return 'C++'
 def CppIII(): return Cpp() + ' 2003'
