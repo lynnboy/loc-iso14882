@@ -93,7 +93,7 @@ def indexconcept(_1):
 @applyTo(['%@gram'])
 def indexgram(_1):
     return index[grammarindex].add(_1)
-#@applyTo(['%@impldef'])
+@applyTo(['%@impldef'])
 def indeximpldef(_1):
     return index[impldefindex].add(_1, order = text(_1))
 @applyTo(['%@defn'])
@@ -103,18 +103,20 @@ def idxbfpage(_1): return f"[.textbf {_1}]"
 def indexgrammar(_1):
     return indextext(_1) + indexgram(_1, styler = idxbfpage)
 
-@applyTo(['%@impldef'])
+@applyTo(['?impldef'])
 def impldef(_1):
-    return indeximpldef(_1) #+ text("implementation-defined")
-@applyTo(['%@impldef@raw'])
+    return indeximpldef(_1) + text("implementation-defined")
+@applyTo(['?impldef@plain'])
 def impldefplain(_1):
-    return index[impldefindex].add(_1) #+ text("implementation-defined")
+    return index[impldefindex].add(_1) + text("implementation-defined")
 
 # appearance
+@applyTo(['`'], at=['%', '% !'])
 def idxcode(_1:str): return {key: _1, text: tcode(_1)}
 def idxconcept(_1:str): return {key: _1, text: tcode(_1)}
 def idxexposconcept(_1:str): return {key: _1, text: tcode(placeholder(_1))}
 def idxhdr(_:str): return {key: _1, text: tcode(f"<{_1}>")}
+@applyTo(['~'], at=['%', '% !'])
 def idxgram(_:str): return {key: _1, text: gterm(_1)}
 def idxterm(_:str): return {key: _1, text: term(_1)}
 def idxxname(_:str): return {key: f"__{_1}", text: xname(_1)}
@@ -132,11 +134,9 @@ def indexlibrarymember(_1:str, _2:str):
 @applyTo(['%@lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
 
-@within(['codeblock'])
-@applyTo(['?libglobal'])
+@applyTo(['?libglobal'], within=['codeblock'])
 def libglobal(_1:str): return indexlibraryglobal(_1) + _1
-@within(['codeblock'])
-@applyTo(['?libmember'])
+@applyTo(['?libmember'], within=['codeblock'])
 def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
 
 # index for library headers
