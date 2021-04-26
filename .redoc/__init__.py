@@ -160,10 +160,9 @@ def libdeprheaderref(_1:str): return libheaderrefx(_1, f"depr.{_1}.syn")
 def tcode(_1:str): return f"[.texttt {_1}]"    # TODO: highlighting
 @applyTo(['+:%'])
 def term(_1:str): return f"[.textit {_1}]"
-@within(['%', '% !', 'codeblock'])
-@applyTo(['~'])
+@applyTo(['~'], within=['%', '% !', 'codeblock'])
 def gterm(_1:str): return f"[.textit {_1}]"
-@applyTo(['~:fake', '~:loc', '~:fmt'])
+@applyTo(['~@fake', '~@loc', '~@fmt'])
 def fakegrammarterm(_1:str): return gterm(_1)
 @applyTo(['`:key'])
 def keyword(_1:str): return tcode(_1) + indextext(idxcode(_1))
