@@ -148,11 +148,11 @@ def indexheader(_1:str): return indextext(idxhdr(_1)) + index[headerindex].add(i
 def libheaderdef(_1:str): return indexheader(_1) + tcode(f"<{_1}>")
 @applyTo(['?libheader@no'])
 def libnoheader(_1:str): return indextext(idxhdr(_1), sub=text("absence thereof")) + tcode(f"<{_1}>")
-@applyTo(['?libheaderref#{refid}'])
+@applyTo(['?libheader@ref#{refid}'])
 def libheaderrefx(_1:str, refid:str): return libheader(_1) + iref(refid)
-@applyTo(['?libheaderref'])
+@applyTo(['?libheader@ref'])
 def libheaderref(_1:str): return libheaderrefx(_1, f"{_1}.syn")
-@applyTo(['?libheaderref@depr'])
+@applyTo(['?libheader@ref@depr'])
 def libdeprheaderref(_1:str): return libheaderrefx(_1, f"depr.{_1}.syn")
 
 # code and definitions embedded in text.
