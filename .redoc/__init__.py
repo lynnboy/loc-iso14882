@@ -164,8 +164,10 @@ def term(_1:str): return f"[.textit {_1}]"
 def gterm(_1:str): return f"[.textit {_1}]"
 @applyTo(['~@fake', '~@loc', '~@fmt'])
 def fakegrammarterm(_1:str): return gterm(_1)
-@applyTo(['`:key'])
+@applyTo(['`:key', '`:defn'])
 def keyword(_1:str): return tcode(_1) + indextext(idxcode(_1))
+@applyTo(['`:defn@lib'])
+def defnlib(_1:str): return tcode(_1) + indexlibrary(idxcode(_1))
 @applyTo(['~'])
 def grammarterm(_1:str): return indexgram(idxgram(_1)) + gterm(_1) #if not within('codeblock') else gterm(_1)
 @applyTo(['~:re'])
@@ -176,7 +178,7 @@ def placeholder(_1:str): return f"[.textit {_1}]"    # TODO: highlighting
 def exposid(_1:str): return tcode(placeholder(_1))
 @applyTo(['?defnxname'])
 def defnxname(_1:str): return indextext(idxxname(_1)) + xname(_1)
-@applyTo(['?defnlibxname'])
+@applyTo(['?defnxname@lib'])
 def defnlibxname(_1:str): return indexlibrary(idxxname(_1)) + xname(_1)
 
 @applyTo(['+'])
