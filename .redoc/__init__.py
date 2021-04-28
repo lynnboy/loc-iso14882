@@ -217,6 +217,7 @@ def note(_1): return noteintro(text('Note')) + _1 + noteoutro(text('note'))
 def example(_1): return noteintro(text('Example')) + _1 + noteoutro(text('example'))
 
 # Library function descriptions
+@applyTo(['?Fundesc'])
 def Fundescx(_1:str): return f"[.textit {_1}]"
 def Fundesc(_1:str): return Fundescx(_1) + ": "
 def required(_1:str): return Fundesc(text('Required behavior'))
