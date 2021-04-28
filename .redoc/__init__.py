@@ -190,8 +190,8 @@ def defnadj(_1:str, _2:str):        # TODO: multilang
     return indextext(f"{_1} {_2}", see={key:_2, sub:{key:_1}})
         + indexdefn(_2, sub=_1) + f"[.textit {_1} {_2}]"
 
-@applyTo('br')
-def brk(): return '[=newline]'
+@applyTo('[=zwsp]')
+def brk(): return '[=zwsp]'
 def Cpp(): return 'C++'
 def CppIII(): return Cpp() + ' 2003'
 def CppXI(): return Cpp() + ' 2011'
