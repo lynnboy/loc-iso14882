@@ -190,7 +190,7 @@ def defnadj(_1:str, _2:str):        # TODO: multilang
     return indextext(f"{_1} {_2}", see={key:_2, sub:{key:_1}})
         + indexdefn(_2, sub=_1) + f"[.textit {_1} {_2}]"
 
-@applyTo('[=zwsp]')
+@applyTo(['?brk'])
 def brk(): return '[=zwsp]'
 def Cpp(): return 'C++'
 def CppIII(): return Cpp() + ' 2003'
@@ -198,7 +198,9 @@ def CppXI(): return Cpp() + ' 2011'
 def CppXIV(): return Cpp() + ' 2014'
 def CppXVII(): return Cpp() + ' 2017'
 def opt(_1:str): return _1 + ensuremath(f"_\mathit{{_{text('opt')}}}")
+@applyTo(['?bigoh'])
 def bigoh(_1:str): return ensuremath(f"\mathscr{{O}}({_1})")
+def O(): return '\mathscr{O}'
 
 # States and operators
 def state(_1:str, _2:str): return tcode(_1) + ensuremath(f"_{{{_2}}}")
