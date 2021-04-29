@@ -259,6 +259,7 @@ def ntmbs(): return NTS('ntmbs')
 def EXPO(_1:str): return f'[.textit {_1}]'
 def expos(): return EXPO(text('exposition only'))
 def impdef(): return EXPO(text('implementation-defined'))
+@applyTo(['?impdefx'])
 def impdefx(_1): return indeximpldef(_1) + EXPO(text('implementation-defined'))
 def notdef(): return EXPO(text('not defined'))
 
