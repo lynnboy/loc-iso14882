@@ -164,9 +164,9 @@ def term(_1:str): return f"[.textit {_1}]"
 def gterm(_1:str): return f"[.textit {_1}]"
 @applyTo(['~@fake', '~@loc', '~@fmt'])
 def fakegrammarterm(_1:str): return gterm(_1)
-@applyTo(['`:key', '`:defn'])
+@applyTo(['`:key', '`@def'])
 def keyword(_1:str): return tcode(_1) + indextext(idxcode(_1))
-@applyTo(['`:defn@lib'])
+@applyTo(['`@def@lib'])
 def defnlib(_1:str): return tcode(_1) + indexlibrary(idxcode(_1))
 @applyTo(['~'])
 def grammarterm(_1:str): return indexgram(idxgram(_1)) + gterm(_1) #if not within('codeblock') else gterm(_1)
@@ -292,11 +292,15 @@ def idxnewoldconcept(_1:str): return {key: _1, text: f'[.textit {_1}]'}
 def cname(_1:str): return tcode(_1)
 def ecname(_1:str): return tcode(placeholder(_1))
 def libconceptx(_1:str, _2:str): return cname(_1) + indexconcept(idxconcept(_2))
+@applyTo(['`:c'])
 def libconcept(_1:str): return libconceptx(_1, _1)
+@applyTo(['`:c@def'])
 def deflibconcept(_1:str):
     return cname(_1) + indexlibrary(idxconcept(_1))
         + indexconcept(idxconcept(_1), styler=idxbfpage)
+@applyTo(['*:c'])
 def exposconcept(_1:str): return ecname(_1) + indexconcept(idxexposconcept(_1))
+@applyTo(['*:c@def'])
 def defexposconcept(_1:str):
     return ecname(_1) + indexconcept(idxexposconcept(_1), styler=idxbfpage)
 
