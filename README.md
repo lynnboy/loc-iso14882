@@ -166,8 +166,8 @@ core constant expression                核心常量表达式
 covariant                               协变
 create                                  创建
 cv-decomposition                        cv 分解
-cv-qualification                        cv 限定性
-cv-qualification signature              cv 限定性签名
+cv-qualification                        cv 限定
+cv-qualification signature              cv 限定签名
 cv-qualifier                            cv 限定符
 data                                    数据
 data member                             数据成员
