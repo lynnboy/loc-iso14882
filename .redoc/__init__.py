@@ -2,6 +2,19 @@ __version__ = "0.1"
 
 import uuid
 
+def applyTo(l:list, **kw) : pass
+def text(a) -> str: return a
+def secNumberStyle(a): return a
+def headerStyleAtLevel(**kw): return ''
+def br(): return '[br]'
+def pushRight(a): return a
+def tagStyle(a): return a
+def ensuremath(a): return a
+def hyperref(a, **kw): return a
+def tablerefname(): return ''
+def figurerefname(): return ''
+def mathmode(): return True
+
 generalindex = 'generalindex'
 headerindex = 'headerindex'
 libraryindex = 'libraryindex'
@@ -20,9 +33,9 @@ class Index:
     @staticmethod
     def item(value):
         if (type(value) is not dict):
-            item = { key: value, text: value }
+            item = { 'key': value, 'text': value }
         Index.refid += 1
-        item.refid = refid
+        item.refid = Index.refid
         return item
 
     def add(self, value, description = None, *contents):
@@ -30,9 +43,9 @@ class Index:
         if description:
             item.description = description
         
-        items.add(item)
+        self.items.append(item)
 
-        return f"[.index#{item.refid}]"
+        return f"[.index#{item['refid']}]"
 
 index = {
     generalindex: Index(generalindex),
@@ -51,12 +64,12 @@ glossary = {
 # \rSecindex{library}{#1}
 
 @applyTo(['#', '#:tab', '#:fig', '#:note'])
-def ref(instruction, args, refid, content, context):
+def ref(refid, **kw): #instruction, args, refid, content, context
     return '__link__0'
 
 @applyTo(['section', 'section:chapter', 'section:annex', 'section:def'])
-def addxref(instruction, args, refid, content, context):
-    return glossary[xrefindex].add({key: refid, description: f'({ref(refid)})'})
+def addxref(refid, **kw): #instruction, args, refid, content, context
+    return glossary[xrefindex].add({'key': refid, 'description': f'({ref(refid)})'})
 
 @applyTo(['section', 'section:chapter', 'section:annex', 'section:def'])
 def customlabel(instruction, args, refid, content, context):
@@ -66,38 +79,38 @@ def customlabel(instruction, args, refid, content, context):
     if instruction == 'section:chapter': reflabel = text(f"Clause {seqNo}")
     elif instruction == 'section:annex': reflabel = text(f"Annex {secChar}")
     else: reflabel = seqNode
-    elif instruction == 'section:annex':
+    if instruction == 'section:annex':
         label = secNumberStyle(text(f"Annex {secChar}"))
-        if len(args) > 0: label += f' {text(f'({args[0]})')}'
+        if len(args) > 0: label += ' ' + text(f'({args[0]})')
         label += br() + content
     else: label = content
     labelrow = headerStyleAtLevel(level = context.nestLevel('section'), contents = [
         f"{secNumberStyle(seqNode)} {content}",
         pushRight(tagStyle(f'[=`[]{refid}[=`]]'))
-    ]):
+        ])
     return labelrow
 
 # locations
 @applyTo(['%'])
-def indextext(_1):
+def indextext(_1, **kw) -> str:
     return index[generalindex].add(_1)
 @applyTo(['%@lib@raw'])
-def indexlibrary(_1):
+def indexlibrary(_1, **kw):
     return index[libraryindex].add(_1)
 @applyTo(['%@hdr'])
-def indexhdr(_1):
+def indexhdr(_1, **kw):
     return index[generalindex].add(idxhdr(_1)) + index[headerindex].add(idxhdr(_1))
 @applyTo(['%@concept'])
-def indexconcept(_1):
+def indexconcept(_1, **kw):
     return index[conceptindex].add(_1)
 @applyTo(['%@gram'])
-def indexgram(_1):
+def indexgram(_1, **kw):
     return index[grammarindex].add(_1)
 @applyTo(['%@impldef'])
-def indeximpldef(_1):
+def indeximpldef(_1, **kw):
     return index[impldefindex].add(_1, order = text(_1))
 @applyTo(['%@defn'])
-def indexdefn(_1): return indextext(_1)
+def indexdefn(_1, **kw) -> str: return indextext(_1)
 def idxbfpage(_1): return f"[.textbf {_1}]"
 @applyTo(['%@grammar'])
 def indexgrammar(_1):
@@ -112,14 +125,14 @@ def impldefplain(_1):
 
 # appearance
 @applyTo(['`'], at=['%', '% !'])
-def idxcode(_1:str): return {key: _1, text: tcode(_1)}
-def idxconcept(_1:str): return {key: _1, text: tcode(_1)}
-def idxexposconcept(_1:str): return {key: _1, text: tcode(placeholder(_1))}
-def idxhdr(_:str): return {key: _1, text: tcode(f"<{_1}>")}
+def idxcode(_1:str): return {'key': _1, text: tcode(_1)}
+def idxconcept(_1:str): return {'key': _1, text: tcode(_1)}
+def idxexposconcept(_1:str): return {'key': _1, text: tcode(placeholder(_1))}
+def idxhdr(_1:str): return {'key': _1, text: tcode(f"<{_1}>")}
 @applyTo(['~'], at=['%', '% !'])
-def idxgram(_:str): return {key: _1, text: gterm(_1)}
-def idxterm(_:str): return {key: _1, text: term(_1)}
-def idxxname(_:str): return {key: f"__{_1}", text: xname(_1)}
+def idxgram(_1:str): return {'key': _1, text: gterm(_1)}
+def idxterm(_1:str): return {'key': _1, text: term(_1)}
+def idxxname(_1:str): return {'key': f"__{_1}", text: xname(_1)}
 
 # library index entries
 @applyTo(['%@lib'])
@@ -187,8 +200,8 @@ def defn(_1:str): return defnx(_1, _1)
 def defnx(_1:str, _2:str): return indexdefn(_2) + f"[.textit {_1}]"
 @applyTo(['+:adj %!'])
 def defnadj(_1:str, _2:str):        # TODO: multilang
-    return indextext(f"{_1} {_2}", see={key:_2, sub:{key:_1}})
-        + indexdefn(_2, sub=_1) + f"[.textit {_1} {_2}]"
+    return indextext(f"{_1} {_2}", see={'key':_2, 'sub':{'key':_1}}) + \
+        indexdefn(_2, sub=_1) + f"[.textit {_1} {_2}]"
 
 @applyTo(['?brk'])
 def brk(): return '[=zwsp]'
@@ -282,12 +295,12 @@ def commentellip(): return tcode('/* ... */')
 def oldconcept(_1:str): return f"[.textit Cpp17{_1}]"
 @applyTo(['^:oc@def'])
 def oldconceptdef(_1:str): return defn(f'Cpp17{_1}')
-def idxoldconcept(_1:str): return {key: f'Cpp17{_1}', text: f'[.textit Cpp17{_1}]'}
+def idxoldconcept(_1:str): return {'key': f'Cpp17{_1}', 'text': f'[.textit Cpp17{_1}]'}
 @applyTo(['^:newoc'])
 def newoldconcept(_1:str): return f"[.textit {_1}]"
 @applyTo(['^:newoc@def'])
 def newoldconceptdef(_1:str): return defn(_1)
-def idxnewoldconcept(_1:str): return {key: _1, text: f'[.textit {_1}]'}
+def idxnewoldconcept(_1:str): return {'key': _1, 'text': f'[.textit {_1}]'}
 
 def cname(_1:str): return tcode(_1)
 def ecname(_1:str): return tcode(placeholder(_1))
@@ -296,7 +309,7 @@ def libconceptx(_1:str, _2:str): return cname(_1) + indexconcept(idxconcept(_2))
 def libconcept(_1:str): return libconceptx(_1, _1)
 @applyTo(['`:c@def'])
 def deflibconcept(_1:str):
-    return cname(_1) + indexlibrary(idxconcept(_1))
+    return cname(_1) + indexlibrary(idxconcept(_1)) \
         + indexconcept(idxconcept(_1), styler=idxbfpage)
 @applyTo(['*:c'])
 def exposconcept(_1:str): return ecname(_1) + indexconcept(idxexposconcept(_1))
@@ -356,28 +369,29 @@ block = {
 }
 def langtag(): pass
 def inlinecode(): pass
-def index(): pass
+# def index(): pass
 def subindex(): pass
 def setkey(): pass
 def see(): pass
-def ref(): pass
+#def ref(): pass
 def macro(): pass
-def placeholder(): pass
+#def placeholder(): pass
 def definition(): pass
 def quote(): pass
-def exposid(): pass
+#def exposid(): pass
 def math(): pass
 def markup(): pass
-def grammarterm(): pass
-def exposid(): pass
+#def grammarterm(): pass
+#def exposid(): pass
 def comment(): pass
-def syntext_alt(): pass
+def syntax_alt(): pass
 def table_cell(): pass
 def table_row(): pass
 
 def table(): pass
 def syntax(): pass
 def rule(): pass
+
 inline = {
     ':': langtag,
     '`': inlinecode,
@@ -397,7 +411,7 @@ inline = {
     '*': exposid,
     '-': table_row if within(table) else None,
     '/': comment,
-    '|': table_coll if within(table) else syntax_alt if within(rule) else None,
+    '|': table_cell if within(table) else syntax_alt if within(rule) else None,
     '?': None,
     '\\': None,
     '<': None,
