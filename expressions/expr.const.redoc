@@ -100,13 +100,14 @@ An object or reference is [+usable in constant expressions] if it is
 [:en@~] a string literal object ([#lex.string]), or
 [:zh_CN@~] 字符串字面量对象（[#lex.string]），或
 [item]
-[:en@~] a non-mutable subobject or reference member of any of the above, or
-[:zh_CN@~] 以上任一的非 mutable 子对象或引用成员，或
+[:en@~] a temporary object of non-volatile const-qualified literal type whose
+lifetime is extended ([#class.temporary]) to that of a variable that is usable
+in constant expressions, or
+[:zh_CN@~] 非 volatile 且 const 限定的字面量类型的临时对象，并且其生存期已扩展
+（[#class.temporary]）到某个可在常量表达式中使用的变量的生存期，或
 [item]
-[:en@~] a complete temporary object of non-volatile const-qualified integral or
-enumeration type that is initialized with a constant expression.
-[:zh_CN@~] 非 volatile 且 const 限定的整型或枚举类型的完整临时对象，并以一个
-常量表达式所初始化。
+[:en@~] a non-mutable subobject or reference member of any of the above.
+[:zh_CN@~] 以上任一的非 mutable 子对象或引用成员。
 [list:end]
 
 [para]
@@ -481,44 +482,49 @@ constexpr int y = h(1);             // [:en] OK: initializes [`y] with the value
 
 [para]
 [:en]
-For the purposes of determining whether an expression is a core constant
+For the purposes of determining whether an expression [`e] is a core constant
 expression, the evaluation of a call to a member function of [`std::allocator<T>]
 as defined in [#allocator.members], where [`T] is a literal type, does not
-disqualify the expression from being a core constant expression, even if the
-actual evaluation of such a call would otherwise fail the requirements for a
-core constant expression.
+disqualify [`e] from being a core constant expression, even if the actual
+evaluation of such a call would otherwise fail the requirements for a core
+constant expression.
 [:zh_CN]
-在确定某个表达式是否是核心常量表达式时，对 [#allocator.members] 中所定义的
+在确定某个表达式 [`e] 是否是核心常量表达式时，对 [#allocator.members] 中所定义的
 [`std::allocator<T>]（其中 [`T] 为字面类型）的成员函数的调用的求值，并不会导致
-表达式无法成为核心常量表达式，即便对这样的调用的实际求值其实不满足对核心常量
+[`e] 无法作为核心常量表达式，即便对这样的调用的实际求值其实不满足对核心常量
 表达式的规定也是如此。
 
 [:en]
 Similarly, the evaluation of a call to [`std::destroy_at],
 [`std::ranges::destroy_at], [`std::construct_at], or [`std::ranges::construct_at]
-is a valid core constant expression unless:
+does not disqualify [`e] from being a core constant expression unless:
 [:zh_CN]
 类似地，对 [`std::destroy_at]，[`std::ranges::destroy_at]，[`std::construct_at]，
-或 [`std::ranges::construct_at] 的调用的求值是有效的核心常量表达式，除非以下情况：
+或 [`std::ranges::construct_at] 的调用的求值并不会导致 [`e] 无法作为核心常量
+表达式，除非以下情况：
 
 [list]
 [item]
 [:en] for a call to [`std::construct_at] or [`std::ranges::construct_at], the
 first argument, of type [`T*], does not point to storage allocated with
-[`std::allocator<T>] or the evaluation of the underlying constructor call is not
-a core constant expression, or
+[`std::allocator<T>] or to an object whose lifetime began within the evaluation
+of [`e], or the evaluation of the underlying constructor call disqualifies [`e]
+from being a core constant expression, or
 [:zh_CN] 对于对 [`std::construct_at] 或 [`std::ranges::construct_at] 的调用，其
-首个实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储，或者对底层
-构造函数的调用的求值并非核心常量表达式，或者
+首个实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储或某个生存期
+开始于 [`e] 的求值期间的对象，或者对底层构造函数的调用的求值导致 [`e] 无法作为
+核心常量表达式，或者
 
 [item]
 [:en] for a call to [`std::destroy_at] or [`std::ranges::destroy_at], the first
 argument, of type [`T*], does not point to storage allocated with
-[`std::allocator<T>] or the evaluation of the underlying destructor call is not
-a core constant expression.
+[`std::allocator<T>] or to an object whose lifetime began within the evaluation
+of [`e], or the evaluation of the underlying destructor call disqualifies [`e]
+from being a core constant expression.
 [:zh_CN] 对于对 [`std::destroy_at] 或 [`std::ranges::destroy_at] 的调用，其首个
-实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储，或者对底层
-析构函数的调用的求值并非核心常量表达式。
+实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储或某个生存期
+开始于 [`e] 的求值期间的对象，或者对底层析构函数的调用的求值导致 [`e] 无法作为
+核心常量表达式。
 [list:end]
 
 [para]
@@ -796,13 +802,6 @@ An immediate invocation shall be a constant expression.
 [:zh_CN]
 直接调用应当是常量表达式。
 
-[begin:note]
-[:en]
-An immediate invocation is evaluated even in an unevaluated operand.
-[:zh_CN]
-直接调用即便在免求值操作数中也是被求值的。
-[end:note]
-
 [para]
 [:en]
 An expression or conversion [`e] is [+manifestly constant-evaluated] if it is:
@@ -820,10 +819,10 @@ An expression or conversion [`e] is [+manifestly constant-evaluated] if it is:
 [:en@~] an immediate invocation, or
 [:zh_CN@~] 直接调用，或
 [item]
-[:en@~] a [~constraint-expression] ([#temp.constr.decl]) including one formed
-from the [~constraint-logical-or-expression] of a [~requires-clause], or
-[:zh_CN@~] [~约束表达式]（[#temp.constr.decl]），包括由 [~requires-子句]的
-[~约束逻辑或表达式]所构成的表达式，或
+[:en@~] the result of substitution into an atomic constraint expression
+to determine whether it is satisfied ([#temp.constr.atomic]), or
+[:zh_CN@~] 向原子约束表达式中进行代换以确定其是否被满足（[#temp.constr.atomic]）
+的结果，或
 [item]
 [:en@~] the initializer of a variable that is usable in constant expressions or
 has constant initialization.[#:note#fn.$2]
@@ -869,6 +868,14 @@ int q = p + f();                                        // [:en] [`m] is 17 for 
 [codeblock:end]
 [end:example]
 [list:end]
+
+[begin:note]
+[:en]
+A manifestly constant-evaluated expression is evaluated even in an unevaluated
+operand.
+[:zh_CN]
+显然常量求值表达式即便在免求值操作数中仍被求值。
+[end:note]
 
 [para]
 [:en]

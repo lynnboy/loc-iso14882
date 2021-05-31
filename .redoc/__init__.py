@@ -174,7 +174,7 @@ def tcode(_1:str): return f"[.texttt {_1}]"    # TODO: highlighting
 @applyTo(['+:%'])
 def term(_1:str): return f"[.textit {_1}]"
 @applyTo(['~'], within=['%', '% !', 'codeblock'])
-def gterm(_1:str): return f"[.textit {_1}]"
+def gterm(_1:str): return f"[.textsf.textit {_1}]"
 @applyTo(['~@fake', '~@loc', '~@fmt'])
 def fakegrammarterm(_1:str): return gterm(_1)
 @applyTo(['`:key', '`@def'])
@@ -184,7 +184,7 @@ def defnlib(_1:str): return tcode(_1) + indexlibrary(idxcode(_1))
 @applyTo(['~'])
 def grammarterm(_1:str): return indexgram(idxgram(_1)) + gterm(_1) #if not within('codeblock') else gterm(_1)
 @applyTo(['~:re'])
-def regrammarterm(_1:str): return gterm(_1)
+def regrammarterm(_1:str): return f"[.textit {_1}]"
 @applyTo(['^'])
 def placeholder(_1:str): return f"[.textit {_1}]"    # TODO: highlighting
 @applyTo(['*'])
@@ -237,9 +237,9 @@ def required(_1:str): return Fundesc(text('Required behavior'))
 def requires(_1:str): return Fundesc(text('Requires'))
 def constraints(_1:str): return Fundesc(text('Constraints'))
 def mandates(_1:str): return Fundesc(text('Mandates'))
-def expects(_1:str): return Fundesc(text('Expects'))
+def expects(_1:str): return Fundesc(text('Preconditions'))
 def effects(_1:str): return Fundesc(text('Effects'))
-def ensures(_1:str): return Fundesc(text('Ensures'))
+def ensures(_1:str): return Fundesc(text('Postconditions'))
 def returns(_1:str): return Fundesc(text('Returns'))
 def throws(_1:str): return Fundesc(text('Throws'))
 def default(_1:str): return Fundesc(text('Default behavior'))
@@ -302,6 +302,7 @@ def newoldconcept(_1:str): return f"[.textit {_1}]"
 def newoldconceptdef(_1:str): return defn(_1)
 def idxnewoldconcept(_1:str): return {'key': _1, 'text': f'[.textit {_1}]'}
 
+@applyTo(['`:cname'])
 def cname(_1:str): return tcode(_1)
 def ecname(_1:str): return tcode(placeholder(_1))
 def libconceptx(_1:str, _2:str): return cname(_1) + indexconcept(idxconcept(_2))

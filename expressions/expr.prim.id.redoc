@@ -91,57 +91,34 @@ appear only
 
 [para]
 [:en]
-An [~id-expression] that denotes the specialization of a concept
-([#temp.concept]) results in a prvalue of type [`bool].
+For an [~id-expression] that denotes an overload set, overload resolution is
+performed to select a unique function ([#over.match], [#over.over]).
 [:zh_CN]
-代表某个概念（[#temp.concept]）的特例的[~标识表达式]的结果为 [`bool] 类型的
-纯右值。
-
-[:en]
-The expression is [`true] if the concept[=']s normalized [~constraint-expression]
-([#temp.constr.decl]) is satisfied ([#temp.constr.constr]) by the specified
-template arguments and [`false] otherwise.
-[:zh_CN]
-如果该概念的正规化的[~约束表达式]（[#temp.constr.decl]）被给定的模板实参所满足
-（[#temp.constr.constr]），则表达式为 [`true]，否则为 [`false]。
-
-[begin:example]
-[codeblock]
-template<typename T> concept C = true;
-static_assert(C<int>);          // OK
-[codeblock:end]
-[end:example]
+对于代表某个重载集合的[~标识表达式]，实施重载决议以选出唯一的函数（[#over.match]，
+[#over.over]）。
 
 [begin:note]
 [:en]
-A concept[=']s constraints are also considered when using a template name
-([#temp.names]) and during overload resolution ([#over]), and they are compared
-during the partial ordering of constraints ([#temp.constr.order]).
+A program cannot refer to a function with a trailing [~requires-clause] whose
+[~constraint-expression] is not satisfied, because such functions are never
+selected by overload resolution.
 [:zh_CN]
-使用模板名（[#temp.names]）时，以及在重载决议（[#over]）过程中，同样要考察概念的
-约束，在对约束的部分排序（[#temp.constr.order]）中也要对它们进行比较。
-[end:note]
-
-[para]
-[:en]
-A program that refers explicitly or implicitly to a function with a trailing
-[~requires-clause] whose [~constraint-expression] is not satisfied, other than
-to declare it, is ill-formed.
-[:zh_CN]
-如果程序显式或隐式涉指了某个带有尾部 [~requires-子句]的函数，其[~约束表达式]未能
-满足，且并非是对它的声明，则该程序非良构。
+程序不能涉指带有尾部 [~requires-子句]且其[~约束表达式]未能满足的函数，因为这种
+函数永不会被重载决议所选择。
 
 [begin:example]
 [codeblock]
-void f(int) requires false;
+template<typename T> struct A {
+  static void f(int) requires false;
+};
 
 void g() {
-  f(0);                         // [:en] error: cannot call [`f] \
-                                   [:zh_CN] 错误：不能调用 [`f]
-  void (*p1)(int) = f;          // [:en] error: cannot take the address of [`f] \
-                                   [:zh_CN] 错误：不能获取 [`f] 的地址
-  decltype(f)* p2 = nullptr;    // [:en] error: the type [`decltype(f)] is invalid \
-                                   [:zh_CN] 错误：类型 [`decltype(f)] 无效
+  A<int>::f(0);                         // [:en] error: cannot call [`f] \
+                                        [:zh_CN] 错误：不能调用 [`f]
+  void (*p1)(int) = A<int>::f;          // [:en] error: cannot take the address of [`f] \
+                                        [:zh_CN] 错误：不能获取 [`f] 的地址
+  decltype(A<int>::f)* p2 = nullptr;    // [:en] error: the type [`decltype(A<int>::f)] is invalid \
+                                        [:zh_CN] 错误：类型 [`decltype(A<int>::f)] 无效
 }
 [codeblock:end]
 
@@ -157,6 +134,7 @@ even though [`f] is an unevaluated operand ([#expr.prop]).
 在 [`p2] 的声明式中，即便 [`f] 是免求值操作数（[#expr.prop]），仍要求其约束被
 满足。
 [end:example]
+[end:note]
 
 [include expr.prim.id.unqual]
 

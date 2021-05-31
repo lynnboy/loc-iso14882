@@ -420,10 +420,11 @@ If the allocated type is an array type, the allocation function[=']s name is
 
 [begin:note]
 [:en]
-An implementation shall provide default definitions for the global allocation
-functions ([#basic.stc.dynamic], [#new.delete.single], [#new.delete.array]).
+An implementation is required to provide default definitions for the global
+allocation functions ([#basic.stc.dynamic], [#new.delete.single],
+[#new.delete.array]).
 [:zh_CN]
-实现应当提供全局分配函数的缺省实现（[#basic.stc.dynamic]，[#new.delete.single]，
+要求实现提供全局分配函数的缺省实现（[#basic.stc.dynamic]，[#new.delete.single]，
 [#new.delete.array]）。
 
 [:en]
@@ -576,10 +577,11 @@ the allocation function as the first argument of type [`std::size_t].
 [:en]
 That argument shall be no less than the size of the object being created; it may
 be greater than the size of the object being created only if the object is an
-array.
+array and the allocation function is not a non-allocating form
+([#new.delete.placement]).
 [:zh_CN]
-此实参应当不小于所要创建的对象的大小；仅当要创建的对象为数组时，它才可以大于该
-对象的大小。
+此实参应当不小于所要创建的对象的大小；仅当要创建的对象为数组且分配函数并非非分配
+形式（[#new.delete.placement]）时，它才可以大于该对象的大小。
 
 [:en]
 For arrays of [`char], [`unsigned char], and [`std::byte], the difference
@@ -656,12 +658,23 @@ If the [~new-placement] syntax is used, the [~initializer-clause]s in its
 实参。
 
 [:en]
-If no matching function is found and the allocated object type has new-extended
-alignment, the alignment argument is removed from the argument list, and
-overload resolution is performed again.
+If no matching function is found then
 [:zh_CN]
-如果没有找到匹配的函数，且所分配的对象类型带有 new 扩充对齐，则将对齐实参从实参
-列表中移除，再进行一次重载决议。
+如果没有找到匹配的函数，则
+[list]
+[item]
+[:en@~] if the allocated object type has new-extended alignment, the alignment
+argument is removed from the argument list;
+[:zh_CN@~] 所分配的对象类型带有 new 扩充对齐，则将对齐实参从实参列表中移除；
+[item]
+[:en@~] otherwise, an argument that is the type[=']s alignment and has type
+[`std::align_val_t] is added into the argument list immediately after the first
+argument;
+[:zh_CN@~] 否则，一个作为该类型的实参且类型为 [`std::align_val_t] 的实参被加入到
+实参列表中紧跟其首个实参之后；
+[list:end]
+[:en@~] and then overload resolution is performed again.
+[:zh_CN] 并再进行一次重载决议。
 
 [para]
 [begin:example]
@@ -714,11 +727,11 @@ this amount from the value returned by [`operator new`[`]].
 
 [:en]
 This overhead may be applied in all array [~new-expression]s, including those
-referencing the library function [`operator new`[`](std::size_t, void*)] and
-other placement allocation functions.
+referencing a placement allocation function, except when referencing the library
+function [`operator new`[`](std::size_t, void*)].
 [:zh_CN]
-此开销可能会施加于所有数组 [~new-表达式]上，包括涉及库函数
-[`operator new`[`](std::size_t, void*)] 以及其他放置式分配函数。
+此开销可能会施加于所有数组 [~new-表达式]上，包括涉及放置式分配函数的那些，除非它
+涉及的是程序库函数 [`operator new`[`](std::size_t, void*)]。
 
 [:en]
 The amount of overhead may vary from one invocation of [`new] to another.
@@ -929,18 +942,16 @@ be called; otherwise, no deallocation function will be called.
 若在查找过程中找到了单个匹配的回收函数，则调用该函数；否则，不调用回收函数。
 
 [:en]
-If the lookup finds a usual deallocation function with a parameter of type
-[`std::size_t] ([#basic.stc.dynamic.deallocation]) and that function, considered
+If the lookup finds a usual deallocation function and that function, considered
 as a placement deallocation function, would have been selected as a match for
 the allocation function, the program is ill-formed.
 [:zh_CN]
-若在查找过程中找到了带有一个 [`std::size_t] 类型的形参的常规回收函数
-（[#basic.stc.dynamic.deallocation]），且当此函数被看作放置式回收函数时，与分配
-函数相匹配并且将会被选取，则程序非良构。
+若在查找过程中找到了常规回收函数，且当此函数被看作放置式回收函数时，与分配函数
+相匹配并且将会被选取，则程序非良构。
 
 [:en]
 For a non-placement allocation function, the normal deallocation function lookup
-is used to find the matching deallocation function ([#expr.delete])
+is used to find the matching deallocation function ([#expr.delete]).
 [:zh_CN]
 对于非放置式分配函数，使用普通的回收函数查找规则来查找其匹配的回收函数
 （[#expr.delete]）。

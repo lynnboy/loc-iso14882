@@ -24,12 +24,12 @@ template<class ExecutionPolicy, class ForwardIterator, class Predicate, class T>
 
 template<input_iterator I, sentinel_for<I> S, class T1, class T2, class Proj = identity>
   requires writable<I, const T2&> &&
-           indirect_relation<ranges::equal_to, projected<I, Proj>, const T1*>
+           indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T1*>
   constexpr I
     ranges::replace(I first, S last, const T1& old_value, const T2& new_value, Proj proj = {});
 template<input_range R, class T1, class T2, class Proj = identity>
   requires writable<iterator_t<R>, const T2&> &&
-           indirect_relation<ranges::equal_to, projected<iterator_t<R>, Proj>, const T1*>
+           indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T1*>
   constexpr safe_iterator_t<R>
     ranges::replace(R&& r, const T1& old_value, const T2& new_value, Proj proj = {});
 template<input_iterator I, sentinel_for<I> S, class T, class Proj = identity,
@@ -63,9 +63,9 @@ template<input_range R, class T, class Proj = identity,
 [:zh_CN@~] 对于 [`ranges::replace_if] 为 [`bool(invoke(pred, invoke(proj, *i)))]。
 [list:end]
 
-[para:requires]
-[:en] The expression [`*first = new_value] shall be valid.
-[:zh_CN] 表达式 [`*first = new_value] 应当有效。
+[para:mandates]
+[:en] [`new_value] is writable ([#iterator.requirements.general]) to [`first].
+[:zh_CN] [`new_value] 为可向 [`first] 写出（[#iterator.requirements.general]）。
 
 [para:effects]
 [:en] Substitutes elements referred by the iterator [`i] in the range
@@ -114,14 +114,14 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
 template<input_iterator I, sentinel_for<I> S, class T1, class T2, output_iterator<const T2&> O,
          class Proj = identity>
   requires indirectly_copyable<I, O> &&
-           indirect_relation<ranges::equal_to, projected<I, Proj>, const T1*>
+           indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T1*>
   constexpr ranges::replace_copy_result<I, O>
     ranges::replace_copy(I first, S last, O result, const T1& old_value, const T2& new_value,
                          Proj proj = {});
 template<input_range R, class T1, class T2, output_iterator<const T2&> O,
          class Proj = identity>
   requires indirectly_copyable<iterator_t<R>, O> &&
-           indirect_relation<ranges::equal_to, projected<iterator_t<R>, Proj>, const T1*>
+           indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T1*>
   constexpr ranges::replace_copy_result<safe_iterator_t<R>, O>
     ranges::replace_copy(R&& r, O result, const T1& old_value, const T2& new_value,
                          Proj proj = {});
@@ -163,16 +163,17 @@ template<input_range R, class T, output_iterator<const T&> O, class Proj = ident
 [`bool(invoke(pred, invoke(proj, *(first + (i - result)))))]。
 [list:end]
 
-[para:requires]
-[:en] The results of the expressions [`*first] and [`new_value] shall be
-writable ([#iterator.requirements.general]) to the [`result] output iterator.
-[:zh_CN] 表达式 [`*first] 的结果和 [`new_value] 都应当可以向 [`result] 输出
-迭代器写出（[#iterator.requirements.general]）。
+[para:mandates]
+[:en] The results of the expressions [`*first] and [`new_value] are writable
+([#iterator.requirements.general]) to [`result].
+[:zh_CN] 表达式 [`*first] 的结果和 [`new_value] 都可以向 [`result] 写出
+（[#iterator.requirements.general]）。
 
+[para:expects]
 [:en] The ranges [=range(first,last)] and [=range(result,result + (last - first))]
-shall not overlap.
+do not overlap.
 [:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first))]
-不能有重叠。
+没有重叠。
 
 [para:effects]
 [:en] Assigns to every iterator [`i] in the range

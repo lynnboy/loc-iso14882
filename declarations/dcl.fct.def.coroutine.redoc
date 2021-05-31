@@ -8,11 +8,11 @@
 
 [para]
 [:en]
-A function is a [+coroutine] if it contains [~coroutine-return-statement]
-([#stmt.return.coroutine]), an [~await-expression] ([#expr.await]),
-or a [~yield-expression] ([#expr.yield]).
+A function is a [+coroutine] if its [~function-body] encloses a
+[~coroutine-return-statement] ([#stmt.return.coroutine]), an [~await-expression]
+([#expr.await]), or a [~yield-expression] ([#expr.yield]).
 [:zh_CN]
-如果函数包含[~协程返回语句]（[#stmt.return.coroutine]），[~等待表达式]
+如果函数的[~函数体]包含[~协程返回语句]（[#stmt.return.coroutine]），[~等待表达式]
 （[#expr.await]），或者[~产出表达式]（[#expr.yield]），则它是[+协程]。
 
 [:en]
@@ -86,11 +86,13 @@ A coroutine behaves as if its [~function-body] were replaced by:
 
 [syntax:explanation]
 [`{]
-    [~promise-type] [*promise] [~promise-constructor-arguments] [`;]
-    [`co_await] [`[*promise].initial_suspend()] [`;]
+    [^promise-type] [*promise] [^promise-constructor-arguments] [`;]
     [`try] [`{]
+        [`co_await] [`[*promise].initial_suspend()] [`;]
         [~function-body]
     [`} catch ( ... ) {]
+        [`if (![*initial-await-resume-called])]
+            [`throw] [`;]
         [`[*promise].unhandled_exception()] [`;]
     [`}]
 [*final-suspend] [`:]
@@ -111,6 +113,13 @@ A coroutine behaves as if its [~function-body] were replaced by:
 [:en] the [~await-expression] containing the call to [`final_suspend] is the
 [+final suspend point], and
 [:zh_CN] 包含对 [`final_suspend] 的调用的[~等待表达式]为其[+最终暂停点]，且
+
+[item]
+[:en] [^initial-await-resume-called] is initially [`false] and is set to [`true]
+immediately before the evaluation of the [^await-resume] expression
+([#expr.await]) of the initial suspend point, and
+[:zh_CN] [^initial-await-resume-called] 初始为 [`false]，并在紧接初始暂停点的
+[^await-resume] 表达式（[#expr.await]）的求值之前，设为 [`true]，且
 
 [item]
 [:en] [^promise-type] denotes the promise type, and

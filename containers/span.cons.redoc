@@ -20,56 +20,112 @@ constexpr span() noexcept;
 
 [%@lib@ctor span]
 [codeblock:declaration]
-constexpr span(pointer ptr, index_type count);
+template<class It>
+  constexpr span(It first, size_type count);
 [codeblock:end]
 
 [div:description]
-[para:expects]
-[:en] [=range(ptr,ptr + count)] is a valid range.
-[:zh_CN] [=range(ptr,ptr + count)] 为有效范围。
+[para:constraints]
+[:en] Let [`U] be [`remove_reference_t<iter_reference_t<It>>].
+[:zh_CN] 令 [`U] 为 [`remove_reference_t<iter_reference_t<It>>]。
 
+[list]
+[item]
+[:en] [`It] satisfies [`:c contiguous_iterator].
+[:zh_CN] [`It] 符合 [`:c contiguous_iterator]。
+[item]
+[:en] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] is [`true].
+[:zh_CN] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] 为 [`true]。
+
+[begin:note]
+[:en] The intent is to allow only qualification conversions of the iterator
+reference type to [`element_type].
+[:zh_CN] 意图是仅允许迭代器引用类型向 [`element_type] 的限定转换.
+[end:note]
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] [=range(first,first + count)] is a valid range.
+[:zh_CN] [=range(first,first + count)] 为有效范围。
+[item]
+[:en] [`It] models [`:c contiguous_iterator].
+[:zh_CN] [`It] 构成 [`:c contiguous_iterator]。
+[item]
 [:en] If [`extent] is not equal to [`dynamic_extent], then [`count] is equal to
 [`extent].
 [:zh_CN] 当 [`extent] 不等于 [`dynamic_extent] 时 [`count] 等于 [`extent]。
+[list:end]
 
 [para:effects]
-[:en] Constructs a [`span] that is a view over the range [=range(ptr,ptr + count)].
-[:zh_CN] 构造一个作为范围 [=range(ptr,ptr + count)] 的视图的 [`span]。
-
-[para:ensures]
-[:en] [`size() == count && data() == ptr].
-[:zh_CN] [`size() == count && data() == ptr]。
+[:en] Initializes [`data_] with [`to_address(first)] and [`size_] with [`count].
+[:zh_CN] 以 [`to_address(first)] 初始化 [`data_] 并以 [`count] 初始化 [`size_]。
 
 [para:throws]
-[:en] Nothing.
-[:zh_CN] 无。
+[:en] When and what [`to_address(first)] throws.
+[:zh_CN] 当 [`to_address(first)] 抛出时为其所抛出的异常。
 [div:end]
 
 [%@lib@ctor span]
 [codeblock:declaration]
-constexpr span(pointer first, pointer last);
+template<class It, class End>
+  constexpr span(It first, End last);
 [codeblock:end]
 
 [div:description]
-[para:expects]
-[:en] [=range(first,last)] is a valid range.
-[:zh_CN] [=range(first,last)] 为有效范围。
+[para:constraints]
+[:en] Let [`U] be [`remove_reference_t<iter_reference_t<It>>].
+[:zh_CN] 令 [`U] 为 [`remove_reference_t<iter_reference_t<It>>]。
 
+[list]
+[item]
+[:en] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] is [`true].
+[:zh_CN] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] 为 [`true]。
+
+[begin:note]
+[:en] The intent is to allow only qualification conversions of the iterator
+reference type to [`element_type].
+[:zh_CN] 意图是仅允许迭代器引用类型向 [`element_type] 的限定转换.
+[end:note]
+
+[item]
+[:en] [`It] satisfies [`:c contiguous_iterator].
+[:zh_CN] [`It] 符合 [`:c contiguous_iterator]。
+[item]
+[:en] [`End] satisfies [`[`:c sized_sentinel_for]<It>].
+[:zh_CN] [`End] 符合 [`[`:c sized_sentinel_for]<It>]。
+[item]
+[:en] [`is_convertible_v<End, size_t>] is [`false].
+[:zh_CN] [`is_convertible_v<End, size_t>] 为 [`false]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
 [:en] If [`extent] is not equal to [`dynamic_extent], then [`last - first] is
 equal to [`extent].
 [:zh_CN] 当 [`extent] 不等于 [`dynamic_extent] 时 [`last - first] 等于 [`extent]。
+[item]
+[:en] [=range(first,last)] is a valid range.
+[:zh_CN] [=range(first,last)] 为有效范围。
+[item]
+[:en] [`It] models [`:c contiguous_iterator].
+[:zh_CN] [`It] 构成 [`:c contiguous_iterator]。
+[item]
+[:en] [`End] models [`[`:c sized_sentinel_for]<It>].
+[:zh_CN] [`End] 构成 [`[`:c sized_sentinel_for]<It>]。
+[list:end]
 
 [para:effects]
-[:en] Constructs a span that is a view over the range [=range(first,last)].
-[:zh_CN] 构造一个作为范围 [=range(first,last)] 的视图的 [`span]。
-
-[para:ensures]
-[:en] [`size() == last - first && data() == first].
-[:zh_CN] [`size() == last - first && data() == first]。
+[:en] Initializes [`data_] with [`to_address(first)] and [`size_] with
+[`last - first].
+[:zh_CN] 以 [`to_address(first)] 初始化 [`data_] 并以 [`last - first] 初始化
+[`size_]。
 
 [para:throws]
-[:en] Nothing.
-[:zh_CN] 无。
+[:en] When and what [`to_address(first)] throws.
+[:zh_CN] 当 [`to_address(first)] 抛出时为其所抛出的异常。
 [div:end]
 
 [%@lib@ctor span]
@@ -103,52 +159,76 @@ template<size_t N> constexpr span(const array<value_type, N>& arr) noexcept;
 
 [%@lib@ctor span]
 [codeblock:declaration]
-template<class Container> constexpr span(Container& cont);
-template<class Container> constexpr span(const Container& cont);
+template<class R> constexpr span(R&& r);
 [codeblock:end]
 
 [div:description]
 [para:constraints]
+[:en] Let [`U] be [`remove_reference_t<ranges::range_reference_t<R>>].
+[:zh_CN] 令 [`U] 为 [`remove_reference_t<ranges::range_reference_t<R>>]。
+
 [list]
 [item]
-[:en] [`extent == dynamic_extent] is [`true],
-[:zh_CN] [`extent == dynamic_extent] 为 [`true]，
+[:en] [`extent == dynamic_extent] is [`true].
+[:zh_CN] [`extent == dynamic_extent] 为 [`true]。
+
 [item]
-[:en] [`Container] is not a specialization of [`span],
-[:zh_CN] [`Container] 不是 [`span] 的特例，
+[:en] [`R] satisfies [`ranges::[`:c contiguous_range]] and
+[`ranges::[`:c sized_range]].
+[:zh_CN] [`R] 符合 [`ranges::[`:c contiguous_range]] 和
+[`ranges::[`:c sized_range]].
+
 [item]
-[:en] [`Container] is not a specialization of [`array],
-[:zh_CN] [`Container] 不是 [`array] 的特例，
+[:en] Either [`R] satisfies [`:c safe_range] or [`is_const_v<element_type>] is
+[`true].
+[:zh_CN] 或者 [`R] 符合 [`:c safe_range]，或者 [`is_const_v<element_type>] 为
+[`true]。
+
 [item]
-[:en] [`is_array_v<Container>] is [`false],
-[:zh_CN] [`is_array_v<Container>] 为 [`false]，
+[:en] [`remove_cvref_t<R>] is not a specialization of [`span],
+[:zh_CN] [`remove_cvref_t<R>] 不是 [`span] 的特例，
+
 [item]
-[:en] [`data(cont)] and [`size(cont)] are both well-formed, and
-[:zh_CN] [`data(cont)] 和 [`size(cont)] 都良构，并且
+[:en] [`remove_cvref_t<R>] is not a specialization of [`array],
+[:zh_CN] [`remove_cvref_t<R>] 不是 [`array] 的特例，
+
 [item]
-[:en] [`remove_pointer_t<decltype(data(cont))>(*)`[`]] is convertible to
-[`ElementType(*)`[`]].
-[:zh_CN] [`remove_pointer_t<decltype(data(cont))>(*)`[`]] 可以转换为
-[`ElementType(*)`[`]]。
+[:en] [`is_array_v<remove_cvref_t<R>>] is [`false],
+[:zh_CN] [`is_array_v<remove_cvref_t<R>>] 为 [`false]，
+
+[item]
+[:en] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] is [`true].
+[:zh_CN] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] 为 [`true]。
+
+[begin:note]
+[:en] The intent is to allow only qualification conversions of the iterator
+reference type to [`element_type].
+[:zh_CN] 意图是仅允许迭代器引用类型向 [`element_type] 的限定转换.
+[end:note]
 [list:end]
 
 [para:expects]
-[:en] [=range(data(cont),data(cont) + size(cont))] is a valid range.
-[:zh_CN] [=range(data(cont),data(cont) + size(cont))] 为有效范围。
+[list]
+[item]
+[:en] [`R] models [`ranges::[`:c contiguous_range]] and
+[`ranges::[`:c sized_range]].
+[:zh_CN] [`R] 构成 [`ranges::[`:c contiguous_range]] 和
+[`ranges::[`:c sized_range]]。
+[item]
+[:en] If [`is_const_v<element_type>] is [`false], [`R] models [`:c safe_range].
+[:zh_CN] 当 [`is_const_v<element_type>] 为 [`false] 时，[`R] 构成
+[`:c safe_range]。
+[list:end]
 
 [para:effects]
-[:en] Constructs a [`span] that is a view over the range
-[=range(data(cont),data(cont) + size(cont))].
-[:zh_CN] 构造一个作为范围 [=range(data(cont),data(cont) + size(cont))] 的视图的
-[`span]。
-
-[para:ensures]
-[:en] [`size() == size(cont) && data() == data(cont)].
-[:zh_CN] [`size() == size(cont) && data() == data(cont)]。
+[:en] Initializes [`data_] with [`ranges::data(r)] and [`size_] with
+[`ranges::size(r)].
+[:zh_CN] 以 [`ranges::data(r)] 初始化 [`data_] 并以 [`ranges::size(r)] 初始化
+[`size_]。
 
 [para:throws]
-[:en] What and when [`data(cont)] and [`size(cont)] throw.
-[:zh_CN] 当 [`data(cont)] 或 [`size(cont)] 抛出异常时抛出其所抛出的异常。
+[:en] When and what [`ranges::data(r)] and [`ranges::size(r)] throws.
+[:zh_CN] 当 [`ranges::data(r)] 或 [`ranges::size(r)] 抛出时为其所抛出的异常。
 [div:end]
 
 [%@lib@ctor span]
