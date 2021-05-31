@@ -27,9 +27,9 @@ namespace std {
   template<class T>
     using iter_difference_t = [[redoc("[=seebelow]")]];
 
-  // [:en] [#readable.traits], readable traits \
-     [:zh_CN] [#readable.traits]，可读取特征
-  template<class> struct readable_traits;
+  // [:en] [#readable.traits], indirectly readable traits \
+     [:zh_CN] [#readable.traits]，可间接读取特征
+  template<class> struct indirectly_readable_traits;
   template<class T>
     using iter_value_t = [[redoc("[=seebelow]")]];
 
@@ -38,7 +38,7 @@ namespace std {
   template<class I> struct iterator_traits;
   template<class T> requires is_object_v<T> struct iterator_traits<T*>;
 
-  template<[[redoc("^>")]]dereferenceable T>
+  template<[[redoc("*>")]]dereferenceable T>
     using iter_reference_t = decltype(*declval<T&>());
 
   namespace ranges {
@@ -53,7 +53,7 @@ namespace std {
     }
   }
 
-  template<[[redoc("^>")]]dereferenceable T>
+  template<[[redoc("*>")]]dereferenceable T>
     requires requires(T& t) {
       { ranges::iter_move(t) } -> [[redoc("^>")]]can-reference;
     }
@@ -62,19 +62,19 @@ namespace std {
 
   // [:en] [#iterator.concepts], iterator concepts \
      [:zh_CN] [#iterator.concepts]，迭代器的概念
-  // [:en] [#iterator.concept.readable], concept [`:c readable] \
-     [:zh_CN] [#iterator.concept.readable]，概念 [`:c readable]
+  // [:en] [#iterator.concept.readable], concept [`:c indirectly_readable] \
+     [:zh_CN] [#iterator.concept.readable]，概念 [`:c indirectly_readable]
   template<class In>
-    concept readable = [[redoc("[=seebelow]")]];
+    concept indirectly_readable = [[redoc("[=seebelow]")]];
 
-  template<readable T>
+  template<indirectly_readable T>
     using iter_common_reference_t =
       common_reference_t<iter_reference_t<T>, iter_value_t<T>&>;
 
-  // [:en] [#iterator.concept.writable], concept [`:c writable] \
-     [:zh_CN] [#iterator.concept.writable]，概念 [`:c writable]
+  // [:en] [#iterator.concept.writable], concept [`:c indirectly_writable] \
+     [:zh_CN] [#iterator.concept.writable]，概念 [`:c indirectly_writable]
   template<class Out, class T>
-    concept writable = [[redoc("[=seebelow]")]];
+    concept indirectly_writable = [[redoc("[=seebelow]")]];
 
   // [:en] [#iterator.concept.winc], concept [`:c weakly_incrementable] \
      [:zh_CN] [#iterator.concept.winc]，概念 [`:c weakly_incrementable]
@@ -99,7 +99,7 @@ namespace std {
   // [:en] [#iterator.concept.sizedsentinel], concept [`:c sized_sentinel_for] \
      [:zh_CN] [#iterator.concept.sizedsentinel]，概念 [`:c sized_sentinel_for]
   template<class S, class I>
-    inline constexpr bool disable_sized_sentinel = false;
+    inline constexpr bool disable_sized_sentinel_for = false;
 
   template<class S, class I>
     concept sized_sentinel_for = [[redoc("[=seebelow]")]];
@@ -147,19 +147,22 @@ namespace std {
   template<class F, class I>
     concept indirect_unary_predicate = [[redoc("[=seebelow]")]];
 
+  template<class F, class I1, class I2>
+    concept indirect_binary_predicate = [[redoc("[=seebelow]")]];
+
   template<class F, class I1, class I2 = I1>
-    concept indirect_relation = [[redoc("[=seebelow]")]];
+    concept indirect_equivalence_relation = [[redoc("[=seebelow]")]];
 
   template<class F, class I1, class I2 = I1>
     concept indirect_strict_weak_order = [[redoc("[=seebelow]")]];
 
   template<class F, class... Is>
-    requires (readable<Is> && ...) && invocable<F, iter_reference_t<Is>...>
+    requires (indirectly_readable<Is> && ...) && invocable<F, iter_reference_t<Is>...>
       using indirect_result_t = invoke_result_t<F, iter_reference_t<Is>...>;
 
   // [:en] [#projected], projected \
      [:zh_CN] [#projected]，投射
-  template<readable I, indirectly_regular_unary_invocable<I> Proj>
+  template<indirectly_readable I, indirectly_regular_unary_invocable<I> Proj>
     struct projected;
 
   template<weakly_incrementable I, class Proj>
@@ -303,7 +306,7 @@ namespace std {
     constexpr bool operator>=(
       const reverse_iterator<Iterator1>& x,
       const reverse_iterator<Iterator2>& y);
-  template<class Iterator1, three_way_comparable_with<Iterator1, weak_equality> Iterator2>
+  template<class Iterator1, three_way_comparable_with<Iterator1> Iterator2>
     constexpr compare_three_way_result_t<Iterator1, Iterator2>
       operator<=>(const reverse_iterator<Iterator1>& x,
                   const reverse_iterator<Iterator2>& y);
@@ -323,8 +326,8 @@ namespace std {
 
   template<class Iterator1, class Iterator2>
       requires (!sized_sentinel_for<Iterator1, Iterator2>)
-    inline constexpr bool disable_sized_sentinel<reverse_iterator<Iterator1>,
-                                                 reverse_iterator<Iterator2>> = true;
+    inline constexpr bool disable_sized_sentinel_for<reverse_iterator<Iterator1>,
+                                                     reverse_iterator<Iterator2>> = true;
 
   // [:en] [#insert.iterators], insert iterators \
      [:zh_CN] [#insert.iterators]，插入迭代器
@@ -360,7 +363,7 @@ namespace std {
   template<class Iterator1, class Iterator2>
     constexpr bool operator>=(
       const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template<class Iterator1, three_way_comparable_with<Iterator1, weak_equality> Iterator2>
+  template<class Iterator1, three_way_comparable_with<Iterator1> Iterator2>
     constexpr compare_three_way_result_t<Iterator1, Iterator2>
       operator<=>(const move_iterator<Iterator1>& x,
                   const move_iterator<Iterator2>& y);

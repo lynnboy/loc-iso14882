@@ -12,54 +12,46 @@ the elements of the range.
 
 [codeblock:declaration]
 template<class T>
-  concept [[redoc("*:c@def>")]]range-impl =          // [=expos]
-    requires(T&& t) {
-      ranges::begin(std::forward<T>(t));        // [:en] sometimes equality-preserving (see below) \
+  concept [[redoc("^:c@def>")]]range =
+    requires(T& t) {
+      ranges::begin(t);                         // [:en] sometimes equality-preserving (see below) \
                                                    [:zh_CN] 有时候是维持相等性的（见下文）
-      ranges::end(std::forward<T>(t));
+      ranges::end(t);
     };
-
-template<class T>
-  concept [[redoc("`:c@def>")]]range = [[redoc("*:c>")]]range-impl<T&>;
-
-template<class T>
-  concept [[redoc("*:c@def>")]]forwarding-range =    // [=expos]
-    range<T> && [[redoc("*:c>")]]range-impl<T>;
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] The required expressions [`ranges::begin(std::forward<T>(t))] and
-[`ranges::end(std::forward<T>(t))] of the [*:c range-impl] concept do not
-require implicit expression variations ([#concepts.equality]).
-[:zh_CN] 对 [*:c range-impl] 概念规定的表达式
-[`ranges::begin(std::forward<T>(t))] 和 [`ranges::end(std::forward<T>(t))] 并不
-规定提供隐式表达式变体（[#concepts.equality]）。
+[:en] The required expressions [`ranges::begin(t)] and [`ranges::end(t)] of the
+[`:c range] concept do not require implicit expression variations
+([#concepts.equality]).
+[:zh_CN] 对 [`:c range] 概念规定的表达式 [`ranges::begin(t)] 和 [`ranges::end(t)]
+并不规定提供隐式表达式变体（[#concepts.equality]）。
 
 [para]
-[:en] Given an expression [`E] such that [`decltype((E))] is [`T], [`T] models
-[`[^range-impl]] only if
-[:zh_CN] 给定某个表达式 [`E] 并使 [`decltype((E))] 为 [`T]，仅当满足以下条件时，
-[`T] 构成 [`[^range-impl]]：
+[:en] Given an expression [`t] such that [`decltype((t))] is [`T&], [`T] models
+[`:c range] only if
+[:zh_CN] 给定某个表达式 [`t] 并使 [`decltype((t))] 为 [`T&]，仅当满足以下条件时，
+[`T] 构成 [`:c range]：
 
 [list]
 [item]
-[:en@~] [=range(ranges::begin(E),ranges::end(E))] denotes a range
+[:en@~] [=range(ranges::begin(t),ranges::end(t))] denotes a range
 ([#iterator.requirements.general]),
-[:zh_CN@~] [=range(ranges::begin(E),ranges::end(E))] 代表一个范围
+[:zh_CN@~] [=range(ranges::begin(t),ranges::end(t))] 代表一个范围
 （[#iterator.requirements.general]），
 
 [item]
-[:en@~] both [`ranges::begin(E)] and [`ranges::end(E)] are amortized constant
+[:en@~] both [`ranges::begin(t)] and [`ranges::end(t)] are amortized constant
 time and non-modifying, and
-[:zh_CN@~] [`ranges::begin(E)] 和 [`ranges::end(E)] 均为均摊常量时间且不进行
+[:zh_CN@~] [`ranges::begin(t)] 和 [`ranges::end(t)] 均为均摊常量时间且不进行
 改动，并且
 
 [item]
-[:en@~] if the type of [`ranges::begin(E)] models [`:c forward_iterator],
-[`ranges::begin(E)] is equality-preserving.
-[:zh_CN@~] 若 [`ranges::begin(E)] 的类型构成 [`:c forward_iterator]，则
-[`ranges::begin(E)] 是维持相等性的。
+[:en@~] if the type of [`ranges::begin(t)] models [`:c forward_iterator],
+[`ranges::begin(t)] is equality-preserving.
+[:zh_CN@~] 若 [`ranges::begin(t)] 的类型构成 [`:c forward_iterator]，则
+[`ranges::begin(t)] 是维持相等性的。
 [list:end]
 
 [para]
@@ -80,52 +72,69 @@ called at most once for such a range.
 要求它维持相等性，所以对其进行重复调用可能并不会返回相等值或者可能是未定义的；
 对于这样的范围应当最多调用 [`ranges::begin] 一次。
 [end:note]
+[div:end]
 
+[codeblock:declaration]
+template<class T>
+  concept [[redoc("`:c@def")]]safe_range =
+    range<T> &&
+      (is_lvalue_reference_v<T> || enable_safe_range<remove_cvref_t<T>>);
+[codeblock:end]
+
+[div:description]
 [para]
-[:en] Given an expression [`E] such that [`decltype((E))] is [`T] and an lvalue
-[`t] that denotes the same object as [`E], [`T] models [*:c forwarding-range]
-only if
-[:zh_CN] 给定表达式 [`E]，令 [`decltype((E))] 为 [`T]，并令左值 [`t] 与 [`E]
-代表相同的对象，则仅当符合以下条件时 [`T] 构成 [*:c forwarding-range]：
-
-[list]
-[item]
-[:en@~] [`ranges::begin(E)] and [`ranges::begin(t)] are expression-equivalent,
-[:zh_CN@~] [`ranges::begin(E)] 和 [`ranges::begin(t)] 表达式等价，
-[item]
-[:en@~] [`ranges::end(E)] and [`ranges::end(t)] are expression-equivalent, and
-[:zh_CN@~] [`ranges::end(E)] 和 [`ranges::end(t)] 表达式等价，并且
-[item]
-[:en@~] the validity of iterators obtained from the object denoted by [`E] is
-not tied to the lifetime of that object.
-[:zh_CN@~] 对从 [`E] 所代表的对象中获得的迭代器的有效性，与这个对象的生存期之间
-并无关联。
-[list:end]
+[:en] Given an expression [`E] such that [`decltype((E))] is [`T], [`T] models
+[`:c safe_range] only if the validity of iterators obtained from the object
+denoted by [`E] is not tied to the lifetime of that object.
+[:zh_CN] 给定表达式 [`E]，令 [`decltype((E))] 为 [`T]，仅当从 [`E] 所代表的对象
+中获得的迭代器的有效性，与这个对象的生存期之间并无关联时，[`T] 构成
+[`:c safe_range]。
 
 [para]
 [begin:note]
 [:en] Since the validity of iterators is not tied to the lifetime of an object
-whose type models [*:c forwarding-range], a function can accept arguments of
-such a type by value and return iterators obtained from it without danger of
-dangling.
-[:zh_CN] 由于对迭代器的有效性，与类型构成了 [*:c forwarding-range] 的对象的
-生存期之间并无关联，所以接受按值传递的这种类型的实参并返回从其中获得的迭代器的
-函数并没有发生悬挂的危险。
+whose type models [`:c safe_range], a function can accept arguments of such a
+type by value and return iterators obtained from it without danger of dangling.
+[:zh_CN] 由于对迭代器的有效性，与类型构成了 [`:c safe_range] 的对象的生存期之间
+并无关联，所以接受按值传递的这种类型的实参并返回从其中获得的迭代器的函数并没有
+发生悬挂的危险。
 [end:note]
+[div:end]
+
+[%@lib enable_safe_range]
+[codeblock:declaration]
+template<class>
+  inline constexpr bool enable_safe_range = false;
+[codeblock:end]
+
+[div:description]
+[para:remarks]
+[:en] Pursuant to [#namespace.std], users may specialize [`enable_safe_range]
+for cv-unqualified program-defined types.
+[:zh_CN] 根据 [#namespace.std]，用户可以针对 cv 未限定的程序定义类型来特化
+[`enable_safe_range]。
+
+[:en] Such specializations shall be usable in constant expressions ([#expr.const])
+and have type [`const bool].
+[:zh_CN] 这种特化应当可以在常量表达式（[#expr.const]）中使用，并具有类型
+[`const bool]。
 
 [para]
 [begin:example]
-[:en] Specializations of class template [`subrange] ([#range.subrange]) model
-[*:c forwarding-range].
-[:zh_CN] 类模板 [`subrange]（[#range.subrange]）的特例都构成
-[*:c forwarding-range]。
+[:en] Each specialization [`S] of class template [`subrange] ([#range.subrange])
+models [`:c safe_range] because
+[:zh_CN] 类模板 [`subrange]（[#range.subrange]）的每个特例 [`S] 都构成
+[`:c safe_range]，因为
 
-[:en] [`subrange] provides non-member rvalue overloads of [`begin] and [`end]
-with the same semantics as its member lvalue overloads, and [`subrange][=']s
-iterators [=-] since they are [=lq]borrowed[=rq] from some other range [=-] do
-not have validity tied to the lifetime of a [`subrange] object.
-[:zh_CN] [`subrange] 提供了 [`begin] 和 [`end] 的非成员右值重载版本，并与其成员
-的左值重载版本具有相同语义，并且 [`subrange] 的迭代器——由于它们是从其他范围中
-“借”来的——其有效性与 [`subrange] 对象的生存期并无关联。
+[list]
+[item]
+[:en@~] [`enable_safe_range<S>] is specialized to have the value [`true], and
+[:zh_CN@~] [`enable_safe_range<S>] 被特化为具有值 [`true]，并且
+[item]
+[:en@~] [`S][=']s iterators do not have validity tied to the lifetime of an [`S]
+object because they are [=lq]borrowed[=rq] from some other range.
+[:zh_CN@~] 由于 [`S] 的迭代器是从某个其他范围“借来”的，它们并不具有与某个 [`S]
+对象的生存期之间关联的有效性。
+[list:end]
 [end:example]
 [div:end]

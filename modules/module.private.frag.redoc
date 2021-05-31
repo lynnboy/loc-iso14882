@@ -1,0 +1,96 @@
+[section#module.private.frag
+    [:en] Private module fragment
+    [:zh_CN] 私有模块分段
+]
+
+[syntax]
+[rule private-module-fragment [:zh_CN] 私有模块分段 ]
+    [| [`:key module] [`:] [`:key private] [`;] [~:opt top-level-declaration-seq] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A [~private-module-fragment] shall appear only in a primary module interface
+unit ([#module.unit]).
+[:zh_CN] [~私有模块分段]只能出现于主模块接口单页（[#module.unit]）之中。
+
+[:en]
+A module unit with a [~private-module-fragment] shall be the only module unit of
+its module; no diagnostic is required.
+[:zh_CN]
+具有[~私有模块分段]的模块单元应当是其模块的唯一模块单元；无须诊断。
+
+[para]
+[begin:note]
+[:en]
+A [~private-module-fragment] ends the portion of the module interface unit that
+can affect the behavior of other translation units.
+[:zh_CN]
+[~私有模块分段]终结了模块接口单元中可以影响其他翻译单元的行为的部分。
+
+[:en]
+A [~private-module-fragment] allows a module to be represented as a single
+translation unit without making all of the contents of the module reachable to
+importers.
+[:zh_CN]
+[~私有模块分段]允许模块表现为单个翻译单元，而无须使模块的所有内容都对导入者可达。
+
+[:en]
+The presence of a [~private-module-fragment] affects:
+[:zh_CN]
+[~私有模块分段]的存在将影响：
+
+[list]
+[item]
+[:en@~] the point by which the definition of an exported inline function is
+required ([#dcl.inline]),
+[:zh_CN@~] 需要被导出的内联函数的定义式的位置点（[#dcl.inline]），
+
+[item]
+[:en@~] the point by which the definition of an exported function with a
+placeholder return type is required ([#dcl.spec.auto]),
+[:zh_CN@~] 需要被导出的带有占位符返回类型的函数的定义式的点（[#dcl.spec.auto]），
+
+[item]
+[:en@~] the instantiation contexts of templates instantiated before it
+([#module.context]), and
+[:zh_CN@~] 被实例化的模板在其之前的实例化语境（[#module.context]），以及
+
+[item]
+[:en@~] the reachability of declarations within it ([#module.reach]).
+[:zh_CN@~] 其内部的声明式的可达性（[#module.reach]）。
+[list:end]
+[end:note]
+
+[para]
+[begin:example]
+[codeblock]
+export module A;
+export inline void fn_e();      // [:en] error: exported inline function [`fn_e] not defined \
+                                [:zh_CN] 错误：导出的内联函数 [`fn_e]
+                                // [:en@~] before private module fragment \
+                                [:zh_CN@~] 未在私有模块分段之前定义
+inline void fn_m();             // [:en] OK, module-linkage inline function \
+                                [:zh_CN] OK，模块连接的内联函数
+static void fn_s();
+export struct X;
+export void g(X *x) {
+  fn_s();                       // [:en] OK, call to static function in same translation unit \
+                                [:zh_CN] OK，调用相同翻译单元中的静态函数
+  fn_m();                       // [:en] OK, call to module-linkage inline function \
+                                [:zh_CN] OK，调用模块连接的内联函数
+}
+export X *factory();            // OK
+
+module :private;
+struct X {};                    // [:en] definition not reachable from importers of [`A] \
+                                [:zh_CN] 定义式从 [`A] 的导入不可达
+X *factory() {
+  return new X ();
+}
+void fn_e() {}
+void fn_m() {}
+void fn_s() {}
+[codeblock:end]
+[end:example]
