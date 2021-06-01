@@ -10,9 +10,8 @@ thread() noexcept;
 
 [div:description]
 [para:effects]
-[:en] Constructs a [`thread] object that does not represent a thread of
-execution.
-[:zh_CN] 构造并不代表执行线程的 [`thread] 对象。
+[:en] The object does not represent a thread of execution.
+[:zh_CN] 该对象不代表执行线程。
 
 [para:ensures]
 [:en] [`get_id() == id()].
@@ -25,35 +24,46 @@ template<class F, class... Args> explicit thread(F&& f, Args&&... args);
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`F] and each [$[`T]_i] in [`Args] shall meet the [^:oc MoveConstructible]
-requirements.
-[:zh_CN] [`F] 和 [`Args] 中的每个 [$[`T]_i] 都应当满足 [^:oc MoveConstructible]
-的规定。
+[para:constraints]
+[:en] [`remove_cvref_t<F>] is not the same type as [`thread].
+[:zh_CN] [`remove_cvref_t<F>] 与 [`thread] 不是相同的类型。
 
-[:en]
-[`[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)]
-([#func.require]) shall be a valid expression.
-[:zh_CN]
-[`[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)]
-（[#func.require]）应当是有效表达式。
+[para:mandates]
+[:en] The following are all [`true]:
+[:zh_CN] 以下各项均为 [`true]：
+[list]
+[item]
+[:en@~] [`is_constructible_v<decay_t<F>, F>],
+[:zh_CN@~] [`is_constructible_v<decay_t<F>, F>]，
+[item]
+[:en@~] [`(is_constructible_v<decay_t<Args>, Args> && ...)],
+[:zh_CN@~] [`(is_constructible_v<decay_t<Args>, Args> && ...)]，
+[item]
+[:en@~] [`is_move_constructible_v<decay_t<F>>],
+[:zh_CN@~] [`is_move_constructible_v<decay_t<F>>]，
+[item]
+[:en@~] [`(is_move_constructible_v<decay_t<Args>> && ...)], and
+[:zh_CN@~] [`(is_move_constructible_v<decay_t<Args>> && ...)]，以及
+[item]
+[:en@~] [`is_invocable_v<decay_t<F>, decay_t<Args>...>].
+[:zh_CN@~] [`is_invocable_v<decay_t<F>, decay_t<Args>...>]。
+[list:end]
 
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution if
-[`remove_cvref_t<F>] is the same type as [`std::thread].
-[:zh_CN] 当 [`remove_cvref_t<F>] 是与 [`std::thread] 相同的类型时，这个构造函数
-不能参与重载决议。
+[para:expects]
+[:en] [`decay_t<F>] and each type in [`decay_t<Args>] meet the
+[^:oc MoveConstructible] requirements.
+[:zh_CN] [`decay_t<F>] 和 [`decay_t<Args>] 中的每个类型都满足
+[^:oc MoveConstructible] 的规定。
 
 [para:effects]
-[:en] Constructs an object of type [`thread].
-[:zh_CN] 构造 [`thread] 类型的对象。
-
 [:en] The new thread of execution executes
-[`[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)]
-with the calls to [`[^decay-copy]] being evaluated in the constructing thread.
 [:zh_CN] 新的执行线程执行
-[`[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)]
-，其中对 [`[^decay-copy]] 的调用在进行构造的线程中求值。
+[codeblock:notation]
+invoke([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)
+[codeblock:end]
+[:en@~] with the calls to [`[^decay-copy]] being evaluated in the constructing
+thread.
+[:zh_CN@~] 其中对 [`[^decay-copy]] 的调用在进行构造的线程中求值。
 
 [:en] Any return value from this invocation is ignored.
 [:zh_CN] 这次调用的任何返回值都被忽略。
@@ -65,12 +75,9 @@ copy of [`f] will be thrown in the constructing thread, not the new thread.
 线程中抛出，而非在新线程中抛出的。
 [end:note]
 
-[:en] If the invocation of
-[`[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)]
-terminates with an uncaught exception, [`terminate] shall be called.
-[:zh_CN] 如果对
-[`[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)]
-的调用以未捕获的异常终止，则应当调用 [`terminate]。
+[:en] If the invocation of [`invoke] terminates with an uncaught exception,
+[`terminate] is called.
+[:zh_CN] 如果对 [`invoke] 的调用以未捕获的异常终止，则调用 [`terminate]。
 
 [para:sync]
 [:en] The completion of the invocation of the constructor synchronizes with the
@@ -105,11 +112,6 @@ thread(thread&& x) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:effects]
-[:en] Constructs an object of type [`thread] from [`x], and sets [`x] to a
-default constructed state.
-[:zh_CN] 从 [`x] 构造 [`thread] 类型的对象，并将 [`x] 设置为默认构造的状态。
-
 [para:ensures]
 [:en] [`x.get_id() == id()] and [`get_id()] returns the value of [`x.get_id()]
 prior to the start of construction.

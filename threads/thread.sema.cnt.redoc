@@ -40,6 +40,8 @@ initialized when the semaphore is created.
 is incremented when a thread releases the semaphore.
 [:zh_CN] 当某个线程获得该信号量时计数器减一，并当线程释放该信号量时增一。
 
+[:en] [%block (execution)]
+[:zh_CN] [%阻塞（执行）]
 [:en] If a thread tries to acquire the semaphore when the counter is zero,
 the thread will block until another thread increments the counter by releasing
 the semaphore.
@@ -130,20 +132,28 @@ bool try_acquire() noexcept;
 
 [div:description]
 [para:effects]
-[list]
-[item]
-[:en] With low probability, returns immediately.
-[:zh_CN] 低概率会立即返回。
+[:en] Attempts to atomically decrement [`counter] if it is positive, without
+blocking.
+[:zh_CN] 若 [`counter] 为正则尝试原子性地减量而不阻塞。
+
+[:en] If [`counter] is not decremented, there is no effect and [`try_acquire]
+immediately returns.
+[:zh_CN] 若  [`counter] 未能减小，则没有效果且 [`try_acquire] 立即返回。
+
+[:en] An implementation may fail to decrement [`counter] even if it is positive.
+[:zh_CN] 实现可能会在 [`counter] 为正时对其减量仍会失败。
+
+[begin:note]
+[:en] This spurious failure is normally uncommon, but allows interesting
+implementations based on a simple compare and exchange ([#atomics]).
+[:zh_CN] 这种假性失败一般很罕见，但它允许进行基于简单的比较和交换的有价值的实现
+（[#atomics]）。
+[end:note]
 
 [:en] An implementation should ensure that [`try_acquire] does not consistently
-return [`false] in the absence of contending acquisitions.
-[:zh_CN] 实现应当保证 [`try_acquire] 在没有争夺性获取时不会持续返回 [`false]。
-
-[item]
-[:en] Otherwise, atomically check whether [`counter] is greater than zero and,
-if so, decrement [`counter] by one.
-[:zh_CN] 否则，原子性地检查 [`counter] 是否大于零，且当为真时对 [`counter] 减一。
-[list:end]
+return [`false] in the absence of contending semaphore operations.
+[:zh_CN] 实现应当保证 [`try_acquire] 在没有争夺性信号量操作时不会持续返回
+[`false]。
 
 [para:returns]
 [:en] [`true] if [`counter] was decremented, otherwise [`false].
@@ -169,6 +179,8 @@ void acquire();
 [:zh_CN] 若结果为 [`true] 则返回。
 
 [item]
+[:en] [%block (execution)]
+[:zh_CN] [%阻塞（执行）]
 [:en] Blocks on [`*this] until [`counter] is greater than zero.
 [:zh_CN] 在 [`*this] 上阻塞直到 [`counter] 大于零。
 [list:end]
@@ -206,6 +218,8 @@ template<class Clock, class Duration>
 [:zh_CN] 若结果为 [`true] 则返回 [`true]。
 
 [item]
+[:en] [%block (execution)]
+[:zh_CN] [%阻塞（执行）]
 [:en] Blocks on [`*this] until [`counter] is greater than zero or until the
 timeout expires.
 [:zh_CN] 在 [`*this] 上阻塞直到 [`counter] 大于零或直到超时到期。

@@ -25,44 +25,51 @@ template<class F, class... Args> explicit jthread(F&& f, Args&&... args);
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`F] and each [$[`T]_i] in [`Args] shall meet the [^:oc MoveConstructible]
-requirements.
-[:zh_CN] [`F] 和 [`Args] 中的每个 [$[`T]_i] 都应当满足 [^:oc MoveConstructible]
-的规定。
-
-[:en] Either
-[:zh_CN] 要么
-[codeblock:notation]
-[^INVOKE]([^decay-copy](std::forward<F>(f)), get_stop_token(),
-       [^decay-copy](std::forward<Args>(args))...)
-[codeblock:end]
-[:en@~] is a valid expression or
-[:zh_CN@~] 是有效表达式，要么
-[codeblock:notation]
-[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)
-[codeblock:end]
-[:en@~] is a valid expression.
-[:zh_CN@~] 是有效表达式。
-
 [para:constraints]
 [:en] [`remove_cvref_t<F>] is not the same type as [`jthread].
 [:zh_CN] [`remove_cvref_t<F>] 与 [`jthread] 不是相同的类型。
 
+[para:mandates]
+[:en] The following are all [`true]:
+[:zh_CN] 以下各项均为 [`true]：
+[list]
+[item]
+[:en@~] [`is_constructible_v<decay_t<F>, F>],
+[:zh_CN@~] [`is_constructible_v<decay_t<F>, F>]，
+[item]
+[:en@~] [`(is_constructible_v<decay_t<Args>, Args> && ...)],
+[:zh_CN@~] [`(is_constructible_v<decay_t<Args>, Args> && ...)]，
+[item]
+[:en@~] [`is_move_constructible_v<decay_t<F>>],
+[:zh_CN@~] [`is_move_constructible_v<decay_t<F>>]，
+[item]
+[:en@~] [`(is_move_constructible_v<decay_t<Args>> && ...)], and
+[:zh_CN@~] [`(is_move_constructible_v<decay_t<Args>> && ...)]，以及
+[item]
+[:en@~] [`is_invocable_v<decay_t<F>, decay_t<Args>...> || is_invocable_v<decay_t<F>, stop_token, decay_t<Args>...>].
+[:zh_CN@~] [`is_invocable_v<decay_t<F>, decay_t<Args>...> || is_invocable_v<decay_t<F>, stop_token, decay_t<Args>...>]。
+[list:end]
+
+[para:expects]
+[:en] [`decay_t<F>] and each type in [`decay_t<Args>] meet the
+[^:oc MoveConstructible] requirements.
+[:zh_CN] [`decay_t<F>] 和 [`decay_t<Args>] 中的每个类型都满足
+[^:oc MoveConstructible] 的规定。
+
 [para:effects]
-[:en] Initializes [`ssource] and constructs an object of type [`jthread].
-[:zh_CN] 初始化 [`ssource] 并构造 [`jthread] 类型的对象。
+[:en] Initializes [`ssource].
+[:zh_CN] 初始化 [`ssource]。
 
 [:en] The new thread of execution executes
 [:zh_CN] 若表达式
 [codeblock:notation]
-[^INVOKE]([^decay-copy](std::forward<F>(f)), get_stop_token(),
+invoke([^decay-copy](std::forward<F>(f)), get_stop_token(),
        [^decay-copy](std::forward<Args>(args))...)
 [codeblock:end]
 [:en@~] if that expression is well-formed, otherwise
 [:zh_CN@~] 良构则新的执行线程执行该表达式，否则执行
 [codeblock:notation]
-[^INVOKE]([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)
+invoke([^decay-copy](std::forward<F>(f)), [^decay-copy](std::forward<Args>(args))...)
 [codeblock:end]
 [:en@~] with the calls to [`[^decay-copy]] being evaluated in the constructing
 thread.
@@ -78,9 +85,8 @@ copy of [`f] will be thrown in the constructing thread, not the new thread.
 线程中抛出，而非在新线程中抛出的。
 [end:note]
 
-[:en] If the [`[^INVOKE]] expression exits via an exception, [`terminate] is
-called.
-[:zh_CN] 当 [`[^INVOKE]] 表达式以异常退出时，调用 [`terminate]。
+[:en] If the [`invoke] expression exits via an exception, [`terminate] is called.
+[:zh_CN] 当 [`invoke] 表达式以异常退出时，调用 [`terminate]。
 
 [para:sync]
 [:en] The completion of the invocation of the constructor synchronizes with the
@@ -120,11 +126,6 @@ jthread(jthread&& x) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:effects]
-[:en] Constructs an object of type [`jthread] from [`x], and sets [`x] to a
-default constructed state.
-[:zh_CN] 从 [`x] 构造 [`jthread] 类型的对象，并将 [`x] 设置为默认构造的状态。
-
 [para:ensures]
 [:en] [`x.get_id() == id()] and [`get_id()] returns the value of [`x.get_id()]
 prior to the start of construction.
