@@ -13,6 +13,14 @@ unqualified, so as to enable argument dependent lookup ([#basic.lookup.argdep]).
 本子条款中的各个 [`parse] 重载，都对 [`from_stream] 进行未限定的调用，以启用
 依赖于实参的名字查找（[#basic.lookup.argdep]）。
 
+[:en]
+In the following paragraphs, let [`is] denote an object of type
+[`basic_istream<charT, traits>], where [`charT] and [`traits] are template
+parameters in that context.
+[:zh_CN]
+以下段落中，令 [`is] 代表一个类型 [`basic_istream<charT, traits>] 的对象，其中
+[`charT] 和 [`traits] 为其语境中的模板形参。
+
 [codeblock:declaration]
 template<class charT, class traits, class Alloc, class Parsable>
   [[redoc("[=unspec]")]]
@@ -20,16 +28,12 @@ template<class charT, class traits, class Alloc, class Parsable>
 [codeblock:end]
 
 [div:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
+[para:constraints]
 [codeblock]
 from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp)
 [codeblock:end]
-
 [:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+[:zh_CN@~] 为有效表达式。
 
 [para:returns]
 [:en] A manipulator that, when extracted from a
@@ -46,16 +50,12 @@ template<class charT, class traits, class Alloc, class Parsable>
 [codeblock:end]
 
 [div:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
+[para:constraints]
 [codeblock]
 from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp, addressof(abbrev))
 [codeblock:end]
-
 [:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+[:zh_CN@~] 为有效表达式。
 
 [para:returns]
 [:en] A manipulator that, when extracted from a
@@ -73,23 +73,29 @@ template<class charT, class traits, class Alloc, class Parsable>
 [codeblock:end]
 
 [div:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
+[para:constraints]
+[:en] The expression
+[:zh_CN] 表达式
 [codeblock]
-from_stream(declval<basic_istream<charT, traits>&>(), fmt.c_str(), tp, nullptr, &offset)
+from_stream(declval<basic_istream<charT, traits>&>(),
+            fmt.c_str(), tp,
+            declval<basic_string<charT, traits, Alloc>*>(),
+            &offset)
 [codeblock:end]
-
-[:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+[:en@~] is well-formed when treated as an unevaluated operand.
+[:zh_CN@~] 当作为免求值操作数时良构。
 
 [para:returns]
 [:en] A manipulator that, when extracted from a
-[`basic_istream<charT, traits> is], calls
-[`from_stream(is, fmt.c_str(), tp, nullptr, &offset)].
+[`basic_istream<charT, traits> is], calls:
 [:zh_CN] 一个操作符，当从一个 [`basic_istream<charT, traits> is] 进行提取时，
-将调用 [`from_stream(is, fmt.c_str(), tp, nullptr, &offset)]。
+将调用：
+[codeblock]
+from_stream(is,
+            fmt.c_str(), tp,
+            static_cast<basic_string<charT, traits, Alloc>*>(nullptr),
+            &offset)
+[codeblock:end]
 [div:end]
 
 [codeblock:declaration]
@@ -100,17 +106,13 @@ template<class charT, class traits, class Alloc, class Parsable>
 [codeblock:end]
 
 [div:description]
-[para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非
-
+[para:constraints]
 [codeblock]
 from_stream(declval<basic_istream<charT, traits>&>(),
             fmt.c_str(), tp, addressof(abbrev), &offset)
 [codeblock:end]
-
 [:en@~] is a valid expression.
-[:zh_CN@~] 为有效表达式，否则这个函数不能参与重载决议。
+[:zh_CN@~] 为有效表达式。
 
 [para:returns]
 [:en] A manipulator that, when extracted from a
@@ -173,6 +175,24 @@ A white space character matches zero or more white space characters in the input
 stream.
 [:zh_CN]
 一个空格字符与输入流中的零个或多个空格字符相匹配。
+
+[para]
+[:en]
+If the type being parsed cannot represent the information that the format flag
+refers to, [`is.setstate(ios_base::failbit)] is called.
+[:zh_CN] 如果所解析的类型无法表示格式标记所代表的信息，则调用
+[`is.setstate(ios_base::failbit)]。
+
+[begin:example]
+[:en] A [`duration] cannot represent a [`weekday].
+[:zh_CN] [`duration] 无法表示 [`weekday]。
+[end:example]
+
+[:en] However, if a flag refers to a [=lq]time of day[=rq] (e.g. [`%H], [`%I],
+[`%p], etc.), then a specialization of [`duration] is parsed as the time of day
+elapsed since midnight.
+[:zh_CN] 然而，如果标记代表一个“日内时间”（例如 [`%H]，[`%I]，[`%p] 等），
+[`duration] 的特例则被解析为从午夜起经过的日内时间。
 
 [para]
 [:en]
@@ -252,9 +272,9 @@ to read.
 [:en] Leading zeroes are permitted but not required.
 [:zh_CN] 允许但不要求有前导零。
 
-[:en] The modified command [`%Ed] interprets the locale[=']s alternate
+[:en] The modified command [`%Od] interprets the locale[=']s alternate
 representation of the day of the month.
-[:zh_CN] 修饰命令 [`%Ed] 解释该地域的月内日期的替代表示。
+[:zh_CN] 修饰命令 [`%Od] 解释该地域的月内日期的替代表示。
 [-]
 [|] %D
 [|] [:en] Equivalent to [`%m/%d/%y].
@@ -411,9 +431,6 @@ white-space patterns.
 [|] [:en] The locale[=']s equivalent of the AM/PM designations associated with a
 12-hour clock.
     [:zh_CN] 该地域中等价于与 12 小时时钟关联的“AM/PM”指示符。
-
-[:en] The command [`%I] must precede [`%p] in the format string.
-[:zh_CN] 格式字符串中，命令 [`%I] 必须在 [`%p] 之前。
 [-]
 [|] %r
 [|] [:en] The locale[=']s 12-hour clock time.
