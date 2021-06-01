@@ -20,10 +20,12 @@ namespace std::ranges {
     iterator() = default;
     constexpr iterator(filter_view& parent, iterator_t<V> current);
 
-    constexpr iterator_t<V> base() const;
+    constexpr iterator_t<V> base() const &
+      requires copyable<iterator_t<V>>;
+    constexpr iterator_t<V> base() &&;
     constexpr range_reference_t<V> operator*() const;
     constexpr iterator_t<V> operator->() const
-      requires [[redoc("^>")]]has-arrow<iterator_t<V>>;
+      requires [[redoc("^>")]]has-arrow<iterator_t<V>> && copyable<iterator_t<V>>;
 
     constexpr iterator& operator++();
     constexpr void operator++(int);
@@ -97,8 +99,8 @@ then [`iterator_category] denotes [`forward_iterator_tag].
 [`iterator_category] 代表 [`forward_iterator_tag]。
 
 [item]
-[:en] Otherwise, [`iterator_category] denotes [`input_iterator_tag].
-[:zh_CN] 否则，[`iterator_category] 代表 [`input_iterator_tag]。
+[:en] Otherwise, [`iterator_category] denotes [`C].
+[:zh_CN] 否则，[`iterator_category] 代表 [`C]。
 [list:end]
 
 [%@lib@ctor filter_view::iterator]
@@ -108,21 +110,33 @@ constexpr iterator(filter_view& parent, iterator_t<V> current);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`current_] with [`current] and [`parent_] with
+[:en] Initializes [`current_] with [`std::move(current)] and [`parent_] with
 [`addressof(parent)].
-[:zh_CN] 以 [`current] 初始化 [`current_] 并以 [`addressof(parent)] 初始化
-[`parent_]。
+[:zh_CN] 以 [`std::move(current)] 初始化 [`current_] 并以 [`addressof(parent)]
+初始化 [`parent_]。
 [div:end]
 
 [%@lib@member base[!filter_view::iterator]]
 [codeblock:declaration]
-constexpr iterator_t<V> base() const;
+constexpr iterator_t<V> base() const &
+  requires copyable<iterator_t<V>>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
 [:en] Equivalent to: [`return current_;]
 [:zh_CN] 等价于：[`return current_;]
+[div:end]
+
+[%@lib@member base[!filter_view::iterator]]
+[codeblock:declaration]
+constexpr iterator_t<V> base() &&;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return std::move(current_);]
+[:zh_CN] 等价于：[`return std::move(current_);]
 [div:end]
 
 [%@lib@member operator*[!filter_view::iterator]]
@@ -139,7 +153,7 @@ constexpr range_reference_t<V> operator*() const;
 [%@lib@member operator->[!filter_view::iterator]]
 [codeblock:declaration]
 constexpr iterator_t<V> operator->() const
-  requires [[redoc("^>")]]has-arrow<iterator_t<V>>;
+  requires [[redoc("^>")]]has-arrow<iterator_t<V>> && copyable<iterator_t<V>>;
 [codeblock:end]
 
 [div:description]
@@ -158,7 +172,8 @@ constexpr iterator& operator++();
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-current_ = ranges::find_if(++current_, ranges::end(parent_->base_), ref(*parent_->pred_));
+current_ = ranges::find_if(std::move(++current_), ranges::end(parent_->base_),
+                           ref(*parent_->pred_));
 return *this;
 [codeblock:end]
 [div:end]

@@ -4,6 +4,8 @@
 ]
 
 [%@lib filter_view]
+[%@lib@member base[!filter_view]]
+[%@lib@member end[!filter_view]]
 [codeblock:synopsis]
 namespace std::ranges {
   template<input_range V, indirect_unary_predicate<iterator_t<V>> Pred>
@@ -27,7 +29,8 @@ namespace std::ranges {
       requires viewable_range<R> && constructible_from<V, all_view<R>>
     constexpr filter_view(R&& r, Pred pred);
 
-    constexpr V base() const;
+    constexpr V base() const& requires copy_constructible<V> { return base_; }
+    constexpr V base() && { return std::move(base_); }
 
     constexpr iterator begin();
     constexpr auto end() {
@@ -71,17 +74,6 @@ constexpr filter_view(R&& r, Pred pred);
 [`std::move(pred)] 初始化 [`pred_]。
 [div:end]
 
-[%@lib@member base[!filter_view]]
-[codeblock:declaration]
-constexpr V base() const;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return base_;]
-[:zh_CN] 等价于：[`return base_;]
-[div:end]
-
 [%@lib@member begin[!filter_view]]
 [codeblock:declaration]
 constexpr iterator begin();
@@ -98,8 +90,9 @@ constexpr iterator begin();
 
 [para:remarks]
 [:en] In order to provide the amortized constant time complexity required by the
-[`:c range] concept, this function caches the result within the [`filter_view]
-for use on subsequent calls.
-[:zh_CN] 为了提供由 [`:c range] 概念所规定的均摊常量时间复杂度，这个函数在
-[`filter_view] 之内将其结果进行缓存，并在随后的调用中使用之。
+[`:c range] concept when [`filter_view] models [`:c forward_range], this
+function caches the result within the [`filter_view] for use on subsequent calls.
+[:zh_CN] 为了在 [`filter_view] 构成 [`:c forward_range] 时提供由 [`:c range]
+概念所规定的均摊常量时间复杂度，这个函数在 [`filter_view] 之内将其结果进行缓存，
+并在随后的调用中使用之。
 [div:end]

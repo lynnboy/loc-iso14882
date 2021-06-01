@@ -33,6 +33,17 @@ constant expression ([#expr.const]) of the type of the [~template-parameter].
 非类型[~模板形参]的[~模板实参]应当是该[~模板形参]类型的经转换常量表达式
 （[#expr.const]）。
 
+[begin:note]
+[:en]
+If the [~template-argument] represents a set of overloaded functions (or a
+pointer or member pointer to such), the matching function is selected from the
+set ([#over.over]).
+[:zh_CN]
+若[~模板实参]代表一组重载函数的集合（或指向它们的指针或成员指针），则从集合中
+选择其所匹配的函数（[#over.over]）。
+[end:note]
+
+[para]
 [:en]
 For a non-type [~template-parameter] of reference or pointer type, or for each
 non-static data member of reference or pointer type in a non-type
@@ -45,31 +56,21 @@ pointer value shall not refer to or be the address of (respectively):
 
 [list]
 [item]
-[:en@~] a subobject ([#intro.object]),
-[:zh_CN@~] 子对象（[#intro.object]），
-[item]
 [:en@~] a temporary object ([#class.temporary]),
 [:zh_CN@~] 临时对象（[#class.temporary]），
 [item]
 [:en@~] a string literal ([#lex.string]),
 [:zh_CN@~] 字符串字面量（[#lex.string]），
 [item]
-[:en@~] the result of a [`typeid] expression ([#expr.typeid]), or
-[:zh_CN@~] [`typeid] 表达式的结果（[#expr.typeid]），或者
+[:en@~] the result of a [`typeid] expression ([#expr.typeid]),
+[:zh_CN@~] [`typeid] 表达式的结果（[#expr.typeid]），
 [item]
-[:en@~] a predefined [`__func__] variable ([#dcl.fct.def.general]).
-[:zh_CN@~] 预定义的 [`__func__] 变量（[#dcl.fct.def.general]）。
+[:en@~] a predefined [`__func__] variable ([#dcl.fct.def.general]), or
+[:zh_CN@~] 预定义的 [`__func__] 变量（[#dcl.fct.def.general]），或者
+[item]
+[:en@~] a subobject ([#intro.object]) of one of the above.
+[:zh_CN@~] 以上各项之一的子对象（[#intro.object]）。
 [list:end]
-
-[begin:note]
-[:en]
-If the [~template-argument] represents a set of overloaded functions (or a
-pointer or member pointer to such), the matching function is selected from the
-set ([#over.over]).
-[:zh_CN]
-若[~模板实参]代表一组重载函数的集合（或指向它们的指针或成员指针），则从集合中
-选择其所匹配的函数（[#over.over]）。
-[end:note]
 
 [para]
 [begin:example]
@@ -77,18 +78,18 @@ set ([#over.over]).
 template<const int* pci> struct X { /* ... */ };
 int ai[10];
 X<ai> xi;                       // [:en] array to pointer and qualification conversions \
-                                   [:zh_CN] 数组向指针转换和限定转换
+                                [:zh_CN] 数组向指针转换和限定转换
 
 struct Y { /* ... */ };
 template<const Y& b> struct Z { /* ... */ };
 Y y;
 Z<y> z;                         // [:en] no conversion, but note extra cv-qualification \
-                                   [:zh_CN] 无须转换，但注意额外的 cv 限定
+                                [:zh_CN] 无须转换，但注意额外的 cv 限定
 
 template<int (&pa)[5]> struct W { /* ... */ };
 int b[5];
 W<b> w;                         // [:en] no conversion \
-                                   [:zh_CN] 无须转换
+                                [:zh_CN] 无须转换
 
 void f(char);
 void f(int);
@@ -96,15 +97,17 @@ void f(int);
 template<void (*pf)(int)> struct A { /* ... */ };
 
 A<&f> a;                        // [:en] selects [`f(int)] \
-                                   [:zh_CN] 选择了 [`f(int)]
+                                [:zh_CN] 选择了 [`f(int)]
 
 template<auto n> struct B { /* ... */ };
-B<5> b1;                        // [:en] OK: template parameter type is [`int] \
-                                   [:zh_CN] OK：模板形参的类型为 [`int]
-B<'a'> b2;                      // [:en] OK: template parameter type is [`char] \
-                                   [:zh_CN] OK：模板形参的类型为 [`char]
-B<2.5> b3;                      // [:en] error: template parameter type cannot be [`double] \
-                                   [:zh_CN] 错误：模板形参类型不能为 [`double]
+B<5> b1;                        // [:en] OK, template parameter type is [`int] \
+                                [:zh_CN] OK，模板形参的类型为 [`int]
+B<'a'> b2;                      // [:en] OK, template parameter type is [`char] \
+                                [:zh_CN] OK，模板形参的类型为 [`char]
+B<2.5> b3;                      // [:en] OK, template parameter type is [`char] \
+                                [:zh_CN] OK，模板形参的类型为 [`char]
+B<void(0)> b4;                  // [:en] error: template parameter type cannot be [`void] \
+                                [:zh_CN] 错误：模板形参类型不能为 [`void]
 [codeblock:end]
 [end:example]
 
@@ -122,45 +125,19 @@ template<class T, T p> class X {
 };
 
 X<const char*, "Studebaker"> x; // [:en] error: string literal as [~template-argument] \
-                                   [:zh_CN] 错误：字符串字面量用作[~模板实参]
+                                [:zh_CN] 错误：字符串字面量用作[~模板实参]
+X<const char*, "Knope" + 1> x2; // [:en] error: subobject of string literal as [~template-argument] \
+                                [:zh_CN] 错误：字符串字面量的子对象用作[~模板实参]
 
 const char p[] = "Vivisectionist";
 X<const char*, p> y;            // OK
 
 struct A {
   constexpr A(const char*) {}
-  friend bool operator==(const A&, const A&) = default;
 };
 
 X<A, "Pyrophoricity"> z;        // [:en] OK, string literal is a constructor argument to [`A] \
-                                   [:zh_CN] OK，字符串字面量是提供给 [`A] 的构造函数实参
-[codeblock:end]
-[end:example]
-[end:note]
-
-[para]
-[begin:note]
-[:en]
-The address of an array element or non-static data member is not an acceptable
-[~template-argument].
-[:zh_CN]
-数组元素或非静态数据成员的地址不是可接受的[~模板实参]。
-
-[begin:example]
-[codeblock]
-template<int* p> class X { };
-
-int a[10];
-struct S { int m; static int s; } s;
-
-X<&a[2]> x3;                    // [:en] error: address of array element \
-                                   [:zh_CN] 错误：数组元素的地址
-X<&s.m> x4;                     // [:en] error: address of non-static member \
-                                   [:zh_CN] 错误：非静态成员的地址
-X<&s.s> x5;                     // [:en] OK: address of static member \
-                                   [:zh_CN] OK：静态成员的地址
-X<&S::s> x6;                    // [:en] OK: address of static member \
-                                   [:zh_CN] OK：静态成员的地址
+                                [:zh_CN] OK，字符串字面量是提供给 [`A] 的构造函数实参
 [codeblock:end]
 [end:example]
 [end:note]
@@ -177,11 +154,19 @@ corresponding [~template-parameter] has reference type.
 [codeblock]
 template<const int& CRI> struct B { /* ... */ };
 
-B<1> b2;                        // [:en] error: temporary would be required for template argument \
-                                   [:zh_CN] 错误：需要为模板实参创建临时对象
+B<1> b1;                        // [:en] error: temporary would be required for template argument \
+                                [:zh_CN] 错误：需要为模板实参创建临时对象
 
 int c = 1;
-B<c> b1;                        // OK
+B<c> b2;                        // OK
+
+struct X { int n; };
+struct Y { const int &r; };
+template<Y y> struct C { /* ... */ };
+C<Y{X{1}.n}> c;                 // [:en] error: subobject of temporary object used to initialize \
+                                [:zh_CN] 错误：临时对象的子对象用于初始化
+                                // [:en@~] reference member of template parameter \
+                                [:zh_CN@~] 模板形参的引用成员
 [codeblock:end]
 [end:example]
 [end:note]

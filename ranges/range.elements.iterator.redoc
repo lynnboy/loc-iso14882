@@ -6,10 +6,10 @@
 [%@lib elements_view::iterator]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<class R, size_t N>
+  template<class V, size_t N>
   template<bool Const>
-  class elements_view<R, N>::iterator {                 // [=expos]
-    using base_t = conditional_t<Const, const R, R>;
+  class elements_view<V, N>::iterator {                 // [=expos]
+    using base_t = conditional_t<Const, const V, V>;
     friend iterator<!Const>;
 
     iterator_t<base_t> current_;
@@ -21,9 +21,11 @@ namespace std::ranges {
     iterator() = default;
     constexpr explicit iterator(iterator_t<base_t> current);
     constexpr iterator(iterator<!Const> i)
-      requires Const && convertible_to<iterator_t<R>, iterator_t<base_t>>;
+      requires Const && convertible_to<iterator_t<V>, iterator_t<base_t>>;
 
-    constexpr iterator_t<base_t> base() const;
+    constexpr iterator_t<base_t> base() const &
+      requires copyable<iterator_t<base_t>>;
+    constexpr iterator_t<base_t> base() &&;
 
     constexpr decltype(auto) operator*() const
     { return get<N>(*current_); }
@@ -86,31 +88,43 @@ constexpr explicit iterator(iterator_t<base_t> current);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`current_] with [`current].
-[:zh_CN] 以 [`current] 初始化 [`current_]。
+[:en] Initializes [`current_] with [`std::move(current)].
+[:zh_CN] 以 [`std::move(current)] 初始化 [`current_]。
 [div:end]
 
 [%@lib@ctor elements_view::iterator]
 [codeblock:declaration]
 constexpr iterator(iterator<!Const> i)
-  requires Const && convertible_to<iterator_t<R>, iterator_t<base_t>>;
+  requires Const && convertible_to<iterator_t<V>, iterator_t<base_t>>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
-[:en] Initializes [`current_] with [`i.current_].
-[:zh_CN] 以 [`i.current_] 初始化 [`current_]。
+[:en] Initializes [`current_] with [`std::move(i.current_)].
+[:zh_CN] 以 [`std::move(i.current_)] 初始化 [`current_]。
 [div:end]
 
 [%@lib@member base[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr iterator_t<base_t> base() const;
+constexpr iterator_t<base_t> base() const &
+  requires copyable<iterator_t<base_t>>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
 [:en] Equivalent to: [`return current_;]
 [:zh_CN] 等价于：[`return current_;]
+[div:end]
+
+[%@lib@member base[!elements_view::iterator]]
+[codeblock:declaration]
+constexpr iterator_t<base_t> base() &&;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return std::move(current_);]
+[:zh_CN] 等价于：[`return std::move(current_);]
 [div:end]
 
 [%@lib@member operator++[!elements_view::iterator]]

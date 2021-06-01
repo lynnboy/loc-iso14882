@@ -5,13 +5,24 @@
 
 [%@lib@member begin[!subrange]]
 [codeblock:declaration]
-constexpr I begin() const;
+constexpr I begin() const requires copyable<I>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
 [:en] Equivalent to: [`return begin_;]
 [:zh_CN] 等价于：[`return begin_;]
+[div:end]
+
+[%@lib@member begin[!subrange]]
+[codeblock:declaration]
+[[nodiscard]] constexpr I begin() requires (!copyable<I>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return std::move(begin_);]
+[:zh_CN] 等价于：[`return std::move(begin_);]
 [div:end]
 
 [%@lib@member end[!subrange]]
@@ -56,7 +67,8 @@ constexpr [[redoc("^>")]]make-unsigned-like-t(iter_difference_t<I>) size() const
 
 [%@lib@member next[!subrange]]
 [codeblock:declaration]
-[[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) const;
+[[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) const &
+  requires forward_iterator<I>;
 [codeblock:end]
 
 [div:description]
@@ -68,12 +80,21 @@ auto tmp = *this;
 tmp.advance(n);
 return tmp;
 [codeblock:end]
+[div:end]
 
-[begin:note]
-[:en] If [`I] does not model [`:c forward_iterator], [`next] can invalidate
-[`*this].
-[:zh_CN] 若 [`I] 并不构成 [`:c forward_iterator]，则 [`next] 将使 [`*this] 失效。
-[end:note]
+[%@lib@member next[!subrange]]
+[codeblock:declaration]
+[[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) &&;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+advance(n);
+return std::move(*this);
+[codeblock:end]
 [div:end]
 
 [%@lib@member prev[!subrange]]
@@ -129,7 +150,10 @@ return *this;
 [codeblock:declaration]
 template<size_t N, class I, class S, subrange_kind K>
   requires (N < 2)
-constexpr auto get(const subrange<I, S, K>& r);
+  constexpr auto get(const subrange<I, S, K>& r);
+template<size_t N, class I, class S, subrange_kind K>
+  requires (N < 2)
+  constexpr auto get(subrange<I, S, K>&& r);
 [codeblock:end]
 
 [div:description]

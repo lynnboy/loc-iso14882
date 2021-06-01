@@ -4,34 +4,39 @@
 ]
 
 [%@lib take_while_view]
+[%@lib@member base[!take_while_view]]
+[%@lib@member begin[!take_while_view]]
+[%@lib@member end[!take_while_view]]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<view R, class Pred>
-  requires input_range<R> && is_object_v<Pred> &&
-    indirect_unary_predicate<const Pred, iterator_t<R>>
-  class take_while_view : public view_interface<take_while_view<R, Pred>> {
+  template<view V, class Pred>
+  requires input_range<V> && is_object_v<Pred> &&
+    indirect_unary_predicate<const Pred, iterator_t<V>>
+  class take_while_view : public view_interface<take_while_view<V, Pred>> {
     template<bool> class sentinel;                      // [=expos]
 
-    R base_;                                            // [=expos]
+    V base_;                                            // [=expos]
     [[redoc("^>")]]semiregular-box<Pred> pred_;                        // [=expos]
 
   public:
     take_while_view() = default;
-    constexpr take_while_view(R base, Pred pred);
+    constexpr take_while_view(V base, Pred pred);
 
-    constexpr R base() const;
+    constexpr V base() const& requires copy_constructible<V> { return base_; }
+    constexpr V base() && { return std::move(base_); }
+
     constexpr const Pred& pred() const;
 
-    constexpr auto begin() requires (![[redoc("^>")]]simple-view<R>)
+    constexpr auto begin() requires (![[redoc("^>")]]simple-view<V>)
     { return ranges::begin(base_); }
 
-    constexpr auto begin() const requires range<const R>
+    constexpr auto begin() const requires range<const V>
     { return ranges::begin(base_); }
 
-    constexpr auto end() requires (![[redoc("^>")]]simple-view<R>)
+    constexpr auto end() requires (![[redoc("^>")]]simple-view<V>)
     { return sentinel<false>(ranges::end(base_), addressof(*pred_)); }
 
-    constexpr auto end() const requires range<const R>
+    constexpr auto end() const requires range<const V>
     { return sentinel<true>(ranges::end(base_), addressof(*pred_)); }
   };
 
@@ -42,7 +47,7 @@ namespace std::ranges {
 
 [%@lib@ctor take_while_view]
 [codeblock:declaration]
-constexpr take_while_view(R base, Pred pred);
+constexpr take_while_view(V base, Pred pred);
 [codeblock:end]
 
 [div:description]
@@ -51,17 +56,6 @@ constexpr take_while_view(R base, Pred pred);
 [`std::move(pred)].
 [:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(pred)] 初始化
 [`pred_]。
-[div:end]
-
-[%@lib@member base[!take_while_view]]
-[codeblock:declaration]
-constexpr V base() const;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return base_;]
-[:zh_CN] 等价于：[`return base_;]
 [div:end]
 
 [%@lib@member pred[!take_while_view]]

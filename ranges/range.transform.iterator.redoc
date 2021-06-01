@@ -29,7 +29,9 @@ namespace std::ranges {
     constexpr iterator(iterator<!Const> i)
       requires Const && convertible_to<iterator_t<V>, iterator_t<Base>>;
 
-    constexpr iterator_t<Base> base() const;
+    constexpr iterator_t<Base> base() const &
+      requires copyable<iterator_t<Base>>;
+    constexpr iterator_t<Base> base() &&;
     constexpr decltype(auto) operator*() const
     { return invoke(*parent_->fun_, *current_); }
 
@@ -137,10 +139,10 @@ constexpr iterator(Parent& parent, iterator_t<Base> current);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`current_] with [`current] and [`parent_] with
+[:en] Initializes [`current_] with [`std::move(current)] and [`parent_] with
 [`addressof(parent)].
-[:zh_CN] 以 [`current] 初始化 [`current_] 并以 [`addressof(parent)] 初始化
-[`parent_]。
+[:zh_CN] 以 [`std::move(current)] 初始化 [`current_] 并以 [`addressof(parent)]
+初始化 [`parent_]。
 [div:end]
 
 [%@lib@ctor transform_view::iterator]
@@ -159,13 +161,25 @@ constexpr iterator(iterator<!Const> i)
 
 [%@lib@member base[!transform_view::iterator]]
 [codeblock:declaration]
-constexpr iterator_t<Base> base() const;
+constexpr iterator_t<Base> base() const &
+  requires copyable<iterator_t<Base>>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
 [:en] Equivalent to: [`return current_;]
 [:zh_CN] 等价于：[`return current_;]
+[div:end]
+
+[%@lib@member base[!transform_view::iterator]]
+[codeblock:declaration]
+constexpr iterator_t<Base> base() &&;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return std::move(current_);]
+[:zh_CN] 等价于：[`return std::move(current_);]
 [div:end]
 
 [%@lib@member operator++[!transform_view::iterator]]

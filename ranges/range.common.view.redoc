@@ -4,10 +4,14 @@
 ]
 
 [%@lib common_view]
+[%@lib@member base[!common_view]]
+[%@lib@member size[!common_view]]
+[%@lib@member begin[!common_view]]
+[%@lib@member end[!common_view]]
 [codeblock:synopsis]
 namespace std::ranges {
   template<view V>
-    requires (!common_range<V>)
+    requires (!common_range<V> && copyable<iterator_t<V>>)
   class common_view : public view_interface<common_view<V>> {
   private:
     V base_ = V();  // [=expos]
@@ -20,7 +24,8 @@ namespace std::ranges {
       requires (!common_range<R> && constructible_from<V, all_view<R>>)
     constexpr explicit common_view(R&& r);
 
-    constexpr V base() const;
+    constexpr V base() const& requires copy_constructible<V> { return base_; }
+    constexpr V base() && { return std::move(base_); }
 
     constexpr auto size() requires sized_range<V> {
       return ranges::size(base_);
@@ -85,15 +90,4 @@ constexpr explicit common_view(R&& r);
 [para:effects]
 [:en] Initializes [`base_] with [`views::all(std::forward<R>(r))].
 [:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_]。
-[div:end]
-
-[%@lib@member base[!common_view]]
-[codeblock:declaration]
-constexpr V base() const;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return base_;]
-[:zh_CN] 等价于：[`return base_;]
 [div:end]

@@ -68,11 +68,11 @@ namespace std::ranges {
       requires (K == subrange_kind::sized);
 
     template<[[redoc("*:c>")]]not-same-as<subrange> R>
-      requires [[redoc("*:c>")]]forwarding-range<R> &&
-        convertible_to<iterator_t<R>, I> && convertible_to<sentinel_t<R>, S>
+      requires safe_range<R> &&
+               convertible_to<iterator_t<R>, I> && convertible_to<sentinel_t<R>, S>
     constexpr subrange(R&& r) requires (!StoreSize || sized_range<R>);
 
-    template<[[redoc("*:c>")]]forwarding-range R>
+    template<safe_range R>
       requires convertible_to<iterator_t<R>, I> && convertible_to<sentinel_t<R>, S>
     constexpr subrange(R&& r, [[redoc("^>")]]make-unsigned-like-t(iter_difference_t<I>) n)
       requires (K == subrange_kind::sized)
@@ -97,20 +97,20 @@ namespace std::ranges {
       requires [[redoc("*:c>")]]pair-like-convertible-from<PairLike, const I&, const S&>
     constexpr operator PairLike() const;
 
-    constexpr I begin() const;
+    constexpr I begin() const requires copyable<I>;
+    [[nodiscard]] constexpr I begin() requires (!copyable<I>);
     constexpr S end() const;
 
     constexpr bool empty() const;
     constexpr [[redoc("^>")]]make-unsigned-like-t(iter_difference_t<I>) size() const
       requires (K == subrange_kind::sized);
 
-    [[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) const;
+    [[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) const &
+      requires forward_iterator<I>;
+    [[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) &&;
     [[nodiscard]] constexpr subrange prev(iter_difference_t<I> n = 1) const
       requires bidirectional_iterator<I>;
     constexpr subrange& advance(iter_difference_t<I> n);
-
-    friend constexpr I begin(subrange&& r) { return r.begin(); }
-    friend constexpr S end(subrange&& r) { return r.end(); }
   };
 
   template<input_or_output_iterator I, sentinel_for<I> S>
@@ -124,19 +124,23 @@ namespace std::ranges {
     subrange(P, [[redoc("^>")]]make-unsigned-like-t(iter_difference_t<tuple_element_t<0, P>>)) ->
       subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, subrange_kind::sized>;
 
-  template<[[redoc("^>")]]forwarding-range R>
+  template<safe_range R>
     subrange(R&&) ->
       subrange<iterator_t<R>, sentinel_t<R>,
                (sized_range<R> || sized_sentinel_for<sentinel_t<R>, iterator_t<R>>)
                  ? subrange_kind::sized : subrange_kind::unsized>;
 
-  template<[[redoc("^>")]]forwarding-range R>
+  template<safe_range R>
     subrange(R&&, [[redoc("^>")]]make-unsigned-like-t(range_difference_t<R>)) ->
       subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;
 
   template<size_t N, class I, class S, subrange_kind K>
     requires (N < 2)
-  constexpr auto get(const subrange<I, S, K>& r);
+    constexpr auto get(const subrange<I, S, K>& r);
+
+  template<size_t N, class I, class S, subrange_kind K>
+    requires (N < 2)
+    constexpr auto get(subrange<I, S, K>&& r);
 }
 
 namespace std {

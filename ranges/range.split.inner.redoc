@@ -53,12 +53,19 @@ namespace std::ranges {
 [codeblock:end]
 
 [para]
-[:en] The [~typedef-name] [`iterator_category] denotes [`forward_iterator_tag]
-if [`iterator_traits<iterator_t<Base>>::iterator_category] models
-[`derived_from<forward_iterator_tag>], and [`input_iterator_tag] otherwise.
-[:zh_CN] 当 [`iterator_traits<iterator_t<Base>>::iterator_category] 构成
-[`derived_from<forward_iterator_tag>] 时，[~typedef-名] [`iterator_category] 代表
-[`forward_iterator_tag]，否则代表 [`input_iterator_tag]。
+[:en] The [~typedef-name] [`iterator_category] denotes:
+[:zh_CN] [~typedef-名] [`iterator_category] 代表：
+[list]
+[item]
+[:en@~] [`forward_iterator_tag] if
+[`iterator_traits<iterator_t<Base>>::iterator_category] models
+[`derived_from<forward_iterator_tag>];
+[:zh_CN@~] 当 [`iterator_traits<iterator_t<Base>>::iterator_category] 构成
+[`derived_from<forward_iterator_tag>] 时，为 [`forward_iterator_tag]；
+[item]
+[:en@~] otherwise, [`iterator_traits<iterator_t<Base>>::iterator_category].
+[:zh_CN@~] 否则代表 [`iterator_traits<iterator_t<Base>>::iterator_category]。
+[list:end]
 
 [%@lib@ctor split_view::inner_iterator]
 [codeblock:declaration]
@@ -67,8 +74,8 @@ constexpr explicit inner_iterator(outer_iterator<Const> i);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`i_] with [`i].
-[:zh_CN] 以 [`i] 初始化 [`i_]。
+[:en] Initializes [`i_] with [`std::move(i)].
+[:zh_CN] 以 [`std::move(i)] 初始化 [`i_]。
 [div:end]
 
 [%@lib@member operator++[!split_view::inner_iterator]]
@@ -114,16 +121,23 @@ friend constexpr bool operator==(const inner_iterator& x, default_sentinel_t);
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-auto cur = x.i_.[[redoc("^>")]]current;
-auto end = ranges::end(x.i_.parent_->base_);
-if (cur == end) return true;
 auto [pcur, pend] = subrange{x.i_.parent_->pattern_};
-if (pcur == pend) return x.incremented_;
-do {
-  if (*cur != *pcur) return false;
-  if (++pcur == pend) return true;
-} while (++cur != end);
-return false;
+auto end = ranges::end(x.i_.parent_->base_);
+if constexpr ([[redoc("*:c>")]]tiny-range<Pattern>) {
+  const auto & cur = x.i_.[[redoc("^>")]]current;
+  if (cur == end) return true;
+  if (pcur == pend) return x.incremented_;
+  return *cur == *pcur;
+} else {
+  auto cur = x.i_.[[redoc("^>")]]current;
+  if (cur == end) return true;
+  if (pcur == pend) return x.incremented_;
+  do {
+    if (*cur != *pcur) return false;
+    if (++pcur == pend) return true;
+  } while (++cur != end);
+  return false;
+}
 [codeblock:end]
 [div:end]
 

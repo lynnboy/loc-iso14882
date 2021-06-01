@@ -28,6 +28,11 @@ The syntax for [~template-parameter]s is:
     [| [`:key class] ]
     [| [`:key typename] ]
 [rule:end]
+
+[rule type-constraint [:zh_CN] 类型约束 ]
+    [| [~:opt nested-name-specifier] concept-name ]
+    [| [~:opt nested-name-specifier] concept-name [`<] [~:opt template-argument-list] [`>] ]
+[rule:end]
 [syntax:end]
 
 [begin:note]
@@ -138,6 +143,61 @@ class Map {
 [end:note]
 
 [para]
+[:en] A [~type-constraint] [`Q] that designates a concept [`C] can be used to
+constrain a contextually-determined type or template type parameter pack [`T]
+with a [~constraint-expression] [`E] defined as follows.
+[:zh_CN] 指定概念 [`C] 的[~类型约束] [`Q]，可被用于约束依据语境确定的类型或模板
+类型形参包组，带有[~约束表达式] [`E]，定义如下。
+
+[:en] If [`Q] is of the form [`C<A[$_1], [$\cdots], A[$_n]>], then let [`E[$']]
+be [`C<T, A[$_1], [$\cdots], A[$_n]>].
+[:zh_CN] 若 [`Q] 的形式为 [`C<A[$_1], [$\cdots], A[$_n]>]，则令 [`E[$']] 为
+[`C<T, A[$_1], [$\cdots], A[$_n]>]。
+
+[:en] Otherwise, let [`E[$']] be [`C<T>].
+[:zh_CN] 否则，令 [`E[$']] 为 [`C<T>]。
+
+[:en] If [`T] is not a pack, then [`E] is [`E[$']], otherwise [`E] is
+[`(E[$'] && ...)].
+[:zh_CN] 若 [`T] 不是包组，则 [`E] 即为 [`E[$']]，否则 [`E] 为 [`(E[$'] && ...)]。
+
+[:en] This [~constraint-expression] [`E] is called the
+[+immediately-declared constraint[%constraint[!immediately-declared]]] of [`Q]
+for [`T].
+[:zh_CN] 这个[~约束表达式] [`E] 称为 [`Q] 针对 [`T] 的[+直接声明约束
+[%约束[!直接声明～]]]。
+
+[:en] The concept designated by a [~type-constraint] shall be a type concept
+([#temp.concept]).
+[:zh_CN] 由[~类型约束]所指定的概念应当是类型概念（[#temp.concept]）。
+
+[para]
+[:en]
+A [~type-parameter] that starts with a [~type-constraint] introduces the
+immediately-declared constraint of the [~type-constraint] for the parameter.
+[:zh_CN]
+以一个[~类型约束]开始的[~类型形参]，引入该[~类型约束]针对该形参的直接声明约束。
+
+[begin:example]
+[codeblock]
+template<typename T> concept C1 = true;
+template<typename... Ts> concept C2 = true;
+template<typename T, typename U> concept C3 = true;
+
+template<C1 T> struct s1;               // [:en] associates [`C1<T>] \
+                                           [:zh_CN] 关联 [`C1<T>]
+template<C1... T> struct s2;            // [:en] associates [`(C1<T> && ...)] \
+                                           [:zh_CN] 关联 [`(C1<T> && ...)]
+template<C2... T> struct s3;            // [:en] associates [`(C2<T> && ...)] \
+                                           [:zh_CN] 关联 [`(C2<T> && ...)]
+template<C3<int> T> struct s4;          // [:en] associates [`C3<T, int>] \
+                                           [:zh_CN] 关联 [`C3<T, int>]
+template<C3<int>... T> struct s5;       // [:en] associates [`(C3<T, int> && ...)] \
+                                           [:zh_CN] 关联 [`(C3<T, int> && ...)]
+[codeblock:end]
+[end:example]
+
+[para]
 [:en]
 A non-type [~template-parameter] shall have one of the following (optionally
 cv-qualified) types:
@@ -146,32 +206,15 @@ cv-qualified) types:
 
 [list]
 [item]
-[:en@~] a literal type that has strong structural equality
-([#class.compare.default]),
-[:zh_CN@~] 具有强结构化相等性（[#class.compare.default]）的字面类型，
-
-[item]
-[:en@~] an lvalue reference type,
-[:zh_CN@~] 左值引用类型，
-
+[:en@~] a structural type (see below),
+[:zh_CN@~] 结构化类型（见下文），
 [item]
 [:en@~] a type that contains a placeholder type\iref{dcl.spec.auto}, or
 [:zh_CN@~] 包含占位符类型的类型（[#dcl.spec.auto]），或者
-
 [item]
 [:en@~] a placeholder for a deduced class type ([#dcl.type.class.deduct]).
 [:zh_CN@~] 推断类类型的占位符（[#dcl.type.class.deduct]）。
 [list:end]
-
-[para]
-[begin:note]
-[:en]
-Other types are disallowed either explicitly below or implicitly by the rules
-governing the form of [~template-argument]s ([#temp.arg]).
-[:zh_CN]
-其他的类型，要么在下文中明确禁止，要么隐含地在[~模板实参]的构成规则中被禁止
-（[#temp.arg]）。
-[end:note]
 
 [:en]
 The top-level [~cv-qualifier]s on the [~template-parameter] are ignored when
@@ -181,11 +224,32 @@ determining its type.
 
 [para]
 [:en]
-When a non-type [~template-parameter] of non-reference and non-class type is
-used as an initializer for a reference, a temporary is always used.
+A [+:adj structural type[%structural[!type]]] is one of the following:
 [:zh_CN]
-当非引用且非类类型的非类型[~模板形参]用作引用的初始化式时，总要使用临时对象。
+[+:adj 结构化类型[%结构化[!类型]]]为以下各项之一：
+[list]
+[item]
+[:en@~] a scalar type, or
+[:zh_CN@~] 标量类型，或
+[item]
+[:en@~] an lvalue reference type, or
+[:zh_CN@~] 左值引用类型，或
+[item]
+[:en@~] a literal class type with the following properties:
+[:zh_CN@~] 具有以下性质的字面量类类型：
+[list]
+[item]
+[:en@~] all base classes and non-static data members are public and non-mutable
+and
+[:zh_CN@~] 所有基类和非静态数据成员均为 [`public] 且非 [`mutable]，并且
+[item]
+[:en@~] the types of all bases classes and non-static data members are
+structural types or (possibly multi-dimensional) array thereof.
+[:zh_CN@~] 所有基类和非静态数据成员的类型均为结构化类型或其（可能多维的）数组。
+[list:end]
+[list:end]
 
+[para]
 [:en]
 An [~id-expression] naming a non-type [~template-parameter] of class type [`T]
 denotes a static storage duration object of type [`const T], known as a
@@ -201,6 +265,11 @@ All such template parameters in the program of the same type with the same value
 denote the same template parameter object.
 [:zh_CN]
 程序中的这种具有相同类型和相同值的全部模板形参，都代表相同的模板形参对象。
+
+[:en]
+A template parameter object shall have constant destruction ([#expr.const]).
+[:zh_CN]
+模板形参对象应当具有常量销毁（[#expr.const]）。
 
 [begin:note]
 [:en]
@@ -220,7 +289,7 @@ Otherwise, if it is of class type [`T], it is an lvalue and has type [`const T]
 [begin:example]
 [codeblock]
 using X = int;
-struct A { friend bool operator==(const A&, const A&) = default; };
+struct A {};
 template<const X& x, int i, A a> void f() {
   i++;                          // [:en] error: change of [~template-parameter] value \
                                    [:zh_CN] 错误：[~模板形参]的值被改变
@@ -240,20 +309,20 @@ template<const X& x, int i, A a> void f() {
 [end:example]
 
 [para]
+[begin:note]
 [:en]
-A non-type [~template-parameter] shall not be declared to have floating-point or
-void type.
+A non-type [~template-parameter] cannot be declared to have type [=cv] [`void].
 [:zh_CN]
-非类型[~模板形参]不能被声明为具有浮点或 [`void] 类型。
+非类型[~模板形参]不能被声明为具有 [=cv] [`void] 类型。
 
 [begin:example]
 [codeblock]
-template<double d> class X;     // [:en] error \
+template<void v> class X;       // [:en] error \
                                    [:zh_CN] 错误
-template<double* pd> class Y;   // OK
-template<double& rd> class Z;   // OK
+template<void* pv> class Y;     // OK
 [codeblock:end]
 [end:example]
+[end:note]
 
 [para]
 [:en]
@@ -280,34 +349,6 @@ R<v> y;                         // [:en] OK due to implicit argument conversion 
                                    [:zh_CN] OK 由于隐式实参转换
 S<v> z;                         // [:en] OK due to both adjustment and conversion \
                                    [:zh_CN] OK 由于调整和转换
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-A [~type-parameter] that starts with a [~type-constraint] introduces the
-immediately-declared constraint ([#temp]) of the [~type-constraint] for the
-parameter.
-[:zh_CN]
-以一个[~类型约束]开始的[~类型形参]，引入该[~类型约束]针对该形参的直接声明约束
-（[#temp]）。
-
-[begin:example]
-[codeblock]
-template<typename T> concept C1 = true;
-template<typename... Ts> concept C2 = true;
-template<typename T, typename U> concept C3 = true;
-
-template<C1 T> struct s1;               // [:en] associates [`C1<T>] \
-                                           [:zh_CN] 关联 [`C1<T>]
-template<C1... T> struct s2;            // [:en] associates [`(C1<T> && ...)] \
-                                           [:zh_CN] 关联 [`(C1<T> && ...)]
-template<C2... T> struct s3;            // [:en] associates [`(C2<T> && ...)] \
-                                           [:zh_CN] 关联 [`(C2<T> && ...)]
-template<C3<int> T> struct s4;          // [:en] associates [`C3<T, int>] \
-                                           [:zh_CN] 关联 [`C3<T, int>]
-template<C3<int>... T> struct s5;       // [:en] associates [`(C3<T, int> && ...)] \
-                                           [:zh_CN] 关联 [`(C3<T, int> && ...)]
 [codeblock:end]
 [end:example]
 

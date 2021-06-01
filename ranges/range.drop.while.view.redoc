@@ -4,17 +4,21 @@
 ]
 
 [%@lib drop_while_view]
+[%@lib@member base[!drop_while_view]]
+[%@lib@member end[!drop_while_view]]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<view R, class Pred>
-  requires input_range<R> && is_object_v<Pred> &&
-    indirect_unary_predicate<const Pred, iterator_t<R>>
-  class drop_while_view : public view_interface<drop_while_view<R, Pred>> {
+  template<view V, class Pred>
+  requires input_range<V> && is_object_v<Pred> &&
+    indirect_unary_predicate<const Pred, iterator_t<V>>
+  class drop_while_view : public view_interface<drop_while_view<V, Pred>> {
   public:
     drop_while_view() = default;
-    constexpr drop_while_view(R base, Pred pred);
+    constexpr drop_while_view(V base, Pred pred);
 
-    constexpr R base() const;
+    constexpr V base() const& requires copy_constructible<V> { return base_; }
+    constexpr V base() && { return std::move(base_); }
+
     constexpr const Pred& pred() const;
 
     constexpr auto begin();
@@ -23,7 +27,7 @@ namespace std::ranges {
     { return ranges::end(base_); }
 
   private:
-    R base_;                                            // [=expos]
+    V base_;                                            // [=expos]
     [[redoc("^>")]]semiregular-box<Pred> pred_;                        // [=expos]
   };
 
@@ -34,7 +38,7 @@ namespace std::ranges {
 
 [%@lib@ctor drop_while_view]
 [codeblock:declaration]
-constexpr drop_while_view(R base, Pred pred);
+constexpr drop_while_view(V base, Pred pred);
 [codeblock:end]
 
 [div:description]
@@ -43,17 +47,6 @@ constexpr drop_while_view(R base, Pred pred);
 [`std::move(pred)].
 [:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(pred)] 初始化
 [`pred_]。
-[div:end]
-
-[%@lib@member base[!drop_while_view]]
-[codeblock:declaration]
-constexpr R base() const;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return base_;]
-[:zh_CN] 等价于：[`return base_;]
 [div:end]
 
 [%@lib@member pred[!drop_while_view]]
@@ -79,10 +72,11 @@ constexpr auto begin();
 
 [para:remarks]
 [:en] In order to provide the amortized constant-time complexity required by the
-[`range] concept, the first call caches the result within the [`drop_while_view]
-for use on subsequent calls.
-[:zh_CN] 为了提供由 [`range] 概念所要求的均摊常量时间复杂度，第一个重载在
-[`drop_while_view] 中将其结果进行缓存以在后续的调用中使用。
+[`range] concept when [`drop_while_view] models [`forward_range], the first
+call caches the result within the [`drop_while_view] for use on subsequent calls.
+[:zh_CN] 为了在 [`drop_while_view] 构成 [`forward_range] 时提供由 [`range]
+概念所要求的均摊常量时间复杂度，第一个重载在 [`drop_while_view] 中将其结果进行
+缓存以在后续的调用中使用。
 
 [begin:note]
 [:en] Without this, applying a [`reverse_view] over a [`drop_while_view] would
