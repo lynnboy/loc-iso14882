@@ -291,15 +291,16 @@ def mname(_1:str): return tcode(f'__{_1}__')
 def commentellip(): return tcode('/* ... */')
 
 # Concepts
+def oldconceptname(_1:str): return f"Cpp17{_1}"
 @applyTo(['^:oc'])
 def oldconcept(_1:str): return f"[.textit Cpp17{_1}]"
 @applyTo(['^:oc@def'])
-def oldconceptdef(_1:str): return defn(f'Cpp17{_1}')
+def defnoldconcept(_1:str): return defn(f'Cpp17{_1}')
 def idxoldconcept(_1:str): return {'key': f'Cpp17{_1}', 'text': f'[.textit Cpp17{_1}]'}
 @applyTo(['^:newoc'])
 def newoldconcept(_1:str): return f"[.textit {_1}]"
 @applyTo(['^:newoc@def'])
-def newoldconceptdef(_1:str): return defn(_1)
+def defnnewoldconcept(_1:str): return defn(_1)
 def idxnewoldconcept(_1:str): return {'key': _1, 'text': f'[.textit {_1}]'}
 
 @applyTo(['`:cname'])

@@ -185,8 +185,8 @@ class C : T {
 public:
   C(int);
 };
-T a = 1;            // [:en] ill-formed: [`T(C(1))] not tried \
-                       [:zh_CN] 非良构：并未尝试 [`T(C(1))]
+T a = 1;            // [:en] error: no viable conversion ([`T(C(1))] not considered) \
+                       [:zh_CN] 错误：没有可行的转换（不考虑 [`T(C(1))]）
 [codeblock:end]
 [end:example]
 
@@ -237,9 +237,9 @@ remainder of overload resolution.
 
 [:en]
 A given name can refer to one or more function templates and also to a set of
-overloaded non-template functions.
+non-template functions.
 [:zh_CN]
-某个给定名字可以涉指一个或多个函数模板，同时可以涉指一组重载的非模板函数。
+某个给定名字可以涉指一个或多个函数模板，同时可以涉指一组非模板函数。
 
 [:en]
 In such a case, the candidate functions generated from each function template
@@ -272,23 +272,23 @@ reference-related to [`D].
 [begin:example]
 [codeblock]
 struct A {
-  A();
-  A(A &&);                              // #1
-  template<typename T> A(T &&);         // #2
+  A();                                  // #1
+  A(A &&);                              // #2
+  template<typename T> A(T &&);         // #3
 };
 struct B : A {
   using A::A;
-  B(const B &);                         // #3
-  B(B &&) = default;                    // [:en] #4, implicitly deleted \
+  B(const B &);                         // #4
+  B(B &&) = default;                    // [:en] #5, implicitly deleted \
                                            [:zh_CN] #4，隐含为弃置的
 
   struct X { X(X &&) = delete; } x;
 };
 extern B b1;
-B b2 = static_cast<B&&>(b1);            // [:en] calls #3: #1, #2, and #4 are not viable \
-                                           [:zh_CN] 调用 #3：#1、#2 和 #4 均不可行
+B b2 = static_cast<B&&>(b1);            // [:en] calls #4: #1 is not viable, #2, #3, and #5 are not candidates \
+                                           [:zh_CN] 调用 #4：#1 不可行，#2、#3 和 #5 均不是候选
 struct C { operator B&&(); };
-B b3 = C();                             // [:en] calls #3 \
+B b3 = C();                             // [:en] calls #4 \
                                            [:zh_CN] 调用 #3
 [codeblock:end]
 [end:example]

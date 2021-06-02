@@ -9,12 +9,12 @@
 [%@lib@member end[!split_view]]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<auto> struct [[redoc("^>")]]require-constant;       // [=expos]
+  template<auto> struct [[redoc("*>")]]require-constant;       // [=expos]
 
   template<class R>
   concept [[redoc("*:c@def>")]]tiny-range =                          // [=expos]
     sized_range<R> &&
-    requires { typename [[redoc("^>")]]require-constant<remove_reference_t<R>::size()>; } &&
+    requires { typename [[redoc("*>")]]require-constant<remove_reference_t<R>::size()>; } &&
     (remove_reference_t<R>::size() <= 1);
 
   template<input_range V, forward_range Pattern>
@@ -23,16 +23,16 @@ namespace std::ranges {
              (forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   class split_view : public view_interface<split_view<V, Pattern>> {
   private:
-    V base_ = V();                              // [=expos]
-    Pattern pattern_ = Pattern();               // [=expos]
-    iterator_t<V> current_ = iterator_t<V>();   // [:en] [=expos], present only if [`!forward_range<V>] \
-                                                   [:zh_CN] [=expos]，仅当 [`!forward_range<V>] 时给出
-    // [:en] [#range.split.outer], class template [`split_view::outer_iterator] \
-       [:zh_CN] [#range.split.outer]，类模板 [`split_view::outer_iterator]
-    template<bool> struct outer_iterator;       // [=expos]
-    // [:en] [#range.split.inner], class template [`split_view::inner_iterator] \
-       [:zh_CN] [#range.split.inner]，类模板 [`split_view::inner_iterator]
-    template<bool> struct inner_iterator;       // [=expos]
+    V [[redoc("*>")]]base_ = V();                              // [=expos]
+    Pattern [[redoc("*>")]]pattern_ = Pattern();               // [=expos]
+    iterator_t<V> [[redoc("*>")]]current_ = iterator_t<V>();   // [:en] [=expos], present only if [`!forward_range<V>] \
+                                                               [:zh_CN] [=expos]，仅当 [`!forward_range<V>] 时给出
+    // [:en] [#range.split.outer], class template [`split_view::[*outer-iterator]] \
+       [:zh_CN] [#range.split.outer]，类模板 [`split_view::[*outer-iterator]]
+    template<bool> struct [[redoc("*>")]]outer-iterator;       // [=expos]
+    // [:en] [#range.split.inner], class template [`split_view::[*inner-iterator]] \
+       [:zh_CN] [#range.split.inner]，类模板 [`split_view::[*inner-iterator]]
+    template<bool> struct [[redoc("*>")]]inner-iterator;       // [=expos]
   public:
     split_view() = default;
     constexpr split_view(V base, Pattern pattern);
@@ -47,29 +47,29 @@ namespace std::ranges {
                constructible_from<Pattern, single_view<range_value_t<R>>>
     constexpr split_view(R&& r, range_value_t<R> e);
 
-    constexpr V base() const& requires copy_constructible<V> { return base_; }
-    constexpr V base() && { return std::move(base_); }
+    constexpr V base() const& requires copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
 
     constexpr auto begin() {
       if constexpr (forward_range<V>)
-        return outer_iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::begin(base_)};
+        return [[redoc("*>")]]outer-iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::begin([[redoc("*>")]]base_)};
       else {
-        current_ = ranges::begin(base_);
-        return outer_iterator<false>{*this};
+        [[redoc("*>")]]current_ = ranges::begin([[redoc("*>")]]base_);
+        return [[redoc("*>")]]outer-iterator<false>{*this};
       }
     }
 
     constexpr auto begin() const requires forward_range<V> && forward_range<const V> {
-      return outer_iterator<true>{*this, ranges::begin(base_)};
+      return [[redoc("*>")]]outer-iterator<true>{*this, ranges::begin([[redoc("*>")]]base_)};
     }
 
     constexpr auto end() requires forward_range<V> && common_range<V> {
-      return outer_iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::end(base_)};
+      return [[redoc("*>")]]outer-iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::end([[redoc("*>")]]base_)};
     }
 
     constexpr auto end() const {
       if constexpr (forward_range<V> && forward_range<const V> && common_range<const V>)
-        return outer_iterator<true>{*this, ranges::end(base_)};
+        return [[redoc("*>")]]outer-iterator<true>{*this, ranges::end([[redoc("*>")]]base_)};
       else
         return default_sentinel;
     }
@@ -91,10 +91,10 @@ constexpr split_view(V base, Pattern pattern);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`base_] with [`std::move(base)], and [`pattern_] with
+[:en] Initializes [*base_] with [`std::move(base)], and [*pattern_] with
 [`std::move(pattern)].
-[:zh_CN] 以 [`std::move(base)] 初始化 [`base_] 并以 [`std::move(pattern)] 初始化
-[`pattern_]。
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`std::move(pattern)] 初始化
+[*pattern_]。
 [div:end]
 
 [%@lib@ctor split_view]
@@ -107,10 +107,10 @@ constexpr split_view(R&& r, P&& p);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`base_] with [`views::all(std::forward<R>(r))] and [`pattern_]
+[:en] Initializes [*base_] with [`views::all(std::forward<R>(r))] and [*pattern_]
 with [`views::all(std::forward<P>(p))].
-[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_] 并以
-[`views::all(std::forward<P>(p))] 初始化 [`pattern_]。
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [*base_] 并以
+[`views::all(std::forward<P>(p))] 初始化 [*pattern_]。
 [div:end]
 
 [%@lib@ctor split_view]
@@ -123,8 +123,8 @@ constexpr split_view(R&& r, range_value_t<R> e);
 
 [div:description]
 [para:effects]
-[:en] Initializes [`base_] with [`views::all(std::forward<R>(r))] and [`pattern_]
+[:en] Initializes [*base_] with [`views::all(std::forward<R>(r))] and [*pattern_]
 with [`single_view{std::move(e)}].
-[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [`base_] 并以
-[`single_view{std::move(e)}] 初始化 [`pattern_]。
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [*base_] 并以
+[`single_view{std::move(e)}] 初始化 [*pattern_]。
 [div:end]
