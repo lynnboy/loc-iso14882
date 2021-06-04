@@ -22,30 +22,11 @@ A translation unit consists of a sequence of declarations.
 
 [syntax]
 [rule translation-unit [:zh_CN] 翻译单元 ]
-    [| [~:opt top-level-declaration-seq] ]
+    [| [~:opt declaration-seq] ]
     [| [~:opt global-module-fragment] module-declaration [~:opt top-level-declaration-seq]
         [~:opt private-module-fragment] ]
 [rule:end]
-
-[rule top-level-declaration-seq [:zh_CN] 顶层声明式序列 ]
-    [| top-level-declaration ]
-    [| top-level-declaration-seq top-level-declaration ]
-[rule:end]
-
-[rule top-level-declaration [:zh_CN] 顶层声明式 ]
-    [| module-import-declaration ]
-    [| declaration ]
-[rule:end]
 [syntax:end]
-
-[para]
-[:en]
-A token sequence beginning with [`:opt export] [`module] and not immediately
-followed by [`::] is never interpreted as the [~declaration] of a
-[~top-level-declaration].
-[:zh_CN]
-以“[`:opt export] [`module]”开头且后面未紧跟 [`::] 的记号序列，不会被解释为
-[~顶层声明式]的[~声明式]。
 
 [para]
 [:en]
@@ -191,6 +172,11 @@ purposes ([#dcl.typedef]); or
 [%枚举[!～的连接]]
 有名字的枚举（[#dcl.enum]），或定义于 typedef 声明式中的无名枚举，其具有用于连接
 的 typedef 名（[#dcl.typedef]）；或者
+
+[item]
+[:en@~] an unnamed enumeration that has an enumerator as a name for linkage
+purposes ([#dcl.enum]); or
+[:zh_CN@~] 无名枚举，具有一个枚举符作为连接目的的名字（[#dcl.enum]）；或者
 
 [item]
 [:en@~] a template
@@ -410,6 +396,12 @@ declare entities, but merely introduce synonyms.
 Similarly, [~using-directive]s do not declare entities.
 [:zh_CN]
 雷斯蒂，[~using-指令]并不声明实体。
+
+[:en]
+Enumerators do not have linkage, but may serve as the name of an enumeration
+with linkage ([#dcl.enum]).
+[:zh_CN]
+枚举符没有连接，但可作为具有连接的枚举的名字（[#dcl.enum]）。
 [end:note]
 
 [para]
@@ -483,5 +475,242 @@ Linkage to non-[=Cpp] declarations can be achieved using a
 [:zh_CN]
 到非 [=Cpp] 的声明式的连接可以通过使用[~连接说明]来达成（[#dcl.link]）。
 [end:note]
+
+[para]
+[:en]
+A declaration [$D] [+names[%name]] an entity [$E] if
+[:zh_CN]
+以下情况下，声明式 [$D] [+指名]实体 [$E]：
+[list]
+[item]
+[:en] [$D] contains a [~lambda-expression] whose closure type is [$E],
+[:zh_CN] [$D] 包含闭包类型为 [$E] 的 [~lambda-表达式]，
+[item]
+[:en] [$E] is not a function or function template and [$D] contains an
+[~id-expression], [~type-specifier], [~nested-name-specifier], [~template-name],
+or [~concept-name] denoting [$E], or
+[:zh_CN] [$E] 不是函数或函数模板，且 [$D] 包含代表 [$E] 的[~标识表达式]，
+[~类型说明符]，[~嵌套名说明符]，[~模板名]，或 [~概念名]，或者
+[item]
+[:en] [$E] is a function or function template and [$D] contains an expression
+that names [$E] ([#basic.def.odr]) or an [~id-expression] that refers to a set
+of overloads that contains [$E].
+[:zh_CN] [$E] 是函数或函数模板，且 [$D] 包含指名了 [$E] 的表达式
+（[#basic.def.odr]）或指代包含了 [$E] 的重载集合的[~标识表达式]。
+
+[begin:note]
+[:en]
+Non-dependent names in an instantiated declaration do not refer to a set of
+overloads ([#temp.nondep]).
+[:zh_CN]
+已实例化声明式中的非待决名并不指代重载集合（[#temp.nondep]）。
+[end:note]
+[list:end]
+
+[para]
+[:en]
+A declaration is an [+exposure] if it either names a TU-local entity (defined
+below), ignoring
+[:zh_CN]
+如果一个声明式或者指名了翻译单元局部的实体（下文定义），其中排除
+[list]
+[item]
+[:en] the [~function-body] for a non-inline function or function template
+(but not the deduced return type for a (possibly instantiated) definition of
+a function with a declared return type that uses a placeholder type
+([#dcl.spec.auto])),
+[:zh_CN] 非内联函数或函数模板的[~函数体]（但不包括对函数的（可能被实例化的）
+定义式的推断返回类型，该函数具有使用了占位符类型的声明返回类型（[#dcl.spec.auto]））
+[item]
+[:en] the [~initializer] for a variable or variable template (but not the
+variable[=']s type),
+[:zh_CN] 变量或变量模板的[~初始化式]（但不包括变量的类型），
+[item]
+[:en] friend declarations in a class definition, and
+[:zh_CN] 类定义式中的友元声明式，以及
+[item]
+[:en] any reference to a non-volatile const object or reference with internal or
+no linkage initialized with a constant expression that is not an odr-use
+([#basic.def.odr]),
+[:zh_CN] 对某个非 [`volatile] 的 [`const] 对象或引用的任何涉指，其具有内部或
+无连接且以并非 ODR 式使用的常量表达式所初始化（[#basic.def.odr]），
+[list:end]
+[:en@~] or defines a constexpr variable initialized to a TU-local value (defined
+below).
+[:zh_CN@~] 或者定义了以翻译单元局部的实体（下文定义）初始化的 constexpr 变量，则
+它是一个[+显露式]。
+
+[begin:note]
+[:en]
+An inline function template can be an exposure even though
+explicit specializations of it might be usable in other translation units.
+[:zh_CN]
+即使可以在其他翻译单元中使用其显示特例，内联函数模板仍可以为显露式。
+[end:note]
+
+[para]
+[:en]
+An entity is [+TU-local[%TU-local[!entity]]] if it is
+[:zh_CN]
+符合下列情况的实体是[+翻译单元局部的[%翻译单元局部的[!实体]]]：
+
+[list]
+[item]
+[:en] a type, function, variable, or template that
+[:zh_CN] 以下情况的类型，函数，变量，或模板：
+[list]
+[item]
+[:en@~] has a name with internal linkage, or
+[:zh_CN@~] 具有带有内部连接的名字，或者
+[item]
+[:en@~] does not have a name with linkage and is declared, or introduced by a
+[~lambda-expression], within the definition of a TU-local entity,
+[:zh_CN@~] 不具有带有连接的名字，且是在翻译单元局部的实体的定义式中，声明或由
+[~lambda-表达式]所引入的，
+[list:end]
+
+[item]
+[:en] a type with no name that is defined outside a [~class-specifier],
+function body, or [~initializer] or is introduced by a [~defining-type-specifier]
+that is used to declare only TU-local entities,
+[:zh_CN] 在[~类说明符]，函数体，或[~初始化式]以外定义的，或者由用于声明仅为
+翻译单元局部的实体的[~定义类型说明符]所引入的，没有名字的类型，
+
+[item]
+[:en] a specialization of a TU-local template,
+[:zh_CN] 翻译单元局部的模板的特化式，
+
+[item]
+[:en] a specialization of a template with any TU-local template argument, or
+[:zh_CN] 带有任何翻译单元局部的模板的实参的模板特化式，或者
+
+[item]
+[:en] a specialization of a template whose (possibly instantiated) declaration
+is an exposure.
+[:zh_CN] 模板的特化式，该模板的（可能被实例化的）声明式为显露式。
+
+[begin:note]
+[:en]
+The specialization might have been implicitly or explicitly instantiated.
+[:zh_CN]
+该特化式可能已被隐式或显示实例化。
+[end:note]
+[list:end]
+
+[para]
+[:en]
+A value or object is [+TU-local[%TU-local[!value or object]]] if either
+[:zh_CN]
+符合下列情况的值或对象是[+翻译单元局部的[%翻译单元局部的[!值或对象]]]：
+[list]
+[item]
+[:en] it is, or is a pointer to, a TU-local function or the object associated
+with a TU-local variable,
+[:zh_CN] 它是翻译单元局部的函数或与翻译单元局部的变量相关联的对象，或为其指针，
+[item]
+[:en] it is an object of class or array type and any of its subobjects or
+any of the objects or functions to which its non-static data members of
+reference type refer is TU-local and is usable in constant expressions.
+[:zh_CN] 它是类或数组类型的对象，而且其任何子对象，或其引用类型的非静态数据成员
+所指代的任何对象或函数，均为翻译单元局部的且可在常量表达式中使用。
+[list:end]
+
+[para]
+[:en]
+If a (possibly instantiated) declaration of, or a deduction guide for,
+a non-TU-local entity in a module interface unit (outside the
+[~private-module-fragment], if any) or module partition ([#module.unit]) is an
+exposure, the program is ill-formed.
+[:zh_CN]
+如果模块接口单元（于[~私有模块分段]之外，如果有）或模块分区（[#module.unit]）
+中的某个非翻译单元局部的实体，其（可能被实例化的）声明式或者其推断导引是显露式，
+则程序非良构。
+
+[:en]
+Such a declaration in any other context is deprecated ([#depr.local]).
+[:zh_CN]
+其他任何语境中的这种声明式是被摒弃的（[#depr.local]）。
+
+[para]
+[:en]
+If a declaration that appears in one translation unit names a TU-local entity
+declared in another translation unit that is not a header unit, the program is
+ill-formed.
+[:zh_CN]
+如果出现于一个翻译单元中的声明式指名了声明于另一个并非头文件单元翻译单元中的
+翻译单元局部实体，则程序非良构。
+
+[:en]
+A declaration instantiated for a template specialization ([#temp.spec])
+appears at the point of instantiation of the specialization ([#temp.point]).
+[:zh_CN]
+对某个模板特例（[#temp.spec]）实例化的声明式，出现于该特例的实例化点
+（[#temp.point]）。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+export module A;
+static void f() {}
+inline void it() { f(); }           // [:en] error: is an exposure of [`f] \
+                                    [:zh_CN] 错误：[`f] 的显露式
+static inline void its() { f(); }   // OK
+template<int> void g() { its(); }   // OK
+template void g<0>();
+
+decltype(f) *fp;                    // [:en] error: [`f] (though not its type) is TU-local \
+                                    [:zh_CN] 错误：[`f] 是翻译单元局部的（虽然其类型不是）
+auto &fr = f;                       // OK
+constexpr auto &fr2 = fr;           // [:en] error: is an exposure of [`f] \
+                                    [:zh_CN] 错误：[`f] 的显露式
+constexpr static auto fp2 = fr;     // OK
+
+struct S { void (&ref)(); } s{f};               // [:en] OK, value is TU-local \
+                                                [:zh_CN] OK，翻译单元局部的值
+constexpr extern struct W { S &s; } wrap{s};    // [:en] OK, value is not TU-local \
+                                                [:zh_CN] OK，不是翻译单元局部的值
+
+static auto x = []{f();};           // OK
+auto x2 = x;                        // [:en] error: the closure type is TU-local \
+                                    [:zh_CN] 错误：闭包类型是翻译单元局部的
+int y = ([]{f();}(),0);             // [:en] error: the closure type is not TU-local \
+                                    [:zh_CN] 错误：闭包类型不是翻译单元局部的
+int y2 = (x,0);                     // OK
+
+namespace N {
+  struct A {};
+  void adl(A);
+  static void adl(int);
+}
+void adl(double);
+
+inline void h(auto x) { adl(x); }   // [:en] OK, but a specialization might be an exposure \
+                                    [:zh_CN] OK，但特例可能是显露式
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+module A;
+void other() {
+  g<0>();                           // [:en] OK, specialization is explicitly instantiated \
+                                    [:zh_CN] OK，显示实例化了特化式
+  g<1>();                           // [:en] error: instantiation uses TU-local [`its] \
+                                    [:zh_CN] 错误：实例化使用了翻译单元局部的 [`its]
+  h(N::A{});                        // [:en] error: overload set contains TU-local [`N::adl(int)] \
+                                    [:zh_CN] 错误：重载集合包含了翻译单元局部的 [`N::adl(int)]
+  h(0);                             // [:en] OK, calls [`adl(double)] \
+                                    [:zh_CN] OK，调用 [`adl(double)]
+  adl(N::A{});                      // [:en] OK; [`N::adl(int)] not found, calls [`N::adl(N::A)] \
+                                    [:zh_CN] OK；未找到 [`N::adl(int)]，调用 [`N::adl(N::A)]
+  fr();                             // [:en] OK, calls [`f] \
+                                    [:zh_CN] OK，调用 [`f]
+  constexpr auto ptr = fr;          // [:en] error: [`fr] is not usable in constant expressions here \
+                                    [:zh_CN] 错误：不能在这里的常量表达式中使用 [`fr]
+}
+[codeblock:end]
+[end:example]
 
 [%:end#linkage]

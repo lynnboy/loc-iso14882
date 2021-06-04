@@ -3,23 +3,6 @@
     [:zh_CN] 原子性类型的操作
 ]
 
-[para]
-[begin:note]
-[:en] Many operations are volatile-qualified.
-[:zh_CN] 许多操作都是 [`volatile] 限定的。
-
-[:en] The [=lq]volatile as device register[=rq] semantics have not changed in
-the standard.
-[:zh_CN] 本标准中并未改变“以 [`volatile] 作为设备寄存器”的语义。
-
-[:en] This qualification means that volatility is preserved when applying these
-operations to volatile objects.
-[:zh_CN] 这种限定意味着当对 [`volatile] 对象实施这些操作时将保持其易失性。
-
-[:en] It does not mean that operations on non-volatile objects become volatile.
-[:zh_CN] 它并不意味着对非 [`volatile] 对象的操作会变为 [`volatile] 的。
-[end:note]
-
 [%@lib@ctor atomic]
 [%@lib@ctor atomic<T*>]
 [%@lib@ctor@raw [`atomic<[^integral]>]]
@@ -76,6 +59,8 @@ receiving thread.
 [%@lib@member is_always_lock_free[!atomic<T*>]]
 [%@lib@member is_always_lock_free[!atomic<[^integral]>]]
 [%@lib@member is_always_lock_free[!atomic<[^floating-point]>]]
+[%@lib@member is_always_lock_free[!atomic<shared_ptr<T>>]]
+[%@lib@member is_always_lock_free[!atomic<weak_ptr<T>>]]
 [codeblock:declaration [!:mark ImpDef] ]
 static constexpr bool is_always_lock_free = [[redoc("[?impdefx"
     "[:en] whether a given [`atomic] type[=']s operations are always lock free"
@@ -102,6 +87,8 @@ corresponding [`ATOMIC_..._LOCK_FREE] macro, if defined.
 [%@lib@member is_lock_free[!atomic<T*>]]
 [%@lib@member is_lock_free[!atomic<[^integral]>]]
 [%@lib@member is_lock_free[!atomic<[^floating-point]>]]
+[%@lib@member is_lock_free[!atomic<shared_ptr<T>>]]
+[%@lib@member is_lock_free[!atomic<weak_ptr<T>>]]
 [codeblock:declaration]
 bool is_lock_free() const volatile noexcept;
 bool is_lock_free() const noexcept;
@@ -138,6 +125,11 @@ void store(T desired, memory_order order = memory_order::seq_cst) noexcept;
 [:zh_CN] 实参 [`order] 不为 [`memory_order::consume]、[`memory_order::acquire]
 或 [`memory_order::acq_rel]。
 
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
 [para:effects]
 [:en] Atomically replaces the value pointed to by [`this] with the value of
 [`desired].
@@ -157,6 +149,11 @@ T operator=(T desired) noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
 [para:effects]
 [:en] Equivalent to [`store(desired)].
 [:zh_CN] 等价于 [`store(desired)]。
@@ -183,6 +180,11 @@ T load(memory_order order = memory_order::seq_cst) const noexcept;
 [`memory_order::acq_rel].
 [:zh_CN] 实参 [`order] 不为 [`memory_order::release] 或 [`memory_order::acq_rel]。
 
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
 [para:effects]
 [:en] Memory is affected according to the value of [`order].
 [:zh_CN] 根据 [`order] 的值影响内存。
@@ -202,6 +204,11 @@ operator T() const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
 [para:effects]
 [:en] Equivalent to: [`return load();]
 [:zh_CN] 等价于：[`return load();]
@@ -219,6 +226,11 @@ T exchange(T desired, memory_order order = memory_order::seq_cst) noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
 [para:effects]
 [:en] Atomically replaces the value pointed to by [`this] with [`desired].
 [:zh_CN] 原子地将 [`this] 所指向的值替换为 [`desired]。
@@ -274,6 +286,11 @@ bool compare_exchange_strong(T& expected, T desired,
 [:zh_CN] 实参 [`failure] 不为 [`memory_order::release] 或
 [`memory_order::acq_rel]。
 
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
 [para:effects]
 [:en] Retrieves the value in [`expected].
 [:zh_CN] 获取 [`expected] 中的值。
@@ -284,11 +301,11 @@ if true, replaces the value pointed to by [`this] with that in [`desired].
 [:zh_CN] 然后原子地比较由 [`this] 所指向值和之前从 [`expected] 所获取到的值的
 值表示，当为真时，将由 [`this] 所指向的值替换为 [`desired] 中的值。
 
-[:en] If and only if the comparison is true, memory is affected according to the
-value of [`success], and if the comparison is false, memory is affected
+[:en] If and only if the comparison is [`true], memory is affected according to
+the value of [`success], and if the comparison is false, memory is affected
 according to the value of [`failure].
-[:zh_CN] 当且仅当比较结果为真时，根据 [`success] 的值影响内存，当比较结果为假时，
-则根据 [`failure] 的值影响内存。
+[:zh_CN] 当且仅当比较结果为 [`true] 时，根据 [`success] 的值影响内存，当比较结果
+为 [`false] 时，则根据 [`failure] 的值影响内存。
 
 [:en] When only one [`memory_order] argument is supplied, the value of [`success]
 is [`order], and the value of [`failure] is [`order] except that a value of

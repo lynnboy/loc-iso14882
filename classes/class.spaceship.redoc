@@ -20,19 +20,26 @@ defined as follows:
 [list]
 [item]
 [:en]
-If overload resolution for [`a <=> b] results in a usable function ([#over.match]),
-[`static_cast<R>(a <=> b)].
+If [`a <=> b] is usable ([#class.compare.default]), [`static_cast<R>(a <=> b)].
 [:zh_CN]
-如果为 [`a <=> b] 进行的重载决议结果为一个可用函数（[#over.match]），则为
-[`static_cast<R>(a <=> b)]。
+如果 [`a <=> b] 可用（[#class.compare.default]），则为 [`static_cast<R>(a <=> b)]。
 
 [item]
 [:en]
-Otherwise, if overload resolution for [`a <=> b] finds at least one viable
-candidate, the synthesized three-way comparison is not defined.
+Otherwise, if overload resolution for [`a <=> b] is performed and finds at least
+one viable candidate, the synthesized three-way comparison is not defined.
 [:zh_CN]
-否则，如果为 [`a <=> b] 进行的重载决议找到了至少一个可行的候选函数，则不定义合成
-三路比较。
+否则，如果为 [`a <=> b] 实施了重载决议并找到了至少一个可行的候选函数，则不定义
+合成三路比较。
+
+[item]
+[:en]
+Otherwise, if [`R] is not a comparison category type, or either the expression
+[`a == b] or the expression [`a < b] is not usable, the synthesized three-way
+comparison is not defined.
+[:zh_CN]
+否则，若 [`R] 并非比较类别类型，或者表达式 [`a == b] 或表达式 [`a < b] 任一
+不可用，则不定义合成三路比较。
 
 [item]
 [:en]
@@ -40,7 +47,7 @@ Otherwise, if [`R] is [`strong_ordering], then
 [:zh_CN]
 否则，若 [`R] 为 [`strong_ordering]，则为
 
-[codeblock:notation]
+[codeblock]
 a == b ? strong_ordering::equal :
 a < b  ? strong_ordering::less :
          strong_ordering::greater
@@ -52,7 +59,7 @@ Otherwise, if [`R] is [`weak_ordering], then
 [:zh_CN]
 否则，若 [`R] 为 [`weak_ordering]，则为
 
-[codeblock:notation]
+[codeblock]
 a == b ? weak_ordering::equivalent :
 a < b  ? weak_ordering::less :
          weak_ordering::greater
@@ -60,39 +67,36 @@ a < b  ? weak_ordering::less :
 
 [item]
 [:en]
-Otherwise, if [`R] is [`partial_ordering], then
+Otherwise (when [`R] is [`partial_ordering]),
 [:zh_CN]
-否则，若 [`R] 为 [`partial_ordering]，则为
+否则（[`R] 为 [`partial_ordering]），为
 
-[codeblock:notation]
+[codeblock]
 a == b ? partial_ordering::equivalent :
 a < b  ? partial_ordering::less :
 b < a  ? partial_ordering::greater :
          partial_ordering::unordered
 [codeblock:end]
-
-[item]
-Otherwise, the synthesized three-way comparison is not defined.
-[:zh_CN]
-否则，不定义合成三路比较。
 [list:end]
 
 [begin:note]
 [:en]
 A synthesized three-way comparison may be ill-formed if overload resolution
-finds usable functions that do not otherwise meet the requirements implied by
+finds usable candidates that do not otherwise meet the requirements implied by
 the defined expression.
 [:zh_CN]
-如果重载决议所找到的可用函数无法满足由定义的表达式所蕴含的规定时，合成三路比较
+如果重载决议所找到的可用候选无法满足由定义的表达式所蕴含的规定时，合成三路比较
 可能非良构。
 [end:note]
 
 [para]
 [:en]
 Let [`R] be the declared return type of a defaulted three-way comparison
-operator function.
+operator function, and let [$[`x]_i] be the elements of the expanded list of
+subobjects for an object [`x] of type [`C].
 [:zh_CN]
-令 [`R] 为预置三路比较运算符函数所声明的返回类型。
+令 [`R] 为预置三路比较运算符函数所声明的返回类型，并令 [$[`x]_i] 为类型 [`C] 的
+对象 [`x] 的子对象的展开列表中的各个元素。
 
 [:en]
 Given an expanded list of subobjects for an object [`x] of type [`C], let
@@ -107,26 +111,40 @@ function.
 [list]
 [item]
 [:en]
-If [`R] is [`auto], then the return type is deduced as the common comparison
-type (see below) of [$[`R]_0], [$[`R]_1], [$\cdots], [$[`R]_{n-1}].
+If [`R] is [`auto], then let [$[=cv]_i [`R]_i] be the type of the expression
+[$[`x]_i] [`<=>] [$[`x]_i].
 [:zh_CN]
-如果 [`R] 为 [`auto]，则将其返回类型推断为
-[$[`R]_0], [$[`R]_1], [$\cdots], [$[`R]_{n-1}] 的一般比较类型（见下文）。
+如果 [`R] 为 [`auto]，则令 [$[=cv]_i [`R]_i] 为表达式 [$[`x]_i] [`<=>] [$[`x]_i]
+的类型。
 
 [:en]
-If the return type is deduced as [`void], the operator function is defined as
-deleted.
+The operator function is defined as deleted if that expression is not usable or
+if [$[`R]_i] is not a comparison category type ([#cmp.categories.pre]) for any
+[$i].
 [:zh_CN]
-如果返回类型被推断为 [`void]，则将该运算符函数定义为弃置的。
+如果该表达式不可用，或如果 [$[`R]_i] 对于任何 [$i] 不是比较类别类型
+（[#cmp.categories.pre]），则运算符函数被定义为弃置的。
+
+[:en]
+The return type is deduced as the common comparison type (see below) of
+[$[`R]_0], [$[`R]_1], [$\cdots], [$[`R]_{n-1}].
+[:zh_CN]
+其返回类型推断为 [$[`R]_0], [$[`R]_1], [$\cdots], [$[`R]_{n-1}] 的一般比较类型
+（见下文）。
 
 [item]
 [:en]
-Otherwise, if the synthesized three-way comparison of type [`R] between any
-objects [$[`x]_i] and [$[`x]_i] is not defined or would be ill-formed, the
-operator function is defined as deleted.
+Otherwise, [`R] shall not contain a placeholder type.
 [:zh_CN]
-否则，如果任意对象 [$[`x]_i] 和 [$[`x]_i] 之间针对类型 [`R] 的合成三路比较未被
-定义或是非良构的，则该运算符函数被定义为弃置的。
+否则，[`R] 不能包含占位符类型。
+
+[:en]
+If the synthesized three-way comparison of type [`R] between any objects
+[$[`x]_i] and [$[`x]_i] is not defined, the operator function is defined as
+deleted.
+[:zh_CN]
+如果任意对象 [$[`x]_i] 和 [$[`x]_i] 之间针对类型 [`R] 的合成三路比较未被定义，则
+该运算符函数被定义为弃置的。
 [list:end]
 
 [para]
@@ -137,14 +155,14 @@ by comparing corresponding elements [$[`x]_i] and [$[`y]_i] in the expanded
 lists of subobjects for [`x] and [`y] (in increasing index order) until the
 first index [$i] where the synthesized three-way comparison of type [`R] between
 [$[`x]_i] and [$[`y]_i] yields a result value [$[`v]_i] where [`v[$_i] != 0],
-contextually converted to [`bool], yields [`true]; [`V] is [$[`v]_i].
+contextually converted to [`bool], yields [`true]; [`V] is a copy of [$[`v]_i].
 [:zh_CN]
 带有两个相同类型的形参 [`x] 和 [`y] 的预置三路比较运算符函数的类型为 [`R] 的
 返回值 [`V]，其确定方式是对 [`x] 和 [`y] 的展开后的子对象列表中的对应元素
 [$[`x]_i] 和 [$[`y]_i]（按索引增序）进行比较，直到遇到第一个使得在 [$[`x]_i] 和
 [$[`y]_i] 之间针对类型 [`R] 的合成三路比较所产生的结果值 [$[`v]_i] 满足
 [`v[$_i] != 0] 被按语境转换为 [`bool] 时产生 [`true] 的索引 [$i]；则 [`V] 即为
-[$[`v]_i]。
+[$[`v]_i] 的副本。
 
 [:en]
 If no such index exists, [`V] is [`static_cast<R>(std::strong_ordering::equal)].
@@ -153,26 +171,20 @@ If no such index exists, [`V] is [`static_cast<R>(std::strong_ordering::equal)].
 
 [para]
 [:en]
-The [+common comparison type] [`U] of a possibly-empty list of [$n] types
-[$[`T]_0], [$[`T]_1], [$\cdots], [$[`T]_{n-1}] is defined as follows:
+The [+common comparison type] [`U] of a possibly-empty list of [$n] comparison
+category types [$[`T]_0], [$[`T]_1], [$\cdots], [$[`T]_{n-1}] is defined as
+follows:
 [:zh_CN]
-可能为空的 [$n] 个类型的列表 [$[`T]_0], [$[`T]_1], [$\cdots], [$[`T]_{n-1}] 的
-[+公共比较类型]定义如下：
+可能为空的 [$n] 个比较类别类型的列表
+[$[`T]_0], [$[`T]_1], [$\cdots], [$[`T]_{n-1}] 的[+公共比较类型]定义如下：
 
 [list]
 [item]
 [:en]
-If any [$[`T]_i] is not a comparison category type ([#cmp.categories]), [`U] is
-[`void].
-[:zh_CN]
-如果有任何 [$[`T]_i] 不是比较类别类型（[#cmp.categories]），则 [`U] 为 [`void]。
-
-[item]
-[:en]
-Otherwise, if at least one [$[`T]_i] is [`std::partial_ordering], [`U] is
+If at least one [$[`T]_i] is [`std::partial_ordering], [`U] is
 [`std::partial_ordering] ([#cmp.partialord]).
 [:zh_CN]
-否则，如果有至少一个 [$[`T]_i] 为 [`std::partial_ordering]，则 [`U] 为
+如果有至少一个 [$[`T]_i] 为 [`std::partial_ordering]，则 [`U] 为
 [`std::partial_ordering]（[#cmp.partialord]）。
 
 [item]

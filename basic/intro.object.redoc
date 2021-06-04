@@ -17,13 +17,13 @@ manipulate objects.
 
 [:en]
 An [+object] is created by a definition ([#basic.def]), by a [~new-expression]
-([#expr.new]), when implicitly changing the active member of a union
-([#class.union]), or when a temporary object is created ([#conv.rval],
-[#class.temporary]).
+([#expr.new]), by an operation that implicitly creates objects (see below), when
+implicitly changing the active member of a union ([#class.union]), or when a
+temporary object is created ([#conv.rval], [#class.temporary]).
 [:zh_CN]
-[+对象]是通过定义式创建（[#basic.def]），通过 [~new-表达式]创建（[#expr.new]），
-当改变联合体的活跃成员时隐式创建（[#class.union]），或者当创建临时对象时创建的
-（[#conv.rval]，[#class.temporary]）。
+[+对象]是通过定义式（[#basic.def]），通过 [~new-表达式]（[#expr.new]），通过隐式
+创建对象的操作（见下文），当改变联合体的活跃成员（[#class.union]）时，或者当创建
+临时对象（[#conv.rval]，[#class.temporary]）时创建的。
 
 [:en]
 An object occupies a region of storage in its period of construction
@@ -374,12 +374,127 @@ unspecified byte of storage occupied by the complete object of that subobject.
 存储的地址。
 
 [para]
+[:en]
+Some operations are described as [+implicitly creating objects[%object[!implicit
+creation]]] within a specified region of storage.
+[:zh_CN]
+一些操作被称为在指定的存储区域中[+隐式创建对象[%对象[!隐式创建]]]。
+
+[:en]
+For each operation that is specified as implicitly creating objects, that
+operation implicitly creates and starts the lifetime of zero or more objects of
+implicit-lifetime types ([#basic.types]) in its specified region of storage
+if doing so would result in the program having defined behavior.
+[:zh_CN]
+对于每个被指定为隐式创建对象的操作，该操作会在其指定存储区域中隐式创建并开始具有
+隐式生存期类型（[#basic.types]）的零个或更多对象，只要这样做将导致程序具有有定义
+的行为。
+
+[:en]
+If no such set of objects would give the program defined behavior,
+the behavior of the program is undefined.
+[:zh_CN]
+如果不存在这样一组会带给程序有定义的行为的对象，则程序的行为未定义。
+
+[:en]
+If multiple such sets of objects would give the program defined behavior,
+it is unspecified which such set of objects is created.
+[:zh_CN]
+如果有多组这种会带给程序有定义行为的对象，则未指明创建哪一组这种对象。
+
 [begin:note]
 [:en]
-[=Cpp] provides a variety of fundamental types and several ways of composing
-new types from existing types ([#basic.types]).
+Such operations do not start the lifetimes of subobjects of such objects
+that are not themselves of implicit-lifetime types.
 [:zh_CN]
-[=Cpp] 提供多种基础类型，以及几种用已有类型组成新类型的途径（[#basic.types]）。
+这种操作并不会使这种对象中自身并非隐式生存期类型的子对象的生存期开始。
+[end:note]
+
+[para]
+[:en]
+Further, after implicitly creating objects within a specified region of storage,
+some operations are described as producing a pointer to a
+[+:adj suitable created object[%suitable created[!object]]].
+[:zh_CN]
+此外，在指定存储区域中隐式创建对象之后，一些操作被描述为产生指向
+[+:adj 适当创建的对象[%适当创建的[!对象]]]的指针。
+
+[:en]
+These operations select one of the implicitly-created objects
+whose address is the address of the start of the region of storage,
+and produce a pointer value that points to that object,
+if that value would result in the program having defined behavior.
+[:zh_CN]
+这些操作选择被隐式创建的对象中其地址为存储区域的起始地址的一个对象，并产生指向
+该对象的一个指针值，但要该值会导致程序具有有定义的行为。
+
+[:en]
+If no such pointer value would give the program defined behavior,
+the behavior of the program is undefined.
+[:zh_CN]
+如果没有这种可以带给程序有定义的行为的指针值，则程序的行为未定义。
+
+[:en]
+If multiple such pointer values would give the program defined behavior,
+it is unspecified which such pointer value is produced.
+[:zh_CN]
+如果有多格这种会带给程序有定义行为的对象，则未指明产生哪一格这种指针值。
+
+[para]
+[begin:example]
+[codeblock]
+#include <cstdlib>
+struct X { int a, b; };
+X *make_x() {
+  // [:en] The call to [`std::malloc] implicitly creates an object of type [`X] \
+  [:zh_CN] 对 [`std::malloc] 的调用隐式创建了一个 [`X] 类型的对象
+  // [:en@~] and its subobjects [`a] and [`b], and returns a pointer to that [`X] object \
+  [:zh_CN@~] 及其子对象 [`a] 和 [`b]，并返回指向该 [`X] 对象
+  // [:en@~] (or an object that is pointer-interconvertible ([#basic.compound]) with it), \
+  [:zh_CN@~] （或一个与之指针可相互转换（[#basic.compound]）的对象）的指针，
+  // [:en@~] in order to give the subsequent class member access operations \
+  [:zh_CN@~] 以便带给随后的类成员访问操作
+  // [:en@~] defined behavior. \
+  [:zh_CN@~] 有定义的行为。
+  X *p = (X*)std::malloc(sizeof(struct X));
+  p->a = 1;
+  p->b = 2;
+  return p;
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+An operation that begins the lifetime of an array of [`char], [`unsigned char],
+or [`std::byte] implicitly creates objects within the region of storage occupied
+by the array.
+[:zh_CN]
+开始 [`char]、[`unsigned char] 或 [`std::byte] 的数组的生存期的操作，在由该数组
+所占据的存储区域中隐式创建对象。
+
+[begin:note]
+[:en]
+The array object provides storage for these objects.
+[:zh_CN]
+此数组对象为这些对象提供存储。
+[end:note]
+
+[:en]
+Any implicit or explicit invocation of a function named [`operator new] or
+[`operator new`[`]] implicitly creates objects in the returned region of storage
+and returns a pointer to a suitable created object.
+[:zh_CN]
+任何对名为 [`operator new] 或 [`operator new`[`]] 的函数的隐式或显示的调用，都
+在其所返回的存储区域中隐式创建对象并返回适当创建的对象的指针。
+
+[begin:note]
+[:en]
+Some functions in the C++ standard library implicitly create objects
+([#allocator.traits.members], [#c.malloc], [#cstring.syn], [#bit.cast]).
+[:zh_CN]
+C++ 标准程序库中的一些函数会隐式创建对象
+（[#allocator.traits.members]，[#c.malloc]，[#cstring.syn]，[#bit.cast]）。
 [end:note]
 
 [%:end#object.model]

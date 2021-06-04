@@ -7,22 +7,27 @@
 namespace std {
   template<class T> struct atomic<shared_ptr<T>> {
     using value_type = shared_ptr<T>;
+
     static constexpr bool is_always_lock_free = [[redoc("[?impdefx [:en] whether a given [`atomic] type[=']s operations are always lock free"
                                                                "[:zh_CN] 给定 [`atomic] 类型的操作是否总是无锁的]")]];
-
     bool is_lock_free() const noexcept;
-    void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+
+    constexpr atomic() noexcept;
+    atomic(shared_ptr<T> desired) noexcept;
+    atomic(const atomic&) = delete;
+    void operator=(const atomic&) = delete;
+
     shared_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
     operator shared_ptr<T>() const noexcept;
+    void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) noexcept;
+    void operator=(shared_ptr<T> desired) noexcept;
 
     shared_ptr<T> exchange(shared_ptr<T> desired,
                            memory_order order = memory_order::seq_cst) noexcept;
-
     bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
                                memory_order success, memory_order failure) noexcept;
     bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
                                  memory_order success, memory_order failure) noexcept;
-
     bool compare_exchange_weak(shared_ptr<T>& expected, shared_ptr<T> desired,
                                memory_order order = memory_order::seq_cst) noexcept;
     bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
@@ -31,12 +36,6 @@ namespace std {
     void wait(shared_ptr<T> old, memory_order order = memory_order::seq_cst) const noexcept;
     void notify_one() noexcept;
     void notify_all() noexcept;
-
-    constexpr atomic() noexcept = default;
-    atomic(shared_ptr<T> desired) noexcept;
-    atomic(const atomic&) = delete;
-    void operator=(const atomic&) = delete;
-    void operator=(shared_ptr<T> desired) noexcept;
 
   private:
     shared_ptr<T> p;            // [=expos]
@@ -89,11 +88,11 @@ void store(shared_ptr<T> desired, memory_order order = memory_order::seq_cst) no
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] The [`order] argument shall not be [`memory_order::consume],
-[`memory_order::acquire], nor [`memory_order::acq_rel].
-[:zh_CN] 实参 [`order] 不能为 [`memory_order::consume]、
-[`memory_order::acquire] 或者 [`memory_order::acq_rel]。
+[para:expects]
+[:en] [`order] is neither [`memory_order::consume], [`memory_order::acquire],
+nor [`memory_order::acq_rel].
+[:zh_CN] [`order] 不为 [`memory_order::consume]、[`memory_order::acquire] 或
+[`memory_order::acq_rel]。
 
 [para:effects]
 [:en] Atomically replaces the value pointed to by [`this] with the value of
@@ -123,8 +122,8 @@ shared_ptr<T> load(memory_order order = memory_order::seq_cst) const noexcept;
 
 [div:description]
 [para:requires]
-[:en] [`order] shall not be [`memory_order::release] nor [`memory_order::acq_rel].
-[:zh_CN] [`order] 不能为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+[:en] [`order] is neither [`memory_order::release] nor [`memory_order::acq_rel].
+[:zh_CN] [`order] 不为 [`memory_order::release] 或 [`memory_order::acq_rel]。
 
 [para:effects]
 [:en] Memory is affected according to the value of [`order].
@@ -177,10 +176,9 @@ bool compare_exchange_strong(shared_ptr<T>& expected, shared_ptr<T> desired,
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`failure] shall not be [`memory_order::release] nor
-[`memory_order::acq_rel].
-[:zh_CN] [`failure] 不能为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+[para:expects]
+[:en] [`failure] is neither [`memory_order::release] nor [`memory_order::acq_rel].
+[:zh_CN] [`failure] 不为 [`memory_order::release] 或 [`memory_order::acq_rel]。
 
 [para:effects]
 [:en] If [`p] is equivalent to [`expected], assigns [`desired] to [`p] and has

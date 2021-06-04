@@ -44,10 +44,12 @@ vacuous initialization) ([#dcl.init]).
 [:en]
 except that if the object is a union member or subobject thereof, its lifetime
 only begins if that union member is the initialized member in the union
-([#dcl.init.aggr], [#class.base.init]), or as described in [#class.union].
+([#dcl.init.aggr], [#class.base.init]), or as described in [#class.union] and
+[#class.copy.ctor] and except as described in [#allocator.members].
 [:zh_CN]
 但若对象是联合体的成员或其子对象，则仅当该联合体成员是联合体中的已初始化成员
-（[#dcl.init.aggr]，[#class.base.init]），或者根据 [#class.union] 的描述，才开始
+（[#dcl.init.aggr]，[#class.base.init]），或者根据 [#class.union] 和
+[#class.copy.ctor] 中的描述但排除 [#allocator.members] 中所描述的情况，才开始
 其生存期。
 
 [:en]
@@ -124,11 +126,11 @@ its periods of construction and destruction.
 [para]
 [:en]
 A program may end the lifetime of any object by reusing the storage which the
-object occupies or by explicitly calling the destructor for an object of a class
-type.
+object occupies or by explicitly calling a destructor or pseudo-destructor
+([#expr.prim.id.dtor]) for the object.
 [:zh_CN]
-程序可以通过重用对象所占据的存储，或通过对类类型的对象明确调用其析构函数来结束
-任何对象的生存期。
+程序可以通过重用对象所占据的存储，或通过对对象显示调用析构函数或伪析构函数
+（[#expr.prim.id.dtor]）来结束任何对象的生存期。
 
 [:en]
 For an object of a class type, the program is not required to call the
@@ -320,40 +322,45 @@ location which the original object occupied, a pointer that pointed to the
 original object, a reference that referred to the original object, or the name
 of the original object will automatically refer to the new object and, once the
 lifetime of the new object has started, can be used to manipulate the new
-object, if:
+object, if the original object is transparently replaceable (see below) by the
+new object.
 [:zh_CN]
 如果在对象的生存期结束后而该对象占据过的存储被重用或释放之前，在原对象占据过的存
-储位置上创建一个新的对象，则在如下情况下，指向原对象的指针、指代原对象的引用或原
-对象的名字将自动指代新对象，并且一旦新对象的生存期开始，就可以被用于操纵新对象：
+储位置上创建一个新的对象，则在原对象可被新对象透明替换（见下文）的情况下，指向
+原对象的指针、指代原对象的引用或原对象的名字将自动指代新对象，并且一旦新对象的
+生存期开始，就可以被用于操纵新对象：
+
+[:en]
+An object [$o_1] is [+transparently replaceable] by an object [$o_2] if:
+[:zh_CN]
+如下情况下对象 [$o_1] 可被对象 [$o_2] [+透明替换]：
 
 [list]
 [item]
-[:en]
-the storage for the new object exactly overlays the storage location which the
-original object occupied, and
-[:zh_CN]
-新对象的存储恰好覆盖原对象曾占据的存储位置，且
+[:en] the storage that [$o_2] occupies exactly overlays the storage that [$o_1]
+occupied, and
+[:zh_CN] [$o_2] 所占据的存储与 [$o_1] 曾占据的存储恰好重叠，且
 
 [item]
-[:en]
-the new object is of the same type as the original object (ignoring the
-top-level cv-qualifiers), and
-[:zh_CN]
-新对象与原对象类型相同（忽略顶层的 cv 限定符），且
+[:en] [$o_1] and [$o_2] are of the same type (ignoring the top-level
+cv-qualifiers), and
+[:zh_CN] [$o_1] 和 [$o_2] 类型相同（忽略顶层的 cv 限定符），且
 
 [item]
-[:en]
-the original object is neither a complete object that is const-qualified nor a
-subobject of such an object, and
-[:zh_CN]
-原对象既不是被 const 限定的完整对象也不是这种对象的子对象，且
+[:en] [$o_1] is not a complete const object, and
+[:zh_CN] [$o_1] 不是完整的 [`const] 对象，且
 
 [item]
-[:en]
-neither the original object nor the new object is a potentially-overlapping
-subobject ([#intro.object]).
-[:zh_CN]
-原对象和新对象都不是潜在重叠子对象（[#intro.object]）。
+[:en] neither [$o_1] nor [$o_2] is a potentially-overlapping subobject
+([#intro.object]), and
+[:zh_CN] [$o_1] 和 [$o_2] 都不是潜在重叠子对象（[#intro.object]），且
+
+[item]
+[:en] either [$o_1] and [$o_2] are both complete objects, or [$o_1] and [$o_2]
+are direct subobjects of objects [$p_1] and [$p_2], respectively, and [$p_1] is
+transparently replaceable by [$p_2].
+[:zh_CN] 或者 [$o_1] 和 [$o_2] 均为完整对象，或者 [$o_1] 和 [$o_2] 分别是对象
+[$p_1] 和 [$p_2] 的直接子对象，且 [$p_1] 可被对象 [$p_2] 透明替换。
 [list:end]
 
 [begin:example]
@@ -389,9 +396,9 @@ c1.f();                         // [:en] well-defined; [`c1] refers to a new obj
 [:en]
 If these conditions are not met, a pointer to the new object can be obtained
 from a pointer that represents the address of its storage by calling
-[`std::launder] ([#support.dynamic]).
+[`std::launder] ([#ptr.launder]).
 [:zh_CN]
-如果不满足这些条件，则还可以通过调用 [`std::launder]（[#support.dynamic]）来从
+如果不满足这些条件，则还可以通过调用 [`std::launder]（[#ptr.launder]）来从
 一个表示新对象的存储地址的指针获得一个指向新对象的指针。
 [end:note]
 

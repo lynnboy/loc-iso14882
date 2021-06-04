@@ -210,6 +210,7 @@ def CppIII(): return Cpp() + ' 2003'
 def CppXI(): return Cpp() + ' 2011'
 def CppXIV(): return Cpp() + ' 2014'
 def CppXVII(): return Cpp() + ' 2017'
+def CppXX(): return Cpp() + ' 2020'
 def opt(_1:str): return _1 + ensuremath(f"_\mathit{{_{text('opt')}}}")
 @applyTo(['?bigoh'])
 def bigoh(_1:str): return ensuremath(f"\mathscr{{O}}({_1})")

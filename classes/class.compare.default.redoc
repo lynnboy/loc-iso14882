@@ -6,82 +6,175 @@
 [para]
 [:en]
 A defaulted comparison operator function ([#over.binary]) for some class [`C]
-shall be a non-template function declared in the [~member-specification] of [`C]
-that is
+shall be a non-template function that is
 [:zh_CN]
-对于类 [`C] 预置的比较运算符函数（[#over.binary]）应当是在 [`C] 的[~成员说明]中
-所声明的非模板函数，为
+某个类 [`C] 的预置比较运算符函数（[#over.binary]）应当是如下的非模板函数：
 
 [list]
 [item]
-[:en] a non-static const member of [`C] having one parameter of type [`const C&], or
-[:zh_CN] 带有一个 [`const C&] 类型的形参的 [`C] 的非静态 const 成员，或者为
+[:en] a non-static const non-volatile member of [`C] having one parameter of
+type [`const C&] and either no [~ref-qualifier] or the [~ref-qualifier] [`&], or
+[:zh_CN] 带有一个 [`const C&] 类型的形参且要么没有[~引用限定符]要么带有
+[~引用限定符] [`&] 的，[`C] 的非静态 [`const] 非 [`volatile] 成员，或者
 [item]
 [:en] a friend of [`C] having either two parameters of type [`const C&] or two
 parameters of type [`C].
 [:zh_CN] 带有两个 [`const C&] 类型的形参或两个 [`C] 类型的形参的 [`C] 的友元。
 [list:end]
 
+[:en]
+A comparison operator function for class [`C] that is defaulted on its first
+declaration and is not defined as deleted is
+[+implicitly defined[%operator[!comparison[!implicitly defined]]]]
+when it is odr-used or needed for constant evaluation.
+[:zh_CN]
+类 [`C] 的比较运算符函数，若在其首个声明式被预置且未被定义为弃置，则当它被
+ODR 式使用或由常量求值所需要时，它被[+隐式定义[%运算符[!比较～[!隐式定义]]]]。
+
+[:en]
+Name lookups in the defaulted definition of a comparison operator function
+are performed from a context equivalent to its [~function-body].
+[:zh_CN]
+比较运算符函数的预置定义式中的名字查找，在等价于其[~函数体]的语境中进行。
+
+[:en]
+A definition of a comparison operator as defaulted that appears in a class shall
+be the first declaration of that function.
+[:zh_CN]
+出现于某个类中的预置比较运算符的定义式，应当为该函数的首个声明式。
+
 [para]
 [:en]
-A defaulted comparison operator function for class [`C] is defined as deleted if
-any non-static data member of [`C] is of reference type or [`C] is a union-like
-class ([#class.union.anon]).
+[%operator[!three-way comparison[!deleted]]]
+[%operator[!equality[!deleted]]]
+A defaulted [`<=>] or [`==] operator function for class [`C] is defined as
+deleted if any non-static data member of [`C] is of reference type or [`C] has
+variant members ([#class.union.anon]).
 [:zh_CN]
-为类 [`C] 预置的比较运算符函数，当 [`C] 的任何非静态数据成员具有引用类型，或 [`C]
-是类似联合的类时，被定义为弃置的。
+[%运算符[!三路比较[!弃置的]]]
+[%运算符[!相等性[!弃置的]]]
+为类 [`C] 预置的 [`<=>] 或 [`==] 运算符函数，当 [`C] 的任何非静态数据成员具有
+引用类型，或 [`C] 带有可变成员（[#class.union.anon]）时，被定义为弃置的。
 
 [para]
 [:en]
-If the class definition does not explicitly declare an [`==] operator function,
-but declares a defaulted three-way comparison operator function, an [`==]
-operator function is declared implicitly with the same access as the three-way
-comparison operator function.
+A binary operator expression [`a @ b] is
+[+usable[%usable[!binary operator expression]]] if either
 [:zh_CN]
-如果类定义式中并未显式声明 [`==] 运算符函数，但声明了预置的三路比较运算符函数，
-则隐式声明一个与该三路比较运算符函数具有相同访问的 [`==] 运算符函数。
+以下情况下，二元运算符表达式 [`a @ b] [+可用[%可用[!二元运算符表达式]]]：
 
+[list]
+[item]
 [:en]
-The implicitly-declared [`==] operator for a class [`X] is an inline member and
-is defined as defaulted in the definition of [`X].
+[`a] or [`b] is of class or enumeration type and overload resolution
+([#over.match]) as applied to [`a @ b] results in a usable candidate, or
 [:zh_CN]
-为类 [`X] 所隐式声明的 [`==] 运算符是内联成员，并且在 [`X] 的定义式中定义为预置
-的。
+[`a] 或 [`b] 为类或枚举类型，且对 [`a @ b] 运用重载决议（[#over.match]）结果为
+一个可用候选，或者
 
+[item]
 [:en]
-If the three-way comparison operator function is declared as a non-static const
-member, the implicitly-declared [`==] operator function is a member of the form
+neither [`a] nor [`b] is of class or enumeration type and [`a @ b] is a valid
+expression.
 [:zh_CN]
-如果三路比较运算符函数被声明为非静态 const 成员，则所隐式声明的 [`==] 运算符函数
-是以下形式的成员：
+[`a] 和 [`b] 均非类或枚举类型，且 [`a @ b] 为有效表达式。
+[list:end]
 
-[codeblock]
-bool X::operator==(const X&) const;
-[codeblock:end]
-
+[para]
 [:en]
-Otherwise, the implicitly-declared [`==] operator function is of the form
+A defaulted comparison function is
+[%operator[!comparison[!constexpr-compatible]]]
+[+constexpr-compatible[%constexpr-compatible[!defaulted comparison operator]]]
+if it satisfies the requirements for a constexpr function ([#dcl.constexpr]) and
+no overload resolution performed when determining whether to delete the function
+results in a usable candidate that is a non-constexpr function.
 [:zh_CN]
-否则，所隐式声明的 [`==] 运算符函数的形式为：
-
-[codeblock]
-friend bool operator==(const X&, const X&);
-[codeblock:end]
+如果预置的比较函数满足对于 constexpr 函数的规定（[#dcl.constexpr]），并且为确定
+函数是否被弃置所实施的重载决议均不会导致结果为非 constexpr 函数的可用候选，则它
+[%运算符[!比较～[!constexpr-兼容]]]
+[+constexpr-兼容[%constexpr-兼容[!预置的比较运算符]]]。
 
 [begin:note]
 [:en]
-Such a friend function is visible to argument-dependent lookup
-([#basic.lookup.argdep]) only ([#namespace.memdef]).
+This includes the overload resolutions performed:
 [:zh_CN]
-这样的友元函数仅对依赖于实参的查找（[#basic.lookup.argdep]）可见
-（[#namespace.memdef]）。
+其中包括实施以下各重载决议：
+
+[list]
+[item]
+[:en] for an [`operator<=>] whose return type is not [`auto],
+when determining whether a synthesized three-way comparison is defined,
+[:zh_CN] 对于返回类型并非 [`auto] 的 [`operator<=>]，当确定是否定义了合成的
+三路比较时，
+
+[item]
+[:en] for an [`operator<=>] whose return type is [`auto] or for an [`operator==],
+for a comparison between an element of the expanded list of subobjects and
+itself, or
+[:zh_CN] 对于返回类型为 [`auto] 的 [`operator<=>] 或对于 [`operator==]，对于在
+子对象的展开列表中的元素和其自身之间进行比较时，或者
+
+[item]
+[:en] for a secondary comparison operator [`@], for the expression [`x @ y].
+[:zh_CN] 对于表达式 [`x @ y] 的次级比较运算符 [`@]。
+[list:end]
 [end:note]
 
+[para]
 [:en]
-The operator is a [`constexpr] function if its definition would satisfy the
-requirements for a [`constexpr] function.
+If the [~member-specification] does not explicitly declare any member or friend
+named [`==], an [`==] operator function is declared implicitly for each
+three-way comparison operator function defined as defaulted in the
+[~member-specification], with the same access and [~function-definition] and in
+the same class scope as the respective three-way comparison operator function,
+except that the return type is replaced with [`bool] and the [~declarator-id]
+is replaced with [`operator==].
 [:zh_CN]
-如果该运算符的定义式能够满足对 [`constexpr] 函数的规定，则它是 [`constexpr] 函数。
+如果[~成员说明]并未显式声明名为 [`==] 的任何成员或友元，则针对[~成员说明]中被
+定义为预置的每个三路比较运算符隐式声明一个 [`==] 运算符函数，与对应的三路比较
+运算符具有相同的访问和[~函数体]，并处于相同的类作用域中，但其返回类型被替换为
+[`bool] 且其[~声明符标识]被替换为 [`operator==]。
+
+[begin:note]
+[:en]
+Such an implicitly-declared [`==] operator for a class [`X] is defined as
+defaulted in the definition of [`X] and has the same
+[~parameter-declaration-clause] and trailing [~requires-clause] as the
+respective three-way comparison operator.
+[:zh_CN]
+这种为类 [`X] 隐式声明的 [`==] 运算符，在 [`X] 的定义式中被定义为预置的，并具有
+与其对应三路比较运算符相同的[~形参声明子句]和尾部 [~requires-子句]。
+
+[:en]
+It is declared with [`friend], [`virtual], [`constexpr], or [`consteval] if
+the three-way comparison operator function is so declared.
+[:zh_CN]
+如果三路比较运算符函数声明为 [`friend]，[`virtual]，[`constexpr]，或 [`consteval]，
+则它也这样声明。
+
+[:en]
+If the three-way comparison operator function has no [~noexcept-specifier],
+the implicitly-declared [`==] operator function has an implicit exception
+specification ([#except.spec]) that may differ from the implicit exception
+specification of the three-way comparison operator function.
+[:zh_CN]
+如果三路比较运算符函数没有 [~noexcept-说明符]，则隐式声明的 [`==] 运算符函数具有
+隐含的异常说明（[#except.spec]），并可能与三路比较运算符函数的隐含异常说明不同。
+[end:note]
+
+[begin:example]
+[codeblock]
+template<typename T> struct X {
+  friend constexpr std::partial_ordering operator<=>(X, X) requires (sizeof(T) != 1) = default;
+  // [:en] implicitly declares: [`friend constexpr bool operator==(X, X) requires (sizeof(T) != 1) = default;] \
+  [:zh_CN] 隐式声明：[`friend constexpr bool operator==(X, X) requires (sizeof(T) != 1) = default;]
+
+  [[nodiscard]] virtual std::strong_ordering operator<=>(const X&) const = default;
+  // [:en] implicitly declares: [``[`[nodiscard`]`] virtual bool operator==(const X&) const = default;} \
+  [:zh_CN] 隐式声明：[``[`[nodiscard`]`] virtual bool operator==(const X&) const = default;}
+};
+[codeblock:end]
+[end:example]
 
 [begin:note]
 [:en]
@@ -118,9 +211,3 @@ member access expressions ([#expr.ref]), and array subscript expressions
 元素的左值，其中 [$[`x]_i] 由对 [`x] 实施一系列的派生类向基类转换
 （[#over.best.ics]）、类成员访问表达式（[#expr.ref]）和数组下标表达式
 （[#expr.sub]）所构成。
-
-[:en]
-It is unspecified whether virtual base class subobjects appear more than once in
-the expanded list of subobjects.
-[:zh_CN]
-虚基类子对象是否会在子对象的展开列表中多次出现是未指明的。

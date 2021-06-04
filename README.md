@@ -273,6 +273,7 @@ explicit type conversion                显式类型转换
 explicitly captured                     显式俘获
 explicitly defaulted function           显式预置的函数
 exponent                                指数
+exposure                                显露式
 expression                              表达式
 extend namespace                        扩展命名空间
 extended alignment                      扩充对齐
