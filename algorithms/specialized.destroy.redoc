@@ -1,0 +1,101 @@
+[section#specialized.destroy
+    [`destroy]
+]
+
+[%@lib destroy_at]
+[codeblock:declaration]
+template<class T>
+  constexpr void destroy_at(T* location);
+namespace ranges {
+  template<destructible T>
+    constexpr void destroy_at(T* location) noexcept;
+}
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] If [`T] is an array type, equivalent to
+[`destroy(begin(*location), end(*location))].
+[:zh_CN] 若 [`T] 是数组类型，则等价于
+[`destroy(begin(*location), end(*location))]。
+[item]
+[:en] Otherwise, equivalent to [`location->~T()].
+[:zh_CN] 否则，等价于 [`location->~T()]。
+[list:end]
+[div:end]
+
+[%@lib destroy]
+[codeblock:declaration]
+template<class NoThrowForwardIterator>
+  constexpr void destroy(NoThrowForwardIterator first, NoThrowForwardIterator last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; first != last; ++first)
+  destroy_at(addressof(*first));
+[codeblock:end]
+[div:end]
+
+[%@lib destroy]
+[codeblock:declaration]
+namespace ranges {
+  template<[[redoc("^>")]]no-throw-input-iterator I, [[redoc("^>")]]no-throw-sentinel<I> S>
+      requires destructible<iter_value_t<I>>
+    constexpr I destroy(I first, S last) noexcept;
+  template<[[redoc("^>")]]no-throw-input-range R>
+      requires destructible<range_value_t<R>>
+    constexpr borrowed_iterator_t<R> destroy(R&& r) noexcept;
+}
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; first != last; ++first)
+  destroy_at(addressof(*first));
+return first;
+[codeblock:end]
+[div:end]
+
+[%@lib destroy_n]
+[codeblock:declaration]
+template<class NoThrowForwardIterator, class Size>
+  constexpr NoThrowForwardIterator destroy_n(NoThrowForwardIterator first, Size n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; n > 0; (void)++first, --n)
+  destroy_at(addressof(*first));
+return first;
+[codeblock:end]
+[div:end]
+
+[%@lib destroy_n]
+[codeblock:declaration]
+namespace ranges {
+  template<[[redoc("^>")]]no-throw-input-iterator I>
+      requires destructible<iter_value_t<I>>
+    constexpr I destroy_n(I first, iter_difference_t<I> n) noexcept;
+}
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return destroy(counted_iterator(first, n), default_sentinel).base();
+[codeblock:end]
+[div:end]

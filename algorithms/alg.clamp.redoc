@@ -9,12 +9,22 @@ template<class T>
   constexpr const T& clamp(const T& v, const T& lo, const T& hi);
 template<class T, class Compare>
   constexpr const T& clamp(const T& v, const T& lo, const T& hi, Compare comp);
+template<class T, class Proj = identity,
+         [[redoc("`:c>")]]indirect_strict_weak_order<projected<const T*, Proj>> Comp = ranges::less>
+  constexpr const T&
+    ranges::clamp(const T& v, const T& lo, const T& hi, Comp comp = {}, Proj proj = {});
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [`comp] be [`less{}] for the overloads with no parameter [`comp], and
+let [`proj] be [`identity{}] for the overloads with no parameter [`proj].
+[:zh_CN] 令 [`comp] 对于没有形参 [`comp] 的重载为 [`less{}]，并令 [`proj] 对于
+没有形参 [`proj] 的重载为 [`identity{}]。
+
 [para:expects]
-[:en] The value of [`lo] is no greater than [`hi].
-[:zh_CN] [`lo] 的值应当不大于 [`hi]。
+[:en] [`bool(comp(proj(hi), proj(lo)))] is [`false].
+[:zh_CN] [`bool(comp(proj(hi), proj(lo)))] 为 [`false]。
 
 [:en] For the first form, type [`T] meets the [^:oc LessThanComparable]
 requirements ([#cpp17.lessthancomparable]).
@@ -22,10 +32,10 @@ requirements ([#cpp17.lessthancomparable]).
 （[#cpp17.lessthancomparable]）。
 
 [para:returns]
-[:en] [`lo] if [`v] is less than [`lo], [`hi] if [`hi] is less than [`v],
-otherwise [`v].
-[:zh_CN] 当 [`v] 小于 [`lo] 时返回 [`lo]，当 [`hi] 小于 [`v] 时返回 [`hi]，
-否则返回 [`v]。
+[:en] [`lo] if [`bool(comp(proj(v), proj(lo)))] is [`true], [`hi] if
+[`bool(comp(proj(hi), proj(v)))] is [`true], otherwise [`v].
+[:zh_CN] 当 [`bool(comp(proj(v), proj(lo)))] 为 [`true] 时返回 [`lo]，当
+[`bool(comp(proj(hi), proj(v)))] 为 [`true] 时返回 [`hi]，否则返回 [`v]。
 
 [para]
 [begin:note]
@@ -34,6 +44,6 @@ otherwise [`v].
 [end:note]
 
 [para:complexity]
-[:en] At most two comparisons.
-[:zh_CN] 最多两次比较。
+[:en] At most two comparisons and three applications of the projections.
+[:zh_CN] 最多两次比较和三次投射的运用。
 [div:end]

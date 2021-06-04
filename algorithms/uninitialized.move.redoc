@@ -1,0 +1,121 @@
+[section#uninitialized.move
+    [`uninitialized_move]
+]
+
+[%@lib uninitialized_move]
+[codeblock:declaration]
+template<class InputIterator, class NoThrowForwardIterator>
+  NoThrowForwardIterator uninitialized_move(InputIterator first, InputIterator last,
+                                            NoThrowForwardIterator result);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [=range(result,last - first)] does not overlap with [=range(first,last)].
+[:zh_CN] [=range(result,last - first)] 与 [=range(first,last)] 不重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; first != last; (void)++result, ++first)
+  ::new ([[redoc("^>")]]voidify(*result))
+    typename iterator_traits<NoThrowForwardIterator>::value_type(std::move(*first));
+[codeblock:end]
+[div:end]
+
+[%@lib uninitialized_move]
+[codeblock:declaration]
+namespace ranges {
+  template<input_iterator I, sentinel_for<I> S1,
+           [[redoc("^>")]]no-throw-forward-iterator O, [[redoc("^>")]]no-throw-sentinel<O> S2>
+      requires constructible_from<iter_value_t<O>, iter_rvalue_reference_t<I>>
+    uninitialized_move_result<I, O>
+      uninitialized_move(I ifirst, S1 ilast, O ofirst, S2 olast);
+  template<input_range IR, [[redoc("^>")]]no-throw-forward-range OR>
+      requires constructible_from<range_value_t<OR>, range_rvalue_reference_t<IR>>
+    uninitialized_move_result<borrowed_iterator_t<IR>, borrowed_iterator_t<OR>>
+      uninitialized_move(IR&& in_range, OR&& out_range);
+}
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [=range(ofirst,olast)] does not overlap with [=range(ifirst,ilast)].
+[:zh_CN] [=range(ofirst,olast)] 与 [=range(ifirst,ilast)] 不重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; ifirst != ilast && ofirst != olast; ++ofirst, (void)++ifirst) {
+  ::new ([[redoc("^>")]]voidify(*ofirst))
+    remove_reference_t<iter_reference_t<O>>(ranges::iter_move(ifirst));
+}
+return {std::move(ifirst), ofirst};
+[codeblock:end]
+
+[para]
+[begin:note]
+[:en] If an exception is thrown, some objects in the range [=range(first,last)]
+are left in a valid, but unspecified state.
+[:zh_CN] 如果抛出了异常，则范围 [=range(first,last)] 中的一些对象将遗留为某个
+有效但未指明的状态。
+[end:note]
+[div:end]
+
+[%@lib uninitialized_move_n]
+[codeblock:declaration]
+template<class InputIterator, class Size, class NoThrowForwardIterator>
+  pair<InputIterator, NoThrowForwardIterator>
+    uninitialized_move_n(InputIterator first, Size n, NoThrowForwardIterator result);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [=range(result,n)] does not overlap with [=range(first,n)].
+[:zh_CN] [=range(result,n)] 与 [=range(first,n)] 不重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; n > 0; ++result, (void) ++first, --n)
+  ::new ([[redoc("^>")]]voidify(*result))
+    typename iterator_traits<NoThrowForwardIterator>::value_type(std::move(*first));
+return {first, result};
+[codeblock:end]
+[div:end]
+
+[%@lib uninitialized_move_n]
+[codeblock:declaration]
+namespace ranges {
+  template<input_iterator I, [[redoc("^>")]]no-throw-forward-iterator O, [[redoc("^>")]]no-throw-sentinel<O> S>
+      requires constructible_from<iter_value_t<O>, iter_rvalue_reference_t<I>>
+    uninitialized_move_n_result<I, O>
+      uninitialized_move_n(I ifirst, iter_difference_t<I> n, O ofirst, S olast);
+}
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [=range(ofirst,olast)] does not overlap with [=range(ifirst,n)].
+[:zh_CN] [=range(ofirst,olast)] 与 [=range(ifirst,n)] 不重叠。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto t = uninitialized_move(counted_iterator(ifirst, n),
+                            default_sentinel, ofirst, olast);
+return {std::move(t.in).base(), t.out};
+[codeblock:end]
+
+[para]
+[begin:note]
+[:en] If an exception is thrown, some objects in the range [=range(first,n)] are
+left in a valid but unspecified state.
+[:zh_CN] 如果抛出了异常，则范围 [=range(first,n)] 中的一些对象将遗留为某个有效但
+未指明的状态。
+[end:note]
+[div:end]

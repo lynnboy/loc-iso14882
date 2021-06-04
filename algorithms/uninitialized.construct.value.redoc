@@ -1,0 +1,80 @@
+[section#uninitialized.construct.value
+    [`uninitialized_value_construct]
+]
+
+[%@lib uninitialized_value_construct]
+[codeblock:declaration]
+template<class NoThrowForwardIterator>
+  void uninitialized_value_construct(NoThrowForwardIterator first, NoThrowForwardIterator last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; first != last; ++first)
+  ::new ([[redoc("^>")]]voidify(*first))
+    typename iterator_traits<NoThrowForwardIterator>::value_type();
+[codeblock:end]
+[div:end]
+
+[%@lib uninitialized_value_construct]
+[codeblock:declaration]
+namespace ranges {
+  template<[[redoc("^>")]]no-throw-forward-iterator I, [[redoc("^>")]]no-throw-sentinel<I> S>
+      requires default_constructible<iter_value_t<I>>
+    I uninitialized_value_construct(I first, S last);
+  template<[[redoc("^>")]]no-throw-forward-range R>
+      requires default_constructible<range_value<R>>
+    borrowed_iterator_t<R> uninitialized_value_construct(R&& r);
+}
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; first != last; ++first)
+  ::new ([[redoc("^>")]]voidify(*first)) remove_reference_t<iter_reference_t<I>>();
+return first;
+[codeblock:end]
+[div:end]
+
+[%@lib uninitialized_value_construct_n]
+[codeblock:declaration]
+template<class NoThrowForwardIterator, class Size>
+  NoThrowForwardIterator uninitialized_value_construct_n(NoThrowForwardIterator first, Size n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+for (; n > 0; (void)++first, --n)
+  ::new ([[redoc("^>")]]voidify(*first))
+    typename iterator_traits<NoThrowForwardIterator>::value_type();
+return first;
+[codeblock:end]
+[div:end]
+
+[%@lib uninitialized_value_construct_n]
+[codeblock:declaration]
+namespace ranges {
+  template<[[redoc("^>")]]no-throw-forward-iterator I>
+      requires default_constructible<iter_value_t<I>>
+    I uninitialized_value_construct_n(I first, iter_difference_t<I> n);
+}
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return uninitialized_value_construct(counted_iterator(first, n),
+                                     default_sentinel).base();
+[codeblock:end]
+[div:end]

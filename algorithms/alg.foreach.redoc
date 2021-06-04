@@ -99,13 +99,13 @@ may not permit efficient state accumulation.
 
 [%@lib for_each]
 [codeblock:declaration]
-template<input_iterator I, sentinel_for<I> S, class Proj = identity,
-         indirect_unary_invocable<projected<I, Proj>> Fun>
+template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_invocable<projected<I, Proj>> Fun>
   constexpr ranges::for_each_result<I, Fun>
     ranges::for_each(I first, S last, Fun f, Proj proj = {});
-template<input_range R, class Proj = identity,
-         indirect_unary_invocable<projected<iterator_t<R>, Proj>> Fun>
-  constexpr ranges::for_each_result<safe_iterator_t<R>, Fun>
+template<[[redoc("`:c>")]]input_range R, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_invocable<projected<iterator_t<R>, Proj>> Fun>
+  constexpr ranges::for_each_result<borrowed_iterator_t<R>, Fun>
     ranges::for_each(R&& r, Fun f, Proj proj = {});
 [codeblock:end]
 
@@ -236,4 +236,47 @@ template<class ExecutionPolicy, class ForwardIterator, class Size, class Functio
 sequence.
 [:zh_CN] 实现不具有 [#algorithms.parallel.exec] 中所授予的对输入序列中的元素进行
 任意复制的自由度。
+[div:end]
+
+[%@lib for_each_n]
+[codeblock:declaration]
+template<input_iterator I, class Proj = identity,
+         [[redoc("`:c>")]]indirectly_unary_invocable<projected<I, Proj>> Fun>
+  constexpr ranges::for_each_n_result<I, Fun>
+    ranges::for_each_n(I first, iter_difference_t<I> n, Fun f, Proj proj = {});
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`n >= 0] is [`true].
+[:zh_CN] [`n >= 0] 为 [`true]。
+
+[para:effects]
+[:en] Calls [`invoke(f, invoke(proj, *i))] for every iterator [`i] in the range
+[=range(first,first + n)] in order.
+[:zh_CN] 对范围 [=range(first,first + n)] 中的每个迭代器 [`i] 依次调用
+[`invoke(f, invoke(proj, *i))]。
+
+[begin:note]
+[:en] If the result of [`invoke(proj, *i)] is a mutable reference, [`f] may
+apply non-constant functions.
+[:zh_CN] 如果 [`invoke(proj, *i)] 的结果是一个可改动的引用，则 [`f] 可以运用
+非常量函数。
+[end:note]
+
+[para:returns]
+[:en] [`{first + n, std::move(f)}].
+[:zh_CN] [`{first + n, std::move(f)}]。
+
+[para:remarks]
+[:en] If [`f] returns a result, the result is ignored.
+[:zh_CN] 如果 [`f] 返回结果，则该结果被忽略。
+
+[para]
+[begin:note]
+[:en] The overload in namespace [`ranges] requires [`Fun] to model
+[`:c copy_constructible].
+[:zh_CN] 命名空间 [`ranges] 中的重载要求 [`Fun] 符合
+[`:c copy_constructible]。
+[end:note]
 [div:end]
