@@ -7,16 +7,19 @@
 [%@lib default_sentinel]
 [%@lib unreachable_sentinel]
 [codeblock:synopsis]
-#include <concept>
+#include <compare>              // [:en] see [#compare.syn] \
+                                   [:zh_CN] 参见 [#compare.syn]
+#include <concept>              // [:en] see [#concepts.syn] \
+                                   [:zh_CN] 参见 [#concepts.syn]
 
 namespace std {
-  template<class T> using [[redoc("^>")]]with-reference = T&;  // [=expos]
+  template<class T> using [[redoc("*>")]]with-reference = T&;  // [=expos]
   template<class T> concept [[redoc("*:c>")]]can-reference       // [=expos]
     = requires { typename [[redoc("^>")]]with-reference<T>; };
   template<class T> concept [[redoc("*:c>")]]dereferenceable     // [=expos]
     = requires(T& t) {
-      { *t } -> [[redoc("^>")]]can-reference;  // [:en] not required to be equality-preserving \
-                                                       [:zh_CN] 不必是维持相等性的
+      { *t } -> [[redoc("*:c>")]]can-reference;  // [:en] not required to be equality-preserving \
+                                                    [:zh_CN] 不必是维持相等性的
     };
 
   // [:en] [#iterator.assoc.types], associated types \
@@ -55,7 +58,7 @@ namespace std {
 
   template<[[redoc("*>")]]dereferenceable T>
     requires requires(T& t) {
-      { ranges::iter_move(t) } -> [[redoc("^>")]]can-reference;
+      { ranges::iter_move(t) } -> [[redoc("*:c>")]]can-reference;
     }
   using iter_rvalue_reference_t
     = decltype(ranges::iter_move(declval<T&>()));
@@ -67,7 +70,7 @@ namespace std {
   template<class In>
     concept indirectly_readable = [[redoc("[=seebelow]")]];
 
-  template<indirectly_readable T>
+  template<[[redoc("`:c>")]]indirectly_readable T>
     using iter_common_reference_t =
       common_reference_t<iter_reference_t<T>, iter_value_t<T>&>;
 
@@ -157,15 +160,15 @@ namespace std {
     concept indirect_strict_weak_order = [[redoc("[=seebelow]")]];
 
   template<class F, class... Is>
-    requires (indirectly_readable<Is> && ...) && invocable<F, iter_reference_t<Is>...>
+    requires ([[redoc("`:c>")]]indirectly_readable<Is> && ...) && [[redoc("`:c>")]]invocable<F, iter_reference_t<Is>...>
       using indirect_result_t = invoke_result_t<F, iter_reference_t<Is>...>;
 
   // [:en] [#projected], projected \
      [:zh_CN] [#projected]，投射
-  template<indirectly_readable I, indirectly_regular_unary_invocable<I> Proj>
+  template<[[redoc("`:c>")]]indirectly_readable I, [[redoc("`:c>")]]indirectly_regular_unary_invocable<I> Proj>
     struct projected;
 
-  template<weakly_incrementable I, class Proj>
+  template<[[redoc("`:c>")]]weakly_incrementable I, class Proj>
     struct incrementable_traits<projected<I, Proj>>;
 
   // [:en] [#alg.req], common algorithm requirements \
@@ -244,35 +247,35 @@ namespace std {
      [:zh_CN] [#range.iter.ops]，范围迭代器操作
   namespace ranges {
     // [#range.iter.op.advance], [`ranges::advance]
-    template<input_or_output_iterator I>
+    template<[[redoc("`:c>")]]input_or_output_iterator I>
       constexpr void advance(I& i, iter_difference_t<I> n);
-    template<input_or_output_iterator I, sentinel_for<I> S>
+    template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
       constexpr void advance(I& i, S bound);
-    template<input_or_output_iterator I, sentinel_for<I> S>
+    template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
       constexpr iter_difference_t<I> advance(I& i, iter_difference_t<I> n, S bound);
 
     // [#range.iter.op.distance], [`ranges::distance]
-    template<input_or_output_iterator I, sentinel_for<I> S>
+    template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
       constexpr iter_difference_t<I> distance(I first, S last);
-    template<Range R>
+    template<[[redoc("`:c>")]]range R>
       constexpr range_difference_t<R> distance(R&& r);
 
     // [#range.iter.op.next], [`ranges::next]
-    template<input_or_output_iterator I>
+    template<[[redoc("`:c>")]]input_or_output_iterator I>
       constexpr I next(I x);
-    template<input_or_output_iterator I>
+    template<[[redoc("`:c>")]]input_or_output_iterator I>
       constexpr I next(I x, iter_difference_t<I> n);
-    template<input_or_output_iterator I, sentinel_for<I> S>
+    template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
       constexpr I next(I x, S bound);
-    template<input_or_output_iterator I, sentinel_for<I> S>
+    template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
       constexpr I next(I x, iter_difference_t<I> n, S bound);
 
     // [#range.iter.op.prev], [`ranges::prev]
-    template<bidirectional_iterator I>
+    template<[[redoc("`:c>")]]bidirectional_iterator I>
       constexpr I prev(I x);
-    template<bidirectional_iterator I>
+    template<[[redoc("`:c>")]]bidirectional_iterator I>
       constexpr I prev(I x, iter_difference_t<I> n);
-    template<bidirectional_iterator I>
+    template<[[redoc("`:c>")]]bidirectional_iterator I>
       constexpr I prev(I x, iter_difference_t<I> n, I bound);
   }
 
@@ -306,7 +309,7 @@ namespace std {
     constexpr bool operator>=(
       const reverse_iterator<Iterator1>& x,
       const reverse_iterator<Iterator2>& y);
-  template<class Iterator1, three_way_comparable_with<Iterator1> Iterator2>
+  template<class Iterator1, [[redoc("`:c>")]]three_way_comparable_with<Iterator1> Iterator2>
     constexpr compare_three_way_result_t<Iterator1, Iterator2>
       operator<=>(const reverse_iterator<Iterator1>& x,
                   const reverse_iterator<Iterator2>& y);
@@ -325,7 +328,7 @@ namespace std {
     constexpr reverse_iterator<Iterator> make_reverse_iterator(Iterator i);    
 
   template<class Iterator1, class Iterator2>
-      requires (!sized_sentinel_for<Iterator1, Iterator2>)
+      requires (![[redoc("`:c>")]]sized_sentinel_for<Iterator1, Iterator2>)
     inline constexpr bool disable_sized_sentinel_for<reverse_iterator<Iterator1>,
                                                      reverse_iterator<Iterator2>> = true;
 
@@ -363,7 +366,7 @@ namespace std {
   template<class Iterator1, class Iterator2>
     constexpr bool operator>=(
       const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template<class Iterator1, three_way_comparable_with<Iterator1> Iterator2>
+  template<class Iterator1, [[redoc("`:c>")]]three_way_comparable_with<Iterator1> Iterator2>
     constexpr compare_three_way_result_t<Iterator1, Iterator2>
       operator<=>(const move_iterator<Iterator1>& x,
                   const move_iterator<Iterator2>& y);
@@ -379,18 +382,18 @@ namespace std {
   template<class Iterator>
     constexpr move_iterator<Iterator> make_move_iterator(Iterator i);
 
-  template<semiregular S> class move_sentinel;
+  template<[[redoc("`:c>")]]semiregular S> class move_sentinel;
 
   // [:en] [#iterators.common], common iterators \
      [:zh_CN] [#iterators.common]，公共迭代器
-  template<input_or_output_iterator I, sentinel_for<I> S>
-    requires (!same_as<I, S>)
+  template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
+    requires (![[redoc("`:c>")]]same_as<I, S>)
       class common_iterator;
 
   template<class I, class S>
     struct incrementable_traits<common_iterator<I, S>>;
 
-  template<input_iterator I, class S>
+  template<[[redoc("`:c>")]]input_iterator I, class S>
     struct iterator_traits<common_iterator<I, S>>;
 
   // [:en] [#default.sentinels], default sentinels \
@@ -400,12 +403,12 @@ namespace std {
 
   // [:en] [#iterators.counted], counted iterators \
      [:zh_CN] [#iterators.counted]，计数迭代器
-  template<input_or_output_iterator I> class counted_iterator;
+  template<[[redoc("`:c>")]]input_or_output_iterator I> class counted_iterator;
 
   template<class I>
     struct incrementable_traits<counted_iterator<I>>;
 
-  template<input_iterator I>
+  template<[[redoc("`:c>")]]input_iterator I>
     struct iterator_traits<counted_iterator<I>>;
 
   // [:en] [#unreachable.sentinels], unreachable sentinels \

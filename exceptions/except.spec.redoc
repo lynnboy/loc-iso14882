@@ -183,61 +183,61 @@ exception.
 
 [para]
 [:en]
-An expression [`e] is [+potentially-throwing[%potentially-throwing[!expression]]]
+An expression [$E] is [+potentially-throwing[%potentially-throwing[!expression]]]
 if
 [:zh_CN]
-符合以下条件的表达式 [`e] [+潜在抛出的[%潜在抛出[!异常]]]：
+符合以下条件的表达式 [$E] [+潜在抛出的[%潜在抛出[!异常]]]：
 
 [list]
 [item]
 [:en]
-[`e] is a function call ([#expr.call]) whose [~postfix-expression] has a
+[$E] is a function call ([#expr.call]) whose [~postfix-expression] has a
 function type, or a pointer-to-function type, with a potentially-throwing
 exception specification, or
 [:zh_CN]
-[`e] 是函数调用（[#expr.call]），其[~后缀表达式]所具有的函数类型或函数指针类型，
+[$E] 是函数调用（[#expr.call]），其[~后缀表达式]所具有的函数类型或函数指针类型，
 具有潜在抛出异常说明，或者
 
 [item]
 [:en]
-[`e] implicitly invokes a function (such as an overloaded operator, an
+[$E] implicitly invokes a function (such as an overloaded operator, an
 allocation function in a [~new-expression], a constructor for a function
-argument, or a destructor if [`e] is a full-expression ([#intro.execution]))
+argument, or a destructor if [$E] is a full-expression ([#intro.execution]))
 that is potentially-throwing, or
 [:zh_CN]
-[`e] 隐式调用了某个潜在抛出的函数（比如重载运算符，[~new-表达式]中的分配函数，
-函数实参的构造函数，或者当 [`e] 是全表达式（[#intro.execution]）时的析构函数），
+[$E] 隐式调用了某个潜在抛出的函数（比如重载运算符，[~new-表达式]中的分配函数，
+函数实参的构造函数，或者当 [$E] 是全表达式（[#intro.execution]）时的析构函数），
 或者
 
 [item]
 [:en]
-[`e] is a [~throw-expression] ([#expr.throw]), or
+[$E] is a [~throw-expression] ([#expr.throw]), or
 [:zh_CN]
-[`e] 是 [~throw-表达式]（[#expr.throw]），或者
+[$E] 是 [~throw-表达式]（[#expr.throw]），或者
 
 [item]
 [:en]
-[`e] is a [`dynamic_cast] expression that casts to a reference type and requires
+[$E] is a [`dynamic_cast] expression that casts to a reference type and requires
 a runtime check ([#expr.dynamic.cast]), or
 [:zh_CN]
-[`e] 是强制转换为引用类型并需要运行时检查的 [`dynamic_cast] 表达式
+[$E] 是强制转换为引用类型并需要运行时检查的 [`dynamic_cast] 表达式
 （[#expr.dynamic.cast]），或者
 
 [item]
 [:en]
-[`e] is a [`typeid] expression applied to a (possibly parenthesized) built-in
+[$E] is a [`typeid] expression applied to a (possibly parenthesized) built-in
 unary [`*] operator applied to a pointer to a polymorphic class type
 ([#expr.typeid]), or
 [:zh_CN]
-[`e] 是 [`typeid] 表达式（[#expr.typeid]），施加于（可能带有括号的）内建的一元
+[$E] 是 [`typeid] 表达式（[#expr.typeid]），施加于（可能带有括号的）内建的一元
 [`*] 运算符，后者施加于一个指向多态类类型的指针，或者
 
 [item]
 [:en]
-any of the immediate subexpressions ([#intro.execution]) of [`e] is
+any of the immediate subexpressions ([#intro.execution]) of [$E] is
 potentially-throwing.
 [:zh_CN]
-[`e] 有任何直接子表达式（[#intro.execution]）是潜在抛出的。
+[$E] 有任何直接子表达式（[#intro.execution]）是潜在抛出的。
 [list:end]
 
 [para]
@@ -324,11 +324,11 @@ A deallocation function ([#basic.stc.dynamic.deallocation]) with no explicit
 [:en]
 The exception specification for a comparison operator function ([#over.binary])
 without a [~noexcept-specifier] that is defaulted on its first declaration is
-potentially-throwing if and only if the invocation of any comparison operator in
-the implicit definition is potentially-throwing.
+potentially-throwing if and only if any expression in the implicit definition is
+potentially-throwing.
 [:zh_CN]
 没有 [~noexcept-说明符]并在其首个声明式被预置的比较运算符函数（[#over.binary]）
-的异常说明，当且仅当在其隐式定义式中所调用的任何比较运算符潜在抛出时是潜在抛出的。
+的异常说明，当且仅当在其隐式定义式中的任何表达式潜在抛出时是潜在抛出的。
 
 [para]
 [begin:example]
@@ -343,8 +343,8 @@ struct B {
   B() noexcept;
   B(const B&) = default;        // [:en] implicit exception specification is [`noexcept(true)] \
                                    [:zh_CN] 隐含的异常说明为 [`noexcept(true)]
-  B(B&&, int = (throw Y(), 0)) noexcept;
-  ~B() throw(Y);
+  B(B&&, int = (throw 42, 0)) noexcept;
+  ~B() noexcept(false);
 };
 int n = 7;
 struct D : public A, public B {
@@ -402,9 +402,9 @@ potentially-evaluated;
 [:zh_CN] 该函数被定义；或者
 
 [item]
-[:en] the exception specification is needed for a defaulted special member
-function that calls the function.
-[:zh_CN] 其异常说明被调用了该函数的预置特殊成员函数所需要。
+[:en] the exception specification is needed for a defaulted function that calls
+the function.
+[:zh_CN] 其异常说明被调用了该函数的预置函数所需要。
 
 [begin:note]
 [:en]
@@ -419,12 +419,12 @@ implicit exception specification to compare against.
 [list:end]
 
 [:en]
-The exception specification of a defaulted special member function is evaluated
-as described above only when needed; similarly, the [~noexcept-specifier] of a
-specialization of a function template or member function of a class template is
-instantiated only when needed.
+The exception specification of a defaulted function is evaluated as described
+above only when needed; similarly, the [~noexcept-specifier] of a specialization
+of a function template or member function of a class template is instantiated
+only when needed.
 [:zh_CN]
-预置特殊成员函数的异常说明仅在需要时才根据上文进行求值；相似地，函数模板或类模板
-的成员函数特例的 [~noexcept-说明符]仅在需要时才被实例化。
+预置函数的异常说明仅在需要时才根据上文进行求值；相似地，函数模板或类模板的成员
+函数特例的 [~noexcept-说明符]仅在需要时才被实例化。
 
 [%:end#exception.specification]

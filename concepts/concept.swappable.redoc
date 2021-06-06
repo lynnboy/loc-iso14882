@@ -28,25 +28,26 @@ only if the operation modifies neither [`t2] nor [`u2] and:
 等于 [`t2]。
 
 [item]
-[:en] If [`T] and [`U] are different types that model
-[`[`:c common_reference_with]<const T&, const U&>], the result of the operation
-is that [`C(t1)] equals [`C(u2)] and [`C(u1)] equals [`C(t2)] where [`C] is
-[`common_reference_t<const T&, const U&>].
-[:zh_CN] 若 [`T] 和 [`U] 为构成 [`[`:c common_reference_with]<const T&, const U&>]
-的不同类型，则操作的结果为 [`C(t1)] 等于 [`C(u2)] 且 [`C(u1)] 等于 [`C(t2)]，
-其中 [`C] 为 [`common_reference_t<const T&, const U&>]。
+[:en] If [`T] and [`U] are different types and
+[`[`:c common_reference_with]<decltype((t1)), decltype((u1))>] is modeled, the
+result of the operation is that [`C(t1)] equals [`C(u2)] and [`C(u1)] equals
+[`C(t2)] where [`C] is [`common_reference_t<decltype((t1)), decltype((u1))>].
+[:zh_CN] 若 [`T] 和 [`U] 为不同类型，且已构成
+[`[`:c common_reference_with]<decltype((t1)), decltype((u1))>]，则操作的结果为
+[`C(t1)] 等于 [`C(u2)] 且 [`C(u1)] 等于 [`C(t2)]，其中 [`C] 为
+[`common_reference_t<decltype((t1)), decltype((u1))>]。
 [list:end]
 
 [para]
-[%@lib ranges::swap]
+[%@lib swap]
 [:en] The name [`ranges::swap] denotes a customization point object
 ([#customization.point.object]).
-[:zh_CN] 名字 [`ranges::swap] 代表一个定制化点对象。
+[:zh_CN] 名字 [`ranges::swap] 代表一个定制化点对象（[#customization.point.object]）。
 
-[:en] The expression [`ranges::swap(E1, E2)] for some subexpressions [`E1] and
-[`E2] is expression-equivalent to an expression [`S] determined as follows:
+[:en] The expression [`ranges::swap(E1, E2)] for subexpressions [`E1] and [`E2]
+is expression-equivalent to an expression [`S] determined as follows:
 [:zh_CN] 对于子表达式 [`E1] 和 [`E2]，表达式 [`ranges::swap(E1, E2)] 与如下确定
-的一个表达式 [`S] 之间表达式等价：
+的一个表达式 [`S] 之间按表达式等价：
 
 [list]
 [item]
@@ -71,10 +72,10 @@ template<class T>
 [note:end]
 
 [:en] If the function selected by overload resolution does not exchange the
-values denoted by [`E1] and [`E2], the program is ill-formed with no diagnostic
+values denoted by [`E1] and [`E2], the program is ill-formed, no diagnostic
 required.
 [:zh_CN] 如果重载决议所选出的函数并不会交换由 [`E1] 和 [`E1] 所代表的值，则程序
-非良构但无须诊断。
+非良构，无须诊断。
 
 [item]
 [:en] Otherwise, if [`E1] and [`E2] are lvalues of array types ([#basi.compound])
@@ -152,7 +153,7 @@ template<class T>
 [codeblock:declaration]
 template<class T, class U>
   concept [[redoc("`:c@def>")]]swappable_with =
-    common_reference_with<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
+    common_reference_with<T, U> &&
     requires(T&& t, U&& u) {
       ranges::swap(std::forward<T>(t), std::forward<T>(t));
       ranges::swap(std::forward<U>(u), std::forward<U>(u));
@@ -183,7 +184,7 @@ an appropriate context under the various conditions as follows:
 
 namespace ranges = std::ranges;
 
-template<class T, std::swappable_with<T> U>
+template<class T, std::[[redoc("`:c>")]swappable_with<T> U>
 void value_swap(T&& t, U&& u) {
   ranges::swap(std::forward<T>(t), std::forward<U>(u));
 }
@@ -195,14 +196,14 @@ void lv_swap(T& t1, T& t2) {
 
 namespace N {
   struct A { int m; };
-  struct Proxy { A* a; };
-  Proxy proxy(A& a) { return Proxy{ &a }; }
-
-  void swap(A& x, Proxy p) {
-    ranges::swap(x.m, p.a->m);
-  }
-  void swap(Proxy p, A& x) { swap(x, p); }      // [:en] satisfy symmetry requirement \
-                                                   [:zh_CN] 满足对称性规定
+  struct Proxy {
+    A* a;
+    Proxy(A& a) : a{&a} {}
+    friend void swap(Proxy x, Proxy y) {
+      ranges::swap(*x.a, *y.a);
+    }
+  };
+  Proxy proxy(A& a) { return Proxy{ a }; }
 }
 
 int main() {

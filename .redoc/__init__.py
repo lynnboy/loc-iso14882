@@ -24,6 +24,9 @@ conceptindex = 'conceptindex'
 xrefindex = 'xrefindex'
 xrefdelta = 'xrefdelta'
 
+firstlibchapter = 'support'
+lastlibchapter = 'thread'
+
 class Index:
     refid = 0
 
@@ -234,6 +237,7 @@ def example(_1): return noteintro(text('Example')) + _1 + noteoutro(text('exampl
 @applyTo(['?Fundesc'])
 def Fundescx(_1:str): return f"[.textit {_1}]"
 def Fundesc(_1:str): return Fundescx(_1) + ": "
+def recommended(_1:str): return Fundesc(text('Recommended practice'))
 def required(_1:str): return Fundesc(text('Required behavior'))
 def requires(_1:str): return Fundesc(text('Requires'))
 def constraints(_1:str): return Fundesc(text('Constraints'))

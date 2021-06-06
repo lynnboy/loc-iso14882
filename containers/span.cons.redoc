@@ -21,7 +21,7 @@ constexpr span() noexcept;
 [%@lib@ctor span]
 [codeblock:declaration]
 template<class It>
-  constexpr span(It first, size_type count);
+  constexpr explicit(extent != dynamic_extent) span(It first, size_type count);
 [codeblock:end]
 
 [div:description]
@@ -70,7 +70,7 @@ reference type to [`element_type].
 [%@lib@ctor span]
 [codeblock:declaration]
 template<class It, class End>
-  constexpr span(It first, End last);
+  constexpr explicit(extent != dynamic_extent) span(It first, End last);
 [codeblock:end]
 
 [div:description]
@@ -124,42 +124,53 @@ equal to [`extent].
 [`size_]。
 
 [para:throws]
-[:en] Nothing.
-[:zh_CN] 无。
+[:en] When and what [`last - first] throws.
+[:zh_CN] 当 [`last - first] 抛出时为其所抛出的异常。
 [div:end]
 
 [%@lib@ctor span]
 [codeblock:declaration]
-template<size_t N> constexpr span(element_type (&arr)[N]) noexcept;
-template<size_t N> constexpr span(array<value_type, N>& arr) noexcept;
-template<size_t N> constexpr span(const array<value_type, N>& arr) noexcept;
+template<size_t N> constexpr span(type_identity_t<element_type> (&arr)[N]) noexcept;
+template<class T, size_t N> constexpr span(array<T, N>& arr) noexcept;
+template<class T, size_t N> constexpr span(const array<T, N>& arr) noexcept;
 [codeblock:end]
 
 [div:description]
 [para:constraints]
+[:en] Let [`U] be [`remove_pointer_t<decltype(data(arr))>].
+[:zh_CN] 令 [`U] 为 [`remove_pointer_t<decltype(data(arr))>]。
 [list]
 [item]
 [:en] [`extent == dynamic_extent || N == extent] is [`true], and
 [:zh_CN] [`extent == dynamic_extent || N == extent] 为 [`true]，并且
 [item]
-[:en] [`remove_pointer_t<decltype(data(arr))>(*)`[`]] is convertible to
-[`ElementType(*)`[`]].
-[:zh_CN] [`remove_pointer_t<decltype(data(arr))>(*)`[`]] 可以转换为
-[`ElementType(*)`[`]]。
+[:en] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] is [`true].
+[:zh_CN] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] 为 [`true]。
 [list:end]
+
+[begin:note]
+[:en] The intent is to allow only qualification conversions of the array element
+type to [`element_type].
+[:zh_CN] 意图是仅允许数组元素类型向 [`element_type] 的限定转换。
+[end:note]
 
 [para:effects]
 [:en] Constructs a [`span] that is a view over the supplied array.
 [:zh_CN] 构造一个作为所提供的数组的视图的 [`span]。
 
+[begin:note]
+[:en] [`type_identity_t] affects class template argument deduction.
+[:zh_CN] [`type_identity_t] 影响类模板实参推断。
+[end:note]
+
 [para:ensures]
-[:en] [`size() == N && data() == data(arr)].
-[:zh_CN] [`size() == N && data() == data(arr)]。
+[:en] [`size() == N && data() == data(arr)] is [`true].
+[:zh_CN] [`size() == N && data() == data(arr)] 为 [`true]。
 [div:end]
 
 [%@lib@ctor span]
 [codeblock:declaration]
-template<class R> constexpr span(R&& r);
+template<class R> constexpr explicit(extent != dynamic_extent) span(R&& r);
 [codeblock:end]
 
 [div:description]
@@ -169,19 +180,15 @@ template<class R> constexpr span(R&& r);
 
 [list]
 [item]
-[:en] [`extent == dynamic_extent] is [`true].
-[:zh_CN] [`extent == dynamic_extent] 为 [`true]。
-
-[item]
 [:en] [`R] satisfies [`ranges::[`:c contiguous_range]] and
 [`ranges::[`:c sized_range]].
 [:zh_CN] [`R] 符合 [`ranges::[`:c contiguous_range]] 和
 [`ranges::[`:c sized_range]].
 
 [item]
-[:en] Either [`R] satisfies [`ranges::[`:c safe_range]] or
+[:en] Either [`R] satisfies [`ranges::[`:c borrowed_range]] or
 [`is_const_v<element_type>] is [`true].
-[:zh_CN] 或者 [`R] 符合 [`ranges::[`:c safe_range]]，或者
+[:zh_CN] 或者 [`R] 符合 [`ranges::[`:c borrowed_range]]，或者
 [`is_const_v<element_type>] 为 [`true]。
 
 [item]
@@ -201,14 +208,19 @@ template<class R> constexpr span(R&& r);
 [:zh_CN] [`is_convertible_v<U(*)`[`], element_type(*)`[`]>] 为 [`true]。
 
 [begin:note]
-[:en] The intent is to allow only qualification conversions of the iterator
+[:en] The intent is to allow only qualification conversions of the range
 reference type to [`element_type].
-[:zh_CN] 意图是仅允许迭代器引用类型向 [`element_type] 的限定转换.
+[:zh_CN] 意图是仅允许范围引用类型向 [`element_type] 的限定转换.
 [end:note]
 [list:end]
 
 [para:expects]
 [list]
+[item]
+[:en] If [`extent] is not equal to [`dynamic_extent], then [`ranges::size(r)]
+is equal to [`extent].
+[:zh_CN] 若 [`extent] 不等于 [`dynamic_extent]，则 [`ranges::size(r)] 等于
+[`extent]。
 [item]
 [:en] [`R] models [`ranges::[`:c contiguous_range]] and
 [`ranges::[`:c sized_range]].
@@ -216,9 +228,9 @@ reference type to [`element_type].
 [`ranges::[`:c sized_range]]。
 [item]
 [:en] If [`is_const_v<element_type>] is [`false], [`R] models
-[`ranges::[`:c safe_range]].
+[`ranges::[`:c borrowed_range]].
 [:zh_CN] 当 [`is_const_v<element_type>] 为 [`false] 时，[`R] 构成
-[`ranges::[`:c safe_range]]。
+[`ranges::[`:c borrowed_range]]。
 [list:end]
 
 [para:effects]
@@ -246,19 +258,34 @@ constexpr span(const span& other) noexcept = default;
 [%@lib@ctor span]
 [codeblock:declaration]
 template<class OtherElementType, size_t OtherExtent>
-  constexpr span(const span<OtherElementType, OtherExtent>& s) noexcept;
+  constexpr explicit([[redoc("[=seebelow]")]]) span(const span<OtherElementType, OtherExtent>& s) noexcept;
 [codeblock:end]
 
 [div:description]
 [para:constraints]
 [list]
 [item]
-[:en] [`Extent == dynamic_extent || Extent == OtherExtent] is [`true], and
-[:zh_CN] [`Extent == dynamic_extent || Extent == OtherExtent] 为 [`true]，并且
+[:en] [`extent == dynamic_extent || OtherExtent == dynamic_extent || extent == OtherExtent]
+is [`true], and
+[:zh_CN] [`extent == dynamic_extent || OtherExtent == dynamic_extent || extent == OtherExtent]
+为 [`true]，并且
 [item]
-[:en] [`OtherElementType(*)`[`]] is convertible to [`ElementType(*)`[`]].
-[:zh_CN] [`OtherElementType(*)`[`]] 可以转换为 [`ElementType(*)`[`]]。
+[:en] [`is_convertible_v<OtherElementType(*)`[`], element_type(*)`[`]>] is
+[`true].
+[:zh_CN] [`is_convertible_v<OtherElementType(*)`[`], element_type(*)`[`]>] 为
+[`true]。
+
+[begin:note]
+[:en] The intent is to allow only qualification conversions of the
+[`OtherElementType] to [`element_type].
+[:zh_CN] 意图是仅允许 [`OtherElementType] 向 [`element_type] 的限定转换。
+[end:note]
 [list:end]
+
+[para:expects]
+[:en] If [`extent] is not equal to [`dynamic_extent], then [`s.size()] is equal
+to [`extent].
+[:zh_CN] 若 [`extent] 不等于 [`dynamic_extent]，则 [`s.size()] 等于 [`extent]。
 
 [para:effects]
 [:en] Constructs a [`span] that is a view over the range
@@ -269,6 +296,13 @@ template<class OtherElementType, size_t OtherExtent>
 [para:ensures]
 [:en] [`size() == s.size() && data() == s.data()].
 [:zh_CN] [`size() == s.size() && data() == s.data()]。
+
+[para:remarks]
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+[codeblock]
+extent != dynamic_extent && OtherExtent == dynamic_extent
+[codeblock:end]
 [div:end]
 
 [%@lib@member operator=[!span]]

@@ -1,0 +1,173 @@
+[section#concept.booleantestable
+    [:en] Boolean testability
+    [:zh_CN] 布尔可测试性
+]
+
+[para]
+[:en] The [`:c boolean] concept specifies the requirements on a type that is
+usable as a truth value.
+[:zh_CN] [`:c boolean] 概念指定对可以用作真值的类型的规定。
+
+[:en] The exposition-only [*:c boolean-testable] concept specifies the
+requirements on expressions that are convertible to [`bool] and for which the
+logical operators ([#expr.log.and], [#expr.log.or], [#expr.unary.op]) have the
+conventional semantics.
+[:zh_CN] 仅为阐释的概念 [*:c boolean-testable] 指定规定，表达式可以转换为 [`bool]，
+且逻辑运算符（[#expr.log.and]，[#expr.log.or]，[#expr.unary.op]）对于它均具有
+传统语义。
+
+[codeblock:declaration]
+template<class T>
+  concept [[redoc("*:c@def>")]]boolean-testable-impl = [[redoc("`:c>")]]convertible_to<T, bool>;  // [=expos]
+[codeblock:end]
+
+[para]
+[:en] Let [`e] be an expression such that [`decltype((e))] is [`T].
+[:zh_CN] 令 [`e] 为使得 [`decltype((e))] 为 [`T] 的表达式。
+
+[:en] [`T] models [*:c boolean-testable-impl] only if:
+[:zh_CN] 仅当满足以下条件时，[`T] 构成 [*:c boolean-testable-impl]：
+
+[list]
+[item]
+[:en] either [`remove_cvref_t<T>] is not a class type, or name lookup for the
+names [`operator&&] and [`operator||] within the scope of [`remove_cvref_t<T>]
+as if by class member access lookup ([#class.member.lookup]) results in an empty
+declaration set; and
+[:zh_CN] 要么 [`remove_cvref_t<T>] 不是类类型，要么如同以类成员访问查找
+（[#class.member.lookup]）在 [`remove_cvref_t<T>] 的作用域中对名字 [`operator&&]
+和 [`operator||] 的名字查找的结果为空的声明式集合；并且
+
+[item]
+[:en] name lookup for the names [`operator&&] and [`operator||] in the
+associated namespaces and entities of [`T] ([#basic.lookup.argdep])
+finds no disqualifying declaration (defined below).
+[:zh_CN] 在与 [`T] 关联的命名空间和实体中对名字 [`operator&&] 和 [`operator||]
+的名字查找（[#basic.lookup.argdep]），未找到任何失格声明式（如下文定义）。
+[list:end]
+
+[para]
+[:en] A [+:adj disqualifying parameter[%disqualifying[!parameter]]]
+is a function parameter whose declared type [`P]
+[:zh_CN] [+ajd 失格形参[%失格[!形参]]]是函数形参，其所声明的类型 [`P]
+
+[list]
+[item]
+[:en] is not dependent on a template parameter, and there exists an implicit
+conversion sequence ([#over.best.ics]) from [`e] to [`P]; or
+[:zh_CN] 不取决于模板形参，且存在一个从 [`e] 到 [`P] 的隐式转换序列
+（[#over.best.ics]）；或者
+
+[item]
+[:en] is dependent on one or more template parameters, and either
+[:zh_CN] 取决于一个或更多模板形参，并且
+[list]
+[item]
+[:en] [`P] contains no template parameter that participates in template argument
+deduction ([#temp.deduct.type]), or
+[:zh_CN] [`P] 不包含任何参与模板实参推断（[#temp.deduct.type]）的模板形参，或
+[item]
+[:en] template argument deduction using the rules for deducing template
+arguments in a function call ([#temp.deduct.call]) and [`e] as the argument
+succeeds.
+[:zh_CN] 使用在函数调用中推断模板实参的规则（[#temp.deduct.call]）并以 [`e] 为
+实参，成功进行模板实参推断。
+[list:end]
+[list:end]
+
+[para]
+[:en]
+[%template[!function[!key parameter of]]]
+A [+:adj key parameter[%key[!parameter]]] of a function template [`D]
+is a function parameter of type [=cv] [`X] or reference thereto, where [`X]
+names a specialization of a class template that is a member of the same
+namespace as [`D], and [`X] contains at least one template parameter that
+participates in template argument deduction.
+[:zh_CN] 
+[%模板[!函数～[!～的关键形参]]]
+函数模板 [`D] 的[+:adj 关键形参[%关键[!形参]]]，是类型为 [=cv] [`X] 或其引用的
+函数形参，其中 [`X] 指名某个作为与 [`D] 相同命名空间的成员的类模板的某个特例，且
+[`X] 包含至少一个参与模板实参推断的模板形参。
+
+[begin:example]
+[:en] In
+[:zh_CN] 以下代码中
+
+[codeblock]
+namespace Z {
+  template<class> struct C {};
+  template<class T>
+    void operator&&(C<T> x, T y);
+  template<class T>
+    void operator||(C<type_identity_t<T>> x, T y);
+}
+[codeblock:end]
+
+[:en] the declaration of [`Z::operator&&] contains one key parameter, [`C<T> x],
+and the declaration of [`Z::operator||] contains no key parameters.
+[:zh_CN] [`Z::operator&&] 的声明式包含一个关键形参 [`C<T> x]，[`Z::operator||]
+的声明式不包含任何关键形参。 
+[end:example]
+
+[para]
+[:en] A [+:adj disqualifying declaration[%disqualifying [!declaration]]] is
+[:zh_CN] [+:adj 失格声明式[%失格[!声明式]]]为
+
+[list]
+[item]
+[:en] a (non-template) function declaration that contains at least one
+disqualifying parameter; or
+[:zh_CN] 包含至少一个失格形参的（非模板）函数声明式；或者
+
+[item]
+[:en] a function template declaration that contains at least one disqualifying
+parameter, where
+[:zh_CN] 包含至少一个失格形参的函数模板声明式，其中
+[list]
+[item]
+[:en] at least one disqualifying parameter is a key parameter; or
+[:zh_CN] 至少一个失格形参为关键形参；或者
+[item]
+[:en] the declaration contains no key parameters; or
+[:zh_CN] 该声明式不包含任何关键形参；或者
+[item]
+[:en] the declaration declares a function template that
+is not visible in its namespace ([#namespace.memdef]).
+[:zh_CN] 该声明式声明一个函数模板且在其命名空间中不可见（[#namespace.memdef]）。
+[list:end]
+[list:end]
+
+[para]
+[begin:note]
+[:en] The intention is to ensure that given two types [`T1] and [`T2] that each
+model [*:c boolean-testable-impl], the [`&&] and [`||] operators within the
+expressions [`declval<T1>() && declval<T2>()] and
+[`declval<T1>() || declval<T2>()] resolve to the corresponding built-in operators.
+[:zh_CN] 意图是确保给定两个均构成 [`:c boolean-testable-impl] 的类型 [`T1] 和
+[`T2]，表达式 [`declval<T1>() && declval<T2>()] 和
+[`declval<T1>() || declval<T2>()] 中的 [`&&] 和 [`||] 运算符均被决议为相应的
+内建运算符。
+[end:note]
+
+[codeblock:declaration]
+template<class T>
+  concept [[redoc("*:c@def>")]]boolean-testable =                // [=expos]
+    [[redoc("*:c>")]]boolean-testable-impl<T> && requires (T&& t) {
+      { !std::forward<T>(t) } -> [[redoc("*:c>")]]boolean-testable-impl;
+    };
+[codeblock:end]
+
+[para]
+[:en] Let [`e] be an expression such that [`decltype((e))] is [`T].
+[:zh_CN] 令 [`e] 为使得 [`decltype((e))] 为 [`T] 的表达式。
+
+[:en] [`T] models [*:c boolean-testable] only if [`bool(e) == !bool(!e)].
+[:zh_CN] 仅当 [`bool(e) == !bool(!e)] 时 [`T] 构成 [*:c boolean-testable]。
+
+[para]
+[begin:example]
+[:en] The types [`bool], [`true_type] ([#meta.type.synop]), [`int*], and
+[`bitset<N>::reference] ([#template.bitset]) model [*:c boolean-testable].
+[:zh_CN] 类型 [`bool]，[`true_type]（[#meta.type.synop]），[`int*]，以及
+[`bitset<N>::reference]（[#template.bitset]）构成 [*:c boolean-testable]。
+[end:example]

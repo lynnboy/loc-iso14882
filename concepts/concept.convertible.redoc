@@ -4,11 +4,13 @@
 ]
 
 [para]
-[:en] The [`:c convertible_to] concept requires an expression of a particular
-type and value category to be both implicitly and explicitly convertible to some
-other type.
-[:zh_CN] [`:c convertible_to] 概念要求特定类型和值类别的表达式同时可以隐式和显式
-转换为某个其他类型。
+[:en] Given types [`From] and [`To] and an expression [`E] such that
+[`decltype((E))] is [`add_rvalue_reference_t<From>],
+[`[`:c convertible_to]<From, To>] requires [`E] to be both implicitly and
+explicitly convertible to type [`To].
+[:zh_CN] 给定类型 [`From] 和 [`To] 以及表达式 [`E] 使得 [`decltype((E))] 为
+[`add_rvalue_reference_t<From>]，[`[`:c convertible_to]<From, To>] 要求 [`E]
+既可隐式也可显式转换为类型 [`To]。
 
 [:en] The implicit and explicit conversions are required to produce equal
 results.
@@ -18,29 +20,30 @@ results.
 template<class From, class To>
   concept [[redoc("`:c@def>")]]convertible_to =
     is_convertible_v<From, To> &&
-    requires(From (&f)()) {
+    requires(add_rvalue_reference_t<From> (&f)()) {
       static_cast<To>(f());
     };
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [`test] be the invented function:
-[:zh_CN] 令 [`test] 为某个虚构函数：
+[:en] Let [`FromR] be [`add_rvalue_reference_t<From>] and [`test] be the
+invented function:
+[:zh_CN] 令 [`FromR] 为 [`add_rvalue_reference_t<From>]，[`test] 为某个虚构函数：
 
 [codeblock]
-To test(From (&f)()) {
+To test(FromR (&f)()) {
   return f();
 }
 [codeblock:end]
 
-[:en@~] for some types [`From] and [`To], and let [`f] be a function with no
-arguments and return type [`From] such that [`f()] is equality-preserving.
-[:zh_CN@~] 对于某个类型 [`From] 和 [`To]，并令 [`f] 为不接受实参且返回类型为
-[`From] 的函数，并使得 [`f()] 维持相等性。
+[:en@~] and let [`f] be a function with no arguments and return type [`FromR]
+such that [`f()] is equality-preserving.
+[:zh_CN@~] 并令 [`f] 为不接受实参且返回类型为 [`FromR] 的函数，并使得 [`f()]
+维持相等性。
 
-[:en] [`From] and [`To] model [`[`:c convertible_to]<From, To>] only if:
-[:zh_CN] 仅当符合以下条件时，[`From] 和 [`To] 构成
+[:en] Types [`From] and [`To] model [`[`:c convertible_to]<From, To>] only if:
+[:zh_CN] 仅当符合以下条件时，类型 [`From] 和 [`To] 构成
 [`[`:c convertible_to]<From, To>]：
 
 [list]
@@ -51,15 +54,15 @@ arguments and return type [`From] such that [`f()] is equality-preserving.
 [`test(f)]。
 
 [item]
-[:en] [`From] is not a reference-to-object type, or
-[:zh_CN] [`From] 并非对象引用类型，或者
+[:en] [`FromR] is not a reference-to-object type, or
+[:zh_CN] [`FromR] 并非对象引用类型，或者
 
 [list]
 [item]
-[:en] If [`From] is an rvalue reference to a non const-qualified type, the
+[:en] If [`FromR] is an rvalue reference to a non const-qualified type, the
 resulting state of the object referenced by [`f()] after either above
 expression is valid but unspecified ([#lib.types.movedfrom]).
-[:zh_CN] 如果 [`From] 是到非 const 限定的类型的右值引用，则经过以上任何表达式
+[:zh_CN] 如果 [`FromR] 是到非 const 限定的类型的右值引用，则经过以上任何表达式
 之后 [`f()] 所指代的对象的结果状态，是有效但未指明的（[#lib.types.movedfrom]）。
 
 [item]

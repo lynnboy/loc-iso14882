@@ -32,30 +32,27 @@ namespace std {
     using iterator = [[redoc("[?impdefx [:en] type of [`span::iterator]"
                                     "[:zh_CN] [`span::iterator] 的类型]")]];        // [:en] see [#span.iterators] \
                                                                                     [:zh_CN] 见 [#span.iterators]
-    using const_iterator = [[redoc("[?impdefx [:en] type of [`span::const_iterator]"
-                                          "[:zh_CN] [`span::const_iterator] 的类型]")]];
     using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     static constexpr size_type extent = Extent;
 
     // [:en] [#span.cons], constructors, copy, and assignment \
        [:zh_CN] [#span.cons]，构造函数，复制和赋值
     constexpr span() noexcept;
     template<class It>
-      constexpr span(It first, size_type count);
+      constexpr explicit(extent != dynamic_extent) span(It first, size_type count);
     template<class It, class End>
-      constexpr span(It first, End last);
+      constexpr explicit(extent != dynamic_extent) span(It first, End last);
     template<size_t N>
-      constexpr span(element_type (&arr)[N]) noexcept;
-    template<size_t N>
-      constexpr span(array<value_type, N>& arr) noexcept;
-    template<size_t N>
-      constexpr span(const array<value_type, N>& arr) noexcept;
+      constexpr span(type_identity_t<element_type> (&arr)[N]) noexcept;
+    template<class T, size_t N>
+      constexpr span(array<T, N>& arr) noexcept;
+    template<class T, size_t N>
+      constexpr span(const array<T, N>& arr) noexcept;
     template<class R>
-      constexpr span(R&& r);
+      constexpr explicit(extent != dynamic_extent) span(R&& r);
     constexpr span(const span& other) noexcept = default;
     template<class OtherElementType, size_t OtherExtent>
-      constexpr span(const span<OtherElementType, OtherExtent>& s) noexcept;
+      constexpr explicit([[redoc("[=seebelow]")]]) span(const span<OtherElementType, OtherExtent>& s) noexcept;
 
     ~span() noexcept = default;
 
@@ -92,20 +89,16 @@ namespace std {
        [:zh_CN] [#span.iterators]，迭代器支持
     constexpr iterator begin() const noexcept;
     constexpr iterator end() const noexcept;
-    constexpr const_iterator cbegin() const noexcept;
-    constexpr const_iterator cend() const noexcept;
     constexpr reverse_iterator rbegin() const noexcept;
     constexpr reverse_iterator rend() const noexcept;
-    constexpr const_reverse_iterator crbegin() const noexcept;
-    constexpr const_reverse_iterator crend() const noexcept;
 
   private:
     pointer data_;              // [=expos]
     size_type size_;            // [=expos]
   };
 
-  template<class It, class End>
-    span(It, End) -> span<remove_reference_t<iter_reference_t<It>>>;
+  template<class It, class EndOrSize>
+    span(It, EndOrSize) -> span<remove_reference_t<iter_reference_t<It>>>;
   template<class T, size_t N>
     span(T (&)[N]) -> span<T, N>;
   template<class T, size_t N>
