@@ -61,7 +61,7 @@ An additional function template derived as above from a hypothetical constructor
 [`C(C)], called the [+copy deduction candidate].
 [:zh_CN]
 从虚构的构造函数 [`C(C)] 以上述方式产生出一个额外的函数模板，称为
-[+复制推断候选函数]。
+[+复制推断候选]。
 
 [item]
 [:en]
@@ -91,14 +91,14 @@ In addition, if [`C] is defined and its definition satisfies the conditions for
 an aggregate class ([#dcl.init.aggr]) with the assumption that any dependent
 base class has no virtual functions and no virtual base classes, and the
 initializer is a non-empty [~braced-init-list] or parenthesized
-[~expression-list], the set contains an additional function template, called the
-[+:adj aggregate deduction candidate[%candidate[!aggregate deduction]]], defined
-as follows.
+[~expression-list], and there are no [~deduction-guide]s for [`C], the set
+contains an additional function template, called the [+:adj aggregate deduction
+candidate[%candidate[!aggregate deduction]]], defined as follows.
 [:zh_CN]
 此外，若 [`C] 有定义，且假定任何待决基类都没有虚函数和虚基类，其定义式符合聚合类
 的条件（[#dcl.init.aggr]），并且其初始化式是个非空的[~花括号初始列表]或带括号的
-[~表达式列表]，则集合中包含一个额外的函数模板，称为[+:adj 聚合推断候选函数
-[%候选函数[!聚合推断～]]]，定义如下。
+[~表达式列表]，且不存在 [`C] 的[~推断导引]，则集合中包含一个额外的函数模板，称为
+[+:adj 聚合推断候选[%候选[!聚合推断～]]]，定义如下。
 
 [:en]
 Let [$x_1, \dotsc, x_n] be the elements of the [~initializer-list] or
@@ -109,26 +109,77 @@ Let [$x_1, \dotsc, x_n] be the elements of the [~initializer-list] or
 [~定名初始化式列表]中的各个元素。
 
 [:en]
-For each [$x_i], let [$e_i] be the corresponding element of [`C] or of one of
-its (possibly recursive) subaggregates that would be initialized by [$x_i]
-([#dcl.init.aggr]) if brace elision is not considered for any element
-that has a dependent type.
+For each [$x_i], let [$e_i] be the corresponding aggregate element of [`C] or of
+one of its (possibly recursive) subaggregates that would be initialized by [$x_i]
+([#dcl.init.aggr]) if
 [:zh_CN]
-对于每个 [$x_i]，令 [$e_i] 为当对具有待决类型的任何元素不考虑花括号消除时，将由
-[$x_i] 所初始化的 [`C] 的对应元素或其（可能递归的）子聚合之一。
+对于每个 [$x_i]，令 [$e_i] 为以下情况下由 [$x_i] 所初始化的 [`C] 的对应聚合元素
+或其（可能递归的）子聚合之一。
+
+[list]
+[item]
+[:en]
+brace elision is not considered for any aggregate element that has a dependent
+non-array type or an array type with a value-dependent bound, and
+[:zh_CN]
+对具有待决非数组类型或带有值待决边界的数组类型的任何聚合元素，不考虑花括号消除，
+并且
+[item]
+[:en]
+each non-trailing aggregate element that is a pack expansion is assumed to
+correspond to no elements of the initializer list, and
+[:zh_CN]
+每个作为包组展开式的非聚合元素均被假定为不与初始化式列表中的任何元素对应，并且
+[item]
+[:en]
+a trailing aggregate element that is a pack expansion is assumed to correspond
+to all remaining elements of the initializer list (if any).
+[:zh_CN]
+末尾的一个作为包组展开式的聚合元素，被假定对应于初始化式列表中的所有剩余元素
+（如果有）。
+[list:end]
 
 [:en]
-If there is no such element [$e_i], the program is ill-formed.
+If there is no such element [$e_i], for any [$x_i], the aggregate deduction
+candidate is not added to the set.
 [:zh_CN]
-若不存在这样的 [$e_i]，则程序非良构。
+若对于任意 [$x_i] 不存在这样的 [$e_i] 则不将聚合推断候选加入集合。
 
 [:en]
 The aggregate deduction candidate is derived as above from a hypothetical
-constructor [$[`C]([`T]_1, \dotsc, [`T]_n)], where [$[`T]_i] is the declared
-type of the element [$e_i].
+constructor [$[`C]([`T]_1, \dotsc, [`T]_n)], where
 [:zh_CN]
-聚合推断候选函数，是从一个虚构的构造函数 [$[`C]([`T]_1, \dotsc, [`T]_n)] 如上文
-的方式得出的，其中 [$[`T]_i] 是元素 [$e_i] 的声明类型。
+聚合推断候选，是从一个虚构的构造函数 [$[`C]([`T]_1, \dotsc, [`T]_n)] 如上文
+的方式得出的，其中
+
+[list]
+[item]
+[:en]
+if [$e_i] is of array type and [$x_i] is a [~braced-init-list] or
+[~string-literal], [$[`T]_i] is an rvalue reference to the declared type of
+[$e_i], and
+[:zh_CN]
+如果 [$e_i] 为数组类型且 [$x_i] 为[~花括号初始化列表]或[~字符串字面量]，则
+[$[`T]_i] 是到 [$e_i] 的声明类型的右值引用，
+[item]
+[:en]
+otherwise, [$[`T]_i] is the declared type of [$e_i],
+[:zh_CN]
+否则，[$[`T]_i] 为 [$e_i] 的声明类型，
+[list:end]
+
+[:en]
+except that additional parameter packs of the form [$[`P]_j [`...]] are inserted
+into the parameter list in their original aggregate element position
+corresponding to each non-trailing aggregate element of type [$[`P]_j] that was
+skipped because it was a parameter pack, and the trailing sequence of parameters
+corresponding to a trailing aggregate element that is a pack expansion (if any)
+is replaced by a single parameter of the form [$[`T]_n [`...]].
+[:zh_CN]
+但对每个由于作为形参包组而被跳过的非末尾的 [$[`P]_j] 类型的聚合元素，在形参列表
+中对应于它的原聚合元素位置，插入一个额外的形式为 [$[`P]_j [`...]] 的形参包组，
+而对应于作为包组展开的尾部聚合元素（如果有）的尾部的形参序列，替换为一个形式为
+[$[`T]_n [`...]] 的形参。
 
 [para]
 [:en]
@@ -209,8 +260,7 @@ the arguments of [`A] are deducible (see below) from the return type.
 If [`f] is a copy deduction candidate ([#over.match.class.deduct]), then [`f']
 is considered to be so as well.
 [:zh_CN]
-如果 [`f] 是复制推断候选函数（[#over.match.class.deduct]），则 [`f'] 也被当做
-如此。
+如果 [`f] 是复制推断候选（[#over.match.class.deduct]），则 [`f'] 也被当做如此。
 
 [item]
 [:en]
@@ -266,15 +316,31 @@ context in which class template argument deduction was performed.
 这个类类型的构造函数，而其初始化式则由实施类模板实参推断的语境来提供。
 
 [:en]
-As an exception, the first phase in [#over.match.list] (considering
-initializer-list constructors) is omitted if the initializer list consists of
-a single expression of type [=cv] [`U], where [`U] is, or is derived from,
-a specialization of the class template directly or indirectly named by the
-placeholder.
+The following exceptions apply:
 [:zh_CN]
-一种例外是，如果初始化式列表由一个 [=cv] [`U] 类型的表达式所构成，其中 [`U] 是
-（或派生于）由该占位符所直接或间接指名的类模板的特例，则省略 [#over.match.list]
-的第一个阶段（考察初始化列表构造函数）。
+有以下例外情况：
+
+[list]
+[item]
+[:en]
+The first phase in [#over.match.list] (considering initializer-list constructors)
+is omitted if the initializer list consists of a single expression of type
+[=cv] [`U], where [`U] is, or is derived from, a specialization of the class
+template directly or indirectly named by the placeholder.
+[:zh_CN]
+如果初始化式列表由一个 [=cv] [`U] 类型的表达式所构成，其中 [`U] 是（或派生于）由
+该占位符所直接或间接指名的类模板的特例，则省略 [#over.match.list] 的第一个阶段
+（考察初始化列表构造函数）。
+
+[item]
+[:en]
+During template argument deduction for the aggregate deduction candidate, the
+number of elements in a trailing parameter pack is only deduced from the number
+of remaining function arguments if it is not otherwise deduced.
+[:zh_CN]
+对聚合推断候选进行模板实参推断过程中，尾部形参包组中的元素数量，如果未被另行推断，
+则仅由剩余的函数实参的数量推断。
+[list:end]
 
 [:en]
 If the function or function template was generated from a constructor or
@@ -369,6 +435,24 @@ struct E {
 
 E e1 = {1, 2};                  // [:en] OK, deduces [`E<int>] \
                                    [:zh_CN] OK，推断为 [`E<int>]
+
+template <typename... T>
+struct Types {};
+
+template <typename... T>
+struct F : Types<T...>, T... {};
+
+struct X {};
+struct Y {};
+struct Z {};
+struct W { operator Y(); };
+
+F f1 = {Types<X, Y, Z>{}, {}, {}};      // [:en] OK, [`F<X, Y, Z>] deduced \
+                                           [:zh_CN] OK，推断为 [`F<X, Y, Z>]
+F f2 = {Types<X, Y, Z>{}, X{}, Y{}};    // [:en] OK, [`F<X, Y, Z>] deduced \
+                                           [:zh_CN] OK，推断为 [`F<X, Y, Z>]
+F f3 = {Types<X, Y, Z>{}, X{}, W{}};    // [:en] error: conflicting types deduced; [`operator Y] not considered \
+                                           [:zh_CN] 错误：推断出冲突的类型；不考虑 [`operator Y]
 [codeblock:end]
 [end:example]
 
@@ -382,7 +466,7 @@ template<class T, class U>
   C(T, U) -> C<T, std::type_identity_t<U>>;     // #2
 
 template<class V> using A = C<V *, V *>;
-template<std::integral W> using B = A<W>;
+template<std::[[redoc("`:c>")]]integral W> using B = A<W>;
 
 int i{};
 double d{};
@@ -444,11 +528,11 @@ template <class T> concept deduces_B = requires { sizeof(BB<T>); };
 
 // [:en] The guides for [`B] derived from the above [`f1'] and [`f2'] for [`A] are as follows: \
    [:zh_CN] [`B] 的导引从上述对于 [`A] 的 [`f1'] 和 [`f2'] 以如下方式得出：
-template<std::integral W>
+template<std::[[redoc("`:c>")]]integral W>
   requires deduces_A<C<W *, W *>> && deduces_B<C<W *, W *>>
   auto f1_prime_for_B(W *, W *) -> C<W *, W *>;
 
-template<std::integral W, class U>
+template<std::[[redoc("`:c>")]]integral W, class U>
   requires deduces_A<C<W *, std::type_identity_t<U>>> &&
     deduces_B<C<W *, std::type_identity_t<U>>>
   auto f2_prime_for_B(W *, U) -> C<W *, std::type_identity_t<U>>;

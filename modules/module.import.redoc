@@ -5,20 +5,27 @@
 
 [syntax]
 [rule module-import-declaration [:zh_CN] 模块导入声明式 ]
-    [| [`:opt:key export] import-keyword module-name [~:opt attribute-specifier-seq] [`;] ]
-    [| [`:opt:key export] import-keyword module-partition [~:opt attribute-specifier-seq] [`;] ]
-    [| [`:opt:key export] import-keyword header-name [~:opt attribute-specifier-seq] [`;] ]
+    [| import-keyword module-name [~:opt attribute-specifier-seq] [`;] ]
+    [| import-keyword module-partition [~:opt attribute-specifier-seq] [`;] ]
+    [| import-keyword header-name [~:opt attribute-specifier-seq] [`;] ]
 [rule:end]
 [syntax:end]
 
 [para]
 [:en]
-In a module unit, all [~module-import-declaration]s shall precede all other
-[~top-level-declaration]s in the [~top-level-declaration-seq] of the
-[~translation-unit] and of the [~private-module-fragment] (if any).
+A [~module-import-declaration] shall only appear at global namespace scope.
 [:zh_CN]
-在一个模块单元中，[~翻译单元]或[~私有模块分段]（如果有）的[~顶层声明式序列]中，
-所有的[~模块导入声明式]都应当处于所有其他的[~顶层声明式]之前。
+[~模块导入声明式]应当仅出现于全局命名空间作用域中。
+
+[:en]
+In a module unit, all [~module-import-declaration]s and [~export-declaration]s
+exporting [~module-import-declaration]s shall precede all other [~declaration]s
+in the [~declaration-seq] of the [~translation-unit] and of the
+[~private-module-fragment] (if any).
+[:zh_CN]
+在一个模块单元中，[~翻译单元]或[~私有模块分段]（如果有）的[~声明式序列]中，
+所有的[~模块导入声明式]和导出[~模块导入声明式]的[~导出声明式]，都应当处于所有
+其他的[~声明式]之前。
 
 [:en]
 The optional [~attribute-specifier-seq] appertains to the
@@ -99,11 +106,31 @@ all importable [=Cpp] library headers ([#headers]).
 [`H] 应当标明某个可导入头文件。
 
 [:en]
-Two [~module-import-declaration]s import the same header unit if and only if
-their [~header-name]s identify the same header or source file ([#cpp.include]).
+Given two such [~module-import-declaration]s:
 [:zh_CN]
-两个[~模块导入声明式]，当且仅当其[~头文件名]标明相同的头文件或源文件
-（[#cpp.include]）时，导入相同头文件单元。
+给定两个这种[~模块导入声明式]：
+[list]
+[item]
+[:en] if their [~header-name]s identify different headers or source files
+([#cpp.include]), they import distinct header units;
+[:zh_CN] 如果它们的[~头文件名]标明不同的的头文件或源文件（[#cpp.include]），则
+它们导入不同的头文件单元；
+[item]
+[:en] otherwise, if they appear in the same translation unit, they import the
+same header unit;
+[:zh_CN] 否则，如果它们出现于同一个翻译单元中，则它们导入相同的头文件单元；
+[item]
+[:en] otherwise, it is unspecified whether they import the same header unit.
+[:zh_CN] 否则，未指明它们是否导入相同的头文件单元。
+
+[begin:note]
+[:en]
+It is therefore possible that multiple copies exist of entities declared with
+internal linkage in an importable header.
+[:zh_CN]
+因此，在某个可导入头文件中被声明为具有内部连接的实体，可能存在多个副本。
+[end:note]
+[list:end]
 
 [begin:note]
 [:en]
@@ -115,6 +142,7 @@ translation of the header unit being made visible as described in [#cpp.import].
 翻译的第 4 阶段结束时所定义的宏均变为可见，如 [#cpp.import] 所述。
 [end:note]
 
+[para]
 [:en]
 A declaration of a name with internal linkage is permitted within a header unit
 despite all declarations being implicitly exported ([#module.interface]).
@@ -122,13 +150,19 @@ despite all declarations being implicitly exported ([#module.interface]).
 具有内部连接的名字的声明式允许出现于头文件单元中，尽管所有声明式都被隐式导出
 （[#module.interface]）。
 
+[begin:note]
 [:en]
-If such a declaration declares an entity that is odr-used outside the header
-unit, or by a template instantiation whose point of instantiation is outside
-the header unit, the program is ill-formed.
+A definition that appears in multiple translation units cannot in general refer
+to such names ([#basic.def.odr]).
 [:zh_CN]
-如果这种声明式所声明的实体，在该头文件单元之外被 ODR 式使用，或者由实例化点处于
-该头文件单元之外的某个模板实例所 ODR 式使用，则程序非良构。
+出现于多个翻译单元中的定义式，一般无法涉指这样的名字（[#basic.def.odr]）。
+[end:note]
+
+[:en]
+A header unit shall not contain a definition of a non-inline function or
+variable whose name has external linkage.
+[:zh_CN]
+头文件单元不能包含名字具有外部连接的非内联函数或变量的定义式。
 
 [para]
 [:en]
@@ -204,13 +238,12 @@ import M;               // [:en] error: cannot import [`M] in its own unit \
 [para]
 [:en]
 A translation unit has an [+interface dependency] on a translation unit [`U] if
-it contains a [~module-declaration] or [~module-import-declaration] that imports
-[`U] or if it has an interface dependency on a translation unit that has an
-interface dependency on [`U].
+it contains a declaration (possibly a [~module-declaration]) that imports [`U]
+or if it has an interface dependency on a translation unit that has an interface
+dependency on [`U].
 [:zh_CN]
-如果翻译单元中包含某个导入了翻译单元 [`U] 的[~模块声明式]或[~模块导入声明式]，
-或者它对某个对 [`U] 有接口依赖的翻译单元有接口依赖，则该翻译单元对 [`U] 有
-[+接口依赖]。
+如果翻译单元中包含某个导入了翻译单元 [`U] 的声明式（可能为[~模块声明式]），或者
+它对某个对 [`U] 有接口依赖的翻译单元有接口依赖，则该翻译单元对 [`U] 有[+接口依赖]。
 
 [:en]
 A translation unit shall not have an interface dependency on itself.
