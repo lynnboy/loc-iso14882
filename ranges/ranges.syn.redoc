@@ -5,8 +5,12 @@
 
 [%@hdr@def ranges]
 [codeblock:synopsis]
-#include <initializer_list>
-#include <iterator>
+#include <compare>              // [:en] see [#compare.syn] \
+                                   [:zh_CN] 参见 [#compare.syn]
+#include <initializer_list>     // [:en] see [#initializer.list.syn] \
+                                   [:zh_CN] 参见 [#initializer.list.syn]
+#include <iterator>             // [:en] see [#iterator.synopsis] \
+                                   [:zh_CN] 参见 [#iterator.synopsis]
 
 namespace std::ranges {
   inline namespace [[redoc("[=unspec]")]] {
@@ -22,6 +26,7 @@ namespace std::ranges {
     inline constexpr [[redoc("[=unspec]")]] crend = [[redoc("[=unspec]")]];
 
     inline constexpr [[redoc("[=unspec]")]] size = [[redoc("[=unspec]")]];
+    inline constexpr [[redoc("[=unspec]")]] ssize = [[redoc("[=unspec]")]];
     inline constexpr [[redoc("[=unspec]")]] empty = [[redoc("[=unspec]")]];
     inline constexpr [[redoc("[=unspec]")]] data = [[redoc("[=unspec]")]];
     inline constexpr [[redoc("[=unspec]")]] cdata = [[redoc("[=unspec]")]];
@@ -32,23 +37,25 @@ namespace std::ranges {
   template<class T>
     concept range = [[redoc("[=seebelow]")]];
 
-  template<range T>
-    inline constexpr bool enable_safe_range = false;
+  template<class T>
+    inline constexpr bool enable_borrowed_range = false;
 
   template<class T>
-    concept safe_range = @\seebelow@;
+    concept borrowed_range = @\seebelow@;
 
-  template<range R>
-    using iterator_t = decltype(ranges::begin(declval<R&>()));
-  template<range R>
+  template<class T>
+    using iterator_t = decltype(ranges::begin(declval<T&>()));
+  template<[[redoc("`:c>")]]range R>
     using sentinel_t = decltype(ranges::end(declval<R&>()));
-  template<range R>
+  template<[[redoc("`:c>")]]range R>
     using range_difference_t = iter_difference_t<iterator_t<R>>;
-  template<range R>
+  template<[[redoc("`:c>")]]sized_range R>
+    using range_size_t = decltype(ranges::size(declval<R&>()));
+  template<[[redoc("`:c>")]]range R>
     using range_value_t = iter_value_t<iterator_t<R>>;
-  template<range R>
+  template<[[redoc("`:c>")]]range R>
     using range_reference_t = iter_reference_t<iterator_t<R>>;
-  template<range R>
+  template<[[redoc("`:c>")]]range R>
     using range_rvalue_reference_t = iter_rvalue_reference_t<iterator_t<R>>;
 
   // [:en] [#range.sized], sized ranges \
@@ -98,30 +105,30 @@ namespace std::ranges {
   // [:en] [#view.interface], class template [`view_interface] \
      [:zh_CN] [#view.interface]，类模板 [`view_interface]
   template<class D>
-    requires is_class_v<D> && same_as<D, remove_cv_t<D>>
+    requires is_class_v<D> && [[redoc("`:c>")]]same_as<D, remove_cv_t<D>>
   class view_interface;
 
   // [:en] [#range.subrange], sub-ranges \
      [:zh_CN] [#range.subrange]，子范围
   enum class subrange_kind : bool { unsized, sized };
 
-  template<input_or_output_iterator I, sentinel_for<I> S = I, subrange_kind K = [[redoc("[=seebelow]")]]>
-    requires (K == subrange_kind::sized || !sized_sentinel_for<S, I>)
+  template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S = I, subrange_kind K = [[redoc("[=seebelow]")]]>
+    requires (K == subrange_kind::sized || ![[redoc("`:c>")]]sized_sentinel_for<S, I>)
   class subrange;
 
   template<input_or_output_iterator I, sentinel_for<I> S, subrange_kind K>
-    inline constexpr bool enable_safe_range<subrange<I, S, K>> = true;
+    inline constexpr bool enable_borrowed_range<subrange<I, S, K>> = true;
 
   // [:en] [#range.dangling], dangling iterator handling \
      [:zh_CN] [#range.dangling]，悬挂迭代器处理
   struct dangling;
 
-  template<range R>
-    using safe_iterator_t = conditional_t<safe_range<R>, iterator_t<R>, dangling>;
+  template<[[redoc("`:c>")]]range R>
+    using borrowed_iterator_t = conditional_t<[[redoc("`:c>")]]borrowed_range<R>, iterator_t<R>, dangling>;
 
-  template<range R>
+  template<[[redoc("`:c>")]]range R>
     using safe_subrange_t =
-      conditional_t<safe_range<R>, subrange<iterator_t<R>>, dangling>;
+      conditional_t<[[redoc("`:c>")]]borrowed_range<R>, subrange<iterator_t<R>>, dangling>;
 
   // [:en] [#range.empty], empty view \
      [:zh_CN] [#range.empty]，空视图
@@ -130,7 +137,7 @@ namespace std::ranges {
   class empty_view;
 
   template<class T>
-    inline constexpr bool enable_safe_range<empty_view<T>> = true;
+    inline constexpr bool enable_borrowed_range<empty_view<T>> = true;
 
   namespace views {
     template<class T>
@@ -139,7 +146,7 @@ namespace std::ranges {
 
   // [:en] [#range.single], single view \
      [:zh_CN] [#range.single]，单对象视图
-  template<copy_constructible T>
+  template<[[redoc("`:c>")]]copy_constructible T>
     requires is_object_v<T>
   class single_view;
 
@@ -147,12 +154,12 @@ namespace std::ranges {
 
   // [:en] [#range.iota], iota view \
      [:zh_CN] [#range.iota]，iota 视图
-  template<weakly_incrementable W, semiregular Bound = unreachable_sentinel_t>
-    requires [[redoc("^>")]]weakly-equality-comparable-with<W, Bound>
+  template<[[redoc("`:c>")]]weakly_incrementable W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
+    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, *:cound>
   class iota_view;
 
   template<weakly_incrementable W, semiregular Bound>
-    inline constexpr bool enable_safe_range<iota_view<W, Bound>> = true;
+    inline constexpr bool enable_borrowed_range<iota_view<W, Bound>> = true;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] iota = [[redoc("[=unspec]")]]; }
 
@@ -166,21 +173,23 @@ namespace std::ranges {
 
   // [:en] [#range.all], all view \
      [:zh_CN] [#range.all]，全视图
-  namespace views { inline constexpr [[redoc("[=unspec]")]] all = [[redoc("[=unspec]")]]; }
+  namespace views {
+    inline constexpr [[redoc("[=unspec]")]] all = [[redoc("[=unspec]")]];
 
-  template<viewable_range R>
-    using all_view = decltype(views::all(declval<R>()));
+    template<[[redoc("`:c>")]]viewable_range R>
+      using all_t = decltype(all(declval<R>()));
+  }
 
-  template<range R>
+  template<[[redoc("`:c>")]]range R>
     requires is_object_v<R>
   class ref_view;
 
   template<class T>
-    inline constexpr bool enable_safe_range<ref_view<T>> = true;
+    inline constexpr bool enable_borrowed_range<ref_view<T>> = true;
 
   // [:en] [#range.filter], filter view \
      [:zh_CN] [#range.filter]，过滤视图
-  template<input_range V, indirect_unary_predicate<iterator_t<V>> Pred>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]indirect_unary_predicate<iterator_t<V>> Pred>
     requires view<V> && is_object_v<Pred>
   class filter_view;
 
@@ -188,7 +197,7 @@ namespace std::ranges {
 
   // [:en] [#range.transform], transform view \
      [:zh_CN] [#range.transform]，变换视图
-  template<input_range V, copy_constructible F>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]copy_constructible F>
     requires view<V> && is_object_v<F> &&
              regular_invocable<F&, range_reference_t<V>>
   class transform_view;
@@ -197,39 +206,39 @@ namespace std::ranges {
 
   // [:en] [#range.take], take view \
      [:zh_CN] [#range.take]，采取视图
-  template<view> class take_view;
+  template<[[redoc("`:c>")]]view> class take_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] take = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.take.while], take while view \
      [:zh_CN] [#range.take.while]，条件采取视图
-  template<view V, class Pred>
-    requires input_range<V> && is_object_v<Pred> &&
-      indirect_unary_predicate<const Pred, iterator_t<V>>
+  template<[[redoc("`:c>")]]view V, class Pred>
+    requires [[redoc("`:c>")]]input_range<V> && is_object_v<Pred> &&
+             [[redoc("`:c>")]]indirect_unary_predicate<const Pred, iterator_t<V>>
     class take_while_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] take_while = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.drop], drop view \
      [:zh_CN] [#range.drop]，丢弃视图
-  template<view V>
+  template<[[redoc("`:c>")]]view V>
     class drop_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] drop = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.drop.while], drop while view \
      [:zh_CN] [#range.drop.while]，条件丢弃视图
-  template<view V, class Pred>
-    requires input_range<V> && is_object_v<Pred> &&
-      indirect_unary_predicate<const Pred, iterator_t<V>>
+  template<[[redoc("`:c>")]]view V, class Pred>
+    requires [[redoc("`:c>")]]input_range<V> && is_object_v<Pred> &&
+             [[redoc("`:c>")]]indirect_unary_predicate<const Pred, iterator_t<V>>
     class drop_while_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] drop_while = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.join], join view \
      [:zh_CN] [#range.join]，联接视图
-  template<input_range V>
-    requires view<V> && input_range<range_reference_t<V>> &&
+  template<[[redoc("`:c>")]]input_range V>
+    requires view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>> &&
              (is_reference_v<range_reference_t<V>> ||
               view<range_value_t<V>>)
   class join_view;
@@ -241,10 +250,10 @@ namespace std::ranges {
   template<class R>
     concept [[redoc("*:c>")]]tiny-range = [[redoc("[=seebelow]")]];   // [=expos]
 
-  template<input_range V, forward_range Pattern>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
     requires view<V> && view<Pattern> &&
-             indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
-             (forward_range<V> || [[redoc("^>")]]tiny-range<Pattern>)
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   class split_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] split = [[redoc("[=unspec]")]]; }
@@ -255,7 +264,7 @@ namespace std::ranges {
 
   // [:en] [#range.common], common view \
      [:zh_CN] [#range.common]，公共视图
-  template<view V>
+  template<[[redoc("`:c>")]]view V>
     requires (!common_range<V> && copyable<iterator_t<V>>)
   class common_view;
 
@@ -263,28 +272,28 @@ namespace std::ranges {
 
   // [:en] [#range.reverse], reverse view \
      [:zh_CN] [#range.reverse]，逆向视图
-  template<view V>
-    requires bidirectional_range<V>
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]bidirectional_range<V>
   class reverse_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] reverse = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.elements], elements view \
      [:zh_CN] [#range.elements]，元素视图
-  template<input_range V, size_t N>
+  template<[[redoc("`:c>")]]input_range V, size_t N>
     requires [[redoc("[=seebelow]")]];
   class elements_view;
 
   template<class R>
-    using keys_view = elements_view<all_view<R>, 0>;
+    using keys_view = elements_view<views::all_t<R>, 0>;
   template<class R>
-    using values_view = elements_view<all_view<R>, 1>;
+    using values_view = elements_view<views::all_t<R>, 1>;
 
   namespace views {
     template<size_t N>
       inline constexpr [[redoc("[=unspec]")]] elements = [[redoc("[=unspec]")]] ;
-    inline constexpr [[redoc("[=unspec]")]] keys = [[redoc("[=unspec]")]] ;
-    inline constexpr [[redoc("[=unspec]")]] values = [[redoc("[=unspec]")]] ;
+    inline constexpr auto keys = elements<0>;
+    inline constexpr auto values = elements<1>;
   }
 }
 
@@ -302,21 +311,29 @@ namespace std {
   struct tuple_element<1, ranges::subrange<I, S, K>> {
     using type = S;
   };
+  template<class I, class S, ranges::subrange_kind K>
+  struct tuple_element<0, const ranges::subrange<I, S, K>> {
+    using type = I;
+  };
+  template<class I, class S, ranges::subrange_kind K>
+  struct tuple_element<1, const ranges::subrange<I, S, K>> {
+    using type = S;
+  };
 }
 [codeblock:end]
 
 [para]
-[%[*make-unsigned-like]]
+[%[*to-unsigned-like]]
 [%[*make-unsigned-like-t]]
-[:en] Within this clause, for some integer-like type [`X]
-([#iterator.concept.winc]), [`[^make-unsigned-like-t](X)] denotes
-[`make_unsigned_t<X>] if [`X] is an integer type; otherwise, it denotes a
-corresponding unspecified unsigned-integer-like type of the same width as [`X].
+[:en] Within this clause, for an integer-like type [`X] ([#iterator.concept.winc]),
+[`[^make-unsigned-like-t]<X>] denotes [`make_unsigned_t<X>] if [`X] is an
+integer type; otherwise, it denotes a corresponding unspecified
+unsigned-integer-like type of the same width as [`X].
 [:zh_CN] 本章中，对于整数式类型 [`X]（[#iterator.concept.winc]），当 [`X] 为整数
-类型时，[`[^make-unsigned-like-t](X)] 代表 [`make_unsigned_t<X>]；否则代表与
+类型时，[`[^make-unsigned-like-t]<X>] 代表 [`make_unsigned_t<X>]；否则代表与
 [`X] 具有相同宽度的某个未指明的对应无符号整数式类型。
 
-[:en] For an object [`x] of type [`X], [`[^make-unsigned-like](x)] is [`x]
-explicitly converted to [`[^make-unsigned-like-t](X)].
-[:zh_CN] 对于 [`X] 类型的对象 [`x]，[`[^make-unsigned-like](x)] 为 [`x] 显式转换
-到 [`[^make-unsigned-like-t](X)]。
+[:en] For an expression [`x] of type [`X], [`[^to-unsigned-like](x)] is [`x]
+explicitly converted to [`[^make-unsigned-like-t]<X>].
+[:zh_CN] 对于 [`X] 类型的表达式 [`x]，[`[^to-unsigned-like](x)] 为 [`x] 显式转换
+到 [`[^make-unsigned-like-t]<X>]。

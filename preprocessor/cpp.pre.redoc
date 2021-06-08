@@ -3,57 +3,22 @@
     [:zh_CN] 导言
 ]
 
-[para]
-[:en]
-A [+preprocessing directive] consists of a sequence of preprocessing tokens that
-satisfies the following constraints:
-[:zh_CN]
-[+预处理指令]由预处理记号的序列构成并满足如下约束条件：
-
-[:en]
-The first token in the sequence, referred to as a [+:adj directive-introducing
-token[%token[!directive-introducing]]] is a [`#] preprocessing token, an
-[`import] preprocessing token, or an [`export] preprocessing token immediately
-followed by an [`import] preprocessing token, that (at the start of translation
-phase 4) either begins with the first character in the source file (optionally
-after white space containing no new-line characters) or follows white space
-containing at least one new-line character.
-[:zh_CN]
-该序列中的第一个记号，称为[+:adj 指令发起记号[%记号[!指令发起～]]]，是预处理记号
-[`#]，预处理记号 [`import]，或者预处理记号 [`export] 之后紧跟预处理记号
-[`import]，它（在翻译阶段 4 开始时）要么是以源文件中的第一个字符开头（可选地跟在
-不包含换行字符的空白之后），要么跟在至少包含一个换行字符的空白后面。
-
-[:en]
-The last token in the sequence is the first new-line character that follows the
-first token in the sequence.[#:note#fn:$1]
-[:zh_CN]
-该序列中的最后一个记号是跟在该序列第一个记号之后的第一个换行字符。[#:note#fn:$1]
-
-[note:foot#fn:$1]
-[:en]
-Thus, preprocessing directives are commonly called [=lq]lines[=rq].
-[:zh_CN]
-因此，预处理指令通常被称为“行”。
-
-[:en]
-These [=lq]lines[=rq] have no other syntactic significance, as all white space
-is equivalent except in certain situations during preprocessing (see the [`#]
-character string literal creation operator in [#cpp.stringize], for example).
-[:zh_CN]
-这些“行”没有其他语法含义，因为除了预处理过程中的特殊情况（例如，参见
-[#cpp.stringize] 中的字符字符串字面量创建运算符 [`#]）外，所有空白都是等价的。
-[note:end]
-
-[:en]
-A new-line character ends the preprocessing directive even if it occurs within
-what would otherwise be an invocation of a function-like macro.
-[:zh_CN]
-即使换行字符出现于可能成为对某函数式宏的调用之内，它也将终止预处理指令。
-
 [syntax]
 [rule preprocessing-file [:zh_CN] 预处理文件 ]
     [| [~:opt group] ]
+    [| module-file ]
+[rule:end]
+
+[rule module-file [:zh_CN] 模块文件 ]
+    [| [~:opt pp-global-module-fragment] pp-module [~:opt group] [~:opt pp-private-module-fragment] ]
+[rule:end]
+
+[rule pp-global-module-fragment [:zh_CN] 预处理全局模块分段 ]
+    [| [`:key module] [`;] new-line [~:opt group] ]
+[rule:end]
+
+[rule pp-private-module-fragment [:zh_CN] 预处理私有模块分段 ]
+    [| [`:key module] [`:] [`:key private] [`;] new-line [~:opt group] ]
 [rule:end]
 
 [rule group [:zh_CN] 组 ]
@@ -70,7 +35,7 @@ what would otherwise be an invocation of a function-like macro.
 
 [rule@aligned control-line [:zh_CN] 控制行 ]
     [| [`#] [`include]  pp-tokens new-line ]
-    [| [`:opt export] [`import] pp-tokens new-line ]
+    [| pp-import ]
     [| [`#] [`define]   identifier replacement-list new-line ]
     [| [`#] [`define]   identifier lparen [~:opt identifier-list] [`)] replacement-list new-line ]
     [| [`#] [`define]   identifier lparen [`...] [`)] replacement-list new-line ]
@@ -148,22 +113,147 @@ what would otherwise be an invocation of a function-like macro.
 
 [para]
 [:en]
-A text line shall not begin with a [`#] preprocessing token.
+A [+preprocessing directive] consists of a sequence of preprocessing tokens that
+satisfies the following constraints:
 [:zh_CN]
-文本行不能以 [`#] 预处理记号开始。
+[+预处理指令]由预处理记号的序列构成并满足如下约束条件：
 
 [:en]
-A [~conditionally-supported-directive] shall not begin with any of the directive
-names appearing in the syntax.
+At the start of translation phase 4, the first token in the sequence, referred
+to as a [+:adj directive-introducing token[%token[!directive-introducing]]],
+begins with the first character in the source file (optionally after white space
+containing no new-line characters) or follows white space containing at least
+one new-line character, and is
 [:zh_CN]
-[~有条件支持的指令]不能以语法中所出现的任何指令的名字开始。
+在翻译阶段 4 开始时，该序列中的第一个记号，称为[+:adj 指令发起记号[%记号
+[!指令发起～]]]，是以源文件中的第一个字符（可选地跟在不包含换行字符的空白之后）
+开头，或者跟在至少包含一个换行字符的空白后面，并且
+
+[list]
+[item]
+[:en]
+a [`#] preprocessing token, or
+[:zh_CN]
+是一个预处理记号 [`#]，或者
+
+[item]
+[:en]
+an [`:key import] preprocessing token immediately followed on the same logical
+line by a [~header-name], [`<], [~identifier], [~string-literal], or [`:]
+preprocessing token, or
+[:zh_CN]
+是一个预处理记号 [`:key import] 且其后在同一个逻辑代码行中紧跟一个预处理记号
+[~头文件名]，[`<]，[~标识符]，[~字符串字面量]，或 [`:]，或者
+
+[item]
+[:en]
+an [`:key export] preprocessing token immediately followed on the same logical
+line by one of the two preceding forms.
+[:zh_CN]
+是一个预处理记号 [`:key export] 且其后在同一个逻辑代码行中紧跟以上两种形式之一。
+[list:end]
+
+[:en]
+The last token in the sequence is the first token within the sequence that is
+immediately followed by whitespace containing a new-line character.[#:note#fn:$1]
+[:zh_CN]
+该序列中的最后一个记号是该序列中第一个其之后紧跟着包含一个换行字符的空白的记号。
+[#:note#fn:$1]
+
+[note:foot#fn:$1]
+[:en]
+Thus, preprocessing directives are commonly called [=lq]lines[=rq].
+[:zh_CN]
+因此，预处理指令通常被称为“行”。
+
+[:en]
+These [=lq]lines[=rq] have no other syntactic significance, as all white space
+is equivalent except in certain situations during preprocessing (see the [`#]
+character string literal creation operator in [#cpp.stringize], for example).
+[:zh_CN]
+这些“行”没有其他语法含义，因为除了预处理过程中的特殊情况（例如，参见
+[#cpp.stringize] 中的字符字符串字面量创建运算符 [`#]）外，所有空白都是等价的。
+[note:end]
+
+[begin:note]
+[:en]
+A new-line character ends the preprocessing directive even if it occurs within
+what would otherwise be an invocation of a function-like macro.
+[:zh_CN]
+即使换行字符出现于可能成为对某函数式宏的调用之内，它也将终止预处理指令。
+[end:note]
+
+[para:~]
+[begin:example]
+[codeblock]
+#                       // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+module ;                // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+export module leftpad;  // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+import <string>;        // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+export import "squee";  // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+import rightpad;        // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+import :part;           // [:en] preprocessing directive \
+                        [:zh_CN] 预处理指令
+
+module                  // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+;                       // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+
+export                  // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+import                  // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+foo;                    // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+
+export                  // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+import foo;             // [:en] preprocessing directive (ill-formed at phase 7) \
+                        [:zh_CN] 预处理指令（在阶段 7 非良构）
+
+import ::               // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+import ->               // [:en] not a preprocessing directive \
+                        [:zh_CN] 不是预处理指令
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+A sequence of preprocessing tokens is only a [~text-line] if it does not begin
+with a directive-introducing token.
+[:zh_CN]
+如果预处理记号序列不以一个指令发起记号开头，则它只是一个[~文本行]。
+
+[:en]
+A sequence of preprocessing tokens is only a [~conditionally-supported-directive]
+if it does not begin with any of the directive names appearing after a [`#] in
+the syntax.
+[:zh_CN]
+如果预处理记号序列不以语法中出现于 [`#] 之后的任何指令的名字开头，则它只是一个
+[~有条件支持的指令]。
 
 [:en]
 A [~conditionally-supported-directive] is conditionally-supported with
-[?impldef additional supported forms of preprocessing directive] semantics
+[?impldef additional supported forms of preprocessing directive] semantics.
 [:zh_CN]
 [~有条件支持的指令]是有条件支持的，并具有[?impldef 额外支持的预处理指令的形式]
 语义。
+
+[para]
+[:en]
+At the start of phase 4 of translation, the [~group] of a
+[~pp-global-module-fragment] shall contain neither a [~text-line] nor a
+[~pp-import].
+[:zh_CN]
+在翻译阶段 4 开始时，[~预处理全局模块分段]的[~组]不能包含[~文本行]或[~预处理导入]。
 
 [para]
 [:en]
