@@ -6,7 +6,10 @@
 [%@lib split_view::outer-iterator]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<class V, class Pattern>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires view<V> && view<Pattern> &&
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   template<bool Const>
   struct split_view<V, Pattern>::[[redoc("*>")]]outer-iterator {
   private:
@@ -21,7 +24,7 @@ namespace std::ranges {
 
   public:
     using iterator_concept  =
-      conditional_t<forward_range<[[redoc("*>")]]Base>, forward_iterator_tag, input_iterator_tag>;
+      conditional_t<[[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>, forward_iterator_tag, input_iterator_tag>;
     using iterator_category = input_iterator_tag;
     // [:en] [#range.split.outer.value], class [`split_view::[*outer-iterator]::value_type] \
        [:zh_CN] [#range.split.outer.value]，类 [`split_view::[*outer-iterator]::value_type]
@@ -30,17 +33,17 @@ namespace std::ranges {
 
     [[redoc("*>")]]outer-iterator() = default;
     constexpr explicit [[redoc("*>")]]outer-iterator([[redoc("*>")]]Parent& parent)
-      requires (!forward_range<[[redoc("*>")]]Base>);
+      requires (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>);
     constexpr [[redoc("*>")]]outer-iterator([[redoc("*>")]]Parent& parent, iterator_t<[[redoc("*>")]]Base> current)
-      requires forward_range<[[redoc("*>")]]Base>;
+      requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
     constexpr [[redoc("*>")]]outer-iterator([[redoc("*>")]]outer-iterator<!Const> i)
-      requires Const && convertible_to<iterator_t<V>, iterator_t<const V>>;
+      requires Const && [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
 
     constexpr value_type operator*() const;
 
     constexpr [[redoc("*>")]]outer-iterator& operator++();
     constexpr decltype(auto) operator++(int) {
-      if constexpr (forward_range<[[redoc("*>")]]Base>) {
+      if constexpr ([[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>) {
         auto tmp = *this;
         ++*this;
         return tmp;
@@ -49,7 +52,7 @@ namespace std::ranges {
     }
 
     friend constexpr bool operator==(const [[redoc("*>")]]outer-iterator& x, const [[redoc("*>")]]outer-iterator& y)
-      requires forward_range<[[redoc("*>")]]Base>;
+      requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 
     friend constexpr bool operator==(const [[redoc("*>")]]outer-iterator& x, default_sentinel_t);
   };
@@ -68,7 +71,7 @@ and [`[*parent_]->[*current_]] otherwise.
 [%@lib@ctor split_view::outer-iterator]
 [codeblock:declaration]
 constexpr explicit [[redoc("*>")]]outer-iterator([[redoc("*>")]]Parent& parent)
-  requires (!forward_range<[[redoc("*>")]]Base>);
+  requires (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>);
 [codeblock:end]
 
 [div:description]
@@ -80,7 +83,7 @@ constexpr explicit [[redoc("*>")]]outer-iterator([[redoc("*>")]]Parent& parent)
 [%@lib@ctor split_view::outer-iterator]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]outer-iterator([[redoc("*>")]]Parent& parent, iterator_t<[[redoc("*>")]]Base> current)
-  requires forward_range<[[redoc("*>")]]Base>;
+  requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -94,7 +97,7 @@ constexpr [[redoc("*>")]]outer-iterator([[redoc("*>")]]Parent& parent, iterator_
 [%@lib@ctor split_view::outer-iterator]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]outer-iterator([[redoc("*>")]]outer-iterator<!Const> i)
-  requires Const && convertible_to<iterator_t<V>, iterator_t<const V>>;
+  requires Const && [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -127,18 +130,18 @@ constexpr [[redoc("*>")]]outer-iterator& operator++();
 [:zh_CN] 等价于：
 [codeblock]
 const auto end = ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_);
-if ([[redoc("*>")]]current_ == end) return *this;
+if ([[redoc("^>")]]current == end) return *this;
 const auto [pbegin, pend] = subrange{[[redoc("*>")]]parent_->[[redoc("*>")]]pattern_};
-if (pbegin == pend) ++[[redoc("*>")]]current_;
+if (pbegin == pend) ++[[redoc("^>")]]current;
 else {
   do {
-    auto [b, p] = ranges::mismatch(std::move([[redoc("*>")]]current_), end, pbegin, pend);
-    [[redoc("*>")]]current_ = std::move(b);
+    auto [b, p] = ranges::mismatch(std::move([[redoc("^>")]]current), end, pbegin, pend);
+    [[redoc("^>")]]current = std::move(b);
     if (p == pend) {
       break;            // [:en] The pattern matched; skip it \
                         [:zh_CN] 模式已匹配；将之跳过
     }
-  } while (++[[redoc("*>")]]current_ != end);
+  } while (++[[redoc("^>")]]current != end);
 }
 return *this;
 [codeblock:end]
@@ -147,7 +150,7 @@ return *this;
 [%@lib@member operator==[!split_view::outer-iterator]]
 [codeblock:declaration]
 friend constexpr bool operator==(const [[redoc("*>")]]outer-iterator& x, const [[redoc("*>")]]outer-iterator& y)
-  requires forward_range<[[redoc("*>")]]Base>;
+  requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -163,6 +166,6 @@ friend constexpr bool operator==(const [[redoc("*>")]]outer-iterator& x, default
 
 [div:description]
 [para:effects]
-[:en] Equivalent to: [`return x.[*current_] == ranges::end(x.[*parent_]->[*base_]);]
-[:zh_CN] 等价于：[`return x.[*current_] == ranges::end(x.[*parent_]->[*base_]);]
+[:en] Equivalent to: [`return x.[^current] == ranges::end(x.[*parent_]->[*base_]);]
+[:zh_CN] 等价于：[`return x.[^current] == ranges::end(x.[*parent_]->[*base_]);]
 [div:end]

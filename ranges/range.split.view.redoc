@@ -17,10 +17,10 @@ namespace std::ranges {
     requires { typename [[redoc("*>")]]require-constant<remove_reference_t<R>::size()>; } &&
     (remove_reference_t<R>::size() <= 1);
 
-  template<input_range V, forward_range Pattern>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
     requires view<V> && view<Pattern> &&
-             indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
-             (forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   class split_view : public view_interface<split_view<V, Pattern>> {
   private:
     V [[redoc("*>")]]base_ = V();                              // [=expos]
@@ -37,21 +37,16 @@ namespace std::ranges {
     split_view() = default;
     constexpr split_view(V base, Pattern pattern);
 
-    template<input_range R, forward_range P>
-      requires constructible_from<V, all_view<R>> &&
-               constructible_from<Pattern, all_view<P>>
-    constexpr split_view(R&& r, P&& p);
-
-    template<input_range R>
-      requires constructible_from<V, all_view<R>> &&
-               constructible_from<Pattern, single_view<range_value_t<R>>>
+    template<[[redoc("`:c>")]]input_range R>
+      requires [[redoc("`:c>")]]constructible_from<V, views::all_t<R>> &&
+               [[redoc("`:c>")]]constructible_from<Pattern, single_view<range_value_t<R>>>
     constexpr split_view(R&& r, range_value_t<R> e);
 
     constexpr V base() const& requires copy_constructible<V> { return [[redoc("*>")]]base_; }
     constexpr V base() && { return std::move([[redoc("*>")]]base_); }
 
     constexpr auto begin() {
-      if constexpr (forward_range<V>)
+      if constexpr ([[redoc("`:c>")]]forward_range<V>)
         return [[redoc("*>")]]outer-iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::begin([[redoc("*>")]]base_)};
       else {
         [[redoc("*>")]]current_ = ranges::begin([[redoc("*>")]]base_);
@@ -59,16 +54,16 @@ namespace std::ranges {
       }
     }
 
-    constexpr auto begin() const requires forward_range<V> && forward_range<const V> {
+    constexpr auto begin() const requires [[redoc("`:c>")]]forward_range<V> && [[redoc("`:c>")]]forward_range<const V> {
       return [[redoc("*>")]]outer-iterator<true>{*this, ranges::begin([[redoc("*>")]]base_)};
     }
 
-    constexpr auto end() requires forward_range<V> && common_range<V> {
+    constexpr auto end() requires [[redoc("`:c>")]]forward_range<V> && common_range<V> {
       return [[redoc("*>")]]outer-iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::end([[redoc("*>")]]base_)};
     }
 
     constexpr auto end() const {
-      if constexpr (forward_range<V> && forward_range<const V> && common_range<const V>)
+      if constexpr ([[redoc("`:c>")]]forward_range<V> && [[redoc("`:c>")]]forward_range<const V> && common_range<const V>)
         return [[redoc("*>")]]outer-iterator<true>{*this, ranges::end([[redoc("*>")]]base_)};
       else
         return default_sentinel;
@@ -76,11 +71,11 @@ namespace std::ranges {
   };
 
   template<class R, class P>
-    split_view(R&&, P&&) -> split_view<all_view<R>, all_view<P>>;
+    split_view(R&&, P&&) -> split_view<views::all_t<R>, views::all_t<P>>;
 
-  template<input_range R>
+  template<[[redoc("`:c>")]]input_range R>
     split_view(R&&, range_value_t<R>)
-      -> split_view<all_view<R>, single_view<range_value_t<R>>>;
+      -> split_view<views::all_t<R>, single_view<range_value_t<R>>>;
 }
 [codeblock:end]
 
@@ -99,25 +94,9 @@ constexpr split_view(V base, Pattern pattern);
 
 [%@lib@ctor split_view]
 [codeblock:declaration]
-template<input_range R, forward_range P>
-  requires constructible_from<V, all_view<R>> &&
-           constructible_from<Pattern, all_view<P>>
-constexpr split_view(R&& r, P&& p);
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initializes [*base_] with [`views::all(std::forward<R>(r))] and [*pattern_]
-with [`views::all(std::forward<P>(p))].
-[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [*base_] 并以
-[`views::all(std::forward<P>(p))] 初始化 [*pattern_]。
-[div:end]
-
-[%@lib@ctor split_view]
-[codeblock:declaration]
-template<input_range R>
-  requires constructible_from<V, all_view<R>> &&
-           constructible_from<Pattern, single_view<range_value_t<R>>>
+template<[[redoc("`:c>")]]input_range R>
+  requires [[redoc("`:c>")]]constructible_from<V, views::all_t<R>> &&
+           [[redoc("`:c>")]]constructible_from<Pattern, single_view<range_value_t<R>>>
 constexpr split_view(R&& r, range_value_t<R> e);
 [codeblock:end]
 

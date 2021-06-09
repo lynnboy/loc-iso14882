@@ -9,9 +9,9 @@
 
 [para]
 [:en] A counted view presents a [`:c view] of the elements of the counted range
-([#iterator.requirements.general]) [=countedrange(i,n)] for some iterator [`i]
+([#iterator.requirements.general]) [=countedrange(i,n)] for an iterator [`i]
 and non-negative integer [`n].
-[:zh_CN] 计数视图针对某个迭代器 [`i] 和非负整数 [`n] 呈现一个元素的计数范围
+[:zh_CN] 计数视图针对迭代器 [`i] 和非负整数 [`n] 呈现一个元素的计数范围
 （[#iterator.requirements.general]）[=countedrange(i,n)] 的 [`:c view]。
 
 [para]
@@ -20,33 +20,15 @@ and non-negative integer [`n].
 [:zh_CN] 名字 [`views::counted] 代表一个定制化点对象
 （[#customization.point.object]）。
 
-[:en] Let [`E] and [`F] be expressions, and let [`T] be [`decay_t<decltype((E))>].
-[:zh_CN] 令 [`E] 和 [`F] 为表达式，并令 [`T] 为 [`decay_t<decltype((E))>]。
+[:en] Let [`E] and [`F] be expressions, let [`T] be [`decay_t<decltype((E))>],
+and let [`D] be [`iter_difference_t<T>].
+[:zh_CN] 令 [`E] 和 [`F] 为表达式，令 [`T] 为 [`decay_t<decltype((E))>]，并令
+[`D] 为 [`iter_difference_t<T>]。
 
-[:en] Then the expression [`views::counted(E, F)] is expression-equivalent to:
-[:zh_CN] 则表达式 [`views::counted(E, F)] 按表达式等价于：
-
-[list]
-[item]
-[:en] If [`T] models [`:c input_or_output_iterator] and [`decltype((F))] models
-[`[`:c convertible_to]<iter_difference_t<T>>],
-[:zh_CN] 若 [`T] 构成 [`:c input_or_output_iterator] 且 [`decltype((F))] 构成
-[`[`:c convertible_to]<iter_difference_t<T>>]，则
-
-[list]
-[item]
-[:en] [`subrange{E, E + static_cast<iter_difference_t<T>>(F)}] if [`T] models
-[`:c random_access_iterator].
-[:zh_CN] 若 [`T] 构成 [`:c random_access_iterator]，则为
-[`subrange{E, E + static_cast<iter_difference_t<T>>(F)}]。
-[item]
-[:en] Otherwise, [`subrange{counted_iterator{E, F}, default_sentinel}].
-[:zh_CN] 否则，为 [`subrange{counted_iterator{E, F}, default_sentinel}]。
-[list:end]
-
-[item]
-[:en] Otherwise, [`views::counted(E, F)] is ill-formed.
-[:zh_CN] 否则，[`views::counted(E, F)] 非良构。
+[:en] If [`decltype((F))] does not model [`[`:c convertible_to]<D>],
+[`views::counted(E, F)] is ill-formed.
+[:zh_CN] 若 [`decltype((F))] 不构成 [`[`:c convertible_to]<D>]，则
+[`views::counted(E, F)] 非良构。
 
 [begin:note]
 [:en] This case can result in substitution failure when [`views::counted(E, F)]
@@ -54,4 +36,24 @@ appears in the immediate context of a template instantiation.
 [:zh_CN] 这种情况下在当 [`views::counted(E, F)] 出现于模板实例化的直接语境中时将
 造成替换失败。
 [end:note]
+
+[:en] Otherwise, [`views::counted(E, F)] is expression-equivalent to:
+[:zh_CN] 否则，[`views::counted(E, F)] 按表达式等价于：
+
+[list]
+[item]
+[:en] If [`T] models [`:c contiguous_iterator], then
+[`span{to_address(E), static_cast<D>(F)}].
+[:zh_CN] 若 [`T] 构成 [`:c contiguous_iterator]，则为
+[`span{to_address(E), static_cast<D>(F)}]。
+
+[item]
+[:en] Otherwise, if [`T] models [`:c random_access_iterator], then
+[`subrange{E, E + static_cast<D>(F)}], except that [`E] is evaluated only once.
+[:zh_CN] 否则，若 [`T] 构成 [`:c random_access_iterator]，则为
+[`subrange{E, E + static_cast<D>(F)}]，但 [`E] 仅进行一次求值。
+
+[item]
+[:en] Otherwise, [`subrange{counted_iterator{E, F}, default_sentinel}].
+[:zh_CN] 否则，为 [`subrange{counted_iterator{E, F}, default_sentinel}]。
 [list:end]

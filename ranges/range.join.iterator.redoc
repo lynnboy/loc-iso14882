@@ -6,7 +6,10 @@
 [%@lib join_view::iterator]
 [codeblock:synopsis]
 namespace std::ranges {
-template<class V>
+  template<[[redoc("`:c>")]]input_range V>
+    requires view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>> &&
+             (is_reference_v<range_reference_t<V>> ||
+              view<range_value_t<V>>)
   template<bool Const>
   struct join_view<V>::[[redoc("*>")]]iterator {
   private:
@@ -30,35 +33,37 @@ template<class V>
     using difference_type   = [[redoc("[=seebelow]")]];
 
     [[redoc("*>")]]iterator() = default;
-    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, iterator_t<V> outer);
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, iterator_t<[[redoc("*>")]]Base> outer);
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
       requires Const &&
-               convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>> &&
-               convertible_to<iterator_t<[[redoc("*>")]]InnerRng>,
+               [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>> &&
+               [[redoc("`:c>")]]convertible_to<iterator_t<[[redoc("*>")]]InnerRng>,
                               iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
 
     constexpr decltype(auto) operator*() const { return *[[redoc("*>")]]inner_; }
 
     constexpr iterator_t<[[redoc("*>")]]Base> operator->() const
-      requires [[redoc("^>")]]has-arrow<iterator_t<[[redoc("*>")]]Base>> && copyable<iterator_t<[[redoc("*>")]]Base>>;
+      requires [[redoc("*:c>")]]has-arrow<iterator_t<[[redoc("*>")]]Base>> && [[redoc("`:c>")]]copyable<iterator_t<[[redoc("*>")]]Base>>;
 
     constexpr [[redoc("*>")]]iterator& operator++();
     constexpr void operator++(int);
     constexpr [[redoc("*>")]]iterator operator++(int)
-      requires [[redoc("*>")]]ref-is-glvalue && forward_range<[[redoc("*>")]]Base> &&
-               forward_range<range_reference_t<[[redoc("*>")]]Base>>;
+      requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base> &&
+               [[redoc("`:c>")]]forward_range<range_reference_t<[[redoc("*>")]]Base>>;
 
     constexpr [[redoc("*>")]]iterator& operator--()
-      requires [[redoc("*>")]]ref-is-glvalue && bidirectional_range<[[redoc("*>")]]Base> &&
-               bidirectional_range<range_reference_t<[[redoc("*>")]]Base>>;
+      requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base> &&
+               [[redoc("`:c>")]]bidirectional_range<range_reference_t<[[redoc("*>")]]Base>> &&
+               common_range<range_reference_t<[[redoc("*>")]]Base>>;
 
     constexpr [[redoc("*>")]]iterator operator--(int)
-      requires [[redoc("*>")]]ref-is-glvalue && bidirectional_range<[[redoc("*>")]]Base> &&
-               bidirectional_range<range_reference_t<[[redoc("*>")]]Base>>;
+      requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base> &&
+               [[redoc("`:c>")]]bidirectional_range<range_reference_t<[[redoc("*>")]]Base>> &&
+               common_range<range_reference_t<[[redoc("*>")]]Base>>;
 
     friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires [[redoc("*>")]]ref-is-glvalue && equality_comparable<iterator_t<[[redoc("*>")]]Base>> &&
-               equality_comparable<iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
+      requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]Base>> &&
+               [[redoc("`:c>")]]equality_comparable<iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
 
     friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& i)
     noexcept(noexcept(ranges::iter_move(i.[[redoc("*>")]]inner_))) {
@@ -113,26 +118,26 @@ denote
 
 [item]
 [:en] If [*ref-is-glvalue] is [`true] and [^OUTERC] and [^INNERC] each model
-[`derived_from<bidirectional_iterator_tag>], [`iterator_category] denotes
+[`[`:c derived_from]<bidirectional_iterator_tag>], [`iterator_category] denotes
 [`bidirectional_iterator_tag].
 [:zh_CN] 若 [*ref-is-glvalue] 为 [`true] 且 [^OUTERC] 和 [^INNERC] 均构成
-[`derived_from<bidirectional_iterator_tag>]，则 [`iterator_category] 代表
+[`[`:c derived_from]<bidirectional_iterator_tag>]，则 [`iterator_category] 代表
 [`bidirectional_iterator_tag]。
 
 [item]
 [:en] Otherwise, if [*ref-is-glvalue] is [`true] and [^OUTERC] and [^INNERC]
-each model [`derived_from<forward_iterator_tag>], [`iterator_category] denotes
-[`forward_iterator_tag].
+each model [`[`:c derived_from]<forward_iterator_tag>], [`iterator_category]
+denotes [`forward_iterator_tag].
 [:zh_CN] 否则，若 [*ref-is-glvalue] 为 [`true] 且 [^OUTERC] 和 [^INNERC] 均构成
-[`derived_from<forward_iterator_tag>]，则 [`iterator_category] 代表
+[`[`:c derived_from]<forward_iterator_tag>]，则 [`iterator_category] 代表
 [`forward_iterator_tag]。
 
 [item]
 [:en] Otherwise, if [^OUTERC] and [^INNERC] each model
-[`derived_from<input_iterator_tag>], [`iterator_category] denotes
+[`[`:c derived_from]<input_iterator_tag>], [`iterator_category] denotes
 [`input_iterator_tag].
 [:zh_CN] 否则，若 [^OUTERC] 和 [^INNERC] 均构成
-[`derived_from<input_iterator_tagg>]，则 [`iterator_category] 代表
+[`[`:c derived_from]<input_iterator_tagg>]，则 [`iterator_category] 代表
 [`input_iterator_tag]。
 
 [item]
@@ -184,7 +189,7 @@ if constexpr ([[redoc("*>")]]ref-is-glvalue)
 
 [%@lib@ctor join_view::iterator]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, iterator_t<V> outer)
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, iterator_t<[[redoc("*>")]]Base> outer)
 [codeblock:end]
 
 [div:description]
@@ -199,8 +204,8 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, iterator_t<V> o
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
   requires Const &&
-           convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>> &&
-           convertible_to<iterator_t<[[redoc("*>")]]InnerRng>,
+           [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>> &&
+           [[redoc("`:c>")]]convertible_to<iterator_t<[[redoc("*>")]]InnerRng>,
                           iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
 [codeblock:end]
 
@@ -215,7 +220,7 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
 [%@lib@member operator->[!join_view::iterator]]
 [codeblock:declaration]
 constexpr iterator_t<[[redoc("*>")]]Base> operator->() const
-  requires [[redoc("^>")]]has-arrow<iterator_t<[[redoc("*>")]]Base>> && copyable<iterator_t<[[redoc("*>")]]Base>>;
+  requires [[redoc("*:c>")]]has-arrow<iterator_t<[[redoc("*>")]]Base>> && copyable<iterator_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -269,8 +274,8 @@ constexpr void operator++(int);
 [%@lib@member operator++[!join_view::iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator operator++(int)
-  requires [[redoc("*>")]]ref-is-glvalue && forward_range<[[redoc("*>")]]Base> &&
-           forward_range<range_reference_t<[[redoc("*>")]]Base>>;
+  requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base> &&
+           [[redoc("`:c>")]]forward_range<range_reference_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -287,8 +292,9 @@ return tmp;
 [%@lib@member operator--[!join_view::iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator& operator--()
-  requires [[redoc("*>")]]ref-is-glvalue && bidirectional_range<[[redoc("*>")]]Base> &&
-           bidirectional_range<range_reference_t<[[redoc("*>")]]Base>>;
+  requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base> &&
+           [[redoc("`:c>")]]bidirectional_range<range_reference_t<[[redoc("*>")]]Base>> &&
+           common_range<range_reference_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -308,8 +314,9 @@ return *this;
 [%@lib@member operator--[!join_view::iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator operator--(int)
-  requires [[redoc("*>")]]ref-is-glvalue && bidirectional_range<[[redoc("*>")]]Base> &&
-           bidirectional_range<range_reference_t<[[redoc("*>")]]Base>>;
+  requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base> &&
+           [[redoc("`:c>")]]bidirectional_range<range_reference_t<[[redoc("*>")]]Base>> &&
+           common_range<range_reference_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]

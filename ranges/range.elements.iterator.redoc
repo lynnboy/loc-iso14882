@@ -6,84 +6,76 @@
 [%@lib elements_view::iterator]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<class V, size_t N>
+  template<input_range V, size_t N>
+    requires [[redoc("`:c>")]]view<V> && [[redoc("*:c>")]]has-tuple-element<range_value_t<V>, N> &&
+             [[redoc("*:c>")]]has-tuple-element<remove_reference_t<range_reference_t<V>>, N>
   template<bool Const>
   class elements_view<V, N>::[[redoc("*>")]]iterator {                 // [=expos]
-    using [[redoc("*>")]]base-t = conditional_t<Const, const V, V>;    // [=expos]
-    friend [[redoc("*>")]]iterator<!Const>;
+    using [[redoc("*>")]]Base = conditional_t<Const, const V, V>;      // [=expos]
 
-    iterator_t<[[redoc("*>")]]base-t> [[redoc("*>")]]current_;
+    iterator_t<[[redoc("*>")]]Base> [[redoc("*>")]]current_ = iterator_t<[[redoc("*>")]]Base>();
   public:
-    using iterator_category = typename iterator_traits<iterator_t<[[redoc("*>")]]base-t>>::iterator_category;
-    using value_type = remove_cvref_t<tuple_element_t<N, range_value_t<[[redoc("*>")]]base-t>>>;
-    using difference_type = range_difference_t<[[redoc("*>")]]base-t>;
+    using iterator_category = typename iterator_traits<iterator_t<[[redoc("*>")]]Base>>::iterator_category;
+    using value_type = remove_cvref_t<tuple_element_t<N, range_value_t<[[redoc("*>")]]Base>>>;
+    using difference_type = range_difference_t<[[redoc("*>")]]Base>;
 
     [[redoc("*>")]]iterator() = default;
-    constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]base-t> current);
+    constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]Base> current);
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
-      requires Const && convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]base-t>>;
+      requires Const && [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
 
-    constexpr iterator_t<[[redoc("*>")]]base-t> base() const &
-      requires copyable<iterator_t<[[redoc("*>")]]base-t>>;
-    constexpr iterator_t<[[redoc("*>")]]base-t> base() &&;
+    constexpr iterator_t<[[redoc("*>")]]Base> base() const &
+      requires copyable<iterator_t<[[redoc("*>")]]Base>>;
+    constexpr iterator_t<[[redoc("*>")]]Base> base() &&;
 
     constexpr decltype(auto) operator*() const
     { return get<N>(*[[redoc("*>")]]current_); }
 
     constexpr [[redoc("*>")]]iterator& operator++();
-    constexpr void operator++(int) requires (!forward_range<[[redoc("*>")]]base-t>);
-    constexpr [[redoc("*>")]]iterator operator++(int) requires forward_range<[[redoc("*>")]]base-t>;
+    constexpr void operator++(int) requires (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>);
+    constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 
-    constexpr [[redoc("*>")]]iterator& operator--() requires bidirectional_range<[[redoc("*>")]]base-t>;
-    constexpr [[redoc("*>")]]iterator operator--(int) requires bidirectional_range<[[redoc("*>")]]base-t>;
+    constexpr [[redoc("*>")]]iterator& operator--() requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
+    constexpr [[redoc("*>")]]iterator operator--(int) requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
 
     constexpr [[redoc("*>")]]iterator& operator+=(difference_type x)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     constexpr [[redoc("*>")]]iterator& operator-=(difference_type x)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 
     constexpr decltype(auto) operator[](difference_type n) const
-      requires random_access_range<[[redoc("*>")]]base-t>
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>
     { return get<N>(*([[redoc("*>")]]current_ + n)); }
 
     friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires equality_comparable<iterator_t<[[redoc("*>")]]base-t>>;
-    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const sentinel_t<[[redoc("*>")]]base-t>& y);
+      requires [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]Base>>;
 
     friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr bool operator<=(const [[redoc("*>")]]iterator& y, const [[redoc("*>")]]iterator& y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
-    friend constexpr compare_three_way_result_t<iterator_t<[[redoc("*>")]]base-t>>
-      operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-        requires random_access_range<[[redoc("*>")]]base-t> && three_way_comparable<iterator_t<[[redoc("*>")]]base-t>>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base> && [[redoc("`:c>")]]three_way_comparable<iterator_t<[[redoc("*>")]]Base>>;
 
     friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& x, difference_type y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr [[redoc("*>")]]iterator operator+(difference_type x, const [[redoc("*>")]]iterator& y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& x, difference_type y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires random_access_range<[[redoc("*>")]]base-t>;
-
-    friend constexpr difference_type
-      operator-(const [[redoc("*>")]]iterator<Const>& x, const sentinel_t<[[redoc("*>")]]base-t>& y)
-        requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]base-t>, iterator_t<[[redoc("*>")]]base-t>>;
-    friend constexpr difference_type
-      operator-(const sentinel_t<[[redoc("*>")]]base-t>& x, const [[redoc("*>")]]iterator<Const>& y)
-        requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]base-t>, iterator_t<[[redoc("*>")]]base-t>>;
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
   };
 }
 [codeblock:end]
 
 [%@lib@ctor elements_view::iterator]
 [codeblock:declaration]
-constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]base-t> current);
+constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]Base> current);
 [codeblock:end]
 
 [div:description]
@@ -95,7 +87,7 @@ constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]base-t> cur
 [%@lib@ctor elements_view::iterator]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
-  requires Const && convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]base-t>>;
+  requires Const && [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -106,8 +98,8 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
 
 [%@lib@member base[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr iterator_t<[[redoc("*>")]]base-t> base() const &
-  requires copyable<iterator_t<[[redoc("*>")]]base-t>>;
+constexpr iterator_t<[[redoc("*>")]]Base> base() const &
+  requires copyable<iterator_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -118,7 +110,7 @@ constexpr iterator_t<[[redoc("*>")]]base-t> base() const &
 
 [%@lib@member base[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr iterator_t<[[redoc("*>")]]base-t> base() &&;
+constexpr iterator_t<[[redoc("*>")]]Base> base() &&;
 [codeblock:end]
 
 [div:description]
@@ -144,7 +136,7 @@ return *this;
 
 [%@lib@member operator++[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr void operator++(int) requires (!forward_range<[[redoc("*>")]]base-t>);
+constexpr void operator++(int) requires (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>);
 [codeblock:end]
 
 [div:description]
@@ -155,7 +147,7 @@ constexpr void operator++(int) requires (!forward_range<[[redoc("*>")]]base-t>);
 
 [%@lib@member operator++[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator operator++(int) requires forward_range<[[redoc("*>")]]base-t>;
+constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -171,7 +163,7 @@ return temp;
 
 [%@lib@member operator--[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator& operator--() requires bidirectional_range<[[redoc("*>")]]base-t>;
+constexpr [[redoc("*>")]]iterator& operator--() requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -186,7 +178,7 @@ return *this;
 
 [%@lib@member operator--[!elements_view::iterator]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator operator--(int) requires bidirectional_range<[[redoc("*>")]]base-t>;
+constexpr [[redoc("*>")]]iterator operator--(int) requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -203,7 +195,7 @@ return temp;
 [%@lib@member operator+=[!elements_view::iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator& operator+=(difference_type n);
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -219,7 +211,7 @@ return *this;
 [%@lib@member operator-=[!elements_view::iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator& operator-=(difference_type n)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -235,7 +227,7 @@ return *this;
 [%@lib@member operator==[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires equality_comparable<[[redoc("*>")]]base-t>;
+  requires equality_comparable<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -244,21 +236,10 @@ friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc
 [:zh_CN] 等价于：[`return x.[*current_] == y.[*current_];]
 [div:end]
 
-[%@lib@member operator==[!elements_view::iterator]]
-[codeblock:declaration]
-friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const sentinel_t<[[redoc("*>")]]base-t>& y);
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return x.[*current_] == y;]
-[:zh_CN] 等价于：[`return x.[*current_] == y;]
-[div:end]
-
 [%@lib@member operator<[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -270,7 +251,7 @@ friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc(
 [%@lib@member operator>[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -282,7 +263,7 @@ friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc(
 [%@lib@member operator<=[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -294,7 +275,7 @@ friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc
 [%@lib@member operator>=[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -305,9 +286,8 @@ friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc
 
 [%@lib@member operator<=>[!elements_view::iterator]]
 [codeblock:declaration]
-friend constexpr compare_three_way_result_t<iterator_t<[[redoc("*>")]]base-t>>
-  operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-    requires random_access_range<[[redoc("*>")]]base-t> && three_way_comparable<iterator_t<[[redoc("*>")]]base-t>>;
+friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base> && [[redoc("`:c>")]]three_way_comparable<iterator_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
@@ -319,7 +299,7 @@ friend constexpr compare_three_way_result_t<iterator_t<[[redoc("*>")]]base-t>>
 [%@lib@member operator+[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& x, difference_type y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -331,7 +311,7 @@ friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator
 [%@lib@member operator+[!elements_view::iterator]]
 [codeblock:declaration]
 friend constexpr [[redoc("*>")]]iterator operator+(difference_type x, const [[redoc("*>")]]iterator& y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -343,7 +323,7 @@ friend constexpr [[redoc("*>")]]iterator operator+(difference_type x, const [[re
 [%@lib@member operator-[!elements_view::iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& x, difference_type y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -355,37 +335,11 @@ constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& x, di
 [%@lib@member operator-[!elements_view::iterator]]
 [codeblock:declaration]
 constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires random_access_range<[[redoc("*>")]]base-t>;
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
 [:en] Equivalent to: [`return x.[*current_] - y.[*current_];]
 [:zh_CN] 等价于：[`return x.[*current_] - y.[*current_];]
-[div:end]
-
-[%@lib@member operator-[!elements_view::iterator]]
-[codeblock:declaration]
-friend constexpr difference_type
-  operator-(const [[redoc("*>")]]iterator<Const>& x, const sentinel_t<[[redoc("*>")]]base-t>& y)
-    requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]base-t>, iterator_t<[[redoc("*>")]]base-t>>;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return x.[*current_] - y;]
-[:zh_CN] 等价于：[`return x.[*current_] - y;]
-[div:end]
-
-[%@lib@member operator-[!elements_view::iterator]]
-[codeblock:declaration]
-friend constexpr difference_type
-  operator-(const sentinel_t<[[redoc("*>")]]base-t>& x, const [[redoc("*>")]]iterator<Const>& y)
-    requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]base-t>, iterator_t<[[redoc("*>")]]base-t>>;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to: [`return -(y - x);]
-[:zh_CN] 等价于：[`return -(y - x);]
 [div:end]

@@ -6,7 +6,10 @@
 [%@lib split_view::inner-iterator]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<class V, class Pattern>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires view<V> && view<Pattern> &&
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   template<bool Const>
   struct split_view<V, Pattern>::[[redoc("*>")]]inner-iterator {
   private:
@@ -22,11 +25,11 @@ namespace std::ranges {
     [[redoc("*>")]]inner-iterator() = default;
     constexpr explicit [[redoc("*>")]]inner-iterator([[redoc("*>")]]outer-iterator<Const> i);
 
-    constexpr decltype(auto) operator*() const { return *[[redoc("*>")]]i_.[[redoc("*>")]]current——; }
+    constexpr decltype(auto) operator*() const { return *[[redoc("*>")]]i_.[[redoc("^>")]]current; }
 
     constexpr [[redoc("*>")]]inner-iterator& operator++();
     constexpr decltype(auto) operator++(int) {
-      if constexpr (forward_range<V>) {
+      if constexpr ([[redoc("`:c>")]]forward_range<V>) {
         auto tmp = *this;
         ++*this;
         return tmp;
@@ -35,7 +38,7 @@ namespace std::ranges {
     }
 
     friend constexpr bool operator==(const [[redoc("*>")]]inner-iterator& x, const [[redoc("*>")]]inner-iterator& y)
-      requires forward_range<[[redoc("*>")]]Base>;
+      requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 
     friend constexpr bool operator==(const [[redoc("*>")]]inner-iterator& x, default_sentinel_t);
 
@@ -46,7 +49,7 @@ namespace std::ranges {
 
     friend constexpr void iter_swap(const [[redoc("*>")]]inner-iterator& x, const [[redoc("*>")]]inner-iterator& y)
       noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]i_.[[redoc("^>")]]current, y.i_.[[redoc("^>")]]current)))
-      requires indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
+      requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
   };
 }
 [codeblock:end]
@@ -58,9 +61,9 @@ namespace std::ranges {
 [item]
 [:en@~] [`forward_iterator_tag] if
 [`iterator_traits<iterator_t<[*Base]>>::iterator_category] models
-[`derived_from<forward_iterator_tag>];
+[`[`:c derived_from]<forward_iterator_tag>];
 [:zh_CN@~] 当 [`iterator_traits<iterator_t<[*Base]>>::iterator_category] 构成
-[`derived_from<forward_iterator_tag>] 时，为 [`forward_iterator_tag]；
+[`[`:c derived_from]<forward_iterator_tag>] 时，为 [`forward_iterator_tag]；
 [item]
 [:en@~] otherwise, [`iterator_traits<iterator_t<[*Base]>>::iterator_category].
 [:zh_CN@~] 否则代表 [`iterator_traits<iterator_t<[*Base]>>::iterator_category]。
@@ -79,7 +82,7 @@ constexpr explicit [[redoc("*>")]]inner-iterator([[redoc("*>")]]outer-iterator<C
 
 [%@lib@member operator++[!split_view::inner-iterator]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]inner-iterator& operator++() const;
+constexpr [[redoc("*>")]]inner-iterator& operator++();
 [codeblock:end]
 
 [div:description]
@@ -88,7 +91,7 @@ constexpr [[redoc("*>")]]inner-iterator& operator++() const;
 [:zh_CN] 等价于：
 [codeblock]
 [[redoc("*>")]]incremented_ = true;
-if constexpr (!forward_range<[[redoc("*>")]]Base>) {
+if constexpr (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>) {
   if constexpr (Pattern::size() == 0) {
     return *this;
   }
@@ -101,7 +104,7 @@ return *this;
 [%@lib@member operator==[!split_view::inner-iterator]]
 [codeblock:declaration]
 friend constexpr bool operator==(const [[redoc("*>")]]inner-iterator& x, const [[redoc("*>")]]inner-iterator& y)
-  requires forward_range<Base>;
+  requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -144,7 +147,7 @@ if constexpr ([[redoc("*:c>")]]tiny-range<Pattern>) {
 [codeblock:declaration]
 friend constexpr void iter_swap(const [[redoc("*>")]]inner-iterator& x, const [[redoc("*>")]]inner-iterator& y)
   noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]i_.[[redoc("^>")]]current, y.[[redoc("*>")]]i_.[[redoc("^>")]]current)))
-  requires indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
+  requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
 [codeblock:end]
 
 [div:description]
