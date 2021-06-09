@@ -6,12 +6,14 @@
 [%@lib iota_view::iterator]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<class W, class Bound>
+  template<[[redoc("`:c>")]]weakly_incrementable W, [[redoc("`:c>")]]semiregular Bound>
+    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound>
   struct iota_view<W, Bound>::[[redoc("*>")]]iterator {
   private:
     W [[redoc("*>")]]value_ = W();             // [=expos]
   public:
-    using iterator_category = [[redoc("[=seebelow]")]];
+    using iterator_concept = [[redoc("[=seebelow]")]];
+    using iterator_category = input_iterator_tag;
     using value_type = W;
     using difference_type = [[redoc("^>")]]IOTA-DIFF-T(W);
 
@@ -22,7 +24,7 @@ namespace std::ranges {
 
     constexpr [[redoc("*>")]]iterator& operator++();
     constexpr void operator++(int);
-    constexpr [[redoc("*>")]]iterator operator++(int) requires incrementable<W>;
+    constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]incrementable<W>;
 
     constexpr [[redoc("*>")]]iterator& operator--() requires [[redoc("*:c>")]]decrementable<W>;
     constexpr [[redoc("*>")]]iterator operator--(int) requires [[redoc("*:c>")]]decrementable<W>;
@@ -38,16 +40,15 @@ namespace std::ranges {
       requires equality_comparable<W>;
 
     friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires totally_ordered<W>;
+      requires [[redoc("`:c>")]]totally_ordered<W>;
     friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires totally_ordered<W>;
+      requires [[redoc("`:c>")]]totally_ordered<W>;
     friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires totally_ordered<W>;
+      requires [[redoc("`:c>")]]totally_ordered<W>;
     friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires totally_ordered<W>;
-    friend constexpr compare_three_way_result_t<W> operator<=>(
-        const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires totally_ordered<W> && three_way_comparable<W>;
+      requires [[redoc("`:c>")]]totally_ordered<W>;
+    friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]totally_ordered<W> && [[redoc("`:c>")]]three_way_comparable<W>;
 
     friend constexpr [[redoc("*>")]]iterator operator+([[redoc("*>")]]iterator i, difference_type n)
       requires [[redoc("*:c>")]]advanceable<W>;
@@ -63,31 +64,31 @@ namespace std::ranges {
 [codeblock:end]
 
 [para]
-[:en] [`iterator::iterator_category] is defined as follows:
-[:zh_CN] [`iterator::iterator_category] 的定义如下：
+[:en] [`[*iterator]::iterator_concept] is defined as follows:
+[:zh_CN] [`[*iterator]::iterator_concept] 的定义如下：
 
 [list]
 [item]
-[:en] If [`W] models [`[^advanceable]], then [`iterator_category] is
+[:en] If [`W] models [*:c advanceable], then [`iterator_concept] is
 [`random_access_iterator_tag].
-[:zh_CN] 若 [`W] 构成 [`[^advanceable]]，则 [`iterator_category] 为
+[:zh_CN] 若 [`W] 构成 [*:c advanceable]，则 [`iterator_concept] 为
 [`random_access_iterator_tag]。
 
 [item]
-[:en] Otherwise, if [`W] models [*:c decrementable], then [`iterator_category]
+[:en] Otherwise, if [`W] models [*:c decrementable], then [`iterator_concept]
 is [`bidirectional_iterator_tag].
-[:zh_CN] 否则，若 [`W] 构成 [*:c decrementable]，则 [`iterator_category] 为
+[:zh_CN] 否则，若 [`W] 构成 [*:c decrementable]，则 [`iterator_concept] 为
 [`bidirectional_iterator_tag]。
 
 [item]
-[:en] Otherwise, if [`W] models [`:c incrementable], then [`iterator_category]
+[:en] Otherwise, if [`W] models [`:c incrementable], then [`iterator_concept]
 is [`forward_iterator_tag].
-[:zh_CN] 否则，若 [`W] 构成 [`:c incrementable]，则 [`iterator_category] 为
+[:zh_CN] 否则，若 [`W] 构成 [`:c incrementable]，则 [`iterator_concept] 为
 [`forward_iterator_tag]。
 
 [item]
-[:en] Otherwise, [`iterator_category] is [`input_iterator_tag].
-[:zh_CN] 否则，[`iterator_category] 为 [`input_iterator_tag]。
+[:en] Otherwise, [`iterator_concept] is [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_concept] 为 [`input_iterator_tag]。
 [list:end]
 
 [para]
@@ -153,7 +154,7 @@ constexpr void operator++(int);
 
 [%@lib@member operator++[!iota_view::iterator]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator operator++(int) requires incrementable<W>;
+constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]incrementable<W>;
 [codeblock:end]
 
 [div:description]
@@ -209,7 +210,7 @@ constexpr [[redoc("*>")]]iterator& operator+=(difference_type n)
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-if constexpr ([[redoc("*:c>")]]is-integer-like<W> && ![[redoc("*:c>")]]is-signed-integer-like<W>) {
+if constexpr ([[redoc("*>")]]is-integer-like<W> && ![[redoc("*>")]]is-signed-integer-like<W>) {
   if (n >= difference_type(0))
     [[redoc("*>")]]value_ += static_cast<W>(n);
   else
@@ -232,7 +233,7 @@ constexpr [[redoc("*>")]]iterator& operator-=(difference_type n)
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-if constexpr ([[redoc("*:c>")]]is-integer-like<W> && ![[redoc("*:c>")]]is-signed-integer-like<W>) {
+if constexpr ([[redoc("*>")]]is-integer-like<W> && ![[redoc("*>")]]is-signed-integer-like<W>) {
   if (n >= difference_type(0))
     [[redoc("*>")]]value_ -= static_cast<W>(n);
   else
@@ -271,7 +272,7 @@ friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc
 [%@lib@member operator<[!iota_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires totally_ordered<W>;
+  requires [[redoc("`:c>")]]totally_ordered<W>;
 [codeblock:end]
 
 [div:description]
@@ -283,7 +284,7 @@ friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc(
 [%@lib@member operator>[!iota_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires totally_ordered<W>;
+  requires [[redoc("`:c>")]]totally_ordered<W>;
 [codeblock:end]
 
 [div:description]
@@ -295,7 +296,7 @@ friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc(
 [%@lib@member operator<=[!iota_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires totally_ordered<W>;
+  requires [[redoc("`:c>")]]totally_ordered<W>;
 [codeblock:end]
 
 [div:description]
@@ -307,7 +308,7 @@ friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc
 [%@lib@member operator>=[!iota_view::iterator]]
 [codeblock:declaration]
 friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires totally_ordered<W>;
+  requires [[redoc("`:c>")]]totally_ordered<W>;
 [codeblock:end]
 
 [div:description]
@@ -318,9 +319,8 @@ friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc
 
 [%@lib@member operator<=>[!iota_view::iterator]]
 [codeblock:declaration]
-friend constexpr compare_three_way_result_t<W>
-  operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-    requires totally_ordered<W> && three_way_comparable<W>;
+friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]totally_ordered<W> && [[redoc("`:c>")]]three_way_comparable<W>;
 [codeblock:end]
 
 [div:description]
@@ -377,8 +377,8 @@ friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, con
 [:zh_CN] 等价于：
 [codeblock]
 using D = difference_type;
-if constexpr ([[redoc("^>")]]is-integer-like<W>) {
-  if constexpr ([[redoc("^>")]]is-signed-integer-like<W>)
+if constexpr ([[redoc("*>")]]is-integer-like<W>) {
+  if constexpr ([[redoc("*>")]]is-signed-integer-like<W>)
     return D(D(x.[[redoc("*>")]]value_) - D(y.[[redoc("*>")]]value_));
   else
     return (y.[[redoc("*>")]]value_ > x.[[redoc("*>")]]value_)

@@ -5,7 +5,7 @@
 
 [%@lib@ctor subrange]
 [codeblock:declaration]
-constexpr subrange(I i, S s) requires (![[redoc("*>")]]StoreSize);
+constexpr subrange([[redoc("*:c>")]]convertible-to-non-slicing<I> auto i, S s) requires (![[redoc("*>")]]StoreSize);
 [codeblock:end]
 
 [div:description]
@@ -20,16 +20,17 @@ constexpr subrange(I i, S s) requires (![[redoc("*>")]]StoreSize);
 
 [%@lib@ctor subrange]
 [codeblock:declaration]
-constexpr subrange(I i, S s, [[redoc:("^", "n>")]]make-unsigned-like-t(iter_difference_t<I>) n)
+constexpr subrange([[redoc("*:c>")]]convertible-to-non-slicing<I> auto i, S s,
+                   [[redoc:("^>")]]make-unsigned-like-t<iter_difference_t<I>> n)
   requires (K == subrange_kind::sized);
 [codeblock:end]
 
 [div:description]
 [para:expects]
 [:en] [=range(i,s)] is a valid range, and
-[`n == [^make-unsigned-like](ranges::distance(i, s))].
+[`n == [^to-unsigned-like](ranges::distance(i, s))].
 [:zh_CN] [=range(i,s)] 为有效范围，且
-[`n == [^make-unsigned-like](ranges::distance(i, s))]。
+[`n == [^to-unsigned-like](ranges::distance(i, s))]。
 
 [para:effects]
 [:en] Initializes [*begin_] with [`std::move(i)] and [*end_] with [`s].
@@ -52,9 +53,10 @@ iterator and sentinel that do not model [`:c sized_sentinel_for].
 [%@lib@ctor subrange]
 [codeblock:declaration]
 template<[[redoc("*:c>")]]not-same-as<subrange> R>
-  requires borrowed_range<R> &&
-           convertible_to<iterator_t<R>, I> && convertible_to<sentinel_t<R>, S>
-constexpr subrange(R&& r) requires (![[redoc("*>")]]StoreSize || sized_range<R>);
+  requires [[redoc("`:c>")]]borrowed_range<R> &&
+           [[redoc("*:c>")]]convertible-to-non-slicing<iterator_t<R>, I> &&
+           [[redoc("`:c>")]]convertible_to<sentinel_t<R>, S>
+constexpr subrange(R&& r) requires (![[redoc("*>")]]StoreSize || [[redoc("`:c>")]]sized_range<R>);
 [codeblock:end]
 
 [div:description]
@@ -64,10 +66,8 @@ constexpr subrange(R&& r) requires (![[redoc("*>")]]StoreSize || sized_range<R>)
 
 [list]
 [item]
-[:en] If [*StoreSize] is [`true],
-[`subrange{ranges::begin(r), ranges::end(r), ranges::size(r)}].
-[:zh_CN] 当 [*StoreSize] 为 [`true] 时，为
-[`subrange{ranges::begin(r), ranges::end(r), ranges::size(r)}]。
+[:en] If [*StoreSize] is [`true], [`subrange{r, ranges::size(r)}].
+[:zh_CN] 当 [*StoreSize] 为 [`true] 时，为 [`subrange{r, ranges::size(r)}]。
 
 [item]
 [:en] Otherwise, [`subrange{ranges::begin(r), ranges::end(r)}].

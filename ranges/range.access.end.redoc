@@ -7,66 +7,75 @@
 ([#customization.point.object]).
 [:zh_CN] 名字 [`ranges::end] 代表一个定制化点（[#customization.point.object]）。
 
-[:en] Given a subexpression [`E] and an lvalue [`t] that denotes the same object
-as [`E], if [`E] is an rvalue and
-[`enable_borrowed_range<remove_cvref_t<decltype((E))>>] is [`false],
-[`ranges::end(E)] is ill-formed.
-[:zh_CN] 给定一个子表达式 [`E] 和一个指代与 [`E] 相同的对象的左值 [`t]，若 [`E]
-为右值并且 [`enable_borrowed_range<remove_cvref_t<decltype((E))>>] 为 [`false]，
-则 [`ranges::end(E)] 非良构。
+[para]
+[:en] Given a subexpression [`E] with type [`T], let [`t] be an lvalue that
+denotes the reified object for [`E].
+[:zh_CN] 给定一个类型为 [`T] 的子表达式 [`E]，令 [`t] 为一个代表 [`E] 的具象化
+对象的左值。
 
-[:en] Otherwise, [`ranges::end(E)] is expression-equivalent to:
-[:zh_CN] 否则，[`ranges::end(E)] 按表达式等价于：
+[:en] Then:
+[:zh_CN] 则有：
 
 [list]
 [item]
-[:en] [`t + extent_v<T>] if [`t] is of array type ([#basic.compound]) [`T].
-[:zh_CN] 若 [`t] 为数组类型（[#basic.compound]）[`T]，则为 [`t + extent_v<T>]。
+[:en] If [`E] is an rvalue and [`enable_borrowed_range<remove_cv_t<T>>] is
+[`false], [`ranges::end(E)] is ill-formed.
+[:zh_CN] 若 [`E] 为左值且 [`enable_borrowed_range<remove_cv_t<T>>] 为 [`false]，
+则 [`ranges::end(E)] 非良构。
 
 [item]
-[:en] Otherwise, [`[^decay-copy](t.end())] if it is a valid expression and its
-type [`S] models
-[:zh_CN] 否则，当 [`[^decay-copy](t.end())] 为有效表达式且其类型 [`S] 构成以下
-约束时为该表达式。
-[codeblock]
-sentinel_for<decltype(ranges::begin(E))>
-[codeblock:end]
+[:en] Otherwise, if [`T] is an array type ([#basic.compound]) and
+[`remove_all_extents_t<T>] is an incomplete type, [`ranges::end(E)] is
+ill-formed with no diagnostic required.
+[:zh_CN] 否则，若 [`T] 为数组类型（[#basic.compound]）且
+[`remove_all_extents_t<T>] 为不完整类型，则 [`ranges::end(E)] 非良构且无须诊断。
 
 [item]
-[:en] Otherwise, [`[^decay-copy](end(t))] if it is a valid expression and its
-type [`S] models
-[:zh_CN] 否则，当 [`[^decay-copy](end(t))] 为有效表达式且其类型 [`S] 构成
-[codeblock]
-sentinel_for<decltype(ranges::begin(E))>
-[codeblock:end]
+[:en] Otherwise, if [`T] is an array of unknown bound, [`ranges::end(E)] is
+ill-formed.
+[:zh_CN] 否则，若 [`T] 为未知边界的数组类型，则 [`ranges::end(E)] 非良构。
 
-[:en@~] with overload resolution performed in a context that includes the
-declarations:
-[:zh_CN@~] 时，在包含下列声明式：
-[codeblock]
-template<class T> void end(T&&) = delete;
-template<class T> void end(initializer_list<T>&&) = delete;
-[codeblock:end]
+[item]
+[:en] Otherwise, if [`T] is an array, [`ranges::end(E)] is expression-equivalent
+to [`t + extent_v<T>].
+[:zh_CN] 否则，若 [`T] 为数组类型，则 [`ranges::end(E)] 按表达式等价于
+[`t + extent_v<T>]。
 
-[:en@~] and does not include a declaration of [`ranges::end].
-[:zh_CN@~] 但不包含 [`ranges::end] 的声明式的语境中实施重载决议，则为该表达式。
+[item]
+[:en] Otherwise, if [`[^decay-copy](t.end())] is a valid expression whose type
+models [`[`:c sentinel_for]<iterator_t<T>>] then [`ranges::end(E)] is
+expression-equivalent to [`[^decay-copy](t.end())].
+[:zh_CN] 否则，若 [`[^decay-copy](t.end())] 为其类型构成
+[`[`:c sentinel_for]<iterator_t<T>>] 的有效表达式，则 [`ranges::end(E)] 按表达式
+等价于 [`[^decay-copy](t.end())]。
+
+[item]
+[:en] Otherwise, if [`T] is a class or enumeration type and
+[`[^decay-copy](end((t))] is a valid expression whose type models
+[`[`:c sentinel_for]<iterator_t<T>>] with overload resolution performed in a
+context in which unqualified lookup for [`end] finds only the declarations
+[:zh_CN] 否则，若 [`T] 为类或枚举类型，且在某个对 [`end] 进行未限定查找仅会找到
+以下声明式的语境中进行重载决议的条件下 [`[^decay-copy](end((t))] 为有效表达式
+且其类型构成 [`[`:c sentinel_for]<iterator_t<T>>]，
+[codeblock]
+void end(auto&) = delete;
+void end(const auto&) = delete;
+[codeblock:end]
+[:en@~] then [`ranges::end(E)] is expression-equivalent to
+[`[^decay-copy](end(t))] with overload resolution performed in the above
+context.
+[:zh_CN@~] 则 [`ranges::end(E)] 在上述语境中进行重载决议的条件下按表达式等价于
+[`[^decay-copy](end(t))]。
 
 [item]
 [:en] Otherwise, [`ranges::end(E)] is ill-formed.
 [:zh_CN] 否则，[`ranges::end(E)] 非良构。
-
-[begin:note]
-[:en] This case can result in substitution failure when [`ranges::end(E)]
-appears in the immediate context of a template instantiation.
-[:zh_CN] 这种情况下，当 [`ranges::end(E)] 出现在某个模板实例化的直接语境中时
-会导致替换失败。
-[end:note]
 [list:end]
 
 [para]
 [begin:note]
-[:en] Whenever [`ranges::end(E)] is a valid expression, the types [`S] and [`I]
-of [`ranges::end(E)] and [`ranges::begin(E)] model [`[`:c sentinel_for]<S, I>].
-[:zh_CN] 只要 [`ranges::end(E)] 是有效表达式，则 [`ranges::end(E)] 和
-[`ranges::begin(E)] 的类型 [`S] 和 [`I] 就构成 [`[`:c sentinel_for]<S, I>]。
+[:en] Diagnosable ill-formed cases above result in substitution failure when
+[`ranges::end(E)] appears in the immediate context of a template instantiation.
+[:zh_CN] 以上各种可诊断的非良构情况，当 [`ranges::end(E)] 出现在某个模板实例化
+的直接语境中时会导致替换失败。
 [end:note]

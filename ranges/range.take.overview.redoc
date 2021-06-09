@@ -5,20 +5,60 @@
 
 [para]
 [:en] [`take_view] produces a [`:c view] of the first [$N] elements from another
-[`:c view], or all the elements if the adapted [`:c view] contains fewer than
-[$N].
+[`:c view], or all the elements if the adapted [`:c view] contains fewer than [$N].
 [:zh_CN] [`take_view] 产生另一个 [`:c view] 的前 [$N] 个元素的 [`:c view]，若所
 适配的 [`:c view] 包含元素少于 [$N] 个则为其所有元素。
 
-[para]
-[:en] The name [`views::take] denotes a range adaptor object
-([#range.adaptor.object]).
-[:zh_CN] 名字 [`views::take] 代表一个范围适配器对象（[#range.adaptor.object]）。
+[:en] Let [`E] and [`F] be expressions, let [`T] be [`remove_cvref_t<decltype((E))>],
+and let [`D] be [`range_difference_t<decltype((E))>].
+[:zh_CN] 令 [`E] 和 [`F] 为表达式，令 [`T] 为 [`remove_cvref_t<decltype((E))>]，
+并令 [`D] 为 [`range_difference_t<decltype((E))>]。
 
-[:en] For some subexpressions [`E] and [`F], the expression
-[`views::take(E, F)] is expression-equivalent to [`take_view{E, F}].
-[:zh_CN] 对于某些子表达式 [`E] 和 [`F]，表达式 [`views::take(E, F)] 按表达式
-等价于 [`take_view{E, F}]。
+[:en] If [`decltype((F))] does not model [`[`:c convertible_to]<D>],
+[`views::take(E, F)] is ill-formed.
+[:zh_CN] 若 [`decltype((F))] 并不构成 [`[`:c convertible_to]<D>]，则
+[`views::take(E, F)] 非良构。
+
+[:en] Otherwise, the expression [`views::take(E, F)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`views::take(E, F)] 按表达式等价于：
+
+[list]
+[item]
+[:en] If [`T] is a specialization of [`ranges::empty_view] ([#range.empty.view]),
+then [`((void) F, [^decay-copy](E))].
+[:zh_CN] 若 [`T] 为 [`ranges::empty_view] 的特例（[#range.empty.view]），则为
+[`((void) F, [^decay-copy](E))]。
+
+[item]
+[:en] Otherwise, if [`T] models [`:c random_access_range] and [`:c sized_range]
+and is
+[:zh_CN] 否则，若 [`T] 构成 [`:c random_access_range] 和 [`:c sized_range]，并且
+为
+[list]
+[item]
+[:en@~] a specialization of [`span] ([#views.span]) where
+[`T::extent == dynamic_extent],
+[:zh_CN@~] [`span]（[#views.span]）的特例，其中 [`T::extent == dynamic_extent]，
+[item]
+[:en@~] a specialization of [`basic_string_view] ([#string.view]),
+[:zh_CN@~] [`basic_string_view]（[#string.view]）的特例，
+[item]
+[:en@~] a specialization of [`ranges::iota_view] ([#range.iota.view]), or
+[:zh_CN@~] [`ranges::iota_view]（[#range.iota.view]）的特例，或
+[item]
+[:en@~] a specialization of [`ranges::subrange] ([#range.subrange]),
+[:zh_CN@~] [`ranges::subrange]（[#range.subrange]）的特例，
+[list:end]
+[:en@~] then [`T{ranges::begin(E), ranges::begin(E) + min<D>(ranges::size(E), F)}],
+except that [`E] is evaluated only once.
+[:zh_CN@~] 则为
+[`T{ranges::begin(E), ranges::begin(E) + min<D>(ranges::size(E), F)}]，但 [`E]
+仅进行一次求值。
+
+[item]
+[:en] Otherwise, [`ranges::take_view{E, F}].
+[:zh_CN] 否则，为 [`ranges::take_view{E, F}]。
+[list:end]
 
 [para]
 [begin:example]

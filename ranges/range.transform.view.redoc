@@ -8,9 +8,10 @@
 [%@lib@member size[!transform_view]]
 [codeblock:synopsis]
 namespace std::ranges {
-  template<input_range V, copy_constructible F>
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]copy_constructible F>
     requires view<V> && is_object_v<F> &&
-             regular_invocable<F&, range_reference_t<V>>
+             regular_invocable<F&, range_reference_t<V>> &&
+             [[redoc("*:c>")]]can-reference<invoke_result_t<F&, range_reference_t<V>>>
   class transform_view : public view_interface<transform_view<V, F>> {
   private:
     // [:en] [#range.transform.iterator], class template [`transform_view::[*iterator]] \
@@ -26,9 +27,6 @@ namespace std::ranges {
   public:
     transform_view() = default;
     constexpr transform_view(V base, F fun);
-    template<input_range R>
-      requires viewable_range<R> && constructible_from<V, all_view<R>>
-    constexpr transform_view(R&& r, F fun);
 
     constexpr V base() const& requires copy_constructible<V> { return [[redoc("*>")]]base_; }
     constexpr V base() && { return std::move([[redoc("*>")]]base_); }
@@ -47,13 +45,13 @@ namespace std::ranges {
       requires common_range<const V> &&
                regular_invocable<const F&, range_reference_t<const V>>;
 
-    constexpr auto size() requires sized_range<V> { return ranges::size([[redoc("*>")]]base_); }
-    constexpr auto size() const requires sized_range<const V>
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V> { return ranges::size([[redoc("*>")]]base_); }
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>
     { return ranges::size([[redoc("*>")]]base_); }
   };
 
   template<class R, class F>
-    transform_view(R&&, F) -> transform_view<all_view<R>, F>;
+    transform_view(R&&, F) -> transform_view<views::all_t<R>, F>;
 }
 [codeblock:end]
 
@@ -68,21 +66,6 @@ constexpr transform_view(V base, F fun);
 [`std::move(fun)].
 [:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`std::move(fun)] 初始化
 [*fun_]。
-[div:end]
-
-[%@lib@ctor transform_view]
-[codeblock:declaration]
-template<input_range R>
-  requires viewable_range<R> && constructible_from<V, all_view<R>>
-constexpr transform_view(R&& r, F fun);
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initializes [*base_] with [`views::all(std::forward<R>(r))] and [*fun_]
-with [`std::move(fun)].
-[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [*base_] 并以
-[`std::move(fun)] 初始化 [*fun_]。
 [div:end]
 
 [%@lib@member begin[!transform_view]]

@@ -13,8 +13,8 @@ namespace std::ranges {
     concept [[redoc("*:c>")]]advanceable =       // [=expos]
       [[redoc("[=seebelow]")]];
 
-  template<weakly_incrementable W, semiregular Bound = unreachable_sentinel_t>
-    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound>
+  template<[[redoc("`:c>")]]weakly_incrementable W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
+    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && semiregular<W>
   class iota_view : public view_interface<iota_view<W, Bound>> {
   private:
     // [:en] [#range.iota.iterator], class [`iota_view::[*iterator]] \
@@ -30,17 +30,18 @@ namespace std::ranges {
     constexpr explicit iota_view(W value);
     constexpr iota_view(type_identity_t<W> value,
                         type_identity_t<Bound> bound);
+    constexpr iota_view([[redoc("*>")]]iterator first, [[redoc("*>")]]sentinel last) : iota_view(*first, last.[[redoc("*>")]]bound_) {}
 
     constexpr [[redoc("*>")]]iterator begin() const;
     constexpr auto end() const;
-    constexpr [[redoc("*>")]]iterator end() const requires same_as<W, Bound>;
+    constexpr [[redoc("*>")]]iterator end() const requires [[redoc("`:c>")]]same_as<W, Bound>;
 
     constexpr auto size() const requires [[redoc("[=seebelow]")]];
   };
 
   template<class W, class Bound>
-    requires (![[redoc("*:c>")]]is-integer-like<W> || ![[redoc("*:c>")]]is-integer-like<Bound> ||
-      ([[redoc("*:c>")]]is-signed-integer-like<W> == [[redoc("*:c>")]]is-signed-integer-like<Bound>))
+    requires (![[redoc("*>")]]is-integer-like<W> || ![[redoc("*>")]]is-integer-like<Bound> ||
+              ([[redoc("*>")]]is-signed-integer-like<W> == [[redoc("*>")]]is-signed-integer-like<Bound>))
     iota_view(W, Bound) -> iota_view<W, Bound>;
 }
 [codeblock:end]
@@ -81,9 +82,9 @@ than the width of [`W] if such a type exists.
 [codeblock:declaration]
 template<class I>
   concept [[redoc("*:c@def>")]]decrementable =
-    incrementable<I> && requires(I i) {
-      { --i } -> same_as<I&>;
-      { i-- } -> same_as<I>;
+    [[redoc("`:c>")]]incrementable<I> && requires(I i) {
+      { --i } -> [[redoc("`:c>")]]same_as<I&>;
+      { i-- } -> [[redoc("`:c>")]]same_as<I>;
     };
 [codeblock:end]
 
@@ -126,14 +127,14 @@ the object is said to be [+:% decrementable].
 [codeblock:declaration]
 template<class I>
   concept [[redoc("*:c@def>")]]advanceable =
-    [[redoc("*:c>")]]decrementable<I> && totally_ordered<I> &&
+    [[redoc("*:c>")]]decrementable<I> && [[redoc("`:c>")]]totally_ordered<I> &&
     requires(I i, const I j, const [[redoc("^>")]]IOTA-DIFF-T(I) n) {
-      { i += n } -> same_as<I&>;
-      { i -= n } -> same_as<I&>;
+      { i += n } -> [[redoc("`:c>")]]same_as<I&>;
+      { i -= n } -> [[redoc("`:c>")]]same_as<I&>;
       I(j + n);
       I(n + j);
       I(j - n);
-      { j -  j } -> convertible_to<[[redoc("^>")]]IOTA-DIFF-T(I)>;
+      { j -  j } -> [[redoc("`:c>")]]convertible_to<[[redoc("^>")]]IOTA-DIFF-T(I)>;
     };
 [codeblock:end]
 
@@ -256,7 +257,7 @@ constexpr auto end() const;
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-if constexpr (same_as<Bound, unreachable_sentinel_t>)
+if constexpr ([[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>)
   return unreachable_sentinel;
 else
   return [[redoc("*>")]]sentinel{[[redoc("*>")]]bound_};
@@ -265,7 +266,7 @@ else
 
 [%@lib@member end[!iota_view]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator end() const requires same_as<W, Bound>;
+constexpr [[redoc("*>")]]iterator end() const requires [[redoc("`:c>")]]same_as<W, Bound>;
 [codeblock:end]
 
 [div:description]
@@ -284,21 +285,21 @@ constexpr auto size() const requires [[redoc("[=seebelow]")]];
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-if constexpr ([[redoc("*:c>")]]is-integer-like<W> && [[redoc("*:c>")]]is-integer-like<Bound>)
+if constexpr ([[redoc("*>")]]is-integer-like<W> && [[redoc("*>")]]is-integer-like<Bound>)
   return ([[redoc("*>")]]value_ < 0)
     ? (([[redoc("*>")]]bound_ < 0)
-      ? [[redoc("^>")]]make-unsigned-like(-[[redoc("*>")]]value_) - [[redoc("^>")]]make-unsigned-like(-[[redoc("*>")]]bound_)
-      : [[redoc("^>")]]make-unsigned-like([[redoc("*>")]]bound_) + [[redoc("^>")]]make-unsigned-like(-[[redoc("*>")]]value_))
-    : [[redoc("^>")]]make-unsigned-like([[redoc("*>")]]bound_) - [[redoc("^>")]]make-unsigned-like([[redoc("*>")]]value_);
+      ? [[redoc("^>")]]to-unsigned-like(-[[redoc("*>")]]value_) - [[redoc("^>")]]to-unsigned-like(-[[redoc("*>")]]bound_)
+      : [[redoc("^>")]]to-unsigned-like([[redoc("*>")]]bound_) + [[redoc("^>")]]to-unsigned-like(-[[redoc("*>")]]value_))
+    : [[redoc("^>")]]to-unsigned-like([[redoc("*>")]]bound_) - [[redoc("^>")]]to-unsigned-like([[redoc("*>")]]value_);
 else
-  return [[redoc("^>")]]make-unsigned-like([[redoc("*>")]]bound_ - [[redoc("*>")]]value_);
+  return [[redoc("^>")]]to-unsigned-like([[redoc("*>")]]bound_ - [[redoc("*>")]]value_);
 [codeblock:end]
 
 [para:remarks]
 [:en] The expression in the [~requires-clause] is equivalent to
 [:zh_CN] [~requires-子句]中的表达式等价于
 [codeblock]
-(same_as<W, Bound> && [[redoc("^>")]]advanceable<W>) || (integral<W> && integral<Bound>) ||
-  sized_sentinel_for<Bound, W>
+([[redoc("`:c>")]]same_as<W, Bound> && [[redoc("*:c>")]]advanceable<W>) || (integral<W> && integral<Bound>) ||
+  [[redoc("`:c>")]]sized_sentinel_for<Bound, W>
 [codeblock:end]
 [div:end]

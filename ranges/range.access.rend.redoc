@@ -7,65 +7,77 @@
 ([#customization.point.object]).
 [:zh_CN] 名字 [`ranges::rend] 代表一个定制化点（[#customization.point.object]）。
 
-[:en] Given a subexpression [`E] and an lvalue [`t] that denotes the same object
-as [`E], if [`E] is an rvalue and
-[`enable_borrowed_range<remove_cvref_t<decltype((E))>>] is [`false],
-[`ranges::rend(E)] is ill-formed.
-[:zh_CN] 给定一个子表达式 [`E] 和一个指代与 [`E] 相同的对象的左值 [`t]，若 [`E]
-为右值并且 [`enable_borrowed_range<remove_cvref_t<decltype((E))>>] 为 [`false]，
-则 [`ranges::rend(E)] 非良构。
+[para]
+[:en] Given a subexpression [`E] with type [`T], let [`t] be an lvalue that
+denotes the reified object for [`E].
+[:zh_CN] 给定一个类型为 [`T] 的子表达式 [`E]，令 [`t] 为一个代表 [`E] 的具象化
+对象的左值。
 
-[:en] Otherwise, [`ranges::rend(E)] is expression-equivalent to:
-[:zh_CN] 否则，[`ranges::rend(E)] 按表达式等价于：
-
+[:en] Then:
+[:zh_CN] 则有：
 
 [list]
 [item]
-[:en] [`[^decay-copy](t.rend())] if it is a valid expression and its type [`S]
-models
-[:zh_CN] 当 [`[^decay-copy](t.rend())] 为有效表达式且其类型 [`S] 构成以下约束时，
-为该表达式。
-[codeblock]
-sentinel_for<decltype(ranges::rbegin(E))>
-[codeblock:end]
+[:en] If [`E] is an rvalue and [`enable_borrowed_range<remove_cv_t<T>>] is
+[`false], [`ranges::rend(E)] is ill-formed.
+[:zh_CN] 若 [`E] 为左值且 [`enable_borrowed_range<remove_cv_t<T>>] 为 [`false]，
+则 [`ranges::rend(E)] 非良构。
 
 [item]
-[:en] Otherwise, [`[^decay-copy](rend(t))] if it is a valid expression and its
-type [`S] models
-[:zh_CN] 否则，当 [`[^decay-copy](rend(t))] 为有效表达式且其类型 [`S] 构成
-[codeblock]
-sentinel_for<decltype(ranges::rbegin(E))>
-[codeblock:end]
-
-[:en@~] with overload resolution performed in a context that includes the
-declarations:
-[:zh_CN@~] 时，在包含下列声明式：
-[codeblock]
-template<class T> void rend(T&&) = delete;
-[codeblock:end]
-
-[:en@~] and does not include a declaration of [`ranges::rend].
-[:zh_CN@~] 但不包含 [`ranges::rend] 的声明式的语境中实施重载决议，则为该表达式。
+[:en] Otherwise, if [`T] is an array type ([#basic.compound]) and
+[`remove_all_extents_t<T>] is an incomplete type, [`ranges::rend(E)] is
+ill-formed with no diagnostic required.
+[:zh_CN] 否则，若 [`T] 为数组类型（[#basic.compound]）且
+[`remove_all_extents_t<T>] 为不完整类型，则 [`ranges::rend(E)] 非良构且无须诊断。
 
 [item]
-[:en] Otherwise, [`make_reverse_iterator(ranges::begin(t))] if both
-[`ranges::begin(t)] and [`ranges::end(t)] are valid expressions of the same type
-[`I] which models [`:c bidirectional_iterator] ([#iterator.concept.bidir]).
-[:zh_CN] 否则，若 [`ranges::begin(t)] 和 [`ranges::end(t)] 都是相同类型 [`I] 的
-有效表达式，且 [`I] 构成 [`:c bidirectional_iterator]（[#iterator.concept.bidir]）
-则为 [`make_reverse_iterator(ranges::begin(t))]。
+[:en] Otherwise, if [`[^decay-copy](t.rend())] is a valid expression whose type
+models [`[`:c sentinel_for]<decltype(ranges::rbegin(E))>] then [`ranges::rend(E)]
+is expression-equivalent to [`[^decay-copy](t.rend())].
+[:zh_CN] 否则，若 [`[^decay-copy](t.rend())] 为其类型构成
+[`[`:c sentinel_for]<decltype(ranges::rbegin(E))>] 的有效表达式，则
+[`ranges::rend(E)] 按表达式等价于 [`[^decay-copy](t.rend())]。
 
 [item]
-[:en] Otherwise, [`ranges::rend(E)] is ill-formed.
-[:zh_CN] 否则，[`ranges::rend(E)] 非良构。
+[:en] Otherwise, if [`T] is a class or enumeration type and
+[`[^decay-copy](rend((t))] is a valid expression whose type models
+[`[`:c sentinel_for]<decltype(ranges::rbegin(E))>] with overload resolution
+performed in a context in which unqualified lookup for [`rend] finds only the
+declarations
+[:zh_CN] 否则，若 [`T] 为类或枚举类型，且在某个对 [`rend] 进行未限定查找仅会找到
+以下声明式的语境中进行重载决议的条件下 [`[^decay-copy](rend((t))] 为有效表达式
+且其类型构成 [`[`:c sentinel_for]<decltype(ranges::rbegin(E))>]，
+[codeblock]
+void rend(auto&) = delete;
+void rend(const auto&) = delete;
+[codeblock:end]
+[:en@~] then [`ranges::rend(E)] is expression-equivalent to
+[`[^decay-copy](rend(t))] with overload resolution performed in the above
+context.
+[:zh_CN@~] 则 [`ranges::rend(E)] 在上述语境中进行重载决议的条件下按表达式等价于
+[`[^decay-copy](rend(t))]。
 
-[begin:note]
-[:en] This case can result in substitution failure when [`ranges::rend(E)]
-appears in the immediate context of a template instantiation.
-[:zh_CN] 这种情况下，当 [`ranges::rend(E)] 出现在某个模板实例化的直接语境中时
-会导致替换失败。
-[end:note]
+[item]
+[:en] Otherwise, if both [`ranges::begin(t)] and [`ranges::end(t)] are valid
+expressions of the same type which models [`:c bidirectional_iterator]
+([#iterator.concept.bidir]), then [`ranges::rend(E)] is expression-equivalent to
+[`make_reverse_iterator(ranges::begin(t))].
+[:zh_CN] 否则，若 [`ranges::begin(t)] 和 [`ranges::end(t)] 均为相同的构成
+[`:c bidirectional_iterator]（[#iterator.concept.bidir]）的类型，则
+[`ranges::rend(E)] 按表达式等价于 [`make_reverse_iterator(ranges::begin(t))]。
+
+[item]
+[:en] Otherwise, [`ranges::end(E)] is ill-formed.
+[:zh_CN] 否则，[`ranges::end(E)] 非良构。
 [list:end]
+
+[para]
+[begin:note]
+[:en] Diagnosable ill-formed cases above result in substitution failure when
+[`ranges::rend(E)] appears in the immediate context of a template instantiation.
+[:zh_CN] 以上各种可诊断的非良构情况，当 [`ranges::rend(E)] 出现在某个模板实例化
+的直接语境中时会导致替换失败。
+[end:note]
 
 [para]
 [begin:note]
