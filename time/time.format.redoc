@@ -45,7 +45,7 @@ specification as a [~@fmt chrono-format-spec] according to the following syntax:
 
 [rule:oneof@fmt type [:zh_CN] 类型 ]
     [| [`a A b B c C d D e F g G h H I j m M n] ]
-    [| [`p r R S t T u U V w W x X y Y z Z %] ]
+    [| [`p q Q r R S t T u U V w W x X y Y z Z %] ]
 [rule:end]
 [syntax:end]
 
@@ -83,6 +83,29 @@ the formatting function if the latter takes one, or the global locale otherwise.
 specifier refers to, an exception of type [`format_error] is thrown.
 [:zh_CN] 当所格式化的对象并不包含转换说明符所指代的信息时，抛出 [`format_error]
 类型的异常。
+
+[para]
+[:en] The result of formatting a [`std::chrono::duration] instance holding a
+negative value, or an [`hh_mm_ss] object [`h] for which [`h.is_negative()] is
+[`true], is equivalent to the output of the corresponding positive value,
+with a [`[*STATICALLY-WIDEN]<charT>("-")] character sequence placed before the
+replacement of the initial conversion specifier.
+[:zh_CN] 格式化一个持有负值的 [`std::chrono::duration] 实例，或使得
+[`h.is_negative()] 为 [`true] 的一个 [`hh_mm_ss] 对象 [`h] 的结果，等价于其对应
+正值的输出，并在对其开头的转换说明符进行替换之前放入一个
+[`[*STATICALLY-WIDEN]<charT>("-")] 字符序列。
+
+[begin:example]
+[codeblock]
+cout << format("{:%T}", -10'000s);          // [:en] prints: [`-02:46:40] \
+                                            [:zh_CN] 打印：[`-02:46:40]
+cout << format("{:%H:%M:%S}", -10'000s);    // [:en] prints: [`-02:46:40] \
+                                            [:zh_CN] 打印：[`-02:46:40]
+cout << format("minutes {:%M, hours %H, seconds %S}", -10'000s);
+                                            // [:en] prints: [`minutes -46, hours 02, seconds 40] \
+                                            [:zh_CN] 打印：[`minutes -46, hours 02, seconds 40]
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] Unless explicitly requested, the result of formatting a chrono type does
@@ -253,8 +276,13 @@ representation.
 [:zh_CN] 修饰命令 [`%OI] 产生该地域的替代表示。
 [-]
 [|] %j
-[|] [:en] The day of the year as a decimal number.
-    [:zh_CN] 年内日期的十进制数字。
+[|] [:en] If the type being formatted is a specialization of [`duration], the
+    decimal number of [`days] without padding.
+    [:zh_CN] 如果被格式化的类型是 [`duration] 的特例，则为 [`days] 的十进制数值
+    且不带填充。
+
+[:en] Otherwise, the day of the year as a decimal number.
+[:zh_CN] 否则为年内日期的十进制数字。
 
 [:en] Jan 1 is [`001].
 [:zh_CN] 一月一日为 [`001]。
@@ -528,11 +556,11 @@ template<class Duration, class charT>
 formatted.
 [:zh_CN] 当使用 [`%z]（或 [`%z] 的经修饰变体）时，格式化偏移量 [`0min]。
 
-[:en] If the argument represents a time during a leap second insertion, and if a
-seconds field is formatted, the integral portion of that format is
+[:en] If the argument represents a time during a positive leap second insertion,
+and if a seconds field is formatted, the integral portion of that format is
 [`[*STATICALLY-WIDEN]<charT>("60")].
-[:zh_CN] 如果实参表示的是处于闰秒插入期中的时间，且若格式化其秒数字段，则该格式
-的整数部分为 [`[*STATICALLY-WIDEN]<charT>("60")]。
+[:zh_CN] 如果实参表示的是处于正闰秒插入期中的时间，且若格式化其秒数字段，则该
+格式的整数部分为 [`[*STATICALLY-WIDEN]<charT>("60")]。
 [div:end]
 
 [%@lib@raw [`formatter][![:en]specializations[:zh_CN]特化式[![`chrono::tai_time]]]]

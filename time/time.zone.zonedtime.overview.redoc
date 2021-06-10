@@ -43,8 +43,10 @@ namespace std::chrono {
     template<class Duration2, class TimeZonePtr2>
       zoned_time(TimeZonePtr z, const zoned_time<Duration2, TimeZonePtr2>& zt, choose);
 
-    zoned_time(string_view name, const zoned_time<Duration>& zt);
-    zoned_time(string_view name, const zoned_time<Duration>& zt, choose);
+    template<class Duration2, class TimeZonePtr2>
+      zoned_time(string_view name, const zoned_time<Duration2, TimeZonePtr2>& zt);
+    template<class Duration2, class TimeZonePtr2>
+      zoned_time(string_view name, const zoned_time<Duration2, TimeZonePtr2>& zt, choose);
 
     zoned_time& operator=(const sys_time<Duration>& st);
     zoned_time& operator=(const local_time<Duration>& ut);
@@ -64,31 +66,32 @@ namespace std::chrono {
     zoned_time(sys_time<Duration>)
       -> zoned_time<common_type_t<Duration, seconds>>;
 
-  template<class TimeZonePtr, class Duration>
-    zoned_time(TimeZonePtr, sys_time<Duration>)
-      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+  template<class TimeZonePtrOrName>
+    using [[redoc("*>")]]time-zone-representation =        // [=expos]
+      conditional_t<is_convertible_v<TimeZonePtrOrName, string_view>,
+                    const time_zone*,
+                    remove_cvref_t<TimeZonePtrOrName>>;
 
-  template<class TimeZonePtr, class Duration>
-    zoned_time(TimeZonePtr, local_time<Duration>, choose = choose::earliest)
-      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+  template<class TimeZonePtrOrName>
+    zoned_time(TimeZonePtrOrName&&)
+      -> zoned_time<seconds, [[redoc("*>")]]time-zone-representation<TimeZonePtrOrName>>;
 
-  template<class TimeZonePtr, class Duration>
-    zoned_time(TimeZonePtr, zoned_time<Duration>, choose = choose::earliest)
-      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+  template<class TimeZonePtrOrName, class Duration>
+    zoned_time(TimeZonePtrOrName&&, sys_time<Duration>)
+      -> zoned_time<common_type_t<Duration, seconds>,
+                    [[redoc("*>")]]time-zone-representation<TimeZonePtrOrName>>;
 
-  zoned_time(string_view) -> zoned_time<seconds>;
+  template<class TimeZonePtrOrName, class Duration>
+    zoned_time(TimeZonePtrOrName&&, local_time<Duration>,
+               choose = choose::earliest)
+      -> zoned_time<common_type_t<Duration, seconds>,
+                    [[redoc("*>")]]time-zone-representation<TimeZonePtrOrName>>;
 
-  template<class Duration>
-    zoned_time(string_view, sys_time<Duration>)
-      -> zoned_time<common_type_t<Duration, seconds>>;
-
-  template<class Duration>
-    zoned_time(string_view, local_time<Duration>, choose = choose::earliest)
-      -> zoned_time<common_type_t<Duration, seconds>>;
-
-  template<class Duration, class TimeZonePtr, class TimeZonePtr2>
-    zoned_time(TimeZonePtr, zoned_time<Duration, TimeZonePtr2>, choose = choose::earliest)
-      -> zoned_time<common_type_t<Duration, seconds>, TimeZonePtr>;
+  template<class Duration, class TimeZonePtrOrName, class TimeZonePtr2>
+    zoned_time(TimeZonePtrOrName&&, zoned_time<Duration, TimeZonePtr2>,
+               choose = choose::earliest)
+      -> zoned_time<common_type_t<Duration, seconds>,
+                    [[redoc("*>")]]time-zone-representation<TimeZonePtrOrName>>;
 }
 [codeblock:end]
 
@@ -108,3 +111,10 @@ ambiguous in that time zone.
 [:en] If [`Duration] is not a specialization of [`chrono::duration], the program
 is ill-formed.
 [:zh_CN] 如果 [`Duration] 不是 [`chrono::duration] 的特例，则程序非良构。
+
+[para]
+[:en] Every constructor of [`zoned_time] that accepts a [`string_view] as its
+first parameter does not participate in class template argument deduction
+([#over.match.class.deduct]).
+[:zh_CN] [`zoned_time] 中接受一个 [`string_view] 为其首个形参的构造函数，均不
+参与类模板实参推断（[#over.match.class.deduct]）。
