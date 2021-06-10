@@ -144,3 +144,56 @@ The associated constraints of [`f6] are [`C1<T> [$\land] C2<T>], and those of
 [`f6] 的关联约束为 [`C1<T> [$\land] C2<T>]，而 [`f7] 的则为
 [`C2<T> [$\land] C1<T>]。
 [end:example]
+
+[para]
+[:en]
+When determining whether a given introduced [~constraint-expression] [$C_1] of
+a declaration in an instantiated specialization of a templated class is
+equivalent ([#temp.over.link]) to the corresponding [~constraint-expression]
+[$C_2] of a declaration outside the class body, [$C_1] is instantiated.
+[:zh_CN]
+当要确定给定的某个模板类的已实例化特例中的某个声明式引入的[~约束表达式] [$C_1]，
+是否等价于（[#temp.over.link]）类体之外的某个声明式的对应[~约束表达式] [$C_2] 时，
+对 [$C_1] 进行实例化。
+
+[:en]
+If the instantiation results in an invalid expression, the
+[~constraint-expression]s are not equivalent.
+[:zh_CN]
+如果其实例化导致无效的表达式，则这些[~约束表达式]不等价。
+
+[begin:note]
+[:en]
+This can happen when determining which member template is specialized
+by an explicit specialization declaration.
+[:zh_CN]
+这可能发生于当要确定显式特化式的声明式所特化的是哪个成员模板之时。
+[end:note]
+
+[begin:example]
+[codeblock]
+template <class T> concept C = true;
+template <class T> struct A {
+  template <class U> U f(U) requires C<typename T::type>;   // #1
+  template <class U> U f(U) requires C<T>;                  // #2
+};
+
+template <> template <class U>
+U A<int>::f(U u) requires C<int> { return u; }              // [:en] OK, specializes #2 \
+                                                            [:zh_CN] OK，特化 #2
+[codeblock:end]
+
+[:en]
+Substituting [`int] for [`T] in [`C<typename T::type>] produces an invalid
+expression, so the specialization does not match #1.
+[:zh_CN]
+以 [`int] 替换 [`C<typename T::type>] 中的 [`T] 产生了无效表达式，因此该特化式
+并不与 #1 匹配。
+
+[:en]
+Substituting [`int] for [`T] in [`C<T>] produces [`C<int>], which is equivalent
+to the [~constraint-expression] for the specialization, so it does match #2.
+[:zh_CN]
+以 [`int] 替换 [`C<T>] 中的 [`T] 产生了 [`C<int>]，与该特化式的[~约束表达式]等价，
+因此它与 #2 匹配。
+[end:example]

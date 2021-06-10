@@ -70,10 +70,9 @@ process.
 
 [:en]
 If both deductions succeed, the partial ordering selects the more constrained
-template as described by the rules in [#temp.constr.order].
+template (if one exists) as determined below.
 [:zh_CN]
-如果推断均成功，则部分排序根据 [#temp.constr.order] 中的规则所述选择更受约束的
-模板。
+如果推断均成功，则部分排序根据下述确定方式选择更受约束的模板（如果存在）。
 
 [para]
 [:en]
@@ -97,27 +96,49 @@ non-type template parameter is also a unique synthesized type.
 [end:note]
 
 [:en]
-If only one of the function templates [^M] is a member function, and that
-function is a non-static member of some class [^A], [^M] is considered to have
-a new first parameter inserted in its function parameter list.
+Each function template [$M] that is a member function is considered to have
+a new first parameter of type [$X(M)], described below, inserted in its function
+parameter list.
 [:zh_CN]
-如果函数模板中仅有一个是成员函数 [^M]，且该函数是某个类 [^A] 的非静态成员，则
-[^M] 被当作其函数形参列表中插入了新的第一个形参。
+每个作为成员函数的函数模板 [$M] 被当作其函数形参列表中插入了一个新的第一个形参，
+其类型 [$X(M)] 描述如下。
 
 [:en]
-Given [=cv] as the cv-qualifiers of [^M] (if any), the new parameter is of type
-[=lq]rvalue reference to [=cv] [^A][=rq] if the optional [~ref-qualifier] of
-[^M] is [`&&] or if [^M] has no [~ref-qualifier] and the first parameter of the
-other template has rvalue reference type.
+If exactly one of the function templates was considered by overload resolution
+via a rewritten candidate ([#over.match.oper]) with a reversed order of
+parameters, then the order of the function parameters in its transformed
+template is reversed.
 [:zh_CN]
-给定 [=cv] 为 [^M] 的 [=cv] 限定符（如果有），则当 [^M] 的可选的[~引用限定符]为
-[`&&]，或当 [^M] 没有[~引用限定符]而另一个模板的第一个形参具有右值引用类型时，
-这个新形参具有类型“[=cv] [^A] 的右值引用”。
+如果函数模板中恰有一个被重载决议通过具有反转形参顺序的重写候选
+（[#over.match.oper]）所考察，则其经过变换的模板中的函数形参的顺序经过反转。
 
 [:en]
-Otherwise, the new parameter is of type [=lq]lvalue reference to [=cv] [^A][=rq].
+For a function template [$M] with cv-qualifiers [=cv] that is a member of a
+class [$A]:
 [:zh_CN]
-否则，这个新形参具有类型“[=cv] [^A] 的左值引用”。
+对于作为类 [$A] 的成员的带有 cv 限定符 [=cv] 的函数模板 [$M]：
+
+[list]
+[item]
+[:en]
+The type [$X(M)] is [=lq]rvalue reference to [=cv] [$A][=rq] if the optional
+[~ref-qualifier] of [$M] is [`&&] or if [$M] has no [~ref-qualifier] and
+the positionally-corresponding parameter of the other transformed template
+has rvalue reference type; if this determination depends recursively upon
+whether [$X(M)] is an rvalue reference type, it is not considered to have rvalue
+reference type.
+[:zh_CN]
+当 [$M] 的可选的[~引用限定符]为 [`&&]，或当 [$M] 没有[~引用限定符]而另一个经过
+变换的模板的潜在对应的形参具有右值引用类型时，类型 [$X(M)] 为“[=cv] [$A] 的右值
+引用”；如果这项决定递归地依赖于 [$X(M)] 是否是右值引用类型，则不将之当做具有
+右值引用类型。
+
+[item]
+[:en]
+Otherwise, [$X(M)] is [=lq]lvalue reference to [=cv] [$A][=rq].
+[:zh_CN]
+否则，[$X(M)] 为“[=cv] [$A] 的左值引用”。
+[list:end]
 
 [begin:note]
 [:en]
@@ -145,8 +166,8 @@ template<class T, class R> int operator*(T&, R&);   // #2
 int main() {
   A a;
   B<A> b;
-  b * a;                                            // [:en] calls #1a \
-                                                       [:zh_CN] 调用了 #1a
+  b * a;                                            // [:en] calls #1 \
+                                                       [:zh_CN] 调用了 #1
 }
 [codeblock:end]
 [end:example]
@@ -194,12 +215,12 @@ void m() {
 [para]
 [begin:note]
 [:en]
-Since partial ordering in a call context considers only parameters for which
+Since, in a call context, such type deduction considers only parameters for which
 there are explicit call arguments, some parameters are ignored (namely, function
 parameter packs, parameters with default arguments, and ellipsis parameters).
 [:zh_CN]
-由于在调用语境中，偏序规则仅考虑具有明确的调用实参的形参，因此一些形参是被忽略的
-（包括函数形参包组，带有默认实参的形参，以及省略号形参）。
+由于在调用语境中，这种类型推断仅考虑具有明确的调用实参的形参，因此一些形参是被
+忽略的（包括函数形参包组，带有默认实参的形参，以及省略号形参）。
 
 [begin:example]
 [codeblock]
@@ -254,3 +275,131 @@ void h(int i) {
 [codeblock:end]
 [end:example]
 [end:note]
+
+[para]
+[:en]
+If deduction against the other template succeeds for both transformed templates,
+constraints can be considered as follows:
+[:zh_CN]
+如果针对另一个模板的推断对两个经转换的模板均成功，则可以如下考察约束：
+
+[list]
+[item]
+[:en]
+If their [~template-parameter-list]s (possibly including [~template-parameter]s
+invented for an abbreviated function template ([#dcl.fct])) or function
+parameter lists differ in length, neither template is more specialized than the
+other.
+[:zh_CN]
+如果它们的[~模板形参列表]（可能包含为简写函数模板（[#dcl.fct]）所引入的
+[~模板形参]）或函数形参列表长度不同，则没有模板比另一个更特殊。
+
+[item]
+[:en]
+Otherwise:
+[:zh_CN]
+否则：
+
+[list]
+[item]
+[:en]
+If exactly one of the templates was considered by overload resolution
+via a rewritten candidate with reversed order of parameters:
+[:zh_CN]
+如果函数模板中恰有一个被重载决议通过具有反转形参顺序的重写候选所考察：
+
+[list]
+[item]
+[:en]
+If, for either template, some of the template parameters are not deducible from
+their function parameters, neither template is more specialized than the other.
+[:zh_CN]
+如果对于任一模板，其某些模板形参不可从它们的函数形参进行推断，则没有模板比另一个
+更特殊。
+
+[item]
+[:en]
+If there is either no reordering or more than one reordering of the associated
+[~template-parameter-list] such that
+[:zh_CN]
+如果对于其所关联的[~模板形参列表]要么没有重排序，要么有多于一种重排序，使得
+[list]
+[item]
+[:en@~]
+the corresponding [~template-parameter]s of the [~template-parameter-list]s are
+equivalent and
+[:zh_CN@~]
+各[~模板形参列表]的对应[~模板形参]等价，并且
+[item]
+[:en@~]
+the function parameters that positionally correspond between the two templates
+are of the same type,
+[:zh_CN@~]
+两个模板中按位置对应的各函数形参具有相同类型，
+[list:end]
+[:en@~]
+neither template is more specialized than the other.
+[:zh_CN@~]
+则没有模板比另一个更特殊。
+[list:end]
+
+[item]
+[:en]
+Otherwise, if the corresponding [~template-parameter]s of the
+[~template-parameter-list]s are not equivalent ([#temp.over.link]) or if the
+function parameters that positionally correspond between the two templates are
+not of the same type, neither template is more specialized than the other.
+[:zh_CN]
+否则，如果各[~模板形参列表]的对应[~模板形参]不等价（[#temp.over.link]），或者
+如果两个模板中按位置对应的函数形参具有不同类型，则没有模板比另一个更特殊。
+[list:end]
+
+[item]
+[:en]
+Otherwise, if the context in which the partial ordering is done is that of a
+call to a conversion function and the return types of the templates are not the
+same, then neither template is more specialized than the other.
+[:zh_CN]
+否则，如果完成部分排序的语境是一次对转换函数的调用，且各模板的返回类型不同，则
+没有模板比另一个更特殊。
+
+[item]
+[:en]
+Otherwise, if one template is more constrained than the other
+([#temp.constr.order]), the more constrained template is more specialized than
+the other.
+[:zh_CN]
+否则，如果一个模板比另一个更受约束（[#temp.constr.order]），则更受约束的模板比
+另一个更特殊。
+
+[item]
+[:en]
+Otherwise, neither template is more specialized than the other.
+[:zh_CN]
+否则，没有模板比另一个更特殊。
+[list:end]
+
+[begin:example]
+[codeblock]
+template <typename> constexpr bool True = true;
+template <typename T> concept C = True<T>;
+
+void f(C auto &, auto &) = delete;
+template <C Q> void f(Q &, C auto &);
+
+void g(struct A *ap, struct B *bp) {
+  f(*ap, *bp);                  // [:en] OK: Can use different methods to produce template parameters \
+                                [:zh_CN] OK：可以用不同方法来产生模板形参
+}
+
+template <typename T, typename U> struct X {};
+
+template <typename T, C U, typename V> bool operator==(X<T, U>, V) = delete;
+template <C T, C U, C V>               bool operator==(T, X<U, V>);
+
+void h() {
+  X<void *, int>{} == 0;        // [:en] OK: Correspondence of `[[`T], [`U], [`V]`] and `[[`U], [`V], [`T]`] \
+                                [:zh_CN] OK：`[[`T], [`U], [`V]`] 和 `[[`U], [`V], [`T]`] 之间相对应
+}
+[codeblock:end]
+[end:example]
