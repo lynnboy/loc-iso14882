@@ -26,11 +26,11 @@ of one of the types in [`Types] throws an exception.
 [:en]
 The defaulted move and copy constructor, respectively, of [`tuple] is a
 constexpr function if and only if all required element-wise initializations for
-copy and move, respectively, would satisfy the requirements for a constexpr
+move and copy, respectively, would satisfy the requirements for a constexpr
 function.
 [:zh_CN]
-[`tuple] 的预置移动和复制构造函数，当且仅当其对应的所有需要的按元素复制或移动
-初始化能够符合 constexpr 函数的规定时，是 constexpr 函数。
+[`tuple] 的预置移动和复制构造函数，当且仅当分别为移动或复制所需要的所有按元素
+初始化都能够符合 constexpr 函数的规定时，它是 constexpr 函数。
 
 [:en]
 The defaulted move and copy constructor of [`tuple<>] are constexpr functions.
@@ -51,22 +51,15 @@ constexpr explicit([[redoc("[=seebelow]")]]) tuple();
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_default_constructible_v<[$[`T]_i]>] is [`true] for all [$i].
+[:zh_CN] [`is_default_constructible_v<[$[`T]_i]>] 对于所有 [$i] 为 [`true].
+
 [para:effects]
 [:en] Value initializes each element.
 [:zh_CN] 值初始化其每个元素。
 
 [para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[`is_default_constructible_v<T[$_i]>] is [`true] for all [$i].
-[:zh_CN] 除非 [`is_default_constructible_v<T[$_i]>] 对于所有 [$i] 为 [`true]，
-否则这个构造函数不能参与重载决议。
-
-[begin:note]
-[:en] This behavior can be implemented by a constructor template with default
-template arguments.
-[:zh_CN] 这种行为可以由带有默认模板实参的构造函数模板来予以实现。
-[end:note]
-
 [:en] The expression inside [`explicit] evaluates to [`true] if and only if
 [$[`T]_i] is not copy-list-initializable from an empty list for at least one [$i].
 [:zh_CN] 当且仅当 [$[`T]_i] 对于至少一个 [$i] 并非是可以从空列表复制列表初始化时，
@@ -86,17 +79,17 @@ constexpr explicit([[redoc("[=seebelow]")]]) tuple(const Types&...);
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [$[`sizeof...(Types)] \geq 1] and [`is_copy_constructible_v<[$[`T]_i]>] is
+[`true] for all [$i].
+[:zh_CN] [$[`sizeof...(Types)] \geq 1] 并且 [`is_copy_constructible_v<[$[`T]_i]>]
+对于所有 [$i] 均为 [`true]。
+
 [para:effects]
 [:en] Initializes each element with the value of the corresponding parameter.
 [:zh_CN] 以对应形参的值初始化其每个元素。
 
 [para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[`sizeof...(Types) >= 1] and [`is_copy_constructible_v<T[$_i]>] is [`true] for
-all [$i].
-[:zh_CN] 除非 [`sizeof...(Types) >= 1] 并且 [`is_copy_constructible_v<T[$_i]>]
-对于所有 [$i] 均为 [`true]，否则这个构造函数不能参与重载决议。
-
 [:en] The expression inside [`explicit] is equivalent to:
 [:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock]
@@ -110,19 +103,20 @@ template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(UTy
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`sizeof...(Types)] equals [`sizeof...(UTypes)] and
+[$[`sizeof...(Types)] \geq 1] and [`is_constructible_v<[$[`T]_i], [$[`U]_i]>] is
+[`true] for all [$i].
+[:zh_CN] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)] 并且
+[$[`sizeof...(Types)] \geq 1]，并且 [`is_constructible_v<[$[`T]_i], [$[`U]_i]>]
+对于所有 [$i] 均为 [`true]。
+
 [para:effects]
 [:en] Initializes the elements in the tuple with the corresponding value in
 [`std::forward<UTypes>(u)].
 [:zh_CN] 以 [`std::forward<UTypes>(u)] 中的对应值初始化元组中的各个元素。
 
 [para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[`sizeof...(Types) == sizeof...(UTypes)] and [`sizeof...(Types) >= 1] and
-[`is_constructible_v<T[$_i], U[$_i]&&>] is [`true] for all [$i].
-[:zh_CN] 除非 [`sizeof...(Types) == sizeof...(UTypes)] 并且
-[`sizeof...(Types) >= 1]，并且 [`is_constructible_v<T[$_i], U[$_i]&&>] 对于所有
-[$i] 均为 [`true]，否则这个构造函数不能参与重载决议。
-
 [:en] The expression inside [`explicit] is equivalent to:
 [:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock]
@@ -136,7 +130,7 @@ tuple(const tuple& u) = default;
 [codeblock:end]
 
 [div:description]
-[para:requires]
+[para:mandates]
 [:en] [`is_copy_constructible_v<T[$_i]>] is [`true] for all [$i].
 [:zh_CN] [`is_copy_constructible_v<T[$_i]>] 对于所有 [$i] 均为 [`true]。
 
@@ -168,33 +162,31 @@ template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(con
 [codeblock:end]
 
 [div:description]
-[para:effects]
-[:en] Initializes each element of [`*this] with the corresponding element of [`u].
-[:zh_CN] 以 [`u] 的对应元素初始化 [`*this] 的各个元素。
-
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[:zh_CN] 除非符合以下条件，否则这个构造函数不能参与重载决议：
-
+[para:constraints]
 [list]
 [item]
-[:en@~] [`sizeof...(Types) == sizeof...(UTypes)] and
-[:zh_CN@~] [`sizeof...(Types) == sizeof...(UTypes)] 并且
+[:en@~] [`sizeof...(Types)] equals [`sizeof...(UTypes)] and
+[:zh_CN@~] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)] 并且
 [item]
 [:en@~] [`is_constructible_v<T[$_i], const U[$_i]&>] is [`true] for all [$i],
 and
 [:zh_CN@~] [`is_constructible_v<T[$_i], const U[$_i]&>] 对于所有 [$i] 均为
 [`true]，并且
 [item]
-[:en@~] either [`sizeof...(Types) != 1], or (when [`Types...] expands to [`T]
+[:en@~] either [`sizeof...(Types)] is not 1, or (when [`Types...] expands to [`T]
 and [`UTypes...] expands to [`U]) [`is_convertible_v<const tuple<U>&, T>],
 [`is_constructible_v<T, const tuple<U>&>], and [`is_same_v<T, U>] are all
 [`false].
-[:zh_CN@~] 或者 [`sizeof...(Types) != 1]，或者（当 [`Types...] 展开为 [`T] 且
+[:zh_CN@~] 或者 [`sizeof...(Types)] 不为 1，或者（当 [`Types...] 展开为 [`T] 且
 [`UTypes...] 展开为 [`U] 时）[`is_convertible_v<const tuple<U>&, T>]、
 [`is_constructible_v<T, const tuple<U>&>] 和 [`is_same_v<T, U>] 均为 [`false]。
 [list:end]
 
+[para:effects]
+[:en] Initializes each element of [`*this] with the corresponding element of [`u].
+[:zh_CN] 以 [`u] 的对应元素初始化 [`*this] 的各个元素。
+
+[para:remarks]
 [:en] The expression inside [`explicit] is equivalent to:
 [:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock]
@@ -208,6 +200,24 @@ template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(tup
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[list]
+[item]
+[:en@~] [`sizeof...(Types)] equals [`sizeof...(UTypes)], and
+[:zh_CN@~] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)]，并且
+[item]
+[:en@~] [`is_constructible_v<T[$_i], U[$_i]>] is [`true] for all [$i], and
+[:zh_CN@~] [`is_constructible_v<T[$_i], U[$_i]>] 对于所有 [$i] 均为 [`true]，
+并且
+[item]
+[:en@~] either [`sizeof...(Types)] is not 1, or (when [`Types...] expands to [`T]
+and [`UTypes...] expands to [`U]) [`is_convertible_v<tuple<U>, T>],
+[`is_constructible_v<T, tuple<U>>], and [`is_same_v<T, U>] are all [`false].
+[:zh_CN@~] 或者 [`sizeof...(Types)] 不为 1，或者（当 [`Types...] 展开为 [`T] 且
+[`UTypes...] 展开为 [`U] 时）[`is_convertible_v<tuple<U>, T>]、
+[`is_constructible_v<T, tuple<U>>] 和 [`is_same_v<T, U>] 均为 [`false]。
+[list:end]
+
 [para:effects]
 [:en] For all [$i], initializes the [$i^\text{th}] element of [`*this] with
 [`std::forward<U[$_i]>(get<[$i]>(u))].
@@ -215,26 +225,6 @@ template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(tup
 的第 [$i] 个元素。
 
 [para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[:zh_CN] 除非符合以下条件，否则这个构造函数不能参与重载决议：
-
-[list]
-[item]
-[:en@~] [`sizeof...(Types) == sizeof...(UTypes)], and
-[:zh_CN@~] [`sizeof...(Types) == sizeof...(UTypes)]，并且
-[item]
-[:en@~] [`is_constructible_v<T[$_i], U[$_i]&&>] is [`true] for all [$i], and
-[:zh_CN@~] [`is_constructible_v<T[$_i], U[$_i]&&>] 对于所有 [$i] 均为 [`true]，
-并且
-[item]
-[:en@~] either [`sizeof...(Types) != 1], or (when [`Types...] expands to [`T]
-and [`UTypes...] expands to [`U]) [`is_convertible_v<tuple<U>, T>],
-[`is_constructible_v<T, tuple<U>>], and [`is_same_v<T, U>] are all [`false].
-[:zh_CN@~] 或者 [`sizeof...(Types) != 1]，或者（当 [`Types...] 展开为 [`T] 且
-[`UTypes...] 展开为 [`U] 时）[`is_convertible_v<tuple<U>, T>]、
-[`is_constructible_v<T, tuple<U>>] 和 [`is_same_v<T, U>] 均为 [`false]。
-[list:end]
-
 [:en] The expression inside [`explicit] is equivalent to:
 [:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock]
@@ -249,20 +239,24 @@ template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`sizeof...(Types)] is 2,
+[:zh_CN] [`sizeof...(Types)] 为 2，
+[item]
+[:en] [`is_constructible_v<T[$_0], const U1&>] is [`true], and
+[`is_constructible_v<T[$_1], const U2&>] is [`true].
+[:zh_CN] [`is_constructible_v<T[$_0], const U1&>] 为 [`true]，并且
+[`is_constructible_v<T[$_1], const U2&>] 为 [`true]。
+[list:end]
+
 [para:effects]
 [:en] initializes the first element with [`u.first] and the second element with
 [`u.second].
 [:zh_CN] 以 [`u.first] 初始化第一个元素，并以 [`u.second] 初始化第二个元素。
 
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[`sizeof...(Types) == 2], [`is_constructible_v<T[$_0], const U1&>] is [`true]
-and [`is_constructible_v<T[$_1], const U2&>] is [`true].
-[:zh_CN] 除非 [`sizeof...(Types) == 2]，
-[`is_constructible_v<T[$_0], const U1&>] 为 [`true] 并且
-[`is_constructible_v<T[$_1], const U2&>] 为 [`true]，否则这个构造函数不能参与
-重载决议。
-
+[para]
 [:en] The expression inside [`explicit] is equivalent to:
 [:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock]
@@ -277,20 +271,25 @@ template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`sizeof...(Types)] is 2,
+[:zh_CN] [`sizeof...(Types)] 为 2，
+[item]
+[:en] [`is_constructible_v<T[$_0], U1>] is [`true], and
+[`is_constructible_v<T[$_1], U2>] is [`true].
+[:zh_CN] [`is_constructible_v<T[$_0], U1>] 为 [`true]，并且
+[`is_constructible_v<T[$_1], U2>] 为 [`true]。
+[list:end]
+
 [para:effects]
 [:en] initializes the first element with [`std::forward<U1>(u.first)] and the
 second element with [`std::forward<U2>(u.second)].
 [:zh_CN] 以 [`std::forward<U1>(u.first)] 初始化第一个元素，并以
 [`std::forward<U2>(u.second)] 初始化第二个元素。
 
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless
-[`sizeof...(Types) == 2], [`is_constructible_v<T[$_0], U1&&>] is [`true] and
-[`is_constructible_v<T[$_1], U2&&>] is [`true].
-[:zh_CN] 除非 [`sizeof...(Types) == 2]，[`is_constructible_v<T[$_0], U1&&>] 为
-[`true] 并且 [`is_constructible_v<T[$_1], U2&&>] 为 [`true]，否则这个构造函数
-不能参与重载决议。
-
+[para]
 [:en] The expression inside [`explicit] is equivalent to:
 [:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock]
@@ -328,10 +327,9 @@ template<class Alloc, class U1, class U2>
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`Alloc] shall meet the [^:oc Allocator] requirements
-([#:tab#cpp17.allocator]).
-[:zh_CN] [`Alloc] 应当满足 [^:oc Allocator] 的规定（[#:tab#cpp17.allocator]）。
+[para:expects]
+[:en] [`Alloc] meets the [^:oc Allocator] requirements ([#:tab#cpp17.allocator]).
+[:zh_CN] [`Alloc] 满足 [^:oc Allocator] 的规定（[#:tab#cpp17.allocator]）。
 
 [para:effects]
 [:en] Equivalent to the preceding constructors except that each element is

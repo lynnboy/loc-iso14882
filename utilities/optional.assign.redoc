@@ -14,13 +14,13 @@ optional<T>& operator=(nullopt_t) noexcept;
 contained value; otherwise no effect.
 [:zh_CN] 若 [`*this] 包含值，则为所包含的值调用 [`val->T::~T()]；否则没有效果。
 
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
-
 [para:ensures]
 [:en] [`*this] does not contain a value.
 [:zh_CN] [`*this] 不包含值。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
 [div:end]
 
 [%@lib@member operator=[!optional]]
@@ -61,13 +61,13 @@ constexpr optional<T>& operator=(const optional& rhs);
 [-]
 [table:end]
 
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
-
 [para:ensures]
 [:en] [`bool(rhs) == bool(*this)].
 [:zh_CN] [`bool(rhs) == bool(*this)]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
 
 [para:remarks]
 [:en] If any exception is thrown, the result of the expression [`bool(*this)]
@@ -84,11 +84,10 @@ of [`T][=']s copy assignment.
 [:zh_CN] 若在调用 [`T] 的复制赋值过程中中抛出了异常，则所包含的值的状态依据 [`T]
 的复制赋值的异常安全性保证所作的定义。
 
-[:en] This operator shall be defined as deleted unless
-[`is_copy_constructible_v<T>] is [`true] and [`is_copy_assignable_v<T>] is
-[`true].
+[:en] This operator is defined as deleted unless [`is_copy_constructible_v<T>]
+is [`true] and [`is_copy_assignable_v<T>] is [`true].
 [:zh_CN] 除非 [`is_copy_constructible_v<T>] 为 [`true] 并且
-[`is_copy_assignable_v<T>] 为 [`true]，否则这个构造函数应当被定义为弃置的。
+[`is_copy_assignable_v<T>] 为 [`true]，否则这个构造函数被定义为弃置的。
 
 [:en] If [`is_trivially_copy_constructible_v<T> &&
 is_trivially_copy_assignable_v<T> && is_trivially_destructible_v<T>] is [`true],
@@ -104,6 +103,12 @@ constexpr optional& operator=(optional&& rhs) noexcept([[redoc("[=seebelow]")]])
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_move_constructible_v<T>] is [`true] and [`is_move_assignable_v<T>] is
+[`true].
+[:zh_CN] [`is_move_constructible_v<T>] 为 [`true] 并且 [`is_move_assignable_v<T>]
+为 [`true]。
+
 [para:effects]
 [:en] See [#:tab#optional.assign.move].
 [:zh_CN] 参见 [#:tab#optional.assign.move]。
@@ -139,13 +144,13 @@ constexpr optional& operator=(optional&& rhs) noexcept([[redoc("[=seebelow]")]])
 [-]
 [table:end]
 
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
-
 [para:ensures]
 [:en] [`bool(rhs) == bool(*this)].
 [:zh_CN] [`bool(rhs) == bool(*this)]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
 
 [para:remarks]
 [:en] The expression inside [`noexcept] is equivalent to:
@@ -171,12 +176,6 @@ guarantee of [`T][=']s move assignment.
 [:zh_CN] 若在调用 [`T] 的移动赋值的过程中抛出了异常，则 [`*val] 和 [`*rhs.val]
 的状态依据 [`T] 的移动赋值的异常安全性保证所作的定义。
 
-[:en] This operator shall not participate in overload resolution unless
-[`is_move_constructible_v<T>] is [`true] and [`is_move_assignable_v<T>] is
-[`true].
-[:zh_CN] 除非 [`is_move_constructible_v<T>] 为 [`true] 并且
-[`is_move_assignable_v<T>] 为 [`true]，否则这个构造函数应当被定义为弃置的。
-
 [:en] If [`is_trivially_move_constructible_v<T> &&
 is_trivially_move_assignable_v<T> && is_trivially_destructible_v<T>] is [`true],
 this assignment operator is trivial.
@@ -191,18 +190,26 @@ template<class U = T> optional<T>& operator=(U&& v);
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_same_v<remove_cvrev_t<U>, optional>] is [`false],
+[`conjunction_v<is_scalar<T>, is_same<T, decay_t<U>>>] is [`false],
+[`is_constructible_v<T, U>] is [`true], and [`is_assignable_v<T&, U>] is [`true].
+[:zh_CN] [`is_same_v<remove_cvrev_t<U>, optional>] 为 [`false]，
+[`conjunction_v<is_scalar<T>, is_same<T, decay_t<U>>>] 为 [`false]，
+[`is_constructible_v<T, U>] 为 [`true]，并且 [`is_assignable_v<T&, U>] 为 [`true]。
+
 [para:effects]
 [:en] If [`*this] contains a value, assigns [`std::forward<U>(v)] to the
 contained value; otherwise initializes the contained value as if
 direct-non-list-initializing object of type [`T] with [`std::forward<U>(v)].
 
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
-
 [para:ensures]
 [:en] [`*this] contains a value.
 [:zh_CN] [`*this] 包含值。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
 
 [para:remarks]
 [:en] If any exception is thrown, the result of the expression [`bool(*this)]
@@ -220,15 +227,6 @@ state of [`*val] and [`v] is determined by the exception safety guarantee of
 [`T][=']s assignment.
 [:zh_CN] 若在调用 [`T] 的赋值的过程中抛出了异常，则 [`*val] 和 [`v] 的状态依据
 [`T] 的赋值的异常安全性保证所作的定义。
-
-[:en] This function shall not participate in overload resolution unless
-[`is_same_v<remove_cvrev_t<U>, optional>] is [`false],
-[`conjunction_v<is_scalar<T>, is_same<T, decay_t<U>>>] is [`false],
-[`is_constructible_v<T, U>] is [`true], and [`is_assignable_v<T&, U>] is [`true].
-[:zh_CN] 除非 [`is_same_v<remove_cvrev_t<U>, optional>] 为 [`false]，
-[`conjunction_v<is_scalar<T>, is_same<T, decay_t<U>>>] 为 [`false]，
-[`is_constructible_v<T, U>] 为 [`true]，并且 [`is_assignable_v<T&, U>] 为 [`true]，
-否则这个构造函数不能参与重载决议。
 [div:end]
 
 [%@lib@member operator=[!optional]]
@@ -237,66 +235,7 @@ template<class U> optional<T>& operator=(const optional<U>& rhs);
 [codeblock:end]
 
 [div:description]
-[para:effects]
-[:en] See [#:tab#optional.assign.copy.templ].
-[:zh_CN] 参见 [#:tab#optional.assign.copy.templ]。
-
-[table:grid#optional.assign.copy.templ
-    [:en] [`optional::operator=(const optional<U>&)] effects
-    [:zh_CN] [`optional::operator=(const optional<U>&)] 的效果
-]
-[|@null ]
-[|@head ]   [:en] [`*this] contains a value
-            [:zh_CN] [`*this] 包含值
-[|@head ]   [:en] [`*this] does not contain a value
-            [:zh_CN] [`*this] 不包含值
-[-]
-[|@head ]   [:en] [`rhs] contains a value
-            [:zh_CN] [`rhs] 包含值
-[|] [:en] assigns [`*rhs] to the contained value
-    [:zh_CN] 将 [`*rhs] 赋值给所包含的值
-[|] [:en] initializes the contained value as if direct-non-list-initializing
-          an object of type [`T] with [`*rhs]
-    [:zh_CN] 如同以 [`*rhs] 对 [`T] 类型的对象进行直接非列表初始化一样初始化其所
-             包含的值
-[-]
-[|@head ]   [:en] [`rhs] does not contain a value
-            [:zh_CN] [`rhs] 不包含值
-[|] [:en] destroys the contained value by calling [`val->T::~T()]
-    [:zh_CN] 调用 [`val->T::~T()] 以销毁所包含的值
-[|] [:en] no effect
-    [:zh_CN] 没有效果
-[-]
-[table:end]
-
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
-
-[para:ensures]
-[:en] [`bool(rhs) == bool(*this)].
-[:zh_CN] [`bool(rhs) == bool(*this)]。
-
-[para:remarks]
-[:en] If any exception is thrown, the result of the expression [`bool(*this)]
-remains unchanged.
-[:zh_CN] 若抛出了任何异常，则不改变表达式 [`bool(*this)] 的结果。
-
-[:en] If an exception is thrown during the call to [`T][=']s constructor, the
-state of [`*rhs.val] is determined by the exception safety guarantee of
-[`T][=']s constructor.
-[:zh_CN] 若在调用 [`T] 的构造函数的过程中抛出了异常，则 [`*rhs.val] 的状态依据
-[`T] 的构造函数的异常安全性保证所作的定义。
-
-[:en] If an exception is thrown during the call to [`T][=']s assignment, the
-state of [`*val] and [`*rhs.val] is determined by the exception safety guarantee
-of [`T][=']s assignment.
-[:zh_CN] 若在调用 [`T] 的赋值的过程中抛出了异常，则 [`*val] 和 [`*rhs.val] 的
-状态依据 [`T] 的赋值的异常安全性保证所作的定义。
-
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非满足以下条件，否则这个函数不能参与重载决议：
-
+[para:constraints]
 [list]
 [item]
 [:en] [`is_constructible_v<T, const U&>] is [`true],
@@ -341,24 +280,14 @@ of [`T][=']s assignment.
 [:en] [`is_assignable_v<T&, const optional<U>&&>] is [`false].
 [:zh_CN] [`is_assignable_v<T&, const optional<U>&&>] 为 [`false]。
 [list:end]
-[div:end]
 
-[%@lib@member operator=[!optional]]
-[codeblock:declaration]
-template<class U> optional<T>& operator=(optional<U>&& rhs);
-[codeblock:end]
-
-[div:description]
 [para:effects]
-[:en] See [#:tab#optional.assign.move.templ].
-[:zh_CN] 参见 [#:tab#optional.assign.move.templ]。
+[:en] See [#:tab#optional.assign.copy.templ].
+[:zh_CN] 参见 [#:tab#optional.assign.copy.templ]。
 
-[:en] The result of the expression [`bool(rhs)] remains unchanged.
-[:zh_CN] 不改变表达式 [`bool(rhs)] 的结果。
-
-[table:grid#optional.assign.move.templ
-    [:en] [`optional::operator=(optional<U>&&)] effects
-    [:zh_CN] [`optional::operator=(optional<U>&&)] 的效果
+[table:grid#optional.assign.copy.templ
+    [:en] [`optional::operator=(const optional<U>&)] effects
+    [:zh_CN] [`optional::operator=(const optional<U>&)] 的效果
 ]
 [|@null ]
 [|@head ]   [:en] [`*this] contains a value
@@ -368,12 +297,12 @@ template<class U> optional<T>& operator=(optional<U>&& rhs);
 [-]
 [|@head ]   [:en] [`rhs] contains a value
             [:zh_CN] [`rhs] 包含值
-[|] [:en] assigns [`std::move(*rhs)] to the contained value
-    [:zh_CN] 将 [`std::move(*rhs)] 赋值给所包含的值
+[|] [:en] assigns [`*rhs] to the contained value
+    [:zh_CN] 将 [`*rhs] 赋值给所包含的值
 [|] [:en] initializes the contained value as if direct-non-list-initializing
-          an object of type [`T] with [`std::move(*rhs)]
-    [:zh_CN] 如同以 [`std::move(*rhs)] 对 [`T] 类型的对象进行直接非列表初始化
-             一样初始化其所包含的值
+          an object of type [`T] with [`*rhs]
+    [:zh_CN] 如同以 [`*rhs] 对 [`T] 类型的对象进行直接非列表初始化一样初始化其所
+             包含的值
 [-]
 [|@head ]   [:en] [`rhs] does not contain a value
             [:zh_CN] [`rhs] 不包含值
@@ -384,13 +313,13 @@ template<class U> optional<T>& operator=(optional<U>&& rhs);
 [-]
 [table:end]
 
-[para:returns]
-[:en] [`*this].
-[:zh_CN] [`*this]。
-
 [para:ensures]
 [:en] [`bool(rhs) == bool(*this)].
 [:zh_CN] [`bool(rhs) == bool(*this)]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
 
 [para:remarks]
 [:en] If any exception is thrown, the result of the expression [`bool(*this)]
@@ -408,10 +337,15 @@ state of [`*val] and [`*rhs.val] is determined by the exception safety guarantee
 of [`T][=']s assignment.
 [:zh_CN] 若在调用 [`T] 的赋值的过程中抛出了异常，则 [`*val] 和 [`*rhs.val] 的
 状态依据 [`T] 的赋值的异常安全性保证所作的定义。
+[div:end]
 
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非满足以下条件，否则这个函数不能参与重载决议：
+[%@lib@member operator=[!optional]]
+[codeblock:declaration]
+template<class U> optional<T>& operator=(optional<U>&& rhs);
+[codeblock:end]
 
+[div:description]
+[para:constraints]
 [list]
 [item]
 [:en] [`is_constructible_v<T, U>] is [`true],
@@ -456,6 +390,66 @@ of [`T][=']s assignment.
 [:en] [`is_assignable_v<T&, const optional<U>&&>] is [`false].
 [:zh_CN] [`is_assignable_v<T&, const optional<U>&&>] 为 [`false]。
 [list:end]
+
+[para:effects]
+[:en] See [#:tab#optional.assign.move.templ].
+[:zh_CN] 参见 [#:tab#optional.assign.move.templ]。
+
+[:en] The result of the expression [`bool(rhs)] remains unchanged.
+[:zh_CN] 不改变表达式 [`bool(rhs)] 的结果。
+
+[table:grid#optional.assign.move.templ
+    [:en] [`optional::operator=(optional<U>&&)] effects
+    [:zh_CN] [`optional::operator=(optional<U>&&)] 的效果
+]
+[|@null ]
+[|@head ]   [:en] [`*this] contains a value
+            [:zh_CN] [`*this] 包含值
+[|@head ]   [:en] [`*this] does not contain a value
+            [:zh_CN] [`*this] 不包含值
+[-]
+[|@head ]   [:en] [`rhs] contains a value
+            [:zh_CN] [`rhs] 包含值
+[|] [:en] assigns [`std::move(*rhs)] to the contained value
+    [:zh_CN] 将 [`std::move(*rhs)] 赋值给所包含的值
+[|] [:en] initializes the contained value as if direct-non-list-initializing
+          an object of type [`T] with [`std::move(*rhs)]
+    [:zh_CN] 如同以 [`std::move(*rhs)] 对 [`T] 类型的对象进行直接非列表初始化
+             一样初始化其所包含的值
+[-]
+[|@head ]   [:en] [`rhs] does not contain a value
+            [:zh_CN] [`rhs] 不包含值
+[|] [:en] destroys the contained value by calling [`val->T::~T()]
+    [:zh_CN] 调用 [`val->T::~T()] 以销毁所包含的值
+[|] [:en] no effect
+    [:zh_CN] 没有效果
+[-]
+[table:end]
+
+[para:ensures]
+[:en] [`bool(rhs) == bool(*this)].
+[:zh_CN] [`bool(rhs) == bool(*this)]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+
+[para:remarks]
+[:en] If any exception is thrown, the result of the expression [`bool(*this)]
+remains unchanged.
+[:zh_CN] 若抛出了任何异常，则不改变表达式 [`bool(*this)] 的结果。
+
+[:en] If an exception is thrown during the call to [`T][=']s constructor, the
+state of [`*rhs.val] is determined by the exception safety guarantee of
+[`T][=']s constructor.
+[:zh_CN] 若在调用 [`T] 的构造函数的过程中抛出了异常，则 [`*rhs.val] 的状态依据
+[`T] 的构造函数的异常安全性保证所作的定义。
+
+[:en] If an exception is thrown during the call to [`T][=']s assignment, the
+state of [`*val] and [`*rhs.val] is determined by the exception safety guarantee
+of [`T][=']s assignment.
+[:zh_CN] 若在调用 [`T] 的赋值的过程中抛出了异常，则 [`*val] 和 [`*rhs.val] 的
+状态依据 [`T] 的赋值的异常安全性保证所作的定义。
 [div:end]
 
 [%@lib@member emplace[!optional]]
@@ -464,9 +458,9 @@ template<class... Args> T& emplace(Args&&... args);
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`is_constructible_v<T, Args&&...>] is [`true].
-[:zh_CN] [`is_constructible_v<T, Args&&...>] 为 [`true]。
+[para:mandates]
+[:en] [`is_constructible_v<T, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<T, Args...>] 为 [`true]。
 
 [para:effects]
 [:en] Calls [`*this = nullopt].
@@ -503,6 +497,10 @@ template<class U, class... Args> T& emplace(initializer_list<U> il, Args&&... ar
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_constructible_v<T, initializer_list<U>&, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<T, initializer_list<U>&, Args...>] 为 [`true]。
+
 [para:effects]
 [:en] Calls [`*this = nullopt].
 [:zh_CN] 调用 [`*this = nullopt]。
@@ -530,9 +528,4 @@ object of type [`T] with the arguments [`il, std::forward<Args>(args)...].
 destroyed.
 [:zh_CN] 若在调用 [`T] 的构造函数中抛出了异常，则 [`*this] 不包含值，且之前的
 [`*val]（如果有）将被销毁。
-
-[:en] This function shall not participate in overload resolution unless
-[`is_constructible_v<T, initializer_list<U>&, Args&&...>] is [`true].
-[:zh_CN] 除非 [`is_constructible_v<T, initializer_list<U>&, Args&&...>] 为
-[`true]，否则这个函数不能参与重载决议。
 [div:end]

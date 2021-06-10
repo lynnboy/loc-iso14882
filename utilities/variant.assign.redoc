@@ -53,18 +53,18 @@ to [`emplace<[$j]>(get<[$j]>(rhs))].
 [:zh_CN] [`index() == rhs.index()]。
 
 [para:remarks]
-[:en] This operator shall be defined as deleted unless
+[:en] This operator is defined as deleted unless
 [`is_copy_constructible_v<T[$_i]> && is_copy_assignable_v<T[$_i]>] is [`true]
 for all [$i].
 [:zh_CN] 除非 [`is_copy_constructible_v<T[$_i]> && is_copy_assignable_v<T[$_i]>]
-对于所有 [$i] 均为 [`true]，否则这个运算符应当定义为弃置的。
+对于所有 [$i] 均为 [`true]，否则这个运算符被定义为弃置的。
 
 [:en] If [`is_trivially_copy_constructible_v<T[$_i]> &&
 is_trivially_copy_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
-is true for all [$i], this assignment operator is trivial.
+is [`true] for all [$i], this assignment operator is trivial.
 [:zh_CN] 若 [`is_trivially_copy_constructible_v<T[$_i]> &&
 is_trivially_copy_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
-对于所有 [$i] 均为真，则这个赋值运算符是平凡的。
+对于所有 [$i] 均为 [`true]，则这个赋值运算符是平凡的。
 [div:end]
 
 [%@lib@member operator=[!variant]]
@@ -76,6 +76,12 @@ constexpr variant& operator=(variant&& rhs) noexcept([[redoc("[=seebelow]")]]);
 [para]
 [:en] Let [$j] be [`rhs.index()].
 [:zh_CN] 令 [$j] 为 [`rhs.index()]。
+
+[para:constraints]
+[:en] [`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] is
+[`true] for all [$i].
+[:zh_CN] [`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] 对于
+所有 [$i] 均为 [`true]。
 
 [para:effects]
 [list]
@@ -105,19 +111,12 @@ to the value contained in [`*this].
 [:zh_CN] [`*this]。
 
 [para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] is [`true]
-for all [$i].
-[:zh_CN] 除非
-[`is_move_constructible_v<T[$_i]> && is_move_assignable_v<T[$_i]>] 对于所有 [$i]
-均为 [`true]，否则这个函数不能参与重载决议。
-
 [:en] If [`is_trivially_move_constructible_v<T[$_i]> &&
 is_trivially_move_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
-is true for all [$i], this assignment operator is trivial.
+is [`true] for all [$i], this assignment operator is trivial.
 [:zh_CN] 若 [`is_trivially_move_constructible_v<T[$_i]> &&
 is_trivially_move_assignable_v<T[$_i]> && is_trivially_destructible_v<T[$_i]>]
-对于所有 [$i] 均为真，则这个赋值运算符是平凡的。
+对于所有 [$i] 均为 [`true]，则这个赋值运算符是平凡的。
 
 [:en] The expression inside [`noexcept] is equivalent to:
 [`is_nothrow_move_constructible_v<T[$_i]> &&
@@ -152,17 +151,45 @@ template<class T> variant& operator=(T&& t) noexcept([[redoc("[=seebelow]")]]);
 [:en] Let [$[`T]_j] be a type that is determined as follows: build an imaginary
 function [`[^FUN](T[$_i])] for each alternative type [$[`T]_i] for which
 [`T[$_i] x`[`] = {std::forward<T>(t)};] is well-formed for some invented
-variable [`x] and, if [$[`T]_i] is [=cv] [`bool], [`remove_cvref_t<T>] is [`bool].
+variable [`x].
 [:zh_CN] 令 [$[`T]_j] 为如下所确定的类型：为每个候选类型 [$[`T]_i] 构建一个
 虚构的函数 [`[^FUN](T[$_i])]，其中，对于某个虚构的变量 [`x]，
-[`T[$_i] x`[`] = {std::forward<T>(t)};] 良构，且当 [$[`T]_i] 为 [=cv] [`bool] 时，
-[`remove_cvref_t<T>] 为 [`bool]。
+[`T[$_i] x`[`] = {std::forward<T>(t)};] 良构。
 
 [:en] The overload [`[^FUN](T[$_j])] selected by overload resolution for
 the expression [`[^FUN](std::forward<T>(t))] defines the alternative [$[`T]_j]
 which is the type of the contained value after assignment.
 [:zh_CN] 由为表达式 [`[^FUN](std::forward<T>(t))] 所进行的重载决议所选择的重载
 [`[^FUN](T[$_j])]，定义了候选类型 [$[`T]_j]，为赋值之后所包含的值的类型。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`is_same_v<remove_cvrev_t<T>, variant>] is [`false],
+[:zh_CN] [`is_same_v<remove_cvrev_t<T>, variant>] 为 [`false]，
+
+[item]
+[:en] [`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] is [`true],
+and
+[:zh_CN] [`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] 为
+[`true]，并且
+
+[item]
+[:en] the expression [`[^FUN](std::forward<T>(t))] (with [`[^FUN]] being the
+above-mentioned set of imaginary functions) is well-formed.
+[:zh_CN] 表达式 [`[^FUN](std::forward<T>(t))] 良构（其中 [`[^FUN]] 为上述的虚构
+函数集合）。
+
+[begin:note]
+[codeblock]
+variant<string, string> v;
+v = "abc";
+[codeblock:end]
+[:en] is ill-formed, as both alternative types have an equally viable
+constructor for the argument.
+[:zh_CN] 非良构，因为两个候选类型对这个实参都具有同样可行的构造函数。
+[end:note]
+[list:end]
 
 [para:effects]
 [list]
@@ -196,38 +223,6 @@ the imaginary function overload resolution described above.
 [:zh_CN] [`*this]。
 
 [para:remarks]
-[:en] This function shall not participate in overload resolution unless
-[:zh_CN] 除非满足以下条件，否则这个函数不能参与重载决议：
-
-[list]
-[item]
-[:en] [`is_same_v<remove_cvrev_t<T>, variant>] is [`false],
-[:zh_CN] [`is_same_v<remove_cvrev_t<T>, variant>] 为 [`false]，
-[item]
-[:en] [`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] is
-[`true], and
-[:zh_CN] [`is_assignable_v<T[$_j]&, T> && is_constructible_v<T[$_j], T>] 为
-[`true]，并且
-[item]
-[:en] the expression [`[^FUN](std::forward<T>(t))] (with [`[^FUN]] being the
-above-mentioned set of imaginary functions) is well-formed.
-[:zh_CN] 表达式 [`[^FUN](std::forward<T>(t))] 良构（其中 [`[^FUN]] 为上述的虚构
-函数集合）。
-[list:end]
-
-[para]
-[begin:note]
-[codeblock]
-variant<string, string> v;
-v = "abc";
-[codeblock:end]
-
-[:en] is ill-formed, as both alternative types have an equally viable
-constructor for the argument.
-[:zh_CN] 非良构，因为两个候选类型对这个实参都具有同样可行的构造函数。
-[end:note]
-
-[para]
 [:en] The expression inside [`noexcept] is equivalent to:
 [:zh_CN] [`noexcept] 中的表达式等价于：
 [codeblock:notation]
