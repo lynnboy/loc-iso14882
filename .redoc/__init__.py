@@ -14,6 +14,7 @@ def hyperref(a, **kw): return a
 def tablerefname(): return ''
 def figurerefname(): return ''
 def mathmode(): return True
+def count(a): return 1
 
 generalindex = 'generalindex'
 headerindex = 'headerindex'
@@ -230,8 +231,8 @@ def leftshift(_1:str): return ensuremath(f"\mathbin{{\mathsf{{lshift}}_{{{_1}}}}
 # Notes and examples
 def noteintro(_1:str): return f"[=`[][.textid {_1}]: "
 def noteoutro(_1:str): return f"[.textid [=thinsp][=--][=thinsp]end {_1}]"
-def note(_1): return noteintro(text('Note')) + _1 + noteoutro(text('note'))
-def example(_1): return noteintro(text('Example')) + _1 + noteoutro(text('example'))
+def note(_1, x): return noteintro(text('Note') + ' ' + (x or count(note))) + _1 + noteoutro(text('note'))
+def example(_1): return noteintro(text('Example') + ' ' + count(example)) + _1 + noteoutro(text('example'))
 
 # Library function descriptions
 @applyTo(['?Fundesc'])
