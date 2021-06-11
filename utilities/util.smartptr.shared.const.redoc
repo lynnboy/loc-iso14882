@@ -30,10 +30,6 @@ constexpr shared_ptr() noexcept;
 [codeblock:end]
 
 [div:description]
-[para:effects]
-[:en] Constructs an empty [`shared_ptr] object.
-[:zh_CN] 构造一个空的 [`shared_ptr] 对象。
-
 [para:ensures]
 [:en] [`use_count() == 0 && get() == nullptr].
 [:zh_CN] [`use_count() == 0 && get() == nullptr]。
@@ -45,15 +41,28 @@ template<class Y> explicit shared_ptr(Y* p);
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`Y] shall be a complete type.
-[:zh_CN] [`Y] 应当为完整类型。
+[para:mandates]
+[:en] [`Y] is a complete type.
+[:zh_CN] [`Y] 为完整类型。
 
+[para:constraints]
+[:en] When [`T] is an array type, the expression [`delete`[`] p] is well-formed
+and either [`T] is [`U`[N`]] and [`Y(*)`[N`]] is convertible to [`T*], or [`T]
+is [`U`[`]] and [`Y(*)`[`]] is convertible to [`T*].
+[:zh_CN] 当 [`T] 为数组类型时，表达式 [`delete`[`] p] 良构且要么 [`T] 为
+[`U`[N`]] 并且 [`Y(*)`[N`]] 可以转换为 [`T*]，要么 [`T] 为 [`U`[`]] 且
+[`Y(*)`[`]] 可以转换为 [`T*]。
+
+[:en] When [`T] is not an array type, the expression [`delete p] is well-formed
+and [`Y*] is convertible to [`T*].
+[:en] 当 [`T] 不是数组类型时，表达式 [`delete p] 良构且 [`Y*] 可以转换为 [`T*]。
+
+[para:expects]
 [:en] The expression [`delete`[`] p], when [`T] is an array type, or [`delete p],
-when [`T] is not an array type, shall have well-defined behavior, and shall not
-throw exceptions.
+when [`T] is not an array type, has well-defined behavior, and does not throw
+exceptions.
 [:zh_CN] 当 [`T] 为数组类型时的表达式 [`delete`[`] p]，或者当 [`T] 不是数组类型
-时的表达式 [`delete p]，应当具有恰当定义的行为，且不能抛出异常。
+时的表达式 [`delete p]，具有恰当定义的行为，且不抛出异常。
 
 [para:effects]
 [:en] When [`T] is not an array type, constructs a [`shared_ptr] object that
@@ -83,21 +92,6 @@ constructor fails] exception when a resource other than memory could not be
 obtained.
 [:zh_CN] [`bad_alloc]，或者当无法获得内存之外的资源时抛出某个[?impldef 当
 [`shared_ptr] 的构造函数失败时抛出的异常类型]异常。
-
-[para:remarks]
-[:en] When [`T] is an array type, this constructor shall not participate in
-overload resolution unless the expression [`delete`[`] p] is well-formed and
-either [`T] is [`U`[N`]] and [`Y(*)`[N`]] is convertible to [`T*], or [`T] is
-[`U`[`]] and [`Y(*)`[`]] is convertible to [`T*].
-[:zh_CN] 当 [`T] 为数组类型时，除非表达式 [`delete`[`] p] 良构且要么 [`T] 为
-[`U`[N`]] 并且 [`Y(*)`[N`]] 可以转换为 [`T*]，要么 [`T] 为 [`U`[`]] 且
-[`Y(*)`[`]] 可以转换为 [`T*]，否则这个构造函数不能参与重载决议。
-
-[:en] When [`T] is not an array type, this constructor shall not participate in
-overload resolution unless the expression [`delete p] is well-formed and [`Y*]
-is convertible to [`T*].
-[:en] 当 [`T] 不是数组类型时，除非表达式 [`delete p] 良构且 [`Y*] 可以转换为
-[`T*]，否则这个构造函数不能参与重载决议。
 [div:end]
 
 [%@lib@ctor shared_ptr]
@@ -109,18 +103,39 @@ template<class D, class A> shared_ptr(nullptr_t p, D d, A a);
 [codeblock:end]
 
 [div:description]
-[para:requires]
+[para:constraints]
+[:en] [`is_move_constructible_v<D>] is [`true], and [`d(p)] is a well-formed
+expression.
+[:zh_CN] [`is_move_constructible_v<D>] 为 [`true]，并且 [`d(p)] 为良构表达式。
+
+[:en] For the first two overloads:
+[:zh_CN] 对于前两个重载：
+
+[list]
+[item]
+[:en] If [`T] is an array type, then either [`T] is [`U`[N`]] and [`Y(*)`[N`]]
+is convertible to [`T*], or [`T] is [`U`[`]] and [`Y(*)`[`]] is convertible to
+[`T*].
+[:zh_CN] 当 [`T] 为数组类型时，要么 [`T] 为 [`U`[N`]] 并且 [`Y(*)`[N`]] 可以转换
+为 [`T*]，要么 [`T] 为 [`U`[`]] 且 [`Y(*)`[`]] 可以转换为 [`T*]。
+
+[item]
+[:en] If [`T] is not an array type, then [`Y*] is convertible to [`T*].
+[:en] 当 [`T] 不是数组类型时，[`Y*] 可以转换为 [`T*]。
+[list:end]
+
+[para:expects]
 [:en] Construction of [`d] and a deleter of type [`D] initialized with
-[`std::move(d)] shall not throw exceptions.
-[:zh_CN] [`d] 和以 [`std::move(d)] 所初始化的 [`D] 类型的一个删除器的构造过程
-不能抛出异常。
+[`std::move(d)] do not throw exceptions.
+[:zh_CN] 以 [`d] 和以 [`std::move(d)] 所初始化的 [`D] 类型的一个删除器进行的构造
+不会抛出异常。
 
-[:en] The expression [`d(p)] shall have well defined behavior and shall not
-throw exceptions.
-[:zh_CN] 表达式 [`d(p)] 应当具有恰当定义的行为，且不能抛出异常。
+[:en] The expression [`d(p)] has well defined behavior and does not throw
+exceptions.
+[:zh_CN] 表达式 [`d(p)] 具有恰当定义的行为，且不抛出异常。
 
-[:en] [`A] shall meet the [^:oc Allocator] requirements ([#:tab#cpp17.allocator]).
-[:zh_CN] [`A] 应当满足 [^:oc Allocator] 的规定（[#:tab#cpp17.allocator]）。
+[:en] [`A] meets the [^:oc Allocator] requirements ([#:tab#cpp17.allocator]).
+[:zh_CN] [`A] 满足 [^:oc Allocator] 的规定（[#:tab#cpp17.allocator]）。
 
 [para:effects]
 [:en] Constructs a [`shared_ptr] object that owns the object [`p] and the
@@ -149,23 +164,6 @@ constructor fails] exception when a resource other than memory could not be
 obtained.
 [:zh_CN] [`bad_alloc]，或者当无法获得内存之外的资源时抛出某个[?impldef 当
 [`shared_ptr] 的构造函数失败时抛出的异常类型]异常。
-
-[para:remarks]
-[:en] When [`T] is an array type, this constructor shall not participate in
-overload resolution unless [`is_move_constructible_v<D>] is [`true], the
-expression [`d(p)] is well-formed, and either [`T] is [`U`[N`]] and [`Y(*)`[N`]]
-is convertible to [`T*], or [`T] is [`U`[`]] and [`Y(*)`[`]] is convertible to
-[`T*].
-[:zh_CN] 当 [`T] 为数组类型时，除非 [`is_move_constructible_v<D>] 为 [`true]，
-表达式 [`d(p)] 良构，而且要么 [`T] 为 [`U`[N`]] 并且 [`Y(*)`[N`]] 可以转换为
-[`T*]，要么 [`T] 为 [`U`[`]] 且 [`Y(*)`[`]] 可以转换为 [`T*]，否则这个构造函数
-不能参与重载决议。
-
-[:en] When [`T] is not an array type, this constructor shall not participate in
-overload resolution unless [`is_move_constructible_v<D>] is [`true], the
-expression [`d(p)] is well-formed, and [`Y*] is convertible to [`T*].
-[:en] 当 [`T] 不是数组类型时，除非 [`is_move_constructible_v<D>] 为 [`true]，
-表达式 [`d(p)] 良构且 [`Y*] 可以转换为 [`T*]，否则这个构造函数不能参与重载决议。
 [div:end]
 
 [%@lib@ctor shared_ptr]
@@ -212,10 +210,9 @@ template<class Y> shared_ptr(const shared_ptr<Y>& r) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:remarks]
-[:en] The second constructor shall not participate in overload resolution unless
-[`Y*] is compatible with [`T*].
-[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，否则第二个构造函数不能参与重载决议。
+[para:constraints]
+[:en] For the second constructor, [`Y*] is compatible with [`T*].
+[:zh_CN] 对于第二个构造函数，[`Y*] 与 [`T*] 兼容。
 
 [para:effects]
 [:en] If [`r] is empty, constructs an empty [`shared_ptr] object; otherwise,
@@ -235,10 +232,9 @@ template<class Y> shared_ptr(shared_ptr<Y>&& r) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:remarks]
-[:en] The second constructor shall not participate in overload resolution unless
-[`Y*] is compatible with [`T*].
-[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，否则第二个构造函数不能参与重载决议。
+[para:constraints]
+[:en] For the second constructor, [`Y*] is compatible with [`T*].
+[:zh_CN] 对于第二个构造函数，[`Y*] 与 [`T*] 兼容。
 
 [para:effects]
 [:en] Move constructs a [`shared_ptr] instance from [`r].
@@ -262,6 +258,10 @@ template<class Y> explicit shared_ptr(const weak_ptr<Y>& r);
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`Y*] is compatible with [`T*].
+[:zh_CN] [`Y*] 与 [`T*] 兼容。
+
 [para:effects]
 [:en] Constructs a [`shared_ptr] object that shares ownership with [`r] and
 stores a copy of the pointer stored in [`r].
@@ -278,11 +278,6 @@ stores a copy of the pointer stored in [`r].
 [para:throws]
 [:en] [`bad_weak_ptr] when [`r.expired()].
 [:zh_CN] 当 [`r.expired()] 时抛出 [`bad_weak_ptr]。
-
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless [`Y*]
-is compatible with [`T*].
-[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，否则这个构造函数不能参与重载决议。
 [div:end]
 
 [%@lib@ctor shared_ptr]
@@ -292,12 +287,11 @@ template<class Y, class D> shared_ptr(unique_ptr<Y, D>&& r);
 [codeblock:end]
 
 [div:description]
-[para:remark]
-[:en] This constructor shall not participate in overload resolution unless [`Y*]
-is compatible with [`T*] and [`unique_ptr<Y, D>::pointer] is convertible to
-[`element_type*].
-[:zh_CN] 除非 [`Y*] 与 [`T*] 兼容，且 [`unique_ptr<Y, D>::pointer] 可以转换为
-[`element_type*]，否则这个构造函数不能成员重载决议。
+[para:constraints]
+[:en] [`Y*] is compatible with [`T*] and [`unique_ptr<Y, D>::pointer] is
+convertible to [`element_type*].
+[:zh_CN] [`Y*] 与 [`T*] 兼容，且 [`unique_ptr<Y, D>::pointer] 可以转换为
+[`element_type*]。
 
 [para:effects]
 [:en] If [`r.get() == nullptr], equivalent to [`shared_ptr()].

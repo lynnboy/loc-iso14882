@@ -10,12 +10,18 @@ constexpr unique_ptr(nullptr_t) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`D] shall meet the [^:oc DefaultConstructible] requirements
-([#:tab#cpp17.defaultconstructible]), and that construction shall not throw an
+[para:expects]
+[:en] [`D] meets the [^:oc DefaultConstructible] requirements
+([#:tab#cpp17.defaultconstructible]), and that construction does not throw an
 exception.
-[:zh_CN] [`D] 应当满足 [^:oc DefaultConstructible] 的规定
-（[#:tab#cpp17.defaultconstructible]），且该构造过程不能抛出任何异常。
+[:zh_CN] [`D] 满足 [^:oc DefaultConstructible] 的规定
+（[#:tab#cpp17.defaultconstructible]），且该构造过程不抛出任何异常。
+
+[para:constraints]
+[:en] [`is_pointer_v<deleter_type>] is [`false] and
+[`is_default_constructible_v<deleter_type>] is [`true].
+[:zh_CN] [`is_pointer_v<deleter_type>] 为 [`false] 并且
+[`is_default_constructible_v<deleter_type>] 为 [`true]。
 
 [para:effects]
 [:en] Constructs a [`unique_ptr] object that owns nothing, value-initializing
@@ -29,14 +35,6 @@ the stored pointer and the stored deleter.
 
 [:en] [`get_deleter()] returns a reference to the stored deleter.
 [:zh_CN] [`get_deleter()] 返回一个所存储的删除器的引用。
-
-[para:remarks]
-[:en] If [`is_pointer_v<deleter_type>] is [`true] or
-[`is_default_constructible_v<deleter_type>] is [`false], this constructor shall
-not participate in overload resolution.
-[:zh_CN] 如果 [`is_pointer_v<deleter_type>] 为 [`true] 或
-[`is_default_constructible_v<deleter_type>] 为 [`false]，则这个构造函数不能参与
-重载决议。
 [div:end]
 
 [%@lib@ctor unique_ptr]
@@ -45,12 +43,23 @@ explicit unique_ptr(pointer p) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`D] shall meet the [^:oc DefaultConstructible] requirements
-([#:tab#cpp17.defaultconstructible]), and that construction shall not throw an
+[para:constraints]
+[:en] [`is_pointer_v<deleter_type>] is [`true] and
+[`is_default_constructible_v<deleter_type>] is [`true].
+[:zh_CN] [`is_pointer_v<deleter_type>] 为 [`false] 并且
+[`is_default_constructible_v<deleter_type>] 为 [`true]。
+
+[para:mandates]
+[:en] This constructor is not selected by class template argument deduction
+([#over.match.class.deduct]).
+[:zh_CN] 类模板实参推断（[#over.match.class.deduct]）不会选择这个构造函数。
+
+[para:expects]
+[:en] [`D] meets the [^:oc DefaultConstructible] requirements
+([#:tab#cpp17.defaultconstructible]), and that construction does not throw an
 exception.
-[:zh_CN] [`D] 应当满足 [^:oc DefaultConstructible] 的规定
-（[#:tab#cpp17.defaultconstructible]），且该构造过程不能抛出任何异常。
+[:zh_CN] [`D] 满足 [^:oc DefaultConstructible] 的规定
+（[#:tab#cpp17.defaultconstructible]），且该构造过程不抛出任何异常。
 
 [para:effects]
 [:en] Constructs a [`unique_ptr] which owns [`p], initializing the stored
@@ -64,20 +73,6 @@ pointer with [`p] and value-initializing the stored deleter.
 
 [:en] [`get_deleter()] returns a reference to the stored deleter.
 [:zh_CN] [`get_deleter()] 返回一个所存储的删除器的引用。
-
-[para:remarks]
-[:en] If [`is_pointer_v<deleter_type>] is [`true] or
-[`is_default_constructible_v<deleter_type>] is [`false], this constructor shall
-not participate in overload resolution.
-[:zh_CN] 如果 [`is_pointer_v<deleter_type>] 为 [`true] 或
-[`is_default_constructible_v<deleter_type>] 为 [`false]，则这个构造函数不能参与
-重载决议。
-
-[:en] If class template argument deduction ([#over.match.class.deduct]) would
-select the function template corresponding to this constructor, then the program
-is ill-formed.
-[:zh_CN] 如果类模板实参推断（[#over.match.class.deduct]）将会选择对应于这个构造
-函数的函数模板，则程序非良构。
 [div:end]
 
 [%@lib@ctor unique_ptr]
@@ -87,18 +82,27 @@ unique_ptr(pointer p, remove_reference_t<D>&& d) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] For the first constructor, if [`D] is not a reference type, [`D] shall
-meet the [^:oc CopyConstructible] requirements and such construction shall not
-exit via an exception.
-[:zh_CN] 对于第一个构造函数，如果 [`D] 不是引用类型，则 [`D] 应当满足
-[^:oc CopyConstructible] 的规定且这种构造不能以异常退出。
+[para:constraints]
+[:en] [`is_constructible_v<D, decltype(d)>] is [`true].
+[:zh_CN] [`is_constructible_v<D, decltype(d)>] 为 [`true]。
 
-[:en] For the second constructor, if [`D] is not a reference type, [`D] shall
-meet the [^:oc MoveConstructible] requirements and such construction shall not
-exit via an exception.
-[:zh_CN] 对于第二个构造函数，如果 [`D] 不是引用类型，则 [`D] 应当满足
-[^:oc MoveConstructible] 的规定且这种构造不能以异常退出。
+[para:mandates]
+[:en] These constructors are not selected by class template argument deduction
+([#over.match.class.deduct]).
+[:zh_CN] 类模板实参推断（[#over.match.class.deduct]）不会选择这些构造函数。
+
+[para:expects]
+[:en] For the first constructor, if [`D] is not a reference type, [`D] meets the
+[^:oc CopyConstructible] requirements and such construction does not exit via
+an exception.
+[:zh_CN] 对于第一个构造函数，如果 [`D] 不是引用类型，则 [`D] 满足
+[^:oc CopyConstructible] 的规定且这种构造不以异常退出。
+
+[:en] For the second constructor, if [`D] is not a reference type, [`D] meets
+the [^:oc MoveConstructible] requirements and such construction does not exit
+via an exception.
+[:zh_CN] 对于第二个构造函数，如果 [`D] 不是引用类型，则 [`D] 满足
+[^:oc MoveConstructible] 的规定且这种构造不以异常退出。
 
 [para:effects]
 [:en] Constructs a [`unique_ptr] object which owns [`p], initializing the stored
@@ -106,15 +110,6 @@ pointer with [`p] and initializing the deleter from
 [`std::forward<decltype(d)>(d)].
 [:zh_CN] 构造一个拥有 [`p] 的 [`unique_ptr] 对象，以 [`p] 初始化所存储的指针并以
 [`std::forward<decltype(d)>(d)] 初始化删除器。
-
-[para:remarks]
-[:en] If [`D] is a reference type, the second constructor is defined as deleted.
-[:zh_CN] 当 [`D] 为引用类型时，第二个构造函数被定义为弃置的。
-
-[:en] These constructors shall not participate in overload resolution unless
-[`is_constructible_v<D, decltype(d)>] is [`true].
-[:zh_CN] 除非 [`is_constructible_v<D, decltype(d)>] 为 [`true]，否则这些构造函数
-不能参与重载决议。
 
 [para:ensures]
 [:en] [`get() == p].
@@ -128,11 +123,8 @@ the lvalue [`d].
 [:zh_CN] 若 [`D] 是引用类型，则 [`get_deleter()] 返回一个指代左值 [`d] 的引用。
 
 [para:remarks]
-[:en] If class template argument deduction ([#over.match.class.deduct]) would
-select a function template corresponding to either of these constructors, then
-the program is ill-formed.
-[:zh_CN] 如果类模板实参推断（[#over.match.class.deduct]）将会选择对应于这些构造
-函数中任一个的函数模板，则程序非良构。
+[:en] If [`D] is a reference type, the second constructor is defined as deleted.
+[:zh_CN] 当 [`D] 为引用类型时，第二个构造函数被定义为弃置的。
 
 [para]
 [begin:example]
@@ -162,15 +154,15 @@ unique_ptr(unique_ptr&& u) noexcept;
 [:en] [`is_move_constructible_v<D>] is [`true].
 [:zh_CN] [`is_move_constructible_v<D>] 为 [`true]。
 
-[para:requires]
-[:en] If [`D] is not a reference type, [`D] shall meet the
-[^:oc MoveConstructible] requirements ([#:tab#cpp17.moveconstructible]).
-[:zh_CN] 若 [`D] 不是引用类型，则 [`D] 应当满足 [^:oc MoveConstructible] 的规定
+[para:expects]
+[:en] If [`D] is not a reference type, [`D] meets the [^:oc MoveConstructible]
+requirements ([#:tab#cpp17.moveconstructible]).
+[:zh_CN] 若 [`D] 不是引用类型，则 [`D] 满足 [^:oc MoveConstructible] 的规定
 （[#:tab#cpp17.moveconstructible]）。
 
-[:en] Construction of the deleter from an rvalue of type [`D] shall not throw an
+[:en] Construction of the deleter from an rvalue of type [`D] does not throw an
 exception.
-[:zh_CN] 从某个类型 [`D] 的右值构造删除器时不能抛出任何异常。
+[:zh_CN] 从某个类型 [`D] 的右值构造删除器时不抛出任何异常。
 
 [para:effects]
 [:en] Constructs a [`unique_ptr] from [`u].
@@ -211,21 +203,7 @@ template<class U, class E> unique_ptr(unique_ptr<U, E>&& u) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] If [`E] is not a reference type, construction of the deleter from an
-rvalue of type [`E] shall be well-formed and shall not throw an exception.
-[:zh_CN] 若 [`E] 不是引用类型，则从类型 [`E] 的右值构造删除器应当是良构的，且
-不能抛出任何异常。
-
-[:en] Otherwise, [`E] is a reference type and construction of the deleter from
-an lvalue of type [`E] shall be well-formed and shall not throw an exception.
-[:zh_CN] 否则，[`E] 为引用类型，从类型 [`E] 的左值构造删除器应当是良构的，且不能
-抛出任何异常。
-
-[para:remarks]
-[:en] This constructor shall not participate in overload resolution unless:
-[:zh_CN] 该构造函数不能参与重载决议，除非：
-
+[para:constraints]
 [list]
 [item]
 [:en] [`unique_ptr<U, E>::pointer] is implicitly convertible to [`pointer],
@@ -239,6 +217,15 @@ an lvalue of type [`E] shall be well-formed and shall not throw an exception.
 [:zh_CN] 或者 [`D] 为引用类型且 [`E] 与 [`D] 是相同类型，或者 [`D] 并非引用类型
 且 [`E] 可以隐式转换为 [`D]。
 [list:end]
+
+[para:expects]
+[:en] If [`E] is not a reference type, construction of the deleter from an
+rvalue of type [`E] is well-formed and does not throw an exception.
+[:zh_CN] 若 [`E] 不是引用类型，则从类型 [`E] 的右值构造删除器良构且不抛出任何异常。
+
+[:en] Otherwise, [`E] is a reference type and construction of the deleter from
+an lvalue of type [`E] is well-formed and does not throw an exception.
+[:zh_CN] 否则，[`E] 为引用类型，从类型 [`E] 的左值构造删除器良构且不抛出任何异常。
 
 [para:effects]
 [:en] Constructs a [`unique_ptr] from [`u].

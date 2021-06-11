@@ -5,12 +5,12 @@
 
 [para]
 [:en] The common requirements that apply to all [`make_shared],
-[`allocate_shared], [`make_shared_default_init], and
-[`allocate_shared_default_init] overloads, unless specified otherwise, are
+[`allocate_shared], [`make_shared_for_overwrite], and
+[`allocate_shared_for_overwrite] overloads, unless specified otherwise, are
 described below.
 [:zh_CN] 除非另行指明，下文描述了适用于 [`make_shared]、[`allocate_shared]、
-[`make_shared_default_init] 和 [`allocate_shared_default_init] 的所有重载的一般
-规定。
+[`make_shared_for_overwrite] 和 [`allocate_shared_for_overwrite] 的所有重载的
+一般规定。
 
 [%@lib make_shared]
 [%@lib allocate_shared]
@@ -20,15 +20,15 @@ template<class T, ...>
 template<class T, class A, ...>
   shared_ptr<T> allocate_shared(const A& a, [[redoc("^>")]]args);
 template<class T, ...>
-  shared_ptr<T> make_shared_default_init([[redoc("^>")]]args);
+  shared_ptr<T> make_shared_for_overwrite([[redoc("^>")]]args);
 template<class T, class A, ...>
-  shared_ptr<T> allocate_shared_default_init(const A& a, [[redoc("^>")]]args);
+  shared_ptr<T> allocate_shared_for_overwrite(const A& a, [[redoc("^>")]]args);
 [codeblock:end]
 
 [div:description]
-[para:requires]
-[:en] [`A] shall meet the [^:oc Allocator] requirements ([#:tab#cpp17.allocator]).
-[:zh_CN] [`A] 应当满足 [^:oc Allocator] 的规定（[#:tab#cpp17.allocator]）。
+[para:expects]
+[:en] [`A] meets the [^:oc Allocator] requirements ([#:tab#cpp17.allocator]).
+[:zh_CN] [`A] 满足 [^:oc Allocator] 的规定（[#:tab#cpp17.allocator]）。
 
 [para:effects]
 [:en] Allocates memory for an object of type [`T] (or [`U`[N`]] when [`T] is
@@ -41,9 +41,9 @@ overload).
 overload.
 [:zh_CN] 根据具体重载苏哦指定的，以 [^args] 对该对象进行初始化。
 
-[:en] The [`allocate_shared] and [`allocate_shared_default_init] templates use
+[:en] The [`allocate_shared] and [`allocate_shared_for_overwrite] templates use
 a copy of [`a] (rebound for an unspecified [`value_type]) to allocate memory.
-[:zh_CN] [`allocate_shared] 和 [`allocate_shared_default_init] 模板利用 [`a] 的
+[:zh_CN] [`allocate_shared] 和 [`allocate_shared_for_overwrite] 模板利用 [`a] 的
 一个副本（重绑定到某个未指明的 [`value_type]）进行内存分配。
 
 [:en] If an exception is thrown, the functions have no effect.
@@ -145,11 +145,11 @@ rebound copy of the allocator [`a] passed to [`allocate_shared] such that its
 
 [item]
 [:en] When a (sub)object of non-array type [`U] is initialized by
-[`make_shared_default_init] or [`allocate_shared_default_init], it is
+[`make_shared_for_overwrite] or [`allocate_shared_for_overwrite], it is
 initialized via the expression [`::new(pv) U], where [`pv] has type [`void*] and
 points to storage suitable to hold an object of type [`U].
-[:zh_CN] 如果非数组类型 [`U] 的（子）对象是由 [`make_shared_default_init] 或
-[`allocate_shared_default_init] 初始化的，则它是通过表达式 [`::new(pv) U] 进行
+[:zh_CN] 如果非数组类型 [`U] 的（子）对象是由 [`make_shared_for_overwrite] 或
+[`allocate_shared_for_overwrite] 初始化的，则它是通过表达式 [`::new(pv) U] 进行
 初始化的，其中 [`pv] 的类型为 [`void*] 且指向适合于持有一个 [`U] 类型对象的存储。
 
 [item]
@@ -204,6 +204,10 @@ template<class T, class A, class... Args>
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`T] is not an array type.
+[:zh_CN] [`T] 不是数组类型。
+
 [para:returns]
 [:en] A [`shared_ptr] to an object of type [`T] with an initial value
 [`T(forward<Args>(args)...)].
@@ -211,10 +215,6 @@ template<class T, class A, class... Args>
 [`T(forward<Args>(args)...)]。
 
 [para:remarks]
-[:en] These overloads shall only participate in overload resolution when [`T]
-is not an array type.
-[:zh_CN] 仅当 [`T] 不是数组类型时，这些重载才能参与重载决议。
-
 [:en] The [`shared_ptr] constructor called by these functions enables
 [`shared_from_this] with the address of the newly constructed object of type [`T].
 [:zh_CN] 这些函数所调用的 [`shared_ptr] 构造函数以新创建的 [`T] 类型对象的地址
@@ -244,16 +244,15 @@ template<class T, class A>
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`T] is of the form [`U`[`]].
+[:zh_CN] [`T] 的形式为 [`U`[`]]。
+
 [para:returns]
 [:en] A [`shared_ptr] to an object of type [`U`[N`]] with a default initial
 value, where [`U] is [`remove_extent_t<T>].
 [:zh_CN] 指向一个 [`U`[N`]] 类型并具有默认初始值的对象的 [`shared_ptr]，其中 [`U]
 为 [`remove_extent_t<T>]。
-
-[para:remarks]
-[:en] These overloads shall only participate in overload resolution when [`T]
-is of the form [`U`[`]].
-[:zh_CN] 仅当 [`T] 的形式为 [`U`[`]] 时，这些重载才能参与重载决议。
 
 [para]
 [begin:example]
@@ -280,14 +279,13 @@ template<class T, class A>
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`T] is of the form [`U`[N`]].
+[:zh_CN] [`T] 的形式为 [`U`[N`]]。
+
 [para:returns]
 [:en] A [`shared_ptr] to an object of type [`T] with a default initial value.
 [:zh_CN] 指向一个 [`T] 类型并具有默认初始值的对象的 [`shared_ptr]。
-
-[para:remarks]
-[:en] These overloads shall only participate in overload resolution when [`T]
-is of the form [`U`[N`]].
-[:zh_CN] 仅当 [`T] 的形式为 [`U`[N`]] 时，这些重载才能参与重载决议。
 
 [para]
 [begin:example]
@@ -316,16 +314,15 @@ template<class T, class A>
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`T] is of the form [`U`[`]].
+[:zh_CN] [`T] 的形式为 [`U`[`]]。
+
 [para:returns]
 [:en] A [`shared_ptr] to an object of type [`U`[N`]], where [`U] is
 [`remove_extent_t<T>] and each array element has an initial value of [`u].
 [:zh_CN] 指向一个 [`U`[N`]] 类型对象的 [`shared_ptr]，其中 [`U] 为
 [`remove_extent_t<T>]，且每个数组元素都具有初始值 [`u]。
-
-[para:remarks]
-[:en] These overloads shall only participate in overload resolution when [`T]
-is of the form [`U`[`]].
-[:zh_CN] 仅当 [`T] 的形式为 [`U`[`]] 时，这些重载才能参与重载决议。
 
 [para]
 [begin:example]
@@ -356,16 +353,15 @@ template<class T, class A>
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`T] is of the form [`U`[N`]].
+[:zh_CN] [`T] 的形式为 [`U`[N`]]。
+
 [para:returns]
 [:en] A [`shared_ptr] to an object of type [`T], where each array element of
 type [`remove_extent_t<T>] has an initial value of [`u].
 [:zh_CN] 指向一个 [`T] 类型对象的 [`shared_ptr]，其中每个 [`remove_extent_t<T>]
 类型的数组元素都具有初始值 [`u]。
-
-[para:remarks]
-[:en] These overloads shall only participate in overload resolution when [`T]
-is of the form [`U`[N`]].
-[:zh_CN] 仅当 [`T] 的形式为 [`U`[N`]] 时，这些重载才能参与重载决议。
 
 [para]
 [begin:example]
@@ -387,9 +383,9 @@ shared_ptr<vector<int>[4]> r = make_shared<vector<int>[4]>({1, 2});
 [%@lib allocate_shared]
 [codeblock:declaration]
 template<class T>
-  shared_ptr<T> make_shared_default_init();
+  shared_ptr<T> make_shared_for_overwrite();
 template<class T, class A>
-  shared_ptr<T> allocate_shared_default_init(const A& a);
+  shared_ptr<T> allocate_shared_for_overwrite(const A& a);
 [codeblock:end]
 
 [div:description]
@@ -405,11 +401,11 @@ template<class T, class A>
 [begin:example]
 [codeblock]
 struct X { double data[1024]; };
-shared_ptr<X> p = make_shared_default_init<X>();
+shared_ptr<X> p = make_shared_for_overwrite<X>();
   // [:en] [`shared_ptr] to a default-initialized [`X], where each element in [`X::data] has an indeterminate value
   // [:zh_CN] 指向一个默认初始化的 [`X] 的 [`shared_ptr]，其中 [`X::data] 中的每个元素都具有不确定的值
 
-shared_ptr<double[1024]> q = make_shared_default_init<double[1024]>();
+shared_ptr<double[1024]> q = make_shared_for_overwrite<double[1024]>();
   // [:en] [`shared_ptr] to a default-initialized [`double`[1024`]], where each element has an indeterminate value
   // [:zh_CN] 指向一个默认初始化的 [`double`[1024`]] 的 [`shared_ptr]，其中的每个元素都具有不确定的值
 [codeblock:end]
@@ -420,9 +416,9 @@ shared_ptr<double[1024]> q = make_shared_default_init<double[1024]>();
 [%@lib allocate_shared]
 [codeblock:declaration]
 template<class T>
-  shared_ptr<T> make_shared_default_init(size_t N);
+  shared_ptr<T> make_shared_for_overwrite(size_t N);
 template<class T, class A>
-  shared_ptr<T> allocate_shared_default_init(const A& a, size_t N);
+  shared_ptr<T> allocate_shared_for_overwrite(const A& a, size_t N);
 [codeblock:end]
 
 [div:description]
@@ -439,7 +435,7 @@ template<class T, class A>
 [para]
 [begin:example]
 [codeblock]
-shared_ptr<double[]> p = make_shared_default_init<double[]>(1024);
+shared_ptr<double[]> p = make_shared_for_overwrite<double[]>(1024);
   // [:en] [`shared_ptr] to a default-initialized [`double`[1024`]], where each element has an indeterminate value
   // [:zh_CN] 指向一个默认初始化的 [`double`[1024`]] 的 [`shared_ptr]，其中的每个元素都具有不确定的值
 [codeblock:end]

@@ -48,12 +48,12 @@ width, alignment, padding, and decimal precision.
 
 [rule@fmt width [:zh_CN] 宽度 ]
     [| positive-integer ]
-    [| [`{] arg-id [`}] ]
+    [| [`{] [~:opt arg-id] [`}] ]
 [rule:end]
 
 [rule@fmt precision [:zh_CN] 精度 ]
     [| [`.] nonnegative-integer ]
-    [| [`.] [`{] arg-id [`}] ]
+    [| [`.] [`{] [~:opt arg-id] [`}] ]
 [rule:end]
 
 [rule:oneof@fmt type [:zh_CN] 类型 ]
@@ -77,6 +77,9 @@ alignment option are absent.
 [end:note]
 
 [para]
+[:en] The [~@fmt align] specifier applies to all argument types.
+[:zh_CN] [~@fmt 对齐]说明符适用于所有实参类型。
+
 [:en] The meaning of the various alignment options is as specified in
 [#:tab#format.align].
 [:zh_CN] 各个对齐选项的含义由 [#:tab#format.align] 指定。
@@ -111,16 +114,16 @@ the size of the content and the alignment option has no effect.
 [table:grid#format.align
     [:en] Meaning of [~@fmt align] options
     [:zh_CN] [~@fmt 对其] 选项的含义
-    [|@code
+    [|
         [:en] Option
         [:zh_CN] 选项 ]
     [|  [:en] Meaning
         [:zh_CN] 含义 ]
 ]
 
-[|] <
-[|] [:en] Forces the field to be left-aligned within the available space.
-    [:zh_CN] 强制字段在可用空间内靠左对齐。
+[|] [`<]
+[|] [:en] Forces the field to be aligned to the start of the available space.
+    [:zh_CN] 强制字段对齐到可用空间的开头。
 
     [:en] This is the default for non-arithmetic types, [`charT], and [`bool],
     unless an integer presentation type is specified.
@@ -128,9 +131,9 @@ the size of the content and the alignment option has no effect.
     表现类型。
 [-]
 
-[|] >
-[|] [:en] Forces the field to be right-aligned within the available space.
-    [:zh_CN] 强制字段在可用空间内靠右对齐。
+[|] [`>]
+[|] [:en] Forces the field to be aligned to the end of the available space.
+    [:zh_CN] 强制字段对齐到可用空间的末尾。
 
     [:en] This is the default for arithmetic types other than [`charT] and
     [`bool] or when an integer presentation type is specified.
@@ -138,7 +141,7 @@ the size of the content and the alignment option has no effect.
     类型时是默认选项。
 [-]
 
-[|] ^
+[|] [`^]
 [|] [:en] Forces the field to be centered within the available space by
     inserting [$\bigl\lfloor \frac{n}{2} \bigr\rfloor] characters before and
     [$\bigl\lceil \frac{n}{2} \bigr\rceil] characters after the value, where
@@ -170,20 +173,32 @@ the size of the content and the alignment option has no effect.
 
 [|] [`+]
 [|] [:en] Indicates that a sign should be used for both non-negative and
-negative numbers.
+    negative numbers.
     [:zh_CN] 指定应当对于非负数和负数都使用正负号。
+
+    [:en] The [`+] sign is inserted before the output of [`to_chars] for
+    non-negative numbers other than negative zero.
+    [:zh_CN]  对于除了负零之外的非负数，在 [`to_chars] 输出之前插入 [`+] 号。
+
+    [begin:note]
+    [:en] For negative numbers and negative zero the output of [`to_chars] will
+    already contain the sign so no additional transformation is performed.
+    [:zh_CN] 对于负数和负零，[`to_chars] 的输出已经会包含符号，因而无需进行额外
+    的变换。
+    [end:note]
 [-]
 
 [|] [`-]
-[|] [:en] Indicates that a sign should be used only for negative numbers (this
-    is the default behavior).
-    [:zh_CN] 指定仅应当对负数都使用正负号（此为默认行为）。
+[|] [:en] Indicates that a sign should be used for negative numbers and negative
+    zero only (this is the default behavior).
+    [:zh_CN] 指定仅应当对负数和负零使用正负号（此为默认行为）。
 [-]
 
 [|] [:en] space [:zh_CN] 空格
-[|] [:en] Indicates that a leading space should be used for non-negative numbers,
-    and a minus sign for negative numbers.
-    [:zh_CN] 指定对于非负数应当使用前导空格，而对于负数则使用减号。
+[|] [:en] Indicates that a leading space should be used for non-negative numbers
+    other than negative zero, and a minus sign for negative numbers and negative
+    zero.
+    [:zh_CN] 指定应当对除负零之外的非负数使用前导空格，对于负数和负零使用减号。
 [-]
 [table:end]
 
@@ -211,21 +226,23 @@ string s3 = format("{0:},{0:+},{0:-},{0: }", nan);      // [:en] value of [`s3] 
 to be used for the conversion.
 [:zh_CN] [`#] 选项导致在转换中采用[+替代形式[%替代形式[!格式字符串]]]。
 
-[:en] This option is only valid for arithmetic types other than [`charT] and
-[`bool] or when an integer presentation type is specified.
-[:zh_CN] 这个选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
-表现时有效。
+[:en] This option is valid for arithmetic types other than [`charT] and [`bool]
+or when an integer presentation type is specified, and not otherwise.
+[:zh_CN] 这个选项对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数表示
+类型时有效，否则无效。
 
-[:en] For integral types, the alternate form adds the base prefix (if any)
-specified in [#:tab#format.type.int] to the output value.
-[:zh_CN] 对于整型类型，替代形式中向输出值中添加 [#:tab#format.type.int] 中指定的
-基数前缀（如果有）。
+[:en] For integral types, the alternate form inserts the base prefix (if any)
+specified in [#:tab#format.type.int] into the output after the sign character
+(possibly space) if there is one, or before the output of [`to_chars] otherwise.
+[:zh_CN] 对于整型类型，替代形式中将 [#:tab#format.type.int] 中指定的基数前缀
+（如果有）插入到输出中，当有一个符号字符（可能为空格）时在其之后，否则在
+[`to_chars] 的输出之前。
 
 [:en] For floating-point types, the alternate form causes the result of the
-conversion to always contain a decimal-point character, even if no digits follow
-it.
-[:zh_CN] 对于浮点类型，替代形式导致转换的结果总是包含小数点字符，即便其后没有
-任何数字。
+conversion of finite values to always contain a decimal-point character, even if
+no digits follow it.
+[:zh_CN] 对于浮点类型，替代形式导致对有穷值的转换的结果总是包含小数点字符，即便
+其后没有任何数字。
 
 [:en] Normally, a decimal-point character appears in the result of these
 conversions only if a digit follows it.
@@ -236,6 +253,19 @@ from the result.
 [:zh_CN] 此外，对于 [`g] 和 [`G] 转换，不会从结果中移除末尾的零。
 
 [para]
+[:en] If [`{ [~:opt@fmt arg-id] }] is used in a [~@fmt width] or
+[~@fmt precision], the value of the corresponding formatting argument is used in
+its place.
+[:zh_CN] 如果[~@fmt 宽度]或[~@fmt 精度]中使用了 [`{ [~:opt@fmt 实参标识] }]，则
+在其位置上使用对应的格式化实参的值。
+
+[:en] If the corresponding formatting argument is not of integral type, or its
+value is negative for [~@fmt precision] or non-positive for [~@fmt width],
+an exception of type [`format_error] is thrown.
+[:zh_CN] 如果其对应格式化实参不是整形类型，或者对于[~@fmt 精度]其值为负数或对于
+[~@fmt 宽度]为非正数，则抛出 [`format_error] 类型的异常。
+
+[para]
 [:en] The [~@fmt positive-integer] in [~@fmt width] is a decimal integer
 defining the minimum field width.
 [:zh_CN] [~@fmt 宽度]中的[~@fmt 正整数]是定义最小字段宽度的十进制整数。
@@ -244,6 +274,71 @@ defining the minimum field width.
 the field width is determined based on the content of the field.
 [:zh_CN] 如果未指定[~@fmt 宽度]，则没有最小字段宽度，字段的宽度基于该字段内容
 确定。
+
+[para]
+[:en]
+[%string[!width]]
+The [+width] of a string is defined as the estimated number of column positions
+appropriate for displaying it in a terminal.
+[:zh_CN]
+[%字符串[!宽度]]
+字符串的[+宽度]定义为适用于将其在终端中显示时的列位置的估计数量。
+
+[begin:note]
+[:en] This is similar to the semantics of the POSIX [`wcswidth] function.
+[:zh_CN] 这类似于 POSIX 的 [`wcswidth] 函数的语义。
+[end:note]
+
+[para]
+[:en] For the purposes of width computation, a string is assumed to be in
+a locale-independent, implementation-defined encoding.
+[:zh_CN] 为进行宽度计算，假定字符串具有一种地域无关的，由实现定义的编码。
+
+[:en] Implementations should use a Unicode encoding on platforms capable of
+displaying Unicode text in a terminal.
+[:zh_CN] 各实现在有能力在终端中显示 Unicode 文本的平台上应当使用 Unicode 编码。
+
+[begin:note]
+[:en] This is the case for Windows-based and many POSIX-based operating systems.
+[:zh_CN] 这正是基于 Windows 和许多基于 POSIX 的操作系统的情况。
+[end:note]
+
+[para]
+[:en] For a string in a Unicode encoding, implementations should estimate the
+width of a string as the sum of estimated widths of the first code points in its
+extended grapheme clusters.
+[:zh_CN] 对于以 Unicode 编码的字符串，实现对字符串的宽度估计，应当为其扩展图形群
+中的第一个代码点的估计宽度的和。
+
+[:en] The extended grapheme clusters of a string are defined by UAX #29.
+[:zh_CN] 字符串的扩展图形群在 UAX #29 中定义。
+
+[:en] The estimated width of the following code points is 2:
+[:zh_CN] 以下代码点的估计宽度为 2：
+[list]
+[item] [`U+1100-U+115F]
+[item] [`U+2329-U+232A]
+[item] [`U+2E80-U+303E]
+[item] [`U+3040-U+A4CF]
+[item] [`U+AC00-U+D7A3]
+[item] [`U+F900-U+FAFF]
+[item] [`U+FE10-U+FE19]
+[item] [`U+FE30-U+FE6F]
+[item] [`U+FF00-U+FF60]
+[item] [`U+FFE0-U+FFE6]
+[item] [`U+1F300-U+1F64F]
+[item] [`U+1F900-U+1F9FF]
+[item] [`U+20000-U+2FFFD]
+[item] [`U+30000-U+3FFFD]
+[list:end]
+
+[:en] The estimated width of other code points is 1.
+[:zh_CN] 其他代码点的估计宽度为 1。
+
+[para]
+[:en]
+For a string in a non-Unicode encoding, the width of a string is unspecified.
+[:zh_CN] 对于非 Unicode 编码的字符串，未指名字符串宽度。
 
 [para]
 [:en] A zero ([`0]) character preceding the [~@fmt width] field pads the field
@@ -284,9 +379,15 @@ defining the precision or maximum field size.
 [:en] For floating-point types this field specifies the formatting precision.
 [:zh_CN] 对于浮点类型，该字段指定格式化精度。
 
-[:en] For string types it specifies how many characters will be used from the
-string.
-[:zh_CN] 对于字符串类型，它指定将从字符串中使用多少字符。
+[:en] For string types, this field provides an upper bound for the estimated
+width of the prefix of the input string that is copied into the output.
+[:zh_CN] 对于字符串类型，该字段为复制到输出中的输入字符串前缀的估计宽度提供上限。
+
+[:en] For a string in a Unicode encoding, the formatter copies to the output
+the longest prefix of whole extended grapheme clusters whose estimated width is
+no greater than the precision.
+[:zh_CN] 对于以 Unicode 编码的字符串，格式化器把估计宽度不大于该精度的完整扩展
+图形群的最长前缀复制到输出中。
 
 [para]
 [:en] When the [`L] option is used, the form used for the conversion is called

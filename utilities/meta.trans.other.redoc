@@ -42,13 +42,13 @@ struct aligned_storage;
     [:zh_CN] 成员 typedef [`type] 应当为适合用作其大小最大为 [`Len] 且其对齐能够
     整除 [`Align] 的任意对象的未初始化存储的平凡标准布局类型。
 
-    [para:requires]
-    [:en] [`Len] shall not be zero.
-    [:zh_CN] [`Len] 不能为零。
+    [para:mandates]
+    [:en] [`Len] is not zero.
+    [:zh_CN] [`Len] 不为零。
 
-    [:en] [`Align] shall be equal to [`alignof(T)] for some type [`T] or to
+    [:en] [`Align] is equal to [`alignof(T)] for some type [`T] or to
     [^default-alignment].
-    [:zh_CN] [`Align] 应当对某类型 [`T] 等于 [`alignof(T)] 或者等于
+    [:zh_CN] [`Align] 对某类型 [`T] 等于 [`alignof(T)] 或者等于
     [^default-alignment]。
 [-]
 
@@ -69,13 +69,13 @@ struct aligned_storage;
     [:zh_CN] 静态成员 [`alignment_value] 应当为 [`size_t] 类型的整型常量，其值为
     在 [`Types] 中列出的所有类型中最严格的对齐。
 
-    [para:requires]
+    [para:mandates]
     [:en] At least one type is provided.
     [:zh_CN] 应当至少提供一个类型。
 
-    [:en] Each type in the template parameter pack [`Types] shall be a complete
-    object type,.
-    [:zh_CN] 模板形参包组 [`Types] 中的每个类型都应当是完整的对象类型。
+    [:en] Each type in the template parameter pack [`Types] is a complete object
+    type,.
+    [:zh_CN] 模板形参包组 [`Types] 中的每个类型都是完整的对象类型。
 [-]
 
 [%@lib remove_cvref]
@@ -95,14 +95,14 @@ struct aligned_storage;
 [|] [:en] Let [`U] be [`remove_reference_t<T>].
     [:zh_CN] 令 [`U] 为 [`remove_reference_t<T>]。
 
-    [:en] If [`is_array_v<U>] is [`true], the member typedef [`type] shall equal
+    [:en] If [`is_array_v<U>] is [`true], the member typedef [`type] equals
     [`remove_extent_t<U>*].
-    [:zh_CN] 若 [`is_array_v<U>] 为 [`true]，则成员 typedef [`type] 应当等于
+    [:zh_CN] 若 [`is_array_v<U>] 为 [`true]，则成员 typedef [`type] 等于
     [`remove_extent_t<U>*]。
 
-    [:en] If [`is_function_v<U>] is [`true], the member typedef [`type] shall
-    equal [`add_pointer_t<U>].
-    [:zh_CN] 若 [`is_function_v<U>] 为 [`true]，则成员 typedef [`type] 应当等于
+    [:en] If [`is_function_v<U>] is [`true], the member typedef [`type] equal
+    [`add_pointer_t<U>].
+    [:zh_CN] 若 [`is_function_v<U>] 为 [`true]，则成员 typedef [`type] 等于
     [`add_pointer_t<U>]。
 
     [:en] Otherwise the member typedef [`type] equals [`remove_cv_t<U>].
@@ -143,9 +143,9 @@ struct aligned_storage;
 [|]
 [`template<class... T>] [`struct common_type;]
 [|] [:en] Unless this trait is specialized (as specified in Note B, below), the
-    member [`type] shall be defined or omitted as specified in Note A, below.
-    [:zh_CN] 除非这个特征被（如表后注释 A 所述）特化，否则成员 [`type] 应当按
-    表后注释 A 所述进行定义或省略。
+    member [`type] is defined or omitted as specified in Note A, below.
+    [:zh_CN] 除非这个特征被（如表后注释 A 所述）特化，否则成员 [`type] 按表后
+    注释 A 所述进行定义或省略。
 
     [:en] If it is omitted, there shall be no member [`type].
     [:zh_CN] 若它被省略，则不应当存在成员 [`type]。
@@ -227,11 +227,30 @@ struct aligned_storage;
     [:zh_CN] 这种副作用并不在其“直接语境”中，且可能导致程序非良构。
     [end:note]
 
-    [para:requires]
-    [:en] [`Fn] and all types in the template parameter pack [`ArgTypes] shall
-    be complete types, [=cv] [`void], or arrays of unknown bound.
-    [:zh_CN] [`Fn] 和模板形参包组 [`ArgTypes] 中的所有类型都应当是完整类型，
+    [para:expects]
+    [:en] [`Fn] and all types in the template parameter pack [`ArgTypes] are
+    complete types, [=cv] [`void], or arrays of unknown bound.
+    [:zh_CN] [`Fn] 和模板形参包组 [`ArgTypes] 中的所有类型都是完整类型，
     [=cv] [`void]，或者未知边界的数组。
+[-]
+
+[%@lib unwrap_reference]
+[|]
+[`template<class T>] [`struct unwrap_reference;]
+[|] [:en] If [`T] is a specialization [`reference_wrapper<X>] for some type [`X],
+    the member typedef [`type] of [`unwrap_reference<T>] is [`X&], otherwise it
+    is [`T].
+    [:zh_CN] 若 [`T] 是针对某个类型 [`X] 的特例 [`reference_wrapper<X>]，则
+    [`reference_wrapper<T>] 的成员 typedef [`type] 为 [`X&]，否则它是 [`T]。
+[-]
+
+[%@lib unwrap_ref_decay]
+[|]
+[`template<class T>] [`struct unwrap_ref_decay;]
+[|] [:en] The member typedef [`type] of [`unwrap_ref_decay<T>] denotes the type
+    [`unwrap_reference_t<decay_t<T>>].
+    [:zh_CN] [`unwrap_ref_decay<T>] 的成员 typedef [`type] 代表类型
+    [`unwrap_reference_t<decay_t<T>>]。
 [-]
 [table:end]
 
@@ -250,6 +269,15 @@ struct aligned_storage {
 };
 [codeblock:end]
 [end:note]
+
+[para]
+[:en] In addition to being available via inclusion of the [`<type_traits>]
+header, the templates [`unwrap_reference], [`unwrap_ref_decay],
+[`unwrap_reference_t], and [`unwrap_ref_decay_t] are available when the header
+[`<functional>] ([#functional.syn]) is included.
+[:zh_CN] 模板 [`unwrap_reference]，[`unwrap_ref_decay]，[`unwrap_reference_t]，
+以及 [`unwrap_ref_decay_t] 除了通过包含头文件 [`<type_traits>] 而可用之外，
+还可以在包含了头文件 [`<functional>]（[#functional.syn]）时可用。
 
 [%@lib common_type]
 [para]
@@ -379,12 +407,6 @@ let [`C] denote the same type, if any, as [`common_type_t<D1, D2>].
 [`common_type<D1, D2>].
 [:zh_CN] 如果存在特例 [`common_type<D1, D2>]，则以下各项都不适用。
 [end:note]
-[item]
-[:en] Otherwise, if both [`D1] and [`D2] denote comparison category types
-([#cmp.categories.pre]), let [`C] denote the common comparison type
-([#class.spaceship]) of [`D1] and [`D2].
-[:zh_CN] 否则，若 [`D1] 和 [`D2] 都代表比较类别类型（[#cmp.categories.pre]），令
-[`C] 代表 [`D1] 和 [`D2] 的公共比较类型（[#class.spaceship]）。
 [item]
 [:en] Otherwise, if
 [:zh_CN] 否则，如果
