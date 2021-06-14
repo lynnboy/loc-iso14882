@@ -1,0 +1,112 @@
+[section#expr.prim.lambda.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[syntax]
+[rule lambda-expression [:zh_CN] lambda-表达式 ]
+    [| lambda-introducer [~:opt lambda-declarator] compound-statement ]
+    [| lambda-introducer [`<] template-parameter-list [`>] [~:opt requires-clause]
+            [~:opt lambda-declarator] compound-statement ]
+[rule:end]
+
+[rule lambda-introducer [:zh_CN] lambda-引导符 ]
+    [| [``[] [~:opt lambda-capture] [``]] ]
+[rule:end]
+
+[rule lambda-declarator [:zh_CN] lambda-声明符 ]
+    [| [`(] parameter-declaration-clause [`)] [~:opt decl-specifier-seq]
+        [~:opt noexcept-specifier] [~:opt attribute-specifier-seq] [~:opt trailing-return-type]
+        [~:opt requires-clause] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A [~lambda-expression] provides a concise way to create a simple function object.
+[:zh_CN]
+[~lambda-表达式]提供了创建简单函数对象的一种简洁方式。
+
+[begin:example]
+[codeblock]
+#include <algorithm>
+#include <cmath>
+void abssort(float* x, unsigned N) {
+  std::sort(x, x + N, [](float a, float b) { return std::abs(a) < std::abs(b); });
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+A [~lambda-expression] is a prvalue whose result object is called the
+[+closure object].
+[:zh_CN]
+[~lambda-表达式]是纯左值，其结果对象被称为[+闭包对象]。
+
+[begin:note]
+[:en]
+A closure object behaves like a function object ([#function.objects]).
+[:zh_CN]
+闭包对象的行为类似于函数对象（[#function.objects]）。
+[end:note]
+
+[para]
+[:en]
+In the [~decl-specifier-seq] of the [~lambda-declarator], each [~decl-specifier]
+shall be one of [`mutable], [`constexpr], or [`consteval].
+[:zh_CN]
+在 [~lambda-声明符]的[~声明说明符序列]中，各个[~声明说明符]为 [`mutable]，
+[`constexpr]，或 [`consteval] 之一。
+
+[begin:note]
+[:en]
+The trailing [~requires-clause] is described in [#dcl.decl].
+[:zh_CN]
+尾部 [~requires-子句]在 [#dcl.decl] 中描述。
+[end:note]
+
+[para]
+[:en]
+If a [~lambda-expression] does not include a [~lambda-declarator], it is as if
+the [~lambda-declarator] were [`()].
+[:zh_CN]
+如果 [~lambda-表达式]中不包含 [~lambda-声明符]，则如同其 [~lambda-声明符]为 [`()]。
+
+[:en]
+The lambda return type is [`auto], which is replaced by the type specified by
+the [~trailing-return-type] if provided and/or deduced from [`return] statements
+as described in [#dcl.spec.auto].
+[:zh_CN]
+lambda 的返回类型为 [`auto]，并根据 [#dcl.spec.auto] 的说明被替换为其
+[~尾部返回类型]（如果有）所指定的类型和/或从 [`return] 语句中进行推断。
+
+[begin:example]
+[codeblock]
+auto x1 = [](int i){ return i; };       // [:en] OK: return type is [`int] \
+                                           [:zh_CN] OK：返回类型为 [`int]
+auto x2 = []{ return { 1, 2 }; };       // [:en] error: deducing return type from [~braced-init-list] \
+                                           [:zh_CN] 错误：从[~花括号初始化列表]推断返回类型
+int j;
+auto x3 = []()->auto&& { return j; };   // [:en] OK: return type is [`int&] \
+                                           [:zh_CN] OK：返回类型为 [`int&]
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+A lambda is a [+generic lambda] if the [~lambda-expression] has any generic
+parameter type placeholders ([#dcl.spec.auto]), or if the lambda has a
+[~template-parameter-list].
+[:zh_CN]
+如果 [~lambda-表达式]带有任何泛型形参类型占位符（[#dcl.spec.auto]），或者如果
+lambda 具有[~模板形参列表]，则该 lambda 是[+泛型 lambda]。
+
+[begin:example]
+[codeblock]
+int i = [](int i, auto a) { return i; }(3, 4);                  // [:en] OK: a generic lambda \
+                                                                   [:zh_CN] OK：泛型 lambda
+int j = []<class T>(T t, int i) { return i; }(3, 4);            // [:en] OK: a generic lambda \
+                                                                   [:zh_CN] OK：泛型 lambda
+[codeblock:end]
+[end:example]

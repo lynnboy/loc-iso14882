@@ -1,0 +1,396 @@
+[section#dcl.spec.auto.general
+    [:en] General
+    [:zh_CN] 概述
+[%  [:en] type specifier[![`auto]]
+    [:zh_CN] 类型说明符[![`auto]] ]
+[%  [:en] type specifier[![`decltype(auto)]]
+    [:zh_CN] 类型说明符[![`decltype(auto)]] ]
+]
+
+[syntax]
+[rule placeholder-type-specifier [:zh_CN] 占位符类型说明符 ]
+    [| [~:opt type-constraint] [`:key auto] ]
+    [| [~:opt type-constraint] [`:key decltype] [`(] [`:key auto] [`)] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en]
+A [~placeholder-type-specifier] designates a placeholder type that will be
+replaced later by deduction from an initializer.
+[:zh_CN]
+[~占位符类型说明符]表示占位符类型，并随后将被从其初始化式的推断结果所替换。
+
+[para]
+[:en]
+A [~placeholder-type-specifier] of the form [~:opt type-constraint] [`auto]
+can be used as a [~decl-specifier] of the [~decl-specifier-seq] of a
+[~parameter-declaration] of a function declaration or [~lambda-expression] and,
+if it is not the [`auto] [~type-specifier] introducing a [~trailing-return-type]
+(see below), is a [+generic parameter type placeholder] of the function
+declaration or [~lambda-expression].
+[:zh_CN]
+形式为“[~类型约束] [`auto]”的[~占位符类型说明符]，可以用作函数声明式或
+[~lambda-表达式]的[~形参声明式]的[~声明说明符序列]中的一个[~声明说明符]，并且，
+当其并非是引入[~尾部返回类型]的 [`auto] [~类型说明符]（见下文）时，它是该函数或
+[~lambda-表达式]的一个[+泛型形参类型占位符]。
+
+[begin:note]
+[:en]
+Having a generic parameter type placeholder signifies that the function is an
+abbreviated function template ([#dcl.fct]) or the lambda is a generic lambda
+([#expr.prim.lambda]).
+[:zh_CN]
+带有一个泛型形参类型占位符，指明该函数为简写的函数模板（[#dcl.fct]），或者该
+lambda 为泛型 lambda（[#expr.prim.lambda]）。
+[end:note]
+
+[para]
+[:en]
+The placeholder type can appear with a function declarator in the
+[~decl-specifier-seq], [~type-specifier-seq], [~conversion-function-id], or
+[~trailing-return-type], in any context where such a declarator is valid.
+[:zh_CN]
+占位符类型可以出现于函数声明符的[~声明说明符序列]，[~类型说明符序列]，
+[~转换函数标识]，或[~尾部返回类型]之中，只要在任何语境中这种声明符合法。
+
+[:en]
+If the function declarator includes a [~trailing-return-type] ([#dcl.fct]), that
+[~trailing-return-type] specifies the declared return type of the function.
+[:zh_CN]
+如果函数声明符包含[~尾部返回类型]（[#dcl.fct]），则该[~尾部返回类型]指定该函数所
+声明的返回类型。
+
+[:en]
+Otherwise, the function declarator shall declare a function.
+[:zh_CN]
+否则，函数声明符应当声明一个函数。
+
+[:en]
+If the declared return type of the function contains a placeholder type, the
+return type of the function is deduced from non-discarded [`return] statements,
+if any, in the body of the function ([#stmt.if]).
+[:zh_CN]
+如果函数所声明的返回类型包含占位符类型，则函数的返回类型从该函数的函数体中未被
+弃用的 [`return] 语句（如果有）（[#stmt.if]）推断出来。
+
+[para]
+[:en]
+The type of a variable declared using a placeholder type is deduced from its
+initializer.
+[:zh_CN]
+用占位符类型所声明的变量的类型从其初始化式推断出来。
+
+[:en]
+This use is allowed in an initializing declaration ([#dcl.init]) of a variable.
+[:zh_CN]
+变量的初始化声明式（[#dcl.init]）中允许这种用法。
+
+[:en]
+The placeholder type shall appear as one of the [~decl-specifier]s in the
+[~decl-specifier-seq] and the [~decl-specifier-seq] shall be followed by one
+or more [~declarator]s, each of which shall be followed by a non-empty
+[~initializer].
+[:zh_CN]
+占位符类型应当被用作[~声明说明符序列]中的[~声明说明符]之一，且该[~声明说明符
+序列]之后应当跟随一个或更多[~声明符]，其中每个都应当跟随一个非空的[~初始化式]。
+
+[:en]
+In an [~initializer] of the form
+[:zh_CN]
+如下形式的[~初始化式]
+
+[syntax:explanation]
+[`(] [~expression-list] [`)]
+[syntax:end]
+
+[:en@~]
+the [~expression-list] shall be a single [~assignment-expression].
+[:zh_CN@~]
+其[~表达式列表]应当是单个[~赋值表达式]。
+
+[begin:example]
+[codeblock]
+auto x = 5;                     // [:en] OK: [`x] has type [`int] \
+                                   [:zh_CN] OK：[`x] 类型为 [`int]
+const auto *v = &x, u = 6;      // [:en] OK: [`v] has type [`const int*], [`u] has type [`const int] \
+                                   [:zh_CN] OK：[`x] 类型为 [`const int*]，[`u] 类型为 [`const int]
+static auto y = 0.0;            // [:en] OK: [`y] has type [`double] \
+                                   [:zh_CN] OK：[`y] 类型为 [`double]
+auto int r;                     // [:en] error: [`auto] is not a [~storage-class-specifier] \
+                                   [:zh_CN] 错误：[`auto] 不是[~存储类说明符]
+auto f() -> int;                // [:en] OK: [`f] returns [`int] \
+                                   [:zh_CN] OK：[`f] 返回 [`int]
+auto g() { return 0.0; }        // [:en] OK: [`g] returns [`double] \
+                                   [:zh_CN] OK：[`g] 返回 [`double]
+auto h();                       // [:en] OK: [`h][=']s return type will be deduced when it is defined \
+                                   [:zh_CN] OK：[`h] 的返回类型将于其被定义时进行推断
+[codeblock:end]
+[end:example]
+
+[:en]
+The [`auto] [~type-specifier] can also be used to introduce a structured binding
+declaration ([#dcl.struct.bind]).
+[:zh_CN]
+[~类型说明符] [`auto] 还可用于引入结构化绑定声明式（[#dcl.struct.bind]）。
+
+[para]
+[:en]
+A placeholder type can also be used in the [~type-specifier-seq] in the
+[~new-type-id] or [~type-id] of a [~new-expression] ([#expr.new]) and as a
+[~decl-specifier] of the [~parameter-declaration][=']s [~decl-specifier-seq] in
+a [~template-parameter] ([#temp.param]).
+[:zh_CN]
+占位符类型还可用在 [~new-表达式]的 [~new-类型标识]或[~类型标识]中的[~类型
+说明符序列]中（[#expr.new]），以及用作[~模板形参]的[~形参声明式]的[~声明说明符
+序列]之中的[~声明说明符]（[#temp.param]）。
+
+[para]
+[:en]
+A program that uses a placeholder type in a context not explicitly allowed in
+[#dcl.spec.auto] is ill-formed.
+[:zh_CN]
+在未被 [#dcl.spec.auto] 明确允许的语境中使用占位符类型的程序是非良构的。
+
+[para]
+[:en]
+If the [~init-declarator-list] contains more than one [~init-declarator], they
+shall all form declarations of variables.
+[:zh_CN]
+当[~初始化说明符列表]中包含多个[~初始化说明符]时，它们都应当构成对变量的声明。
+
+[:en]
+The type of each declared variable is determined by placeholder type deduction
+([#dcl.type.auto.deduct]), and if the type that replaces the placeholder type is
+not the same in each deduction, the program is ill-formed.
+[:zh_CN]
+所声明的各个变量的类型，是通过占位符类型推断（[#dcl.type.auto.deduct]）所确定的，
+而如果各个推断中用于替换占位符类型的类型不同，则程序非良构。
+
+[para:~]
+[begin:example]
+[codeblock]
+auto x = 5, *y = &x;            // [:en] OK: [`auto] is [`int] \
+                                   [:zh_CN] OK：[`auto] 为 [`int]
+auto a = 5, b = { 1, 2 };       // [:en] error: different types for [`auto] \
+                                   [:zh_CN] 错误：[`auto] 有不同的类型
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+If a function with a declared return type that contains a placeholder type has
+multiple non-discarded [`return] statements, the return type is deduced for each
+such [`return] statement.
+[:zh_CN]
+如果所声明的返回类型包含占位符类型的函数，具有多个未弃用的 [`return] 语句，则对
+每个 [`return] 语句推断返回类型。
+
+[:en]
+If the type deduced is not the same in each deduction, the program is ill-formed.
+[:zh_CN]
+如果每次推断所推断的类型不同，则程序非良构。
+
+[para]
+[:en]
+If a function with a declared return type that uses a placeholder type has no
+non-discarded [`return] statements, the return type is deduced as though from a
+[`return] statement with no operand at the closing brace of the function body.
+[:zh_CN]
+如果所声明的返回类型使用了占位符类型的函数，没有未弃用的 [`return] 语句，则其
+返回类型的推断，按照从其函数体的闭花括号处的没有操作数的 [`return] 语句进行推断。
+
+[begin:example]
+[codeblock]
+auto  f() { }                   // [:en] OK, return type is [`void] \
+                                   [:zh_CN] OK，返回类型为 [`void]
+auto* g() { }                   // [:en] error: cannot deduce [`auto*] from [`void()] \
+                                   [:zh_CN] 错误：无法从 [`void()] 中推断 [`auto*]
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+An exported function with a declared return type that uses a placeholder type
+shall be defined in the translation unit containing its exported declaration,
+outside the [~private-module-fragment] (if any).
+[:zh_CN]
+具有使用了占位符类型所声明的返回类型的被导出函数，应当在包含其被导出声明式的
+翻译单元中，于[~私有模块分段]（如果有）之外进行定义。
+
+[begin:note]
+[:en]
+The deduced return type cannot have a name with internal linkage ([#basic.link]).
+[:zh_CN]
+推断的返回类型不能具有带有内部连接的名字（[#basic.link]）。
+[end:note]
+
+[para]
+[:en]
+If the name of an entity with an undeduced placeholder type appears in an
+expression, the program is ill-formed.
+[:zh_CN]
+如果表达式中出现了带有未推断的占位符的实体的名字，则程序非良构。
+
+[:en]
+Once a non-discarded [`return] statement has been seen in a function, however,
+the return type deduced from that statement can be used in the rest of the
+function, including in other [`return] statements.
+[:zh_CN]
+不过，一旦在函数中遇到未弃用的 [`return] 语句，则从该语句中推断出的返回类型，就
+可以在函数的余下部分（包括其他的 [`return] 语句）中使用。
+
+[begin:example]
+[codeblock]
+auto n = n;                     // [:en] error: [`n][=']s initializer refers to [`n] \
+                                   [:zh_CN] 错误：[`n] 的初始化式提及了 [`n]
+auto f();
+void g() { &f; }                // [:en] error: [`f][=']s return type is unknown \
+                                   [:zh_CN] 错误：[`f] 的返回类型未知
+auto sum(int i) {
+  if (i == 1)
+    return i;                   // [:en] [`sum][=']s return type is [`int] \
+                                   [:zh_CN] [`sum] 的返回类型为 [`int]
+  else
+    return sum(i-1)+i;          // [:en] OK, [`sum][=']s return type has been deduced \
+                                   [:zh_CN] OK，已经推断了 [`sum] 的返回类型
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+Return type deduction for a templated entity that is a function or function
+template with a placeholder in its declared type occurs when the definition is
+instantiated even if the function body contains a [`return] statement with a
+non-type-dependent operand.
+[:zh_CN]
+对于作为函数或函数模板的模板化实体，且其所声明的类型中带有占位符类型，对其所进行
+的返回类型推断，发生于其定义被实例化之时，即便函数体包含带有非类型待决的操作数的
+[`return] 语句也是如此。
+
+[begin:note]
+[:en]
+Therefore, any use of a specialization of the function template will cause an
+implicit instantiation.
+[:zh_CN]
+因此，每次使用该函数模板的任何特例，都会导致隐式的实例化。
+
+[:en]
+Any errors that arise from this instantiation are not in the immediate context
+of the function type and can result in the program being ill-formed
+([#temp.deduct]).
+[:zh_CN]
+其实例化中所发生的错误，并非处于函数类型的直接语境中，并可能导致程序非良构
+（[#temp.deduct]）。
+[end:note]
+
+[begin:example]
+[codeblock]
+template <class T> auto f(T t) { return t; }    // [:en] return type deduced at instantiation time \
+                                                   [:zh_CN] 返回类型在实例化时进行推断
+typedef decltype(f(1)) fint_t;                  // [:en] instantiates [`f<int>] to deduce return type \
+                                                   [:zh_CN] 实例化 [`f<int>] 以推断其返回类型
+template<class T> auto f(T* t) { return *t; }
+void g() { int (*p)(int*) = &f; }               // [:en] instantiates both [`f]s to determine return types, \
+                                                   [:zh_CN] 两个 [`f] 均进行实例化以确定返回类型，
+                                                // [:en@~] chooses second \
+                                                   [:zh_CN@~] 选择第二个
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+Redeclarations or specializations of a function or function template with a
+declared return type that uses a placeholder type shall also use that
+placeholder, not a deduced type.
+[:zh_CN]
+对所声明的返回类型使用了占位符类型的函数或函数模板所进行的重复声明或者特化，应当
+仍然使用这个占位符，而不是推断出的类型。
+
+[:en]
+Similarly, redeclarations or specializations of a function or function template
+with a declared return type that does not use a placeholder type shall not use a
+placeholder.
+[:zh_CN]
+相似地，若函数或函数模板的声明的返回类型没有使用占位符类型，则对其进行重复声明
+或者特化不应当使用占位符。
+
+[begin:example]
+[codeblock]
+auto f();
+auto f() { return 42; }                         // [:en] return type is [`int] \
+                                                   [:zh_CN] 返回类型为 [`int]
+auto f();                                       // OK
+int f();                                        // [:en] error: cannot be overloaded with [`auto f()] \
+                                                   [:zh_CN] 错误：无法与 [`auto f()] 重载
+decltype(auto) f();                             // [:en] error: [`auto] and [`decltype(auto)] don[=']t match \
+                                                   [:zh_CN] 错误：[`auto] 和 [`decltype(auto)] 不匹配
+
+template <typename T> auto g(T t) { return t; } // #1
+template auto g(int);                           // [:en] OK, return type is [`int] \
+                                                   [:zh_CN] OK，返回类型为 [`int]
+template char g(char);                          // [:en] error: no matching template \
+                                                   [:zh_CN] 错误：没有匹配的模板
+template<> auto g(double);                      // [:en] OK, forward declaration with unknown return type \
+                                                   [:zh_CN] OK，带有未知返回类型的前置声明式
+
+template <class T> T g(T t) { return t; }       // [:en] OK, not functionally equivalent to #1 \
+                                                   [:zh_CN] OK，与 #1 并非功能等价
+template char g(char);                          // [:en] OK, now there is a matching template \
+                                                   [:zh_CN] OK，存在匹配的模板。
+template auto g(float);                         // [:en] still matches #1 \
+                                                   [:zh_CN] 仍与 #1 匹配
+
+void h() { return g(42); }                      // [:en] error: ambiguous \
+                                                   [:zh_CN] 错误：有歧义
+
+template <typename T> struct A {
+  friend T frf(T);
+};
+auto frf(int i) { return i; }                   // [:en] not a friend of [`A<int>] \
+                                                   [:zh_CN] 并非 [`A<int>] 的友元
+extern int v;
+auto v = 17;                                    // [:en] OK, redeclares [`v] \
+                                                   [:zh_CN] OK，重复声明 [`v]
+struct S {
+  static int i;
+};
+auto S::i = 23;                                 // OK
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+A function declared with a return type that uses a placeholder type shall not be
+[`virtual] ([#class.virtual]).
+[:zh_CN]
+所声明的返回类型带有占位符类型的函数不能为 [`virtual]（[#class.virtual]）。
+
+[para]
+[:en]
+A function declared with a return type that uses a placeholder type shall not
+be a coroutine ([#dcl.fct.def.coroutine]).
+[:zh_CN]
+声明为带有使用了占位符类型的返回类型的函数不能是协程（[#dcl.fct.def.coroutine]）。
+
+[para]
+[:en]
+An explicit instantiation declaration ([#temp.explicit]) does not cause the
+instantiation of an entity declared using a placeholder type, but it also does
+not prevent that entity from being instantiated as needed to determine its type.
+[:zh_CN]
+显式实例化声明式（[#temp.explicit]）不会导致对声明中使用了占位符类型的实体的
+实例化，但它也不妨碍这个实体根据需要进行实例化以确定其类型。
+
+[begin:example]
+[codeblock]
+template <typename T> auto f(T t) { return t; }
+extern template auto f(int);    // [:en] does not instantiate [`f<int>] \
+                                   [:zh_CN] 并未实例化 [`f<int>]
+int (*p)(int) = f;              // [:en] instantiates [`f<int>] to determine its return type, but an explicit \
+                                   [:zh_CN] 实例化 [`f<int>] 以确定其返回类型，但仍然需要
+                                // [:en@~] instantiation definition is still required somewhere in the program \
+                                   [:zh_CN@~] 程序的某处存在一个显式实例化定义式
+[codeblock:end]
+[end:example]
