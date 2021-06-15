@@ -1,0 +1,747 @@
+[section#allocator.requirements.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[%[^:oc Allocator]]
+[para]
+[:en]
+The library describes a standard set of requirements for [+:% allocators], which
+are class-type objects that encapsulate the information about an allocation
+model.
+[:zh_CN]
+程序库描述了对于[+:% 分配器]的一组标准规定，它们是封装了一种分配模型的相关信息的
+类类型的对象。
+
+[:en]
+This information includes the knowledge of pointer types, the type of their
+difference, the type of the size of objects in this allocation model, as well
+as the memory allocation and deallocation primitives for it.
+[:zh_CN]
+这些信息中包括关于其中的指针类型，它们的差的类型，这个分配模型中的对象的大小的
+类型，以及其中的内存分配和回收原语的知识。
+
+[:en]
+All of the string types ([#strings]), containers ([#containers]) (except [`array]),
+string buffers and string streams ([#input.output]), and [`match_results] ([#re])
+are parameterized in terms of allocators.
+[:zh_CN]
+所有字符串类型（[#strings]），（除 [`array] 之外的）容器（[#containers]），
+字符串缓冲区和字符串流（[#input.output]），以及 [`match_results]（[#re]），都是
+以分配器进行参数化的。
+
+[table:grid#allocator.req.var
+    [:en] Descriptive variable definitions
+    [:zh_CN] 描述性的变量定义
+    [|@code
+        [:en] Variable
+        [:zh_CN] 变量
+    ]
+    [|
+        [:en] Definition
+        [:zh_CN] 定义
+    ]
+]
+[|] T, U, C
+[|] [:en] any [=cv]-unqualified object type ([#basic.types])
+    [:zh_CN] 任何 [=cv] 未限定的对象类型（[#basic.types]）
+[-]
+[|] X
+[|] [:en] an allocator class for type [`T]
+    [:zh_CN] 类型 [`T] 的分配器类
+[-]
+[|] Y
+[|] [:en] the corresponding allocator class for type [`U]
+    [:zh_CN] 对应的类型 [`U] 的分配器类
+[-]
+[|] XX
+[|] [:en] the type [`allocator_traits<X>]
+    [:zh_CN] 类型 [`allocator_traits<X>]
+[-]
+[|] YY
+[|] [:en] the type [`allocator_traits<Y>]
+    [:zh_CN] 类型 [`allocator_traits<Y>]
+[-]
+[|] a, a1, a2
+[|] [:en] lvalues of type [`X]
+    [:zh_CN] 类型 [`X] 的左值
+[-]
+[|] u
+[|] [:en] the name of a variable being declared
+    [:zh_CN] 所声明的变量的名字
+[-]
+[|] b
+[|] [:en] a value of type [`Y]
+    [:zh_CN] 类型 [`Y] 的值
+[-]
+[|] c
+[|] [:en] a pointer of type [`C*] through which indirection is valid
+    [:zh_CN] 类型 [`C*] 的指针，通过它可以进行间接
+[-]
+[|] p
+[|] [:en] a value of type [`XX::pointer], obtained by calling [`a1.allocate],
+    where [`a1 == a]
+    [:zh_CN] 类型 [`XX:pointer] 的值，通过调用 [`a1.allocate] 获得，其中
+    [`a1 == a]
+[-]
+[|] q
+[|] [:en] a value of type [`XX::const_pointer] obtained by conversion from a
+    value [`p]
+    [:zh_CN] 通过从值 [`p] 转换而获得的类型 [`XX::const_pointer] 的值
+[-]
+[|] r
+[|] [:en] a value of type [`T&] obtained by the expression [`*p]
+    [:zh_CN] 通过表达式 [`*p] 获得的 [`T&] 类型的值
+[-]
+[|] w
+[|] [:en] a value of type [`XX::void_pointer] obtained by conversion from a
+    value [`p]
+    [:zh_CN] 通过从值 [`p] 转换而获得的类型 [`XX::void_pointer] 的值
+[-]
+[|] x
+[|] [:en] a value of type [`XX::const_void_pointer] obtained by conversion from
+    a value [`q] or a value [`w]
+    [:zh_CN] 通过从值 [`q] 或值 [`w] 转换而获得的类型 [`XX::const_void_pointer]
+    的值
+[-]
+[|] y
+[|] [:en] a value of type [`XX::const_void_pointer] obtained by conversion from
+    a result value of [`YY::allocate], or else a value of type (possibly
+    [`const]) [`std::nullptr_t]
+    [:zh_CN] 通过从 [`YY::allocate] 的结果值，或者（可能为 [`const] 的）类型
+    [`std::nullptr_t] 的值转换而获得的类型 [`XX::const_void_pointer] 的值
+[-]
+[|] n
+[|] [:en] a value of type [`XX::size_type]
+    [:zh_CN] 类型 [`XX::size_type] 的值
+[-]
+[|] Args
+[|] [:en] a template parameter pack
+    [:zh_CN] 模板形参包组
+[-]
+[|] args
+[|] [:en] a function parameter pack with the pattern [`Args&&]
+    [:zh_CN] 模式为 [`Args&&] 的函数形参包组
+[-]
+[table:end]
+
+[para]
+[:en]
+The class template [`allocator_traits] ([#allocator.traits]) supplies a uniform
+interface to all allocator types.
+[:zh_CN]
+类模板 [`allocator_traits]（[#allocator.traits]）提供了一个对所有分配器类型一致
+的统一接口。
+
+[:en]
+[#:tab#allocator.req.var] describes the types manipulated through allocators.
+[:zh_CN]
+[#:tab#allocator.req.var] 描述了通过分配器所操作的类型。
+
+[:en]
+[#:tab#cpp17.allocator] describes the requirements on allocator types and thus
+on types used to instantiate [`allocator_traits].
+[:zh_CN]
+[#:tab#cpp17.allocator] 描述了对于分配器类型（亦即用以实例化 [`allocator_traits]
+的类型）的规定。
+
+[:en]
+A requirement is optional if the last column of [#:tab#cpp17.allocator]
+specifies a default for a given expression.
+[:zh_CN]
+如果对于一个给定的表达式，[#:tab#cpp17.allocator] 的最后一列给出了默认值，则
+该条规定是可选的。
+
+[:en]
+Within the standard library [`allocator_traits] template, an optional
+requirement that is not supplied by an allocator is replaced by the specified
+default expression.
+[:zh_CN]
+在标准程序库的 [`allocator_traits] 模板中，分配器没提供的可选规定被替换为所指定
+的默认表达式。
+
+[:en]
+A user specialization of [`allocator_traits] may provide different defaults and
+may provide defaults for different requirements than the primary template.
+[:zh_CN]
+用户提供的 [`allocator_traits] 特化式可以提供不同的默认值，而且可以为与主模板
+不同的规定提供默认值。
+
+[:en]
+Within Tables [#tab:alloocaor.req.var] and [#tab:cpp17.allocator], the use of
+[`move] and [`forward] always refers to [`std::move] and [`std::forward],
+respectively.
+[:zh_CN]
+表 [#tab:allocator.req.var] 和 [#tab:cpp17.allocator] 中，所使用的 [`move] 和
+[`forward] 总是分别指代 [`std::move] 和 [`std::forward]。
+
+[table:grid#cpp17.allocator
+    [:en] [^:oc Allocator] requirements
+    [:zh_CN] [^:oc Allocator] 的规定
+    [|
+        [:en] Expression
+        [:zh_CN] 表达式
+    ]
+    [|
+        [:en] Return type
+        [:zh_CN] 返回类型
+    ]
+    [|
+        [:en] Assertion/note [br] pre-/post-condition
+        [:zh_CN] 断言/注解 [br] 前/后条件
+    ]
+    [|
+        [:en] Default
+        [:zh_CN] 默认值
+    ]
+]
+[|] [`X::pointer]
+[|]
+[|]
+[|] [`T*]
+[-]
+[|] [`X::const_pointer]
+[|]
+[|] [:en] [`X::pointer] is convertible to [`X::const_pointer]
+    [:zh_CN] [`X::pointer] 可以转换为 [`X::const_pointer]
+[|] [`pointer_traits<X::pointer>::rebind<const T>]
+[-]
+[|] [`X::void_pointer] [br] [`Y::void_pointer]
+[|]
+[|] [:en] [`X::pointer] is convertible to [`X::void_pointer].
+    [:zh_CN] [`X::pointer] 可以转换为 [`X::void_pointer]
+
+    [:en] [`X::void_pointer] and [`Y::void_pointer] are the same type.
+    [:zh_CN] [`X::void_pointer] 和 [`Y::void_pointer] 是相同类型
+[|] [`pointer_traits<X::pointer>::rebind<void>]
+[-]
+[|] [`X::const_void_pointer] [br] [`Y::const_void_pointer]
+[|]
+[|] [:en] [`X::pointer], [`X::const_pointer], and [`X::void_pointer] are
+    convertible to [`X::const_void_pointer].
+    [:zh_CN] [`X::pointer]，[`X::const_pointer]，和 [`X::void_pointer] 可以转换
+    为 [`X::const_void_pointer].
+
+    [:en] [`X::const_void_pointer] and [`Y::const_void_pointer] are the same
+    type.
+    [:zh_CN] [`X::const_void_pointer] 和 [`Y::const_void_pointer] 是相同类型。
+[|] [`pointer_traits<X::pointer>::rebind<const void>]
+[-]
+[|] [`X::value_type]
+[|] [:en] Identical to [`T]
+    [:zh_CN] 等同于 [`T]
+[|]
+[|]
+[-]
+[|] [`X::size_type]
+[|] [:en] unsigned integer type
+    [:zh_CN] 无符号整数类型
+[|] [:en] a type that can represent the size of the largest object in the
+    allocation model
+    [:zh_CN] 可以表示分配模型中的最大对象大小的类型
+[|] [`make_unsigned_t<X::difference_type>]
+[-]
+[|] [`X::difference_type]
+[|] [:en] signed integer type
+    [:zh_CN] 有符号整数类型
+[|] [:en] a type that can represent the difference between any two pointers in
+    the allocation model
+    [:zh_CN] 可以表示分配模型中任意两个指针之间的差的类型
+[|] [`pointer_traits<X::pointer>::difference_type]
+[-]
+[|] [`typename X::template rebind<U>::other]
+[|] [`Y]
+[|] [:en] For all [`U] (including [`T]), [`Y::template rebind<T>::other] is [`X].
+    [:zh_CN] 对于所有 [`U]（包括 [`T]），[`Y::template rebind<T>::other] 为 [`X]。
+[|] [:en] See Note A, below.
+    [:zh_CN] 参见表后的注解 A。
+[-]
+[|] [`*p]
+[|] [`T&]
+[|]
+[|]
+[-]
+[|] [`*q]
+[|] [`const T&]
+[|] [:en] [`*q] refers to the same object as [`*p].
+    [:zh_CN] [`*q] 与 [`*p] 指代相同对象。
+[|]
+[-]
+[|] [`p->m]
+[|] [:en] type of [`T::m]
+    [:zh_CN] [`T::m] 的类型
+[|] [para:expects]
+    [:en] [`(*p).m] is well-defined.
+    [:zh_CN] [`(*p).m] 良构
+    [:en] equivalent to [`(*p).m]
+    [:zh_CN] 等价于 [`(*p).m]
+[|]
+[-]
+[|] [`q->m]
+[|] [:en] type of [`T::m]
+    [:zh_CN] [`T::m] 的类型
+[|] [para:expects]
+    [:en] [`(*q).m] is well-defined.
+    [:zh_CN] [`(*q).m] 良构。
+    [:en] equivalent to [`(*q).m]
+    [:zh_CN] 等价于 [`(*q).m]
+[|]
+[-]
+[|] [`static_cast<X::pointer>(w)]
+[|] [`X::pointer]
+[|] [`static_cast<X::pointer>(w) == p]
+[|]
+[-]
+[|] [`static_cast<X::const_pointer>(x)]
+[|] [`X::const_pointer]
+[|] [`static_cast<X::const_pointer>(x) == q]
+[|]
+[-]
+[|] [`pointer_traits<X::pointer>::pointer_to(r)]
+[|] [`X::pointer]
+[|] [:en] same as [`p]
+    [:zh_CN] 与 [`p] 相同
+[|]
+[-]
+[|] [`a.allocate(n)]
+[|] [`X::pointer]
+[|] [:en] Memory is allocated for an array of [`n] [`T] and such an object is
+    created but array elements are not constructed.
+    [:zh_CN] 为 [`n] 个 [`T] 的数组分配内存，创建该对象但并未构造其数组元素。
+
+    [begin:example]
+    [:en] When reusing storage denoted by some pointer value [`p],
+    [`launder(reinterpret_cast<T*>(new (p) byte`[n * sizeof(T)`]))] can be used
+    to implicitly create a suitable array object and obtain a pointer to it.
+    [:zh_CN] 若要重用某个指针值 [`p] 所代表的存储，可以使用
+    [`launder(reinterpret_cast<T*>(new (p) byte`[n * sizeof(T)`]))] 来隐式创建
+    一个合适的数组对象并获取指向它的指针。
+    [end:example]
+
+    [:en] [`allocate] may throw an appropriate exception.[#:note#fn:$1]
+    [:zh_CN] [`allocate] 可以抛出一个适当的异常。[#:note#fn:$1]
+
+    [note:foot#fn:$1]
+    [:en] It is intended that [`a.allocate] be an efficient means of allocating
+    a single object of type [`T], even when [`sizeof(T)] is small.
+    [:zh_CN] 其目的是使得 [`a.allocate] 成为分配 [`T] 类型的单个对象的高效方式，
+    而无论 [`sizeof(T)] 是否很小。
+
+    [:en] That is, there is no need for a container to maintain its own free
+    list.
+    [:zh_CN] 就是说，容器不需要维护其自己的自由表。
+    [note:end]
+
+    [begin:note]
+    [:en] If [`n == 0], the return value is unspecified.
+    [:zh_CN] 若 [`n == 0]，则未指明其返回值。
+    [end:note]
+[|]
+[-]
+[|] [`a.allocate(n, y)]
+[|] [`X::pointer]
+[|] [:en] Same as [`a.allocate(n)].
+    [:zh_CN] 与 [`a.allocate(n)] 相同。
+
+    [:en] The use of [`y] is unspecified, but it is intended as an aid to
+    locality.
+    [:zh_CN] 未指明 [`y] 的使用情况，但其意图是促进局部性。
+[|] [`a.allocate(n)]
+[-]
+[|] [`a.deallocate(p,n)]
+[|] [:en] (not used)
+    [:zh_CN] （未使用）
+[|] [para:expects]
+    [:en] [`p] is a value returned by an earlier call to [`allocate] that has
+    not been invalidated by an intervening call to [`deallocate].
+    [:zh_CN] [`p] 是由早前对 [`allocate] 的调用所返回的值，且未被任何介入期间的
+    对 [`deallocate] 的调用将其无效化。
+
+    [:en] [`n] matches the value passed to [`allocate] to obtain this memory.
+    [:zh_CN] [`n] 与用以获得这段内存的 [`allocate] 所传递的值相匹配。
+
+    [para:throws]
+    [:en] Nothing.
+    [:zh_CN] 不抛出异常。
+[|]
+[-]
+[|] [`a.max_size()]
+[|] [`X::size_type]
+[|] [:en] the largest value that can meaningfully be passed to [`X::allocate()]
+    [:zh_CN] 可以传递给 [`X::allocate()] 且有意义的最大值
+[|] [`numeric_limits<size_type>::max() / sizeof(value_type)]
+[-]
+[|] [`a1 == a2]
+[|] [`bool]
+[|] [:en] Returns [`true] only if storage allocated from each can be deallocated
+    via the other.
+    [:zh_CN] 仅当其中任意一个所分配的存储都可以以另一个进行回收时返回 [`true]。
+
+    [:en] [`operator==] shall be reflexive, symmetric, and transitive, and shall
+    not exit via an exception.
+    [:zh_CN] [`operator==] 应当是自反的，对称的，和可传递的，且不能以异常退出。
+[|]
+[-]
+[|] [`a1 != a2]
+[|] [`bool]
+[|] [:en] same as [`!(a1 == a2)]
+    [:zh_CN] 与 [`!(a1 == a2)] 相同
+[|]
+[-]
+[|] [`a == b]
+[|] [`bool]
+[|] [:en] same as [`a == Y::rebind<T>::other(b)]
+    [:zh_CN] 与 [`a == Y::rebind<T>::other(b)] 相同
+[|]
+[-]
+[|] [`a != b]
+[|] [`bool]
+[|] [:en] same as [`!(a == b)]
+    [:zh_CN] 与 [`!(a == b)] 相同
+[|]
+[-]
+[|] [`X u(a);] [br] [`X u = a;]
+[|]
+[|] [:en] Shall not exit via an exception.
+    [:zh_CN] 不能以异常退出。
+
+    [para:ensures] [`u == a]
+[|]
+[-]
+[|] [`X u(b);]
+[|]
+[|] [:en] Shall not exit via an exception.
+    [:zh_CN] 不能以异常退出。
+
+    [para:ensures]
+    [:en] [`Y(u) == b], [`u == X(b)]
+    [:zh_CN] [`Y(u) == b]，[`u == X(b)]
+[|]
+[-]
+[|] [`X u(std::move(a));] [br] [`X u = std::move(a);]
+[|]
+[|] [:en] Shall not exit via an exception.
+    [:zh_CN] 不能以异常退出。
+
+    [para:ensures]
+    [:en] The value of [`a] is unchanged and is equal to [`u].
+    [:zh_CN] 不改变 [`a] 的值且其定于 [`u]。
+[|]
+[-]
+[|] [`X u(std::move(b));]
+[|]
+[|] [:en] Shall not exit via an exception.
+    [:zh_CN] 不能以异常退出。
+
+    [para:ensures]
+    [:en] [`u] is equal to the prior value of [`X(b)].
+    [:zh_CN] [`u] 等于 [`X(b)] 之前的值。
+[|]
+[-]
+[|] [`a.construct(c, args)]
+[|] [:en] (not used)
+    [:zh_CN] （未使用）
+[|] [para:effects]
+    [:en] Constructs an object of type [`C] at [`c].
+    [:zh_CN] 在 [`c] 处构造类型 [`C] 的一个对象。
+[|] [`construct_at(c, std::forward<Args>(args)...)]
+[-]
+[|] [`a.destroy(c)]
+[|] [:en] (not used)
+    [:zh_CN] （未使用）
+[|] [para:effects]
+    [:en] Destroys the object at [`c]
+    [:zh_CN] 销毁 [`c] 处的对象
+[|] [`destroy_at(c)]
+[-]
+[|] [`a.select_on_container_copy_construction()]
+[|] [`X]
+[|] [:en] Typically returns either [`a] or [`X()].
+    [:zh_CN] 典型情况下返回 [`a] 或 [`X()]。
+[|] [`return a;]
+[-]
+[|] [`X::propagate_on_container_copy_assignment]
+[|] [:en] Identical to or derived from [`true_type] or [`false_type]
+    [:zh_CN] 等同于，或者派生于 [`true_type] 或 [`false_type]
+[|] [:en] [`true_type] only if an allocator of type [`X] should be copied when
+    the client container is copy-assigned.
+    [:zh_CN] 当客户容器被复制赋值时，仅当类型 [`X] 的一个分配器应当被复制时，为
+    [`true_type]。
+
+    [:en] See Note B, below.
+    [:zh_CN] 见表后的注解 B。
+[|] [`false_type]
+[-]
+[|] [`X::propagate_on_container_move_assignment]
+[|] [:en] Identical to or derived from [`true_type] or [`false_type]
+    [:zh_CN] 等同于，或者派生于 [`true_type] 或 [`false_type]
+[|] [:en] [`true_type] only if an allocator of type [`X] should be moved when
+    the client container is move-assigned.
+    [:zh_CN] 当客户容器被移动赋值时，仅当类型 [`X] 的一个分配器应当被移动时，为
+    [`true_type]。
+
+    [:en] See Note B, below.
+    [:zh_CN] 见表后的注解 B。
+[|] [`false_type]
+[-]
+[|] [`X::propagate_on_container_swap]
+[|] [:en] Identical to or derived from [`true_type] or [`false_type]
+    [:zh_CN] 等同于，或者派生于 [`true_type] 或 [`false_type]
+[|] [:en] [`true_type] only if an allocator of type [`X] should be swapped when
+    the client container is swapped.
+    [:zh_CN] 当客户容器被交换时，仅当类型 [`X] 的一个分配器应当被交换时，为
+    [`true_type]。
+
+    [:en] See Note B, below.
+    [:zh_CN] 见表后的注解 B。
+[|] [`false_type]
+[-]
+[|] [`X::is_always_equal]
+[|] [:en] Identical to or derived from [`true_type] or [`false_type]
+    [:zh_CN] 等同于，或者派生于 [`true_type] 或 [`false_type]
+[|] [:en] [`true_type] only if the expression [`a1 == a2] is guaranteed to be
+    [`true] for any two (possibly [`const]) values [`a1], [`a2] of type [`X].
+    [:zh_CN] 对于任意两个（可能为 [`const] 的）类型 [`X] 的值 [`a1] 和 [`a2]，
+    仅当表达式 [`a1 == a2] 保证为 [`true] 时，为 [`true_type]。
+[|] [`is_empty<X>::type]
+[-]
+[table:end]
+
+[para]
+[:en]
+Note A: The member class template [`rebind] in the table above is effectively a
+typedef template.
+[:zh_CN]
+注解 A：上表中的成员类模板 [`rebind] 效果上是一个 typedef 模板。
+
+[begin:note]
+[:en]
+In general, if the name [`Allocator] is bound to [`SomeAllocator<T>], then
+[`Allocator::rebind<U>::other] is the same type as [`SomeAllocator<U>], where
+[`SomeAllocator<T>::value_type] is [`T] and [`SomeAllocator<U>::value_type] is
+[`U].
+[:zh_CN]
+一般地，如果名字 [`Allocator] 绑定为 [`SomeAllocator<T>]，则
+[`Allocator::rebind<U>::other] 与 [`SomeAllocator<U>] 是相同类型，其中
+[`SomeAllocator<T>::value_type] 为 [`T] 而 [`SomeAllocator<U>::value_type] 为
+[`U]。
+[end:note]
+
+[:en]
+If [`Allocator] is a class template instantiation of the form
+[`SomeAllocator<T, Args>], where [`Args] is zero or more type arguments, and
+[`Allocator] does not supply a [`rebind] member template, the standard
+[`allocator_traits] template uses [`SomeAllocator<U, Args>] in place of
+[`Allocator::rebind<U>::other] by default.
+[:zh_CN]
+若 [`Allocator] 是形式为 [`SomeAllocator<T, Args>] 的类模板实例，其中 [`Args]
+为零个或更多的类型实参，而 [`Allocator] 并未提供 [`rebind] 成员模板，则标准的
+[`allocator_traits] 模板默认情况下就使用 [`SomeAllocator<U, Args>] 以代替
+[`Allocator::rebind<U>::other]。
+
+[:en]
+For allocator types that are not template instantiations of the above form, no
+default is provided.
+[:zh_CN]
+对于并非以上形式的模板实例的分配器类型，不提供默认值。
+
+[para]
+[:en]
+Note B: If [`X::propagate_on_container_copy_assignment::value] is [`true], [`X]
+shall meet the [^:oc CopyAssignable] requirements ([#:tab#cpp17.copyassignable])
+and the copy operation shall not throw exceptions.
+[:zh_CN]
+注解 B：若 [`X::propagate_on_container_copy_assignment::value] 为 [`true]，则
+[`X] 应当满足 [^:oc CopyAssignable] 的规定（[#:tab#cpp17.copyassignable]），
+并且其复制操作不能抛出异常。
+
+[:en]
+If [`X::propagate_on_container_move_assignment::value] is [`true], [`X] shall
+meet the [^:oc MoveAssignable] requirements ([#:tab#cpp17.moveassignable]) and
+the move operation shall not throw exceptions.
+[:zh_CN]
+若 [`X::propagate_on_container_move_assignment::value] 为 [`true]，则 [`X] 应当
+满足 [^:oc MoveAssignable] 的规定（[#:tab#cpp17.moveassignable]），并且其移动
+操作不能抛出异常。
+
+[:en]
+If [`X::propagate_on_container_swap::value] is [`true], lvalues of type [`X]
+shall be swappable ([#swappable.requirements]) and the [`swap] operation shall
+not throw exceptions.
+[:zh_CN]
+若 [`X::propagate_on_container_swap::value] 为 [`true]，则类型 [`X] 的左值应当
+是可交换的（[#swappable.requirements]），并且其 [`swap] 操作不能抛出异常。
+
+[para]
+[:en]
+An allocator type [`X] shall meet the [^:oc CopyConstructible] requirements
+([#:tab#cpp17.copyconstructible]).
+[:zh_CN]
+分配器类型 [`X] 应当满足 [^:oc CopyConstructible] 的规定
+（[#:tab#cpp17.copyconstructible]）。
+
+[:en]
+The [`X::pointer], [`X::const_pointer], [`X::void_pointer], and
+[`X::const_void_pointer] types shall meet the [^:oc NullablePointer]
+requirements ([#:tab#cpp17.nullablepointer]).
+[:zh_CN]
+类型 [`X::pointer]，[`X::const_pointer]，[`X::void_pointer]，以及
+[`X::const_void_pointer] 应当满足 [^:oc NullablePointer] 的规定
+（[#:tab#cpp17.nullablepointer]）。
+
+[:en]
+No constructor, comparison operator function, copy operation, move operation, or
+swap operation on these pointer types shall exit via an exception.
+[:zh_CN]
+这些指针类型的构造函数，比较运算符函数，复制操作，移动操作，或者交换操作不能以
+抛出异常退出。
+
+[:en]
+[`X::pointer] and [`X::const_pointer] shall also meet the requirements for a
+[^:oc RandomAccessIterator] ([#random.access.iterators]) and the additional
+requirement that, when [`a] and [`(a + n)] are dereferenceable pointer values
+for some integral value [`n],
+[:zh_CN]
+[`X::pointer] 和 [`X::const_pointer] 应当也符合 [^:oc RandomAccessIterator]
+（[#random.access.iterators]）的规定，以及如下的额外规定：当对于某个整型值 [`n]，
+[`a] 和 [`(a + n)] 均为可解引用的指针值时，
+[codeblock:notation]
+addressof(*(a + n)) == addressof(*a) + n
+[codeblock:end]
+[:en@~] is [`true].
+[:zh_CN@~] 为 [`true]。
+
+[para]
+[:en]
+Let [`x1] and [`x2] denote objects of (possibly different) types
+[`X::void_pointer], [`X::const_void_pointer], [`X::pointer],
+or [`X::const_pointer].
+[:zh_CN]
+令 [`x1] 和 [`x2] 代表类型 [`X::void_pointer]，[`X::const_void_pointer]，
+[`X::pointer]，或者 [`X::const_pointer] 的（可能不同的）对象。
+
+[:en]
+Then, [`x1] and [`x2] are [+equivalently-valued] pointer values, if and only
+if both [`x1] and [`x2] can be explicitly converted to the two corresponding
+objects [`px1] and [`px2] of type [`X::const_pointer], using a sequence of
+[`static_cast]s using only these four types, and the expression [`px1 == px2]
+evaluates to [`true].
+[:zh_CN]
+则有，当且仅当 [`x1] 和 [`x2] 都可利用一系列只使用这四种类型的 [`static_cast]，
+分别被显式转换为类型 [`X::const_pointer] 的对象 [`px1] 和 [`px2]，并且表达式
+[`px1 == px2] 求值为 [`true]，则 [`x1] 和 [`x2] 是[+值等价的]指针值。
+
+[para]
+[:en]
+Let [`w1] and [`w2] denote objects of type [`X::void_pointer].
+[:zh_CN]
+令 [`w1] 和 [`w2] 代表类型 [`X::void_pointer] 的对象。
+
+[:en]
+Then for the expressions
+[:zh_CN]
+则对于表达式
+
+[codeblock:notation]
+w1 == w2
+w1 != w2
+[codeblock:end]
+
+[:en@~]
+either or both objects may be replaced by an equivalently-valued object of type
+[`X::const_void_pointer] with no change in semantics.
+[:zh_CN@~]
+两个对象之一或二者均可被替换为类型 [`X::const_void_pointer] 的值等价的对象，并且
+不改变其语义。
+
+[para]
+[:en]
+Let [`p1] and [`p2] denote objects of type [`X::pointer].
+[:zh_CN]
+令 [`p1] 和 [`p2] 代表类型 [`X::pointer] 的对象。
+
+[:en]
+Then for the expressions
+[:zh_CN]
+则对于表达式
+
+[codeblock:notation]
+p1 == p2
+p1 != p2
+p1 < p2
+p1 <= p2
+p1 >= p2
+p1 > p2
+p1 - p2
+[codeblock:end]
+
+[:en@~]
+either or both objects may be replaced by an equivalently-valued object of type
+[`X::const_pointer] with no change in semantics.
+[:zh_CN@~]
+两个对象之一或二者均可被替换为类型 [`X::const_pointer] 的值等价的对象，并且不
+改变其语义。
+
+[para]
+[:en]
+An allocator may constrain the types on which it can be instantiated and the
+arguments for which its [`construct] or [`destroy] members may be called.
+[:zh_CN]
+分配器可以对有关何种类型可以对其进行实例化，以及它的 [`construct] 或 [`destroy]
+成员可以对何种实参进行调用给出限制。
+
+[:en]
+If a type cannot be used with a particular allocator, the allocator class or the
+call to [`construct] or [`destroy] may fail to instantiate.
+[:zh_CN]
+如果某个类型不能用于特定的分配器，则分配器的类，或对 [`construct] 或 [`destroy]
+的调用，可以实例化失败。
+
+[para]
+[:en]
+If the alignment associated with a specific over-aligned type is not supported
+by an allocator, instantiation of the allocator for that type may fail.
+[:zh_CN]
+如果分配器无法支持与某个特定过量对齐类型关联的对齐，则分配器对这个类型的实例化
+可以失败。
+
+[:en]
+The allocator also may silently ignore the requested alignment.
+[:zh_CN]
+分配器还可以沉默地忽略所请求的对其。
+
+[begin:note]
+[:en]
+Additionally, the member function [`allocate] for that type can fail by throwing
+an object of type [`bad_alloc].
+[:zh_CN]
+此外，针对这个类型的成员函数 [`allocate] 可以通过抛出类型 [`bad_alloc] 的对象而
+失败。
+[end:note]
+
+[para]
+[begin:example]
+[:en]
+The following is an allocator class template supporting the minimal interface
+that meets the requirements of [#:tab#cpp17.allocator]:
+[:zh_CN]
+以下的分配器类模板支持能够满足 [#:tab#cpp17.allocator] 的规定的最小接口：
+
+[codeblock]
+template<class Tp>
+struct SimpleAllocator {
+  typedef Tp value_type;
+  SimpleAllocator([*ctor args]);
+
+  template<class T> SimpleAllocator(const SimpleAllocator<T>& other);
+
+  [[nodiscard]] Tp* allocate(std::size_t n);
+  void deallocate(Tp* p, std::size_t n);
+};
+
+template<class T, class U>
+bool operator==(const SimpleAllocator<T>&, const SimpleAllocator<U>&);
+template<class T, class U>
+bool operator!=(const SimpleAllocator<T>&, const SimpleAllocator<U>&);
+[codeblock:end]
+[end:example]
