@@ -1,0 +1,153 @@
+[section#istream.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[%@lib basic_istream]
+[codeblock:synopsis]
+namespace std {
+  template<class charT, class traits = char_traits<charT>>
+  class basic_istream : virtual public basic_ios<charT, traits> {
+  public:
+    // [:en] types (inherited from [`basic_ios] ([#ios])) \
+       [:zh_CN] 类型（继承于 [`basic_ios]（[#ios]））
+    using char_type   = charT;
+    using int_type    = typename traits::int_type;
+    using pos_type    = typename traits::pos_type;
+    using off_type    = typename traits::off_type;
+    using traits_type = traits;
+
+    // [:en] [#istream.cons], constructor/destructor \
+       [:zh_CN] [#istream.cons]，构造函数/析构函数
+    explicit basic_istream(basic_streambuf<charT, traits>* sb);
+    virtual ~basic_istream();
+
+    // [:en] [#istream.sentry], prefix/suffix \
+       [:zh_CN] [#istream::sentry]，前缀/后缀
+    class sentry;
+
+    // [:en] [#istream.formatted], formatted input \
+       [:zh_CN] [#istream.formatted]，格式化输入
+    basic_istream<charT, traits>&
+      operator>>(basic_istream<charT, traits>& (*pf)(basic_istream<charT, traits>&));
+    basic_istream<charT, traits>&
+      operator>>(basic_ios<charT, traits>& (*pf)(basic_ios<charT, traits>&));
+    basic_istream<charT, traits>&
+      operator>>(ios_base& (*pf)(ios_base&));
+
+    basic_istream<charT, traits>& operator>>(bool& n);
+    basic_istream<charT, traits>& operator>>(short& n);
+    basic_istream<charT, traits>& operator>>(unsigned short& n);
+    basic_istream<charT, traits>& operator>>(int& n);
+    basic_istream<charT, traits>& operator>>(unsigned int& n);
+    basic_istream<charT, traits>& operator>>(long& n);
+    basic_istream<charT, traits>& operator>>(unsigned long& n);
+    basic_istream<charT, traits>& operator>>(long long& n);
+    basic_istream<charT, traits>& operator>>(unsigned long long& n);
+    basic_istream<charT, traits>& operator>>(float& f);
+    basic_istream<charT, traits>& operator>>(double& f);
+    basic_istream<charT, traits>& operator>>(long double& f);
+
+    basic_istream<charT, traits>& operator>>(void*& p);
+    basic_istream<charT, traits>& operator>>(basic_streambuf<char_type, traits>* sb);
+
+    // [:en] [#istream.unformatted], unformatted input \
+       [:zh_CN] [#istream.unformatted]，无格式输入
+    streamsize gcount() const;
+    int_type get();
+    basic_istream<charT, traits>& get(char_type& c);
+    basic_istream<charT, traits>& get(char_type* s, streamsize n);
+    basic_istream<charT, traits>& get(char_type* s, streamsize n, char_type delim);
+    basic_istream<charT, traits>& get(basic_streambuf<char_type, traits>& sb);
+    basic_istream<charT, traits>& get(basic_streambuf<char_type, traits>& sb, char_type delim);
+
+    basic_istream<charT, traits>& getline(char_type* s, streamsize n);
+    basic_istream<charT, traits>& getline(char_type* s, streamsize n, char_type delim);
+
+    basic_istream<charT, traits>& ignore(streamsize n = 1, int_type delim = traits::eof());
+    int_type                      peek();
+    basic_istream<charT, traits>& read    (char_type* s, streamsize n);
+    streamsize                    readsome(char_type* s, streamsize n);
+
+    basic_istream<charT, traits>& putback(char_type c);
+    basic_istream<charT, traits>& unget();
+    int sync();
+
+    pos_type tellg();
+    basic_istream<charT, traits>& seekg(pos_type);
+    basic_istream<charT, traits>& seekg(off_type, ios_base::seekdir);
+
+  protected:
+    // [:en] [#istream.cons], copy/move constructor \
+       [:zh_CN] [#istream.cons]，复制/移动构造函数
+    basic_istream(const basic_istream&) = delete;
+    basic_istream(basic_istream&& rhs);
+
+    // [:en] [#istream.assign], assign and swap \
+       [:zh_CN] [#istream.assign]，赋值与交换
+    basic_istream& operator=(const basic_istream&) = delete;
+    basic_istream& operator=(basic_istream&& rhs);
+    void swap(basic_istream& rhs);
+  };
+
+  // [:en] [#istream.extractors], character extraction templates \
+     [:zh_CN] [#istream.extractors]，字符提取模板
+  template<class charT, class traits>
+    basic_istream<charT, traits>& operator>>(basic_istream<charT, traits>&, charT&);
+  template<class traits>
+    basic_istream<char, traits>& operator>>(basic_istream<char, traits>&, unsigned char&);
+  template<class traits>
+    basic_istream<char, traits>& operator>>(basic_istream<char, traits>&, signed char&);
+
+  template<class charT, class traits, size_t N>
+    basic_istream<charT, traits>& operator>>(basic_istream<charT, traits>&, charT(&)[N]);
+  template<class traits, size_t N>
+    basic_istream<char, traits>& operator>>(basic_istream<char, traits>&, unsigned char(&)[N]);
+  template<class traits, size_t N>
+    basic_istream<char, traits>& operator>>(basic_istream<char, traits>&, signed char(&)[N]);
+}
+[codeblock:end]
+
+[para]
+[:en] The class template [`basic_istream] defines a number of member function
+signatures that assist in reading and interpreting input from sequences
+controlled by a stream buffer.
+[:zh_CN] 类模板 [`basic_istream] 定义了一些成员函数签名，以帮助对来自流缓冲区所
+掌控的序列的输入进行读取和解释。
+
+[para]
+[:en] Two groups of member function signatures share common properties: the
+[+:% formatted input functions] (or [+:% extractors]) and the [+:% unformatted
+input functions].
+[:zh_CN] 两组成员函数签名各自具有共通的属性：[+:% 格式化输入函数]（或
+[+:% 提取符]），以及[+:% 无格式输入函数]。
+
+[:en] Both groups of input functions are described as if they obtain (or
+[+:% extract]) input [+:% characters] by calling [`rdbuf()->sbumpc()] or
+[`rdbuf()->sgetc()].
+[:zh_CN] 对这两组输入函数的说明都按照，如同它们是通过调用 [`rdbuf()->sbumpc()]
+或 [`rdbuf()->sgetc()] 来获取（或[+:% 提取]）其输入[+:% 字符]的。
+
+[:en] They may use other public members of [`istream].
+[:zh_CN] 它们可以使用 [`istream] 的其他公开成员。
+
+[para]
+[:en] If [`rdbuf()->sbumpc()] or [`rdbuf()->sgetc()] returns [`traits::eof()],
+then the input function, except as explicitly noted otherwise, completes its
+actions and does [`setstate(eofbit)], which may throw [`ios_base::failure]
+([#iostate.flags]), before returning.
+[:zh_CN] 如果 [`rdbuf()->sbumpc()] 或 [`rdbuf()->sgetc()] 返回了
+[`traits::eof()]，则除非另行明确指定，否则输入函数即完成其动作，并在返回前执行
+[`setstate(eofbit)]，而这可能会抛出 [`ios_base::failure]（[#iostate.flags]）。
+
+[para]
+[:en] If one of these called functions throws an exception, then unless
+explicitly noted otherwise, the input function sets [`badbit] in the error state.
+[:zh_CN] 当其所调用的函数之一抛出了异常时，除非另行明确指定，否则该输入函数将在
+错误状态中设置 [`badbit]。
+
+[:en] If [`badbit] is set in [`exceptions()], the input function rethrows the
+exception without completing its actions, otherwise it does not throw anything
+and proceeds as if the called function had returned a failure indication.
+[:zh_CN] 若 [`exceptions()] 中设置了 [`badbit]，则输入函数重新抛出异常而并不完成
+其动作，否则它不抛出任何异常并按照如同所调用的函数返回了失败标识一样继续处理。
