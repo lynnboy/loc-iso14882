@@ -1,0 +1,333 @@
+[section#temp.class.spec.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en]
+[%specialization[!class template partial]]
+[%primary class template[%template[!primary]]]
+A [+primary class template[%template[!primary]]] declaration is one in which the
+class template name is an identifier.
+[:zh_CN]
+[%特化[!类模板部分～]]
+[%主类模板[%模板[!主～]]]
+[+主类模板[%模板[!主～]]]声明式是其类模板名为一个标识符的声明式。
+
+[:en]
+A template declaration in which the class template name is a
+[~simple-template-id] is a [+partial specialization [%specialization[!class
+template partial]]] of the class template named in the [~simple-template-id].
+[:zh_CN]
+类模板名为一个[~简单模板标识]的模板声明式，是由其[~简单模板标识]中所提名的类模板
+的[+部分特化式[%特化式[!类模板部分～]]]。
+
+[:en]
+A partial specialization of a class template provides an alternative definition
+of the template that is used instead of the primary definition when the
+arguments in a specialization match those given in the partial specialization
+([#temp.class.spec.match]).
+[:zh_CN]
+类模板的部分特化式提供了该模板的替换定义式，当某个特例中的实参与该部分特化式中所
+给定的相匹配（[#temp.class.spec.match]）时，将使用这个定义式代替其主定义式。
+
+[:en]
+The primary template shall be declared before any specializations of that
+template.
+[:zh_CN]
+应当在一个模板的任何特化式之前声明其主模板。
+
+[:en]
+A partial specialization shall be declared before the first use of a class
+template specialization that would make use of the partial specialization as the
+result of an implicit or explicit instantiation in every translation unit in
+which such a use occurs; no diagnostic is required.
+[:zh_CN]
+部分特化式应当在首次使用类模板的特例，并由于隐式或显式实例化而使用了该部分特化式
+之前，在每个包含这种使用的翻译单元中进行声明；无须诊断。
+
+[para]
+[:en]
+Each class template partial specialization is a distinct template and
+definitions shall be provided for the members of a template partial
+specialization ([#temp.class.spec.mfunc]).
+[:zh_CN]
+每个类模板部分特化都是独立的模板，并且应该为模板部分特化的成员提供定义式
+（[#temp.class.spec.mfunc]）。
+
+[para]
+[begin:example]
+[codeblock]
+template<class T1, class T2, int I> class A             { };
+template<class T, int I>            class A<T, T*, I>   { };
+template<class T1, class T2, int I> class A<T1*, T2, I> { };
+template<class T>                   class A<int, T*, 5> { };
+template<class T1, class T2, int I> class A<T1, T2*, I> { };
+[codeblock:end]
+
+[:en]
+The first declaration declares the primary (unspecialized) class template.
+[:zh_CN]
+第一个声明式声明了主（未特化的）类模板。
+
+[:en]
+The second and subsequent declarations declare partial specializations of
+the primary template.
+[:zh_CN]
+第二个和随后的声明式声明了主模板的部分特化。
+[end:example]
+
+[para]
+[:en]
+A class template partial specialization may be constrained ([#temp.pre]).
+[:zh_CN]
+类模板部分特化式可以被约束（[#temp.pre]）。
+
+[begin:example]
+[codeblock]
+template<typename T> concept C = true;
+
+template<typename T> struct X { };
+template<typename T> struct X<T*> { };          // #1
+template<C T> struct X<T> { };                  // #2
+[codeblock:end]
+
+[:en]
+Both partial specializations are more specialized than the primary template.
+[:zh_CN]
+两个部分特化式都比主模板更特殊。
+
+[:en]
+#1 is more specialized because the deduction of its template arguments from the
+template argument list of the class template specialization succeeds, while the
+reverse does not.
+[:zh_CN]
+#1 更特殊是因为其模板实参从类模板特例的模板实参列表进行的推断成功，而反之则不能。
+
+[:en]
+#2 is more specialized because the template arguments are equivalent, but the
+partial specialization is more constrained ([#temp.constr.order]).
+[:zh_CN]
+#2 更特殊是因为其模板实参等价，但部分特化中的则更受约束（[#temp.constr.order]）。
+[end:example]
+
+[para]
+[:en]
+The template parameters are specified in the angle bracket enclosed list that
+immediately follows the keyword [`:key template].
+[:zh_CN]
+紧跟在 [`:key template] 关键字后面的角括号包围的列表中指定其模板形参。
+
+[:en]
+For partial specializations, the template argument list is explicitly written
+immediately following the class template name.
+[:zh_CN]
+对于部分特化式，紧跟在类模板名后面明确写出其模板实参列表。
+
+[:en]
+For primary templates, this list is implicitly described by the template
+parameter list.
+[:zh_CN]
+对于主模板，这个列表由其模板形参列表所隐含地说明。
+
+[:en]
+Specifically, the order of the template arguments is the sequence in which they
+appear in the template parameter list.
+[:zh_CN]
+具体来说，模板实参的顺序就是它们出现在模板形参列表中的顺序。
+
+[begin:example]
+[:en]
+The template argument list for the primary template in the example above is
+[`<T1, T2, I>].
+[:zh_CN]
+上例中的主模板的模板实参列表是 [`<T1, T2, I>]。
+[end:example]
+
+[begin:note]
+[:en]
+The template argument list cannot be specified in the primary template
+declaration.
+[:zh_CN]
+在主模板声明式中不能指定模板实参列表。
+
+[:en]
+For example,
+[:zh_CN]
+例如，
+
+[codeblock]
+template<class T1, class T2, int I>
+class A<T1, T2, I>  { };                        // [:en] error \
+                                                   [:zh_CN] 错误
+[codeblock:end]
+[end:note]
+
+[para]
+[:en]
+A class template partial specialization may be declared in any scope in which
+the corresponding primary template may be defined ([#namespace.memdef],
+[#class.mem], [#temp.mem]).
+[:zh_CN]
+类模板部分特化式可以在任何能够对其对应的主模板进行定义的作用域中进行声明
+（[#namespace.memdef]，[#class.mem]，[#temp.mem]）。
+
+[begin:example]
+[codeblock]
+template<class T> struct A {
+  struct C {
+    template<class T2> struct B { };
+    template<class T2> struct B<T2**> { };      // [:en] partial specialization #1 \
+                                                   [:zh_CN] 部分特化式 #1
+  };
+};
+
+// [:en] partial specialization of [`A<T>::C::B<T2>] \
+   [:zh_CN] [`A<T>::C::B<T2>] 的部分特化式
+template<class T> template<class T2>
+  struct A<T>::C::B<T2*> { };                   // #2
+
+A<short>::C::B<int*> absip;                     // [:en] uses partial specialization #2 \
+                                                   [:zh_CN] 使用了部分特化式 #2
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+Partial specialization declarations themselves are not found by name lookup.
+[:zh_CN]
+部分特化声明式自身不能被名字查找所找到。
+
+[:en]
+Rather, when the primary template name is used, any previously-declared partial
+specializations of the primary template are also considered.
+[:zh_CN]
+确切地说，当使用某个主模板名时，这个主模板的之前声明过的所有部分特化式都会被考察。
+
+[:en]
+One consequence is that a [~using-declaration] which refers to a class template
+does not restrict the set of partial specializations which may be found through
+the [~using-declaration].
+[:zh_CN]
+其结论之一是，指代某个类模板的 [~using-声明式]并不会限制可以通过该
+[~using-声明式]找到的部分特化式的集合。
+
+[begin:example]
+[codeblock]
+namespace N {
+  template<class T1, class T2> class A { };     // [:en] primary template \
+                                                   [:zh_CN] 主模板
+}
+
+using N::A;                                     // [:en] refers to the primary template \
+                                                   [:zh_CN] 指代主模板
+
+namespace N {
+  template<class T> class A<T, T*> { };         // [:en] partial specialization \
+                                                   [:zh_CN] 部分特化式
+}
+
+A<int,int*> a;      // [:en] uses the partial specialization, which is found through the using declaration \
+                       [:zh_CN] 使用了部分特化式，它是通过指代主模板的
+                    // [:en@~] which refers to the primary template \
+                       [:zh_CN@~] using 声明式找到的
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+A non-type argument is non-specialized if it is the name of a non-type
+parameter.
+[:zh_CN]
+如果一个非类型实参是某个非类型形参的名字，则它是未特化的。
+
+[:en]
+All other non-type arguments are specialized.
+[:zh_CN]
+所有其他的非类型实参都是特化的。
+
+[para]
+[:en]
+Within the argument list of a class template partial specialization, the
+following restrictions apply:
+[:zh_CN]
+下列限制适用于类模板部分特化式的实参列表：
+
+[list]
+[item]
+[:en]
+The type of a template parameter corresponding to a specialized non-type
+argument shall not be dependent on a parameter of the specialization.
+[:zh_CN]
+对应于某个被特化的非类型实参的模板形参的类型，不能依存于该特化式中的某个形参。
+
+[begin:example]
+[codeblock]
+template <class T, T t> struct C {};
+template <class T> struct C<T, 1>;              // [:en] error \
+                                                   [:zh_CN] 错误
+
+template< int X, int (*array_ptr)[X] > class A {};
+int array[5];
+template< int X > class A<X,&array> { };        // [:en] error \
+                                                   [:zh_CN] 错误
+[codeblock:end]
+[end:example]
+
+[item]
+[:en]
+The specialization shall be more specialized than the primary template
+([#temp.class.order]).
+[:zh_CN]
+特化式应当比主模板更加特殊（[#temp.class.order]）。
+
+[item]
+[:en]
+The template parameter list of a specialization shall not contain default
+template argument values.[#:note#fn:$1]
+[:zh_CN]
+特化式的模板形参列表中不能包含默认模板实参值。[#:note#fn:$1]
+
+[note:foot#fn:$1]
+[:en]
+There is no way in which they could be used.
+[:zh_CN]
+不存在使用它们的方式。
+[note:end]
+
+[item]
+[:en]
+An argument shall not contain an unexpanded pack.
+[:zh_CN]
+实参不能包含未展开的包组。
+
+[:en]
+If an argument is a pack expansion ([#temp.variadic]), it shall be the last
+argument in the template argument list.
+[:zh_CN]
+若某个实参是包组展开式（[#temp.variadic]），则它应当为模板实参列表中的最后一个
+实参。
+[list:end]
+
+[para]
+[:en]
+The usual access checking rules do not apply to non-dependent names used to
+specify template arguments of the [~simple-template-id] of the partial
+specialization.
+[:zh_CN]
+常规访问检查规则对于用于指定部分特化式的[~简单模板标识]的模板实参的非待决的名字
+并不适用。
+
+[begin:note]
+[:en]
+The template arguments can be private types or objects that would normally not
+be accessible.
+[:zh_CN]
+模板视察可以是私有类型或对象，而它们通常是不可访问的。
+
+[:en]
+Dependent names cannot be checked when declaring the partial specialization,
+but will be checked when substituting into the partial specialization.
+[:zh_CN]
+对待决名字的检查无法在声明部分特化式时进行，但将会在向部分特化式进行替换时检查。
+[end:note]

@@ -1,0 +1,143 @@
+[section#temp.class.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en]
+A [+class template[%template[!class]]] defines the layout and operations for an
+unbounded set of related types.
+[:zh_CN]
+[+类模板[%模板[!类～]]]为相关类型的无界集合定义它们的布局和操作。
+
+[para]
+[begin:example]
+[:en]
+A single class template [`List] might provide an unbounded set of class
+definitions: one class [`List<T>] for every type [`T], each describing a linked
+list of elements of type [`T].
+[:zh_CN]
+单个类模板 [`List] 可以为提供无界限的类定义的集合：每个类型 [`T] 都有一个类
+[`List<T>]，它们各自为 [`T] 类型元素的链表。
+
+[:en]
+Similarly, a class template [`Array] describing a contiguous, dynamic array
+might be defined like this:
+[:zh_CN]
+相似地，可以这样来定义一个描述一种连续动态数组的类模板 [`Array]：
+
+[codeblock]
+template<class T> class Array {
+  T* v;
+  int sz;
+public:
+  explicit Array(int);
+  T& operator[](int);
+  T& elem(int i) { return v[i]; }
+};
+[codeblock:end]
+
+[para]
+[:en]
+The prefix [`[`:key template]<class T>] specifies that a template is being
+declared and that a [~type-name] [`T] may be used in the declaration.
+[:zh_CN]
+前缀 [`[`:key template]<class T>] 指定其声明了一个模板，且可以在其声明式中使用
+[~类型名] [`T]。
+
+[:en]
+In other words, [`Array] is a parameterized type with [`T] as its parameter.
+[:zh_CN]
+换句话说，[`Array] 是个以 [`T] 作为形参的参数化类型。
+[end:example]
+
+[para]
+[:en]
+When a member function, a member class, a member enumeration, a static data
+member or a member template of a class template is defined outside of the class
+template definition, the member definition is defined as a template definition
+in which the [~template-head] is equivalent to that of the class template
+([#temp.over.link]).
+[:zh_CN]
+当一个类模板的成员函数、成员类、成员枚举、静态数据成员或成员模板在类模板定义式
+之外进行定义时，该成员定义式被定义为模板定义式，其[~模板头]等价于类模板的
+[~模板头]（[#temp.over.link]）。
+
+[:en]
+The names of the template parameters used in the definition of the member may
+be different from the template parameter names used in the class template
+definition.
+[:zh_CN]
+该成员的定义式中所使用的模板形参名可以与类模板定义式中所使用的模板形参名不同。
+
+[:en]
+The template argument list following the class template name in the member
+definition shall name the parameters in the same order as the one used in the
+template parameter list of the member.
+[:zh_CN]
+成员定义式中跟在类模板名后面的模板实参列表，应当按照该成员的模板形参列表中所用的
+相同顺序来指名形参。
+
+[:en]
+Each template parameter pack shall be expanded with an ellipsis in the template
+argument list.
+[:zh_CN]
+每个模板形参包组都应该由模板实参列表中的某个省略号所展开。
+
+[begin:example]
+[codeblock]
+template<class T1, class T2> struct A {
+  void f1();
+  void f2();
+};
+
+template<class T2, class T1> void A<T2,T1>::f1() { }    // OK
+template<class T2, class T1> void A<T1,T2>::f2() { }    // [:en] error \
+                                                           [:zh_CN] 错误
+[codeblock:end]
+
+[codeblock]
+template<class ... Types> struct B {
+  void f3();
+  void f4();
+};
+
+template<class ... Types> void B<Types ...>::f3() { }   // OK
+template<class ... Types> void B<Types>::f4() { }       // [:en] error \
+                                                           [:zh_CN] 错误
+[codeblock:end]
+
+[codeblock]
+template<typename T> concept C = true;
+template<typename T> concept D = true;
+
+template<C T> struct S {
+  void f();
+  void g();
+  void h();
+  template<D U> struct Inner;
+};
+
+template<C A> void S<A>::f() { }        // [:en] OK: [~template-head]s match \
+                                           [:zh_CN] OK：[~模板头]相匹配
+template<typename T> void S<T>::g() { } // [:en] error: no matching declaration for [`S<T>] \
+                                           [:zh_CN] 错误：没有与 [`S<T>] 匹配的声明式
+
+template<typename T> requires C<T>      // [:en] ill-formed, no diagnostic required: [~template-head]s are \
+                                           [:zh_CN] 非良构，无须诊断：[~模板头]功能等价
+void S<T>::h() { }                      // [:en@~] functionally equivalent but not equivalent \
+                                           [:zh_CN@~] 但并不等价
+
+template<C X> template<D Y>
+struct S<X>::Inner { };                 // OK
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+In a redeclaration, partial specialization, explicit specialization or explicit
+instantiation of a class template, the [~class-key] shall agree in kind with the
+original class template declaration ([#dcl.type.elab]).
+[:zh_CN]
+在类模板的重复声明式、部分特化式、显式特化式或显式实例化式中，其[~类关键字]应当
+与其原来的类模板声明式中的种类相同（[#dcl.type.elab]）。
