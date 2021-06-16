@@ -1,0 +1,172 @@
+[section#util.smartptr.shared.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[%@lib shared_ptr]
+[:en]
+The [`shared_ptr] class template stores a pointer, usually obtained via [`new].
+[:zh_CN]
+[`shared_ptr] 类模板存储一个通常由 [`new] 所得到的指针。
+
+[:en]
+[`shared_ptr] implements semantics of shared ownership; the last remaining owner
+of the pointer is responsible for destroying the object, or otherwise releasing
+the resources associated with the stored pointer.
+[:zh_CN]
+[`shared_ptr] 实现共享所有权语义；其指针的最后剩下来的拥有者负有销毁对象，或者
+释放与存储的指针关联的资源的责任。
+
+[:en]
+A [`shared_ptr] is said to be empty if it does not own a pointer.
+[:zh_CN]
+若 [`shared_ptr] 并未拥有某个指针，则称其为空。
+
+[codeblock:synopsis]
+namespace std {
+  template<class T> class shared_ptr {
+  public:
+    using element_type = remove_extent_t<T>;
+    using weak_type    = weak_ptr<T>;
+
+    // [:en] [#util.smartptr.shared.const], constructors \
+       [:zh_CN]  [#util.smartptr.shared.const]，构造函数
+    constexpr shared_ptr() noexcept;
+    constexpr shared_ptr(nullptr_t) noexcept : shared_ptr() { }
+    template<class Y>
+      explicit shared_ptr(Y* p);
+    template<class Y, class D>
+      shared_ptr(Y* p, D d);
+    template<class Y, class D, class A>
+      shared_ptr(Y* p, D d, A a);
+    template<class D>
+      shared_ptr(nullptr_t p, D d);
+    template<class D, class A>
+      shared_ptr(nullptr_t p, D d, A a);
+    template<class Y>
+      shared_ptr(const shared_ptr<Y>& r, element_type* p) noexcept;
+    template<class Y>
+      shared_ptr(shared_ptr<Y>&& r, element_type* p) noexcept;
+    shared_ptr(const shared_ptr& r) noexcept;
+    template<class Y>
+      shared_ptr(const shared_ptr<Y>& r) noexcept;
+    shared_ptr(shared_ptr&& r) noexcept;
+    template<class Y>
+      shared_ptr(shared_ptr<Y>&& r) noexcept;
+    template<class Y>
+      explicit shared_ptr(const weak_ptr<Y>& r);
+    template<class Y, class D>
+      shared_ptr(unique_ptr<Y, D>&& r);
+
+    // [:en] [#util.smartptr.shared.dest], destructor \
+       [:zh_CN] [#util.smartptr.shared.dest]，析构函数
+    ~shared_ptr();
+
+    // [:en] [#util.smartptr.shared.assign], assignment \
+       [:zh_CN] [#util.smartptr.shared.assign]，赋值
+    shared_ptr& operator=(const shared_ptr& r) noexcept;
+    template<class Y>
+      shared_ptr& operator=(const shared_ptr<Y>& r) noexcept;
+    shared_ptr& operator=(shared_ptr&& r) noexcept;
+    template<class Y>
+      shared_ptr& operator=(shared_ptr<Y>&& r) noexcept;
+    template<class Y, class D>
+      shared_ptr& operator=(unique_ptr<Y, D>&& r);
+
+    // [:en] [#util.smartptr.shared.mod], modifiers \
+       [:zh_CN] [#util.smartptr.shared.mod]，改动函数
+    void swap(shared_ptr& r) noexcept;
+    void reset() noexcept;
+    template<class Y>
+      void reset(Y* p);
+    template<class Y, class D>
+      void reset(Y* p, D d);
+    template<class Y, class D, class A>
+      void reset(Y* p, D d, A a);
+
+    // [:en] [#util.smartptr.shared.obs], observers \
+       [:zh_CN] [#util.smartptr.shared.obs]，探察函数
+    element_type* get() const noexcept;
+    T& operator*() const noexcept;
+    T* operator->() const noexcept;
+    element_type& operator[](ptrdiff_t i) const;
+    long use_count() const noexcept;
+    explicit operator bool() const noexcept;
+    template<class U>
+      bool owner_before(const shared_ptr<U>& b) const noexcept;
+    template<class U>
+      bool owner_before(const weak_ptr<U>& b) const noexcept;
+  };
+
+  template<class T>
+    shared_ptr(weak_ptr<T>) -> shared_ptr<T>;
+  template<class T, class D>
+    shared_ptr(unique_ptr<T, D>) -> shared_ptr<T>;
+}
+[codeblock:end]
+
+[para]
+[:en]
+Specializations of [`shared_ptr] shall be [^:oc CopyConstructible],
+[^:oc CopyAssignable], and [^:oc LessThanComparable], allowing their use in
+standard containers.
+[:zh_CN]
+[`shared_ptr] 的特例应当为 [^:oc CopyConstructible]，[^:oc CopyAssignable]，
+以及 [^:oc LessThanComparable]，允许它们被用在标准容器之中。
+
+[:en]
+Specializations of [`shared_ptr] shall be contextually convertible to [`bool],
+allowing their use in boolean expressions and declarations in conditions.
+[:zh_CN]
+[`shared_ptr] 的特例应当可以按语境转换为 [`bool]，允许它们被用作条件中的表达式或
+声明式。
+
+[para]
+[:en]
+The template parameter [`T] of [`shared_ptr] may be an incomplete type.
+[:zh_CN]
+[`shared_ptr] 的模板形参 [`T] 可以是不完整类型。
+
+[begin:note]
+[:en]
+[`T] can be a function type.
+[:zh_CN]
+[`T] 可以为函数类型。
+[end:note]
+
+[para]
+[begin:example]
+[codeblock]
+if (shared_ptr<X> px = dynamic_pointer_cast<X>(py)) {
+  // [:en] do something with [`px] \
+     [:zh_CN] 对 [`px] 进行某些操作
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+For purposes of determining the presence of a data race, member functions shall
+access and modify only the [`shared_ptr] and [`weak_ptr] objects themselves and
+not objects they refer to.
+[:zh_CN]
+为确定数据竞争的存在性，成员函数应当仅访问并修改 [`shared_ptr] 和 [`weak_ptr]
+对象自身，而不是它们所指代的对象。
+
+[:en]
+Changes in [`use_count()] do not reflect modifications that can introduce data
+races.
+[:zh_CN]
+[`use_count()] 的改变并不会反映可能造成数据竞争的修改。
+
+[para]
+[:en]
+For the purposes of subclause [#smartptr], a pointer type [`Y*] is said to be
+[+compatible with[%compatible with[![`shared_ptr]]]] a pointer type [`T*] when
+either [`Y*] is convertible to [`T*] or [`Y] is [`U`[N`]] and [`T] is
+[=cv] [`U`[`]].
+[:zh_CN]
+对于子条款 [#smartptr] 来说，当 [`Y*] 可以转换为 [`T*] 时，或者当 [`Y] 为
+[`U`[N`]] 而 [`T] 为 [=cv] [`U`[`]] 时，指针类型 [`Y*] 被称为与指针类型 [`T*]
+[+兼容[%与～兼容[![`shared_ptr]]]]。

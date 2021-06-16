@@ -1,0 +1,111 @@
+[section#func.wrap.func.general
+    [:en] General
+    [:zh_CN] 概述
+]
+[%@lib function]
+
+[%@lib@member result_type[!function]]
+[codeblock:synopsis]
+namespace std {
+  template<class> class function;       // [=notdef]
+
+  template<class R, class... ArgTypes>
+  class function<R(ArgTypes...)> {
+  public:
+    using result_type = R;
+
+    // [:en] [#func.wrap.func.con], construct/copy/destroy \
+       [:zh_CN] [#func.wrap.func.con]，构造/复制/销毁
+    function() noexcept;
+    function(nullptr_t) noexcept;
+    function(const function&);
+    function(function&&) noexcept;
+    template<class F> function(F);
+
+    function& operator=(const function&);
+    function& operator=(function&&);
+    function& operator=(nullptr_t) noexcept;
+    template<class F> function& operator=(F&&);
+    template<class F> function& operator=(reference_wrapper<F>) noexcept;
+
+    ~function();
+
+    // [:en] [#func.wrap.func.mod], function modifiers \
+       [:zh_CN] [#func.wrap.func.mod]，function 的改动函数
+    void swap(function&) noexcept;
+
+    // [:en] [#func.wrap.func.cap], function capacity \
+       [:zh_CN] [#func.wrap.func.cap]，function 的能力
+    explicit operator bool() const noexcept;
+
+    // [:en] [#func.wrap.func.inv], function invocation \
+       [:zh_CN] [#func.wrap.func.inv]，function 的调用
+    R operator()(ArgTypes...) const;
+
+    // [:en] [#func.wrap.func.targ], function target access \
+       [:zh_CN] [#func.wrap.func.targ]，function 的目标访问
+    const type_info& target_type() const noexcept;
+    template<class T>       T* target() noexcept;
+    template<class T> const T* target() const noexcept;
+  };
+
+  template<class R, class... ArgTypes>
+    function(R(*)(ArgTypes...)) -> function<R(ArgTypes...)>;
+
+  template<class F> function(F) -> function<[[redoc("[=seebelow]")]]>;
+
+  // [:en] [#func.wrap.func.nullptr], null pointer comparison operator functions \
+     [:zh_CN] [#func.wrap.func.nullptr]，空指针比较运算符函数
+  template<class R, class... ArgTypes>
+    bool operator==(const function<R(ArgTypes...)>&, nullptr_t) noexcept;
+
+  // [:en] [#func.wrap.func.alg], specialized algorithms \
+     [:zh_CN] [#func.wrap.func.alg]，特化的算法
+  template<class R, class... ArgTypes>
+    void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&) noexcept;
+}
+[codeblock:end]
+
+[para]
+[:en]
+The [`function] class template provides polymorphic wrappers that generalize the
+notion of a function pointer.
+[:zh_CN]
+[`function] 类模板提供了将函数指针概念一般化的多态的包装器。
+
+[:en]
+Wrappers can store, copy, and call arbitrary callable objects ([#func.def]),
+given a call signature ([#func.def]), allowing functions to be first-class
+objects.
+[:zh_CN]
+给定一个调用签名（[#func.def]），包装器可以存储、复制和调用任意可调用对象
+（[#func.def]），并允许将函数作为第一级对象处理。
+
+[para]
+[:en]
+A [%callable type] callable type ([#func.def]) [`F] is [+Lvalue-Callable] for
+argument types [`ArgTypes] and return type [`R] if the expression
+[`[^INVOKE]<R>(declval<F&>(), declval<ArgTypes>()...)], considered as an
+unevaluated operand ([#expr.expr]), is well-formed ([#func.require]).
+[:zh_CN]
+对于[%可调用类型]可调用类型（[#func.def]）[`F]，如果表达式
+[`[^INVOKE]<R>(declval<F&>(), declval<ArgTypes>()...)] 作为免求值操作数
+（[#expr.expr]）是良构的（[#func.require]），则它对于实参类型 [`ArgTypes] 和
+返回类型 [`R] 是[+可左值调用]的。
+
+[para]
+[:en]
+The [`function] class template is a call wrapper ([#func.def]) whose call
+signature ([#func.def]) is [`R(ArgTypes...)].
+[:zh_CN]
+[`function] 类模板是调用包装器（[#func.def]），其调用签名（[#func.def]）为
+[`R(ArgTypes...)]。
+
+[para]
+[begin:note]
+[:en]
+The types deduced by the deduction guides for [`function] might change in future
+revisions of [=Cpp].
+[:zh_CN]
+[=Cpp] 的未来版本中有可能改变由推断导引为 [`function] 所推断的类型。
+[end:note]
