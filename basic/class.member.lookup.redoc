@@ -1,0 +1,414 @@
+[section#class.member.lookup
+    [:en] Member name lookup
+    [:zh_CN] 成员名查找
+]
+
+[para]
+[:en]
+[%scope[!search]]
+A [+search] in a scope [$X] for a name [$N] from a program point [$P] is a
+single search in [$X] for [$N] from [$P] unless [$X] is the scope of a class or
+class template [$T], in which case the following steps define the result of the
+search.
+[:zh_CN]
+[%作用域[!搜索]]
+从程序位置点 [$P] 对名字 [$N] 在作用域 [$X] 中进行的[+搜索]，是从 [$P] 对 [$N]
+在 [$X] 中进行的[+单次搜索]，除非 [$X] 是类或类模板 [$T] 的作用域，这种情况下由
+以下步骤定义搜索的结果。
+
+[begin:note]
+[:en]
+The result differs only if [$N] is a [~conversion-function-id] or if the single
+search would find nothing.
+[:zh_CN]
+仅当 [$N] 是个[~转换函数标识]，或当单次搜索找不到任何东西时，结果才会有差异。
+[end:note]
+
+[para]
+[:en]
+The [+lookup set] for [$N] in [$C], called [$S(N,C)], consists of two component
+sets: the [+:% declaration set], a set of members named [$N]; and the
+[+:% subobject set], a set of subobjects where declarations of these members
+were found (possibly via [~using-declaration]s).
+[:zh_CN]
+在 [$C] 中对 [$N] 的[+查找集合]，称为 [$S(N,C)]，由两个成分集合构成：[+:% 声明式
+集合]，为名为 [$N] 的成员的集合；以及[+:% 子对象集合]，为可以在其中找到这些成员
+（可能通过 [~using-声明式]）的子对象的集合。
+
+[:en]
+In the declaration set, type declarations (including injected-class-names)
+are replaced by the types they designate.
+[:zh_CN]
+声明式集合中的类型声明式（包括注入类名）被它们所代表的类型替换。
+
+[:en]
+[$S(N,C)] is calculated as follows:
+[:zh_CN]
+[$S(N,C)] 的计算方法如下：
+
+[para]
+[:en]
+The declaration set is the result of a single search in the scope of [$C] for
+[$N] from immediately after the [~class-specifier] of [$C] if [$P] is in a
+complete-class context of [$C] or from [$P] otherwise.
+[:zh_CN]
+声明式集合为，当 [$P] 处于 [$C] 的完整类语境则从紧跟 [$C] 的[~类说明符]之后，
+否则从 [$P]，对 [$N] 在 [$C] 的作用域中进行单次搜索的结果。
+
+[:en]
+If the resulting declaration set is not empty, the subobject set contains [$C]
+itself, and calculation is complete.
+[:zh_CN]
+若产生的声明式集合不为空，则子对象集合包含 [$C] 自身，并完成计算。
+
+[para]
+[:en]
+Otherwise (i.e., [$C] does not contain a declaration of [$N] or the resulting
+declaration set is empty), [$S(N,C)] is initially empty.
+[:zh_CN]
+否则（亦即 [$C] 并不包含 [$N] 的声明式或产生的声明式集合为空），[$S(N,C)] 初始
+为空。
+
+[:en]
+Calculate the lookup set for [$N] in each direct non-dependent ([#temp.dep.type])
+base class subobject [$B_i], and merge each such lookup set [$S(N,B_i)] in turn
+into [$S(N,C)].
+[:zh_CN]
+在每个直接非待决（[#temp.dep.type]）基类子对象 [$B_i] 中计算 [$N] 的查找集合，
+并将各个这种查找集合 [$S(N,B_i)] 依次合并到 [$S(N,C)] 之中。
+
+[begin:note]
+[:en]
+If [$T] is incomplete, only base classes whose [~base-specifier] appears before
+[$P] are considered.
+[:zh_CN]
+若 [$T] 不完整，则仅考察其[~基说明符]出现于 [$P] 之前的基类。
+
+[:en]
+If [$T] is an instantiated class, its base classes are not dependent.
+[:zh_CN]
+若 [$T] 是已实例化的类，则其基类均非待决。
+[end:note]
+
+[para]
+[:en]
+The following steps define the result of merging lookup set [$S(N,B_i)] into the
+intermediate [$S(N,C)]:
+[:zh_CN]
+以下步骤定义了将查找集合 [$S(N,B_i)] 合并到半成品的 [$S(N,C)] 中的结果：
+
+[list]
+[item]
+[:en]
+If each of the subobject members of [$S(N,B_i)] is a base class subobject of at
+least one of the subobject members of [$S(N,C)], or if [$S(N,B_i)] is empty,
+[$S(N,C)] is unchanged and the merge is complete.
+[:zh_CN]
+如果 [$S(N,B_i)] 的各个子对象成员是 [$S(N,C)] 的子对象成员中至少一个的基类子对象，
+或者如果 [$S(N,B_i)] 为空，则 [$S(N,C)] 未改变且合并完成。
+
+[:en]
+Conversely, if each of the subobject members of [$S(N,C)] is a base class
+subobject of at least one of the subobject members of [$S(N,B_i)], or if
+[$S(N,C)] is empty, the new [$S(N,C)] is a copy of [$S(N,B_i)].
+[:zh_CN]
+反之，如果 [$S(N,C)] 的各个子对象成员是 [$S(N,B_i)] 的子对象成员中至少一个的基类
+子对象，或者如果 [$S(N,C)] 为空，则新的 [$S(N,C)] 为 [$S(N,B_i)] 的副本。
+
+[item]
+[:en]
+Otherwise, if the declaration sets of [$S(N,B_i)] and [$S(N,C)] differ, the
+merge is ambiguous: the new [$S(N,C)] is a lookup set with an invalid
+declaration set and the union of the subobject sets.
+[:zh_CN]
+否则，如果 [$S(N,B_i)] 和 [$S(N,C)] 的声明式集合不同，则合并有歧义：新的 [$S(N,C)]
+是具有一个无效的声明式集合和子对象集合的并集的查找集合。
+
+[:en]
+In subsequent merges, an invalid declaration set is considered different from
+any other.
+[:zh_CN]
+无效声明式集合在后续的合并中被认为与任何其他集合都不同。
+
+[item]
+[:en]
+Otherwise, the new [$S(N,C)] is a lookup set with the shared set of declarations
+and the union of the subobject sets.
+[:zh_CN]
+否则，新的 [$S(N,C)] 是带有共享的声明式集合和子对象集合的并集的查找集合。
+[list:end]
+
+[para]
+[:en]
+The result of the search is the declaration set of [$S(N,T)].
+[:zh_CN]
+搜索的结果为 [$S(N,T)] 的声明式集合。
+
+[:en]
+If it is an invalid set, the program is ill-formed.
+[:zh_CN]
+如果它是无效集合，则程序非良构。
+
+[:en]
+If it differs from the result of a search in [$T] for [$N] from immediately
+after the [~class-specifier] of [$T], the program is ill-formed, no diagnostic
+required.
+[:zh_CN]
+如果它与从紧跟 [$T] 的[~类说明符]之后对 [$N] 在 [$T] 中搜索的结果不同，则程序
+非良构，无须诊断。
+
+[begin:example]
+[codeblock]
+struct A { int x; };                    // S(x,A) = { { [`A::x] }, { [`A] } }
+struct B { float x; };                  // S(x,B) = { { [`B::x] }, { [`B] } }
+struct C: public A, public B { };       // [:en] S(x,C) = { invalid, { [`A] in [`C], [`B] in [`C] } } \
+                                           [:zh_CN] S(x,C) = { 无效, { [`C] 中的 [`A], [`C] 中的 [`B] } }
+struct D: public virtual C { };         // S(x,D) = S(x,C)
+struct E: public virtual C { char x; }; // S(x,E) = { { [`E::x] }, { [`E] } }
+struct F: public D, public E { };       // S(x,F) = S(x,E)
+int main() {
+  F f;
+  f.x = 0;                              // [:en] OK, lookup finds [`E::x] \
+                                           [:zh_CN] OK，查找找到了 [`E::x]
+}
+[codeblock:end]
+
+[:en]
+[$S([`x],[`F])] is unambiguous because the [`A] and [`B] base class subobjects
+of [`D] are also base class subobjects of [`E], so [$S([`x],[`D])] is discarded
+in the first merge step.
+[:zh_CN]
+[$S([`x],[`F])] 无歧义，因为 [`D] 的基类子对象 [`A] 和 [`B] 同样是 [`E] 的基类
+子对象，所以 [$S([`x],[`D])] 在第一个合并步骤中被丢弃。
+[end:example]
+
+[para]
+[:en]
+If [$N] is a non-dependent [~conversion-function-id], conversion function
+templates that are members of [$T] are considered.
+[:zh_CN]
+如果 [$N] 为非待决的[~转换函数标识]，则考察作为 [$T] 的成员的转换函数模板。
+
+[:en]
+For each such template [$F], the lookup set [$S(t,T)] is constructed,
+considering a function template declaration to have the name [$t]
+only if it corresponds to a declaration of [$F] ([#basic.scope.scope]).
+[:zh_CN]
+对于每个这种模板 [$F]，考虑一个具有名字 [`t] 的函数模板声明式，仅当其对应于 [`F]
+的声明式（[#basic.scope.scope]）时，构造查找集合 [$S(t,T)]。
+
+[:en]
+The members of the declaration set of each such lookup set,
+which shall not be an invalid set, are included in the result.
+[:zh_CN]
+每个这种查找集合的除无效集合外声明式集合中的成员，被包含到结果中。
+
+[begin:note]
+[:en]
+Overload resolution will discard those that cannot convert to the type specified
+by [$N] ([#temp.over]).
+[:zh_CN]
+重载决议将会丢弃无法被转换为由 [$N] 所指定的类型（[#temp.over]）的成员。
+[end:note]
+
+[para]
+[begin:note]
+[:en]
+A static member, a nested type or an enumerator defined in a base class [`T] can
+unambiguously be found even if an object has more than one base class subobject
+of type [`T].
+[:zh_CN]
+即使对象中具有多于一个类型 [`T] 的基类子对象，在基类 [`T] 中所定义的静态成员、
+嵌套类型或枚举符也可以无歧义地找到。
+
+[:en]
+Two base class subobjects share the non-static member subobjects of their common
+virtual base classes.
+[:zh_CN]
+两个基类子对象共享其共同虚基类的非静态成员子对象。
+[end:note]
+
+[begin:example]
+[codeblock]
+struct V {
+  int v;
+};
+struct A {
+  int a;
+  static int s;
+  enum { e };
+};
+struct B : A, virtual V { };
+struct C : A, virtual V { };
+struct D : B, C { };
+
+void f(D* pd) {
+  pd->v++;          // [:en] OK: only one [`v] (virtual) \
+                       [:zh_CN] OK：只有一个 [`v]（虚成员）
+  pd->s++;          // [:en] OK: only one [`s] (static) \
+                       [:zh_CN] OK：只有一个 [`s]（静态成员）
+  int i = pd->e;    // [:en] OK: only one [`e] (enumerator) \
+                       [:zh_CN] OK：只有一个 [`e]（枚举符）
+  pd->a++;          // [:en] error: ambiguous: two [`a]s in [`D] \
+                       [:zh_CN] 错误：有歧义：[`D] 中有两个 [`a]
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:note]
+[:en]
+[%dominance[!virtual base class]]
+When virtual base classes are used, a hidden declaration can be reached along a
+path through the subobject lattice that does not pass through the hiding
+declaration.
+[:zh_CN]
+[%支配[!虚基类]]
+当使用虚基类时，一个被隐藏的声明式，可以通过子对象晶格中的一条并不经过隐藏它的
+声明式的路径来访问它。
+
+[:en]
+This is not an ambiguity.
+[:zh_CN]
+这没有歧义。
+
+[:en]
+The identical use with non-virtual base classes is an ambiguity; in that case
+there is no unique instance of the name that hides all the others.
+[:zh_CN]
+非虚基类的同等用法是有歧义的；那种情况下并不存在该名字的一个隐藏了所有其他实例的
+唯一实例。
+[end:note]
+
+[begin:example]
+[codeblock]
+struct V { int f();  int x; };
+struct W { int g();  int y; };
+struct B : virtual V, W {
+  int f();  int x;
+  int g();  int y;
+};
+struct C : virtual V, W { };
+
+struct D : B, C { void glorp(); };
+[codeblock:end]
+
+[figure:dot#class.lookup
+    [:en] Name lookup
+    [:zh_CN] 名字查找
+]
+digraph virt {
+    graph [nodesep=1.5, rankdir=BT];
+
+    W1 [label = "W", shape=plaintext, height=.1, fontsize=24];
+    V [shape=plaintext, height=.1, fontsize=24];
+    W2 [label = "W", shape=plaintext, height=.1, fontsize=24];
+    B [shape=plaintext, height=.1, fontsize=24];
+    C [shape=plaintext, height=.1, fontsize=24];
+    D [shape=plaintext, height=.1, fontsize=24];
+
+    D -> B;
+    D -> C;
+    B -> V;
+    C -> V;
+    B -> W1;
+    C -> W2;
+}
+[figure:end]
+
+[:en]
+As illustrated in [#:fig#class.lookup], the names declared in [`V] and the
+left-hand instance of [`W] are hidden by those in [`B], but the names declared
+in the right-hand instance of [`W] are not hidden at all.
+[:zh_CN]
+如 [#:fig#class.lookup] 中所示，在 [`V] 和左边的 [`W] 实例中声明的名字被 [`B] 中
+的声明式所隐藏，但在右边的 [`W] 的实例中所声明的名字则根本没被隐藏。
+
+[codeblock]
+void D::glorp() {
+  x++;              // [:en] OK: [`B::x] hides [`V::x] \
+                       [:zh_CN] OK：[`B::x] 隐藏了 [`V::x]
+  f();              // [:en] OK: [`B::f()] hides [`V::f()] \
+                       [:zh_CN] OK：[`B::f()] 隐藏了 [`V::f()]
+  y++;              // [:en] error: [`B::y] and [`C][=']s [`W::y] \
+                       [:zh_CN] 错误：[`B::y] 与 [`C] 中的 [`W::y]
+  g();              // [:en] error: [`B::g()] and [`C][=']s [`W::g()] \
+                       [:zh_CN] 错误：[`B::g()] 与 [`C] 中的 [`W::g()]
+}
+[codeblock:end]
+[end:example]
+
+[%  [:en] ambiguity[!class conversion]
+    [:zh_CN] 歧义[!类转换] ]
+
+[para]
+[:en]
+An explicit or implicit conversion from a pointer to or an expression
+designating an object of a derived class to a pointer or reference to one of its
+base classes shall unambiguously refer to a unique object representing the base
+class.
+[:zh_CN]
+从指向派生类的指针或代表派生类的表达式，向指向其基类之一的指针或引用所进行的显式
+或隐式转换，应当无歧义地涉指唯一表示该基类的对象。
+
+[begin:example]
+[codeblock]
+struct V { };
+struct A { };
+struct B : A, virtual V { };
+struct C : A, virtual V { };
+struct D : B, C { };
+
+void g() {
+  D d;
+  B* pb = &d;
+  A* pa = &d;       // [:en] error: ambiguous: [`C][=']s [`A] or [`B][=']s [`A]? \
+                       [:zh_CN] 错误：有歧义：[`C] 中的 [`A] 还是 [`B] 中的 [`A]？
+  V* pv = &d;       // [:en] OK: only one [`V] subobject \
+                       [:zh_CN] OK：只有一个 [`V] 子对象
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:note]
+[:en]
+Even if the result of name lookup is unambiguous, use of a name found in
+multiple subobjects might still be ambiguous ([#conv.mem], [#expr.ref],
+[#class.access.base]).
+[:zh_CN]
+即使名字查找的结果是无歧义的，使用在多个子对象中找到的名字还是可能产生歧义
+（[#conv.mem]，[#expr.ref]，[#class.access.base]）。
+[end:note]
+
+[begin:example]
+[codeblock]
+struct B1 {
+  void f();
+  static void f(int);
+  int i;
+};
+struct B2 {
+  void f(double);
+};
+struct I1: B1 { };
+struct I2: B1 { };
+
+struct D: I1, I2, B2 {
+  using B1::f;
+  using B2::f;
+  void g() {
+    f();                        // [:en] Ambiguous conversion of [`this] \
+                                   [:zh_CN] 有歧义的 [`this] 的转换
+    f(0);                       // [:en] Unambiguous (static) \
+                                   [:zh_CN] 无歧义（静态的）
+    f(0.0);                     // [:en] Unambiguous (only one [`B2]) \
+                                   [:zh_CN] 无歧义（只有一个 [`B2]）
+    int B1::* mpB1 = &D::i;     // [:en] Unambiguous \
+                                   [:zh_CN] 无歧义
+    int D::* mpD = &D::i;       // [:en] Ambiguous conversion \
+                                   [:zh_CN] 有歧义的转换
+  }
+};
+[codeblock:end]
+[end:example]

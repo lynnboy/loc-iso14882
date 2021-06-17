@@ -3,616 +3,171 @@
     [:zh_CN] 未限定名查找
 ]
 
+[:en]
+[%name[!unqualified]]
+[:zh_CN]
+[%名字[!未限定～]]
+
 [para]
 [:en]
-[%lookup[!unqualified name]] [%name[!unqualified]]
-In all the cases listed in [#basic.lookup.unqual], the scopes are searched for a
-declaration in the order listed in each of the respective categories;
+A [~using-directive] is [+:% active] in a scope [$S] at a program point [$P] if
+it precedes [$P] and inhabits either [$S] or the scope of a namespace nominated
+by a [~using-directive] that is active in [$S] at [$P].
 [:zh_CN]
-[%查找[!未限定名～]] [%名字[!未限定～]]
-在 [#basic.lookup.unqual] 所列出的所有情况中，根据每个类别各自所列出的顺序在
-作用域中搜索声明式；
+如果某条 [~using-指令]先于程序位置点 [$P]，且要么居于作用域 [$S] 要么居于在 [$P]
+处活跃于 [$S] 中的某条 [~using-指令]所提名的命名空间的作用域，则它在 [$P] 处
+[+:% 活跃]于 [$S] 中。
 
+[begin:note]
+[:en]
+A [~using-directive] is exported if and only if it appears in a header unit.
+[:zh_CN]
+当且仅当 [~using-指令]出现于头文件单元中时，它被导出。
+[end:note]
+
+[para]
+[:en]
+An [+:% unqualified search] in a scope [$S] from a program point [$P]
+includes the results of searches from [$P] in
+[:zh_CN]
+从程序位置点 [$P] 在作用域 [$S] 中进行[+:% 未限定搜索]，包含从 [$P] 在以下作用域
+中搜索的结果：
+
+[list]
+[item]
 [:en@~]
-name lookup ends as soon as a declaration is found for the name.
+[$S], and
 [:zh_CN@~]
-一旦找到该名字的一个声明式就结束名字查找。
-
-[:en]
-If no declaration is found, the program is ill-formed.
-[:zh_CN]
-若找不到任何声明式，则程序非良构。
-
-[para]
-[:en]
-The declarations from the namespace nominated by a [~using-directive] become
-visible in a namespace enclosing the [~using-directive]; see [#namespace.udir].
-[:zh_CN]
-由 [~using-指令]所提名的命名空间中的声明式，在包含 [~using-指令]的命名空间之中是
-可见的；参见 [#namespace.udir]。
-
-[:en]
-For the purpose of the unqualified name lookup rules described in
-[#basic.lookup.unqual], the declarations from the namespace nominated by the
-[~using-directive] are considered members of that enclosing namespace.
-[:zh_CN]
-当施行 [#basic.lookup.unqual] 中描述的未限定名查找规则时，[~using-指令]所提名的
-命名空间中的声明式也被当成是包含该指令的命名空间的成员。
-
-[para]
-[:en]
-The lookup for an unqualified name used as the [~postfix-expression] of a
-function call is described in [#basic.lookup.argdep].
-[:zh_CN]
-对在函数调用中用作[~后缀表达式]的未限定名所进行的查找，在 [#basic.lookup.argdep]
-中描述。
-
-[begin:note]
-[:en]
-For purposes of determining (during parsing) whether an expression is a
-[~postfix-expression] for a function call, the usual name lookup rules apply.
-[:zh_CN]
-当（在语法解析时）确定表达式是否是某函数调用的[~后缀表达式]时，使用常规的
-名字查找规则。
-
-[:en]
-In some cases a name followed by [`<] is treated as a [~template-name] even
-though name lookup did not find a [~template-name] (see [#temp.names]).
-[:zh_CN]
-某些情况下，即便通过名字查找并未找到一个[~模板名]时，后面跟着 [`<] 的名字仍将被
-当做是[~模板名]（参见 [#temp.names]）。
-
-[:en]
-For example,
-[:zh_CN]
-例如，
-
-[codeblock]
-int h;
-void g();
-namespace N {
-  struct A {};
-  template <class T> int f(T);
-  template <class T> int g(T);
-  template <class T> int h(T);
-}
-
-int x = f<N::A>(N::A());        // [:en] OK: lookup of [`f] finds nothing, [`f] treated as template name \
-                                   [:zh_CN] OK：对 [`f] 的查找未找到任何声明式，[`f] 被当做模板名
-int y = g<N::A>(N::A());        // [:en] OK: lookup of [`g] finds a function, [`g] treated as template name \
-                                   [:zh_CN] OK：对 [`g] 的查找找到了一个函数，[`g] 被当做模板名
-int z = h<N::A>(N::A());        // [:en] error: [`h<] does not begin a [~template-id] \
-                                   [:zh_CN] 错误：[`h<] 并不开始一个[~模板标识]
-[codeblock:end]
-
-[:en]
-The rules in [#basic.lookup.argdep] have no effect on the syntactic
-interpretation of an expression.
-[:zh_CN]
-[#basic.lookup.argdep] 中的规则对表达式的语法判读没有影响。
-
-[:en]
-For example,
-[:zh_CN]
-例如，
-
-[codeblock]
-typedef int f;
-namespace N {
-  struct A {
-    friend void f(A &);
-    operator int();
-    void g(A a) {
-      int i = f(a);             // [:en] [`f] is the typedef, not the friend function: equivalent to [`int(a)] \
-                                   [:zh_CN] 是 typedef，而不是友元函数：等价于 [`int(a)]
-    }
-  };
-}
-[codeblock:end]
-
-[:en]
-Because the expression is not a function call, the argument-dependent
-name lookup ([#basic.lookup.argdep]) does not apply and the friend function
-[`f] is not found.
-[:zh_CN]
-因为该表达式并不是函数调用，所以依赖于实参的名字查找（[#basic.lookup.argdep]）
-不适用，且友元函数 [`f] 没被找到。
-[end:note]
-
-[para]
-[:en]
-A name used in global scope, outside of any function, class or user-declared
-namespace, shall be declared before its use in global scope.
-[:zh_CN]
-在全局作用域中，于任何函数、类或用户声明的命名空间之外使用的名字，应当在
-全局作用域之中，在其被使用之前声明。
-
-[para]
-[:en]
-A name used in a user-declared namespace outside of the definition of any
-function or class shall be declared before its use in that namespace or before
-its use in a namespace enclosing its namespace.
-[:zh_CN]
-在用户声明的命名空间中，于任何函数或类之外使用的名字，应当在该命名空间或包含该
-命名空间的命名空间之中，在其被使用之前声明。
-
-[para]
-[:en]
-In the definition of a function that is a member of namespace [`N], a name used
-after the function[=']s [~declarator-id][#:note#fn:$1] shall be declared before
-its use in the block in which it is used or in one of its enclosing blocks
-([#stmt.block]) or shall be declared before its use in namespace [`N] or,
-if [`N] is a nested namespace, shall be declared before its use in one of
-[`N][=']s enclosing namespaces.
-[:zh_CN]
-在作为命名空间 [`N] 的成员的函数定义式中，于该函数的[~声明符标识]之后所使用的
-名字[#:note#fn:$1]，应当在使用它的语句块或其外围语句块（[#stmt.block]）之一之中，
-在其被使用之前声明，或者应当在命名空间 [`N] 之中，在其被使用之前声明，或者当
-[`N] 为嵌套的命名空间时，应当在 [`N] 的外围命名空间之一之中，在其被使用之前声明。
-
-[note:foot#fn:$1]
-[:en]
-This refers to unqualified names that occur, for instance, in a type or default
-argument in the [~parameter-declaration-clause] or used in the function body.
-[:zh_CN]
-所说的是，出现于（例如）[~形参声明子句]中的类型或默认实参表达式中，或在函数体中
-使用的未限定名。
-[note:end]
-
-[begin:example]
-[codeblock]
-namespace A {
-  namespace N {
-    void f();
-  }
-}
-void A::N::f() {
-  i = 5;
-  // [:en] The following scopes are searched for a declaration of [`i]: \
-     [:zh_CN] 在如下作用域中搜索 [`i] 的声明式：
-  // [:en] 1) outermost block scope of [`A::N::f], before the use of [`i] \
-     [:zh_CN] 1) [`A::N::f] 的最外层块作用域，使用 [`i] 之前
-  // [:en] 2) scope of namespace [`N] \
-     [:zh_CN] 2) 命名空间 [`N] 的作用域
-  // [:en] 3) scope of namespace [`A] \
-     [:zh_CN] 3) 命名空间 [`A] 的作用域
-  // [:en] 4) global scope, before the definition of [`A::N::f] \
-     [:zh_CN] 4) 全局作用域，[`A::N::f] 的定义式之前
-}
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-A name used in the definition of a class [`X][#:note#fn:$2] outside of
-a complete-class context ([#class.mem]) of [`X] shall be declared in one of the
-following ways:
-[:zh_CN]
-在类 [`X] 的定义式中，于 [`X] 的完整类语境（[#class.mem]）之外使用的名字
-[#:note#fn:$2]，应当以如下方式之一进行声明：
-
-[note:foot#fn:$2]
-[:en]
-This refers to unqualified names following the class name; such a name might be
-used in a [~base-specifier] or in the [~member-specification] of the class
-definition.
-[:zh_CN]
-所说的是类名之后的未限定名；这种名字可能被用在[~基说明符]中，或被用在类定义式的
-[~成员说明]之中。
-[note:end]
-
-[list]
+[$S]，以及
 [item]
-[:en]
-before its use in class [`X] or be a member of a base class of [`X]
-([#class.member.lookup]), or
-[:zh_CN]
-处于它在类 [`X] 中的使用之前声明，或应当为类 [`X] 的某个基类的成员
-（[#class.member.lookup]），或者
-
-[item]
-[:en]
-if [`X] is a nested class of class [`Y] ([#class.nest]), before the definition
-of [`X] in [`Y], or shall be a member of a base class of [`Y] (this lookup
-applies in turn to [`Y][=']s enclosing classes, starting with the innermost
-enclosing class),[#:note#fn:$3] or
-[:zh_CN]
-若 [`X] 是类 [`Y] 的嵌套类（[#class.nest]），则处于 [`Y] 中的 [`X] 的定义式之前
-声明，或者应当为 [`Y] 的某个基类的成员（此查找从最内层的外围类开始，依次应用于
-包含 [`Y] 的类中），[#:note#fn:$3] 或者
-
-[note:foot#fn:$3]
-[:en]
-This lookup applies whether the definition of [`X] is nested within [`Y][=']s
-definition or whether [`X][=']s definition appears in a namespace scope
-enclosing [`Y][=']s definition ([#class.nest]).
-[:zh_CN]
-无论 [`X] 的定义式嵌套于 [`Y] 的定义式之中，还是 [`X] 的定义式出现于包含 [`Y] 的
-定义式的命名空间作用域之中，都适用此查找（[#class.nest]）。
-[note:end]
-
-[item]
-[:en]
-if [`X] is a local class ([#class.local]) or is a nested class of a local class,
-before the definition of class [`X] in a block enclosing the definition of class
-[`X], or
-[:zh_CN]
-若 [`X] 是局部类（[#class.local]）或是局部类的嵌套类，则处于包含类 [`X] 的定义式
-的某个语句块之中，在类 [`X] 的定义式之前声明，或者
-
-[item]
-[:en]
-if [`X] is a member of namespace [`N], or is a nested class of a class that is a
-member of [`N], or is a local class or a nested class within a local class of a
-function that is a member of [`N], before the definition of class [`X] in
-namespace [`N] or in one of [`N][=']s enclosing namespaces.
-[:zh_CN]
-若 [`X] 是命名空间 [`N] 的成员，或是作为 [`N] 的成员的某个类的嵌套类，或是作为
-[`N] 的成员的某个函数的局部类或局部类中的嵌套类，则处于命名空间 [`N] 或 [`N] 的
-外围命名空间之一之中，在类 [`X] 的定义式之前声明。
+[:en@~]
+for any scope [$U] that contains [$P] and is or is contained by [$S],
+each namespace contained by [$S] that is nominated by
+a [~using-directive] that is active in [$U] at [$P].
+[:zh_CN@~]
+对于包含 [$P] 且是 [$S] 或是被其包含的任何作用域 [$U]，则有 [$S] 所包含的，由在
+[$P] 处活跃于 [$U] 中的 [~using-指令]所提名的每个命名空间。
 [list:end]
 
-[begin:example]
-[codeblock]
-namespace M {
-  class B { };
-}
-
-[codeblock:end]
-[codeblock]
-namespace N {
-  class Y : public M::B {
-    class X {
-      int a[i];
-    };
-  };
-}
-
-// [:en] The following scopes are searched for a declaration of [`i]: \
-   [:zh_CN] 在如下作用域中搜索 [`i] 的声明式：
-// [:en] 1) scope of class [`N::Y::X], before the use of [`i] \
-   [:zh_CN] 1) 类 [`N::Y::X] 的作用域，使用 [`i] 之前
-// [:en] 2) scope of class [`N::Y], before the definition of [`N::Y::X] \
-   [:zh_CN] 2) 类 [`N::Y] 的作用域，[`N::Y::X] 的定义式之前
-// [:en] 3) scope of [`N::Y][=']s base class [`M::B] \
-   [:zh_CN] 3) [`N::Y] 的基类 [`M::B] 的作用域
-// [:en] 4) scope of namespace [`N], before the definition of [`N::Y] \
-   [:zh_CN] 4) 命名空间 [`N] 的作用域，[`N::] 的定义式之前
-// [:en] 5) global scope, before the definition of [`N] \
-   [:zh_CN] 5) 全局作用域，[`N] 的定义式之前
-[codeblock:end]
-[end:example]
+[:en]
+If no declarations are found, the results of the unqualified search are the
+results of an unqualified search in the parent scope of [$S], if any, from [$P].
+[:zh_CN]
+如果未找到任何声明式，则未限定搜索的结果为从 [$P] 在 [$S] 的父作用域（如果有）中
+进行未限定搜索的结果。
 
 [begin:note]
 [:en]
-When looking for a prior declaration of a class or function introduced by a
-friend declaration, scopes outside of the innermost enclosing namespace scope
-are not considered; see [#namespace.memdef].
-[:zh_CN]
-当查找由友元声明式所引入的类或函数早前的声明式时，不考虑除最内层外围命名空间
-作用域之外的作用域；参见 [#namespace.memdef]。
-[end:note]
-
-[begin:note]
-[:en]
-[#basic.scope.class] further describes the restrictions on the use of names in a
-class definition.
-[:zh_CN]
-[#basic.scope.class] 进一步说明类定义式中使用名字的限制。
-
-[:en]
-[#class.nest] further describes the restrictions on the use of names in nested
-class definitions.
-[:zh_CN]
-[#class.nest] 进一步说明嵌套类定义式中使用名字的限制。
-
-[:en]
-[#class.local] further describes the restrictions on the use of names in local
-class definitions.
-[:zh_CN]
-[#class.local] 进一步说明局部类定义式中使用名字的限制。
-[end:note]
-
-[para]
-[:en]
-For the members of a class [`X], a name used in a complete-class context
-([#class.mem]) of [`X] or in the definition of a class member outside of the
-definition of [`X], following the member[=']s [~declarator-id] [#:note#fn:$4],
-shall be declared in one of the following ways:
-[:zh_CN]
-对于类 [`X] 的成员，在 [`X] 的完整类语境（[#class.mem]）中，或者在处于 [`X] 的
-定义式之外的类成员定义式中于该成员的[~声明符标识]之后[#:note#fn:$4]所使用的名字，
-应当以如下方式之一进行声明：
-
-[note:foot#fn:$4]
-[:en]
-That is, an unqualified name that occurs, for instance, in a type in the
-[~parameter-declaration-clause] or in the [~noexcept-specifier].
-[:zh_CN]
-也就是说，出现于（例如）其[~形参声明子句]中的某个的类型中或其[~noexcept-说明符]
-之中的未限定名。
-[note:end]
-
-[list]
-[item]
-[:en]
-before its use in the block in which it is used or in an enclosing block
-([#stmt.block]), or
-[:zh_CN]
-在使用它的语句块或其某个外围语句块（[#stmt.block]）之中，处于其被使用之前声明，
-或者
-
-[item]
-[:en]
-shall be a member of class [`X] or be a member of a base class of [`X]
-([#class.member.lookup]), or
-[:zh_CN]
-应当为类 [`X] 的成员，或 [`X] 的某个基类（[#class.member.lookup]）的成员，或者
-
-[item]
-[:en]
-if [`X] is a nested class of class [`Y] ([#class.nest]), shall be a member of
-[`Y], or shall be a member of a base class of [`Y] (this lookup applies in turn
-to [`Y][=']s enclosing classes, starting with the innermost enclosing class),
-[#:note#fn:$5] or
-[:zh_CN]
-若 [`X] 是类 [`Y] 的嵌套类（[#class.nest]），则应当为 [`Y] 的成员，或为 [`Y] 的
-某个基类的成员（此查找从最内层外围类开始，依次应用于包含 [`Y] 的类中），
-[#:note#fn:$5] 或者
-
-[note:foot#fn:$5]
-[:en]
-This lookup applies whether the member function is defined within the definition
-of class [`X] or whether the member function is defined in a namespace scope
-enclosing [`X][=']s definition.
-[:zh_CN]
-无论该成员函数定义于类 [`X] 的定义式之内，还是该成员函数定义于包含 [`X] 的定义式
-的某个命名空间作用域之中，都适用此查找。
-[note:end]
-
-[item]
-[:en]
-if [`X] is a local class ([#class.local]) or is a nested class of a local class,
-before the definition of class [`X] in a block enclosing the definition of class
-[`X], or
-[:zh_CN]
-若 [`X] 是局部类（[#class.local]）或是局部类的嵌套类，则在包含类 [`X] 的某个语句
-块之中，处于类 [`X] 的定义式之前声明，或者
-
-[item]
-[:en]
-if [`X] is a member of namespace [`N], or is a nested class of a class that is a
-member of [`N], or is a local class or a nested class within a local class of a
-function that is a member of [`N], before the use of the name, in namespace [`N]
-or in one of [`N][=']s enclosing namespaces.
-[:zh_CN]
-若 [`X] 是命名空间 [`N] 的成员，或是作为 [`N] 的成员的某个类的嵌套类，或是作为
-[`N] 的成员的某个函数的局部类或局部类中的嵌套类，则应在命名空间 [`N] 或 [`N] 的
-外围命名空间之一之中，使用该名字之前声明。
-[list:end]
-
-[begin:example]
- [codeblock]
-class B { };
-namespace M {
-  namespace N {
-    class X : public B {
-      void f();
-    };
-  }
-}
-void M::N::X::f() {
-  i = 16;
-}
-
-// [:en] The following scopes are searched for a declaration of [`i]: \
-   [:zh_CN] 在如下作用域中搜索 [`i] 的声明式：
-// [:en] 1) outermost block scope of [`M::N::X::f], before the use of [`i] \
-   [:zh_CN] 1) [`M::N::X::f] 的最外层块作用域，使用 [`i]
-// [:en] 2) scope of class [`M::N::X] \
-   [:zh_CN] 2) 类 [`M::N::X] 的作用域
-// [:en] 3) scope of [`M::N::X][=']s base class [`B] \
-   [:zh_CN] 3) [`M::N::X] 的基类 [`B] 的作用域
-// [:en] 4) scope of namespace [`M::N] \
-   [:zh_CN] 4) 命名空间 [`M::N] 的作用域
-// [:en] 5) scope of namespace [`M] \
-   [:zh_CN] 5) 命名空间 [`M] 的作用域
-// [:en] 6) global scope, before the definition of [`M::N::X::f] \
-   [:zh_CN] 6) 全局作用域，[`M::N::X::f] 的定义式之前
-[codeblock:end]
-[end:example]
-
-[begin:note]
-[:en]
-[#class.mfct] and [#class.static] further describe the restrictions on the use
-of names in member function definitions.
-[:zh_CN]
-[#class.mfct] 和 [#class.static] 进一步说明成员函数的定义式中使用名字的限制。
-
-[:en]
-[#class.nest] further describes the restrictions on the use of names in the
-scope of nested classes.
-[:zh_CN]
-[#class.nest] 进一步说明嵌套类的作用域中使用名字的限制。
-
-[:en]
-[#class.local] further describes the restrictions on the use of names in local
-class definitions.
-[:zh_CN]
-[#class.local] 进一步说明局部类的定义式中使用名字的限制。
-[end:note]
-
-[para]
-[:en]
-Name lookup for a name used in the definition of a friend function
-([#class.friend]) defined inline in the class granting friendship shall proceed
-as described for lookup in member function definitions.
-[:zh_CN]
-对于在授予友元关系的类中内联定义的友元函数（[#class.friend]）的定义式中使用的
-名字所进行的名字查找，应当按照在成员函数定义式中进行查找的描述进行。
-
-[:en]
-If the friend function is not defined in the class granting friendship, name
-lookup in the friend function definition shall proceed as described for lookup
-in namespace member function definitions.
-[:zh_CN]
-若友元函数不是在授予友元关系的类之中进行定义的，则在友元函数的定义式中所进行的
-名字查找，应当按照在命名空间成员函数定义式中进行查找的描述进行。
-
-[para]
-[:en]
-In a friend declaration naming a member function, a name used in the function
-declarator and not part of a [~template-argument] in the [~declarator-id] is
-first looked up in the scope of the member function[=']s class
+When a class scope is searched, the scopes of its base classes are also searched
 ([#class.member.lookup]).
 [:zh_CN]
-在提名某个成员函数的友元声明式中，在函数声明符中所使用的，不是[~模板标识]中的
-某个[~模板实参]的一部分的名字，首先在该成员函数的类的作用域中查找
-（[#class.member.lookup]）。
+搜索类作用域时，还会搜索其各基类的作用域（[#class.member.lookup]）。
 
 [:en]
-If it is not found, or if the name is part of a [~template-argument] in the
-[~declarator-id], the look up is as described for unqualified names in the
-definition of the class granting friendship.
+If it inherits from a single base, it is as if the scope of the base immediately
+contains the scope of the derived class.
 [:zh_CN]
-如果找不到，或者如果该名字是[~模板标识]中某个[~模板实参]的一部分，则该查找按照在
-授予友元关系的类的定义式中，对未限定名进行查找的描述来进行。
-
-[begin:example]
-[codeblock]
-struct A {
-  typedef int AT;
-  void f1(AT);
-  void f2(float);
-  template <class T> void f3();
-};
-struct B {
-  typedef char AT;
-  typedef float BT;
-  friend void A::f1(AT);        // [:en] parameter type is [`A::AT] \
-                                   [:zh_CN] 形参类型为 [`A::AT]
-  friend void A::f2(BT);        // [:en] parameter type is [`B::BT] \
-                                   [:zh_CN] 形参类型为 [`B::BT]
-  friend void A::f3<AT>();      // [:en] template argument is [`B::AT] \
-                                   [:zh_CN] 模板实参为 [`B::AT]
-};
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-During the lookup for a name used as a default argument ([#dcl.fct.default]) in
-a function [~parameter-declaration-clause] or used in the [~expression] of a
-[~mem-initializer] for a constructor ([#class.base.init]), the function
-parameter names are visible and hide the names of entities declared in the
-block, class or namespace scopes containing the function declaration.
-[:zh_CN]
-对于在函数的[~形参声明子句]中用作默认实参（[#dcl.fct.default]），或在构造函数
-的一个[~成员初始化式]（[#class.base.init]）中的[~表达式]中使用的名字，当对其进行
-查找时，函数形参名可见，并将隐藏声明于包含该函数声明式的语句块、类或命名空间
-作用域之中的实体的名字。
-
-[begin:note]
-[:en]
-[#dcl.fct.default] further describes the restrictions on the use of names in
-default arguments.
-[:zh_CN]
-[#dcl.fct.default] 进一步说明默认实参中使用名字的限制。
+若它继承于单个基类，则如同基类的作用域直接包含派生类的作用域一样。
 
 [:en]
-[#class.base.init] further describes the restrictions on the use of names in a
-[~ctor-initializer].
+Template parameter scopes that are associated with one scope in the chain of
+parents are also considered ([#temp.local]).
 [:zh_CN]
-[#class.base.init] 进一步说明[~构造函数初始化式]中使用名字的限制。
+与父作用域链条中的某个作用域相关联的模板形参作用域也会被考察（[#temp.local]）。
 [end:note]
 
 [para]
 [:en]
-During the lookup of a name used in the [~constant-expression] of an
-[~enumerator-definition], previously declared [~enumerator]s of the enumeration
-are visible and hide the names of entities declared in the block, class, or
-namespace scopes containing the [~enum-specifier].
+[+Unqualified name lookup[%lookup[!unqualified name]]]
+from a program point performs an unqualified search in its immediate scope.
 [:zh_CN]
-当对[~枚举符定义式]的[~常量表达式]之中所使用的名字进行查找时，该枚举中早前声明的
-[~枚举符]可见，并将隐藏声明于包含该[~枚举说明符]的语句块、类或命名空间作用域中的
-实体的名字。
+从某个程序位置点进行的[+未限定名查找[%查找[!未限定名]]]，在其直接作用域中实施
+未限定搜索。
 
 [para]
 [:en]
-A name used in the definition of a [`static] data member of class [`X]
-([#class.static.data]) (after the [~qualified-id] of the static member) is
-looked up as if the name was used in a member function of [`X].
+An [+:adj unqualified name[%unqualified[!name]]] is a name that does not follow
+a [~nested-name-specifier] or the [`.] or [`->] in a class member access
+expression ([#expr.ref]), possibly after a [`:key template] keyword or [`~].
 [:zh_CN]
-在类 [`X] 的 [`static] 数据成员（[#class.static.data]）的定义式中（在该静态成员
-的[~限定标识]之后）所使用的名字，按照如同该名字被使用于 [`X] 的成员函数中那样来
-进行查找。
+[+:adj 未限定名[%未限定[!名字]]]是并不跟随于一个[~嵌套名说明符]，或者类成员访问
+表达式中的 [`.] 或 [`->]（[#expr.ref]）之后，可能处于 [`:key template] 关键字或
+[`~] 之后的名字。
 
-[begin:note]
 [:en]
-[#class.static.data] further describes the restrictions on the use of names in
-the definition of a [`static] data member.
+Unless otherwise specified, such a name undergoes unqualified name lookup from
+the point where it appears.
 [:zh_CN]
-[#class.static.data] 进一步说明 [`static] 数据成员的定义式中使用名字的限制。
-[end:note]
+除非另行指明，这种名字都遵循从其出现之处进行的未限定名字查找。
 
 [para]
 [:en]
-If a variable member of a namespace is defined outside of the scope of its
-namespace then any name that appears in the definition of the member (after the
-[~declarator-id]) is looked up as if the definition of the member occurred in
-its namespace.
+An unqualified name that is a component name ([#expr.prim.id.unqual]) of
+a [~type-specifier] or [~ptr-operator] of a [~conversion-type-id] is looked up
+in the same fashion as the [~conversion-function-id] in which it appears.
 [:zh_CN]
-若命名空间的变量成员定义于其命名空间的作用域之外，则在该成员的定义式中（在其
-[~声明符标识]之后）出现的任何名字，都按照如同该成员的定义式出现于其命名空间之内
-来进行查找。
+作为[~转换类型标识]的[~类型说明符]或[~指针声明符]的成分名字
+（[#expr.prim.id.unqual]）的未限定名，以其所出现的[~转换函数标识]相同的方式查找。
+
+[:en]
+If that lookup finds nothing, it undergoes unqualified name lookup; in each case,
+only names that denote types or templates whose specializations are types are
+considered.
+[:zh_CN]
+如果这种查找未找到任何东西，则它要进行未限定名查找；任何情况中，都只考察代表类型
+或特例为类型的模板的名字。
+
+[para]
+[:en]
+In a friend declaration [~declarator] whose [~declarator-id] is a [~qualified-id]
+whose lookup context ([#basic.lookup.qual]) is a class or namespace [$S], lookup
+for an unqualified name that appears after the [~declarator-id] performs a
+search in the scope associated with [$S].
+[:zh_CN]
+在友元声明式的[~声明符]中，其[~声明符标识]是一个查找语境（[#basic.lookup.qual]）
+为类或命名空间 [$S] 的[~限定标识]，对出现于该[~声明符标识]之后的未限定名的查找
+在与 [$S] 关联的作用域中进行搜索。
+
+[:en]
+If that lookup finds nothing, it undergoes unqualified name lookup.
+[:zh_CN]
+如果这种查找未找到任何东西，则它要进行未限定名查找。
 
 [begin:example]
 [codeblock]
-namespace N {
-  int i = 4;
-  extern int j;
+using I = int;
+using D = double;
+namespace A {
+  inline namespace N {using C = char; }
+  using F = float;
+  void f(I);
+  void f(D);
+  void f(C);
+  void f(F);
 }
-
-int i = 2;
-
-int N::j = i;       // [`N::j == 4]
+struct X0 {using F = float; };
+struct W {
+  using D = void;
+  struct X : X0 {
+    void g(I);
+    void g(::D);
+    void g(F);
+  };
+};
+namespace B {
+  typedef short I, F;
+  class Y {
+    friend void A::f(I);        // [:en] error: no [`void A::f(short)] \
+                                [:zh_CN] 错误：没有 [`void A::f(short)]
+    friend void A::f(D);        // OK
+    friend void A::f(C);        // [:en] error: [`A::N::C] not found \
+                                [:zh_CN] 错误：未找到 [`A::N::C]
+    friend void A::f(F);        // OK
+    friend void W::X::g(I);     // [:en] error: no [`void X::g(short)] \
+                                [:zh_CN] 错误：没有 [`void X::g(short)]
+    friend void W::X::g(D);     // OK
+    friend void W::X::g(F);     // OK
+  };
+}
 [codeblock:end]
 [end:example]
-
-[para]
-[:en]
-A name used in the handler for a [~function-try-block] ([#except.pre]) is looked
-up as if the name was used in the outermost block of the function definition.
-[:zh_CN]
-在[~函数-try-块]（[#except.pre]）的某个处理器中使用的名字，按照如同该名字被使用
-于该函数定义式的最外层语句块中来进行查找。
-
-[:en]
-In particular, the function parameter names shall not be redeclared in the
-[~exception-declaration] nor in the outermost block of a handler for the
-[~function-try-block].
-[:zh_CN]
-特别是，既不能在[~异常声明]中，也不能在[~函数-try-块]的任何处理器的最外层语句块
-中重复声明函数形参名。
-
-[:en]
-Names declared in the outermost block of the function definition are not found
-when looked up in the scope of a handler for the [~function-try-block].
-[:zh_CN]
-在[~函数-try-块]的某个处理器的作用域中查找时，不会找到函数定义式的最外层语句块中
-声明的名字。
-
-[begin:note]
-[:en]
-But function parameter names are found.
-[:zh_CN]
-但函数形参名会被找到。
-[end:note]
-
-[para]
-[begin:note]
-[:en]
-The rules for name lookup in template definitions are described in [#temp.res].
-[:zh_CN]
-在模板定义式中进行名字查找的规则在 [#temp.res] 中说明。
-[end:note]

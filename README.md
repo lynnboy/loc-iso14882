@@ -429,6 +429,7 @@ locale                                  地域
 locale-specific                         地域特有的
 lock                                    锁，锁定
 lock-free                               无锁
+locus                                   位点
 logical and operator                    逻辑与运算符
 logical negation operator               逻辑非运算符
 logical or operator                     逻辑或运算符

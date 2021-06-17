@@ -5,165 +5,36 @@
 
 [para]
 [:en]
-[%scope[!namespace]]
-The declarative region of a [~namespace-definition] is its [~namespace-body].
+Any [~namespace-definition] for a namespace [$N] introduces a
+[+:adj namespace scope[%namespace[!scope]]] that includes the [~namespace-body]
+for every [~namespace-definition] for [$N].
 [:zh_CN]
-[%作用域[!命名空间～]]
-[~命名空间定义式]的声明区是其[~命名空间体]。
+命名空间 [$N] 的任何[~命名空间定义式]均引入一个[+:adj 命名空间作用域[%命名空间
+[!作用域]]]，它包括 [$N] 的每个[~命名空间定义式]的[~命名空间体]。
 
 [:en]
-Entities declared in a [~namespace-body] are said to be [+members] of the
-namespace, and names introduced by these declarations into the declarative
-region of the namespace are said to be [+member names] of the namespace.
+For each non-friend redeclaration or specialization whose target scope is or is
+contained by the scope, the portion after the [~declarator-id],
+[~class-head-name], or [~enum-head-name] is also included in the scope.
 [:zh_CN]
-在[~命名空间体]中声明的实体被称为该命名空间的[+成员]，而被这些声明式引入到命名
-空间的声明区中的名字被称为该命名空间的[+成员名]。
+对于以该作用域为其目标作用域或被其包含的每个非友元的重复声明式或特化式，其
+[~声明符标识]，[~类头名]，或[~枚举头名]之后的部分也处于该作用域之中。
 
 [:en]
-A namespace member name has namespace scope.
+The global scope is the namespace scope of the global namespace
+([#basic.namespace]).
 [:zh_CN]
-命名空间成员名具有命名空间作用域。
-
-[:en]
-Its potential scope includes its namespace from the name[=']s point of
-declaration ([#basic.scope.pdecl]) onwards; and for each [~using-directive]
-([#namespace.udir]) that nominates the member[=']s namespace, the member[=']s
-potential scope includes that portion of the potential scope of the
-[~using-directive] that follows the member[=']s point of declaration.
-[:zh_CN]
-它的潜在作用域包括命名空间中从该名字的声明点（[#basic.scope.pdecl]）往后的部分；
-而且，对于每个提名该成员的命名空间的 [~using-指令]（[#namespace.udir]），该成员
-的潜在作用域还包括这个 [~using-指令]的潜在作用域处于该成员的声明点之后的部分。
+全局作用域时全局命名空间的命名空间作用域（[#basic.namespace]）。
 
 [begin:example]
 [codeblock]
-namespace N {
-  int i;
-  int g(int a) { return a; }
-  int j();
-  void q();
-}
-namespace { int l=1; }
-// [:en] the potential scope of [`l] is from its point of declaration to the end of the translation unit \
-   [:zh_CN] [`l] 的潜在作用域从其声明点到该翻译单元的末尾
-
-namespace N {
-  int g(char a) {   // [:en] overloads [`N::g(int)] \
-                       [:zh_CN] 重载了 [`N::g(int)]
-    return l+a;     // [:en] [`l] is from unnamed namespace\
-                       [:zh_CN] [`l] 来自无名命名空间
+namespace Q {
+  namespace V { void f(); }
+  void V::f() {         // [:en] in the scope of [`V] \
+                        [:zh_CN] 在 [`V] 的作用域中
+    void h();           // declares [`Q::V::h] \
+                        [:zh_CN] 声明 [`Q::V::h]
   }
-
-  int i;            // [:en] error: duplicate definition \
-                       [:zh_CN] 错误：重复定义
-  int j();          // [:en] OK: duplicate function declaration\
-                       [:zh_CN] OK：重复的函数声明
-
-  int j() {         // [:en] OK: definition of [`N::j()] \
-                       [:zh_CN] OK：[`N::j()] 的定义
-    return g(i);    // [:en] calls [`N::g(int)] \
-                       [:zh_CN] 调用了 [`N::g(int)]
-  }
-  int q();          // [:en] error: different return type \
-                       [:zh_CN] 错误：不同的返回类型
 }
 [codeblock:end]
 [end:example]
-
-[para]
-[:en]
-If a translation unit [$Q] is imported into a translation unit [$R]
-([#module.import]), the potential scope of a name [$X] declared with namespace
-scope in [$Q] is extended to include the portion of the corresponding namespace
-scope in [$R] following the first [~module-import-declaration] or
-[~module-declaration] in [$R] that imports [$Q] (directly or indirectly) if
-[:zh_CN]
-当翻译单元 [$Q] 被导入到翻译单元 [$R] 中时（[#module.import]），若满足以下条件，
-则在 [$Q] 中以命名空间作用域所声明的名字 [$X] 的潜在作用域，扩展为包含 [$R] 中的
-对应命名空间作用域中，跟在 [$R] 中（直接或间接）导入了 [$Q] 的首个
-[~模块导入声明式]或[~模块声明式]之后的部分：
-
-[list]
-[item]
-[:en@~] [$X] does not have internal linkage, and
-[:zh_CN@~] [$X] 并非具有内部连接，并且
-[item]
-[:en@~] [$X] is declared after the [~module-declaration] in [$Q] (if any), and
-[:zh_CN@~] [$X] 声明于 [$Q] 中的[~模块声明式]（如果有）之后，并且
-[item]
-[:en@~] either [$X] is exported or [$Q] and [$R] are part of the same module.
-[:zh_CN@~] 要么 [$X] 被导出，要么 [$Q] 和 [$R] 均为相同模块的一部分。
-[list:end]
-
-[begin:note]
-[:en]
-A [~module-import-declaration] imports both the named translation unit(s) and
-any modules named by exported [~module-import-declaration]s within them,
-recursively.
-[:zh_CN]
-[~模块导入声明式]递归地同时导入所指名的各个翻译单元和它们之中以被导出的
-[~模块导入声明式]所指名的任何模块。
-
-[begin:example]
-[:en] Translation unit #1:
-[:zh_CN] 翻译单元 #1：
-[codeblock]
-export module Q;
-export int sq(int i) { return i*i; }
-[codeblock:end]
-
-[:en] Translation unit #2:
-[:zh_CN] 翻译单元 #2：
-[codeblock]
-export module R;
-export import Q;
-[codeblock:end]
-
-[:en] Translation unit #3:
-[:zh_CN] 翻译单元 #3：
-[codeblock]
-import R;
-int main() { return sq(9); }    // [:en] OK: [`sq] from module [`Q] \
-                                [:zh_CN] OK：模块 [`Q] 中的 [`sq]
-[codeblock:end]
-[end:example]
-[end:note]
-
-[para]
-[:en]
-A namespace member can also be referred to after the [`::] scope resolution
-operator ([#expr.prim.id.qual]) applied to the name of its namespace or the name
-of a namespace which nominates the member[=']s namespace in a [~using-directive];
-see [#namespace.qual].
-[:zh_CN]
-命名空间的成员，也可以通过对命名空间的名字，或对某个以 [~using-指令]提名了该成员
-所在命名空间的命名空间的名字，应用作用域解析运算符 [`::]（[#expr.prim.id.qual]）
-来进行涉指；参见 [#namespace.qual]。
-
-[para]
-[:en]
-The outermost declarative region of a translation unit is also a namespace,
-called the [+:adj global namespace[%namespace[!global]]].
-[:zh_CN]
-翻译单元最外层的声明区也是命名空间，叫做[+:adj 全局命名空间[%命名空间[!全局～]]]。
-
-[:en]
-A name declared in the global namespace has [+:adj global namespace scope
-[%namespace scope[!global]]] (also called [+:adj global scope[%scope[!global]]]).
-[:zh_CN]
-在全局命名空间中声明的名字具有[+:adj 全局命名空间作用域[%命名空间作用域[!全局～]]]
-（也叫[+:adj 全局作用域[%作用域[!全局～]]]）。
-
-[:en]
-The potential scope of such a name begins at its point of declaration
-([#basic.scope.pdecl]) and ends at the end of the translation unit that is its
-declarative region.
-[:zh_CN]
-这种名字的潜在作用域开始于其声明点（[#basic.scope.pdecl]），并结束于作为其声明区
-的翻译单元的末尾。
-
-[:en]
-A name with global namespace scope is said to be a [+:adj global name
-[%name[!global]]].
-[:zh_CN]
-具有全局命名空间作用域的名字被称为[+:adj 全局名字[%名字[!全局～]]]。
