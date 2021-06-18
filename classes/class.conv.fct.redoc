@@ -14,9 +14,9 @@
 
 [para]
 [:en]
-A member function of a class [`X] having no parameters with a name of the form
+A member function of a class [`X] with a name of the form
 [:zh_CN]
-类 [`X] 中，没有形参且名字具有如下形式的成员函数
+类 [`X] 中，名字具有如下形式的成员函数
 
 [syntax]
 [rule conversion-function-id [:zh_CN] 转换函数标识 ]
@@ -33,10 +33,11 @@ A member function of a class [`X] having no parameters with a name of the form
 [syntax:end]
 
 [:en@~]
-specifies a conversion from [`X] to the type specified by the
-[~conversion-type-id].
+shall have no parameters and specifies a conversion from [`X] to the type
+specified by the [~conversion-type-id], interpreted as a [~type-id] ([#dcl.name]).
 [:zh_CN@~]
-指定了从 [`X] 向由[~转换类型标识]所指定的类型的转换。
+应当没有形参，并指定了从 [`X] 向由[~转换类型标识]（被判读为一个[~类型标识]
+（[#dcl.name]））所指定的类型的转换。
 
 [:en]
 Such functions are called [+conversion functions[%conversion function]].
@@ -202,12 +203,47 @@ operator int [[noreturn]] ();   // [:en] error: [`noreturn] attribute applied to
 [end:note]
 
 [para]
+[begin:note]
 [:en]
 [%conversion[!inheritance of user-defined]]
-Conversion functions are inherited.
+A conversion function in a derived class hides only
+conversion functions in base classes that convert to the same type.
 [:zh_CN]
 [%转换[!用户定义～的继承]]
-转换函数可被继承。
+派生类中的转换函数仅会隐藏基类中转换为相同类型的转换函数。
+
+[:en]
+A conversion function template with a dependent return type hides only
+templates in base classes that correspond to it ([#class.member.lookup]);
+otherwise, it hides and is hidden as a non-template function.
+[:zh_CN]
+带有待决返回类型的转换函数模板仅会隐藏基类中与其对应（[#class.member.lookup]）的
+模板；否则，它将作为非模板函数而参与隐藏和被隐藏。
+
+[:en]
+Function overload resolution ([#over.match.best]) selects
+the best conversion function to perform the conversion.
+[:zh_CN]
+函数重载决议（[#over.match.best]）选择最佳的转换函数来实施转换。
+
+[begin:example]
+[codeblock]
+struct X {
+  operator int();
+};
+
+struct Y : X {
+    operator char();
+};
+
+void f(Y& a) {
+  if (a) {          // [:en] error: ambiguous between [`X::operator int()] and [`Y::operator char()] \
+                       [:zh_CN] 错误：[`X::operator int()] 和 [`Y::operator char()] 之间有歧义
+  }
+}
+[codeblock:end]
+[end:example]
+[end:note]
 
 [para]
 [:en]

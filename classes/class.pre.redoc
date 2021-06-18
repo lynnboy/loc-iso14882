@@ -72,10 +72,10 @@ class objects.
 [:en]
 A class declaration where the [~class-name] in the [~class-head-name] is a
 [~simple-template-id] shall be an explicit specialization ([#temp.expl.spec]) or
-a partial specialization ([#temp.class.spec]).
+a partial specialization ([#temp.spec.partial]).
 [:zh_CN]
 [~类头名]中的[~类名]是个[~简单模板标识]的类声明式，应当是显式特化式
-（[#temp.expl.spec]）或者部分特化式（[#temp.class.spec]）。
+（[#temp.expl.spec]）或者部分特化式（[#temp.spec.partial]）。
 
 [:en]
 A [~class-specifier] whose [~class-head] omits the [~class-head-name] defines an
@@ -90,18 +90,18 @@ An unnamed class thus can[=']t be [`final].
 因此无名类不能为 [`final]。
 [end:note]
 
+[:en]
+Otherwise, the [~class-name] is an [~identifier]; it is not looked up, and the
+[~class-specifier] introduces it.
+[:zh_CN]
+否则，该[~类名]为[~标识符]；不对其进行查找，而该[~类说明符]引入了它。
+
 [para]
 [:en]
-A [~class-name] is inserted into the scope in which it is declared immediately
-after the [~class-name] is seen.
+The [~class-name] is also bound in the scope of the class (template) itself;
+this is known as the [+injected-class-name].
 [:zh_CN]
-紧跟[~类名]出现之后，该[~类名]就被插入到声明它的作用域之中。
-
-[:en]
-The [~class-name] is also inserted into the scope of the class itself; this is
-known as the [+injected-class-name].
-[:zh_CN]
-[~类名]也被插入到该类自身的作用域之中；这被称为[+注入类名]。
+[~类名]也在该类（模板）自身的作用域之中绑定；这被称为[+注入类名]。
 
 [:en]
 For purposes of access checking, the injected-class-name is treated as if it
@@ -133,23 +133,35 @@ class whenever it is named.
 [para]
 [:en]
 If a [~class-head-name] contains a [~nested-name-specifier], the
-[~class-specifier] shall refer to a class that was previously declared directly
-in the class or namespace to which the [~nested-name-specifier] refers, or in an
-element of the inline namespace set ([#namespace.def]) of that namespace (i.e.,
-not merely inherited or introduced by a [~using-declaration]), and the
-[~class-specifier] shall appear in a namespace enclosing the previous
-declaration.
+[~class-specifier] shall not inhabit a class scope.
 [:zh_CN]
-若[~类头名]包含[~嵌套名说明符]，则该[~类说明符]应当涉指在由该[~嵌套名说明符]所
-涉指的类或命名空间中，或者在这个命名空间的内联命名空间集合（[#namespace.def]）的
-某个元素之中，某个曾经直接声明过的类（就是说，并非继承来的或通过 [~using-声明式]
-所引入的），并且该[~类说明符]应当出现在一个包围这个先前的声明式的命名空间中。
+若[~类头名]包含[~嵌套名说明符]，则该[~类说明符]不能居于某个类作用域。
 
 [:en]
-In such cases, the [~nested-name-specifier] of the [~class-head-name] of the
-definition shall not begin with a [~decltype-specifier].
+If its [~class-name] is an [~identifier], the [~class-specifier] shall
+correspond to one or more declarations nominable in the class, class template,
+or namespace to which the [~nested-name-specifier] refers; they shall all have
+the same target scope, and the target scope of the [~class-specifier] is that
+scope.
 [:zh_CN]
-这些情况中，该定义式的[~类头名]的[~嵌套名说明符]不能以 [~decltype-说明符]开始。
+如果其[~类名]是一个[~标识符]，则该[~类说明符]应当对应于由该[~嵌套名说明符]所
+涉指的类、类模板或命名空间中可提名的一个或多个声明式；它们应当全部具有相同的目标
+作用域，且该[~类说明符]的目标作用域即为这个作用域。
+
+[begin:example]
+[codeblock]
+namespace N {
+  template<class>
+  struct A {
+    struct B;
+  };
+}
+using N::A;
+template<class T> struct A<T>::B {};    // OK
+template<> struct A<void> {};           // [:en] error: [`A] not nominable in [`::] \
+                                           [:zh_CN] 错误：[`A] 在 [`::] 中不能被提名
+[codeblock:end]
+[end:example]
 
 [para]
 [begin:note]
