@@ -5,71 +5,29 @@
 
 [para]
 [:en]
-[%lookup[!namespace member]]
-If the [~nested-name-specifier] of a [~qualified-id] nominates a namespace
-(including the case where the [~nested-name-specifier] is [`::], i.e.,
-nominating the global namespace), the name specified after the
-[~nested-name-specifier] is looked up in the scope of the namespace.
+Qualified name lookup in a namespace [$N] additionally searches every element of
+the inline namespace set of [$N] ([#namespace.def]).
 [:zh_CN]
-[%查找[!命名空间成员的～]]
-若[~限定标识]的[~嵌套名说明符]提名了一个命名空间（这包括[~嵌套名说明符]为 [`::]
-的情况，亦即提名全局命名空间），则[~嵌套名说明符]后所指定的名字在这个命名空间的
-作用域中查找。
+在命名空间 [$N] 中的限定名查找还要搜索 [$N] 的内联命名空间集合（[#namespace.def]）
+的每个成员。
 
 [:en]
-The names in a [~template-argument] of a [~template-id] are looked up in the
-context in which the entire [~postfix-expression] occurs.
+If nothing is found, the results of the lookup are the results of qualified name
+lookup in each namespace nominated by a [~using-directive] that precedes the
+point of the lookup and inhabits [$N] or an element of [$N][=']s inline
+namespace set.
 [:zh_CN]
-[~模板标识]的[~模板实参]中的名字，在整个[~后缀表达式]所出现的语境中查找。
+如果未找到任何东西，则查找的结果为，在先于查找点并居于 [$N] 或 [$N] 的内联
+命名空间集合的某个成员的 [~using-声明式]所提名的每个命名空间中进行限定名查找的
+结果。
 
-[para]
+[begin:note]
 [:en]
-For a namespace [`X] and name [`m], the namespace-qualified lookup set
-[$S(X, m)] is defined as follows:
+If a [~using-directive] refers to a namespace that has already been considered,
+it does not affect the result.
 [:zh_CN]
-对于命名空间 [`X] 与名字 [`m]，由命名空间限定的查找集合 [$S(X, m)] 定义如下：
-
-[:en]
-Let [$S'(X, m)] be the set of all declarations of [`m] in [`X] and the inline
-namespace set of [`X] ([#namespace.def]) whose potential scope
-([#basic.scope.namespace]) would include the namespace in which [`m] is declared
-at the location of the [~nested-name-specifier].
-[:zh_CN]
-令 [$S'(X, m)] 为在 [`X] 以及 [`X] 的内联命名空间集合（[#namespace.def]）中（其
-潜在作用域（[#basic.scope.namespace]）可以在该[~嵌套名说明符]的位置包含声明了
-[`m] 于其中的命名空间），[`m] 的所有声明式的集合。
-
-[:en]
-If [$S'(X, m)] is not empty, [$S(X, m)] is [$S'(X, m)]; otherwise, [$S(X, m)] is
-the union of [$S(N_i, m)] for all namespaces [$N_i] nominated by
-[~using-directive]s in [`X] and its inline namespace set.
-[:zh_CN]
-如果 [$S'(X, m)] 非空，则 [$S(X, m)] 即为 [$S'(X, m)]；否则 [$S(X, m)] 是 [`X]
-及其内联命名空间集合中的 [~using-指令]所提名的每个命名空间 [$N_i] 的
-[$S(N_i, m)] 的并集。
-
-[para]
-[:en]
-Given [`X::m] (where [`X] is a user-declared namespace), or given [`::m] (where
-[`X] is the global namespace), if [$S(X, m)] is the empty set, the program is
-ill-formed.
-[:zh_CN]
-给定 [`X::m]（其中 [`X] 是用户定义的命名空间），或给定 [`::m]（其中 [`X] 是全局
-命名空间），若 [$S(X, m)] 是空集，则该程序非良构。
-
-[:en]
-Otherwise, if [$S(X, m)] has exactly one member, or if the context of the
-reference is a [~using-declaration] ([#namespace.udecl]), [$S(X, m)] is the
-required set of declarations of [`m].
-[:zh_CN]
-否则，若 [$S(X, m)] 恰好有一个成员，或若进行该涉指的语境是个 [~using-声明式]
-（[#namespace.udecl]），则 [$S(X, m)] 就为所求的 [`m] 的声明式的集合。
-
-[:en]
-Otherwise if the use of [`m] is not one that allows a unique declaration to be
-chosen from [$S(X, m)], the program is ill-formed.
-[:zh_CN]
-否则如果 [`m] 的使用方式不允许从 [$S(X, m)] 中选取唯一的声明式，则该程序非良构。
+如果某个 [~using-声明式]指代已被考察过的命名空间，则它对结果没有影响。
+[end:note]
 
 [begin:example]
 [codeblock]
@@ -225,19 +183,13 @@ void f()
 [end:example]
 
 [para]
+[begin:note]
 [:en]
-During the lookup of a qualified namespace member name, if the lookup finds more
-than one declaration of the member, and if one declaration introduces a class
-name or enumeration name and the other declarations introduce either the same
-variable, the same enumerator, or a set of functions, the non-type name hides
-the class or enumeration name if and only if the declarations are from the same
-namespace; otherwise (the declarations are from different namespaces), the
-program is ill-formed.
+Class and enumeration declarations are not discarded because of other
+declarations found in other searches.
 [:zh_CN]
-在对受限定的命名空间成员名进行查找时，如果该查找找到了该成员的多个声明式，并且若
-其中一个声明式引入了类名或枚举名而其他声明式引入了相同的变量、相同的枚举符或一组
-函数，则当且仅当这些声明式来自同一个命名空间时，这个非类型名隐藏这个类或枚举名；
-否则（这些声明式来自不同命名空间），该程序非良构。
+不会因为其他搜索中找到的其他声明式而丢弃类和枚举的声明式。
+[end:note]
 
 [begin:example]
 [codeblock]
@@ -259,68 +211,5 @@ namespace C {
   int j = C::y;     // [:en] ambiguous, [`A::y] or [`B::y] \
                        [:zh_CN] 有歧义，[`A::y] 或 [`B::y]
 }
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-In a declaration for a namespace member in which the [~declarator-id] is a
-[~qualified-id], given that the [~qualified-id] for the namespace member has the
-form
-[:zh_CN]
-在[~声明符标识]是[~限定标识]的命名空间成员声明式中，若给定该命名空间成员的
-[~限定标识]的形式为
-
-[syntax:explanation]
-[~nested-name-specifier] [~unqualified-id]
-[syntax:end]
-
-[:en@~]
-the [~unqualified-id] shall name a member of the namespace designated by the
-[~nested-name-specifier] or of an element of the inline namespace set
-([#namespace.def]) of that namespace.
-[:zh_CN@~]
-则该[~未限定标识]应当是该[~嵌套名说明符]所指定的命名空间或该命名空间的
-内联命名空间集合（[#namespace.def]）的某个元素的名字。
-
-[begin:example]
-[codeblock]
-namespace A {
-  namespace B {
-    void f1(int);
-  }
-  using namespace B;
-}
-void A::f1(int){ }  // [:en] error: [`f1] is not a member of [`A] \
-                       [:zh_CN] 错误：[`fi] 不是 [`A] 的成员
-[codeblock:end]
-[end:example]
-
-[:en]
-However, in such namespace member declarations, the [~nested-name-specifier] may
-rely on [~using-directive]s to implicitly provide the initial part of the
-[~nested-name-specifier].
-[:zh_CN]
-然而，在这种命名空间成员声明式中，其[~嵌套名说明符]可能会基于 [~using-指令]来
-隐含地提供该[~嵌套名说明符]的开头部分。
-
-[begin:example]
-[codeblock]
-namespace A {
-  namespace B {
-    void f1(int);
-  }
-}
-
-namespace C {
-  namespace D {
-    void f1(int);
-  }
-}
-
-using namespace A;
-using namespace C::D;
-void B::f1(int){ }  // [:en] OK, defines [`A::B::f1(int)] \
-                       [:zh_CN] OK，定义了 [`A::B::f1(int)]
 [codeblock:end]
 [end:example]
