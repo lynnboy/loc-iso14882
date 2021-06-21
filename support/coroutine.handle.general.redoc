@@ -36,21 +36,41 @@ namespace std {
   };
 
   template<class Promise>
-  struct coroutine_handle : coroutine_handle<>
+  struct coroutine_handle
   {
     // [:en] [#coroutine.handle.con], construct/reset \
        [:zh_CN] [#coroutine.handle.con]，构造/重置
-    using coroutine_handle<>::coroutine_handle;
+    constexpr coroutine_handle() noexcept;
+    constexpr coroutine_handle(nullptr_t) noexcept;
     static coroutine_handle from_promise(Promise&);
     coroutine_handle& operator=(nullptr_t) noexcept;
 
     // [:en] [#coroutine.handle.export.import], export/import \
        [:zh_CN] [#coroutine.handle.export.import]，导出/导入
+    constexpr void* address() const noexcept;
     static constexpr coroutine_handle from_address(void* addr);
+
+    // [:en] [#coroutine.handle.conv], conversion \
+       [:zh_CN] [#coroutine.handle.conv]，转换
+    constexpr operator coroutine_handle<>() const noexcept;
+
+    // [:en] [#coroutine.handle.observers], observers \
+       [:zh_CN] [#coroutine.handle.observers]，探察函数
+    constexpr explicit operator bool() const noexcept;
+    bool done() const;
+
+    // [:en] [#coroutine.handle.resumption], resumption \
+       [:zh_CN] [#coroutine.handle.resumption]，恢复
+    void operator()() const;
+    void resume() const;
+    void destroy() const;
 
     // [:en] [#coroutine.handle.promise], promise access \
        [:zh_CN] [#coroutine.handle.promise]，对承诺的访问
     Promise& promise() const;
+
+  private:
+    void* ptr;  // [=expos]
   };
 }
 [codeblock:end]
@@ -64,9 +84,17 @@ and can be used to refer to a suspended or executing coroutine.
 执行的协程。
 
 [:en]
-A default-constructed [`coroutine_handle] object does not refer to any coroutine.
+A [`coroutine_handle] object whose member [`address()] returns a null pointer
+value does not refer to any coroutine.
 [:zh_CN]
-默认构造的 [`coroutine_handle] 对象并不指代任何协程。
+成员 [`address()] 返回空指针的 [`coroutine_handle] 对象并不指代任何协程。
+
+[:en]
+Two [`coroutine_handle] objects refer to the same coroutine if and only if their
+member [`address()] returns the same non-null value.
+[:zh_CN]
+当且仅当两个 [`coroutine_handle] 对象的 [`address()] 返回相同的非空值时，它们
+指代相同协程。
 
 [para]
 [:en]
