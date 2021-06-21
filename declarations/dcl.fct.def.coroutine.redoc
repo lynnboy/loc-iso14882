@@ -153,23 +153,18 @@ argument list with lvalues [$[`p]_1 \dotsc [`p]_n].
 
 [para]
 [:en]
-The [~unqualified-id]s [`return_void] and [`return_value] are looked up in the
-scope of the promise type.
+If searches for the names [`return_void] and [`return_value] in the scope of the
+promise type each find any declarations, the program is ill-formed.
 [:zh_CN]
-在承诺类型的作用域中查找[~未限定标识] [`return_void] 和 [`return_value]。
-
-[:en]
-If both are found, the program is ill-formed.
-[:zh_CN]
-如果同时找到了二者，则程序非良构。
+如果在承诺类型的作用域中搜索名字 [`return_void] 和 [`return_value] 都有找到任何
+声明式，则程序非良构。
 
 [begin:note]
 [:en]
-If the [~unqualified-id] [`return_void] is found, flowing off the end of a
-coroutine is equivalent to a [`co_return] with no operand.
+If [`return_void] is found, flowing off the end of a coroutine is equivalent to
+a [`co_return] with no operand.
 [:zh_CN]
-如果找到了[~未限定标识] [`return_void]，则控制流过协程的末尾就等价于没有操作数的
-[`co_return]。
+如果找到了 [`return_void]，则控制流过协程的末尾就等价于没有操作数的 [`co_return]。
 
 [:en]
 Otherwise, flowing off the end of a coroutine results in undefined behavior
@@ -228,9 +223,10 @@ a non-array allocation function ([#basic.stc.dynamic.allocation]).
 （[#basic.stc.dynamic.allocation]）。
 
 [:en]
-The allocation function[=']s name is looked up in the scope of the promise type.
+The allocation function[=']s name is looked up by searching for it in the scope
+of the promise type.
 [:zh_CN]
-在承诺类型的作用域中查找分配函数的名字。
+分配函数的名字是在承诺类型的作用域中搜索它来进行查找的。
 
 [:en]
 If this lookup fails, the allocation function[=']s name is looked up in the
@@ -238,13 +234,13 @@ global scope.
 [:zh_CN]
 如果此查找失败，则在全局作用域中查找分配函数的名字。
 
+[list]
+[item]
 [:en]
-If the lookup finds an allocation function in the scope of the promise type,
-overload resolution is performed on a function call created by assembling an
-argument list.
+If any declarations are found, overload resolution is performed on a function
+call created by assembling an argument list.
 [:zh_CN]
-如果在承诺类型的作用域中找到了一个分配函数，则通过编成实参列表来创建一次函数调用
-并对其实施重载决议。
+如果找到了任何声明式，则通过编成实参列表来创建一次函数调用并对其实施重载决议。
 
 [:en]
 The first argument is the amount of space requested, and has type [`std::size_t].
@@ -256,6 +252,13 @@ The lvalues [$[`p]_1 \dotsc [`p]_n] are the succeeding arguments.
 [:zh_CN]
 各左值 [$[`p]_1 \dotsc [`p]_n] 为其之后的各个实参。
 
+[item]
+[:en]
+Otherwise, a search is performed in the global scope.
+[:zh_CN]
+否则，在全局作用域中进行搜索。
+[list:end]
+
 [:en]
 If no viable function is found ([#over.match.viable]), overload resolution is
 performed again on a function call created by passing just the amount of space
@@ -266,21 +269,17 @@ required as an argument of type [`std::size_t].
 
 [para]
 [:en]
-The [~unqualified-id] [`get_return_object_on_allocation_failure] is looked up in
-the scope of the promise type by class member access lookup
-([#basic.lookup.classref]).
+If a search for the name [`get_return_object_on_allocation_failure] in the scope
+of the promise type ([#basic.lookup.classref]) finds any declaration, then the
+result of a call to an allocation function used to obtain storage for the
+coroutine state is assumed to return [`nullptr] if it fails to obtain storage,
+and if a global allocation function is selected, the
+[`::operator new(size_t, nothrow_t)] form is used.
 [:zh_CN]
-在承诺类型的作用域中通过类成员访问查找（[#basic.lookup.classref]）来查找
-[~未限定标识] [`get_return_object_on_allocation_failure]。
-
-[:en]
-If any declarations are found, then the result of a call to an allocation
-function used to obtain storage for the coroutine state is assumed to return
-[`nullptr] if it fails to obtain storage, and if a global allocation function is
-selected, the [`::operator new(size_t, nothrow_t)] form is used.
-[:zh_CN]
-如果找到了任何声明式，则用来获取协程状态的存储的分配函数的调用的结果，当其获取
-存储失败时假定它将返回 [`nullptr]，而若所选中的是某个全局分配函数，则使用
+如果在承诺类型（[#basic.lookup.classref]）的作用域中对名字
+[`get_return_object_on_allocation_failure] 进行的搜索找到了任何声明式，则用来
+获取协程状态的存储的分配函数的调用的结果，当其获取存储失败时假定它将返回
+[`nullptr]，而若所选中的是某个全局分配函数，则使用
 [`::operator new(size_t, nothrow_t)] 的调用形式。
 
 [:en]
@@ -349,11 +348,10 @@ coroutine handle ([#coroutine.handle]) that refers to the coroutine is invoked.
 [`destroy] 成员函数（[#coroutine.handle.resumption]）时，销毁协程状态。
 
 [:en]
-In the latter case objects with automatic storage duration that are in scope at
-the suspend point are destroyed in the reverse order of the construction.
+In the latter case, control in the coroutine is considered to be transferred out
+of the function ([#stmt.dcl]).
 [:zh_CN]
-后一种情况下，在暂停点处于作用域中的各个具有自动存储期的对象，以它们构造的相反
-顺序销毁。
+后一种情况下，协程中的控制被认为转移出了这个函数（[#stmt.dcl]）。
 
 [:en]
 The storage for the coroutine state is released by calling a non-array
@@ -370,26 +368,24 @@ undefined behavior.
 
 [para]
 [:en]
-The deallocation function[=']s name is looked up in the scope of the promise
-type.
+The deallocation function[=']s name is looked up by searching for it in the
+scope of the promise type.
 [:zh_CN]
-在承诺类型的作用域中查找回收函数的名字。
+回收函数的名字是在承诺类型的作用域中搜索它来查找的。
 
 [:en]
-If this lookup fails, the deallocation function[=']s name is looked up in the
-global scope.
+If nothing is found, a search is performed in the global scope.
 [:zh_CN]
-如果此查找失败，则在全局作用域中查找回收函数的名字。
+如果未找到任何东西，则在全局作用域中进行搜索。
 
 [:en]
-If deallocation function lookup finds both a usual deallocation function with
-only a pointer parameter and a usual deallocation function with both a pointer
-parameter and a size parameter, then the selected deallocation function shall be
-the one with two parameters.
+If both a usual deallocation function with only a pointer parameter and a usual
+deallocation function with both a pointer parameter and a size parameter are
+found, then the selected deallocation function shall be the one with two
+parameters.
 [:zh_CN]
-如果回收函数的查找同时找到了一个只有一个指针形参的常规回收函数，和一个同时具有
-一个指针形参和一个大小形参的常规回收函数，则选中的回收函数应当是具有两个形参的
-函数。
+如果同时找到了一个只有一个指针形参的常规回收函数，和一个同时具有一个指针形参和
+一个大小形参的常规回收函数，则选中的回收函数应当是具有两个形参的函数。
 
 [:en]
 Otherwise, the selected deallocation function shall be the function with one

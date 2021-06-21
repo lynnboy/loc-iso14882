@@ -113,12 +113,10 @@ and its innermost enclosing scope is the corresponding class scope
 
 [para]
 [:en]
-The [~identifier] in a [~simple-capture] is looked up using the usual rules for
-unqualified name lookup ([#basic.lookup.unqual]); each such lookup shall find a
-local entity.
+The [~identifier] in a [~simple-capture] shall denote a local entity
+([#basic.lookup.unqual]).
 [:zh_CN]
-使用未限定名查找的常规规则对[~简单俘获符]中的[~标识符]进行查找
-（[#basic.lookup.unqual]）；每次这种查找都应当找到一个局部实体。
+[~简单俘获符]中的[~标识符]应当代表某个局部实体（[#basic.lookup.unqual]）。
 
 [:en]
 The [~simple-capture]s [`this] and [`* this] denote the local entity [`*this].
@@ -152,13 +150,18 @@ void f() {
 
 [para]
 [:en]
+An [~init-capture] inhabits the scope of the [~lambda-expression][=']s
+[~compound-statement].
+[:zh_CN]
+[~带初始化俘获符]居于 [~lambda-表达式]的[~复合语句]的作用域。
+
+[:en]
 An [~init-capture] without ellipsis behaves as if it declares and explicitly
-captures a variable of the form [=lq][`auto] [~init-capture] [`;][=rq] whose
-declarative region is the [~lambda-expression][=']s [~compound-statement],
-except that:
+captures a variable of the form [=lq][`auto] [~init-capture] [`;][=rq], except
+that:
 [:zh_CN]
 没有省略号的[~带初始化俘获符]表现为如同它声明并显式俘获某个形式为“[`auto]
-[~带初始化俘获符] [`;]”的变量，其声明区为该[~lambda-表达式]的[~复合语句]，但是：
+[~带初始化俘获符] [`;]”的变量，但是：
 
 [list]
 [item]
@@ -244,14 +247,14 @@ A [~lambda-expression] potentially references the local entities named by its
 [list:end]
 
 [:en]
-If an expression potentially references a local entity within a declarative
-region in which it is odr-usable, and the expression would be potentially
-evaluated if the effect of any enclosing [`typeid] expressions ([#expr.typeid])
-were ignored, the entity is said to be [+implicitly captured[%capture[!implicit]]]
-by each intervening [~lambda-expression] with an associated [~capture-default]
-that does not explicitly capture it.
+If an expression potentially references a local entity within a scope in which
+it is odr-usable, and the expression would be potentially evaluated if the
+effect of any enclosing [`typeid] expressions ([#expr.typeid]) were ignored, the
+entity is said to be [+implicitly captured[%capture[!implicit]]] by each
+intervening [~lambda-expression] with an associated [~capture-default] that does
+not explicitly capture it.
 [:zh_CN]
-如果某个表达式在其可 ODR 式使用的声明区中潜在地引用了某个局部实体，且该表达式
+如果某个表达式在其可 ODR 式使用的作用域中潜在地引用了某个局部实体，且该表达式
 在忽略任何外围的 [`typeid] 表达式（[#expr.typeid]）的效果时是潜在求值的，则称
 该实体被介入其间的每个带有[~默认俘获符]且并未显式俘获它的 [~lambda-表达式]所
 [+隐式俘获[%俘获[!隐式～]]]。
@@ -280,8 +283,8 @@ void test() {
 
   auto g2 = [=](auto a) {
     int selector[sizeof(a) == 1 ? 1 : 2]{};
-    f(x, selector);             // [:en] OK: captures [`x], might call #1 or #2 \
-                                   [:zh_CN] OK：俘获了 [`x]，可能调用 #1 或 #2
+    f(x, selector);             // [:en] OK: captures [`x], can call #1 or #2 \
+                                   [:zh_CN] OK：俘获了 [`x]，可以调用 #1 或 #2
   };
 
   auto g3 = [=](auto a) {
@@ -292,20 +295,20 @@ void test() {
 [codeblock:end]
 
 [:en]
-Within [`g1], an implementation might optimize away the capture of [`x] as it is
+Within [`g1], an implementation can optimize away the capture of [`x] as it is
 not odr-used.
 [:zh_CN]
-在 [`g1] 中，实现可能会将对 [`x] 的俘获优化掉，因为它并未被 ODR 式使用。
+在 [`g1] 中，实现可将对 [`x] 的俘获优化掉，因为它并未被 ODR 式使用。
 [end:example]
 
 [begin:note]
 [:en]
-The set of captured entities is determined syntactically, and entities might be
+The set of captured entities is determined syntactically, and entities are
 implicitly captured even if the expression denoting a local entity is within a
 discarded statement ([#stmt.if]).
 [:zh_CN]
 被俘获实体的集合是依据语法来确定的，而且即便代表某个局部实体的表达式处于弃用语句
-（[#stmt.if]）之中，实体也可能会被隐式俘获。
+（[#stmt.if]）之中，实体也被隐式俘获。
 
 [begin:example]
 [codeblock]
@@ -329,11 +332,11 @@ An entity is [+captured] if it is captured explicitly or implicitly.
 若某个实体被显式或隐式俘获，则它被[+俘获]。
 
 [:en]
-An entity captured by a [~lambda-expression] is odr-used ([#basic.def.odr]) in
-the scope containing the [~lambda-expression].
+An entity captured by a [~lambda-expression] is odr-used ([#basic.def.odr]) by
+the [~lambda-expression].
 [:zh_CN]
-由某个 [~lambda-表达式]所俘获的实体，是在包含该 [~lambda-表达式]的作用域中被
-ODR 式使用的（[#basic.def.odr]）。
+由某个 [~lambda-表达式]所俘获的实体，被该 [~lambda-表达式] ODR 式使用
+（[#basic.def.odr]）。
 
 [begin:note]
 [:en]
@@ -694,13 +697,12 @@ A [~simple-capture] containing an ellipsis is a pack expansion ([#temp.variadic]
 
 [:en]
 [%[~init-capture] pack]
-An [~init-capture] containing an ellipsis is a pack expansion that introduces
-an [~init-capture] pack ([#temp.variadic]) whose declarative region is the
-[~lambda-expression][=']s [~compound-statement].
+An [~init-capture] containing an ellipsis is a pack expansion that declares
+an [~init-capture] pack ([#temp.variadic]).
 [:zh_CN]
 [%[~带初始化俘获符]包组]
-包含省略号的[~带初始化俘获符]是包组展开式并引入一个[~带初始化俘获符]包组
-（[#temp.variadic]），其声明区为该 [~lambda-表达式]的[~复合语句]。
+包含省略号的[~带初始化俘获符]是声明一个[~带初始化俘获符]包组（[#temp.variadic]）
+的包组展开式。
 
 [begin:example]
 [codeblock]

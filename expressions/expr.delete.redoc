@@ -269,15 +269,21 @@ above.
 指明的。
 
 [para]
+[:en]
+If a deallocation function is called, it is [`operator delete] for a
+single-object delete expression or [`operator delete`[`]] for an array delete
+expression.
+[:zh_CN]
+若调用回收函数，则对于单对象 delete 表达式，它是 [`operator delete]，而对于数组
+delete 表达式，它是 [`operator delete`[`]]。
+
 [begin:note]
+[%[`operator delete]]
 [:en]
 An implementation provides default definitions of the global deallocation
-functions [`operator delete] for non-arrays ([#new.delete.single]) and
-[%[`operator delete]][`operator delete`[`]] for arrays ([#new.delete.array]).
+functions ([#new.delete.single], [#new.delete.array]).
 [:zh_CN]
-实现提供全局回收函数 [`operator delete]（非数组，[#new.delete.single]）和
-[%[`operator delete]][`operator delete`[`]]（数组，[#new.delete.array]）的缺省
-定义。
+实现提供全局回收函数的缺省定义（[#new.delete.single]，[#new.delete.array]）。
 
 [:en]
 A [=Cpp] program can provide alternative definitions of these functions
@@ -289,30 +295,59 @@ A [=Cpp] program can provide alternative definitions of these functions
 
 [para]
 [:en]
-When the keyword [`delete] in a [~delete-expression] is preceded by the unary
-[`::] operator, the deallocation function[=']s name is looked up in global scope.
+If the keyword [`delete] in a [~delete-expression] is not preceded by the unary
+[`::] operator and the type of the operand is a pointer to a (possibly
+cv-qualified) class type [`T]:
 [:zh_CN]
-若 [~delete-表达式]中的关键字 [`delete] 之前有一元 [`::] 运算符，则在全局作用域
-中查找回收函数的名字。
+若 [~delete-表达式]中的关键字 [`delete] 之前没有一元 [`::] 运算符，并且操作数的
+类型为指向（可能被 cv 限定的）类类型 [`T] 的指针：
+
+[list]
+[item]
+[:en]
+If [`T] has a virtual destructor, the deallocation function is the one selected
+at the point of definition of the dynamic type[=']s virtual destructor
+([#class.dtor]).
+[:zh_CN]
+如果 [`T] 带有虚析构函数，则分配函数为在动态类型的虚析构函数的定义点处选择的那个
+（[#class.dtor]）。
+
+[item]
+[:en]
+Otherwise, a search is performed for the deallocation function[=']s name
+in the scope of [`T].
+[:zh_CN]
+否则，在 [`T] 的作用域中实施针对回收函数的名字的搜索。
+[list:end]
 
 [:en]
-Otherwise, the lookup considers class-specific deallocation functions
-([#class.free]).
+Otherwise, or if nothing is found, the deallocation function[=']s name is looked
+up by searching for it in the global scope.
 [:zh_CN]
-否则，其查找考察类特有的回收函数（[#class.free]）。
+否则，或若未找到任何东西，则通过在全局作用域中搜索函数函数的名字来查找它。
 
 [:en]
-If no class-specific deallocation function is found, the deallocation
-function[=']s name is looked up in global scope.
+In any case, any declarations other than of usual deallocation functions
+([#basic.stc.dynamic.deallocation]) are discarded.
 [:zh_CN]
-如果没有找到类特有的回收函数，则在全局作用域中查找回收函数的名字。
+任何情况下，都丢弃除了常规回收函数（[#basic.stc.dynamic.deallocation]）之外的
+任何声明式。
+
+[begin:note]
+[:en]
+If only a placement deallocation function is found in a class,
+the program is ill-formed because the lookup set is empty ([#basic.lookup]).
+[:zh_CN]
+如果在类中只找到一个放置式回收函数，则因为查找集合为空（[#basic.lookup]），程序
+非良构。
+[end:note]
 
 [para]
 [:en]
-If deallocation function lookup finds more than one usual deallocation function,
-the function to be called is selected as follows:
+If more than one usual deallocation function is found, the function to be called
+is selected as follows:
 [:zh_CN]
-如果回收函数的查找找到了多个常规回收函数，则如下进行对所调用的函数的选择：
+如果找到了多个常规回收函数，则如下进行对所调用的函数的选择：
 
 [list]
 [item]
@@ -348,10 +383,10 @@ process terminates.
 
 [item]
 [:en]
-If the deallocation functions have class scope, the one without a parameter of
-type [`std::size_t] is selected.
+If the deallocation functions belong to a class scope, the one without a
+parameter of type [`std::size_t] is selected.
 [:zh_CN]
-如果回收函数具有类作用域，则选择没有 [`std::size_t] 类型形参的函数。
+如果回收函数属于某个类作用域，则选择没有 [`std::size_t] 类型形参的函数。
 
 [item]
 [:en]

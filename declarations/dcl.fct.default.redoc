@@ -95,15 +95,15 @@ pointers to functions, references to functions, or [`typedef] declarations.
 [para]
 [:en]
 For non-template functions, default arguments can be added in later declarations
-of a function in the same scope.
+of a function that inhabit the same scope.
 [:zh_CN]
-对于非模板函数，相同作用域中，后续的函数声明式中可以添加默认实参。
+对于非模板函数，可以在函数的居于相同作用域的后续声明式中添加默认实参。
 
 [:en]
-Declarations in different scopes have completely distinct sets of default
-arguments.
+Declarations that inhabit different scopes have completely distinct sets of
+default arguments.
 [:zh_CN]
-不同作用域中的声明式具有完全独立的默认实参集合。
+居于不同作用域的声明式具有完全独立的默认实参集合。
 
 [:en]
 That is, declarations in inner scopes do not acquire default arguments from
@@ -175,12 +175,13 @@ be the same; no diagnostic is required.
 值应该相同；无须诊断。
 
 [:en]
-If a friend declaration specifies a default argument expression, that
-declaration shall be a definition and shall be the only declaration of the
-function or function template in the translation unit.
+If a friend declaration [$D] specifies a default argument expression, that
+declaration shall be a definition and there shall be no other declaration of the
+function or function template which is reachable from [$D] or from which [$D]
+is reachable.
 [:zh_CN]
-若某个友元声明式指定了默认实参表达式，则该声明式应当是定义式，且应当是该函数或
-函数模板在此翻译单元中的唯一声明式。
+若某个友元声明式指定了默认实参表达式，则该声明式应当是定义式，且应当没有从 [$D]
+可达它或从它可达 [$D] 的，该函数或函数模板的其他声明式。
 
 [para]
 [:en]
@@ -198,18 +199,16 @@ semantics ([#dcl.init]).
 初始化语义（[#dcl.init]）。
 
 [:en]
-The names in the default argument are bound, and the semantic constraints are
-checked, at the point where the default argument appears.
+The names in the default argument are looked up, and the semantic constraints
+are checked, at the point where the default argument appears.
 [:zh_CN]
-对默认实参中的名字的绑定，以及语义约束检查，是在出现默认实参之处进行的。
+对默认实参中的名字的查找，以及语义约束检查，是在出现默认实参之处进行的。
 
 [:en]
-Name lookup and checking of semantic constraints for default arguments in
-function templates and in member functions of class templates are performed as
-described in [#temp.inst].
+Name lookup and checking of semantic constraints for default arguments of
+templated functions are performed as described in [#temp.inst].
 [:zh_CN]
-对函数模板和类模板的成员函数中的默认实参所实施的名字查找和语义约束检查在
-[#temp.inst] 中说明。
+对模板化函数的默认实参所实施的名字查找和语义约束检查在 [#temp.inst] 中说明。
 
 [begin:example]
 [:en]
@@ -237,11 +236,9 @@ void h() {
 
 [begin:note]
 [:en]
-In member function declarations, names in default arguments are looked up as
-described in [#basic.lookup.unqual].
+A default arguments is a complete-class context ([#class.mem]).
 [:zh_CN]
-在成员函数的声明式中，默认实参中的名字按照 [#basic.lookup.unqual] 中的说明进行
-查找。
+默认实参是完整类语境（[#class.mem]）。
 
 [:en]
 Access checking applies to names in default arguments as described in
@@ -339,6 +336,7 @@ argument.
 [%实参[!默认～的作用域]]
 形参不能被用作默认实参中的潜在求值表达式。
 
+[begin:note]
 [:en]
 [%argument and name hiding[!default]]
 Parameters of a function declared before a default argument are in scope and can
@@ -346,6 +344,7 @@ hide namespace and class member names.
 [:zh_CN]
 [%实参和名字隐藏[!默认～]]
 在默认实参之前声明的函数形参处于作用域中，且能够隐藏命名空间和类成员的名字。
+[end:note]
 
 [begin:example]
 [codeblock]
@@ -423,20 +422,20 @@ int (*p2)() = &f;                   // [:en] error: type mismatch \
 [end:example]
 
 [:en]
-When a declaration of a function is introduced by way of a [~using-declaration]
-([#namespace.udecl]), any default argument information associated with the
-declaration is made known as well.
+When an overload set contains a declaration of a function that inhabits a scope
+[$S], any default argument associated with any reachable declaration that
+inhabits [$S] is available to the call.
 [:zh_CN]
-当通过 [~using-声明式]引入函数的声明式时（[#namespace.udecl]），同时也使得与该
-声明式相关联的所有默认实参的信息成为已知的。
+当重载集合中包含某个居于作用域 [$S] 的函数声明式时，与任何居于 [$S] 的可达声明式
+相关联的默认实参对调用都是可用的。
 
+[begin:note]
 [:en]
-If the function is redeclared thereafter in the namespace with additional
-default arguments, the additional arguments are also known at any point
-following the redeclaration where the [~using-declaration] is in scope.
+The candidate might have been found through a [~using-declarator] from which
+the declaration that provides the default argument is not reachable.
 [:zh_CN]
-若该函数在此命名空间中的后面用附加的默认实参进行重复声明，则这个重复声明之后，该
-[~using-声明式]处于作用域之中的任意位置，这些附加的实参也是已知的。
+这个候选可能已经通过某个从之并不可达提供默认实参的声明式的 [~using-声明符]找到过。
+[end:note]
 
 [para]
 [:en]

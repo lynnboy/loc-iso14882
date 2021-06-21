@@ -49,36 +49,40 @@
 
 [para]
 [:en]
-Every [~namespace-definition] shall appear at namespace scope
+Every [~namespace-definition] shall inhabit a namespace scope
 ([#basic.scope.namespace]).
 [:zh_CN]
-所有[~命名空间定义式]都应当出现于命名空间作用域（[#basic.scope.namespace]）中。
+所有[~命名空间定义式]都应当居于命名空间作用域（[#basic.scope.namespace]）。
 
 [para]
 [:en]
-In a [~named-namespace-definition], the [~identifier] is the name of the
+In a [~named-namespace-definition] [$D], the [~identifier] is the name of the
 namespace.
 [:zh_CN]
-[~具名命名空间定义式]中，其[~标识符]是命名空间的名字。
+[~具名命名空间定义式] [$D] 中，其[~标识符]是命名空间的名字。
 
 [:en]
-If the [~identifier], when looked up ([#basic.lookup.unqual]), refers to a
-[~namespace-name] (but not a [~namespace-alias]) that was introduced in the
-namespace in which the [~named-namespace-definition] appears or that was
-introduced in a member of the inline namespace set of that namespace, the
-[~namespace-definition] [%extend[%namespace[!extend]]] [+extends [%namespace
-[!extend]]] the previously-declared namespace.
+The [~identifier] is looked up by searching for it in the scope of the namespace
+[$A] in which [$D] appears and of every element of the inline namespace set of
+[$A].
 [:zh_CN]
-如果其[~标识符]进行查找时（[#basic.lookup.unqual]），指代某个被引入到包含该
-[~具名命名空间定义式]的命名空间中，或被引入到该命名空间的内联命名空间集合的某个
-成员中的[~命名空间名]（但不是[~命名空间别名]），则该[~命名空间定义式]
-[%扩展[%命名空间[!扩展～]]][+扩展[%命名空间[!扩展～]]]了之前所声明的命名空间。
+对其[~标识符]的查找，是在包含 [$D] 的命名空间 [$A] 以及 [$A] 的内联命名空间集合
+的每个元素中对它进行搜索来进行的。
 
 [:en]
-Otherwise, the [~identifier] is introduced as a [~namespace-name] into the
-declarative region in which the [~named-namespace-definition] appears.
+If the lookup finds a [~namespace-definition] for a namespace [$N], [$D]
+[%extend[%namespace[!extend]]] [+extends [%namespace[!extend]]] [$N], and the
+target scope of [$D] is the scope to which [$N] belongs.
 [:zh_CN]
-否则，该[~标识符]作为[~命名空间名]被引入到包含该[~具名命名空间定义式]的声明区之中。
+如果该查找找到了某个命名空间 [$N] 的[~命名空间定义式]，则 [$D]
+[%扩展[%命名空间[!扩展～]]][+扩展[%命名空间[!扩展～]]]了 [$N]，并且 [$D] 的目标
+作用域为 [$N] 所属于的作用域。
+
+[:en]
+If the lookup finds nothing, the [~identifier] is introduced as a
+[~namespace-name] into [$A].
+[:zh_CN]
+如果该查找未找到任何东西，则该[~标识符]作为[~命名空间名]被引入 [$A] 中。
 
 [para]
 [:en]
@@ -97,43 +101,6 @@ namespace Outer {
     void f() { i++; }           // [`Outer::i]
     int i;
     void g() { i++; }           // [`Inner::i]
-  }
-}
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-The [+enclosing namespaces[%namespace[!enclosing]]] of a declaration are those
-namespaces in which the declaration lexically appears, except for a
-redeclaration of a namespace member outside its original namespace (e.g.,
-a definition as specified in [#namespace.memdef]).
-[:zh_CN]
-某个声明式的[+外围命名空间[%命名空间[!外围～]]]，是在词法上包含该声明式的
-命名空间，但不考虑于初始命名空间之外对命名空间成员的重复声明（例如，
-在 [#namespace.memdef] 中所指定的定义式）。
-
-[:en]
-Such a redeclaration has the same enclosing namespaces as the original
-declaration.
-[:zh_CN]
-此种重复声明与其原始声明式具有相同的外围命名空间。
-
-[begin:example]
-[codeblock]
-namespace Q {
-  namespace V {
-    void f();                   // [:en] enclosing namespaces are the global namespace, [`Q], and [`Q::V] \
-                                   [:zh_CN] 外围命名空间是全局命名空间，[`Q]，以及 [`Q::V]
-    class C { void m(); };
-  }
-  void V::f() {                 // [:en] enclosing namespaces are the global namespace, [`Q], and [`Q::V] \
-                                   [:zh_CN] 外围命名空间是全局命名空间，[`Q]，以及 [`Q::V]
-    extern void h();            // [:en@~] ... so this declares [`Q::V::h] \
-                                   [:zh_CN@~] …… 此处声明了 [`Q::V::h]
-  }
-  void V::C::m() {              // [:en] enclosing namespaces are the global namespace, [`Q], and [`Q::V] \
-                                   [:zh_CN] 外围命名空间是全局命名空间，[`Q]，以及 [`Q::V]
   }
 }
 [codeblock:end]
@@ -184,23 +151,21 @@ the enclosing namespace as for an unnamed namespace ([#namespace.unnamed]).
 
 [:en]
 Furthermore, each member of the inline namespace can subsequently be partially
-specialized ([#temp.class.spec]), explicitly instantiated ([#temp.explicit]), or
-explicitly specialized ([#temp.expl.spec]) as though it were a member of the
+specialized ([#temp.spec.partial]), explicitly instantiated ([#temp.explicit]),
+or explicitly specialized ([#temp.expl.spec]) as though it were a member of the
 enclosing namespace.
 [:zh_CN]
 而且，内联命名空间的所有成员，都可以如同是外围命名空间的成员那样，随后进行部分
-特化（[#temp.class.spec]），显式实例化（[#temp.explicit]），或显式特化
+特化（[#temp.spec.partial]），显式实例化（[#temp.explicit]），或显式特化
 （[#temp.expl.spec]）。
 
 [:en]
 Finally, looking up a name in the enclosing namespace via explicit qualification
-([#namespace.qual]) will include members of the inline namespace brought in by
-the [~using-directive] even if there are declarations of that name in the
-enclosing namespace.
+([#namespace.qual]) will include members of the inline namespace even if there
+are declarations of that name in the enclosing namespace.
 [:zh_CN]
 最后，使用显式限定（[#namespace.qual]）在外围命名空间中查找某个名字时，即使外围
-命名空间中已经存在这个名字的声明式，也会将由这条 [~using-指令]所带入的内联命名
-空间的成员包括进来。
+命名空间中已经存在这个名字的声明式，也会将内联命名空间的成员包括进来。
 
 [para]
 [:en]
@@ -216,14 +181,6 @@ The [+inline namespace set] of [`N] is the transitive closure of all inline
 namespaces in [`N].
 [:zh_CN]
 [`N] 的[+内联命名空间集合]，是 [`N] 中的全部内联命名空间的传递闭包。
-
-[:en]
-The [+enclosing namespace set] of [`O] is the set of namespaces consisting of
-the innermost non-inline namespace enclosing an inline namespace [`O], together
-with any intervening inline namespaces.
-[:zh_CN]
-[`O] 的[+外围命名空间集合]，由包含内联命名空间 [`O] 的最内层非内联命名空间，
-以及介于它们之中的所有内联命名空间一起构成 。
 
 [para]
 [:en]
