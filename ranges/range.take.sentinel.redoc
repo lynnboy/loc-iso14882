@@ -10,9 +10,10 @@ namespace std::ranges {
   template<bool Const>
   class take_view<V>::[[redoc("*>")]]sentinel {
   private:
-    using [[redoc("*>")]]Base = conditional_t<Const, const V, V>;      // [=expos]
-    using [[redoc("*>")]]CI = counted_iterator<iterator_t<[[redoc("*>")]]Base>>;      // [=expos]
-    sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();         // [=expos]
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                                     // [=expos]
+    template<bool OtherConst>
+      using [[redoc("*>")]]CI = counted_iterator<iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>;  // [=expos]
+    sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();                             // [=expos]
   public:
     [[redoc("*>")]]sentinel() = default;
     constexpr explicit [[redoc("*>")]]sentinel(sentinel_t<[[redoc("*>")]]Base> end);
@@ -21,7 +22,11 @@ namespace std::ranges {
 
     constexpr sentinel_t<[[redoc("*>")]]Base> base() const;
 
-    friend constexpr bool operator==(const [[redoc("*>")]]CI& y, const [[redoc("*>")]]sentinel& x);
+    friend constexpr bool operator==(const [[redoc("*>")]]CI<Const>& y, const [[redoc("*>")]]sentinel& x);
+
+    template<bool OtherConst = !Const>
+      requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr bool operator==(const [[redoc("*>")]]CI<OtherConst>& y, const [[redoc("*>")]]sentinel& x);
   };
 }
 [codeblock:end]
@@ -62,7 +67,11 @@ constexpr sentinel_t<[[redoc("*>")]]Base> base() const;
 
 [%@lib@member operator==[!take_view::sentinel]]
 [codeblock:declaration]
-friend constexpr bool operator==(const [[redoc("*>")]]CI& y, const [[redoc("*>")]]sentinel& x);
+friend constexpr bool operator==(const [[redoc("*>")]]CI<Const>& y, const [[redoc("*>")]]sentinel& x);
+
+template<bool OtherConst = !Const>
+  requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr bool operator==(const [[redoc("*>")]]CI<OtherConst>& y, const [[redoc("*>")]]sentinel& x);
 [codeblock:end]
 
 [div:description]

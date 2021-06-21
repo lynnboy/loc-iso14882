@@ -103,7 +103,7 @@ def indexlibrary(_1, **kw):
     return index[libraryindex].add(_1)
 @applyTo(['%@hdr'])
 def indexhdr(_1, **kw):
-    return index[generalindex].add(idxhdr(_1)) + index[headerindex].add(idxhdr(_1))
+    return index[headerindex].add(idxhdr(_1))
 @applyTo(['%@concept'])
 def indexconcept(_1, **kw):
     return index[conceptindex].add(_1)
@@ -160,7 +160,7 @@ def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
 @applyTo(['?libheader'])
 def libheader(_1:str): return indexhdr(_1) + tcode(f"<{_1}>")
 @applyTo(['%@hdr@def'])
-def indexheader(_1:str): return indextext(idxhdr(_1)) + index[headerindex].add(idxhdr(_1), styler=idxbfpage)
+def indexheader(_1:str): return index[headerindex].add(idxhdr(_1), styler=idxbfpage)
 @applyTo(['?libheader@def'])
 def libheaderdef(_1:str): return indexheader(_1) + tcode(f"<{_1}>")
 @applyTo(['?libheader@no'])

@@ -13,9 +13,8 @@ namespace std::ranges {
   template<bool Const>
   struct join_view<V>::[[redoc("*>")]]sentinel {
   private:
-    using [[redoc("*>")]]Parent =                                      // [=expos]
-      conditional_t<Const, const join_view, join_view>;
-    using [[redoc("*>")]]Base   = conditional_t<Const, const V, V>;    // [=expos]
+    using [[redoc("*>")]]Parent = [[redoc("*>")]]maybe-const<Const, join_view>;       // [=expos]
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                 // [=expos]
     sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();         // [=expos]
   public:
     [[redoc("*>")]]sentinel() = default;
@@ -24,7 +23,9 @@ namespace std::ranges {
     constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> s)
       requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
 
-    friend constexpr bool operator==(const [[redoc("*>")]]iterator<Const>& x, const [[redoc("*>")]]sentinel& y);
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
   };
 }
 [codeblock:end]
@@ -54,7 +55,9 @@ constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> s)
 
 [%@lib@member operator==[!join_view::sentinel]]
 [codeblock:declaration]
-friend constexpr bool operator==(const [[redoc("*>")]]iterator<Const>& x, const [[redoc("*>")]]sentinel& y);
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
 [codeblock:end]
 
 [div:description]

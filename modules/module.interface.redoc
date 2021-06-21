@@ -13,10 +13,10 @@
 
 [para]
 [:en]
-An [~export-declaration] shall appear only at namespace scope and only in the
+An [~export-declaration] shall inhabit a namespace scope and appear in the
 purview of a module interface unit.
 [:zh_CN]
-[~导出声明式]只能在命名空间作用域中，且只能在模块接口单元的视野中出现。
+[~导出声明式]应当居于命名空间作用域，且只能在模块接口单元的视野中出现。
 
 [:en]
 An [~export-declaration] shall not appear directly or indirectly within an
@@ -32,31 +32,34 @@ An [~export-declaration] has the declarative effects of its [~declaration],
 声明效果。
 
 [:en]
-An [~export-declaration] does not establish a scope and its [~declaration] or
-[~declaration-seq] shall not contain an [~export-declaration] or
-[~module-import-declaration].
+The [~declaration] or [~declaration-seq] of an [~export-declaration] shall not
+contain an [~export-declaration] or [~module-import-declaration].
 [:zh_CN]
-[~导出声明式]并不设立作用域，且其[~声明式]或[~声明式序列]不能包含[~导出声明式]或
-[~模块导入声明式]。
+[~导出声明式]的[~声明式]或[~声明式序列]不能包含[~导出声明式]或[~模块导入声明式]。
+
+[begin:note]
+[:en]
+An [~export-declaration] does not establish a scope.
+[:zh_CN]
+[~导出声明式]并不设立作用域。
+[end:note]
 
 [para]
 [:en]
-A declaration is [+exported[%declaration[!exported]]] if it is
+A declaration is [+exported[%declaration[!exported]]] if it is declared within
+an [~export-declaration] and inhabits a namespace scope or it is
 [:zh_CN]
-以下声明式[+被导出[%声明式[!被导出]]]：
+如果声明式声明于某个[~导出声明式]中并居于命名空间作用域，或者它满足以下条件，则
+它[+被导出[%声明式[!被导出]]]：
 
 [list]
 [item]
-[:en@~] a namespace-scope declaration declared within an [~export-declaration],
-or
-[:zh_CN@~] 声明于[~导出声明式]中的命名空间作用域声明式，或
-[item]
 [:en@~] a [~namespace-definition] that contains an exported declaration, or
-[:zh_CN@~] 包含被导出声明式的[~命名空间定义式]，或
+[:zh_CN@~] 它是包含被导出声明式的[~命名空间定义式]，或
 [item]
 [:en@~] a declaration within a header unit ([#module.import]) that introduces at
 least one name.
-[:zh_CN@~] 在头文件单元（[#module.import]）之内并且引入至少一个名字的声明式。
+[:zh_CN@~] 它是头文件单元（[#module.import]）之内的引入至少一个名字的声明式。
 [list:end]
 
 [para]
@@ -179,15 +182,12 @@ export using T = S;             // [:en] OK, exports name [`T] denoting type [`S
 
 [para]
 [:en]
-A redeclaration of an exported declaration of an entity is implicitly exported.
+A redeclaration of an entity or [~typedef-name] [$X] is implicitly exported if
+[$X] was introduced by an exported declaration; otherwise it shall not be
+exported.
 [:zh_CN]
-对某个实体的被导出声明式进行重复声明，是隐式被导出的。
-
-[:en]
-An exported redeclaration of a non-exported declaration of an entity is
-ill-formed.
-[:zh_CN]
-对某个实体的未被导出的声明式进行被导出的重复声明，是非良构的。
+对于某个实体或 [~typedef-名] [$X] 的重复声明式，如果 [$X] 是由某个被导出声明式所
+引入的，则它被隐式导出；否则它应当不被导出。
 
 [begin:example]
 [codeblock]
@@ -202,31 +202,25 @@ export struct S;                // [:en] error: exported declaration follows non
 [end:example]
 
 [para]
-[:en]
-A name is [+exported[%name[!exported]]] by a module if it is introduced or
-redeclared by an exported declaration in the purview of that module.
-[:zh_CN]
-如果某个名字是在模块的视野中的被导出声明式所引入或重复声明的，则它被该模块所
-[+导出[%名字[!被导出]]]。
-
 [begin:note]
 [:en]
-Exported names have either external linkage or no linkage; see [#basic.link].
+Names introduced by exported declarations have either external linkage or no
+linkage; see [#basic.link].
 [:zh_CN]
-被导出的名字要么具有外部连接，要么无连接；参见 [#basic.link]。
+由被导出的声明式所引入名字要么具有外部连接，要么无连接；参见 [#basic.link]。
 
 [:en]
-Namespace-scope names exported by a module are visible to name lookup in any
-translation unit importing that module; see [#basic.scope.namespace].
+Namespace-scope declarations exported by a module can be found by name lookup in
+any translation unit importing that module ([#basic.lookup]).
 [:zh_CN]
-被某个模块导出的命名空间作用域的名字，在导入了这个模块的任何翻译单元中都对
-名字查找可见；参见 [#basic.scope.namespace]。
+被某个模块导出的命名空间作用域的声明式，在导入了这个模块的任何翻译单元中都可通过
+名字查找找到（[#basic.lookup]）。
 
 [:en]
-Class and enumeration member names are visible to name lookup in any context in
+Class and enumeration member names can be found by name lookup in any context in
 which a definition of the type is reachable.
 [:zh_CN]
-类和枚举的成员名，在其类型的某个定义式可达的任何语境中，对名字查找可见。
+类和枚举的成员名，在其类型的某个定义式可达的任何语境中，都可通过名字查找找到。
 [end:note]
 
 [begin:example]
@@ -281,36 +275,6 @@ int main() {
 }
 [codeblock:end]
 [end:example]
-
-[para]
-[begin:note]
-[:en]
-Redeclaring a name in an [~export-declaration] cannot change the linkage of the
-name ([#basic.link]).
-[:zh_CN]
-在[~导出声明式]中重复声明一个名字，不会改变该名字的连接性（[#basic.link]）。
-
-[begin:example]
-[:en] Interface unit of [`M]:
-[:zh_CN] [`M] 的接口单元：
-[codeblock]
-export module M;
-static int f();                 // #1
-export int f();                 // [:en] error: #1 gives internal linkage \
-                                   [:zh_CN] 错误：#1 给出内部连接
-struct S;                       // #2
-export struct S;                // [:en] error: #2 gives module linkage \
-                                   [:zh_CN] 错误：#2 给出模块连接
-namespace {
-  namespace N {
-    extern int x;               // #3
-  }
-}
-export int N::x;                // [:en] error: #3 gives internal linkage \
-                                   [:zh_CN] 错误：#3 给出内部连接
-[codeblock:end]
-[end:example]
-[end:note]
 
 [para]
 [begin:note]

@@ -12,7 +12,7 @@ namespace std::ranges {
   template<bool Const>
   class elements_view<V, N>::[[redoc("*>")]]sentinel {                 // [=expos]
   private:
-    using [[redoc("*>")]]Base = conditional_t<Const, const V, V>;      // [=expos]
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                 // [=expos]
     sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();         // [=expos]
   public:
     [[redoc("*>")]]sentinel() = default;
@@ -22,15 +22,19 @@ namespace std::ranges {
 
     constexpr sentinel_t<[[redoc("*>")]]Base> base() const &
 
-    friend constexpr bool operator==(const [[redoc("*>")]]iterator<Const>& x, const [[redoc("*>")]]sentinel& y);
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
 
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
     friend constexpr range_difference_t<[[redoc("*>")]]Base>
-      operator-(const [[redoc("*>")]]iterator<Const>& x, const [[redoc("*>")]]sentinel& y)
-        requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+      operator-(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
 
-    friend constexpr range_difference_t<[[redoc("*>")]]Base>
-      operator-(const [[redoc("*>")]]sentinel& x, const [[redoc("*>")]]iterator<Const>& y)
-        requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, V>>
+      operator-(const [[redoc("*>")]]sentinel& x, const [[redoc("*>")]]iterator<OtherConst>& y);
   };
 }
 [codeblock:end]
@@ -71,8 +75,9 @@ constexpr sentinel_t<[[redoc("*>")]]Base> base() const;
 
 [%@lib@member operator==[!elements_view::sentinel]]
 [codeblock:declaration]
-friend constexpr bool operator==(const [[redoc("*>")]]iterator<Const>& x, const [[redoc("*>")]]sentinel& y)
-  requires equality_comparable<[[redoc("*>")]]Base>;
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
 [codeblock:end]
 
 [div:description]
@@ -83,9 +88,10 @@ friend constexpr bool operator==(const [[redoc("*>")]]iterator<Const>& x, const 
 
 [%@lib@member operator-[!elements_view::sentinel]]
 [codeblock:declaration]
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
 friend constexpr range_difference_t<[[redoc("*>")]]Base>
-  operator-(const [[redoc("*>")]]iterator<Const>& x, const [[redoc("*>")]]sentinel& y)
-    requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+  operator-(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
 [codeblock:end]
 
 [div:description]
@@ -96,9 +102,10 @@ friend constexpr range_difference_t<[[redoc("*>")]]Base>
 
 [%@lib@member operator-[!elements_view::sentinel]]
 [codeblock:declaration]
-friend constexpr range_difference_t<[[redoc("*>")]]Base>
-  operator-(const [[redoc("*>")]]sentinel& x, const [[redoc("*>")]]iterator<Const>& y)
-    requires sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, V>>
+  operator-(const [[redoc("*>")]]sentinel& x, const [[redoc("*>")]]iterator<OtherConst>& y);
 [codeblock:end]
 
 [div:description]

@@ -8,10 +8,10 @@
 
 [para]
 [:en]
-A declaration statement introduces one or more new identifiers into a block; it
-has the form
+A declaration statement introduces one or more new names into a block; it has
+the form
 [:zh_CN]
-声明语句向语句块中引入一个或多个新标识符；它的形式为
+声明语句向语句块中引入一个或多个新名字；它的形式为
 
 [syntax]
 [rule declaration-statement [:zh_CN] 声明语句 ]
@@ -19,60 +19,58 @@ has the form
 [rule:end]
 [syntax:end]
 
+[begin:note]
 [:en]
 If an identifier introduced by a declaration was previously declared in an outer
 block,
 [%declaration hiding[%name hiding]] [%name hiding]
 [%block (statement)[!structure]]
-the outer declaration is hidden for the remainder of the block, after which it
-resumes its force.
+the outer declaration is hidden for the remainder of the block
+([#basic.lookup.unqual]), after which it resumes its force.
 [:zh_CN]
 若由声明式所引入的标识符在外层块中已经被声明过，
 [%声明式的隐藏[%名字隐藏]] [%名字隐藏]
 [%块（语句）[!结构]]
-则外面的声明式在该块的余下部分中被隐藏，其后又恢复其效力。
+则外面的声明式在该块的余下部分中被隐藏（[#basic.lookup.unqual]），其后又恢复其
+效力。
+[end:note]
 
 [para]
 [:en]
 [%block (statement)[!initialization in]]
 [%initialization[!automatic]]
-Variables with automatic storage duration ([#basic.stc.auto]) are initialized
-each time their [~declaration-statement] is executed.
+[%active[%variable[!active]]]
+A variable with automatic storage duration ([#basic.stc.auto]) is
+[+active[%variable[!active]]] everywhere in the scope to which it belongs after
+its [~init-declarator].
 [:zh_CN]
 [%块（语句）[!～中的初始化]]
 [%初始化[!自动～]]
-具有自动存储期（[#basic.stc.auto]）的变量，在每次执行它们的[~声明语句]时进行
-初始化。
-
-[:en]
-[%local variable[!destruction of]]
-Variables with automatic storage duration declared in the block are destroyed on
-exit from the block ([#stmt.jump]).
-[:zh_CN]
-[%局部变量[!～的销毁]]
-在语句块中声明的具有自动存储期的变量，在从该语句块中退出（[#stmt.jump]）时进行
-销毁。
+[%活跃[%变量[!活跃]]]
+具有自动存储期（[#basic.stc.auto]）的变量，在其所属的作用域中其[~初始化声明符]
+之后的任何位置均是[+活跃[%变量[!活跃]]]的。
 
 [para]
 [:en]
 [%initialization[!jump past]]
 [%[`goto][!initialization and]]
-It is possible to transfer into a block, but not in a way that bypasses
-declarations with initialization (including ones in [~condition]s and
-[~init-statement]s).
+Upon each transfer of control (including sequential execution of statements)
+within a function from point [$P] to point [$Q], all variables that are active
+at [$P] and not at [$Q] are destroyed in the reverse order of their construction.
 [:zh_CN]
 [%初始化[!跳转越过～]]
 [%[`goto][!初始化与～]]
-向语句块中转移控制是可能的，但其路径不能经过带有初始化的声明式（包括[~条件]和
-[~初始化语句]中的声明式）。
+每次进行某个函数中从点 [$P] 到点 [$Q] 的控制转移（包括语句的顺序执行），所有在
+[$P] 活跃而在 [$Q] 不活跃的变量均以它们构造的相反顺序销毁。
 
 [:en]
-A program that jumps[#:note#fn:$1] from a point where a variable with automatic
-storage duration is not in scope to a point where it is in scope is ill-formed
-unless the variable has vacuous initialization ([#basic.life]).
+Then, all variables that are active at [$Q] but not at [$P] are initialized in
+declaration order; unless all such variables have vacuous initialization
+([#basic.life]), the transfer of control shall not be a jump.[#:note#fn:$1]
 [:zh_CN]
-从某个具有自动存储期的变量不在作用域之中的一点，跳转[#:note#fn:$1]到它在作用域
-之中的一点，则程序非良构，除非该变量具有无为初始化（[#basic.life]）。
+然后，所有在 [$Q] 活跃而在 [$P] 不活跃的所有变量均以声明顺序进行初始化；除非所有
+这种变量均具有空虚初始化（[#basic.life]），否则这次控制转移不能是跳转。
+[#:note#fn:$1]
 
 [note:foot#fn:$1]
 [:en]
@@ -83,10 +81,11 @@ considered a jump in this respect.
 [note:end]
 
 [:en]
-In such a case, the variables with vacuous initialization are constructed in the
-order of their declaration.
+When a [~declaration-statement] is executed, [$P] and [$Q] are the points
+immediately before and after it; when a function returns, [$Q] is after its body.
 [:zh_CN]
-这种情况下，具有无为初始化的各个变量按照声明式的顺序进行构造。
+当执行[~声明式语句]时，[$P] 和 [$Q] 为紧挨它之前和之后的位置点；当函数返回时，
+[$Q] 在函数体之后。
 
 [begin:example]
 [codeblock]
@@ -113,7 +112,7 @@ lx:
 [%initialization[!dynamic block scope]]
 [%initialization[!local [`static]]]
 [%initialization[!local [`thread_local]]]
-Dynamic initialization of a block-scope variable with static storage duration
+Dynamic initialization of a block variable with static storage duration
 ([#basic.stc.static]) or thread storage duration ([#basic.stc.thread]) is
 performed the first time control passes through its declaration; such a variable
 is considered initialized upon the completion of its initialization.
@@ -123,8 +122,8 @@ is considered initialized upon the completion of its initialization.
 [%初始化[!局部 [`static] 的～]]
 [%初始化[!局部 [`thread_local] 的～]]
 对于带有静态存储期（[#basic.stc.static]）或线程存储期（[#basic.stc.thread]）的
-块作用域变量，当控制第一次通过其声明式时进行动态初始化；这种变量在其初始化完成时
-即被当做是已经初始化的。
+块变量，当控制第一次通过其声明式时进行动态初始化；这种变量在其初始化完成时即被
+当做是已经初始化的。
 
 [:en]
 If the initialization exits by throwing an exception, the initialization is not
@@ -173,16 +172,15 @@ int foo(int i) {
 [para]
 [:en]
 [%[`static][!destruction of local]]
-A block-scope object with static or thread storage duration will be destroyed if
-and only if it was constructed.
+An object associated with a block variable with static or thread storage
+duration will be destroyed if and only if it was constructed.
 [:zh_CN]
 [%[`static][!局部～的销毁]]
-当且仅当带有静态或线程存储期的块作用域对象已被构造时，它被销毁。
+当且仅当与带有静态或线程存储期的块变量关联的对象已被构造时，它被销毁。
 
 [begin:note]
 [:en]
-[#basic.start.term] describes the order in which block-scope objects with static
-and thread storage duration are destroyed.
+[#basic.start.term] describes the order in which such objects are destroyed.
 [:zh_CN]
-[#basic.start.term] 说明带有静态和线程存储期的块作用域对象的销毁顺序。
+[#basic.start.term] 说明这种对象的销毁顺序。
 [end:note]
