@@ -171,17 +171,18 @@ function template with external linkage.
 
 [:en]
 For determining whether two dependent names ([#temp.dep]) are equivalent, only
-the name itself is considered, not the result of name lookup in the context of
-the template.
+the name itself is considered, not the result of name lookup.
 [:zh_CN]
-为确定两个待决名字（[#temp.dep]）是否等价，仅考察这个名字自身，而不是在模板的
-语境中进行名字查找的结果。
+为确定两个待决名字（[#temp.dep]）是否等价，仅考察名字自身而不是名字查找的结果。
 
+[begin:note]
 [:en]
-If multiple declarations of the same function template differ in the result of
-this name lookup, the result for the first declaration is used.
+If such a dependent name is unqualified, it is looked up from the first
+declaration of the function template ([#temp.dep.candidate]).
 [:zh_CN]
-如果相同函数模板的多个声明式因为名字查找的结果而不同，则使用第一个声明式的结果。
+如果这种待决名未被限定，则从该函数模板的首个声明式对它进行查找
+（[#temp.dep.candidate]）。
+[end:note]
 
 [begin:example]
 [codeblock]
@@ -197,8 +198,8 @@ template <class T> decltype(g(T())) h()         // [:en] redeclaration of [`h()]
                                                    [:zh_CN@~] [$\ldots] 虽然此处的查找能够找到 [`g(int)]
 int i = h<int>();                               // [:en] template argument substitution fails; [`g(int)] \
                                                    [:zh_CN] 模板实参代换失败；[`g(int)]
-                                                // [:en@~] was not in scope at the first declaration of [`h()] \
-                                                   [:zh_CN@~] 在 [`h()] 的第一个声明式之处不在作用域中
+                                                // [:en@~] not considered at the first declaration of [`h()] \
+                                                   [:zh_CN@~] 在 [`h()] 的第一个声明式之处不予考虑
 
 // [:en] ill-formed, no diagnostic required: the two expressions are functionally equivalent but not equivalent \
    [:zh_CN] 非良构，无须诊断：两个表达式功能等价但并不等价
@@ -237,6 +238,17 @@ For instance, one could have redundant parentheses.
 [:zh_CN]
 例如，其一可以带有多余括号。
 [end:note]
+
+[begin:example]
+[codeblock]
+template<int I> concept C = true;
+template<typename T> struct A {
+  void f() requires C<42>;      // #1
+  void f() requires true;       // [:en] OK, different functions \
+                                   [:zh_CN] OK，不同的函数
+};
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]
@@ -292,35 +304,6 @@ the same set of template argument lists.
 则它们[+功能等价[%功能等价[![~模板头]]]]。
 
 [para]
-[:en]
-[%template[!function[!equivalent]][%equivalent[!function templates]]]
-Two function templates are [+equivalent[%equivalent[!function templates]]] if
-they are declared in the same scope, have the same name, have equivalent
-[~template-head]s, and have return types, parameter lists, and trailing
-[~requires-clause]s (if any) that are equivalent using the rules described above
-to compare expressions involving template parameters.
-[:zh_CN]
-[%模板[!函数～[!等价]][%等价[!函数模板]]]
-若两个函数模板声明于相同的作用域中，具有相同的名字，具有等价的[~模板头]，而且
-根据上述对涉及模板形参的表达式的比较规则，具有等价的返回类型、形参列表和尾部
-[~requires-子句]，则它们[+等价[%等价[!函数模板]]]。
-
-[:en]
-[%equivalent[!functionally][%functionally equivalent]]
-[%template[!function[!functionally equivalent]]
- [%functionally equivalent[!function templates]]]
-Two function templates are [+functionally equivalent[%functionally equivalent
-[!function templates]]] if they are declared in the same scope, have the same
-name, accept and are satisfied by the same set of template argument lists, and
-have return types and parameter lists that are functionally equivalent using
-the rules described above to compare expressions involving template parameters.
-[:zh_CN]
-[%等价[!功能～][%功能等价]]
-[%模板[!函数～[!功能等价]][%功能等价[!函数模板]]]
-若两个函数模板声明于相同的作用域中，具有相同的名字，可以接受相同的一组模板实参
-列表且被其所满足，而且根据上述对涉及模板形参的表达式的比较规则，具有功能等价的
-返回类型和形参列表，则它们[+功能等价[%功能等价[!函数模板]]]。
-
 [:en]
 If the validity or meaning of the program depends on whether two constructs are
 equivalent, and they are functionally equivalent but not equivalent, the program
