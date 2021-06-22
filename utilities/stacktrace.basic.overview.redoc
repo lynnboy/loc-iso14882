@@ -1,0 +1,106 @@
+[section#stacktrace.basic.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[codeblock:synopsis]
+  template<class Allocator>
+  class [[redoc("?libglobal>")]]basic_stacktrace {
+  public:
+    using value_type = stacktrace_entry;
+    using const_reference = const value_type&;
+    using reference = value_type&;
+    using const_iterator = [[redoc("[?impdefx [:en]type of [`basic_stacktrace::const_iterator]"
+                                          "[:zh_CN][`basic_stacktrace::const_iterator] 的类型]")]]; // [:en] see [#stacktrace.basic.obs] \
+                                                                                                    [:zh_CN] 参见 [#stacktrace.basic.obs]
+    using iterator = const_iterator;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using difference_type = [[redoc("[?impdefx [:en]type of [`basic_stacktrace::difference_type]"
+                                          "[:zh_CN][`basic_stacktrace::difference_type] 的类型]")]];
+    using size_type = [[redoc("[?impdefx [:en]type of [`basic_stacktrace::size_type]"
+                                          "[:zh_CN][`basic_stacktrace::size_type] 的类型]")]];
+    using allocator_type = Allocator;
+
+    // [:en] [#stacktrace.basic.ctor], creation and assignment \
+    [:zh_CN] [#stacktrace.basic.ctor]，创建和赋值
+    static basic_stacktrace current(const allocator_type& alloc = allocator_type()) noexcept;
+    static basic_stacktrace current(size_type skip,
+                                    const allocator_type& alloc = allocator_type()) noexcept;
+    static basic_stacktrace current(size_type skip, size_type max_depth,
+                                    const allocator_type& alloc = allocator_type()) noexcept;
+
+    basic_stacktrace() noexcept(is_nothrow_default_constructible_v<allocator_type>);
+    explicit basic_stacktrace(const allocator_type& alloc) noexcept;
+
+    basic_stacktrace(const basic_stacktrace& other);
+    basic_stacktrace(basic_stacktrace&& other) noexcept;
+    basic_stacktrace(const basic_stacktrace& other, const allocator_type& alloc);
+    basic_stacktrace(basic_stacktrace&& other, const allocator_type& alloc);
+    basic_stacktrace& operator=(const basic_stacktrace& other);
+    basic_stacktrace& operator=(basic_stacktrace&& other)
+      noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value ||
+        allocator_traits<Allocator>::is_always_equal::value);
+
+    ~basic_stacktrace();
+
+    // [:en] [#stacktrace.basic.obs], observers \
+    [:zh_CN] [#stacktrace.basic.obs]，探察函数
+    allocator_type get_allocator() const noexcept;
+
+    const_iterator begin() const noexcept;
+    const_iterator end() const noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+    const_reverse_iterator rend() const noexcept;
+
+    const_iterator cbegin() const noexcept;
+    const_iterator cend() const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
+    const_reverse_iterator crend() const noexcept;
+
+    [[nodiscard]] bool empty() const noexcept;
+    size_type size() const noexcept;
+    size_type max_size() const noexcept;
+
+    const_reference operator[](size_type) const;
+    const_reference at(size_type) const;
+
+    // [:en] [#stacktrace.basic.cmp], comparisons \
+    [:zh_CN] [#stacktrace.basic.cmp]，比较
+    template<class Allocator2>
+    friend bool operator==(const basic_stacktrace& x,
+                           const basic_stacktrace<Allocator2>& y) noexcept;
+    template<class Allocator2>
+    friend strong_ordering operator<=>(const basic_stacktrace& x,
+                                       const basic_stacktrace<Allocator2>& y) noexcept;
+
+    // [:en] [#stacktrace.basic.mod], modifiers \
+    [:zh_CN] [#stacktrace.basic.mod]，改动函数
+    void swap(basic_stacktrace& other)
+      noexcept(allocator_traits<Allocator>::propagate_on_container_swap::value ||
+        allocator_traits<Allocator>::is_always_equal::value);
+
+  private:
+    vector<value_type, allocator_type> frames_;         // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The class template [`basic_stacktrace] satisfies the requirements of an
+allocator-aware container ([#:tab#container.alloc.req]), a sequence container
+([#sequence.reqmts]), and a reversible container
+([#container.requirements.general]) except that
+[:zh_CN] 类模板 [`basic_stacktrace] 符合分配器感知容器
+（[#:tab#container.alloc.req]），序列容器（[#sequence.reqmts]），以及可反向容器
+（[#container.requirements.general]）的规定，但
+[list]
+[item]
+[:en@~] only move, assignment, swap, and operations defined for const-qualified
+sequence containers are supported and,
+[:zh_CN@~] 仅支持移动，赋值，交换，以及针对 const 限定的序列容器定义的操作，并且
+[item]
+[:en@~] the semantics of comparison functions are different from those required
+for a container.
+[:zh_CN@~] 比较函数的语义和对容器所要求的语义有差别。
+[list:end]
