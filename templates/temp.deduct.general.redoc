@@ -162,11 +162,10 @@ void g() {
 [:en]
 When all template arguments have been deduced or obtained from default template
 arguments, all uses of template parameters in the template parameter list of the
-template and the function type are replaced with the corresponding deduced or
-default argument values.
+template are replaced with the corresponding deduced or default argument values.
 [:zh_CN]
-当所有模板实参均被推断或从默认模板实参获得之后，在该模板的模板形参列表和函数类型
-中的所有对模板形参的使用，均以对应推断出的或默认的实参值进行代换。
+当所有模板实参均被推断或从默认模板实参获得之后，在该模板的模板形参列表中的所有
+对模板形参的使用，均以对应推断出的或默认的实参值进行代换。
 
 [:en]
 If the substitution results in an invalid type, as described above, type
@@ -185,6 +184,66 @@ constraints are checked for satisfaction ([#temp.constr.constr]).
 If the constraints are not satisfied, type deduction fails.
 [:zh_CN]
 如果约束未能满足，则类型推断失败。
+
+[:en]
+In the context of a function call, if type deduction has not yet failed, then
+for those function parameters for which the function call has arguments, each
+function parameter with a type that was non-dependent before substitution of any
+explicitly-specified template arguments is checked against its corresponding
+argument; if the corresponding argument cannot be implicitly converted to the
+parameter type, type deduction fails.
+[:zh_CN]
+在函数调用的语境中，如果类型推断尚未失败，对于在函数调用中具有实参的那些函数形参，
+每个具有在以显式指定的模板实参进行替换之前非待决的类型的函数形参，均针对它的对应
+实参进行检查；如果其对应实参无法隐式转换为形参类型，则类型推断失败。
+
+[begin:note]
+[:en]
+Overload resolution will check the other parameters, including parameters with
+dependent types in which no template parameters participate in template argument
+deduction and parameters that became non-dependent due to substitution of
+explicitly-specified template arguments.
+[:zh_CN]
+重载决议会检查其他的形参，包括带有待决类型的形参，其中没有模板形参参与模板实参
+推断，还包括由于显式指定的模板实参的替换而变为非待决的形参。
+[end:note]
+
+[:en]
+If type deduction has not yet failed, then all uses of template parameters in
+the function type are replaced with the corresponding deduced or default
+argument values.
+[:zh_CN]
+如果类型推断尚未失败，则在函数类型中使用的所有模板形参均被替换为其对应的推断或
+默认实参的值。
+
+[:en]
+If the substitution results in an invalid type, as described above,
+type deduction fails.
+[:zh_CN]
+如果如上所述的替换导致了无效类型，则类型推断失败。
+
+[begin:example]
+[codeblock]
+template <class T> struct Z {
+  typedef typename T::x xx;
+};
+template <class T> concept C = requires { typename T::A; };
+template <C T> typename Z<T>::xx f(void *, T);          // #1
+template <class T> void f(int, T);                      // #2
+struct A {} a;
+struct ZZ {
+  template <class T, class = typename Z<T>::xx> operator T *();
+  operator int();
+};
+int main() {
+  ZZ zz;
+  f(1, a);              // [:en] OK, deduction fails for #1 because there is no conversion from [`int] to [`void*] \
+                        [:zh_CN] OK，对 #1 的推断失败，因为不存在从 [`int] 到 [`void*] 的转换
+  f(zz, 42);            // [:en] OK, deduction fails for #1 because [`C<int>] is not satisfied \
+                        [:zh_CN] OK，对 #1 的推断失败，因为 [`C<int>] 未能满足
+}
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]
@@ -458,7 +517,7 @@ template <int I> struct X { };
 template <template <class T> class> struct Z { };
 template <class T> void f(typename T::Y*){}
 template <class T> void g(X<T::N>*){}
-template <class T> void h(Z<T::template TT>*){}
+template <class T> void h(Z<T::TT>*){}
 struct A {};
 struct B { int Y; };
 struct C {

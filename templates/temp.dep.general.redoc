@@ -37,20 +37,20 @@ its type may depend on a template parameter) or [+value-dependent[%expression
 
 [para]
 [:en]
-In an expression of the form:
+A [+:adj dependent call[%dependent[!call]]] is an expression, possibly formed as
+a non-member candidate for an operator ([#over.match.oper]), of the form
 [:zh_CN]
-在如下形式的表达式中：
+[+adj 待决调用[%待决[!调用]]]是一个表达式，可能构成某个运算符的非成员候选
+（[#over.match.oper]），其形式为
 
 [syntax:explanation]
 [~postfix-expression] [`(] [~:opt expression-list] [`)]
 [syntax:end]
 
 [:en@~]
-where the [~postfix-expression] is an [~unqualified-id], the [~unqualified-id]
-denotes a [+dependent name[%name[!dependent]]] if
+where the [~postfix-expression] is an [~unqualified-id] and
 [:zh_CN@~]
-其中的[~后缀表达式]是个[~未限定标识]，如果符合以下条件，则这个[~未限定标识]代表
-一个[+待决的名字[%名字[!待决的～]]]：
+其中的[~后缀表达式]是个[~未限定标识]，并且
 
 [list]
 [item] 
@@ -72,19 +72,35 @@ arguments depends on a template parameter.
 [list:end]
 
 [:en]
-If an operand of an operator is a type-dependent expression, the operator also
-denotes a dependent name.
+The component name of an [~unqualified-id] ([#expr.prim.id.unqual]) is dependent
+if
 [:zh_CN]
-若某个运算符的一个操作数是类型待决的表达式，则该运算符也代表一个待决的名字。
+以下情况下，[~未限定标识]的成分名（[#expr.prim.id.unqual]）待决：
+
+[list]
+[item] 
+[:en@~] it is a [~conversion-function-id] whose [~conversion-type-id] is
+dependent, or
+[:zh_CN@~] 它是个[~转换类型标识]待决的[~转换函数标识]，或者
+
+[item]
+[:en@~] it is [`[`:key operator]=] and the current class is a templated entity,
+or
+[:zh_CN@~] 它是 [`[`:key operator]=] 且当前类是模板化实体，或者
+
+[item]
+[:en@~] the [~unqualified-id] is the [~postfix-expression] in a dependent call.
+[:zh_CN@~] 该[~未限定标识]是待决调用中的[~后缀表达式]。
+[list:end]
 
 [begin:note]
 [:en]
-Such names are unbound and are looked up at the point of the template
-instantiation ([#temp.point]) in both the context of the template definition and
-the context of the point of instantiation ([#temp.dep.candidate]).
+Such names are looked up only at the point of the template instantiation
+([#temp.point]) in both the context of the template definition and the context
+of the point of instantiation ([#temp.dep.candidate]).
 [:zh_CN]
-这些名字是未绑定的，并且在模板实例化点（[#temp.point]），同时模板定义式的语境和
-实例化点的语境中进行查找（[#temp.dep.candidate]）。
+这些名字仅在模板实例化点（[#temp.point]），同时于模板定义式的语境和实例化点的
+语境中进行查找（[#temp.dep.candidate]）。
 [end:note]
 
 [para]
@@ -105,63 +121,4 @@ The base class name [`B<T>], the type name [`T::A], the names [`B<T>::i] and
 [:zh_CN]
 基类名 [`B<T>]，类型名 [`T::A]，名字 [`B<T>::i] 和 [`pb->j] 明确依存于其
 [~模板形参]。
-[end:example]
-
-[para]
-[:en]
-In the definition of a class or class template, the scope of a dependent base
-class ([#temp.dep.type]) is not examined during unqualified name lookup either
-at the point of definition of the class template or member or during an
-instantiation of the class template or member.
-[:zh_CN]
-在类或类模板的定义式中，在该类模板或成员的定义点，或者在该类模板或成员的实例化
-过程中进行未限定名的查找时，均不检查待决基类（[#temp.dep.type]）的作用域。
-
-[begin:example]
-[codeblock]
-typedef double A;
-template<class T> class B {
-  typedef int A;
-};
-template<class T> struct X : B<T> {
-  A a;              // [:en] [`a] has type [`double] \
-                       [:zh_CN] [`a] 的类型为 [`double]
-};
-[codeblock:end]
-
-[:en]
-The type name [`A] in the definition of [`X<T>] binds to the typedef name
-defined in the global namespace scope, not to the typedef name defined in the
-base class [`B<T>].
-[:zh_CN]
-[`X<T>] 的定义式中的类型名 [`A] 绑定到全局命名空间作用域中定义的 typedef 名，而
-不是基类 [`B<T>] 中定义的 typedef 名。
-[end:example]
-
-[begin:example]
-[codeblock]
-struct A {
-  struct B { /* ... */ };
-  int a;
-  int Y;
-};
-
-int a;
-
-template<class T> struct Y : T {
-  struct B { /* ... */ };
-  B b;                          // [:en] The [`B] defined in [`Y] \
-                                   [:zh_CN] [`Y] 中所定义的 [`B]
-  void f(int i) { a = i; }      // [`::a]
-  Y* p;                         // [`Y<T>]
-};
-
-Y<A> ya;
-[codeblock:end]
-
-[:en]
-The members [`A::B], [`A::a], and [`A::Y] of the template argument [`A] do not
-affect the binding of names in [`Y<A>].
-[:zh_CN]
-模板实参 [`A] 的成员 [`A::B]，[`A::a] 和 [`A::Y] 并不影响 [`Y<A>] 中的名字绑定。
 [end:example]

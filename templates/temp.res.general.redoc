@@ -5,80 +5,124 @@
 
 [para]
 [:en]
-[%overloading[!resolution[!template name]]]
-[%lookup[!template name]]
-Three kinds of names can be used within a template definition:
+A name that appears in a declaration [$D] of a template [$T] is looked up from
+where it appears in an unspecified declaration of [$T] that is or is reachable
+from [$D] and from which no other declaration of [$T] that contains the usage of
+the name is reachable.
 [:zh_CN]
-[%重载[!～决议[!模板名字]]]
-[%查找[!模板名字～]]
-模板定义式中可以使用三种名字：
+出现于模板 [$T] 的声明式 [$D] 中的名字，从它在 [$D] 或从 [$D] 可达的某个未指明的
+[$T] 的声明式中出现之处查找，还要从其他包含该名字的使用的 [$T] 的声明式均不可达
+的声明式中进行查找。
 
-[list]
-[item]
 [:en]
-The name of the template itself, and names declared within the template itself.
+If the name is dependent (as specified in [#temp.dep]), it is looked up for each
+specialization (after substitution) because the lookup depends on a template
+parameter.
 [:zh_CN]
-该模板自身的名字，以及在该模板自身之中声明的名字。
+如果名字待决（如 [#temp.dep] 中所述），则为每个特化式（经过替换）对它进行查找，
+因为其查找依赖于模板实参。
 
-[item]
+[begin:note]
 [:en]
-Names dependent on a [~template-parameter] ([#temp.dep]).
+Some dependent names are also looked up during parsing to determine that they
+are dependent or to interpret following [`<] tokens.
 [:zh_CN]
-依存于某个[~模板形参]（[#temp.dep]）的名字。
+某些待决名还会在解析时查找，以确定它们是否待决或者用于判读随后的 [`<] 记号。
 
-[item]
 [:en]
-Names from scopes which are visible within the template definition.
+Uses of other names might be type-dependent or value-dependent ([#temp.dep.expr],
+[#temp.dep.constexpr]).
 [:zh_CN]
-该模板定义式可见的作用域中的名字。
-[list:end]
+其他名字的使用可能是类型待决的或值待决的（[#temp.dep.expr]，[#temp.dep.constexpr]）。
 
-[para]
 [:en]
-A name used in a template declaration or definition and that is dependent on a
-[~template-parameter] is assumed not to name a type unless the applicable name
-lookup finds a type name or the name is qualified by the keyword [`typename].
+A [~using-declarator] is never dependent in a specialization and is therefore
+replaced during lookup for that specialization ([#basic.lookup]).
 [:zh_CN]
-在模板声明式或定义式中所使用的依存于某个[~模板形参]的名字，除非被适当的名字查找
-找到为某个类型名或者是被 [`typename] 关键字所限定，否则假定它并不指名一个类型。
+[~using-声明符]在特化式中从不是待决的，因而在对该特化式的查找中被替换
+（[#basic.lookup]）。
+[end:note]
 
 [begin:example]
 [codeblock]
-// [:en] no [`B] declared here \
-   [:zh_CN] 此处没有声明 [`B]
-
-class X;
-
-template<class T> class Y {
-  class Z;                      // [:en] forward declaration of member class \
-                                   [:zh_CN] 成员类的前置声明式
-
-  void f() {
-    X* a1;                      // [:en] declare pointer to [`X] \
-                                   [:zh_CN] 声明 [`X] 的指针
-    T* a2;                      // [:en] declare pointer to [`T] \
-                                   [:zh_CN] 声明 [`T] 的指针
-    Y* a3;                      // [:en] declare pointer to [`Y<T>] \
-                                   [:zh_CN] 声明 [`Y<T>] 的指针
-    Z* a4;                      // [:en] declare pointer to [`Z] \
-                                   [:zh_CN] 声明 [`Z] 的指针
-    typedef typename T::A TA;
-    TA* a5;                     // [:en] declare pointer to [`T][=']s [`A] \
-                                   [:zh_CN] 声明 [`T] 中的 [`A] 的指针
-    typename T::A* a6;          // [:en] declare pointer to [`T][=']s [`A] \
-                                   [:zh_CN] 声明 [`T] 中的 [`A] 的指针
-    T::A* a7;                   // [:en] error: no visible declaration of [`a7] \
-                                   [:zh_CN] 错误：没有可见的 [`a7] 的声明式
-                                // [:en] [`T::A] is not a type name; multiplication of [`T::A] by [`a7] \
-                                   [:zh_CN] [`T::A] 不是类型名；[`T::A] 乘以 [`a7]
-    B* a8;                      // [:en] error: no visible declarations of [`B] and [`a8] \
-                                   [:zh_CN] 错误：没有可见的 [`B] 和 [`a8] 的声明式
-                                // [:en] [`B] is not a type name; multiplication of [`B] by [`a8] \
-                                   [:zh_CN] [`B] 不是类型名；[`B] 乘以 [`a8]
-  }
+struct A { operator int(); };
+template<class B, class T>
+struct D : B {
+  T get() { return operator T(); }      // [:en] [~conversion-function-id] is dependent \
+                                        [:zh_CN] [~转换函数标识]待决
 };
+int f(D<A, int> d) { return d.get(); }  // [:en] OK: lookup finds [`A::operator int] \
+                                        [:zh_CN] OK：查找找到了 [`A::operator int]
 [codeblock:end]
 [end:example]
+
+[begin:example]
+[codeblock]
+void f(char);
+
+template<class T> void g(T t) {
+  f(1);             // [`f(char)]
+  f(T(1));          // [:en] dependent \
+                    [:zh_CN] 待决
+  f(t);             // [:en] dependent \
+                    [:zh_CN] 待决
+  dd++;             // [:en] not dependent; error: declaration for [`dd] not found \
+                    [:zh_CN] 非待决；错误：未找到 [`dd] 的声明式
+}
+
+enum E { e };
+void f(E);
+
+double dd;
+void h() {
+  g(e);             // [:en] will cause one call of [`f(char)] followed by two calls of [`f(E)] \
+                    [:zh_CN] 会造成一次对 [`f(char)] 的调用跟着两次对 [`f(E)] 的调用
+  g('a');           // [:en] will cause three calls of [`f(char)] \
+                    [:zh_CN] 会造成三次对 [`f(char)] 的调用
+}
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[codeblock]
+struct A {
+  struct B { /* ... */ };
+  int a;
+  int Y;
+};
+
+int a;
+
+template<class T> struct Y : T {
+  struct B { /* ... */ };
+  B b;                          // [:en] The [`B] defined in [`Y] \
+                                [:zh_CN] [`Y] 中定义的 [`B]
+  void f(int i) { a = i; }      // [`::a]
+  Y* p;                         // [`Y<T>]
+};
+
+Y<A> ya;
+[codeblock:end]
+
+[:en]
+The members [`A::B], [`A::a], and [`A::Y] of the template argument [`A]
+do not affect the binding of names in [`Y<A>].
+[:zh_CN]
+模板实参 [`A] 的成员 [`A::B]，[`A::a]，和 [`A::Y] 并不影响 [`Y<A>] 中的名字绑定。
+[end:example]
+
+[para]
+[:en]
+If the validity or meaning of the program would be changed by considering a
+default argument or default template argument introduced in a declaration that
+is reachable from the point of instantiation of a specialization ([#temp.point])
+but is not found by lookup for the specialization, the program is ill-formed,
+no diagnostic required.
+[:zh_CN]
+对于从特化式的实例化点（[#temp.point]）可达的声明式，且该声明式未被针对该特化式
+的查找找到，如果程序的有效性和含义会因为考虑在声明式中引入的默认实参或默认模板
+实参而发生改变，则程序非良构；无须诊断。
+
 
 [syntax]
 [rule typename-specifier [:zh_CN] typename-说明符 ]
@@ -89,6 +133,16 @@ template<class T> class Y {
 
 [para]
 [:en]
+[%component name]
+The component names of a [~typename-specifier] are its [~identifier] (if any)
+and those of its [~nested-name-specifier] and [~simple-template-id] (if any).
+[:zh_CN]
+[%成分名]
+[~typename-声明符]的成分名，为它的[~标识符]（如果有），和它的[~嵌套名说明符]和
+[~简单模板标识]的成分名（如果有）。
+
+[para]
+[:en]
 A [~typename-specifier] denotes the type or class template denoted by the
 [~simple-type-specifier] ([#dcl.type.simple]) formed by omitting the keyword
 [`typename].
@@ -96,12 +150,13 @@ A [~typename-specifier] denotes the type or class template denoted by the
 [~typename-说明符]代表由忽略其 [`typename] 关键字所构成的[~简单模板标识]
 （[#dcl.type.simple]）所代表的类型或类模板。
 
+[begin:note]
 [:en]
-The usual qualified name lookup ([#basic.lookup.qual]) is used to find the
-[~qualified-id] even in the presence of [`typename].
+The usual qualified name lookup ([#basic.lookup.qual]) applies even in the
+presence of [`typename].
 [:zh_CN]
-即使带有 [`typename]，也应当使用常规的限定名查找（[#basic.lookup.qual]）来对其
-[~限定标识]进行查找。
+即使带有 [`typename]，也适用常规的限定名查找（[#basic.lookup.qual]）。
+[end:note]
 
 [begin:example]
 [codeblock]
@@ -128,42 +183,50 @@ void foo() {
 
 [para]
 [:en]
-A qualified name used as the name in a [~class-or-decltype] ([#class.derived])
-or an [~elaborated-type-specifier] is implicitly assumed to name a type, without
-the use of the [`typename] keyword.
+[%type-only[!context][%context[!type-only]]]
+A qualified or unqualified name is said to be in a [+type-only context[%context
+[!type-only]]] if it is the terminal name of
 [:zh_CN]
-不使用 [`typename] 关键字时，用作[~类或-decltype]（[#class.derived]）或
-[~详述类型说明符]中的名字的限定名隐含地假定为指名某个类型。
-
-[:en]
-In a [~nested-name-specifier] that immediately contains a
-[~nested-name-specifier] that depends on a template parameter, the [~identifier]
-or [~simple-template-id] is implicitly assumed to name a type, without the use
-of the [`typename] keyword.
-[:zh_CN]
-不使用 [`typename] 关键字时，在一个[~嵌套名说明符]中，其中直接包含一个依存于某个
-模板形参的[~嵌套名说明符]，其[~标识符]或[~简单模板标识]隐含地假定为指名某个类型。
-
-[begin:note]
-[:en]
-The [`typename] keyword is not permitted by the syntax of these constructs.
-[:zh_CN]
-这些构造的语法不允许有 [`typename] 关键字。
-[end:note]
-
-[para]
-[:en]
-A [~qualified-id] is assumed to name a type if
-[:zh_CN]
-如下情况下[~限定标识]被假定为指名某个类型：
+[%仅限类型[!语境][%语境[!仅限类型]]]
+如果某个限定或未限定的名字是以下各项的终端名，则称它处于[+仅限类型语境[%语境
+[!仅限类型]]]中。
 
 [list]
 [item]
-[:en] it is a qualified name in a type-id-only context (see below), or
-[:zh_CN] 它是只接受[~类型标识]的语境（见下文）中的一个限定名，或者
+[:en] a [~typename-specifier], [~nested-name-specifier],
+[~elaborated-type-specifier], [~class-or-decltype], or
+[:zh_CN] [~typename-说明符]，[~嵌套名说明符]，[~详述类型说明符]，[~类或-decltype]，
+或者
+
 [item]
-[:en] it is a [~decl-specifier] of the [~decl-specifier-seq] of a
-[:zh_CN] 它是以下各种[~声明说明符序列]中的[~声明说明符]:
+[:en] a [~type-specifier] of a
+[:zh_CN] 以下各项的[~类型说明符]：
+[list]
+[item]
+[:en@~] [~new-type-id],
+[:zh_CN@~] [~new-类型标识]，
+[item]
+[:en@~] [~defining-type-id],
+[:zh_CN@~] [~定义类型标识]，
+[item]
+[:en@~] [~conversion-type-id],
+[:zh_CN@~] [~转换类型标识]，
+[item]
+[:en@~] [~trailing-return-type],
+[:zh_CN@~] [~尾部返回类型]，
+[item]
+[:en@~] default argument of a [~type-parameter], or
+[:zh_CN@~] [~类型形参]的默认实参，或
+[item]
+[:en@~] [~type-id] of a [`:key static_cast], [`:key const_cast],
+[`:key reinterpret_cast], or [`:key dynamic_cast], or
+[:zh_CN@~] [`:key static_cast]、[`:key const_cast]、[`:key reinterpret_cast] 或
+[`:key dynamic_cast] 的[~类型标识]，或者
+[list:end]
+
+[item]
+[:en] a [~decl-specifier] of the [~decl-specifier-seq] of a
+[:zh_CN] 以下各项的[~声明说明符序列]中的[~声明说明符]:
 [list]
 [item]
 [:en@~] [~simple-declaration] or a [~function-definition] in namespace scope,
@@ -172,7 +235,7 @@ A [~qualified-id] is assumed to name a type if
 [:en@~] [~member-declaration],
 [:zh_CN@~] [~成员声明式]，
 [item]
-[:en@~] [~parameter-declaration] in a [~member-declaration][#:note#fn:$1],
+[:en@~] [~parameter-declaration] in a [~member-declaration],[#:note#fn:$1]
 unless that [~parameter-declaration] appears in a default argument,
 [:zh_CN@~] [~成员声明式][#:note#fn:$1]中的[~形参声明式]，除非该[~形参声明式]出现
 于默认实参之中，
@@ -200,20 +263,6 @@ This includes friend function declarations.
 [:zh_CN]
 包括友元函数声明式。
 [note:end]
-
-[:en]
-A qualified name is said to be in a [+type-id-only context] if it appears in a
-[~type-id], [~new-type-id], or [~defining-type-id] and the smallest enclosing
-[~type-id], [~new-type-id], or [~defining-type-id] is a [~new-type-id],
-[~defining-type-id], [~trailing-return-type], default argument of a
-[~type-parameter] of a template, or [~type-id] of a [`static_cast],
-[`const_cast], [`reinterpret_cast], or [`dynamic_cast].
-[:zh_CN]
-如果一个限定名出现于某个[~类型标识]、[~new-类型标识]或[~定义类型标识]之内，且其
-最小的外围[~类型标识]、[~new-类型标识]或[~定义类型标识]是[~new-类型标识]，
-[~定义类型标识]，[~尾部返回类型]，模板的[~类型形参]的默认实参，或者
-[`static_cast]、[`const_cast]、[`reinterpret_cast] 或 [`dynamic_cast] 的
-[~类型标识]，则称其处于[+仅接受类型标识的语境]中。
 
 [begin:example]
 [codeblock]
@@ -247,12 +296,18 @@ template<typename T> void f() {
 
 [para]
 [:en]
-A [~qualified-id] that refers to a member of an unknown specialization, that is
-not prefixed by [`typename], and that is not otherwise assumed to name a type
-(see above) denotes a non-type.
+A [~qualified-id] whose terminal name is dependent and that is in a type-only
+context is considered to denote a type.
 [:zh_CN]
-涉指某个未知特例的成员，没有 [`typename] 前缀，以及并未被假定为指名某个类型
-（见上文）的[~限定标识]，代表非类型。
+终端名待决且处于仅限类型语境中的[~限定标识]被认为代表类型。
+
+[:en]
+A name that refers to a [~using-declarator] whose terminal name is dependent is
+interpreted as a [~typedef-name] if the [~using-declarator] uses the keyword
+[`:key typename].
+[:zh_CN]
+如果某个终端名待决的 [~using-声明符]使用了关键字 [`:key typename]，则指代该
+[~using-声明符]的名字被判读为一个 [~typedef-名]。
 
 [begin:example]
 [codeblock]
@@ -274,26 +329,6 @@ int main() {
   f<Foo>(1);        // [:en] error: [`Foo::x] is a type \
                        [:zh_CN] 错误：[`Foo:x] 是类型
 }
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-Within the definition of a class template or within the definition of a member
-of a class template following the [~declarator-id], the keyword [`typename]
-is not required when referring to a member of the current instantiation
-([#temp.dep.expr]).
-[:zh_CN]
-在类模板的定义式中，或者类模板的成员的定义式中，其[~声明符标识]之后，当指代当前
-实例化（[#temp.dep.expr]）的成员时不需要 [`typename] 关键字。
-
-[begin:example]
-[codeblock]
-template<class T> struct A {
-  typedef int B;
-  B b;              // [:en] OK, no [`typename] required \
-                       [:zh_CN] OK，不需要 [`typename]
-};
 [codeblock:end]
 [end:example]
 
@@ -332,10 +367,12 @@ instantiated, or
 
 [item]
 [:en]
-no substitution of template arguments into a [~type-constraint] or
-[~requires-clause] would result in a valid expression, or
+any [~constraint-expression] in the program, introduced or otherwise, has (in
+its normal form) an atomic constraint [$A] where no satisfaction check for [$A]
+could be well-formed and no satisfaction check of [$A] is performed, or
 [:zh_CN]
-向[~类型约束]或 [~requires-子句]中替换模板实参时无法得到有效的表达式，或者
+程序中（引入或其它方式包含）的任何[~约束表达式]，（其正规形式中）包含原子约束
+[$A]，但对 [$A] 没有良构的满足性检查并且为对 [$A] 进行满足性检查，或者
 
 [item]
 [:en]
@@ -459,6 +496,9 @@ template<class T> class X {
                        [:zh_CN] 即使 [`X::f] 未被实例化也需要进行诊断
     p = j;          // [:en] may be diagnosed even if [`X::f] is not instantiated \
                        [:zh_CN] 即使 [`X::f] 未被实例化也需要进行诊断
+    X<T>::g(t);     // OK
+    X<T>::h();      // [:en] may be diagnosed even if [`X::f] is not instantiated \
+                       [:zh_CN] 即使 [`X::f] 未被实例化也需要进行诊断
   }
   void g(T t) {
     +;              // [:en] may be diagnosed even if [`X::g] is not instantiated \
@@ -474,105 +514,6 @@ template<class... T> union X : T... { };            // [:en] error: union with b
                                                        [:zh_CN] 错误：带有基类的联合体
 template<class... T> struct A : T...,  T... { };    // [:en] error: duplicate base class \
                                                        [:zh_CN] 错误：重复的基类
-[codeblock:end]
-[end:example]
-
-[para]
-[:en]
-When looking for the declaration of a name used in a template definition, the
-usual lookup rules ([#basic.lookup.unqual], [#basic.lookup.argdep]) are used for
-non-dependent names.
-[:zh_CN]
-当查找模板定义式中所使用的名字的声明式时，使用常规名字查找规则
-（[#basic.lookup.unqual]，[#basic.lookup.argdep]）来查找非待决名。
-
-[:en]
-The lookup of names dependent on the template parameters is postponed until the
-actual template argument is known ([#temp.dep]).
-[:zh_CN]
-对依存于模板形参的名字的查找被延迟到得知其实际模板实参之时（[#temp.dep]）。
-
-[begin:example]
-[codeblock]
-#include <iostream>
-using namespace std;
-
-template<class T> class Set {
-  T* p;
-  int cnt;
-public:
-  Set();
-  Set<T>(const Set<T>&);
-  void printall() {
-    for (int i = 0; i<cnt; i++)
-      cout << p[i] << '\n';
-  }
-};
-[codeblock:end]
-
-[:en]
-In the example, [`i] is the local variable [`i] declared in [`printall], [`cnt]
-is the member [`cnt] declared in [`Set], and [`cout] is the standard output
-stream declared in [?libheader iostream].
-[:zh_CN]
-本例中，[`i] 是在 [`printall] 中声明的局部变量 [`i]，[`cnt] 是在 [`Set] 中声明的
-[`cnt] 成员，而 [`cout] 是在 [?libheader iostream] 中声明的标准输出流。
-
-[:en]
-However, not every declaration can be found this way; the resolution of some
-names is postponed until the actual [~template-argument]s are known.
-[:zh_CN]
-然而，并不是每个声明式都可以被这样找到；某些名字的决议将推迟到得知其实际
-[~模板实参]时。
-
-[:en]
-For example, even though the name [`operator<<] is known within the definition
-of [`printall()] and a declaration of it can be found in [?libheader iostream],
-the actual declaration of [`operator<<] needed to print [`p`[i`]] cannot be
-known until it is known what type [`T] is ([#temp.dep]).
-[:zh_CN]
-例如，即使名字 [`operator<<] 在 [`printall()] 的定义式中已知，并且它的一个声明式
-可以在 [?libheader iostream] 中找到，这个需要打印 [`p`[i`]] 的 [`operator<<] 的
-实际的声明式直到得知 [`T] 是什么类型之前仍是未知的（[#temp.dep]）。
-[end:example]
-
-[para]
-[:en]
-If a name does not depend on a [~template-parameter] (as defined in [#temp.dep]),
-a declaration (or set of declarations) for that name shall be in scope at the
-point where the name appears in the template definition; the name is bound to
-the declaration (or declarations) found at that point and this binding is not
-affected by declarations that are visible at the point of instantiation.
-[:zh_CN]
-如果一个名字并不依存于某个[~模板形参]（如 [#temp.dep] 中的定义），这个名字的一个
-声明式（或声明式集合）应当在模板定义式中出现这个名字之处是处于作用域中的；这个
-名字被绑定到该处所找到的声明式（或声明式集合），此绑定不受实例化点可见的声明式的
-影响。
-
-[begin:example]
-[codeblock]
-void f(char);
-
-template<class T> void g(T t) {
-  f(1);             // [`f(char)]
-  f(T(1));          // [:en] dependent \
-                       [:zh_CN] 待决的
-  f(t);             // [:en] dependent \
-                       [:zh_CN] 待决的
-  dd++;             // [:en] not dependent; error: declaration for [`dd] not found \
-                       [:zh_CN] 非待决的；错误：未找到 [`dd] 的声明式
-}
-
-enum E { e };
-void f(E);
-
-double dd;
-void h() {
-  g(e);             // [:en] will cause one call of [`f(char)] followed by two calls of [`f(E)] \
-                       [:zh_CN] 将会产生一个对 [`f(char)] 的调用跟着两个对 [`f(E)] 的调用
-  g('a');           // [:en] will cause three calls of [`f(char)] \
-                       [:zh_CN] 将会产生三个对 [`f(char)] 的调用
-}
 [codeblock:end]
 [end:example]
 

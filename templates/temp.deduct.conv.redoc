@@ -6,14 +6,20 @@
 [para]
 [:en]
 Template argument deduction is done by comparing the return type of the
-conversion function template (call it [`P]) with the type that is required as
-the result of the conversion (call it [`A]; see [#dcl.init], [#over.match.conv],
-and [#over.match.ref] for the determination of that type) as described in
-[#temp.deduct.type].
+conversion function template (call it [`P]) with the type specified by the
+[~conversion-type-id] of the [~conversion-function-id] being looked up (call it
+[`A]) as described in [#temp.deduct.type].
 [:zh_CN]
-模板实参推断是对转换函数模板的返回类型（称其为 [`P]），与转换结果所需的类型（称
-其为 [`A]；有关这个类型的确定过程，参见 [#dcl.init]，[#over.match.conv] 和
-[#over.match.ref]），按照 [#temp.deduct.type] 所述进行比较而作出的。
+模板实参推断是对转换函数模板的返回类型（称其为 [`P]），和被查找的[~转换函数标识]
+的[~转换类型标识]所指定的类型（称其为 [`A]）进行比较做到的，如
+[#temp.deduct.type] 所述。
+
+[:en]
+If the [~conversion-function-id] is constructed during overload resolution
+([#over.match.funcs]), the following transformations apply.
+[:zh_CN]
+如果该[~转换函数标识]是在重载决议过程中构造而得的（[#over.match.funcs]），则适用
+以下变换。
 
 [para]
 [:en]
@@ -78,51 +84,41 @@ will make the deduced [`A] identical to [`A].
 一般地，推断过程试图找到能够使被推断出来的 [`A] 与 [`A] 一致的模板实参值。
 
 [:en]
-However, there are four cases that allow a difference:
+However, certain attributes of [`A] may be ignored:
 [:zh_CN]
-然而，在四种情况下允许有所不同：
+然而，[`A] 的某些性质可以忽略：
 
 [list]
 [item]
 [:en]
-If the original [`A] is a reference type, [`A] can be more cv-qualified than the
-deduced [`A] (i.e., the type referred to by the reference).
+If the original [`A] is a reference type, any cv-qualifiers of [`A] (i.e., the
+type referred to by the reference).
 [:zh_CN]
-若原来的 [`A] 为引用类型，则 [`A] 可以比被推断出来的 [`A]（就是被该引用所指代的
-类型）更加被 cv 限定的。
+当原来的 [`A] 为引用类型时，[`A]（就是被该引用所指代的类型）的 cv 限定符。
 
 [item]
 [:en]
-If the original [`A] is a function pointer type, [`A] can be [=lq]pointer to
+If the original [`A] is a function pointer or pointer-to-member-function type,
+its [`noexcept].
 function[=rq] even if the deduced [`A] is [=lq]pointer to [`noexcept] function[=rq].
 [:zh_CN]
-若原来的 [`A] 为函数指针类型，则 [`A] 可以为“函数的指针”，即便所推断的 [`A] 是
-“[`noexcept] 函数的指针”。
+当原来的 [`A] 为函数指针或成员函数指针类型时，它的 [`noexcept]。
 
 [item]
 [:en]
-If the original [`A] is a pointer-to-member-function type, [`A] can be
-[=lq]pointer to member of type function[=rq] even if the deduced [`A] is
-[=lq]pointer to member of type [`noexcept] function[=rq].
+Any cv-qualifiers in [`A] that can be restored by a qualification conversion.
 [:zh_CN]
-若原来的 [`A] 为成员函数指针类型，则 [`A] 可以为“函数类型的成员的指针”，即便所
-推断的 [`A] 是“[`noexcept] 函数类型的成员的指针”。
-
-[item]
-[:en]
-The deduced [`A] can be another pointer or pointer-to member-type that can be
-converted to [`A] via a qualification conversion.
-[:zh_CN]
-被推断出来的 [`A] 可以为可通过限定转换转换为 [`A] 的其他指针或成员指针类型。
+[`A] 中可以经由限定转换恢复的任何 cv 限定符。
 [list:end]
 
 [para]
 [:en]
-These alternatives are considered only if type deduction would otherwise fail.
+These attributes are ignored only if type deduction would otherwise fail.
 [:zh_CN]
-仅当若非如此类型推断将失败时才会考虑这些备选方式。
+仅当若非如此类型推断将失败时才会忽略这些性质。
 
 [:en]
-If they yield more than one possible deduced [`A], the type deduction fails.
+If ignoring them allows more than one possible deduced [`A], the type deduction
+fails.
 [:zh_CN]
-若它们产生多于一个可能的被推断出来的 [`A]，则类型推断失败。
+若忽略它们产生了多于一个可能的被推断出来的 [`A]，则类型推断失败。
