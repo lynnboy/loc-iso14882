@@ -16,19 +16,23 @@ namespace std::ranges {
       typename tuple_size<T>::type;
       requires N < tuple_size_v<T>;
       typename tuple_element_t<N, T>;
-      { get<N>(t) } -> convertible_to<const tuple_element_t<N, T>&>;
+      { get<N>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<N, T>&>;
     };
 
+  template<class T, size_t N>
+  concept [[redoc("*:c@def>")]]returnable-element =                  // [=expos]
+    is_reference_v<T> || move_constructible<tuple_element_t<N, T>>;
 
-  template<input_range V, size_t N>
+  template<[[redoc("`:c>")]]input_range V, size_t N>
     requires [[redoc("`:c>")]]view<V> && [[redoc("*:c>")]]has-tuple-element<range_value_t<V>, N> &&
-             [[redoc("*:c>")]]has-tuple-element<remove_reference_t<range_reference_t<V>>, N>
+             [[redoc("*:c>")]]has-tuple-element<remove_reference_t<range_reference_t<V>>, N> &&
+             [[redoc("*:c>")]]returnable-element<range_reference_t<V>, N>
   class elements_view : public view_interface<elements_view<V, N>> {
   public:
     elements_view() = default;
     constexpr explicit elements_view(V base);
 
-    constexpr V base() const& requires copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() const& requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
     constexpr V base() && { return std::move([[redoc("*>")]]base_); }
 
     constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>)
@@ -37,22 +41,22 @@ namespace std::ranges {
     constexpr auto begin() const requires [[redoc("`:c>")]]range<const V>
     { return [[redoc("*>")]]iterator<true>(ranges::begin([[redoc("*>")]]base_)); }
 
-    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V> && !common_range<V>)
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V> && ![[redoc("`:c>")]]common_range<V>)
     { return [[redoc("*>")]]sentinel<false>{ranges::end([[redoc("*>")]]base_)}; }
 
-    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V> && common_range<V>)
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V> && [[redoc("`:c>")]]common_range<V>)
     { return [[redoc("*>")]]iterator<false>{ranges::end([[redoc("*>")]]base_)}; }
 
-    constexpr auto end() const requires range<const V>
+    constexpr auto end() const requires [[redoc("`:c>")]]range<const V>
     { return [[redoc("*>")]]sentinel<true>{ranges::end([[redoc("*>")]]base_)}; }
 
-    constexpr auto end() const requires common_range<const V>
+    constexpr auto end() const requires [[redoc("`:c>")]]common_range<const V>
     { return [[redoc("*>")]]iterator<true>{ranges::end([[redoc("*>")]]base_)}; }
 
-    constexpr auto size() requires sized_range<V>
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>
     { return ranges::size([[redoc("*>")]]base_); }
 
-    constexpr auto size() const requires sized_range<const V>
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>
     { return ranges::size([[redoc("*>")]]base_); }
 
   private:

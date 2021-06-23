@@ -5,7 +5,7 @@
 
 [%@lib@member begin[!subrange]]
 [codeblock:declaration]
-constexpr I begin() const requires copyable<I>;
+constexpr I begin() const requires [[redoc("`:c>")]]copyable<I>;
 [codeblock:end]
 
 [div:description]
@@ -16,7 +16,7 @@ constexpr I begin() const requires copyable<I>;
 
 [%@lib@member begin[!subrange]]
 [codeblock:declaration]
-[[nodiscard]] constexpr I begin() requires (!copyable<I>);
+[[nodiscard]] constexpr I begin() requires (![[redoc("`:c>")]]copyable<I>);
 [codeblock:end]
 
 [div:description]
@@ -68,7 +68,7 @@ constexpr [[redoc("^>")]]make-unsigned-like-t<iter_difference_t<I>> size() const
 [%@lib@member next[!subrange]]
 [codeblock:declaration]
 [[nodiscard]] constexpr subrange next(iter_difference_t<I> n = 1) const &
-  requires forward_iterator<I>;
+  requires [[redoc("`:c>")]]forward_iterator<I>;
 [codeblock:end]
 
 [div:description]
@@ -123,27 +123,21 @@ constexpr subrange& advance(iter_difference_t<I> n);
 [para:effects]
 [:en] Equivalent to:
 [:zh_CN] 等价于：
-[list]
-[item]
-[:en] If [*StoreSize] is [`true],
-[:zh_CN] 当 [*StoreSize] 为 [`true] 时，为
 [codeblock]
-auto d = n - ranges::advance([[redoc("*>")]]begin_, n, [[redoc("*>")]]end_);
-if (d >= 0)
-  [[redoc("*>")]]size_ -= [[redoc("^>")]]to-unsigned-like(d);
-else
-  [[redoc("*>")]]size_ += [[redoc("^>")]]to-unsigned-like(-d);
-return *this;
-[codeblock:end]
+if constexpr (bidirectional_iterator<I>) {
+  if (n < 0) {
+    ranges::advance([[redoc("*>")]]begin_, n);
+    if constexpr ([[redoc("*>")]]StoreSize)
+      [[redoc("*>")]]size_ += [[redoc("^>")]]to-unsigned-like(-n);
+    return *this;
+  }
+}
 
-[item]
-[:en] Otherwise,
-[:zh_CN] 否则，
-[codeblock]
-ranges::advance([[redoc("*>")]]begin_, n, [[redoc("*>")]]end_);
+auto d = n - ranges::advance([[redoc("*>")]]begin_, n, [[redoc("*>")]]end_);
+if constexpr ([[redoc("*>")]]StoreSize)
+  [[redoc("*>")]]size_ -= [[redoc("^>")]]to-unsigned-like(d);
 return *this;
 [codeblock:end]
-[list:end]
 [div:end]
 
 [%@lib@member get[!subrange]]

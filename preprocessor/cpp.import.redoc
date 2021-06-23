@@ -39,13 +39,15 @@ preprocessing tokens).
 [`import] [~控制行]中预处理记号 [`import] 之后的各预处理记号仅作为普通文本处理
 （以及，各个当前已定义为宏名的标识符均被替换为其预处理记号的替换列表）。
 
+[begin:note]
 [:en]
 An [`import] directive matching the first two forms of a [~pp-import] instructs
 the preprocessor to import macros from the header unit ([#module.import])
-denoted by the [~header-name].
+denoted by the [~header-name], as described below.
 [:zh_CN]
 符合[~预处理导入]前两种形式的 [`import] 指令，指示预处理器从其[~头文件名]所代表
-的头文件单元中导入宏（[#module.import]）。
+的头文件单元中导入宏（[#module.import]），如下文所述。
+[end:note]
 
 [:en]
 The [+point of macro import[%macro[!point of import]]][%point of[!macro import
@@ -57,9 +59,9 @@ immediately after the [~new-line] terminating the [~pp-import].
 
 [:en]
 The last form of [~pp-import] is only considered if the first two forms did not
-match.
+match, and does not have a point of macro import.
 [:zh_CN]
-仅当[~预处理导入]的前两种形式均不匹配时才考虑最后一种形式。
+仅当[~预处理导入]的前两种形式均不匹配时才考虑最后一种形式，且并没有宏导入点。
 
 [para]
 [:en]
@@ -131,12 +133,6 @@ encouraged to not treat them as being introduced by a [`#define] directive.
 [end:note]
 
 [:en]
-Importing macros from a header unit makes macro definitions from a translation
-unit visible in other translation units.
-[:zh_CN]
-从头文件单元导入宏，使得某个翻译单元中的宏定义对其他翻译单元可见。
-
-[:en]
 Each macro definition has at most one point of definition in each translation
 unit and at most one point of undefinition, as follows:
 [:zh_CN]
@@ -147,18 +143,34 @@ unit and at most one point of undefinition, as follows:
 [:en]
 The [+point of definition[%macro[!point of definition]]][%point of[!macro
 definition[%macro[!point of definition]]]] of a macro definition within a
-translation unit is the point at which its [`#define] directive occurs (in the
-translation unit containing the [`#define] directive), or, if the macro name is
-not lexically identical to a keyword ([#lex.key]) or to the [~identifier]s
-[`module] or [`import], the first point of macro import of a translation unit
-containing a point of definition for the macro definition, if any (in any other
-translation unit).
+translation unit [$T] is
 [:zh_CN]
-某个宏在一个翻译单元中的[+定义点[%宏[!定义点]]][%点[!宏定义～[%宏[!定义点]]]]，
-是出现其 [`#define] 指令的位置（处于包含该 [`#define] 指令的翻译单元之中），或者
+某个宏定义在翻译单元 [$T] 中的[+定义点[%宏[!定义点]]][%点[!宏定义～[%宏[!定义点]]]]
+为：
+[list]
+[item]
+[:en@~]
+if the [`#define] directive of the macro definition occurs within [$T], the
+point at which that directive occurs, or otherwise,
+[:zh_CN@~]
+若该宏定义的 [`#define] 指令出现于 [$T] 之中，则为出现该指令的位置点，又或者，
+[item]
+[:en@~]
+if the macro name is not lexically identical to a keyword ([#lex.key]) or to the
+[~identifier]s [`module] or [`import], the first point of macro import in [$T]
+of a header unit containing a point of definition for the macro definition, if
+any.
+[:zh_CN@~]
 如果这个宏名并非词法等同于某个关键字（[#lex.key]）或者[~标识符] [`module] 或
-[`import]，则为对包含该宏定义的一个定义点的翻译单元的首个宏导入点（如果有）
-（处于其他翻译单元之中）。
+[`import]，则为 [$T] 中对某个包含该宏定义的定义点的头文件单元的第一个宏导入点
+（如果有）。
+[list:end]
+
+[:en]
+In the latter case, the macro is said to be [+imported[%macro[!import]]] from
+the header unit.
+[:zh_CN]
+后一种情况下，称该宏被从该头文件单元[+导入[%宏[!导入]]]。
 
 [item]
 [:en]
@@ -166,12 +178,12 @@ The [+point of undefinition[%macro[!point of undefinition]]][%point of[!macro
 undefinition[%macro[!point of undefinition]]]] of a macro definition within a
 translation unit is the first point at which a [`#undef] directive naming the
 macro occurs after its point of definition, or the first point of macro import
-of a translation unit containing a point of undefinition for the macro
-definition, whichever (if any) occurs first.
+of a header unit containing a point of undefinition for the macro definition,
+whichever (if any) occurs first.
 [:zh_CN]
 某个宏在一个翻译单元中的[+去定义点[%宏[!去定义点]]][%点[!去定义～[%宏[!去定义点]]]]，
 是在其定义点之后首次出现指名这个宏的 [`#undef] 指令的位置，或者为对包含该宏定义
-的一个去定义点的翻译单元的首个宏导入点，先出现者（如果有）为准。
+的一个去定义点的头文件单元的首个宏导入点，先出现者（如果有）为准。
 [list:end]
 
 [para]
@@ -235,10 +247,17 @@ import "a.h";   // [:en] point of definition of #1, #2, and #3, point of undefin
 [:en] Importable header [`"d.h"]:
 [:zh_CN] 可导入头文件 [`"d.h"]：
 [codeblock]
-import "a.h";   // [:en] point of definition of #1, #2, and #3, point of undefinition of #1 in [`"d.h"] \
-                   [:zh_CN] 在 [`"d.h"] 中，#1、#2 和 #3 的定义点，#1 的去定义点
 import "c.h";   // [:en] point of definition of #4 and #5 in [`"d.h"] \
                    [:zh_CN] 在 [`"d.h"] 中，#4 和 #5 的定义点
+[codeblock:end]
+
+[:en] Importable header [`"e.h"]:
+[:zh_CN] 可导入头文件 [`"e.h"]：
+[codeblock]
+import "a.h";   // [:en] point of definition of #1, #2, and #3, point of undefinition of #1 in [`"e.h"] \
+                   [:zh_CN] 在 [`"e.h"] 中，#1、#2 和 #3 的定义点，#1 的去定义点
+import "d.h";   // [:en] point of definition of #4 and #5 in [`"e.h"] \
+                   [:zh_CN] 在 [`"e.h"] 中，#4 和 #5 的定义点
 int a = Y;      // [:en] OK, active macro definitions #2 and #4 are valid redefinitions \
                    [:zh_CN] OK，#2 和 #4 的活跃宏定义是有效的重复定义
 int c = Z;      // [:en] error: active macro definitions #3 and #5 are not valid redefinitions of [`Z] \

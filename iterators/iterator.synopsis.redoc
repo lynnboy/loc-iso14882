@@ -12,9 +12,9 @@
 
 namespace std {
   template<class T> using [[redoc("*>")]]with-reference = T&;  // [=expos]
-  template<class T> concept [[redoc("*:c>")]]can-reference       // [=expos]
+  template<class T> concept [[redoc("*:c@def>")]]can-reference       // [=expos]
     = requires { typename [[redoc("^>")]]with-reference<T>; };
-  template<class T> concept [[redoc("*:c>")]]dereferenceable     // [=expos]
+  template<class T> concept [[redoc("*:c@def>")]]dereferenceable     // [=expos]
     = requires(T& t) {
       { *t } -> [[redoc("*:c>")]]can-reference;  // [:en] not required to be equality-preserving \
                                                     [:zh_CN] 不必是维持相等性的
@@ -39,7 +39,7 @@ namespace std {
   template<class I> struct iterator_traits;
   template<class T> requires is_object_v<T> struct iterator_traits<T*>;
 
-  template<[[redoc("*>")]]dereferenceable T>
+  template<[[redoc("*:c>")]]dereferenceable T>
     using iter_reference_t = decltype(*declval<T&>());
 
   namespace ranges {
@@ -54,7 +54,7 @@ namespace std {
     }
   }
 
-  template<[[redoc("*>")]]dereferenceable T>
+  template<[[redoc("*:c>")]]dereferenceable T>
     requires requires(T& t) {
       { ranges::iter_move(t) } -> [[redoc("*:c>")]]can-reference;
     }
@@ -384,7 +384,7 @@ namespace std {
   // [:en] [#iterators.common], common iterators \
      [:zh_CN] [#iterators.common]，公共迭代器
   template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S>
-    requires (![[redoc("`:c>")]]same_as<I, S>)
+    requires (![[redoc("`:c>")]]same_as<I, S> && [[redoc("`:c>")]]copyable<I>)
       class common_iterator;
 
   template<class I, class S>
@@ -402,10 +402,8 @@ namespace std {
      [:zh_CN] [#iterators.counted]，计数迭代器
   template<[[redoc("`:c>")]]input_or_output_iterator I> class counted_iterator;
 
-  template<class I>
-    struct incrementable_traits<counted_iterator<I>>;
-
   template<[[redoc("`:c>")]]input_iterator I>
+    requires [[redoc("[=seebelow]")]]
     struct iterator_traits<counted_iterator<I>>;
 
   // [:en] [#unreachable.sentinel], unreachable sentinels \
@@ -420,7 +418,7 @@ namespace std {
   class istream_iterator;
   template<class T, class charT, class traits, class Distance>
     bool operator==(const istream_iterator<T,charT,traits,Distance>& x,
-            const istream_iterator<T,charT,traits,Distance>& y);
+                    const istream_iterator<T,charT,traits,Distance>& y);
 
   template<class T, class charT = char, class traits = char_traits<charT>>
       class ostream_iterator;
@@ -429,7 +427,7 @@ namespace std {
     class istreambuf_iterator;
   template<class charT, class traits>
     bool operator==(const istreambuf_iterator<charT,traits>& a,
-            const istreambuf_iterator<charT,traits>& b);
+                    const istreambuf_iterator<charT,traits>& b);
 
   template<class charT, class traits = char_traits<charT>>
     class ostreambuf_iterator;

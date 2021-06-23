@@ -7,7 +7,7 @@
 [codeblock:synopsis]
 namespace std::ranges {
   template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
-    requires view<V> && view<Pattern> &&
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]view<Pattern> &&
              [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
              ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   template<bool Const>
@@ -22,7 +22,8 @@ namespace std::ranges {
   public:
     using iterator_concept  =
       conditional_t<[[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>, forward_iterator_tag, input_iterator_tag>;
-    using iterator_category = input_iterator_tag;
+    using iterator_category = input_iterator_tag;       // [:en] present only if [*Base] models [`:c forward_range] \
+                                                           [:zh_CN] 仅当 [*Base] 构成 [`:c forward_range] 时出现
     // [:en] [#range.split.outer.value], class [`split_view::[*outer-iterator]::value_type] \
        [:zh_CN] [#range.split.outer.value]，类 [`split_view::[*outer-iterator]::value_type]
     struct value_type;
@@ -57,9 +58,11 @@ namespace std::ranges {
 [codeblock:end]
 
 [para]
-[:en] Many of the following specifications refer to the notional member
+[:en] Many of the specifications in [#range.split] refer to the notional member
 [^current] of [*outer-iterator].
-[:zh_CN] 下文的许多规范说明都涉指了 [*outer-iterator] 的概念上的成员 [^current]。
+[:zh_CN] [#range.split] 中的许多规范说明都涉指了 [*outer-iterator] 的概念上的
+成员 [^current]。
+
 [:en] [^current] is equivalent to [*current_] if [`V] models [`:c forward_range],
 and [`[*parent_]->[*current_]] otherwise.
 [:zh_CN] [^current] 在 [`V] 构成 [`:c forward_range] 时等价于 [*current_]， 否则
@@ -130,11 +133,17 @@ const auto end = ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_);
 if ([[redoc("^>")]]current == end) return *this;
 const auto [pbegin, pend] = subrange{[[redoc("*>")]]parent_->[[redoc("*>")]]pattern_};
 if (pbegin == pend) ++[[redoc("^>")]]current;
+else if constexpr ([[redoc("*:c>")]]tiny-range<Pattern>) {
+  [[redoc("^>")]]current = ranges::find(std::move([[redoc("^>")]]current), end, *pbegin);
+  if ([[redoc("^>")]]current != end) {
+    ++[[redoc("^>")]]current;
+  }
+}
 else {
   do {
-    auto [b, p] = ranges::mismatch(std::move([[redoc("^>")]]current), end, pbegin, pend);
-    [[redoc("^>")]]current = std::move(b);
+    auto [b, p] = ranges::mismatch([[redoc("^>")]]current, end, pbegin, pend);
     if (p == pend) {
+      [[redoc("^>")]]current = b;
       break;            // [:en] The pattern matched; skip it \
                         [:zh_CN] 模式已匹配；将之跳过
     }

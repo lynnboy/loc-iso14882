@@ -116,7 +116,7 @@ namespace std::ranges {
     requires (K == subrange_kind::sized || ![[redoc("`:c>")]]sized_sentinel_for<S, I>)
   class subrange;
 
-  template<input_or_output_iterator I, sentinel_for<I> S, subrange_kind K>
+  template<class I, class S, subrange_kind K>
     inline constexpr bool enable_borrowed_range<subrange<I, S, K>> = true;
 
   // [:en] [#range.dangling], dangling iterator handling \
@@ -158,17 +158,17 @@ namespace std::ranges {
   // [:en] [#range.iota], iota view \
      [:zh_CN] [#range.iota]，iota 视图
   template<[[redoc("`:c>")]]weakly_incrementable W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
-    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && semiregular<W>
+    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && [[redoc("`:c>")]]semiregular<W>
   class iota_view;
 
-  template<weakly_incrementable W, semiregular Bound>
+  template<class W, class Bound>
     inline constexpr bool enable_borrowed_range<iota_view<W, Bound>> = true;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] iota = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.istream], istream view \
      [:zh_CN] [#range.istream]，istream 视图
-  template<movable Val, class CharT, class Traits = char_traits<CharT>>
+  template<[[redoc("`:c>")]]movable Val, class CharT, class Traits = char_traits<CharT>>
     requires [[redoc("[=seebelow]")]]
   class basic_istream_view;
   template<class Val, class CharT, class Traits>
@@ -193,7 +193,7 @@ namespace std::ranges {
   // [:en] [#range.filter], filter view \
      [:zh_CN] [#range.filter]，过滤视图
   template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]indirect_unary_predicate<iterator_t<V>> Pred>
-    requires view<V> && is_object_v<Pred>
+    requires [[redoc("`:c>")]]view<V> && is_object_v<Pred>
   class filter_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] filter = [[redoc("[=unspec]")]]; }
@@ -201,8 +201,8 @@ namespace std::ranges {
   // [:en] [#range.transform], transform view \
      [:zh_CN] [#range.transform]，变换视图
   template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]copy_constructible F>
-    requires view<V> && is_object_v<F> &&
-             regular_invocable<F&, range_reference_t<V>> &&
+    requires [[redoc("`:c>")]]view<V> && is_object_v<F> &&
+             [[redoc("`:c>")]]regular_invocable<F&, range_reference_t<V>> &&
              [[redoc("*:c>")]]can-reference<invoke_result_t<F&, range_reference_t<V>>>
   class transform_view;
 
@@ -211,6 +211,9 @@ namespace std::ranges {
   // [:en] [#range.take], take view \
      [:zh_CN] [#range.take]，采取视图
   template<[[redoc("`:c>")]]view> class take_view;
+
+  template<class T>
+    inline constexpr bool enable_borrowed_range<take_view<T>> = enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] take = [[redoc("[=unspec]")]]; }
 
@@ -228,6 +231,9 @@ namespace std::ranges {
   template<[[redoc("`:c>")]]view V>
     class drop_view;
 
+  template<class T>
+    inline constexpr bool enable_borrowed_range<drop_view<T>> = enable_borrowed_range<T>;
+
   namespace views { inline constexpr [[redoc("[=unspec]")]] drop = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.drop.while], drop while view \
@@ -237,14 +243,18 @@ namespace std::ranges {
              [[redoc("`:c>")]]indirect_unary_predicate<const Pred, iterator_t<V>>
     class drop_while_view;
 
+  template<class T, class Pred>
+    inline constexpr bool enable_borrowed_range<drop_while_view<T, Pred>> =
+      enable_borrowed_range<T>;
+
   namespace views { inline constexpr [[redoc("[=unspec]")]] drop_while = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.join], join view \
      [:zh_CN] [#range.join]，联接视图
   template<[[redoc("`:c>")]]input_range V>
-    requires view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>> &&
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>> &&
              (is_reference_v<range_reference_t<V>> ||
-              view<range_value_t<V>>)
+              [[redoc("`:c>")]]view<range_value_t<V>>)
   class join_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] join = [[redoc("[=unspec]")]]; }
@@ -255,7 +265,7 @@ namespace std::ranges {
     concept [[redoc("*:c>")]]tiny-range = [[redoc("[=seebelow]")]];   // [=expos]
 
   template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
-    requires view<V> && view<Pattern> &&
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]view<Pattern> &&
              [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
              ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
   class split_view;
@@ -269,8 +279,11 @@ namespace std::ranges {
   // [:en] [#range.common], common view \
      [:zh_CN] [#range.common]，公共视图
   template<[[redoc("`:c>")]]view V>
-    requires (!common_range<V> && copyable<iterator_t<V>>)
+    requires (![[redoc("`:c>")]]common_range<V> && [[redoc("`:c>")]]copyable<iterator_t<V>>)
   class common_view;
+
+  template<class T>
+    inline constexpr bool enable_borrowed_range<common_view<T>> = enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] common = [[redoc("[=unspec]")]]; }
 
@@ -280,6 +293,9 @@ namespace std::ranges {
     requires [[redoc("`:c>")]]bidirectional_range<V>
   class reverse_view;
 
+  template<class T>
+    inline constexpr bool enable_borrowed_range<reverse_view<T>> = enable_borrowed_range<T>;
+
   namespace views { inline constexpr [[redoc("[=unspec]")]] reverse = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.elements], elements view \
@@ -287,6 +303,9 @@ namespace std::ranges {
   template<[[redoc("`:c>")]]input_range V, size_t N>
     requires [[redoc("[=seebelow]")]]
   class elements_view;
+
+  template<class T, size_t N>
+    inline constexpr bool enable_borrowed_range<elements_view<T, N>> = enable_borrowed_range<T>;
 
   template<class R>
     using keys_view = elements_view<views::all_t<R>, 0>;

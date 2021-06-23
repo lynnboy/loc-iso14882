@@ -46,7 +46,19 @@ namespace std {
   class counted_iterator {
   public:
     using iterator_type = I;
-
+    using value_type = iter_value_t<I>;                         // [:en] present only \
+                                                                [:zh_CN] 仅当 [`I] 构成
+                        // [:en@~] if [`I] models [`:c indirectly_readable] \
+                        [:zh_CN@~] [`:c indirectly_readable] 时才出现
+    using difference_type = iter_difference_t<I>;
+    using iterator_concept = typename I::iterator_concept;      // [:en] present only \
+                                                                [:zh_CN] 仅当[~限定标识]
+                        // [:en@~] if the [~qualified-id] [`I::iterator_concept] is valid and denotes a type \
+                        [:zh_CN@~] [`I::iterator_concept] 有效且代表某个类型时才出现
+    using iterator_category = typename I::iterator_category;    // [:en] present only \
+                                                                [:zh_CN] 仅当[~限定标识]
+                        // [:en@~] if the [~qualified-id] [`I::iterator_category] is valid and denotes a type \
+                        [:zh_CN@~] [`I::iterator_category] 有效且代表某个类型时才出现
     constexpr counted_iterator() = default;
     constexpr counted_iterator(I x, iter_difference_t<I> n);
     template<class I2>
@@ -57,12 +69,15 @@ namespace std {
       requires [[redoc("`:c>")]]assignable_from<I&, const I2&>
         constexpr counted_iterator& operator=(const counted_iterator<I2>& x);
 
-    constexpr I base() const & requires copy_constructible<I>;
+    constexpr const I& base() const &;
     constexpr I base() &&;
     constexpr iter_difference_t<I> count() const noexcept;
     constexpr decltype(auto) operator*();
     constexpr decltype(auto) operator*() const
-      requires [[redoc("*>")]]dereferenceable<const I>;
+      requires [[redoc("*:c>")]]dereferenceable<const I>;
+
+    constexpr auto operator->() const noexcept
+      requires [[redoc("`:c>")]]contiguous_iterator<I>;
 
     constexpr counted_iterator& operator++();
     decltype(auto) operator++(int);
@@ -118,14 +133,12 @@ namespace std {
     iter_difference_t<I> length = 0;    // [=expos]
   };
 
-  template<class I>
-  struct incrementable_traits<counted_iterator<I>> {
-    using difference_type = iter_difference_t<I>;
-  };
-
   template<[[redoc("`:c>")]]input_iterator I>
+    requires [[redoc("`:c>")]]same_as<[[redoc("*>")]]ITER_TRAITS(I), iterator_traits<I>>   // [:en] see [#iterator.concepts.general] \
+                                                                                           [:zh_CN] 参见 [#iterator.concepts.general]
   struct iterator_traits<counted_iterator<I>> : iterator_traits<I> {
-    using pointer = void;
+    using pointer = conditional_t<[[redoc("`:c>")]]contiguous_iterator<I>,
+                                  add_pointer_t<iter_reference_t<I>>, void>;
   };
 }
 [codeblock:end]
