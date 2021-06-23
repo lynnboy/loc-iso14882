@@ -14,66 +14,93 @@ template<class R, class Visitor, class... Variants>
 
 [div:description]
 [para]
+[:en] Let [*as-variant] denote the following exposition-only function templates:
+[:zh_CN] 令 [*as-variant] 代表下列仅用于阐释的函数模板：
+[codeblock]
+template<class... Ts>
+  auto&& [[redoc("*>")]]as-variant(variant<Ts...>& var) { return var; }
+template<class... Ts>
+  auto&& [[redoc("*>")]]as-variant(const variant<Ts...>& var) { return var; }
+template<class... Ts>
+  auto&& [[redoc("*>")]]as-variant(variant<Ts...>&& var) { return std::move(var); }
+template<class... Ts>
+  auto&& [[redoc("*>")]]as-variant(const variant<Ts...>&& var) { return std::move(var); }
+[codeblock:end]
+
 [:en] Let [$n] be [`sizeof...(Variants)].
 [:zh_CN] 令 [$n] 为 [`sizeof...(Variants)]。
 
-[:en] Let [`m] be a pack of [$n] values of type [`size_t].
-[:zh_CN] 令 [`m] 为 [$n] 个 [`size_t] 类型的值的包组。
+[:en] For each [$0 \leq i < n], let [$[`V]_i] denote the type
+[`decltype([*as-variant](std::forward<[$[`Variants]_i]>([$[`vars]_i])))].
+[:zh_CN] 对于每个 [$0 \leq i < n]，令 [$[`V]_i] 代表类型
+[`decltype([*as-variant](std::forward<[$[`Variants]_i]>([$[`vars]_i])))]。
 
-[:en] Such a pack is called valid if
-[$0 \leq [`m]_i < [`variant_size_v<remove_reference_t<Variants]_i[`>>]] for all
+[para:constraints]
+[:en] [$[`V]_i] is a valid type for all [$0 \leq i < n].
+[:zh_CN] [$[`V]_i] 对于所有 [$0 \leq i < n] 均为有效类型。
+
+[para]
+[:en] Let [`V] denote the pack of types [$[`V]_i].
+[:zh_CN] 令 [`V] 代表类型 [$[`V]_i] 的包组。
+
+[para]
+[:en] Let [$m] be a pack of [$n] values of type [`size_t].
+[:zh_CN] 令 [$m] 为 [$n] 个 [`size_t] 类型的值的包组。
+
+[:en] Such a pack is valid if
+[$0 \leq m_i < [`variant_size_v<remove_reference_t<[$[`V]_i]>>]] for all
 [$0 \leq i < n].
-[:zh_CN] 对于所有 [$0 \leq i < n]，当
-[$0 \leq [`m]_i < [`variant_size_v<remove_reference_t<Variants]_i[`>>]] 时称该
-包组有效。
+[:zh_CN] 当对于所有 [$0 \leq i < n] 有
+[$0 \leq m_i < [`variant_size_v<remove_reference_t<[$[`V]_i]>>]] 时，这样的包组
+有效。
 
-[:en] For each valid pack [`m], let [$e([`m])] denote the expression:
-[:zh_CN] 对于每个有效的包组 [`m]，令 [$e([`m])] 对于第一种形式时代表如下表达式：
+[:en] For each valid pack [$m], let [$e(m)] denote the expression:
+[:zh_CN] 对于每个有效的包组 [$m]，令 [$e(m)] 对于第一种形式时代表如下表达式：
 
-[codeblock]
-[[redoc("^>")]]INVOKE(std::forward<Visitor>(vis), get<m>(std::forward<Variants>(vars))...) // [:en] see [#func.require] \
-                                                                                                   [:zh_CN] 参见 [#func.require]
+[codeblock:notation]
+[^INVOKE](std::forward<Visitor>(vis), get<[$m]>(std::forward<V>(vars))...)  // [:en] see [#func.require] \
+                                                                            [:zh_CN] 参见 [#func.require]
 [codeblock:end]
 
 [:en@~] for the first form and
 [:zh_CN@~] ，而对于第二种形式时代表如下表达式：
 
-[codeblock]
-[[redoc("^>")]]INVOKE<R>(std::forward<Visitor>(vis), get<m>(std::forward<Variants>(vars))...) // [:en] see [#func.require] \
-                                                                                                      [:zh_CN] 参见 [#func.require]
+[codeblock:notation]
+[^INVOKE]<R>(std::forward<Visitor>(vis), get<[$m]>(std::forward<V>(vars))...)  // [:en] see [#func.require] \
+                                                                               [:zh_CN] 参见 [#func.require]
 [codeblock:end]
 
 [:en@~] for the second form.
 [:zh_CN@~] 等。
 
 [para:mandates]
-[:en] For each valid pack [`m], [$e([`m])] is a valid expression.
-[:zh_CN] 对于每个有效的包组 [`m]，[$e([`m])] 均为有效的表达式。
+[:en] For each valid pack [$m], [$e(m)] is a valid expression.
+[:zh_CN] 对于每个有效的包组 [$m]，[$e(m)] 均为有效的表达式。
 
 [:en] All such expressions are of the same type and value category.
 [:zh_CN] 所有这样的表达式都具有相同的类型和值类别。
 
 [para:returns]
-[:en] [$e([`m])], where [`m] is the pack for which [$[`m]_i] is
-[`vars[$_i].index()] for all [$0 \leq i < n].
-[:zh_CN] [$e([`m])]，其中的包组 [`m] 中，对于所有 [$0 \leq i < n]，[$[`m]_i] 为
-[`vars[$_i].index()]。
+[:en] [$e(m)], where [$m] is the pack for which [$m_i] is
+[`[*as-variant](vars[$_i]).index()] for all [$0 \leq i < n].
+[:zh_CN] [$e(m)]，其中的包组 [$m] 中，对于所有 [$0 \leq i < n]，[$m_i] 为
+[`[*as-variant](vars[$_i]).index()]。
 
-[:en] The return type is [`decltype([$e([`m])])] for the first form.
-[:zh_CN] 第一种形式的返回类型为 [`decltype([$e([`m])])] 的类型。
+[:en] The return type is [`decltype([$e(m)])] for the first form.
+[:zh_CN] 第一种形式的返回类型为 [`decltype([$e(m)])] 的类型。
 
 [para:throws]
-[:en] [`bad_variant_access] if any [`variant] in [`vars] is
-[`valueless_by_exception()].
-[:zh_CN] 当 [`vars] 中的任何 [`variant] 为 [`valueless_by_exception()] 时抛出
-[`bad_variant_access]。
+[:en] [`bad_variant_access] if
+[`([*as-variant](vars).valueless_by_exception() || ...)] is [`true].
+[:zh_CN] 当 [`([*as-variant](vars).valueless_by_exception() || ...)] 为 [`true]
+时抛出 [`bad_variant_access]。
 
 [para:complexity]
 [:en] For [$n \leq 1], the invocation of the callable object is implemented in
 constant time, i.e., for [$n = 1], it does not depend on the number of
-alternative types of [$[`Variants]_0].
+alternative types of [$[`V]_0].
 [:zh_CN] 当 [$n \leq 1] 时，对可调用对象的调用操作时以常量时间实现的，亦即当
-[$n = 1] 时，它并不依赖于 [$[`Variants]_0] 中的可选类型个数。
+[$n = 1] 时，它并不依赖于 [$[`V]_0] 中的可选类型个数。
 
 [:en] For [$n > 1], the invocation of the callable object has no complexity
 requirements.
