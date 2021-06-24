@@ -117,6 +117,37 @@ considered.
 如果这种查找未找到任何东西，则它要进行未限定名查找；任何情况中，都只考察代表类型
 或特例为类型的模板的名字。
 
+[begin:example]
+[codeblock]
+struct T1 { struct U { int i; }; };
+struct T2 { };
+struct U1 {};
+struct U2 {};
+
+struct B {
+  using T = T1;
+  using U = U1;
+  operator U1 T1::*();
+  operator U1 T2::*();
+  operator U2 T1::*();
+  operator U2 T2::*();
+};
+
+template<class X, class T>
+int g() {
+  using U = U2;
+  X().operator U T::*();                // [:en] #1, searches for [`T] in the scope of [`X] first \
+                                           [:zh_CN] #1，首先在 [`X] 的作用域中搜索 [`T]
+  X().operator U decltype(T())::*();    // #2
+  return 0;
+}
+int x = g<B, T2>();                     // [:en] #1 calls [`B::operator U1 T1::*] \
+                                           [:zh_CN] #1 调用 [`B::operator U1 T1::*]
+                                        // [:en] #2 calls [`B::operator U1 T2::*] \
+                                           [:zh_CN] #2 调用 [`B::operator U1 T2::*]
+[codeblock:end]
+[end:example]
+
 [para]
 [:en]
 In a friend declaration [~declarator] whose [~declarator-id] is a [~qualified-id]

@@ -38,36 +38,45 @@ by using a [~noexcept-specifier] as a suffix of a function declarator ([#dcl.fct
 
 [syntax]
 [rule noexcept-specifier [:zh_CN] noexcept-说明符 ]
-    [| [`noexcept] [`(] constant-expression [`)] ]
-    [| [`noexcept] ]
+    [| [`:key noexcept] [`(] constant-expression [`)] ]
+    [| [`:key noexcept] ]
 [rule:end]
 [syntax:end]
 
 [:en]
 [%exception specification[!noexcept[!constant expression and]]]
 In a [~noexcept-specifier], the [~constant-expression], if supplied, shall be a
-contextually converted constant expression of type [`bool] ([#expr.const]);
+contextually converted constant expression of type [`:key bool] ([#expr.const]);
 that constant expression is the exception specification of the function type in
 which the [~noexcept-specifier] appears. 
 [:zh_CN]
 [%异常说明[!noexcept[!常量表达式与～]]]
-在 [~noexcept-说明符]中，[~常量表达式]（如果提供）应当是按语境转换为 [`bool] 的
-常量表达式（[#expr.const]）；这个常量表达式就是包含这个 [~noexcept-说明符]的函数
-类型的异常说明。
+在 [~noexcept-说明符]中，[~常量表达式]（如果提供）应当是按语境转换为 [`:key bool]
+的常量表达式（[#expr.const]）；这个常量表达式就是包含这个 [~noexcept-说明符]的
+函数类型的异常说明。
 
 [:en]
-A [`(] token that follows [`noexcept] is part of the [~noexcept-specifier]
+A [`(] token that follows [`:key noexcept] is part of the [~noexcept-specifier]
 and does not commence an initializer ([#dcl.init]).
 [:zh_CN]
-跟在 [`noexcept] 后面的 [`(] 记号是 [~noexcept-说明符]的一部分，而并不开始一个
-初始化式（[#dcl.init]）。
+跟在 [`:key noexcept] 后面的 [`(] 记号是 [~noexcept-说明符]的一部分，而并不开始
+一个初始化式（[#dcl.init]）。
 
 [:en]
-The [~noexcept-specifier] [`noexcept] without a [~constant-expression] is
-equivalent to the [~noexcept-specifier] [`noexcept(true)].
+The [~noexcept-specifier] [`:key noexcept] without a [~constant-expression] is
+equivalent to the [~noexcept-specifier] [`[`:key noexcept]([`:key true])].
 [:zh_CN]
-不带有[~常量表达式]的 [~noexcept-说明符] [`noexcept] 等价于 [~noexcept-说明符]
-[`noexcept(true)]。
+不带有[~常量表达式]的 [~noexcept-说明符] [`:key noexcept] 等价于
+[~noexcept-说明符] [`[`:key noexcept]([`:key true])]。
+
+[begin:example]
+[codeblock]
+void f() noexcept(sizeof(char[2])); // [:en] error: narrowing conversion of value 2 to type [`:key bool] \
+                                    [:zh_CN] 错误：值 2 向类型 [`:key bool] 的窄化转换
+void g() noexcept(sizeof(char));    // [:en] OK, conversion of value 1 to type [`:key bool] is non-narrowing \
+                                    [:zh_CN] OK，值 1 向类型 [`:key bool] 的转换不是窄化
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]
@@ -203,11 +212,11 @@ exception specification, or
 [$E] implicitly invokes a function (such as an overloaded operator, an
 allocation function in a [~new-expression], a constructor for a function
 argument, or a destructor if [$E] is a full-expression ([#intro.execution]))
-that is potentially-throwing, or
+that has a potentially-throwing exception specification, or
 [:zh_CN]
-[$E] 隐式调用了某个潜在抛出的函数（比如重载运算符，[~new-表达式]中的分配函数，
-函数实参的构造函数，或者当 [$E] 是全表达式（[#intro.execution]）时的析构函数），
-或者
+[$E] 隐式调用了某个具有潜在抛出异常说明的函数（比如重载运算符，[~new-表达式]中的
+分配函数，函数实参的构造函数，或者当 [$E] 是全表达式（[#intro.execution]）时的
+析构函数），或者
 
 [item]
 [:en]
@@ -217,20 +226,20 @@ that is potentially-throwing, or
 
 [item]
 [:en]
-[$E] is a [`dynamic_cast] expression that casts to a reference type and requires
-a runtime check ([#expr.dynamic.cast]), or
+[$E] is a [`:key dynamic_cast] expression that casts to a reference type and
+requires a runtime check ([#expr.dynamic.cast]), or
 [:zh_CN]
-[$E] 是强制转换为引用类型并需要运行时检查的 [`dynamic_cast] 表达式
+[$E] 是强制转换为引用类型并需要运行时检查的 [`:key dynamic_cast] 表达式
 （[#expr.dynamic.cast]），或者
 
 [item]
 [:en]
-[$E] is a [`typeid] expression applied to a (possibly parenthesized) built-in
-unary [`*] operator applied to a pointer to a polymorphic class type
+[$E] is a [`:key typeid] expression applied to a (possibly parenthesized)
+built-in unary [`*] operator applied to a pointer to a polymorphic class type
 ([#expr.typeid]), or
 [:zh_CN]
-[$E] 是 [`typeid] 表达式（[#expr.typeid]），施加于（可能带有括号的）内建的一元
-[`*] 运算符，后者施加于一个指向多态类类型的指针，或者
+[$E] 是 [`:key typeid] 表达式（[#expr.typeid]），施加于（可能带有括号的）内建的
+一元 [`*] 运算符，后者施加于一个指向多态类类型的指针，或者
 
 [item]
 [:en]
@@ -254,11 +263,12 @@ constructs is potentially-throwing:
 [list]
 [item]
 [:en]
-a constructor selected by overload resolution in the implicit definition of the
-constructor for class [`X] to initialize a potentially constructed subobject, or
+the invocation of a constructor selected by overload resolution in the implicit
+definition of the constructor for class [`X] to initialize a potentially
+constructed subobject, or
 [:zh_CN]
-在类 [`X] 的隐式定义中由重载决议选择用以初始化一个潜在构造的子对象的构造函数，
-或者
+对在类 [`X] 的隐式定义中由重载决议选择用以初始化一个潜在构造的子对象的构造函数的
+调用，或者
 
 [item]
 [:en]
@@ -295,22 +305,23 @@ The exception specification for an implicitly-declared destructor, or a
 destructor without a [~noexcept-specifier], is potentially-throwing if and only
 if any of the destructors for any of its potentially constructed subojects is
 potentially-throwing or the destructor is virtual and the destructor of any
-virtual base class is potentially-throwing.
+virtual base class has a potentially-throwing exception specification.
 [:zh_CN]
 隐式声明的析构函数或没有 [~noexcept-说明符]的析构函数的异常说明，当且仅当有任何
-潜在构造的子对象的任何析构函数潜在抛出时，或其析构函数时虚函数且有任何虚基类的
-析构函数潜在抛出时，是潜在抛出的。
+潜在构造的子对象的任何析构函数潜在抛出时，或其析构函数是虚函数且有任何虚基类的
+析构函数带有潜在抛出的异常说明时，是潜在抛出的。
 
 [para]
 [:en]
 The exception specification for an implicitly-declared assignment operator, or
 an assignment-operator without a [~noexcept-specifier] that is defaulted on its
 first declaration, is potentially-throwing if and only if the invocation of any
-assignment operator in the implicit definition is potentially-throwing.
+assignment operator in the implicit definition has a potentially-throwing
+exception specification.
 [:zh_CN]
 隐式声明的赋值运算符，或者在其首个声明式被预置的没有 [~noexcept-说明符]的赋值
-运算符的异常说明，当且仅当其隐式定义中所调用的任何赋值运算符潜在抛出时，是潜在
-抛出的。
+运算符的异常说明，当且仅当其隐式定义中所调用的任何赋值运算符带有潜在抛出的异常
+说明时，是潜在抛出的。
 
 [para]
 [:en]
@@ -341,16 +352,16 @@ struct A {
 };
 struct B {
   B() noexcept;
-  B(const B&) = default;        // [:en] implicit exception specification is [`noexcept(true)] \
-                                   [:zh_CN] 隐含的异常说明为 [`noexcept(true)]
+  B(const B&) = default;        // [:en] implicit exception specification is [`[`:key noexcept]([`:key true])] \
+                                   [:zh_CN] 隐含的异常说明为 [`[`:key noexcept]([`:key true])]
   B(B&&, int = (throw 42, 0)) noexcept;
   ~B() noexcept(false);
 };
 int n = 7;
 struct D : public A, public B {
     int * p = new int[n];
-    // [:en] [`D::D()] potentially-throwing, as the [`new] operator may throw [`bad_alloc] or [`bad_array_new_length] \
-       [:zh_CN] [`D::D()] 潜在抛出，因为 [`new] 运算符可能抛出 [`bad_alloc] 或 [`std::bad_array_new_length]
+    // [:en] [`D::D()] potentially-throwing, as the [`:key new] operator may throw [`bad_alloc] or [`bad_array_new_length] \
+       [:zh_CN] [`D::D()] 潜在抛出，因为 [`:key new] 运算符可能抛出 [`bad_alloc] 或 [`std::bad_array_new_length]
     // [:en] [`D::D(const D&)] non-throwing \
        [:zh_CN] [`D::D(const D&)] 无抛出
     // [:en] [`D::D(D&&)] potentially-throwing, as the default argument for [`B][=']s constructor may throw \
