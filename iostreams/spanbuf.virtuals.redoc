@@ -1,0 +1,129 @@
+[section#spanbuf.virtuals
+    [:en] overridden virtual functions
+    [:zh_CN] 覆盖的虚函数
+]
+
+[para]
+[begin:note]
+[:en] Because the underlying buffer is of fixed size, neither [`overflow],
+[`underflow], nor [`pbackfail] can provide useful behavior.
+[:zh_CN] 因为底层缓冲区为固定大小，所以 [`overflow]、[`underflow] 和 [`pbackfail]
+都无法提供有用的行为。
+[end:note]
+
+[%@lib@member seekoff[!basic_spanbuf]]
+[codeblock:declaration]
+pos_type seekoff(off_type off, ios_base::seekdir way,
+                 ios_base::openmode which = ios_base::in | ios_base::out) override;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Alters the stream positions within one or both of the controlled sequences,
+if possible, as follows:
+[:zh_CN] 改变一个或两个其所掌控的序列之中的流位置（如果可能），如下：
+
+[list]
+[item]
+[:en] If [`ios_base::in] is set in [`which], positions the input sequence;
+[`xnext] is [`gptr()], [`xbeg] is [`eback()].
+[:zh_CN] 如果 [`which] 中设置了 [`ios_base::in]，则对输入序列定位；
+[`xnext] 为 [`gptr()]，[`xbeg] 为 [`eback()]。
+[item]
+[:en] If [`ios_base::out] is set in [`which], positions the output sequence;
+[`xnext] is [`pptr()], [`xbeg] is [`pbase()].
+[:zh_CN] 如果 [`which] 中设置了 [`ios_base::out]，则对输出序列定位；
+[`xnext] 为 [`pptr()]，[`xbeg] 为 [`pback()]。
+[list:end]
+
+[para]
+[:en] If both [`ios_base::in] and [`ios_base::out] are set in [`which] and [`way]
+is [`ios_base::cur], the positioning operation fails.
+[:zh_CN] 如果 [`which] 中同时设置了 [`ios_base::in] 和 [`ios_base::out]，且
+[`way] 为 [`ios_base::cur]，则定位操作失败。
+
+[para]
+[:en] For a sequence to be positioned, if its next pointer [`xnext] (either
+[`gptr()] or [`pptr()]) is a null pointer and the new offset [`newoff] as
+computed below is nonzero, the positioning operation fails.
+[:zh_CN] 对于要定位的序列，如果其后继指针 [`xnext]（无论 [`gptr()] 还是 [`pptr()]）
+为空指针，并且如下所计算的新偏移量 [`newoff] 非零，则定位操作失败。
+
+[:en] Otherwise, the function determines [`baseoff] as a value of type
+[`off_type] as follows:
+[:zh_CN] 否则，该函数如下确定 [`baseoff] 作为 [`off_type] 类型的值：
+
+[list]
+[item]
+[:en@~] [`0] when [`way] is [`ios_base::beg];
+[:zh_CN@~] 当 [`way] 为 [`ios_base::beg] 时为 [`0]；
+[item]
+[:en@~] [`(pptr() - pbase())] for the output sequence, or [`(gptr() - eback())]
+for the input sequence when [`way] is [`ios_base::cur];
+[:zh_CN@~] 当 [`way] 为 [`ios_base::cur] 时，对于输出序列为 [`(pptr() - pbase())]，
+或对于输入序列为 [`(gptr() - eback())]；
+[item]
+[:en@~] when [`way] is [`ios_base::end]:
+[:zh_CN@~] 当 [`way] 为 [`ios_base::end] 时：
+[list]
+[item]
+[:en@~] [`(pptr() - pbase())] if [`ios_base::out] is set in [*mode] and
+[`ios_base::in] is not set in [*mode],
+[:zh_CN@~] 当 [*mode] 中设置了 [`ios_base::out] 并且 [*mode] 中未设置
+[`ios_base::in] 时，为 [`(pptr() - pbase())]，
+[item]
+[:en@~] [`buf.size()] otherwise.
+[:zh_CN@~] 否则，为 [`buf.size()]。
+[list:end]
+[list:end]
+
+[para]
+[:en] If [$[`baseoff] + [`off]] would overflow, or if [$[`baseoff] + [`off]] is
+less than zero, or if [$[`baseoff] + [`off]] is greater than [`[*buf].size()],
+the positioning operation fails.
+[:zh_CN] 若 [$[`baseoff] + [`off]] 会溢出，或者若 [$[`baseoff] + [`off]] 小于零，
+或者若 [$[`baseoff] + [`off]] 大于 [`[*buf].size()]，则定位操作失败。
+
+[:en] Otherwise, the function computes
+[:zh_CN] 否则，该函数计算
+[codeblock]
+off_type newoff = baseoff + off;
+[codeblock:end]
+[:en@~] and assigns [`xbeg + newoff] to the next pointer [`xnext].
+[:zh_CN@~] 并将 [`xbeg + newoff] 赋值给后继指针 [`xnext]。
+
+[para:return]
+[:en] [`pos_type(off_type(-1))] if the positioning operation fails;
+[`pos_type(newoff)] otherwise.
+[:zh_CN] 当定位操作失败时返回 [`pos_type(off_type(-1))]；否则返回
+[`pos_type(newoff)]。
+[div:end]
+
+[%@lib@member seekpos[!basic_spanbuf]]
+[codeblock:declaration]
+pos_type seekpos(pos_type sp, ios_base::openmode which = ios_base::in | ios_base::out) override;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return seekoff(off_type(sp), ios_base::beg, which);
+[codeblock:end]
+[div:end]
+
+[%@lib@member setbuf[!basic_spanbuf]]
+[codeblock:declaration]
+basic_streambuf<charT, traits>* setbuf(charT* s, streamsize n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+this->span(std::span<charT>(s, n));
+return this;
+[codeblock:end]
+[div:end]
