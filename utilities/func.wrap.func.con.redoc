@@ -78,23 +78,43 @@ only a pointer or reference to an object and a member function pointer.
 
 [%@lib@ctor function]
 [codeblock:declaration]
-template<class F> function(F f);
+template<class F> function(F&& f);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [`FD] be [`decay_t<F>].
+[:zh_CN] 令 [`FD] 为 [`decay_t<F>]。
+
 [para:constraints]
-[:en] [`F] is Lvalue-Callable ([#func.wrap.func]) for argument types
+[list]
+[item]
+[:en] [`is_same_v<remove_cvref_t<F>, function>] is [`false], and
+[:zh_CN] [`is_same_v<remove_cvref_t<F>, function>] 为 [`false]，并且
+[item]
+[:en] [`FD] is Lvalue-Callable ([#func.wrap.func]) for argument types
 [`ArgTypes...] and return type [`R].
-[:zh_CN] [`F] 对于实参类型 [`ArgTypes...] 和返回类型 [`R] 是可左值调用的
+[:zh_CN] [`FD] 对于实参类型 [`ArgTypes...] 和返回类型 [`R] 是可左值调用的
 （[#func.wrap.func]）。
+[list:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`is_copy_constructible_v<FD>] is [`true], and
+[:zh_CN] [`is_copy_constructible_v<FD>] 为 [`true]，并且
+[item]
+[:en] [`is_constructible_v<FD, F>] is [`true].
+[:zh_CN] [`is_constructible_v<FD, F>] 为 [`true]。
+[list:end]
 
 [para:expects]
-[:en] [`F] meets the [^:oc CopyConstructible] requirements.
-[:zh_CN] [`F] 满足 [^:oc CopyConstructible] 规定。
+[:en] [`FD] meets the [^:oc CopyConstructible] requirements.
+[:zh_CN] [`FD] 满足 [^:oc CopyConstructible] 规定。
 
 [para:ensures]
-[:en] [`!*this] if any of the following hold:
-[:zh_CN] 如果符合以下任何情况则有 [`!*this]：
+[:en] [`!*this] is [`true] if any of the following hold:
+[:zh_CN] 如果符合以下任何情况，则 [`!*this] 为 [`true]：
 
 [list]
 [item]
@@ -104,30 +124,32 @@ template<class F> function(F f);
 [:en] [`f] is a null member pointer value.
 [:zh_CN] [`f] 是空成员指针值。
 [item]
-[:en] [`F] is a specialization of the [`function] class template, and [`!f].
-[:zh_CN] [`F] 是类模板 [`function] 的特例，且有 [`!f]。
+[:en] [`remove_cvref_t<F>] is a specialization of the [`function] class template,
+and [`!f] is [`true].
+[:zh_CN] [`remove_cvref_t<F>] 是类模板 [`function] 的特例，且 [`!f] 为 [`true]。
 [list:end]
 
 [para]
-[:en] Otherwise, [`*this] targets a copy of [`f] initialized with [`std::move(f)].
-[:zh_CN] 否则，[`*this] 的目标为以 [`std::move(f)] 初始化的一个 [`f] 的副本。
+[:en] Otherwise, [`*this] targets an object of type [`FD]
+direct-non-list-initialized with [`std::forward<F>(f)].
+[:zh_CN] 否则，[`*this] 的目标为以 [`std::forward<F>(f)] 直接非列表初始化的一个
+[`FD] 类型的对象。
 
 [para:throws]
-[:en] Nothing if [`f] is a specialization of [`reference_wrapper] or a
-function pointer.
-[:zh_CN] 当 [`f] 是 [`reference_wrapper] 的特例或函数指针时，不抛出任何异常。
+[:en] Nothing if [`FD] is a specialization of [`reference_wrapper] or a
+function pointer type.
+[:zh_CN] 当 [`FD] 是 [`reference_wrapper] 的特例或函数指针类型时，不抛出任何异常。
 
-[:en] Otherwise, may throw [`bad_alloc] or any exception thrown by [`F][=']s
-copy or move constructor.
-[:zh_CN] 否则，可能抛出 [`bad_alloc] 或者任何由 [`F] 的复制或移动构造函数所抛出
-的异常。
+[:en] Otherwise, may throw [`bad_alloc] or any exception thrown by the
+initialization of the target object.
+[:zh_CN] 否则，可能抛出 [`bad_alloc] 或者任何由目标对象的初始化所抛出的异常。
 
 [para:recommended]
 [:en] Implementations should avoid the use of dynamically allocated memory for
-small callable objects, for example, where [`f] is an object holding only a
-pointer or reference to an object and a member function pointer.
-[:zh_CN] 实现最好对于小的可调用对象避免使用动态分配的内存，例如，当 [`f] 是一种
-仅保持一个对象指针或引用，以及一个成员函数指针的对象时。
+small callable objects, for example, where [`f] refers to an object holding only
+a pointer or reference to an object and a member function pointer.
+[:zh_CN] 实现最好对于小的可调用对象避免使用动态分配的内存，例如，当 [`f] 指代
+某个仅保持一个对象指针或引用，以及一个成员函数指针的对象时。
 [div:end]
 
 [codeblock:declaration]
@@ -196,8 +218,8 @@ function& operator=(nullptr_t) noexcept;
 
 [div:description]
 [para:effects]
-[:en] If [`*this != nullptr], destroys the target of [`this].
-[:zh_CN] 如果 [`*this != nullptr]，则销毁 [`this] 的目标。
+[:en] If [`*this != nullptr], destroys the target of [`:key this].
+[:zh_CN] 如果 [`*this != nullptr]，则销毁 [`:key this] 的目标。
 
 [para:ensures]
 [:en] [`!(*this)].
@@ -251,6 +273,6 @@ template<class F> function& operator=(reference_wrapper<F> f) noexcept;
 
 [div:description]
 [para:effects]
-[:en] If [`*this != nullptr], destroys the target of [`this].
-[:zh_CN] 如果 [`*this != nullptr]，则销毁 [`this] 的目标。
+[:en] If [`*this != nullptr], destroys the target of [`:key this].
+[:zh_CN] 如果 [`*this != nullptr]，则销毁 [`:key this] 的目标。
 [div:end]

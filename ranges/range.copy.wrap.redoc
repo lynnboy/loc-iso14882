@@ -1,0 +1,71 @@
+[section#range.copy.wrap
+    [:en] Copyable wrapper
+    [:zh_CN] 可复制包装器
+]
+
+[para]
+[:en] Many types in this subclause are specified in terms of an exposition-only
+class template [*copyable-box].
+[:zh_CN] 本子条款中的许多类型，都是基于仅用于阐释的类模板 [*copyable-box] 来指定
+的。
+
+[:en] [`[*copyable-box]<T>] behaves exactly like [`optional<T>] with the
+following differences:
+[:zh_CN] [`[*copyable-box]<T>] 的行为与 [`optional<T>] 十分相似，但具有以下区别：
+
+[list]
+[item]
+[:en] [`[*copyable-box]<T>] constrains its type parameter [`T] with
+[`[`:c copy_constructible]<T> && is_object_v<T>].
+[:zh_CN] [`[*copyable-box]<T>] 以
+[`[`:c copy_constructible]<T> && is_object_v<T>] 来对其类型形参 [`T] 进行约束。
+
+[item]
+[:en] The default constructor of [`[*copyable-box]<T>] is equivalent to:
+[:zh_CN] [`[*copyable-box]<T>] 的默认构造函数等价于：
+[codeblock]
+constexpr [[redoc("*>")]]copyable-box() noexcept(is_nothrow_default_constructible_v<T>)
+  requires [[redoc("`:c>")]]default_initializable<T>
+  : [[redoc("*>")]]copyable-box{in_place}
+{ }
+[codeblock:end]
+
+[item]
+[:en] If [`[`:c copyable]<T>] is not modeled, the copy assignment operator is
+equivalent to:
+[:zh_CN] 如果未能构成 [`[`:c copyable]<T>]，则其复制赋值运算符等价于：
+[codeblock]
+[[redoc("*>")]]copyable-box& operator=(const [[redoc("*>")]]copyable-box& that)
+  noexcept(is_nothrow_copy_constructible_v<T>) {
+  if (this != addressof(that)) {
+    if (that) emplace(*that);
+    else reset();
+  }
+  return *this;
+}
+[codeblock:end]
+
+[item]
+[:en] If [`[`:c movable]<T>] is not modeled, the move assignment operator is
+equivalent to:
+[:zh_CN] 如果未能构成 [`[`:c movable]<T>]，则其移动赋值运算符等价于：
+[codeblock]
+[[redoc("*>")]]copyable-box& operator=([[redoc("*>")]]copyable-box&& that)
+  noexcept(is_nothrow_move_constructible_v<T>) {
+  if (this != addressof(that)) {
+    if (that) emplace(std::move(*that));
+    else reset();
+  }
+  return *this;
+}
+[codeblock:end]
+[list:end]
+
+[para:recommended]
+[:en] [`[*copyable-box]<T>] should store only a [`T] if either [`T] models
+[`:c copyable] or
+[`is_nothrow_move_constructible_v<T> && is_nothrow_copy_constructible_v<T>] is
+[`true].
+[:zh_CN] 如果 [`T] 构成 [`:c copyable]，或者
+[`is_nothrow_move_constructible_v<T> && is_nothrow_copy_constructible_v<T>] 为
+[`true]，则 [`[*copyable-box]<T>] 应当仅存储一个 [`T]。

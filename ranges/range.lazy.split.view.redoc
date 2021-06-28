@@ -1,0 +1,116 @@
+[section#range.lazy.split.view
+    [:en] Class template [`lazy_split_view]
+    [:zh_CN] 类模板 [`lazy_split_view]
+]
+
+[%@lib lazy_split_view]
+[%@lib@member base[!lazy_split_view]]
+[%@lib@member begin[!lazy_split_view]]
+[%@lib@member end[!lazy_split_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<auto> struct [[redoc("*>")]]require-constant;                       // [=expos]
+
+  template<class R>
+  concept [[redoc("*:c@def>")]]tiny-range =                                          // [=expos]
+    [[redoc("`:c>")]]sized_range<R> &&
+    requires { typename [[redoc("*>")]]require-constant<remove_reference_t<R>::size()>; } &&
+    (remove_reference_t<R>::size() <= 1);
+
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]view<Pattern> &&
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
+             ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
+  class lazy_split_view : public view_interface<split_view<V, Pattern>> {
+  private:
+    V [[redoc("*>")]]base_ = V();                                              // [=expos]
+    Pattern [[redoc("*>")]]pattern_ = Pattern();                               // [=expos]
+
+    [[redoc("*>")]]non-propagating-cache<iterator_t<V>> [[redoc("*>")]]current_;              // [:en] [=expos], present only \
+                                                                                              [:zh_CN] [=expos]，仅当
+                                                                // [:en@~] if [`![`:c forward_range]<V>] \
+                                                                [:zh_CN@~] [`![`:c forward_range]<V>] 时出现
+
+    // [:en] [#range.lazy.split.outer], class template [`lazy_split_view::[*outer-iterator]] \
+       [:zh_CN] [#range.lazy.split.outer]，类模板 [`lazy_split_view::[*outer-iterator]]
+    template<bool> struct [[redoc("*>")]]outer-iterator;                       // [=expos]
+
+    // [:en] [#range.lazy.split.inner], class template [`lazy_split_view::[*inner-iterator]] \
+       [:zh_CN] [#range.lazy.split.inner]，类模板 [`lazy_split_view::[*inner-iterator]]
+    template<bool> struct [[redoc("*>")]]inner-iterator;                       // [=expos]
+
+  public:
+    lazy_split_view()
+      requires [[redoc("`:c>")]]default_initializable<V> && [[redoc("`:c>")]]default_initializable<Pattern> = default;
+    constexpr lazy_split_view(V base, Pattern pattern);
+
+    template<[[redoc("`:c>")]]input_range R>
+      requires [[redoc("`:c>")]]constructible_from<V, views::all_t<R>> &&
+               [[redoc("`:c>")]]constructible_from<Pattern, single_view<range_value_t<R>>>
+    constexpr lazy_split_view(R&& r, range_value_t<R> e);
+
+    constexpr V base() const& requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr auto begin() {
+      if constexpr ([[redoc("`:c>")]]forward_range<V>)
+        return [[redoc("*>")]]outer-iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::begin([[redoc("*>")]]base_)};
+      else {
+        [[redoc("*>")]]current_ = ranges::begin([[redoc("*>")]]base_);
+        return [[redoc("*>")]]outer-iterator<false>{*this};
+      }
+    }
+
+    constexpr auto begin() const requires [[redoc("`:c>")]]forward_range<V> && [[redoc("`:c>")]]forward_range<const V> {
+      return [[redoc("*>")]]outer-iterator<true>{*this, ranges::begin([[redoc("*>")]]base_)};
+    }
+
+    constexpr auto end() requires [[redoc("`:c>")]]forward_range<V> && [[redoc("`:c>")]]common_range<V> {
+      return [[redoc("*>")]]outer-iterator<[[redoc("^>")]]simple-view<V>>{*this, ranges::end([[redoc("*>")]]base_)};
+    }
+
+    constexpr auto end() const {
+      if constexpr ([[redoc("`:c>")]]forward_range<V> && [[redoc("`:c>")]]forward_range<const V> && [[redoc("`:c>")]]common_range<const V>)
+        return [[redoc("*>")]]outer-iterator<true>{*this, ranges::end([[redoc("*>")]]base_)};
+      else
+        return default_sentinel;
+    }
+  };
+
+  template<class R, class P>
+    lazy_split_view(R&&, P&&) -> lazy_split_view<views::all_t<R>, views::all_t<P>>;
+
+  template<[[redoc("`:c>")]]input_range R>
+    lazy_split_view(R&&, range_value_t<R>)
+      -> lazy_split_view<views::all_t<R>, single_view<range_value_t<R>>>;
+}
+[codeblock:end]
+
+[%@lib@ctor lazy_split_view]
+[codeblock:declaration]
+constexpr lazy_split_view(V base, Pattern pattern);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)], and [*pattern_] with
+[`std::move(pattern)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`std::move(pattern)] 初始化
+[*pattern_]。
+[div:end]
+
+[%@lib@ctor lazy_split_view]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]input_range R>
+  requires [[redoc("`:c>")]]constructible_from<V, views::all_t<R>> &&
+           [[redoc("`:c>")]]constructible_from<Pattern, single_view<range_value_t<R>>>
+constexpr lazy_split_view(R&& r, range_value_t<R> e);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`views::all(std::forward<R>(r))] and [*pattern_]
+with [`views::single(std::move(e))].
+[:zh_CN] 以 [`views::all(std::forward<R>(r))] 初始化 [*base_] 并以
+[`views::single(std::move(e))] 初始化 [*pattern_]。
+[div:end]

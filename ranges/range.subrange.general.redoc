@@ -21,7 +21,7 @@ namespace std::ranges {
       [[redoc("`:c>")]]convertible_to<From, To> &&
       !(is_pointer_v<decay_t<From>> &&
         is_pointer_v<decay_t<To>> &&
-        [[redoc("*:c>")]]not-same-as<remove_pointer_t<decay_t<From>>, remove_pointer_t<decay_t<To>>>);
+        [[redoc("*:c>")]]different-from<remove_pointer_t<decay_t<From>>, remove_pointer_t<decay_t<To>>>);
 
   template<class T>
     concept [[redoc("*:c@def>")]]pair-like =                                     // [=expos]
@@ -31,8 +31,8 @@ namespace std::ranges {
         requires [[redoc("`:c>")]]derived_from<tuple_size<T>, integral_constant<size_t, 2>>;
         typename tuple_element_t<0, remove_const_t<T>>;
         typename tuple_element_t<1, remove_const_t<T>>;
-        { get<0>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<0, T>&>;
-        { get<1>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<1, T>&>;
+        { std::get<0>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<0, T>&>;
+        { std::get<1>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<1, T>&>;
       };
 
   template<class T, class U, class V>
@@ -47,16 +47,16 @@ namespace std::ranges {
     requires (K == subrange_kind::sized || ![[redoc("`:c>")]]sized_sentinel_for<S, I>)
   class subrange : public view_interface<subrange<I, S, K>> {
   private:
-    static constexpr bool [[redoc("*>")]]StoreSize =                           // [=expos]
+    static constexpr bool [[redoc("*>")]]StoreSize =                       // [=expos]
       K == subrange_kind::sized && ![[redoc("`:c>")]]sized_sentinel_for<S, I>;
-    I [[redoc("*>")]]begin_ = I();                                             // [=expos]
-    S [[redoc("*>")]]end_ = S();                                               // [=expos]
-    [[redoc("^>")]]make-unsigned-like-t<iter_difference_t<I>> [[redoc("*>")]]size_ = 0;       // [:en] [=expos]; present only \
-                                                                                              [:zh_CN] [=expos]；仅当 [*StoreSize] 为
-                                                                // [:en@~] when [*StoreSize] is [`true] \
-                                                                   [:zh_CN@~] [`true] 时提供
+    I [[redoc("*>")]]begin_ = I();                                         // [=expos]
+    S [[redoc("*>")]]end_ = S();                                           // [=expos]
+    [[redoc("*>")]]make-unsigned-like-t<iter_difference_t<I>> [[redoc("*>")]]size_ = 0;   // [:en] [=expos]; present only \
+                                                                                          [:zh_CN] [=expos]；仅当 [*StoreSize] 为
+                                                            // [:en@~] when [*StoreSize] is [`true] \
+                                                            [:zh_CN@~] [`true] 时提供
   public:
-    subrange() = default;
+    subrange() requires [[redoc("`:c>")]]default_initializable<I> = default;
 
     constexpr subrange([[redoc("*:c>")]]convertible-to-non-slicing<I> auto i, S s) requires (![[redoc("*>")]]StoreSize);
 
@@ -64,7 +64,7 @@ namespace std::ranges {
                        [[redoc("^>")]]make-unsigned-like-t<iter_difference_t<I>> n)
       requires (K == subrange_kind::sized);
 
-    template<[[redoc("*:c>")]]not-same-as<subrange> R>
+    template<[[redoc("*:c>")]]different-from<subrange> R>
       requires [[redoc("`:c>")]]borrowed_range<R> &&
                [[redoc("*:c>")]]convertible-to-non-slicing<iterator_t<R>, I> &&
                [[redoc("`:c>")]]convertible_to<sentinel_t<R>, S>
@@ -78,7 +78,7 @@ namespace std::ranges {
         : subrange{ranges::begin(r), ranges::end(r), n}
     {}
 
-    template<[[redoc("*:c>")]]not-same-as<subrange> PairLike>
+    template<[[redoc("*:c>")]]different-from<subrange> PairLike>
       requires [[redoc("*:c>")]]pair-like-convertible-from<PairLike, const I&, const S&>
     constexpr operator PairLike() const;
 

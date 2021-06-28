@@ -51,6 +51,40 @@ of the array elements.
 [:zh_CN] 这个函数启动了数组对象的，而非任何数组元素的生存期。
 [div:end]
 
+[%@lib@member allocate_at_least[!allocator]]
+[codeblock:declaration]
+[[nodiscard]] constexpr allocation_result<T*> allocate_at_least(size_t n);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is not an incomplete type ([#basic.types]).
+[:zh_CN] [`T] 不是不完整类型（[#basic.types]）。
+
+[para:returns]
+[:en] [`allocation_result<T*>{ptr, count}], where [`ptr] is a pointer to the
+initial element of an array of [`count] [`T] and [$[`count] \geq [`n]].
+[:zh_CN] [`allocation_result<T*>{ptr, count}]，其中 [`ptr] 为指向某个 [`count]
+个 [`T] 的数组的起始元素的指针，且 [$[`count] \geq [`n]]。
+
+[para:throws]
+[:en] [`bad_array_new_length] if
+[$[`numeric_limits<size_t>::max() / sizeof(T)] < [`n]], or [`bad_alloc] if the
+storage cannot be obtained.
+[:zh_CN] 当 [$[`numeric_limits<size_t>::max() / sizeof(T)] < [`n]] 时抛出
+[`bad_array_new_length]，或当无法获得存储时抛出 [`bad_alloc]。
+
+[para:remarks]
+[:en] The storage for the array is obtained by calling [`::operator new], but it
+is unspecified when or how often this function is called.
+[:zh_CN] 该数组的存储是通过调用 [`::operator new] 获得的，但何时以及多久进行一次
+该函数的调用是未指明的。
+
+[:en] This function starts the lifetime of the array object, but not that of any
+of the array elements.
+[:zh_CN] 这个函数启动了数组对象的，而非任何数组元素的生存期。
+[div:end]
+
 [%@lib@member deallocate[!allocator]]
 [codeblock:declaration]
 constexpr void deallocate(T* p, size_t n);
@@ -58,12 +92,28 @@ constexpr void deallocate(T* p, size_t n);
 
 [div:description]
 [para:expects]
-[:en] [`p] is a pointer value obtained from [`allocate()].
-[:zh_CN] [`p] 是由 [`allocate()] 获得的指针值。
+[list]
+[item]
+[:en] If [`p] is memory that was obtained by a call to [`allocate_at_least], let
+[`ret] be the value returned and [`req] be the value passed as the first
+argument to that call.
+[:zh_CN] 若 [`p] 为由调用 [`allocate_at_least] 所获得的内存，令 [`ret] 为返回值，
+[`req] 为这次调用中作为首个实参所传递的值。 
 
-[:en] [`n] equals the value passed as the first argument to the invocation
-of [`allocate] which returned [`p].
-[:zh_CN] [`n] 等于对返回 [`p] 的 [`allocate] 调用中作为其第一个实参所传递的值。
+[:en] [`p] is equal to [`ret.ptr] and [`n] is a value such that
+[$[`req] \leq [`n] \leq [`ret.count]].
+[:zh_CN] [`p] 等于 [`ret.ptr]，并且 [`n] 是使得
+[$[`req] \leq [`n] \leq [`ret.count]] 的值。
+
+[item]
+[:en] Otherwise, [`p] is a pointer value obtained from [`allocate].
+[:zh_CN] 否则，[`p] 为从 [`allocate] 获得的指针值。
+
+[:en] [`n] equals the value passed as the first argument to the invocation of
+[`allocate] which returned [`p].
+[:zh_CN] [`n] 等于返回 [`p] 的那次对 [`allocate] 的调用中作为第一个实参所传递的
+值。
+[list:end]
 
 [para:effects]
 [:en] Deallocates the storage referenced by [`p].

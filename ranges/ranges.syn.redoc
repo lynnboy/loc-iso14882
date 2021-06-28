@@ -124,11 +124,10 @@ namespace std::ranges {
   struct dangling;
 
   template<[[redoc("`:c>")]]range R>
-    using borrowed_iterator_t = conditional_t<[[redoc("`:c>")]]borrowed_range<R>, iterator_t<R>, dangling>;
+    using borrowed_iterator_t = [[redoc("[=seebelow]")]];
 
   template<[[redoc("`:c>")]]range R>
-    using safe_subrange_t =
-      conditional_t<[[redoc("`:c>")]]borrowed_range<R>, subrange<iterator_t<R>>, dangling>;
+    using borrowed_subrange_t = [[redoc("[=seebelow]")]];
 
   // [:en] [#range.empty], empty view \
      [:zh_CN] [#range.empty]，空视图
@@ -141,7 +140,7 @@ namespace std::ranges {
 
   namespace views {
     template<class T>
-      inline constexpr empty_view<T> empty{};
+      inline constexpr empty_view<T> [[redoc("[?libmember empty[!views]]")]]{};
   }
 
   // [:en] [#range.single], single view \
@@ -158,7 +157,7 @@ namespace std::ranges {
   // [:en] [#range.iota], iota view \
      [:zh_CN] [#range.iota]，iota 视图
   template<[[redoc("`:c>")]]weakly_incrementable W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
-    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && [[redoc("`:c>")]]semiregular<W>
+    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && [[redoc("`:c>")]]copyable<W>
   class iota_view;
 
   template<class W, class Bound>
@@ -252,15 +251,13 @@ namespace std::ranges {
   // [:en] [#range.join], join view \
      [:zh_CN] [#range.join]，联接视图
   template<[[redoc("`:c>")]]input_range V>
-    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>> &&
-             (is_reference_v<range_reference_t<V>> ||
-              [[redoc("`:c>")]]view<range_value_t<V>>)
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>>
   class join_view;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] join = [[redoc("[=unspec]")]]; }
 
-  // [:en] [#range.split], split view \
-     [:zh_CN] [#range.split]，分割视图
+  // [:en] [#range.lazy.split], lazy split view \
+     [:zh_CN] [#range.lazy.split]，懒惰分割视图
   template<class R>
     concept [[redoc("*:c>")]]tiny-range = [[redoc("[=seebelow]")]];   // [=expos]
 
@@ -268,9 +265,19 @@ namespace std::ranges {
     requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]view<Pattern> &&
              [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to> &&
              ([[redoc("`:c>")]]forward_range<V> || [[redoc("*:c>")]]tiny-range<Pattern>)
+  class lazy_split_view;
+
+  // [:en] [#range.split], split view \
+     [:zh_CN] [#range.split]，分割视图
+  template<[[redoc("`:c>")]]forward_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]view<Pattern> &&
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to>
   class split_view;
 
-  namespace views { inline constexpr [[redoc("[=unspec]")]] split = [[redoc("[=unspec]")]]; }
+  namespace views {
+    inline constexpr [[redoc("[=unspec]")]] lazy_split = [[redoc("[=unspec]")]];
+    inline constexpr [[redoc("[=unspec]")]] split = [[redoc("[=unspec]")]];
+  }
 
   // [:en] [#range.counted], counted view \
      [:zh_CN] [#range.counted]，计数视图
@@ -308,20 +315,23 @@ namespace std::ranges {
     inline constexpr bool enable_borrowed_range<elements_view<T, N>> = enable_borrowed_range<T>;
 
   template<class R>
-    using keys_view = elements_view<views::all_t<R>, 0>;
+    using [[redoc("?libglobal>")]]keys_view = elements_view<views::all_t<R>, 0>;
   template<class R>
-    using values_view = elements_view<views::all_t<R>, 1>;
+    using [[redoc("?libglobal>")]]values_view = elements_view<views::all_t<R>, 1>;
 
   namespace views {
     template<size_t N>
-      inline constexpr [[redoc("[=unspec]")]] elements = [[redoc("[=unspec]")]] ;
-    inline constexpr auto keys = elements<0>;
-    inline constexpr auto values = elements<1>;
+      inline constexpr [[redoc("[=unspec]")]] elements = [[redoc("[=unspec]")]];
+    inline constexpr auto [[redoc("[?libmember keys[!views]]")]] = elements<0>;
+    inline constexpr auto [[redoc("[?libmember values[!views]]")]] = elements<1>;
   }
 }
 
 namespace std {
   namespace views = ranges::views;
+
+  template<class T> struct tuple_size;
+  template<size_t I, class T> struct tuple_element;
 
   template<class I, class S, ranges::subrange_kind K>
   struct tuple_size<ranges::subrange<I, S, K>>

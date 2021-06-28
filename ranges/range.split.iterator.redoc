@@ -1,0 +1,121 @@
+[section#range.split.iterator
+    [:en] Class [`split_view::[*iterator]]
+    [:zh_CN] 类 [`split_view::[*iterator]]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]forward_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]view<Pattern> &&
+             [[redoc("`:c>")]]indirectly_comparable<iterator_t<V>, iterator_t<Pattern>, ranges::equal_to>
+  class split_view<V, Pattern>::[[redoc("*>")]]iterator {
+  private:
+    split_view* [[redoc("*>")]]parent_ = nullptr;                              // [=expos]
+    iterator_t<V> [[redoc("*>")]]cur_ = iterator_t<V>();                       // [=expos]
+    subrange<iterator_t<V>> [[redoc("*>")]]next_ = subrange<iterator_t<V>>();  // [=expos]
+    bool [[redoc("*>")]]trailing_empty_ = false;                               // [=expos]
+
+  public:
+    using iterator_concept = forward_iterator_tag;
+    using iterator_category = input_iterator_tag;
+    using value_type = subrange<iterator_t<V>>;
+    using difference_type = range_difference_t<V>;
+
+    [[redoc("*>")]]r() = default;
+    constexpr [[redoc("*>")]]iterator(split_view& parent, iterator_t<V> current, subrange<iterator_t<V>> next);
+
+    constexpr iterator_t<V> base() const;
+    constexpr value_type operator*() const;
+
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr [[redoc("*>")]]iterator operator++(int);
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator(split_view& parent, iterator_t<V> current, subrange<iterator_t<V>> next);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`addressof(parent)], [*cur_] with
+[`std::move(current)], and [*next_] with [`std::move(next)].
+[:zh_CN] 以 [`addressof(parent)] 初始化 [*parent_]，以 [`std::move(current)]
+初始化 [*cur_]，并以 [`std::move(next)] 初始化 [*next_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr iterator_t<V> base() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`return [*cur_];]
+[:zh_CN] 等价于 [`return [*cur_];]
+[div:end]
+
+[codeblock:declaration]
+constexpr value_type operator*() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`return {[*cur_], [*next_].begin()};]
+[:zh_CN] 等价于 [`return {[*cur_], [*next_].begin()};]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]cur_ = [[redoc("*>")]]next_.begin();
+if ([[redoc("*>")]]cur_ != ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_)) {
+  [[redoc("*>")]]cur_ = [[redoc("*>")]]next_.end();
+  if ([[redoc("*>")]]cur_ == ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_)) {
+    [[redoc("*>")]]trailing_empty_ = true;
+    [[redoc("*>")]]next_ = {[[redoc("*>")]]cur_, [[redoc("*>")]]cur_};
+  } else {
+    [[redoc("*>")]]next_ = [[redoc("*>")]]parent_->[[redoc("*>")]]find-next([[redoc("*>")]]cur_);
+  }
+} else {
+  [[redoc("*>")]]trailing_empty_ = false;
+}
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return x.[[redoc("*>")]]cur_ == y.[[redoc("*>")]]cur_ && x.[[redoc("*>")]]trailing_empty_ == y.[[redoc("*>")]]trailing_empty_;
+[codeblock:end]
+[div:end]

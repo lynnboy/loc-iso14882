@@ -18,11 +18,45 @@ uninitialized memory buffers ([#pointer.traits][=-][#specialized.addressof] and
 
 [:en]
 The header also defines the templates [`unique_ptr], [`shared_ptr], [`weak_ptr],
-and various function templates that operate on objects of these types
-([#smartptr]).
+[`out_ptr_t], [`inout_ptr_t], and various function templates that operate on
+objects of these types ([#smartptr]).
 [:zh_CN]
-这个头文件还定义了模板 [`unique_ptr]，[`shared_ptr]，[`weak_ptr]，以及操作这些
-类型的对象的各种函数模板（[#smartptr]）。
+这个头文件还定义了模板 [`unique_ptr]，[`shared_ptr]，[`weak_ptr]，[`out_ptr_t]，
+[`inout_ptr_t]，以及操作这些类型的对象的各种函数模板（[#smartptr]）。
+
+[para]
+[:en]
+Let [`[*POINTER_OF](T)] denote a type that is
+[:zh_CN]
+令 [`[*POINTER_OF](T)] 代表类型：
+[list]
+[item]
+[:en@~] [`T::pointer] if the [~qualified-id] [`T::pointer] is valid and denotes
+a type,
+[:zh_CN@~] 若[~限定标识] [`T::pointer] 有效且代表某个类型，则为 [`T::pointer]，
+[item]
+[:en@~] otherwise, [`T::element_type*] if the [~qualified-id] [`T::element_type]
+is valid and denotes a type,
+[:zh_CN@~] 否则，若[~限定标识] [`T::element_type] 有效且代表某个类型，则为
+[`T::element_type*]，
+[item]
+[:en@~] otherwise, [`pointer_traits<T>::element_type*].
+[:zh_CN@~] 否则，为 [`pointer_traits<T>::element_type*]。
+[list:end]
+
+[para]
+[:en]
+Let [`[*POINTER_OF_OR](T, U)] denote a type that is:
+[:zh_CN]
+令 [`[*POINTER_OF_OR](T, U)] 代表类型：
+[list]
+[item]
+[:en@~] [`[*POINTER_OF](T)] if [`[*POINTER_OF](T)] is valid and denotes a type,
+[:zh_CN@~] 若 [`[*POINTER_OF](T)] 有效且代表某个类型，则为 [`[*POINTER_OF](T)]，
+[item]
+[:en@~] otherwise, [`U].
+[:zh_CN@~] 否则，为 [`U]。
+[list:end]
 
 [%@header memory]
 [codeblock:synopsis]
@@ -41,22 +75,6 @@ namespace std {
     constexpr T* to_address(T* p) noexcept;
   template<class Ptr>
     constexpr auto to_address(const Ptr& p) noexcept;
-
-  // [:en] [#util.dynamic.safety], pointer safety \
-     [:zh_CN] [#util.dynamic.safety]，指针安全性
-[[redoc("[
-[%@lib in_place]
-[%@lib@member relaxed[!pointer_safety]]
-[%@lib@member preferred[!pointer_safety]]
-[%@lib@member strict[!pointer_safety]]
-]")]]\
-  enum class pointer_safety { relaxed, preferred, strict };
-  void declare_reachable(void* p);
-  template<class T>
-    T* undeclare_reachable(T* p);
-  void declare_no_pointers(char* p, size_t n);
-  void undeclare_no_pointers(char* p, size_t n);
-  pointer_safety get_pointer_safety() noexcept;
 
   // [:en] [#ptr.align], pointer alignment \
      [:zh_CN] [#ptr.align]，指针对齐
@@ -82,22 +100,21 @@ namespace std {
      [:zh_CN] [#allocator.uses.construction]，带分配器构造
   template<class T, class Alloc, class... Args>
     constexpr auto uses_allocator_construction_args(const Alloc& alloc,
-                                                    Args&&... args) noexcept -> [[redoc("[=seebelow]")]];
+                                                    Args&&... args) noexcept;
   template<class T, class Alloc, class Tuple1, class Tuple2>
     constexpr auto uses_allocator_construction_args(const Alloc& alloc, piecewise_construct_t,
-                                                    Tuple1&& x, Tuple2&& y)
-                                                    noexcept ->  [[redoc("[=seebelow]")]];
+                                                    Tuple1&& x, Tuple2&& y) noexcept;
   template<class T, class Alloc>
-    constexpr auto uses_allocator_construction_args(const Alloc& alloc) noexcept -> [[redoc("[=seebelow]")]];
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc) noexcept;
   template<class T, class Alloc, class U, class V>
     constexpr auto uses_allocator_construction_args(const Alloc& alloc,
-                                                    U&& u, V&& v) noexcept -> [[redoc("[=seebelow]")]];
+                                                    U&& u, V&& v) noexcept;
   template<class T, class Alloc, class U, class V>
     constexpr auto uses_allocator_construction_args(const Alloc& alloc,
-                                                    const pair<U,V>& pr) noexcept -> [[redoc("[=seebelow]")]];
+                                                    const pair<U,V>& pr) noexcept;
   template<class T, class Alloc, class U, class V>
     constexpr auto uses_allocator_construction_args(const Alloc& alloc,
-                                                    pair<U,V>&& pr) noexcept -> [[redoc("[=seebelow]")]];
+                                                    pair<U,V>&& pr) noexcept;
   template<class T, class Alloc, class... Args>
     constexpr T make_obj_using_allocator(const Alloc& alloc, Args&&... args);
   template<class T, class Alloc, class... Args>
@@ -107,6 +124,16 @@ namespace std {
   // [:en] [#allocator.traits], allocator traits \
      [:zh_CN] [#allocator.traits]，分配器特征
   template<class Alloc> struct allocator_traits;
+
+  template<class Pointer>
+  struct allocation_result {
+    Pointer ptr;
+    size_t count;
+  };
+
+  template<class Allocator>
+    [[nodiscard]] constexpr allocation_result<typename allocator_traits<Allocator>::pointer>
+      allocate_at_least(Allocator& a, size_t n);
 
   // [:en] [#default.allocator], the default allocator: \
      [:zh_CN] [#default.allocator]，默认分配器：
@@ -199,18 +226,19 @@ namespace std {
   template<class InputIterator, class NoThrowForwardIterator>
     NoThrowForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
                                               NoThrowForwardIterator result);
-  template<class ExecutionPolicy, class InputIterator, class NoThrowForwardIterator>
+  template<class ExecutionPolicy, class ForwardIterator, class NoThrowForwardIterator>
     NoThrowForwardIterator uninitialized_copy(ExecutionPolicy&& exec,   // [:en] see [#algorithms.parallel.overloads] \
                                                                            [:zh_CN] 参见 [#algorithms.parallel.overloads]
-                                              InputIterator first, InputIterator last,
+                                              ForwardIterator first, ForwardIterator last,
                                               NoThrowForwardIterator result);
   template<class InputIterator, class Size, class NoThrowForwardIterator>
     NoThrowForwardIterator uninitialized_copy_n(InputIterator first, Size n,
                                                 NoThrowForwardIterator result);
-  template<class ExecutionPolicy, class InputIterator, class Size, class NoThrowForwardIterator>
+  template<class ExecutionPolicy, class ForwardIterator, class Size,
+           class NoThrowForwardIterator>
     NoThrowForwardIterator uninitialized_copy_n(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads] \
                                                                            [:zh_CN] 参见 [#algorithms.parallel.overloads]
-                                                InputIterator first, Size n,
+                                                ForwardIterator first, Size n,
                                                 NoThrowForwardIterator result);
 
   namespace ranges {
@@ -237,19 +265,20 @@ namespace std {
   template<class InputIterator, class NoThrowForwardIterator>
     NoThrowForwardIterator uninitialized_move(InputIterator first, InputIterator last,
                                               NoThrowForwardIterator result);
-  template<class ExecutionPolicy, class InputIterator, class NoThrowForwardIterator>
+  template<class ExecutionPolicy, class ForwardIterator, class NoThrowForwardIterator>
     NoThrowForwardIterator uninitialized_move(ExecutionPolicy&& exec,   // [:en] see [#algorithms.parallel.overloads] \
                                                                            [:zh_CN] 参见 [#algorithms.parallel.overloads]
-                                              InputIterator first, InputIterator last,
+                                              ForwardIterator first, ForwardIterator last,
                                               NoThrowForwardIterator result);
   template<class InputIterator, class Size, class NoThrowForwardIterator>
     pair<InputIterator, NoThrowForwardIterator>
       uninitialized_move_n(InputIterator first, Size n, NoThrowForwardIterator result);
-  template<class ExecutionPolicy, class InputIterator, class Size, class NoThrowForwardIterator>
-    pair<InputIterator, NoThrowForwardIterator>
+  template<class ExecutionPolicy, class ForwardIterator, class Size,
+           class NoThrowForwardIterator>
+    pair<ForwardIterator, NoThrowForwardIterator>
       uninitialized_move_n(ExecutionPolicy&& exec,              // [:en] see [#algorithms.parallel.overloads] \
                                                                    [:zh_CN] 参见 [#algorithms.parallel.overloads]
-                           InputIterator first, Size n, NoThrowForwardIterator result);
+                           ForwardIterator first, Size n, NoThrowForwardIterator result);
 
   namespace ranges {
     template<class I, class O>
@@ -552,5 +581,25 @@ namespace std {
   template<class T> struct atomic;
   template<class T> struct atomic<shared_ptr<T>>;
   template<class T> struct atomic<weak_ptr<T>>;
+
+  // [:en] [#out.ptr.t], class template [`out_ptr_t] \
+     [:zh_CN] [#out.ptr.t]，类模板 [`out_ptr_t]
+  template<class Smart, class Pointer, class... Args>
+    class out_ptr_t;
+
+  // [:en] [#out.ptr], function template [`out_ptr] \
+     [:zh_CN] [#out.ptr]，函数模板 [`out_ptr]
+  template<class Pointer = void, class Smart, class... Args>
+    auto out_ptr(Smart& s, Args&&... args);
+
+  // [:en] [#inout.ptr.t], class template [`inout_ptr_t] \
+     [:zh_CN] [#inout.ptr.t]，类模板 [`inout_ptr_t]
+  template<class Smart, class Pointer, class... Args>
+    class inout_ptr_t;
+
+  // [:en] [#inout.ptr], function template [`inout_ptr] \
+     [:zh_CN] [#inout.ptr]，函数模板 [`inout_ptr]
+  template<class Pointer = void, class Smart, class... Args>
+    auto inout_ptr(Smart& s, Args&&... args);
 }
 [codeblock:end]

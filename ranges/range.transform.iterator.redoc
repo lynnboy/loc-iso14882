@@ -25,16 +25,16 @@ namespace std::ranges {
       remove_cvref_t<invoke_result_t<F&, range_reference_t<[[redoc("*>")]]Base>>>;
     using difference_type   = range_difference_t<[[redoc("*>")]]Base>;
 
-    [[redoc("*>")]]iterator() = default;
+    [[redoc("*>")]]iterator() requires [[redoc("`:c>")]]default_initializable<iterator_t<[[redoc("*>")]]Base>> = default;
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, iterator_t<[[redoc("*>")]]Base> current);
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
       requires Const && [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
 
-    constexpr iterator_t<[[redoc("*>")]]Base> base() const &
-      requires [[redoc("`:c>")]]copyable<iterator_t<[[redoc("*>")]]Base>>;
+    constexpr const iterator_t<[[redoc("*>")]]Base>& base() const &;
     constexpr iterator_t<[[redoc("*>")]]Base> base() &&;
-    constexpr decltype(auto) operator*() const
-    { return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *[[redoc("*>")]]current_); }
+    constexpr decltype(auto) operator*() const {
+      return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *[[redoc("*>")]]current_);
+    }
 
     constexpr [[redoc("*>")]]iterator& operator++();
     constexpr void operator++(int);
@@ -47,9 +47,11 @@ namespace std::ranges {
       requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     constexpr [[redoc("*>")]]iterator& operator-=(difference_type n)
       requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+
     constexpr decltype(auto) operator[](difference_type n) const
-      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
-    { return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, [[redoc("*>")]]current_[n]); }
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base> {
+      return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, [[redoc("*>")]]current_[n]);
+    }
 
     friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
       requires [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]Base>>;
@@ -76,17 +78,12 @@ namespace std::ranges {
       requires [[redoc("`:c>")]]sized_sentinel_for<iterator_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
 
     friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& i)
-      noexcept(noexcept(invoke(*i.[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *i.[[redoc("*>")]]current_)))
-    {
+      noexcept(noexcept(invoke(*i.[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *i.[[redoc("*>")]]current_))) {
       if constexpr (is_lvalue_reference_v<decltype(*i)>)
         return std::move(*i);
       else
         return *i;
     }
-
-    friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]current_, y.[[redoc("*>")]]current_)))
-      requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
   };
 }
 [codeblock:end]
@@ -97,21 +94,21 @@ namespace std::ranges {
 
 [list]
 [item]
-[:en] If [`V] models [`:c random_access_range], then [`iterator_concept] denotes
-[`random_access_iterator_tag].
-[:zh_CN] 若 [`V] 构成 [`:c random_access_range]，则 [`iterator_concept] 代表
+[:en] If [`Base] models [`:c random_access_range], then [`iterator_concept]
+denotes [`random_access_iterator_tag].
+[:zh_CN] 若 [`Base] 构成 [`:c random_access_range]，则 [`iterator_concept] 代表
 [`random_access_iterator_tag]。
 
 [item]
-[:en] Otherwise, if [`V] models [`:c bidirectional_range], then
+[:en] Otherwise, if [`Base] models [`:c bidirectional_range], then
 [`iterator_concept] denotes [`bidirectional_iterator_tag].
-[:zh_CN] 否则，若 [`V] 构成 [`:c bidirectional_range]，则 [`iterator_concept]
+[:zh_CN] 否则，若 [`Base] 构成 [`:c bidirectional_range]，则 [`iterator_concept]
 代表 [`bidirectional_iterator_tag]。
 
 [item]
-[:en] Otherwise, if [`V] models [`:c forward_range], then [`iterator_concept]
+[:en] Otherwise, if [`Base] models [`:c forward_range], then [`iterator_concept]
 denotes [`forward_iterator_tag].
-[:zh_CN] 否则，若 [`V] 构成 [`:c forward_range]，则 [`iterator_concept] 代表
+[:zh_CN] 否则，若 [`Base] 构成 [`:c forward_range]，则 [`iterator_concept] 代表
 [`forward_iterator_tag]。
 
 [item]
@@ -185,8 +182,7 @@ with [`i.[*parent_]].
 
 [%@lib@member base[!transform_view::iterator]]
 [codeblock:declaration]
-constexpr iterator_t<[[redoc("*>")]]Base> base() const &
-  requires [[redoc("`:c>")]]copyable<iterator_t<[[redoc("*>")]]Base>>;
+constexpr const iterator_t<[[redoc("*>")]]Base>& base() const &;
 [codeblock:end]
 
 [div:description]
@@ -419,17 +415,4 @@ friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, con
 [para:effects]
 [:en] Equivalent to: [`return x.[*current_] - y.[*current_];]
 [:zh_CN] 等价于：[`return x.[*current_] - y.[*current_];]
-[div:end]
-
-[%@lib@member iter_swap[!transform_view::iterator]]
-[codeblock:declaration]
-friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]current_, y.[[redoc("*>")]]current_)))
-  requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to [`ranges::iter_swap(x.[*current_], y.[*current_])].
-[:zh_CN] 等价于 [`ranges::iter_swap(x.[*current_], y.[*current_])]。
 [div:end]

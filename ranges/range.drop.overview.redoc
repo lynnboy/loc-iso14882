@@ -11,6 +11,7 @@ than [$N] elements.
 所适配的 [`:c view] 包含少于 [$N] 个元素则为空范围。
 
 [para]
+[%@lib@member drop[!views]]
 [:en] The name [`views::drop] denotes a range adaptor object
 ([#range.adaptor.object]).
 [:zh_CN] 名字 [`views::drop] 代表一个范围适配器对象（[#range.adaptor.object]）。
@@ -31,9 +32,10 @@ and let [`D] be [`range_difference_t<decltype((E))>].
 [list]
 [item]
 [:en] If [`T] is a specialization of [`ranges::empty_view] ([#range.empty.view]),
-then [`((void) F, [^decay-copy](E))].
+then [`((void) F, [^decay-copy](E))], except that the evaluations of [`E] and
+[`F] are indeterminately sequenced.
 [:zh_CN] 若 [`T] 为 [`ranges::empty_view] 的特例（[#range.empty.view]），则为
-[`((void) F, [^decay-copy](E))]。
+[`((void) F, [^decay-copy](E))]，但 [`E] 和 [`F] 的执行是顺序不确定的。
 
 [item]
 [:en] Otherwise, if [`T] models [`:c random_access_range] and [`:c sized_range]
@@ -55,23 +57,22 @@ and is
 [:en@~] a specialization of [`ranges::subrange] ([#range.subrange]),
 [:zh_CN@~] [`ranges::subrange]（[#range.subrange]）的特例，
 [list:end]
-[:en@~] then [`T{ranges::begin(E) + min<D>(ranges::size(E), F), ranges::end(E)}],
+[:en@~] then [`T(ranges::begin(E) + min<D>(ranges::size(E), F), ranges::end(E))],
 except that [`E] is evaluated only once.
 [:zh_CN@~] 则为
-[`T{ranges::begin(E) + min<D>(ranges::size(E), F), ranges::end(E)}]，但 [`E]
+[`T(ranges::begin(E) + min<D>(ranges::size(E), F), ranges::end(E))]，但 [`E]
 仅进行一次求值。
 
 [item]
-[:en] Otherwise, [`ranges::drop_view{E, F}].
-[:zh_CN] 否则，为 [`ranges::drop_view{E, F}]。
+[:en] Otherwise, [`ranges::drop_view(E, F)].
+[:zh_CN] 否则，为 [`ranges::drop_view(E, F)]。
 [list:end]
 
 [para]
 [begin:example]
 [codeblock]
 auto ints = views::iota(0) | views::take(10);
-auto latter_half = drop_view{ints, 5};
-for (auto i : latter_half) {
+for (auto i : ints | views::drop(5)) {
   cout << i << ' ';                             // [:en] prints [`5 6 7 8 9] \
                                                    [:zh_CN] 打印：[`5 6 7 8 9]
 }

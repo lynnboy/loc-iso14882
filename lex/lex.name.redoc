@@ -10,14 +10,25 @@
 
 [syntax]
 [rule identifier [:zh_CN] 标识符 ]
-    [| identifier-nondigit ]
-    [| identifier identifier-nondigit ]
-    [| identifier digit ]
+    [| identifier-start ]
+    [| identifier identifier-continue ]
 [rule:end]
 
-[rule identifier-nondigit [:zh_CN] 标识符非数字字符 ]
+[rule identifier-start [:zh_CN] 标识符开头 ]
     [| nondigit ]
-    [| universal-character-name ]
+    [|:descriptive
+        [:en] [~universal-character-name] of class XID_Start
+        [:zh_CN] XID_Start 类的 [~通用字符名]
+    ]
+[rule:end]
+
+[rule identifier-continue [:zh_CN] 标识符继续 ]
+    [| digit ]
+    [| nondigit ]
+    [|:descriptive
+        [:en] [~universal-character-name] of class XID_Continue
+        [:zh_CN] XID_Continue 类的 [~通用字符名]
+    ]
 [rule:end]
 
 [rule:oneof nondigit [:zh_CN] 非数字 ]
@@ -35,36 +46,14 @@
 [para]
 [:en]
 [%name [!length of]] [%name]
-An identifier is an arbitrarily long sequence of letters and digits.
 [:zh_CN]
 [%名字 [!～的长度]] [%名字]
-标识符是任意长度的字母和数字的序列。
 
 [:en]
-Each [~universal-character-name] in an identifier shall designate a character
-whose encoding in ISO/IEC 10646 falls into one of the ranges specified in
-[#:tab#lex.name.allowed].
+The character classes XID_Start and XID_Continue are Derived Core Properties as
+described by UAX #44.[#:note#fn:$1]
 [:zh_CN]
-标识符中的每个[~通用字符名]所代表的字符的 ISO/IEC 10646 编码都应当处于
-[#:tab#lex.name.allowed] 中所指定的范围之一之中。
-
-[:en]
-The initial element shall not be a [~universal-character-name] designating a
-character whose encoding falls into one of the ranges specified in
-[#:tab#lex.name.disallowed].
-[:zh_CN]
-标识符的第一个元素不能为代表其编码处于 [#:tab#lex.name.allowed] 中所指定的范围
-之一之中的某个字符的[~通用字符名]。
-
-[:en]
-Upper- and lower-case letters are different.
-[:zh_CN]
-大写和小写字母是不同的。
-
-[:en]
-All characters are significant.[#:note#fn:$1]
-[:zh_CN]
-所有字符均有效。[#:note#fn:$1]
+字符类 XID_Start 和 XID_Continue 是如 UAX #44 所描述的导出核心属性。[#:note#fn:$1]
 
 [note:foot#fn:$1]
 [:en]
@@ -87,36 +76,30 @@ place a translation limit on significant characters for external identifiers.
 [:zh_CN]
 扩展字符可能产生很长的外部标识符，但 [=Cpp] 不对外部标识符的有效字符数量设置翻译
 限度。
-
-[:en]
-In [=Cpp], upper- and lower-case letters are considered different for all
-identifiers, including external identifiers.
-[:zh_CN]
-在 [=Cpp] 中，大写和小写字母在任何标识符中都被认为是不同的，包括外部标识符。
 [note:end]
 
-[table:listing@code@shape=?x5@fill=row#lex.name.allowed
-    [:en] Ranges of characters allowed
-    [:zh_CN] 允许的字符范围
-]
-[|] 00A8      [|] 00AA      [|] 00AD      [|] 00AF      [|] 00B2-00B5
-[|] 00B7-00BA [|] 00BC-00BE [|] 00C0-00D6 [|] 00D8-00F6 [|] 00F8-00FF
-[|] 0100-167F [|] 1681-180D [|] 180F-1FFF [-]
-[|] 200B-200D [|] 202A-202E [|] 203F-2040 [|] 2054      [|] 2060-206F
-[|] 2070-218F [|] 2460-24FF [|] 2776-2793 [|] 2C00-2DFF [|] 2E80-2FFF
-[|] 3004-3007 [|] 3021-302F [|] 3031-D7FF [-]
-[|] F900-FD3D [|] FD40-FDCF [|] FDF0-FE44 [|] FE47-FFFD [-]
-[|] 10000-1FFFD [|] 20000-2FFFD [|] 30000-3FFFD [|] 40000-4FFFD [|] 50000-5FFFD
-[|] 60000-6FFFD [|] 70000-7FFFD [|] 80000-8FFFD [|] 90000-9FFFD [|] A0000-AFFFD
-[|] B0000-BFFFD [|] C0000-CFFFD [|] D0000-DFFFD [|] E0000-EFFFD
-[table:end]
+[:en]
+The program is ill-formed if an [~identifier] does not conform to Normalization
+Form C as specified in ISO/IEC 10646.
+[:zh_CN]
+如果[~标识符]不符合 ISO/IEC 10646 所指定的正规化形式 C，则程序非良构。
 
-[table:listing@code@shape=?x4@fill=row#lex.name.disallowed
-    [:en] Ranges of characters disallowed initially (combining characters)
-    [:zh_CN] 不允许作为开头的字符（组合字符）范围
-]
-[|] 0300-036F [|] 1DC0-1DFF [|] 20D0-20FF [|] FE20-FE2F
-[table:end]
+[begin:note]
+[:en]
+Upper- and lower-case letters are considered different for all identifiers.
+[:zh_CN]
+大写和小写字母对于所有标识符都被当做是不同的。
+[end:note]
+
+[begin:note]
+[:en]
+In translation phase 4, [~identifier] also includes those
+[~preprocessing-token]s ([#lex.pptoken]) differentiated as keywords ([#lex.key])
+in the later translation phase 7 ([#lex.token]).
+[:zh_CN]
+翻译阶段 4 中，[~标识符]还包含那些在后面的翻译阶段 7（[#lex.token]）中被区分为
+关键字（[#lex.key]）的[~预处理记号]（[#lex.pptoken]）。
+[end:note]
 
 [para]
 [%[`import]] [%[`final]] [%[`module]] [%[`override]]

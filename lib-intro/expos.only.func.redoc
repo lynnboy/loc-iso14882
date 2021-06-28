@@ -25,26 +25,28 @@ library:
 
 [%@lib@raw [`[^decay-copy]][@decay-copy]]
 [codeblock]
-template<class T> constexpr decay_t<T> [[redoc("^>")]]decay-copy(T&& v)
-    noexcept([[redoc("`:c>")]]is_nothrow_convertible_v<T, decay_t<T>>)           // [=expos]
-  { return std::forward<T>(v); }
+namespace std {
+  template<class T> constexpr decay_t<T> [[redoc("^>")]]decay-copy(T&& v)
+      noexcept([[redoc("`:c>")]]is_nothrow_convertible_v<T, decay_t<T>>)         // [=expos]
+    { return std::forward<T>(v); }
 
-constexpr auto [[redoc("^>")]]synth-three-way =
-  []<class T, class U>(const T& t, const U& u)
-    requires requires {
-      { t < u } -> [[redoc("*:c>")]]boolean-testable;
-      { u < t } -> [[redoc("*:c>")]]boolean-testable;
-    }
-  {
-    if constexpr (three_way_comparable_with<T, U>) {
-      return t <=> u;
-    } else {
-      if (t < u) return weak_ordering::less;
-      if (u < t) return weak_ordering::greater;
-      return weak_ordering::equivalent;
-    }
-  };
+  constexpr auto [[redoc("^>")]]synth-three-way =
+    []<class T, class U>(const T& t, const U& u)
+      requires requires {
+        { t < u } -> [[redoc("*:c>")]]boolean-testable;
+        { u < t } -> [[redoc("*:c>")]]boolean-testable;
+      }
+    {
+      if constexpr (three_way_comparable_with<T, U>) {
+        return t <=> u;
+      } else {
+        if (t < u) return weak_ordering::less;
+        if (u < t) return weak_ordering::greater;
+        return weak_ordering::equivalent;
+      }
+    };
 
-template<class T, class U=T>
-using [[redoc("^>")]]synth-three-way-result = decltype([[redoc("^>")]]synth-three-way(declval<T&>(), declval<U&>()));
+  template<class T, class U=T>
+  using [[redoc("^>")]]synth-three-way-result = decltype([[redoc("^>")]]synth-three-way(declval<T&>(), declval<U&>()));
+}
 [codeblock:end]

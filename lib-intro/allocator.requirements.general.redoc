@@ -107,9 +107,9 @@ are parameterized in terms of allocators.
 [|] y
 [|] [:en] a value of type [`XX::const_void_pointer] obtained by conversion from
     a result value of [`YY::allocate], or else a value of type (possibly
-    [`const]) [`std::nullptr_t]
-    [:zh_CN] 通过从 [`YY::allocate] 的结果值，或者（可能为 [`const] 的）类型
-    [`std::nullptr_t] 的值转换而获得的类型 [`XX::const_void_pointer] 的值
+    [`:key const]) [`std::nullptr_t]
+    [:zh_CN] 通过从 [`YY::allocate] 的结果值，或者（可能为 [`:key const] 的）
+    类型 [`std::nullptr_t] 的值转换而获得的类型 [`XX::const_void_pointer] 的值
 [-]
 [|] n
 [|] [:en] a value of type [`XX::size_type]
@@ -332,10 +332,8 @@ respectively.
     [:zh_CN] 就是说，容器不需要维护其自己的自由表。
     [note:end]
 
-    [begin:note]
-    [:en] If [`n == 0], the return value is unspecified.
-    [:zh_CN] 若 [`n == 0]，则未指明其返回值。
-    [end:note]
+    [:en] See Note C, below.
+    [:zh_CN] 见表后的注解 C。
 [|]
 [-]
 [|] [`a.allocate(n, y)]
@@ -348,17 +346,52 @@ respectively.
     [:zh_CN] 未指明 [`y] 的使用情况，但其意图是促进局部性。
 [|] [`a.allocate(n)]
 [-]
+[|] [`a.allocate_at_least(n)]
+[|] [`allocation_result<X::pointer>]
+[|] [para:returns]
+    [:en] [`allocation_result<X::pointer>{ptr, count}], where [`ptr] is memory
+    allocated for an array of [`count] [`T] and such an object is created but
+    array elements are not constructed, such that [$[`count] \geq [`n]].
+    [:zh_CN] [`allocation_result<X::pointer>{ptr, count}]，其中 [`ptr] 是为
+    [`count] 个 [`T] 的数组所分配的内存，且这个对象被创建但未构造各个数组元素，
+    并使得 [$[`count] \geq [`n]]。
+
+    [:en] [`allocate_at_least] may throw an appropriate exception.
+    [:zh_CN] [`allocate_at_least] 可能抛出适当的异常。
+    [:en] See Note C, below.
+    [:zh_CN] 见表后的注解 C。
+[|] [:en] See Note D, below.
+    [:zh_CN] 见表后的注解 D。
+[-]
 [|] [`a.deallocate(p,n)]
 [|] [:en] (not used)
     [:zh_CN] （未使用）
 [|] [para:expects]
-    [:en] [`p] is a value returned by an earlier call to [`allocate] that has
-    not been invalidated by an intervening call to [`deallocate].
-    [:zh_CN] [`p] 是由早前对 [`allocate] 的调用所返回的值，且未被任何介入期间的
-    对 [`deallocate] 的调用将其无效化。
+    [list]
+    [item]
+    [:en] If [`p] is memory that was obtained by a call to [`a.allocate_at_least],
+    let [`ret] be the value returned and [`req] be the value passed as the first
+    argument of that call.
+    [:zh_CN] 如果 [`p] 是通过对 [`a.allocate_at_least] 的调用所获得的内存，令
+    [`ret] 为所返回的值，而 [`req] 为作为该调用的第一个实参所传递的值。
 
-    [:en] [`n] matches the value passed to [`allocate] to obtain this memory.
-    [:zh_CN] [`n] 与用以获得这段内存的 [`allocate] 所传递的值相匹配。
+    [:en] [`p] is equal to [`ret.ptr] and [`n] is a value such that
+    [$[`req] \leq [`n] \leq [`ret.count]].
+    [:zh_CN] [`p] 等于 [`ret.ptr]，且 [`n] 为满足
+    [$[`req] \leq [`n] \leq [`ret.count]] 的值。
+
+    [item]
+    [:en] Otherwise, [`p] is a pointer value obtained from [`allocate].
+    [:zh_CN] 否则，[`p] 是从 [`allocate] 所获得的指针值。
+
+    [:en] [`n] equals the value passed as the first argument to the invocation
+    of [`allocate] which returned [`p].
+    [:zh_CN] [`n] 等于为返回 [`p] 的那次对 [`allocate] 的调用的第一个实参所传递
+    的值。
+    [list:end]
+
+    [:en] [`p] has not been invalidated by an intervening call to [`deallocate].
+    [:zh_CN] [`p] 未被介入其间的对 [`deallocate] 的调用使其失效。
 
     [para:throws]
     [:en] Nothing.
@@ -500,8 +533,8 @@ respectively.
 [|] [:en] Identical to or derived from [`true_type] or [`false_type]
     [:zh_CN] 等同于，或者派生于 [`true_type] 或 [`false_type]
 [|] [:en] [`true_type] only if the expression [`a1 == a2] is guaranteed to be
-    [`true] for any two (possibly [`const]) values [`a1], [`a2] of type [`X].
-    [:zh_CN] 对于任意两个（可能为 [`const] 的）类型 [`X] 的值 [`a1] 和 [`a2]，
+    [`true] for any two (possibly [`:key const]) values [`a1], [`a2] of type [`X].
+    [:zh_CN] 对于任意两个（可能为 [`:key const] 的）类型 [`X] 的值 [`a1] 和 [`a2]，
     仅当表达式 [`a1 == a2] 保证为 [`true] 时，为 [`true_type]。
 [|] [`is_empty<X>::type]
 [-]
@@ -574,6 +607,26 @@ not throw exceptions.
 
 [para]
 [:en]
+Note C: If [`n == 0], the return value is unspecified.
+[:zh_CN]
+注解 B：若 [`n == 0]，则未指明返回值。
+
+[para]
+[:en]
+Note C: An allocator need not support [`allocate_at_least], but no default is
+provided in [`allocator_traits].
+[:zh_CN]
+注解 C：分配器不必支持 [`allocate_at_least]，但 [`allocator_traits] 中并没有
+缺省函数。
+
+[:en]
+If an allocator has an [`allocate_at_least] mmeber, it shall satisfy the
+requirements.
+[:zh_CN]
+如果分配器具有 [`allocate_at_least] 成员，则它应当符合这些规定。
+
+[para]
+[:en]
 An allocator type [`X] shall meet the [^:oc CopyConstructible] requirements
 ([#:tab#cpp17.copyconstructible]).
 [:zh_CN]
@@ -624,12 +677,13 @@ or [`X::const_pointer].
 Then, [`x1] and [`x2] are [+equivalently-valued] pointer values, if and only
 if both [`x1] and [`x2] can be explicitly converted to the two corresponding
 objects [`px1] and [`px2] of type [`X::const_pointer], using a sequence of
-[`static_cast]s using only these four types, and the expression [`px1 == px2]
-evaluates to [`true].
+[`:key static_cast]s using only these four types, and the expression
+[`px1 == px2] evaluates to [`true].
 [:zh_CN]
-则有，当且仅当 [`x1] 和 [`x2] 都可利用一系列只使用这四种类型的 [`static_cast]，
-分别被显式转换为类型 [`X::const_pointer] 的对象 [`px1] 和 [`px2]，并且表达式
-[`px1 == px2] 求值为 [`true]，则 [`x1] 和 [`x2] 是[+值等价的]指针值。
+则有，当且仅当 [`x1] 和 [`x2] 都可利用一系列只使用这四种类型的
+[`:key static_cast]，分别被显式转换为类型 [`X::const_pointer] 的对象 [`px1] 和
+[`px2]，并且表达式 [`px1 == px2] 求值为 [`true]，则 [`x1] 和 [`x2] 是[+值等价的]
+指针值。
 
 [para]
 [:en]

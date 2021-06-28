@@ -7,30 +7,27 @@
 [codeblock:synopsis]
 namespace std::ranges {
   template<class I>
-    concept [[redoc("*:c>")]]decrementable =     // [=expos]
-      [[redoc("[=seebelow]")]];
+    concept [[redoc("*:c>")]]decrementable = [[redoc("[=seebelow]")]];  // [=expos]
   template<class I>
-    concept [[redoc("*:c>")]]advanceable =       // [=expos]
-      [[redoc("[=seebelow]")]];
+    concept [[redoc("*:c>")]]advanceable = [[redoc("[=seebelow]")]];    // [=expos]
 
   template<[[redoc("`:c>")]]weakly_incrementable W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
-    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && [[redoc("`:c>")]]semiregular<W>
+    requires [[redoc("*:c>")]]weakly-equality-comparable-with<W, Bound> && [[redoc("`:c>")]]copyable<W>
   class iota_view : public view_interface<iota_view<W, Bound>> {
   private:
     // [:en] [#range.iota.iterator], class [`iota_view::[*iterator]] \
        [:zh_CN] [#range.iota.iterator]，类 [`iota_view::[*iterator]]
-    struct [[redoc("*>")]]iterator;            // [=expos]
+    struct [[redoc("*>")]]iterator;                    // [=expos]
     // [:en] [#range.iota.sentinel], class [`iota_view::[*sentinel]] \
        [:zh_CN] [#range.iota.sentinel]，类 [`iota_view::[*sentinel]]
-    struct [[redoc("*>")]]sentinel;            // [=expos]
-    W [[redoc("*>")]]value_ = W();             // [=expos]
-    Bound [[redoc("*>")]]bound_ = Bound();     // [=expos]
+    struct [[redoc("*>")]]sentinel;                    // [=expos]
+    W [[redoc("*>")]]value_ = W();                     // [=expos]
+    Bound [[redoc("*>")]]bound_ = Bound();             // [=expos]
   public:
-    iota_view() = default;
+    iota_view() requires [[redoc("`:c>")]]default_initializable<W> = default;
     constexpr explicit iota_view(W value);
-    constexpr iota_view(type_identity_t<W> value,
-                        type_identity_t<Bound> bound);
-    constexpr iota_view([[redoc("*>")]]iterator first, [[redoc("*>")]]sentinel last) : iota_view(*first, last.[[redoc("*>")]]bound_) {}
+    constexpr iota_view(type_identity_t<W> value, type_identity_t<Bound> bound);
+    constexpr iota_view([[redoc("*>")]]iterator first, [[redoc("[=seebelow]")]] last);
 
     constexpr [[redoc("*>")]]iterator begin() const;
     constexpr auto end() const;
@@ -234,6 +231,44 @@ constexpr iota_view(type_identity_t<W> value, type_identity_t<Bound> bound);
 [para:effects]
 [:en] Initializes [*value_] with [`value] and [*bound_] with [`bound].
 [:zh_CN] 以 [`value] 初始化 [*value_] 并以 [`bound] 初始化 [*bound_]。
+[div:end]
+
+[%@lib@ctor iota_view]
+[codeblock:declaration]
+constexpr iota_view([[redoc("*>")]]iterator first, [[redoc("[=seebelow]")]] last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[list]
+[item]
+[:en] If [`[`:c same_as]<W, Bound>] is [`true],
+[`iota_view(first,[*value_], last.[*value_])].
+[:zh_CN] 若 [`[`:c same_as]<W, Bound>] 为 [`true]，则为
+[`iota_view(first,[*value_], last.[*value_])]。
+[item]
+[:en] Otherwise, if [`Bound] denotes [`unreachable_sentinel_t],
+[`iota_view(first,[*value_], last)].
+[:zh_CN] 否则，若 [`Bound] 代表 [`unreachable_sentinel_t]，则为
+[`iota_view(first,[*value_], last)]。
+[list:end]
+
+[para:remarks]
+[:en] The type of [`last] is:
+[:zh_CN] [`last] 的类型为：
+[list]
+[item]
+[:en] If [`[`:c same_as]<W, Bound>] is [`true], [*iterator].
+[:zh_CN] 若 [`[`:c same_as]<W, Bound>] 为 [`true]，则为 [*iterator]。
+[item]
+[:en] Otherwise, if [`Bound] denotes [`unreachable_sentinel_t], [`Bound].
+[:zh_CN] 否则，若 [`Bound] 代表 [`unreachable_sentinel_t]，则为 [`Bound]。
+[item]
+[:en] Otherwise, [*sentinel].
+[:zh_CN] 否则，为 [*sentinel]。
+[list:end]
 [div:end]
 
 [%@lib@member begin[!iota_view]]

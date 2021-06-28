@@ -21,15 +21,35 @@ R | C
 [codeblock:end]
 
 [:en] Given an additional range adaptor closure object [`D], the expression
-[`C | D] is well-formed and produces another range adaptor closure object such
-that the following two expressions are equivalent:
-[:zh_CN] 给定一个额外的范围适配器闭包对象 [`D]，表达式 [`C | D] 良构，并且产生
-另一个使得以下两个表达式等价的范围适配器闭包对象：
+[`C | D] produces another range adaptor closure object [`E].
+[:zh_CN] 给定一个额外的范围适配器闭包对象 [`D]，表达式 [`C | D] 产生另一个范围
+适配器闭包对象 [`E]。
 
-[codeblock]
-R | C | D
-R | (C | D)
-[codeblock:end]
+[:en] [`E] is a perfect forwarding call wrapper ([#func.require]) with the
+following properties:
+[:zh_CN] [`E] 为具有以下性质的完美转发调用包装器（[#func.require]）：
+
+[list]
+[item]
+[:en] Its target object is an object [`d] of type [`decay_t<decltype((D))>]
+direct-non-list-initialized with [`D].
+[:zh_CN] 其目标对象为 [`decay_t<decltype((D))>] 类型的对象 [`d] 并以 [`D] 直接
+非列表初始化。
+[item]
+[:en] It has one bound argument entity, an object [`c] of type
+[`decay_t<decltype((C))>] direct-non-list-initialized with [`C].
+[:zh_CN] 它具有一个绑定的实参实体，[`decay_t<decltype((C))>] 类型的对象 [`c]
+并以 [`C] 直接非列表初始化。
+[item]
+[:en] Its call pattern is [`d(c(arg))], where [`arg] is the argument used in
+a function call expression of [`E].
+[:zh_CN] 其调用模式为 [`d(c(arg))]，其中 [`arg] 为 [`E] 的函数调用表达式中所用的
+实参。
+[list:end]
+
+[:en] The expression [`C | D] is well-formed if and only if the initializations
+of the state entities of [`E] are all well-formed.
+[:zh_CN] 当且仅当 [`E] 的各状态实体的初始化良构时，表达式 [`C | D] 良构。
 
 [para]
 [:en] A [+:% range adaptor object] is a customization point object
@@ -44,15 +64,37 @@ adaptor closure object.
 [:zh_CN] 如果一个范围适配器对象仅接受一个实参，则它是个范围适配器闭包对象。
 
 [para]
-[:en] If a range adaptor object accepts more than one argument, then the
-following expressions are equivalent:
-[:zh_CN] 如果一个范围适配器对象接受多于一个实参，则以下各表达式等价：
+[:en] If a range adaptor object [`adaptor] accepts more than one argument, then
+let [`range] be an expression such that [`decltype((range))] models
+[`:c viewable_range], let [`args...] be arguments such that
+[`adaptor(range, args...)] is a well-formed expression as specified in the rest
+of subclause ([#range.adaptors]), and let [`BoundArgs] be a pack that denotes
+[`decay_t<decltype((args))>...].
+[:zh_CN] 如果一个范围适配器对象 [`adaptor] 接受多于一个实参，则令 [`range] 为
+使得 [`decltype((range))] 构成 [`:c viewable_range] 的表达式，令 [`args...] 为
+使得 [`adaptor(range, args...)] 根据子条款 [#range.adaptors] 的余下部分所指定为
+良构表达式的实参，并令 [`BoundArgs] 为代表 [`decay_t<decltype((args))>...] 的
+包组。
 
-[codeblock:notation]
-[^adaptor](range, args...)
-[^adaptor](args...)(range)
-range | [^adaptor](args...)
-[codeblock:end]
+[list]
+[item]
+[:en] Its target object is a copy of [`adaptor].
+[:zh_CN] 其目标对象为 [`adaptor] 的副本。
+[item]
+[:en] Its bound argument entities [`bound_args] consist of objects of types
+[`BoundArgs...] direct-non-list-initialized with
+[`std::forward<decltype((args))>(args)...], respectively.
+[:zh_CN] 其绑定实参实体 [`bound_args] 由类型为 [`BoundArgs...] 的对象组成，并
+分别以 [`std::forward<decltype((args))>(args)...] 直接非列表初始化。
+[item]
+[:en] Its call pattern is [`adaptor(r, bound_args...)], where [`r] is the
+argument used in a function call expression of [`f].
+[:zh_CN] 其调用模式为 [`adaptor(r, bound_args...)]，其中 [`r] 为在 [`f] 的函数
+调用表达式中所用的实参。
+[list:end]
 
-[:en] In this case, [`[^adaptor](args...)] is a range adaptor closure object.
-[:zh_CN] 这种情况下，[`[^adaptor](args...)] 就是一个范围适配器闭包对象。
+[:en] The expression [`adaptor(args...)] is well-formed if and only if the
+initializations of the bound argument entities of the result, as specified above,
+are all well-formed.
+[:zh_CN] 当且仅当如上所述的各绑定实参实体的初始化良构时，表达式
+[`adaptor(args...)] 良构。

@@ -1,0 +1,110 @@
+[section#range.nonprop.cache
+    [:en] Non-propagating cache
+    [:zh_CN] 无传播缓存
+]
+
+[para]
+[:en] Some types in subclause [#range.adaptors] are specified in terms of
+an exposition-only class template [*non-propagating-cache].
+[:zh_CN] 子条款 [#range.adapters] 中的许多类型，都是基于仅用于阐释的类模板
+[*non-propagating-cache] 来指定的。
+
+[:en] [`[*non-propagating-cache]<T>] behaves exactly like [`optional<T>] with
+the following differences:
+[:zh_CN] [`[*non-propagating-cache]<T>] 的行为与 [`optional<T>] 十分相似，但具有
+以下区别：
+
+[list]
+[item]
+[:en] [`[*non-propagating-cache]<T>] constrains its type parameter [`T] with
+[`is_object_v<T>].
+[:zh_CN] [`[*non-propagating-cache]<T>] 以 [`is_object_v<T>] 来对其类型形参 [`T]
+进行约束。
+
+[item]
+[:en] The copy constructor is equivalent to:
+[:zh_CN] 其复制构造函数等价于：
+[codeblock]
+constexpr [[redoc("*>")]]non-propagating-cache(const [[redoc("*>")]]non-propagating-cache&) noexcept { }
+[codeblock:end]
+
+[item]
+[:en] The move constructor is equivalent to:
+[:zh_CN] 其移动构造函数等价于：
+[codeblock]
+constexpr [[redoc("*>")]]non-propagating-cache([[redoc("*>")]]non-propagating-cache&& other) noexcept {
+  other.reset();
+}
+[codeblock:end]
+
+[item]
+[:en] The copy assignment operator is equivalent to:
+[:zh_CN] 其复制赋值运算符等价于：
+[codeblock]
+constexpr [[redoc("*>")]]non-propagating-cache& operator=(const [[redoc("*>")]]non-propagating-cache& other) noexcept {
+  if (addressof(other) != this)
+    reset();
+  return *this;
+}
+[codeblock:end]
+
+[item]
+[:en] The move assignment operator is equivalent to:
+[:zh_CN] 其移动赋值运算符等价于：
+[codeblock]
+constexpr [[redoc("*>")]]non-propagating-cache& operator=([[redoc("*>")]]non-propagating-cache&& other) noexcept {
+  reset();
+  other.reset();
+  return *this;
+}
+[codeblock:end]
+
+[item]
+[:en] [`[*non-propagating-cache]<T>] has an additional member function template
+specified as follows:
+[:zh_CN] [`[*non-propagating-cache]<T>] 还带有另一个如下指定的成员函数：
+[codeblock]
+template<class I>
+  constexpr T& [[redoc("*>")]]emplace-deref(const I& i);    // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] The declaration [`T t(*i);] is well-formed for some invented variable [`t].
+[:zh_CN] 声明式 [`T t(*i);] 对于某个虚构变量 [`t] 良构。
+
+[para:effects]
+[:en] Calls [`reset()].
+[:zh_CN] 调用 [`reset()]。
+
+[:en] Then initializes the contained value as if direct-non-list-initializing
+an object of type [`T] with the argument [`*i].
+[:zh_CN] 然后如同以实参 [`*i] 来直接非列表初始化一个 [`T] 类型的对象来初始化其
+所包含的值。
+
+[para:ensures]
+[:en] [`*this] contains a value.
+[:zh_CN] [`*this] 包含值。
+
+[para:returns]
+[:en] A reference to the new contained value.
+[:zh_CN] 指代新包含的值的引用。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the contained value.
+[:zh_CN] 由所包含的值的初始化所抛出的任何异常。
+
+[para:remarks]
+[:en] If an exception is thrown during the initialization of [`T], [`*this] does
+not contain a value, and the previous value (if any) has been destroyed.
+[:zh_CN] 如果 [`T] 的初始化过程中抛出了异常，则 [`*this] 并不包含值，且之前的值
+（如果有）已被销毁。
+[div:end]
+[list:end]
+
+[para]
+[begin:note]
+[:en] [`[*non-propagating-cache]<T>] enables an input view to temporarily cache
+values as it is iterated over.
+[:zh_CN] [`[*non-propagating-cache]<T>] 让输入视图在迭代过程中可以临时缓存一些值。
+[end:note]
