@@ -345,7 +345,7 @@ happens after                           发生晚于
 happens before                          发生早于
 header                                  头文件
 high-order bit                          高序位
-hosted implementation                   主机式实现
+hosted implementation                   宿主式实现
 identifier                              标识符
 identifier label                        标识符标号
 if statement                            if 语句
