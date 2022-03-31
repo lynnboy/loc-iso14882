@@ -33,7 +33,7 @@ alignment                               |对齐
 alignment requirement                   |对齐要求
 allocate                                |分配
 allocation function                     |分配函数
-alternative token                       |代用记号
+alternative token                       |代用记号       |二联符+保留字 `and` 等，11个位和逻辑运算符
 ambiguity                               |歧义
 amendment                               |文档修订
 amortized constant                      |摊销常量
@@ -60,6 +60,7 @@ assertion                               |断言
 assignment                              |赋值
 assignment expression                   |赋值表达式
 assignment operator                     |赋值运算符
+associated character encoding           |关联字符编码   |字符或字符串字面量前缀指定的编码，无前缀的不可编码或多字符类型为 `int`
 associated class                        |关联类
 associated namespace                    |关联命名空间
 atomic                                  |原子性
@@ -73,11 +74,14 @@ awaitable                               |可等待体
 #### B
 |English|中文|说明|
 |-|-|-|
+backslash                               |反斜杠     |`\`，用于转义，行拼接等
 barrier                                 |关卡
 base characteristic                     |基础特征
+base N integer                          |以 N 为基的整数    |进制
 basic character set                     |基本字符集
-basic execution character set           |基本执行字符集
-basic source character set              |基本源字符集
+basic execution character set           |基本执行字符集 |96基本源字符 + `\a`, `\b`, `\r`, `\0`
+basic execution wide-character set      |基本执行宽字符集
+basic source character set              |基本源字符集   |只有96个字符，至少兼容 ASCII 和 EBCDIC
 behavior                                |行为
 binary                                  |二进制，二元
 binary fold                             |二元折叠
@@ -96,6 +100,7 @@ block scope                             |块作用域
 block statement                         |块语句
 boolean                                 |布尔
 boolean conversion                      |布尔转换
+boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
 break statement                         |break 语句
 built-in operator                       |内建运算符
 byte                                    |字节
@@ -115,6 +120,8 @@ cast away constness                     |强制移除常量性
 catch                                   |捕获
 character                               |字符
 character container type                |字符容器类型   |`basic_string`等模板的类型形参
+character encoding                      |字符编码
+character literal                       |字符字面量     |预处理记号，也是记号，支持编码前缀，转义序列
 character set                           |字符集
 class                                   |类
 class declaration                       |类声明式
@@ -130,10 +137,11 @@ class template                          |类模板
 clause                                  |子句
 closure object                          |闭包对象
 closure type                            |闭包类型
+code point                              |代码点     |字符在字符集中的数值
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
 comma expression                        |逗号表达式
 comma operator                          |逗号运算符
-comment                                 |注释
+comment                                 |注释       | `/* */`，`// \n`
 common initial sequence                 |共同起始序列
 common type                             |公共类型
 compile                                 |编译
@@ -149,7 +157,9 @@ compound type                           |复合类型
 concept                                 |概念
 concurrency                             |并发性
 concurrent                              |并发的
+conditional escape sequence             |有条件转义序列 |编译器实现支持的其他单字符转移序列
 conditional expression                  |条件表达式
+conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等
 conditional operator                    |条件运算符
 conditionally-supported                 |有条件支持的   |编译器实现可以选择不支持
 conflict                                |冲突
@@ -173,8 +183,10 @@ consume                                 |消费
 container                               |容器
 context                                 |语境，上下文
 contextually converted to bool          |按语境转换为 bool
+contextual keyword                      |语境关键字，上下文关键字   |仅在特定语境中具有特殊含义：`final` `override` `import` `module`
 continue statement                      |continue 语句
 contravariant                           |逆变
+control character                       |控制字符       |代码点 0-1F，7F-9F
 conversion                              |类型转换，转换
 conversion function                     |转换函数
 conversion rank                         |转换等级
@@ -245,7 +257,7 @@ destructor                              |析构函数
 device                                  |设备
 diagnosable rule                        |可诊断规则
 diagnostic message                      |诊断消息   |编译器报错
-digraph                                 |二连符
+digraph                                 |二联符，合成符     |6个：`<%`,`%>`,`<:`,`:>`,`%:`,`%:%:`->`{`,`}`,`[`,`]`,`#`,`##`
 direct base class                       |直接基类
 direct-initialization                   |直接初始化
 direct-list-initialization              |直接列表初始化     |直接进行的列表初始化
@@ -279,6 +291,8 @@ enclosing class                         |外围类
 enclosing namespace                     |外围命名空间
 enclosing scope                         |外围作用域
 encode                                  |编码
+encoding prefix                         |编码前缀   |`L`, `u`, `u8`, `U`
+end-of-line indicator                   |行结束指示符   |`\n`，`\r\n`，等
 endian                                  |端序
 entity                                  |实体
 entry                                   |入口       |函数，catch，代码块
@@ -293,15 +307,16 @@ equivalence                             |等价
 equivalence class                       |等价类 |正则表达式，[=a=]，匹配校排等价字符
 error                                   |错误，误差
 escape character                        |转义字符
-escape sequence                         |转义序列
+escape sequence                         |转义序列   |简单、数值、有条件转义序列
 evaluation                              |求值
 exception                               |异常
 exception handler                       |异常处理器
 exception specification                 |异常说明
 execute                                 |执行，运行
 execution agent                         |执行代理
-execution character set                 |执行字符集
+execution character set                 |执行字符集     |LC_CTYPE
 execution step                          |执行步骤
+execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化生命式
 explicit specialization                 |显式特化式
@@ -311,6 +326,7 @@ explicitly captured                     |显式俘获
 explicitly defaulted function           |显式预置的函数
 exponent                                |指数
 export declaration                      |导出声明式
+module-keyword                          |导出关键字 |预处理记号，在预处理阶段支持模块
 exported declaration                    |被导出声明式
 exposure                                |显露式
 expression                              |表达式
@@ -344,6 +360,7 @@ finite state machine                    |有限状态机     |用于实现正则
 floating conversion                     |浮点转换
 floating-integral conversion            |浮点整形转换
 floating-point                          |浮点
+floating-point literal                  |浮点字面量     |后缀：'fFlL'，十进制'eE'，十六进制'0x|0X' + 'pP'，指数部分仍为10进制
 floating-point promotion                |浮点提升
 fold expression                         |折叠表达式
 for statement                           |for 语句
@@ -390,6 +407,7 @@ global object                           |全局对象
 global scope                            |全局作用域
 global variable                         |全局变量
 glvalue                                 |泛左值
+glyph                                   |字形       |字符图形，书写效果
 goto statement                          |goto 语句
 grammar                                 |文法
 greater-than operator                   |大于运算符
@@ -403,6 +421,7 @@ handler function                        |处理函数   |`new_handler`等
 happens after                           |发生晚于
 happens before                          |发生早于
 header                                  |头文件
+header name                             |头文件名   |预处理记号，`<[~>]*>` 或 `"[~"]*"`，仅属于 `#include`，`import`，`__has_include`
 header unit                             |头文件单元 |模块
 high-order bit                          |高序位
 hosted implementation                   |宿主式实现 |在操作系统下运行
@@ -410,7 +429,7 @@ hosted implementation                   |宿主式实现 |在操作系统下运�
 #### I
 |English|中文|说明|
 |-|-|-|
-identifier                              |标识符
+identifier                              |标识符     |预处理记号，也是记号，符合 Unicode 标识符文法 XID_Start XID_Continue*
 identifier label                        |标识符标号
 IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
@@ -427,6 +446,7 @@ implicitly captured                     |隐式俘获
 implicitly declared function            |隐式声明的函数
 import                                  |导入
 import declaration                      |导入声明式
+module-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
 impose                                  |施加
 incomplete type                         |不完整类型
 incomplete-defined object type          |定义不完整的对象类型
@@ -447,9 +467,10 @@ input                                   |输入
 instance                                |实例
 instantiate                             |实例化，落实
 instantiation                           |实例化式，实例化   |模板实体落实为具体实体
-instantiation unit                      |实例化单元
+instantiation unit                      |实例化单元         |根据已翻译翻译单元中的模板表示，为程序所需要的特例生成的二进制代码
 integer                                 |整数
 integer conversion rank                 |整数转换等级
+integer literal                         |整数字面量         |后缀：符号性`u|U`，类型`l|L|ll|LL|z|Z`<br>前缀：进制`0|0b|0B|0x|0X`
 integer type                            |整数类型
 integral constant expression            |整型常量表达式
 integral conversion                     |整形转换
@@ -457,7 +478,8 @@ integral promotion                      |整形提升
 integral type                           |整型类型
 inter-thread happens before             |线程间发生早于
 interactive device                      |交互设备   |I/O 设备，可观察行为
-internal linkage                        |内部连接
+interface dependency                    |接口依赖   |被导入模块
+internal linkage                        |内部连接   |翻译单元内可见
 invalid                                 |无效，非法
 invocation                              |调用，执行
 invoke                                  |调用，执行 |多用于除函数之外的场合，如宏等
@@ -475,7 +497,7 @@ jump statement                          |跳转语句
 #### K
 |English|中文|说明|
 |-|-|-|
-keyword                                 |关键字
+keyword                                 |关键字     |无条件关键字 + `import` `export` `module`
 
 #### L
 |English|中文|说明|
@@ -490,7 +512,7 @@ layout-compatible type                  |布局兼容类型
 left shift operator                     |左移运算符
 less-than operator                      |小于运算符
 less-than-or-equal-to operator          |小于或等于运算符
-lexical                                 |词法
+lexical                                 |词法   |如何以字符构成语法记号
 library                                 |程序库
 lifetime                                |生存期
 line                                    |行，文本行
@@ -499,7 +521,10 @@ linkage                                 |连接，连接性
 linkage specification                   |连接说明
 list                                    |列表
 list-initialization                     |列表初始化
-literal                                 |字面量
+literal                                 |字面量     |字符/字符串/数值，以及自定义变体，布尔，指针
+literal operator                        |字面量运算符       |用户字面量的函数，非模板有类型化和原始两种，`operator "" X(T)`, `operator "" X(const char*)`
+literal operator template               |字面量运算符模板   |用户字面量的函数模板，数值模板和字符串模板两种，无函数形参
+literal suffix literal                  |字面量后缀         |字面量运算符（模板）中的标识符，即字面量后缀
 literal type                            |字面类型
 local                                   |局部，局部的
 local                                   |局部的
@@ -516,6 +541,7 @@ locus                                   |位点
 logical and operator                    |逻辑与运算符
 logical negation operator               |逻辑非运算符
 logical or operator                     |逻辑或运算符
+logical source line                     |逻辑源文本行   |行拼接后的结果
 low-order bit                           |低序位
 lower bound                             |下界
 lvalue                                  |左值
@@ -525,6 +551,7 @@ lvalue-to-rvalue conversion             |左值向右值转换
 |English|中文|说明|
 |-|-|-|
 macro                                   |宏
+macro invocation                        |宏调用 |代码文本中使用宏
 match                                   |匹配   |正则表达式模式与目标文本发生对应
 materialize                             |实质化
 member                                  |成员
@@ -536,6 +563,10 @@ memory management                       |内存管理
 memory model                            |内存模型
 modification order                      |改动顺序
 modifier function                       |改动函数
+module                                  |模块
+module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
+module linkage                          |模块连接   |模块内跨翻译单元可见
+module unit                             |模块单元   |模块机制支持的程序表示
 most derived class                      |全派生类
 most derived object                     |全派生对象
 move                                    |移动
@@ -564,7 +595,7 @@ namespace                               |命名空间
 namespace alias                         |命名空间别名
 namespace definition                    |命名空间定义式
 namespace scope                         |命名空间作用域
-narrow character                        |窄字符
+narrow string literal                   |窄字符串字面量 |普通和UTF-8
 necessarily reachable                   |必定可达
 nest                                    |嵌套
 nested class                            |嵌套类
@@ -572,27 +603,32 @@ nested name                             |嵌套名
 nested name specifier                   |嵌套名说明符
 nested type                             |嵌套类型
 new expression                          |new 表达式
+new-line                                |换行       |`\n`
 new operator                            |new 运算符
 no diagnostic is required               |无须诊断
 noexcept expression                     |noexcept 表达式
 noexcept function of () cv ref returning| T  T 为返回类型的 () cv ref 的 noexcept 函数
 noexcept operator                       |noexcept 运算符
 non-allocating form                     |非分配形式
+non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-throwing exception specification    |无抛出异常说明
 non-vacuous initialization              |非无为初始化
 normalized                              |正规化的
 normative                               |规范性的   |作为正式内容的文本章节或参考文献
 null                                    |空
-null character                          |空字符
+null character                          |空字符     |`'\0'`
 null member pointer conversion          |空成员指针转换
 null member pointer value               |空成员指针值
 null pointer                            |空指针
-null pointer constant                   |空指针常量
+null pointer constant                   |空指针常量 |包括`nullptr`和`0`等
 null pointer conversion                 |空指针转换
-null pointer literal                    |空指针字面量
-null pointer value                      |空指针值
+null pointer literal                    |空指针字面量   |唯一的指针字面量，`nullptr`，类型为`std::nullptr_t`
+null pointer value                      |空指针值   |具体指针类型的空指针值，二进制表示可能不为全0
 null statement                          |空语句
 null-terminated                         |空终结
+null wide character                     |空宽字符   |`L'\0'`
+numeric escape sequence                 |数值转义序列   |`\ooo`，`\hh` 八进制最多三个，十六进制无限制
+numeric literal operator template       |数值字面量运算符模板   |自定义数值字面量的通配，`<char...> T operator "" X()`
 
 #### O
 |English|中文|说明|
@@ -611,10 +647,11 @@ one-definition rule                     |单一定义规则，ODR
 opaque enum declaration                 |笼统枚举声明式
 operand                                 |操作数
 operator                                |运算符
+operator-or-punctuator                  |运算符或标点   |记号的一种，包括运算符记号和 `{}[]()...` 等和替代表示
 operator overloading                    |运算符重载
 or operator                             |或运算符
-ordinary character literal              |普通字符字面量
-ordinary string literal                 |普通字符串字面量
+ordinary character literal              |普通字符字面量     |除不可编码和多字符外，类型为 `char`，编码为执行字符集
+ordinary string literal                 |普通字符串字面量   |类型为`const char[n]`，编码为执行字符集
 output                                  |输出
 over-aligned                            |过量对齐
 overflow                                |溢出
@@ -637,6 +674,9 @@ parameter-type-list                     |形参类型列表   |函数签名
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
 partial specialization                  |部分特化，部分特化式
+phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
+physical source file character          |物理源文件字符 |根据文件编码获得的字符
+physical source line                    |物理源文本行
 placeholder                             |占位符
 placeholder type deduction              |占位符类型推断
 placement allocation function           |放置式分配函数
@@ -648,6 +688,7 @@ pointer                                 |指针
 pointer arithmetic                      |指针算术
 pointer conversion                      |指针转换
 pointer declarator                      |指针声明符
+pointer literal                         |指针字面量     |`nullptr`，类型为`std::nullptr_t`
 pointer to member                       |成员指针
 pointer to member conversion            |成员指针转换
 pointer to member declarator            |成员指针声明符
@@ -665,16 +706,21 @@ potential scope                         |潜在作用域
 potentially concurrent                  |潜在并发
 potentially evaluated                   |潜在求值的
 potentially throwing                    |潜在抛出异常的     |有能力抛出异常
-prefix                                  |前缀
+pragma                                  |语用       |预处理指令，预处理运算符
+prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符
 prefix increment operator               |前置增量运算符
 preprocess                              |预处理
 preprocessing directive                 |预处理指令
-preprocessing token                     |预处理记号
+preprocessing number                    |预处理数字 |预处理记号，`[.]? [0-9] ( [.] | [']? [0-9a-zA-Z_] | [eEpP] [-+] )*`
+preprocessing operator                  |预处理运算符       |由预处理器操作的运算符：`#`, `##`, `%:`, `%:%:`
+preprocessing operators and punctuators |预处理运算符与标点 |预处理记号，预处理运算符+运算符或标点
+preprocessing token                     |预处理记号 |预处理指令工作对象，预处理后转换为记号
 primary equivalence class               |主等价类   |校排中具有相同主排序键的字符或字符串
 primary expression                      |初等表达式
 primary sort key                        |主排序键   |校排中仅按主题字符形状分类的排序字符
 primary template                        |主模板
+primary token                           |首选记号   |代用记号所等价的记号
 private                                 |私有
 program                                 |程序
 program-defined specialization          |由程序定义的特化式
@@ -705,7 +751,8 @@ qualifier                               |限定符
 radix point                             |小数点
 range                                   |范围
 range-based for statement               |基于范围的 for 语句
-raw string literal                      |原始字符串字面量
+raw literal operator                    |原始字面量运算符   |`operator "" X(const char*)`，数值字面量的通配运算符之一
+raw string literal                      |原始字符串字面量   |避免转义等处理的字符串，分隔串用于识别边界`)`，如`R"xx()xx"`
 reachable                               |可达的
 reaching scope                          |可达作用域
 recursive function call                 |递归函数调用
@@ -735,6 +782,7 @@ requirement                             |规定，要求
 requires-clause                         |requires 子句
 reserved                                |保留的     |规定使用权属于标准或实现的名字或实体
 reserved function                       |保留函数
+reserved identifier                     |保留标识符 |`__` 开头或 `_[A-Z]` 开头的任何标识符，以及 `_` 开头的全局命名空间成员
 restriction                             |限制，要求
 resumption                              |恢复
 return                                  |返回
@@ -772,9 +820,11 @@ signature                               |签名   |名字，形参类型列表�
 signed                                  |有符号
 signed integer type                     |有符号整数类型
 similar type                            |相似类型
+simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
 sizeof operator                         |sizeof 运算符
 source character set                    |源字符集
 source file                             |源文件
+space character                         |空格字符   |` `
 specialization                          |特化式，特例   |代码结构为‘特化式’，实体为‘特例’
 specialize                              |特化
 specifier                               |说明符
@@ -785,6 +835,7 @@ standard signed integer type            |标准有符号整数类型
 standard unsigned integer type          |标准无符号整数类型
 standard-layout class                   |标准布局类
 standard-layout type                    |标准布局类型
+stateful character encoding             |有状态字符编码
 statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
@@ -805,6 +856,9 @@ strict partial order                    |严格偏序，拟序 |反自反，反�
 strict total order                      |严格全序   |具有完全性的严格偏序，完整的 <
 strict weak order                       |严格弱序   |连通的严格偏序，不可比较关系为等价关系，如 <
 string                                  |字符串
+string literal                          |字符串字面量   |预处理记号，也是记号，编码前缀，数组（常量左值）
+string literal operator template        |字符串字面量运算符模板 |`template<A a> A operator "" X()`，`A` 为支持字符串的字面量类型
+stringize                               |字符串化       |预处理功能，获得预处理记号的字面量，`#a` -> `"a"`
 struct                                  |结构体
 structure tag                           |结构体标签
 structured binding declaration          |结构化绑定声明式
@@ -814,6 +868,8 @@ subnormal                               |次正规的
 subobject                               |子对象
 subscript operator                      |下标运算符
 substatement                            |子语句
+suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
+surrogate code point                    |代用代码点 |UCS 代用字符的代码点，为 UTF16 用于编码高值字符，D800-DFFF
 suspension                              |暂停
 switch statement                        |switch 语句
 synchronization                         |同步
@@ -848,7 +904,8 @@ thread storage duration                 |线程存储期
 thread_local specifier                  |thread_local 说明符
 thread-local variable                   |线程局部变量
 throw                                   |抛出
-token                                   |记号
+token                                   |记号       |编译器理解的语法元素：标识符，关键字，字面量，运算符或标点
+token concatenation                     |记号拼接   |预处理功能，`a ## b` -> `ab`
 top-level cv-qualifier                  |顶层 cv 限定符
 total order                             |全序，非严格全序，线序 |具有完全性的偏序，完整的 <=
 traceable pointer                       |可追踪指针
@@ -856,8 +913,9 @@ trailing requires-clause                |尾部 requires 子句 |模板函数
 trailing return type                    |尾部返回类型
 traits class                            |特征类     |提供与某个主类型形参有关的静态自定义能力，模板类
 translate                               |翻译       |编译
+translated translation unit             |已翻译的翻译单元   |非模板的二进制代码，模板的二进制表示
 translation phase                       |翻译阶段
-translation unit                        |翻译单元
+translation unit                        |翻译单元   |预处理后的完整文件
 trivial class                           |平凡类
 trivial copy constructor                |平凡复制构造函数
 trivial default constructor             |平凡默认构造函数
@@ -880,6 +938,7 @@ typename specifier                      |typename 说明符
 |English|中文|说明|
 |-|-|-|
 UCS, Universal Multiple-Octet Coded Character Set   |UCS，通用字符集，通用多八位编码字符集
+ud-suffix                               |ud-后缀    |用户定义字面量后缀，用于查找字面量运算符（模板）函数
 unary                                   |一元
 unary fold                              |一元折叠
 unary left fold                         |一元左折叠
@@ -896,7 +955,7 @@ unexpanded parameter pack               |未展开形参包组
 Unicode                                 |Unicode，统一码
 union                                   |联合体
 union-like class                        |类似联合体的类
-universal character name                |通用字符名
+universal character name                |UCN，通用字符名    |概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 unnamed class                           |无名类
 unnamed enumeration                     |无名枚举
 unnamed namespace                       |无名命名空间
@@ -911,11 +970,19 @@ unspecified behavior                    |未指明的行为   |多种允许可�
 upper bound                             |上界
 user provided function                  |用户提供的函数
 user-declared                           |用户声明的
+user-defined character literal          |用户定义字符字面量     |预处理记号，记号，字符字面量+后缀，类型运算符 `operator "" X(Tchar t)`
 user-defined conversion                 |用户定义转换
-user-defined literal                    |用户定义字面量
+user-defined floating-point literal     |用户定义浮点字面量     |无后缀浮点字面量+自定义后缀，先类型后通配，类型运算符只支持`long double`
+user-defined integer literal            |用户定义整数字面量     |无后缀整数字面量+自定义后缀，先类型后通配，类型运算符只支持`unsigned long long`
+user-defined literal                    |用户定义字面量         |数值/字符/字符串字面量+字面量后缀，字面量运算符（模板）函数
+user-defined string literal             |用户定义字符串字面量   |预处理记号，记号，字符串字面量+后缀，支持字符串拼接，先模板后非模板`operator "" X(const Tchar*, size_t)`
 using declaration                       |using 声明式
 using directive                         |using 指令
 usual arithmetic conversions            |一般算术转换
+UTF, Unicode Transformation Format      |UTF，Unicode 转换格式
+UTF-8 string literal                    |UTF-8 字符串字面量     |前缀为`u8`，类型为`const char8_t[n]`
+UTF-16 string literal                   |UTF-16 字符串字面量    |前缀为`u`，类型为`const char16_t[n]`
+UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为`U`，类型为`const char32_t[n]`
 
 #### V
 |English|中文|说明|
@@ -950,8 +1017,11 @@ volatile                                |易失的     |免除编译器优化，
 weak order                              |弱序   |自反，传递，连通，不要求反对称性，如某些 <=
 well-formed                             |良构的     |语法和语义没有问题的代码
 while statement                         |while 语句
-whitespace                              |空白，空格
+whitespace                              |空白       |空白字符和注释
+whitespace character                    |空白字符   |` `, `\t`, `\v`, `\f`, `\n`, `\r` 等
 wide character                          |宽字符
+wide character literal                  |宽字符字面量   |类型为 `wchar_t`，除不可编码和多字符外，编码为执行宽字符
+wide string literal                     |宽字符串字面量 |类型为 `const wchar_t[n]`，编码为执行宽字符
 
 #### X
 |English|中文|说明|
