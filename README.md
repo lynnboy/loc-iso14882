@@ -153,7 +153,7 @@ composite pointer type                  |组合指针类型
 compound assignment expression          |复合赋值表达式
 compound assignment operator            |复合赋值运算符
 compound statement                      |复合语句   |块语句，语句块，花括号
-compound type                           |复合类型
+compound type                           |复合类型   |
 concept                                 |概念
 concurrency                             |并发性
 concurrent                              |并发的
@@ -218,7 +218,7 @@ data type                               |数据类型
 deallocate                              |回收
 deallocation function                   |回收函数
 decay                                   |退化
-declaration                             |声明式，声明   |代码结构称为‘声明式’
+declaration                             |声明式，声明   |代码结构称为‘声明式’，引入实体的名字，类型和编译期存在性
 declaration statement                   |声明语句
 declarative region                      |声明区
 declarator                              |声明符
@@ -238,7 +238,7 @@ default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
 defaulted function                      |预置函数
 define                                  |定义
-definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’
+definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
 delegating constructor                  |委派构造函数
 delete                                  |删除
 delete expression                       |delete 表达式
@@ -294,7 +294,7 @@ encode                                  |编码
 encoding prefix                         |编码前缀   |`L`, `u`, `u8`, `U`
 end-of-line indicator                   |行结束指示符   |`\n`，`\r\n`，等
 endian                                  |端序
-entity                                  |实体
+entity                                  |实体       |值、对象、引用、结构化绑定、函数、枚举符、类型、类成员、位字段、模板、模板特例、命名空间、包组
 entry                                   |入口       |函数，catch，代码块
 enumeration                             |枚举
 enumeration scope                       |枚举作用域
@@ -395,7 +395,7 @@ function try block                      |函数 try 块
 function-like macro                     |函数式宏
 function-to-pointer conversion          |函数向指针转换
 fundamental alignment                   |基础对齐
-fundamental type                        |基础类型
+fundamental type                        |基础类型       |
 
 #### G
 |English|中文|说明|
@@ -586,7 +586,7 @@ mutex                                   |互斥体
 #### N
 |English|中文|说明|
 |-|-|-|
-name                                    |名字
+name                                    |名字       |标识符、运算符函数标识、字面量运算符标识、转换函数标识
 name hiding                             |名字隐藏
 name lookup                             |名字查找
 name mangling                           |名字重整
@@ -990,7 +990,7 @@ UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为
 valid                                   |有效，合法
 valid but unspecified state             |有效但未指明的状态     |被移动后的状态
 value                                   |值
-value category                          |值类别
+value category                          |值类别     |glvalue: lvalue, xvalue; rvalue: xvalue, prvalue
 value computation                       |值计算
 value representation                    |值表示
 value-initialize                        |值初始化
