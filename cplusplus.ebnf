@@ -1,5 +1,5 @@
 /* comment */
-// #region A.2 Keywords
+// #region [gram.key] A.2 Keywords
 typedef_name ::=
     identifier
   | simple_template_id
@@ -17,12 +17,14 @@ template_name ::=
     identifier
 // #endregion
 
-// #region A.3 Lexical conventions
+// #region [gram.lex] A.3 Lexical conventions
 hex_quad ::=
     hexadecimal_digit hexadecimal_digit hexadecimal_digit hexadecimal_digit
 universal_character_name ::=
     '\u' hex_quad
   | '\U' hex_quad hex_quad
+  /* [ wfc: code_point - surrogate_code_point WITHIN ( character_literal | string_literal ) */
+  /* [ wfc: code_point - ( surrogate_code_point | surrogate_code_point | basic_source_character_set | control_character ) */
 preprocessing_token ::=
     header_name
   | import_keyword
@@ -35,8 +37,8 @@ preprocessing_token ::=
   | string_literal
   | user_defined_string_literal
   | preprocessing_op_or_punc
-  | universal_character_name [wfc: cannot be one of above]
-  | non_whitespace [wfc: cannot be one of above]
+  | universal_character_name /* [wfc: cannot be one of above] */
+  | non_whitespace /* [wfc: cannot be one of above] */
 token ::=
     identifier
   | keyword
@@ -49,12 +51,12 @@ h_char_sequence ::=
     h_char
   | h_char_sequence h_char
 h_char ::=
-    source_character_set - '>' - #xA
+    source_character_set - ('>' | new_line)
 q_char_sequence ::=
     q_char
   | q_char_sequence q_char
 q_char ::=
-    source_character_set - '"' - #xA
+    source_character_set - ('"' | new_line)
 pp_number ::=
     digit
   | '.' digit
@@ -247,7 +249,7 @@ r_char_sequence ::=
     r_char
   | r_char_sequence r_char
 r_char ::=
-    source_character_set - ( ')' d_char_sequence '"') [wfc: d_char_sequence must match]
+    source_character_set - ( ')' d_char_sequence '"') /* [wfc: d_char_sequence must match] */
 d_char_sequence ::=
     d_char
   | d_char_sequence d_char
@@ -281,13 +283,13 @@ ud_suffix ::=
     identifier
 // #endregion
 
-// #region A.4 Basic
+// #region [gram.basic] A.4 Basic
 translation_unit ::=
     declaration_seq?
   | global_module_fragment? module_declaration declaration_seq? private_module_fragment?
 // #endregion
 
-// #region A.5 Expressions
+// #region [gram.expr] A.5 Expressions
 primary_expression ::=
     literal
   | 'this'
@@ -507,7 +509,7 @@ constant_expression ::=
     conditional_expression
 // #endregion
 
-// #region A.6 Statements
+// #region [gram.stmt] A.6 Statements
 statement ::=
     labeled_statement
   | attribute_specifier_seq? expression_statement
@@ -562,7 +564,7 @@ declaration_statement ::=
     block_declaration
 // #endregion
 
-// #region A.7 Declarations
+// #region [gram.dcl] A.7 Declarations
 declaration_seq ::=
     declaration
   | declaration_seq declaration
@@ -884,14 +886,312 @@ balanced_token ::=
     '(' balanced_token_seq? ')'
   | '[' balanced_token_seq? ']'
   | '{' balanced_token_seq? '}'
-  | ( token - '(' - ')' - '[' - ']' - '{' - '}' )
+  | token - ('(' | ')' | '[' | ']' | '{' | '}' )
+// #endregion
+
+// #region [gram.module] A.8 Modules
+module_declaration ::=
+    export_keyword? module_keyword module_name module_partition? attribute_specifier_seq? ';'
+module_name ::=
+    module_name_qualifier? identifier
+module_partition ::=
+    ':' module_name_qualifier? identifier
+module_name_qualifier ::=
+    identifier '.'
+  | module_name_qualifier identifier '.'
+export_declaration ::=
+    'export' declaration
+  | 'export' '{' declaration_seq? '}'
+  | export_keyword module_import_declaration
+module_import_declaration ::=
+    import_keyword module_name attribute_specifier_seq? ';'
+  | import_keyword module_partition attribute_specifier_seq? ';'
+  | import_keyword header_name attribute_specifier_seq? ';'
+global_module_fragment ::=
+    module_keyword ';' declaration_seq?
+private_module_fragment ::=
+    module_keyword ':' 'private' ';' declaration_seq?
+// #endregion
+
+// #region [gram.class] A.9 Classes
+class_name ::=
+    identifier
+  | simple_template_id
+class_specifier ::=
+    class_head '{' member_specification? '}'
+class_head ::=
+    class_key attribute_specifier_seq? class_head_name class_virt_specifier? base_clause?
+  | class_key attribute_specifier_seq? base_clause?
+class_head_name ::=
+    nested_name_specifier? class_name
+class_virt_specifier ::=
+    'final'
+class_key ::=
+    'class'
+  | 'struct'
+  | 'union'
+member_specification ::=
+    member_declaration member_specification?
+  | access_specifier ':' member_specification?
+member_declaration ::=
+    attribute_specifier_seq? decl_specifier_seq? member_declarator_list? ';'
+  | function_definition
+  | using_declaration
+  | using_enum_declaration
+  | static_assert_declaration
+  | template_declaration
+  | explicit_specialization
+  | deduction_guide
+  | alias_declaration
+  | opaque_enum_declaration
+  | empty_declaration
+member_declarator_list ::=
+    member_declarator
+  | member_declarator_list ',' member_declarator
+member_declarator ::=
+    declarator virt_specifier_seq? pure_specifier?
+  | declarator requires_clause
+  | declarator brace_or_equal_initializer?
+  | identifier? attribute_specifier_seq? ':' constant_expression brace_or_equal_initializer?
+virt_specifier_seq ::=
+    virt_specifier
+  | virt_specifier_seq virt_specifier
+virt_specifier ::=
+    'override'
+  | 'final'
+pure_specifier ::=
+    '=' '0'
+conversion_function_id ::=
+    'operator' conversion_type_id
+conversion_type_id ::=
+    type_specifier_seq conversion_declarator?
+conversion_declarator ::=
+    ptr_operator conversion_declarator?
+base_clause ::=
+    ':' base_specifier_list
+base_specifier_list ::=
+    base_specifier '...'?
+  | base_specifier_list ',' base_specifier '...'?
+base_specifier ::=
+    attribute_specifier_seq? class_or_decltype
+  | attribute_specifier_seq? 'virtual' access_specifier? class_or_decltype
+  | attribute_specifier_seq? access_specifier 'virtual'? class_or_decltype
+class_or_decltype ::=
+    nested_name_specifier? type_name
+  | nested_name_specifier 'template' simple_template_id
+  | decltype_specifier
+access_specifier ::=
+    'private'
+  | 'protected'
+  | 'public'
+ctor_initializer ::=
+    ':' mem_initializer_list
+mem_initializer_list ::=
+    mem_initializer '...'?
+  | mem_initializer_list ',' mem_initializer '...'?
+mem_initializer ::=
+    mem_initializer_id '(' expression_list? ')'
+  | mem_initializer_id braced_init_list
+mem_initializer_id ::=
+    class_or_decltype
+  | identifier
+// #endregion
+
+// #region [gram.over] A.10 Overloading
+operator_function_id ::=
+    'operator' operator
+operator ::=
+    'new' | 'delete' | 'new' '[' ']' | 'delete' '[' ']' | 'co_await' | '(' ')' | '[' ']' | '->' | '->*'
+  | '~'  | '!'  | '+'  | '-'   | '*'   | '/'  | '%'  | '^'   | '&'
+  | '~=' | '='  | '+=' | '-='  | '*='  | '/=' | '%=' | '^='  | '&='
+  | '|=' | '==' | '!=' | '<'   | '>'   | '<=' | '>=' | '<=>' | '&&'
+  | '||' | '<<' | '>>' | '<<=' | '>>=' | '++' | '--' | ','
+literal_operator_id ::=
+    'operator' string_literal identifier
+  | 'operator' user_defined_string_literal
+// #endregion
+
+// #region [gram.temp] A.11 Templates
+template_declaration ::=
+    template_head declaration
+  | template_head concept_definition
+template_head ::=
+    'template' '<' template_parameter_list '>' requires_clause?
+template_parameter_list ::=
+    template_parameter
+  | template_parameter_list ',' template_parameter
+requires_clause ::=
+    'requires' constraint_logical_or_expression
+constraint_logical_or_expression ::=
+    constraint_logical_and_expression
+  | constraint_logical_or_expression '||' constraint_logical_and_expression
+constraint_logical_and_expression ::=
+    primary_expression
+  | constraint_logical_and_expression '&&' primary_expression
+template_parameter ::=
+    type_parameter
+  | parameter_declaration
+type_parameter ::=
+    type_parameter_key '...'? identifier?
+  | type_parameter_key identifier? '=' type_id
+  | type_constraint '...'? identifier?
+  | type_constraint identifier? '=' type_id
+  | template_head type_parameter_key '...'? identifier?
+  | template_head type_parameter_key identifier? '=' id_expression
+type_parameter_key ::=
+    'class'
+  | 'typename'
+type_constraint ::=
+    nested_name_specifier? concept_name
+  | nested_name_specifier? concept_name '<' template_argument_list? '>'
+simple_template_id ::=
+    template_name '<' template_argument_list? '>'
+template_id ::=
+    simple_template_id
+  | operator_function_id '<' template_argument_list? '>'
+  | literal_operator_id '<' template_argument_list? '>'
+template_name ::=
+    identifier
+template_argument_list ::=
+    template_argument '...'?
+  | template_argument_list ',' template_argument '...'?
+template_argument ::=
+    constant_expression
+  | type_id
+  | id_expression
+constraint_expression ::=
+    logical_or_expression
+deduction_guide ::=
+    explicit_specifier? template_name '(' parameter_declaration_clause ')' '->' simple_template_id ';'
+concept_definition ::=
+    'concept' concept_name '=' constraint_expression ';'
+concept_name ::=
+    identifier
+typename_specifier ::=
+    'typename' nested_name_specifier identifier
+  | 'typename' nested_name_specifier 'template'? simple_template_id
+explicit_instantiation ::=
+    'extern'? 'template' declaration
+explicit_specialization ::=
+    'template' '<' '>' declaration
+// #endregion
+
+// #region [gram.except] A.12 Exception handling
+try_block ::=
+    'try' compound_statement handler_seq
+function_try_block ::=
+    'try' ctor_initializer? compound_statement handler_seq
+handler_seq ::=
+    handler handler_seq?
+handler ::=
+    'catch' '(' exception_declaration ')' compound_statement
+exception_declaration ::=
+    attribute_specifier_seq? type_specifier_seq declarator
+  | attribute_specifier_seq? type_specifier_seq abstract_declarator?
+  | '...'
+noexcept_specifier ::=
+    'noexcept' '(' constant_expression ')'
+  | 'noexcept'
+// #endregion
+
+// #region [gram.cpp] A.13 Preprocessing directives
+preprocessing_file ::=
+    group?
+  | module_file
+module_file ::=
+    pp_global_module_fragment? pp_module group? pp_private_module_fragment?
+pp_global_module_fragment ::=
+    'module' ';' new_line group?
+pp_private_module_fragment ::=
+    'module' ':' 'private' ';' new_line group?
+group ::=
+    group_part
+  | group group_part
+group_part ::=
+    control_line
+  | if_section
+  | text_line
+  | '#' conditionally_supported_directive
+control_line ::=
+    '#' 'include' pp_tokens new_line
+  | pp_import
+  | '#' 'define' identifier replacement_list new_line
+  | '#' 'define' identifier lparen identifier_list? ')' replacement_list new_line
+  | '#' 'define' identifier lparen '...' ')' replacement_list new_line
+  | '#' 'define' identifier lparen identifier_list ',' '...' ')' replacement_list new_line
+  | '#' 'undef'  identifier new_line
+  | '#' 'line'   pp_tokens new_line
+  | '#' 'error'  pp_tokens? new_line
+  | '#' 'pragma' pp_tokens? new_line
+  | '#' new_line
+if_section ::=
+    if_group elif_groups? else_group? endif_line
+if_group ::=
+    '#' 'if' constant_expression new_line group?
+  | '#' 'ifdef' identifier new_line group?
+  | '#' 'ifndef' identifier new_line group?
+elif_groups ::=
+    elif_group
+  | elif_groups elif_group
+elif_group ::=
+    '#' 'elif' constant_expression new_line group?
+else_group ::=
+    '#' 'else' new_line group?
+endif_line ::=
+    '#' 'endif' new_line
+text_line ::=
+    pp_tokens? new_line
+conditionally_supported_directive ::=
+    pp_tokens new_line
+lparen ::=
+    '(' [wfc: not immediately preceded by whitespace]
+identifier_list ::=
+    identifier
+  | identifier_list ',' identifier
+replacement_list ::=
+    pp_tokens?
+pp_tokens ::=
+    preprocessing_token
+  | pp_tokens preprocessing_token
+new_line ::=
+    #xA
+defined_macro_expression ::=
+    'defined' identifier
+  | 'defined' '(' identifier ')'
+h_preprocessing_token ::=
+    preprocessing_token - '>'
+h_pp_tokens ::=
+    h_preprocessing_token
+  | h_pp_tokens h_preprocessing_token
+header_name_tokens ::=
+    string_literal
+  | '<' h_pp_tokens '>'
+has_include_expression ::=
+    '__has_include' '(' header_name ')'
+  | '__has_include' '(' header_name_tokens ')'
+has_attribute_expression ::=
+    '__has_cpp_attribute' '(' pp_tokens ')'
+pp_module ::=
+    'export'? 'module' pp_tokens? ';' new_line
+pp_import ::=
+    'export'? 'import' header_name pp_tokens? ';' new_line
+  | 'export'? 'import' header_name_tokens pp_tokens? ';' new_line
+  | 'export'? 'import' pp_tokens? ';' new_line
+va_opt_replacement ::=
+    '__VA_OPT__' '(' pp_tokens? ')'
 // #endregion
 
 // #region Misc
-new_line ::= #xA
+physical_source_character ::= [ ] | [^ ] // TODO, phase 1
+code_point ::= [#x0-#x10FFFF]
+surrogate_code_point ::= [#xD800-#xDFFF]
+control_character ::= [#x0-#x1F] | [#x7F-#x9F]
 basic_source_character_set ::= [a-zA-Z0-9_{}#()<>%:;.?*+/^&|~!=,\"'-] | '[' | ']' | whitespace // 96 in total
-source_character_set ::= [ ] | [^ ] // TODO
+end_of_line ::= #xD? #xA | #xD // may have other Unicode line terminator: NextLine #x85, LineSeparator #x2028, ParagraphSeparator #x2029
+source_character_set ::=    // phase 2
+    basic_source_character_set
+  | universal_character_name - end_of_line
+
 whitespace ::= [#x20#x9#xA#xB#xC] // space, h tab, nl, v tab, ff (no cr after phase 1)
 non_whitespace ::= [^#x20#x9#xA#xB#xC#xD]
-
 // #endregion
