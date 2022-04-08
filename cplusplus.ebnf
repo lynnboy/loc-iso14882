@@ -26,7 +26,7 @@ universal_character_name ::=
   /* [ wfc: code_point - surrogate_code_point WITHIN ( character_literal | string_literal ) */
   /* [ wfc: code_point - ( surrogate_code_point | surrogate_code_point | basic_source_character_set | control_character ) */
 preprocessing_token ::=
-    header_name
+    header_name [wfc: after macro expansion, only appear in #include directive, __has_include expr, or import token]
   | import_keyword
   | module_keyword
   | export_keyword
@@ -38,7 +38,7 @@ preprocessing_token ::=
   | user_defined_string_literal
   | preprocessing_op_or_punc
   | universal_character_name /* [wfc: cannot be one of above] */
-  | non_whitespace /* [wfc: cannot be one of above] */
+  | non_whitespace_character /* [wfc: cannot be one of above] */
 token ::=
     identifier
   | keyword
@@ -71,6 +71,7 @@ pp_number ::=
 identifier ::=
     identifier_start
   | identifier identifier_continue
+  [wfc: should conform to ISO10646 NFC]
 identifier_start ::=
     nondigit
   | universal_character_name [wfc: of class XID_Start]
@@ -128,6 +129,7 @@ integer_literal ::=
   | octal_literal integer_suffix?
   | decimal_literal integer_suffix?
   | hexadecimal_literal integer_suffix?
+  [wfc: value should be representable by allowed type]
 binary_literal ::=
     '0b' binary_digit
   | '0B' binary_digit
@@ -170,6 +172,7 @@ size_suffix ::=
     [zZ]
 character_literal ::=
     encoding_prefix? "'" c_char_sequence "'"
+    [vc: non-encodable or multichar literal with no prefix or L, type int/wchar_t]
 encoding_prefix ::=
     'u8' | 'u' | 'U' | 'L'
 c_char_sequence ::=
@@ -192,6 +195,8 @@ simple_escape_sequence_char ::=
 numeric_escape_sequence ::=
     octal_escape_sequence
   | hexadecimal_escape_sequence
+  [wfc: value representable by type]
+  [wfc: no prefix or L: value representable by underlying type (modulo 2)]
 octal_escape_sequence ::=
     '\' octal_digit
   | '\' octal_digit octal_digit
@@ -206,6 +211,7 @@ conditional_escape_sequence_char ::=
 floating_point_literal ::=
     decimal_floating_point_literal
   | hexadecimal_floating_point_literal
+  [wfc: scaled value should in representable range of type]
 decimal_floating_point_literal ::=
     fractional_constant exponent_part? floating_point_suffix?
   | digit_sequence exponent_part floating_point_suffix?
@@ -254,7 +260,7 @@ d_char_sequence ::=
     d_char
   | d_char_sequence d_char
 d_char ::=
-    basic_source_character_set - ( whitespace | '(' | ')' | '\' )
+    basic_source_character_set - ( whitespace_character | '(' | ')' | '\' )
 boolean_literal ::=
     'false'
   | 'true'
@@ -1144,7 +1150,7 @@ text_line ::=
 conditionally_supported_directive ::=
     pp_tokens new_line
 lparen ::=
-    '(' [wfc: not immediately preceded by whitespace]
+    '(' [wfc: not immediately preceded by whitespace_character]
 identifier_list ::=
     identifier
   | identifier_list ',' identifier
@@ -1182,16 +1188,33 @@ va_opt_replacement ::=
 // #endregion
 
 // #region Misc
+// phase 1: source character set, eol (char level)
+// phase 2: line splicing (char level)
+// phase 3: parse to pp-tokens, handle raw strings (char level)
+// phase 4: preprocessing (pp-token level)
+// phase 5: encode chars in char/string literals (pp-token level)
+// phase 6: concate string literals (pp-token level)
+// phase 7: token AST, sem check, translated TU (token level)
+// phase 8: link, instantiation unit
+// phase 9: link with library
 physical_source_character ::= [ ] | [^ ] // TODO, phase 1
 code_point ::= [#x0-#x10FFFF]
 surrogate_code_point ::= [#xD800-#xDFFF]
 control_character ::= [#x0-#x1F] | [#x7F-#x9F]
-basic_source_character_set ::= [a-zA-Z0-9_{}#()<>%:;.?*+/^&|~!=,\"'-] | '[' | ']' | whitespace // 96 in total
+basic_source_character_set ::= [a-zA-Z0-9_{}#()<>%:;.?*+/^&|~!=,\"'-] | '[' | ']' | whitespace_character // 96 in total
 end_of_line ::= #xD? #xA | #xD // may have other Unicode line terminator: NextLine #x85, LineSeparator #x2028, ParagraphSeparator #x2029
 source_character_set ::=    // phase 2
     basic_source_character_set
   | universal_character_name - end_of_line
-
-whitespace ::= [#x20#x9#xA#xB#xC] // space, h tab, nl, v tab, ff (no cr after phase 1)
-non_whitespace ::= [^#x20#x9#xA#xB#xC#xD]
+line_splice ::= '\' (whitespace_character - new_line)* new_line  // phase 2
+physical_source_line ::= source_character_set* // phase 2
+logical_source_line ::= (source_character_set* - line_splice) new_line // phase 3
+logical_source_line ::= (preprocessing_token whitespace*)* new_line // phase 3
+whitespace_character ::= [#x20#x9#xA#xB#xC] // space, h tab, nl, v tab, ff (no cr after phase 1)
+whitespace ::= whitespace_character | comment
+non_whitespace_character ::= [^#x20#x9#xA#xB#xC#xD]
+reserved_identifier ::= '_' [A-Z] identifier_continue* | '_' '_' identifier_continue
+reserved_global_identifier ::= '_' identifier_continue*
+concatenated_string_literal ::= string_literal+
+  [wfc: all encoding_prefix should be same or omitted]
 // #endregion
