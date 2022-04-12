@@ -89,13 +89,13 @@ binary left fold                        |二元左折叠
 binary operator                         |二元运算符
 binary right fold                       |二元右折叠
 bit                                     |位
-bit-field                               |位字段
+bit-field                               |位字段         |一种实体
 bitwise and operator                    |按位与运算符
 bitwise negation operator               |按位反运算符
 bitwise or operator                     |按位或运算符
 bitwise xor operator                    |按位亦或运算符
 block                                   |1. 代码块 <br>2. 阻塞
-block declaration                       |块声明式
+block-declaration                       |块声明式       |可作为语句的声明式：声明变量或函数的，引入现有实体名字或类型前向声明的，执行运算的（asm、静态断言），不包括空声明式，不允许函数定义和模板
 block scope                             |块作用域
 block statement                         |块语句
 boolean                                 |布尔
@@ -110,7 +110,7 @@ byte                                    |字节
 |-|-|-|
 cache                                   |高速缓存
 call                                    |调用
-capture                                 |俘获
+capture                                 |俘获，俘获符   |俘获符：语法结构，代表闭包数据成员，可指定初始化
 capture by copy                         |按复制俘获
 captured by reference                   |按引用俘获
 carry a dependency to                   |传递依赖给
@@ -127,11 +127,11 @@ class                                   |类
 class declaration                       |类声明式
 class definition                        |类定义式
 class granding friendship               |授予友元关系
-class member                            |类成员
+class member                            |类成员         |一种实体
 class member access expression          |类成员访问表达式
 class member access operator            |类成员访问运算符
 class scope                             |类作用域
-class specifier                         |类说明符
+class-specifier                         |类说明符   |类的定义体
 class template deduction                |类模板推断
 class template                          |类模板
 clause                                  |子句
@@ -157,6 +157,7 @@ compound type                           |复合类型   |
 concept                                 |概念
 concurrency                             |并发性
 concurrent                              |并发的
+condition                               |条件       |语法结构：if/while/switch/for中的条件部分，可以声明变量
 conditional escape sequence             |有条件转义序列 |编译器实现支持的其他单字符转移序列
 conditional expression                  |条件表达式
 conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等
@@ -281,7 +282,7 @@ dynamic type                            |动态类型       |纯右值的动态�
 |English|中文|说明|
 |-|-|-|
 ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制造商协会
-elaborated type specifier               |详述类型说明符
+elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明
 element                                 |元素
 eligible special member function        |合格的特殊成员函数
 empty declaration                       |空声明
@@ -298,9 +299,9 @@ entity                                  |实体       |值、对象、引用、�
 entry                                   |入口       |函数，catch，代码块
 enumeration                             |枚举
 enumeration scope                       |枚举作用域
-enumeration specifier                   |枚举说明符
 enumeration type                        |枚举类型
-enumerator                              |枚举符
+enumerator                              |枚举符     |一种实体，类型化具名常量值
+enum-specifier                          |枚举说明符 |枚举的定义体
 equality                                |相等
 equality operator                       |相等运算符
 equivalence                             |等价
@@ -310,6 +311,7 @@ escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
 evaluation                              |求值
 exception                               |异常
+exception-declaration                   |异常声明式 |catch中的异常变量声明式，仅支持一个异常，支持省略号，不支持默认值，不支持占位符？
 exception handler                       |异常处理器
 exception specification                 |异常说明
 execute                                 |执行，运行
@@ -363,6 +365,7 @@ floating-point                          |浮点
 floating-point literal                  |浮点字面量     |后缀：'fFlL'，十进制'eE'，十六进制'0x|0X' + 'pP'，指数部分仍为10进制
 floating-point promotion                |浮点提升
 fold expression                         |折叠表达式
+for-range-declaration                   |for-范围声明式 |范围式for语句的变量声明式
 for statement                           |for 语句
 format specifier                        |格式说明符     |正则表达式中被替换部分的格式说明
 forward declaration                     |前置声明式
@@ -375,7 +378,7 @@ friend class                            |友元类
 friend function                         |友元函数
 friend specifier                        |friend 说明符
 full-expression                         |全表达式
-function                                |函数
+function                                |函数           |一种实体，不是对象
 function body                           |函数体
 function call expression                |函数调用表达式
 function call operator                  |函数调用运算符
@@ -455,10 +458,11 @@ indeterminately sequenced               |未定顺序的
 indirect base class                     |间接基类
 indirection operator                    |间接运算符
 inequality operator                     |不相等运算符
+init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
 initialization                          |初始化
 initialize                              |初始化
 initializer                             |初始化式
-injected class name                     |注入类名
+injected-class-name                     |注入类名       |当做成员名的类名
 inline function                         |内联函数
 inline namespace                        |内联命名空间
 inline specifier                        |inline 说明符
@@ -527,9 +531,8 @@ literal operator template               |字面量运算符模板   |用户字�
 literal suffix literal                  |字面量后缀         |字面量运算符（模板）中的标识符，即字面量后缀
 literal type                            |字面类型
 local                                   |局部，局部的
-local                                   |局部的
 local class                             |局部类
-local class                             |局部类
+local entity                            |局部实体           |自动变量，自动变量的结构化绑定，*this
 local lambda expression                 |局部 lambda 表达式
 local scope                             |局部作用域
 local variable                          |局部变量
@@ -555,6 +558,7 @@ macro invocation                        |宏调用 |代码文本中使用宏
 match                                   |匹配   |正则表达式模式与目标文本发生对应
 materialize                             |实质化
 member                                  |成员
+member-declaration                      |成员声明式 |可以作为类成员的声明式：比块声明式多出空声明式、模板、函数定义、位字段，支持成员函数特有的语言特性，不支持结构化绑定，不支持成员变量占位符类型
 member function                         |成员函数
 member type                             |成员类型
 memory                                  |内存
@@ -588,10 +592,10 @@ mutex                                   |互斥体
 |-|-|-|
 name                                    |名字       |标识符、运算符函数标识、字面量运算符标识、转换函数标识
 name hiding                             |名字隐藏
-name lookup                             |名字查找
+name lookup                             |名字查找   |遇到名字时确定其含义
 name mangling                           |名字重整
 named                                   |具名的
-namespace                               |命名空间
+namespace                               |命名空间       |一种实体，名字的层级管理设施
 namespace alias                         |命名空间别名
 namespace definition                    |命名空间定义式
 namespace scope                         |命名空间作用域
@@ -633,7 +637,7 @@ numeric literal operator template       |数值字面量运算符模板   |自�
 #### O
 |English|中文|说明|
 |-|-|-|
-object                                  |对象
+object                                  |对象       |一种实体
 object expression                       |对象表达式
 object model                            |对象模型
 object pointer type                     |对象指针类型
@@ -644,7 +648,7 @@ observer function                       |探察函数
 obstruction-free                        |无阻碍
 odr-used                                |ODR 式使用
 one-definition rule                     |单一定义规则，ODR
-opaque enum declaration                 |笼统枚举声明式
+opaque-enum-declaration                 |笼统枚举声明式 |不声明枚举符，但指定底层类型，完整的前向声明
 operand                                 |操作数
 operator                                |运算符
 operator-or-punctuator                  |运算符或标点   |记号的一种，包括运算符记号和 `{}[]()...` 等和替代表示
@@ -665,10 +669,12 @@ overrider                               |覆盖函数
 #### P
 |English|中文|说明|
 |-|-|-|
+pack                                    |包组           |一种实体，概念上类似`tuple`，用于`...`
 pack expansion                          |包组展开式
 pair                                    |对偶
 parallel                                |并行的
 parameter                               |形参，形式参数 |函数，catch，函数式宏，模板
+parameter-declaration                   |形参声明式     |函数、lambda、推断导引、模板、requires（不支持默认实参、省略号和占位符推断？）
 parameter pack                          |形参包组
 parameter-type-list                     |形参类型列表   |函数签名
 parenthesized expression                |带括号表达式
@@ -757,7 +763,7 @@ reachable                               |可达的
 reaching scope                          |可达作用域
 recursive function call                 |递归函数调用
 ref-qualifier                           |引用限定符 |函数类型，成员函数的 & 或 &&
-reference                               |引用
+reference                               |引用       |一种实体，不是对象，别名
 reference declarator                    |引用声明符
 reference to cv T                       |cv T 的引用
 reference to T                          |T 的引用，指代 T 的引用
@@ -820,6 +826,7 @@ signature                               |签名   |名字，形参类型列表�
 signed                                  |有符号
 signed integer type                     |有符号整数类型
 similar type                            |相似类型
+simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
 sizeof operator                         |sizeof 运算符
 source character set                    |源字符集
@@ -861,7 +868,8 @@ string literal operator template        |字符串字面量运算符模板 |`tem
 stringize                               |字符串化       |预处理功能，获得预处理记号的字面量，`#a` -> `"a"`
 struct                                  |结构体
 structure tag                           |结构体标签
-structured binding declaration          |结构化绑定声明式
+structured binding                      |结构化绑定     |实体的一种，一组变量的语法糖
+structured binding declaration          |结构化绑定声明式   |`[]`语法的简单声明式
 sub-expression                          |子表达式   |正则表达式：括号标记的部分
 subexpression                           |子表达式
 subnormal                               |次正规的
@@ -883,7 +891,7 @@ syntax notation                         |语法表示法
 |English|中文|说明|
 |-|-|-|
 target constructor                      |目标构造函数
-template                                |模板
+template                                |模板           |一种实体，基于参数生成（实例化）其他实体
 template argument                       |模板实参
 template argument deduction             |模板实参推断
 template instantiation                  |模板实例化
@@ -891,6 +899,7 @@ template non-type parameter             |模板非类型形参 |三种模板形�
 template parameter                      |模板形参
 template parameter pack                 |模板形参包组
 template parameter scope                |模板形参作用域
+template specialization                 |模板特例，模板特化式   |模板特例：一种实体，模板基于参数落实的实体
 template template parameter             |模板模板形参   |三种模板形参之一
 template type parameter                 |模板类型形参   |三种模板形参之一
 temporary                               |临时对象
@@ -926,8 +935,9 @@ trivially copyable class                |可平凡复制类
 trivially copyable type                 |可平凡复制类型
 truncation                              |截断
 tuple                                   |元组
-type                                    |类型
+type                                    |类型       |一种实体，决定值表示的意义
 type identification                     |类型标识
+type-parameter                          |类型形参   |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
 type specifier                          |类型说明符
 typedef declaration                     |typedef 声明式
@@ -989,12 +999,12 @@ UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为
 |-|-|-|
 valid                                   |有效，合法
 valid but unspecified state             |有效但未指明的状态     |被移动后的状态
-value                                   |值
+value                                   |值         |一种实体，对象的状态
 value category                          |值类别     |glvalue: lvalue, xvalue; rvalue: xvalue, prvalue
 value computation                       |值计算
-value representation                    |值表示
+value representation                    |值表示     |构成对象状态的位的值
 value-initialize                        |值初始化
-variable                                |变量
+variable                                |变量       |对象或引用，不包括非静态数据成员引用
 variable template                       |变量模板
 variadic function                       |变参函数
 variadic template                       |变参模板
