@@ -10,7 +10,7 @@ Redoc is a markup language, all special things are in `[]`.
 #### A
 |English|中文|说明|
 |-|-|-|
-abstract class                          |抽象类
+abstract class                          |抽象类     |包含纯虚函数
 abstract machine                        |抽象机器
 access                                  |访问       |读取或改动标量对象
 access check                            |访问检查
@@ -65,8 +65,8 @@ associated class                        |关联类
 associated namespace                    |关联命名空间
 atomic                                  |原子性
 attach to module                        |附属于模块
-attribute                               |特性标注，特性
-attribute declaration                   |特性标注声明
+attribute                               |特性标注，特性 |`[[]]`语法，支持
+attribute-declaration                   |特性标注声明式 |仅有特性标注的空声明，不是块声明式
 automatic storage duration              |自动存储期
 await-expression                        |等待表达式
 awaitable                               |可等待体
@@ -155,6 +155,7 @@ compound assignment operator            |复合赋值运算符
 compound statement                      |复合语句   |块语句，语句块，花括号
 compound type                           |复合类型   |
 concept                                 |概念
+concept-definition                      |概念定义式 |定义概念时模板头后面的部分，决定概念语义
 concurrency                             |并发性
 concurrent                              |并发的
 condition                               |条件       |语法结构：if/while/switch/for中的条件部分，可以声明变量
@@ -201,6 +202,7 @@ core constant expression                |核心常量表达式
 corresponding instance                  |对应实例       |实现所对应的抽象机器
 covariant                               |协变
 create                                  |创建
+CTAD, constructor template argument deduction   |构造函数模板实参推断   |可利用推断导引
 cv pointer to cv T                      |cv T 的 cv 指针
 cv-decomposition                        |cv 分解
 cv-qualification                        |cv 限定
@@ -285,8 +287,8 @@ ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制�
 elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明
 element                                 |元素
 eligible special member function        |合格的特殊成员函数
-empty declaration                       |空声明
-empty statement                         |空语句
+empty-declaration                       |空声明式   |仅有`;`的声明式，不是块语句
+empty-statement                         |空语句     |仅有`;`的语句
 encapsulate                             |封装
 enclosing class                         |外围类
 enclosing namespace                     |外围命名空间
@@ -320,8 +322,8 @@ execution character set                 |执行字符集     |LC_CTYPE
 execution step                          |执行步骤
 execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
-explicit instantiation declaration      |显式实例化生命式
-explicit specialization                 |显式特化式
+explicit instantiation declaration      |显式实例化声明式   |指定某个模板特例应当 ODR 式存在
+explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符
 explicit type conversion                |显式类型转换
 explicitly captured                     |显式俘获
@@ -379,12 +381,12 @@ friend function                         |友元函数
 friend specifier                        |friend 说明符
 full-expression                         |全表达式
 function                                |函数           |一种实体，不是对象
-function body                           |函数体
+function-body                           |函数体         |指定代码或`=default`、`=delete`
 function call expression                |函数调用表达式
 function call operator                  |函数调用运算符
 function declaration                    |函数声明式
 function declarator                     |函数声明符
-function definition                     |函数定义式
+function-definition                     |函数定义式
 function object                         |函数对象
 function overloading                    |函数重载
 function parameter pack                 |函数形参包组
@@ -394,7 +396,7 @@ function prototype                      |函数原型
 function scope                          |函数作用域
 function specifier                      |函数说明符
 function template                       |函数模板
-function try block                      |函数 try 块
+function-try-block                      |函数-try-块    |整个函数放入`try...catch`中
 function-like macro                     |函数式宏
 function-to-pointer conversion          |函数向指针转换
 fundamental alignment                   |基础对齐
@@ -451,7 +453,7 @@ import                                  |导入
 import declaration                      |导入声明式
 module-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
 impose                                  |施加
-incomplete type                         |不完整类型
+incomplete type                         |不完整类型 |`void`，`T[]`，（类作用域外）无定义式的类
 incomplete-defined object type          |定义不完整的对象类型
 increment operator                      |增量运算符
 indeterminately sequenced               |未定顺序的
@@ -461,7 +463,7 @@ inequality operator                     |不相等运算符
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
 initialization                          |初始化
 initialize                              |初始化
-initializer                             |初始化式
+initializer                             |初始化式       |`(expr,...)`，`{...}`，`=expr`，`={...}`
 injected-class-name                     |注入类名       |当做成员名的类名
 inline function                         |内联函数
 inline namespace                        |内联命名空间
@@ -522,7 +524,7 @@ lifetime                                |生存期
 line                                    |行，文本行
 link                                    |连接   |将已翻译实体收集并组合成程序映像
 linkage                                 |连接，连接性
-linkage specification                   |连接说明
+linkage-specification                   |连接说明   |指定语言连接`extern "xxx"`
 list                                    |列表
 list-initialization                     |列表初始化
 literal                                 |字面量     |字符/字符串/数值，以及自定义变体，布尔，指针
@@ -615,6 +617,7 @@ noexcept function of () cv ref returning| T  T 为返回类型的 () cv ref 的 
 noexcept operator                       |noexcept 运算符
 non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
+non-static data member                  |非静态数据成员
 non-throwing exception specification    |无抛出异常说明
 non-vacuous initialization              |非无为初始化
 normalized                              |正规化的
@@ -847,7 +850,9 @@ statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
 static cast                             |静态强制转换
+static data member                      |静态数据成员
 static initialization                   |静态初始化
+static member function                  |静态成员函数
 static specifier                        |static 说明符
 static storage duration                 |静态存储期
 static type                             |静态类型   |表达式的可声明类型
@@ -894,9 +899,11 @@ target constructor                      |目标构造函数
 template                                |模板           |一种实体，基于参数生成（实例化）其他实体
 template argument                       |模板实参
 template argument deduction             |模板实参推断
+template-declaration                    |模板声明式     |声明或定义模板化实体（包括概念），引入模板形参的作用域
+template-head                           |模板头         |模板声明中声明实体前指定模板形参及其约束的部分
 template instantiation                  |模板实例化
 template non-type parameter             |模板非类型形参 |三种模板形参之一
-template parameter                      |模板形参
+template-parameter                      |模板形参
 template parameter pack                 |模板形参包组
 template parameter scope                |模板形参作用域
 template specialization                 |模板特例，模板特化式   |模板特例：一种实体，模板基于参数落实的实体
@@ -941,6 +948,7 @@ type-parameter                          |类型形参   |模板形参，包括�
 type pun                                |类型双关
 type specifier                          |类型说明符
 typedef declaration                     |typedef 声明式
+typedef-name                            |typedef-名         |类型别名，`typedef`或`using`，可为模板
 typedef specifier                       |typedef 说明符
 typename specifier                      |typename 说明符
 
@@ -986,8 +994,9 @@ user-defined floating-point literal     |用户定义浮点字面量     |无后
 user-defined integer literal            |用户定义整数字面量     |无后缀整数字面量+自定义后缀，先类型后通配，类型运算符只支持`unsigned long long`
 user-defined literal                    |用户定义字面量         |数值/字符/字符串字面量+字面量后缀，字面量运算符（模板）函数
 user-defined string literal             |用户定义字符串字面量   |预处理记号，记号，字符串字面量+后缀，支持字符串拼接，先模板后非模板`operator "" X(const Tchar*, size_t)`
-using declaration                       |using 声明式
-using directive                         |using 指令
+using-declaration                       |using-声明式           |引入已有实体的名字，所在位置限制其种类
+using-directive                         |using-指令             |引入其中所有已有可达实体的名字
+using-enum-declaration                  |using-枚举声明式       |作用类似using-指令，引入所有已有枚举符的名字
 usual arithmetic conversions            |一般算术转换
 UTF, Unicode Transformation Format      |UTF，Unicode 转换格式
 UTF-8 string literal                    |UTF-8 字符串字面量     |前缀为`u8`，类型为`const char8_t[n]`
