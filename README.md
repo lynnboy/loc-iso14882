@@ -83,6 +83,7 @@ basic execution character set           |基本执行字符集 |96基本源字�
 basic execution wide-character set      |基本执行宽字符集
 basic source character set              |基本源字符集   |只有96个字符，至少兼容 ASCII 和 EBCDIC
 behavior                                |行为
+belong                                  |属于（作用域） |实体属于其声明式的目标作用域
 binary                                  |二进制，二元
 binary fold                             |二元折叠
 binary left fold                        |二元左折叠
@@ -101,6 +102,7 @@ block statement                         |块语句
 boolean                                 |布尔
 boolean conversion                      |布尔转换
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
+bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
 break statement                         |break 语句
 built-in operator                       |内建运算符
 byte                                    |字节
@@ -112,6 +114,7 @@ cache                                   |高速缓存
 call                                    |调用
 capture                                 |俘获，俘获符   |俘获符：语法结构，代表闭包数据成员，可指定初始化
 capture by copy                         |按复制俘获
+capture-default                         |默认俘获符
 captured by reference                   |按引用俘获
 carry a dependency to                   |传递依赖给
 case label                              |case 标号
@@ -199,6 +202,7 @@ copy assignment operator                |复制赋值运算符
 copy constructor                        |复制构造函数
 copy-initialization                     |复制初始化
 core constant expression                |核心常量表达式
+corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
 corresponding instance                  |对应实例       |实现所对应的抽象机器
 covariant                               |协变
 create                                  |创建
@@ -237,11 +241,13 @@ default behavior                        |缺省行为   |某些函数，如果�
 default constructor                     |默认构造函数
 default label                           |default 标号
 default member initializer              |默认成员初始化式
+default template argument               |默认模板实参   |模板形参的默认实参
 default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
 defaulted function                      |预置函数
 define                                  |定义
 definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
+definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
 delegating constructor                  |委派构造函数
 delete                                  |删除
 delete expression                       |delete 表达式
@@ -268,7 +274,7 @@ direct-non-list-initialization          |直接非列表初始化   |直接进�
 directive                               |指令
 directive-introducing token             |指令发起记号
 disambiguation                          |歧义消解
-discarded statement                     |弃用语句
+discarded statement                     |弃用语句       |`constexpr if` 排除的语句
 discarded-value expression              |弃值表达式
 disjunction                             |析取
 division operator                       |除法运算符
@@ -390,6 +396,7 @@ function-definition                     |函数定义式
 function object                         |函数对象
 function overloading                    |函数重载
 function parameter pack                 |函数形参包组
+function parameter scope                |函数形参作用域
 function pointer conversion             |函数指针转换
 function pointer type                   |函数指针类型
 function prototype                      |函数原型
@@ -407,9 +414,10 @@ fundamental type                        |基础类型       |
 |-|-|-|
 generic lambda expression               |泛型 lambda 表达式
 global                                  |全局的
+global-module-fragment                  |全局模块分段   |
 global namespace                        |全局命名空间
 global object                           |全局对象
-global scope                            |全局作用域
+global scope                            |全局作用域     |整个程序
 global variable                         |全局变量
 glvalue                                 |泛左值
 glyph                                   |字形       |字符图形，书写效果
@@ -440,6 +448,7 @@ IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
 if statement                            |if 语句
 ill-formed                              |非良构的   |语法或语义无效的代码
+immediate scope                         |直接作用域 |最小的外围作用域
 immediate subexpression                 |直接子表达式
 implementation                          |实现
 implementation limits                   |实现限额
@@ -460,6 +469,7 @@ indeterminately sequenced               |未定顺序的
 indirect base class                     |间接基类
 indirection operator                    |间接运算符
 inequality operator                     |不相等运算符
+inhabit                                 |居于           |声明式居于其直接作用域（模板形参作用域单算）
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
 initialization                          |初始化
 initialize                              |初始化
@@ -486,6 +496,7 @@ inter-thread happens before             |线程间发生早于
 interactive device                      |交互设备   |I/O 设备，可观察行为
 interface dependency                    |接口依赖   |被导入模块
 internal linkage                        |内部连接   |翻译单元内可见
+intervening scope                       |介入作用域 |即目标的每层不包含声明点的外围作用域
 invalid                                 |无效，非法
 invocation                              |调用，执行
 invoke                                  |调用，执行 |多用于除函数之外的场合，如宏等
@@ -510,7 +521,7 @@ keyword                                 |关键字     |无条件关键字 + `im
 |-|-|-|
 label                                   |标号
 labeled statement                       |带标号语句
-lambda expression                       |lambda 表达式
+lambda-expression                       |lambda-表达式
 language linkage                        |语言连接
 latch                                   |门栓
 layout-compatible enumeration           |布局兼容枚举
@@ -542,7 +553,7 @@ locale                                  |地域
 locale-specific                         |地域特有的
 lock                                    |锁，锁定
 lock-free                               |无锁
-locus                                   |位点
+locus                                   |位点           |声明点
 logical and operator                    |逻辑与运算符
 logical negation operator               |逻辑非运算符
 logical or operator                     |逻辑或运算符
@@ -597,6 +608,7 @@ name hiding                             |名字隐藏
 name lookup                             |名字查找   |遇到名字时确定其含义
 name mangling                           |名字重整
 named                                   |具名的
+named by                                |被（表达式或转换）指名 |变量：标识表达式<br>函数：被重载决议选中（还包括new/delete）（排除纯虚函数的全限定名或成员指针）
 namespace                               |命名空间       |一种实体，名字的层级管理设施
 namespace alias                         |命名空间别名
 namespace definition                    |命名空间定义式
@@ -615,6 +627,7 @@ no diagnostic is required               |无须诊断
 noexcept expression                     |noexcept 表达式
 noexcept function of () cv ref returning| T  T 为返回类型的 () cv ref 的 noexcept 函数
 noexcept operator                       |noexcept 运算符
+nominable declaration                   |可提名声明式       |类/命名空间某点之前的目标为该作用域（或其内联）的居于非块作用域的声明式，即引入了实体成员而不关心是否绑定名字
 non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-static data member                  |非静态数据成员
@@ -649,8 +662,9 @@ object-like macro                       |对象式宏
 observable behavior                     |可观察行为
 observer function                       |探察函数
 obstruction-free                        |无阻碍
-odr-used                                |ODR 式使用
-one-definition rule                     |单一定义规则，ODR
+odr-usable                              |可 ODR 式使用  |词法作用域中排除并未被俘获的变量
+odr-used                                |ODR 式使用 |- 变量：潜在求值指名（排除不涉及地址的使用方式：弃值或l2r转换）<br>- 结构化绑定：潜在求值<br>- *this：显式或隐式潜在求值this<br>- 函数：潜在求值指名（非纯虚函数仅需声明）<br>- 类的new/delete：定义类的构造/析构函数，或虚析构中被选中<br>- 类的构造/析构/复制/移动赋值：参与其他类的初始化/销毁/成员赋值
+one-definition rule                     |单一定义规则，ODR  |各翻译单元中的类型定义应当严格等价，生成的程序映像中的实体定义应当唯一
 opaque-enum-declaration                 |笼统枚举声明式 |不声明枚举符，但指定底层类型，完整的前向声明
 operand                                 |操作数
 operator                                |运算符
@@ -680,6 +694,7 @@ parameter                               |形参，形式参数 |函数，catch�
 parameter-declaration                   |形参声明式     |函数、lambda、推断导引、模板、requires（不支持默认实参、省略号和占位符推断？）
 parameter pack                          |形参包组
 parameter-type-list                     |形参类型列表   |函数签名
+parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
 partial specialization                  |部分特化，部分特化式
@@ -711,10 +726,12 @@ postfix                                 |后缀
 postfix decrement operator              |后置减量运算符
 postfix expression                      |后缀表达式
 postfix increment operator              |后置增量运算符
+potential result                        |潜在结果       |用于挑出某些表达式中并非 ODR 式使用变量的标识表达式
 potential scope                         |潜在作用域
 potentially concurrent                  |潜在并发
-potentially evaluated                   |潜在求值的
-potentially throwing                    |潜在抛出异常的     |有能力抛出异常
+pytentially conflict                    |潜在冲突       |对应声明式代表了不同实体
+potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
+potentially throwing                    |潜在抛出异常的 |有能力抛出异常
 pragma                                  |语用       |预处理指令，预处理运算符
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符
@@ -731,6 +748,7 @@ primary sort key                        |主排序键   |校排中仅按主题�
 primary template                        |主模板
 primary token                           |首选记号   |代用记号所等价的记号
 private                                 |私有
+private-module-fragment                 |私有模块分段   |用于支持单TU模块，非导出部分
 program                                 |程序
 program-defined specialization          |由程序定义的特化式
 program-defined type                    |由程序定义的类型
@@ -762,7 +780,7 @@ range                                   |范围
 range-based for statement               |基于范围的 for 语句
 raw literal operator                    |原始字面量运算符   |`operator "" X(const char*)`，数值字面量的通配运算符之一
 raw string literal                      |原始字符串字面量   |避免转义等处理的字符串，分隔串用于识别边界`)`，如`R"xx()xx"`
-reachable                               |可达的
+reachable                               |可达，可达的
 reaching scope                          |可达作用域
 recursive function call                 |递归函数调用
 ref-qualifier                           |引用限定符 |函数类型，成员函数的 & 或 &&
@@ -829,8 +847,10 @@ signature                               |签名   |名字，形参类型列表�
 signed                                  |有符号
 signed integer type                     |有符号整数类型
 similar type                            |相似类型
+simple-capture                          |简单俘获符     |不带有初始化式，直接指名被俘获变量的俘获符
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
+simple-template-id                      |简单模板标识   |模板标识，名字为标识符（不包括运算符/字面量函数）
 sizeof operator                         |sizeof 运算符
 source character set                    |源字符集
 source file                             |源文件
@@ -896,11 +916,13 @@ syntax notation                         |语法表示法
 |English|中文|说明|
 |-|-|-|
 target constructor                      |目标构造函数
+target scope                            |目标作用域     |声明式所居作用域（友元/限定名/详述类型/块外部声明式等的目标例外）
 template                                |模板           |一种实体，基于参数生成（实例化）其他实体
 template argument                       |模板实参
 template argument deduction             |模板实参推断
 template-declaration                    |模板声明式     |声明或定义模板化实体（包括概念），引入模板形参的作用域
 template-head                           |模板头         |模板声明中声明实体前指定模板形参及其约束的部分
+template-id                             |模板标识       |未限定标识的一种，指名模板化实体的特例
 template instantiation                  |模板实例化
 template non-type parameter             |模板非类型形参 |三种模板形参之一
 template-parameter                      |模板形参
