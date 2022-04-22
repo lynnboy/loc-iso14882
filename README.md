@@ -97,8 +97,9 @@ bitwise or operator                     |按位或运算符
 bitwise xor operator                    |按位亦或运算符
 block                                   |1. 代码块 <br>2. 阻塞
 block-declaration                       |块声明式       |可作为语句的声明式：声明变量或函数的，引入现有实体名字或类型前向声明的，执行运算的（asm、静态断言），不包括空声明式，不允许函数定义和模板
-block scope                             |块作用域
-block statement                         |块语句
+block scope                             |块作用域       |作用域的一种，包含执行代码的代码块：块语句，选择、循环及其子语句，`catch(){}`的整体
+block statement                         |块语句         |语句的一种，`{}`
+block variable                          |块变量         |块作用域的变量
 boolean                                 |布尔
 boolean conversion                      |布尔转换
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
@@ -130,10 +131,11 @@ class                                   |类
 class declaration                       |类声明式
 class definition                        |类定义式
 class granding friendship               |授予友元关系
+class-head                              |类头           |类定义式中花括号前的部分
 class member                            |类成员         |一种实体
 class member access expression          |类成员访问表达式
 class member access operator            |类成员访问运算符
-class scope                             |类作用域
+class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外限定成员
 class-specifier                         |类说明符   |类的定义体
 class template deduction                |类模板推断
 class template                          |类模板
@@ -306,7 +308,7 @@ endian                                  |端序
 entity                                  |实体       |值、对象、引用、结构化绑定、函数、枚举符、类型、类成员、位字段、模板、模板特例、命名空间、包组
 entry                                   |入口       |函数，catch，代码块
 enumeration                             |枚举
-enumeration scope                       |枚举作用域
+enumeration scope                       |枚举作用域 |作用域的一种，包括枚举符列表
 enumeration type                        |枚举类型
 enumerator                              |枚举符     |一种实体，类型化具名常量值
 enum-specifier                          |枚举说明符 |枚举的定义体
@@ -396,7 +398,7 @@ function-definition                     |函数定义式
 function object                         |函数对象
 function overloading                    |函数重载
 function parameter pack                 |函数形参包组
-function parameter scope                |函数形参作用域
+function parameter scope                |函数形参作用域 |作用域的一种，形参声明子句（不只函数）所在声明符范围，有体则包含体
 function pointer conversion             |函数指针转换
 function pointer type                   |函数指针类型
 function prototype                      |函数原型
@@ -417,7 +419,7 @@ global                                  |全局的
 global-module-fragment                  |全局模块分段   |
 global namespace                        |全局命名空间
 global object                           |全局对象
-global scope                            |全局作用域     |整个程序
+global scope                            |全局作用域     |整个程序，全局命名空间的命名空间作用域
 global variable                         |全局变量
 glvalue                                 |泛左值
 glyph                                   |字形       |字符图形，书写效果
@@ -572,6 +574,7 @@ match                                   |匹配   |正则表达式模式与目�
 materialize                             |实质化
 member                                  |成员
 member-declaration                      |成员声明式 |可以作为类成员的声明式：比块声明式多出空声明式、模板、函数定义、位字段，支持成员函数特有的语言特性，不支持结构化绑定，不支持成员变量占位符类型
+member-specification                    |成员说明   |类体的内容，包括成员声明式和访问说明符
 member function                         |成员函数
 member type                             |成员类型
 memory                                  |内存
@@ -611,8 +614,9 @@ named                                   |具名的
 named by                                |被（表达式或转换）指名 |变量：标识表达式<br>函数：被重载决议选中（还包括new/delete）（排除纯虚函数的全限定名或成员指针）
 namespace                               |命名空间       |一种实体，名字的层级管理设施
 namespace alias                         |命名空间别名
-namespace definition                    |命名空间定义式
-namespace scope                         |命名空间作用域
+namespace-body                          |命名空间体     |每个命名空间定义式的体
+namespace-definition                    |命名空间定义式 |
+namespace scope                         |命名空间作用域 |作用域的一种，合并该命名空间的所有体，加上体外限定成员
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
 necessarily reachable                   |必定可达
 nest                                    |嵌套
@@ -692,6 +696,7 @@ pair                                    |对偶
 parallel                                |并行的
 parameter                               |形参，形式参数 |函数，catch，函数式宏，模板
 parameter-declaration                   |形参声明式     |函数、lambda、推断导引、模板、requires（不支持默认实参、省略号和占位符推断？）
+parameter-declaration-clause            |形参声明子句   |可调用体的参数列表部分，同上
 parameter pack                          |形参包组
 parameter-type-list                     |形参类型列表   |函数签名
 parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
@@ -706,7 +711,7 @@ placeholder type deduction              |占位符类型推断
 placement allocation function           |放置式分配函数
 placement deallocation function         |放置式回收函数
 placement new                           |放置式 new
-point of declaration                    |声明点
+point of declaration                    |声明点         |实体声明生效的位点：<br>- 变量/函数/形参在声明符（包括初始化式）之后，<br>- 注入类名和函数预定义变量在`{`前，<br>- 其他（类型、枚举符、using、概念、命名空间等）在标识符（列表）之后
 point of definition                     |定义点
 pointer                                 |指针
 pointer arithmetic                      |指针算术
@@ -729,7 +734,7 @@ postfix increment operator              |后置增量运算符
 potential result                        |潜在结果       |用于挑出某些表达式中并非 ODR 式使用变量的标识表达式
 potential scope                         |潜在作用域
 potentially concurrent                  |潜在并发
-pytentially conflict                    |潜在冲突       |对应声明式代表了不同实体
+pytentially conflict                    |潜在冲突       |对应声明式代表了不同实体，或被覆盖实体无法再使用（形参、选择/循环的条件、捕获异常不能被覆盖）
 potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
 pragma                                  |语用       |预处理指令，预处理运算符
@@ -927,7 +932,7 @@ template instantiation                  |模板实例化
 template non-type parameter             |模板非类型形参 |三种模板形参之一
 template-parameter                      |模板形参
 template parameter pack                 |模板形参包组
-template parameter scope                |模板形参作用域
+template parameter scope                |模板形参作用域 |作用域的一种，模板形参列表到被模板化声明式末尾，模板模板形参的形参范围<br>模板形参作用域对其他名字透明，仅对模板形参有效
 template specialization                 |模板特例，模板特化式   |模板特例：一种实体，模板基于参数落实的实体
 template template parameter             |模板模板形参   |三种模板形参之一
 template type parameter                 |模板类型形参   |三种模板形参之一
