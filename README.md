@@ -135,6 +135,7 @@ class-head                              |类头           |类定义式中花括
 class member                            |类成员         |一种实体
 class member access expression          |类成员访问表达式
 class member access operator            |类成员访问运算符
+class-name                              |类名       |标识符或简单模板标识
 class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外限定成员
 class-specifier                         |类说明符   |类的定义体
 class template deduction                |类模板推断
@@ -258,7 +259,7 @@ deleted                                 |已删除的，弃置的
 deleted definition                      |弃置定义式
 deleted function                        |弃置函数
 dependency-ordered before               |按依赖序早于
-dependent name                          |待决名字
+dependent name                          |待决名字   |依赖于模板的名字，实例化时决定具体含义
 deprecated                              |被摒弃的   |因为有某种问题而不建议使用的，未来会被移除的功能设施
 derived class                           |派生类
 designated initializer                  |定名初始化式
@@ -584,7 +585,9 @@ memory model                            |内存模型
 modification order                      |改动顺序
 modifier function                       |改动函数
 module                                  |模块
+module-declaration                      |模块声明式 |
 module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
+module-import-declaration               |模块导入声明式 |
 module linkage                          |模块连接   |模块内跨翻译单元可见
 module unit                             |模块单元   |模块机制支持的程序表示
 most derived class                      |全派生类
@@ -616,6 +619,7 @@ namespace                               |命名空间       |一种实体，名�
 namespace alias                         |命名空间别名
 namespace-body                          |命名空间体     |每个命名空间定义式的体
 namespace-definition                    |命名空间定义式 |
+namespace-name                          |命名空间名     |标识符：原名或别名
 namespace scope                         |命名空间作用域 |作用域的一种，合并该命名空间的所有体，加上体外限定成员
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
 necessarily reachable                   |必定可达
@@ -681,7 +685,7 @@ output                                  |输出
 over-aligned                            |过量对齐
 overflow                                |溢出
 overload                                |重载
-overload resolution                     |重载决议
+overload resolution                     |重载决议   |
 overloaded function                     |重载函数
 overloaded operator                     |重载运算符
 override                                |覆盖
@@ -738,6 +742,7 @@ pytentially conflict                    |潜在冲突       |对应声明式代�
 potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
 pragma                                  |语用       |预处理指令，预处理运算符
+precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符
 prefix increment operator               |前置增量运算符
@@ -856,6 +861,7 @@ simple-capture                          |简单俘获符     |不带有初始化
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
 simple-template-id                      |简单模板标识   |模板标识，名字为标识符（不包括运算符/字面量函数）
+single search                           |单次搜索       |名字查找步骤，找到先于搜索点的目标作用域中的全部声明式，using-声明式替换为目标声明式，类/枚举可被隐藏
 sizeof operator                         |sizeof 运算符
 source character set                    |源字符集
 source file                             |源文件
@@ -940,6 +946,7 @@ temporary                               |临时对象
 temporary expression                    |临时对象表达式
 temporary materialization conversion    |临时对象实质化转换
 term                                    |术语
+terminal name                           |终端名 |using-声明符的目标
 terminate                               |终止
 thread                                  |线程
 thread of execution                     |执行线程，线程
@@ -971,6 +978,7 @@ truncation                              |截断
 tuple                                   |元组
 type                                    |类型       |一种实体，决定值表示的意义
 type identification                     |类型标识
+type-only lookup                        |仅限类型查找   |仅查找类型
 type-parameter                          |类型形参   |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
 type specifier                          |类型说明符
@@ -1021,7 +1029,7 @@ user-defined floating-point literal     |用户定义浮点字面量     |无后
 user-defined integer literal            |用户定义整数字面量     |无后缀整数字面量+自定义后缀，先类型后通配，类型运算符只支持`unsigned long long`
 user-defined literal                    |用户定义字面量         |数值/字符/字符串字面量+字面量后缀，字面量运算符（模板）函数
 user-defined string literal             |用户定义字符串字面量   |预处理记号，记号，字符串字面量+后缀，支持字符串拼接，先模板后非模板`operator "" X(const Tchar*, size_t)`
-using-declaration                       |using-声明式           |引入已有实体的名字，所在位置限制其种类
+using-declaration                       |using-声明式           |引入已有实体的名字，所在位置限制其种类，没有连接
 using-directive                         |using-指令             |引入其中所有已有可达实体的名字
 using-enum-declaration                  |using-枚举声明式       |作用类似using-指令，引入所有已有枚举符的名字
 usual arithmetic conversions            |一般算术转换
