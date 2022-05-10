@@ -42,7 +42,7 @@ apply                                   |运用，实施，适用于
 arbitrary-positional stream             |可任意定位流   |可seek
 architecture                            |体系结构
 argument                                |实参，实际参数 |函数，函数式宏，模板，throw
-argument-dependent name lookup          |依赖于实参的名字查找
+argument-dependent name lookup          |依赖于实参的名字查找   |调用无限定函数时查找函数的过程：<br>1. 先查找局部声明或类成员，或者非函数，<br>2. 然后查找：关联命名空间成员，关联实体的友元，与关联实体附属于相同模块
 arithmetic                              |算术的
 arithmetic exception                    |算术异常
 arithmetic type                         |算术类型
@@ -62,7 +62,8 @@ assignment expression                   |赋值表达式
 assignment operator                     |赋值运算符
 associated character encoding           |关联字符编码   |字符或字符串字面量前缀指定的编码，无前缀的不可编码或多字符类型为 `int`
 associated class                        |关联类
-associated namespace                    |关联命名空间
+associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
+associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
 atomic                                  |原子性
 attach to module                        |附属于模块
 attribute                               |特性标注，特性 |`[[]]`语法，支持
@@ -136,7 +137,7 @@ class member                            |类成员         |一种实体
 class member access expression          |类成员访问表达式
 class member access operator            |类成员访问运算符
 class-name                              |类名       |标识符或简单模板标识
-class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外限定成员
+class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外带限定成员
 class-specifier                         |类说明符   |类的定义体
 class template deduction                |类模板推断
 class template                          |类模板
@@ -151,6 +152,7 @@ comment                                 |注释       | `/* */`，`// \n`
 common initial sequence                 |共同起始序列
 common type                             |公共类型
 compile                                 |编译
+complete-class context                  |完整类语境 |在类说明符之内需要将类当做完整类型的语境，如内联代码部分
 complete object                         |完整对象
 complete type                           |完整类型
 compliance                              |遵从性
@@ -197,6 +199,7 @@ contravariant                           |逆变
 control character                       |控制字符       |代码点 0-1F，7F-9F
 conversion                              |类型转换，转换
 conversion function                     |转换函数
+conversion-function-id                  |转换函数标识   |`operator T`
 conversion rank                         |转换等级
 converted constant expression           |经转换的常量表达式
 converting constructor                  |转换构造函数
@@ -561,6 +564,7 @@ logical and operator                    |逻辑与运算符
 logical negation operator               |逻辑非运算符
 logical or operator                     |逻辑或运算符
 logical source line                     |逻辑源文本行   |行拼接后的结果
+lookup set                              |查找集合       |类成员名字查找的中间结果，包含声明式集合和所属子对象集合
 low-order bit                           |低序位
 lower bound                             |下界
 lvalue                                  |左值
@@ -620,7 +624,7 @@ namespace alias                         |命名空间别名
 namespace-body                          |命名空间体     |每个命名空间定义式的体
 namespace-definition                    |命名空间定义式 |
 namespace-name                          |命名空间名     |标识符：原名或别名
-namespace scope                         |命名空间作用域 |作用域的一种，合并该命名空间的所有体，加上体外限定成员
+namespace scope                         |命名空间作用域 |作用域的一种，合并该命名空间的所有体，加上体外带限定成员
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
 necessarily reachable                   |必定可达
 nest                                    |嵌套
@@ -839,7 +843,7 @@ safely-derived pointer                  |安全衍生指针
 scalar                                  |标量
 scalar type                             |标量类型
 scope                                   |作用域，范围
-scope resolution operator               |作用域解析运算符
+scope resolution operator               |作用域解析运算符   |`::`
 scoped enumeration                      |有作用域枚举
 scoped enumerator                       |有作用域枚举符
 selection statement                     |选择语句
@@ -933,7 +937,7 @@ template argument                       |模板实参
 template argument deduction             |模板实参推断
 template-declaration                    |模板声明式     |声明或定义模板化实体（包括概念），引入模板形参的作用域
 template-head                           |模板头         |模板声明中声明实体前指定模板形参及其约束的部分
-template-id                             |模板标识       |未限定标识的一种，指名模板化实体的特例
+template-id                             |模板标识       |无限定标识的一种，指名模板化实体的特例
 template instantiation                  |模板实例化
 template non-type parameter             |模板非类型形参 |三种模板形参之一
 template-parameter                      |模板形参
@@ -1012,7 +1016,9 @@ universal character name                |UCN，通用字符名    |概念上兼�
 unnamed class                           |无名类
 unnamed enumeration                     |无名枚举
 unnamed namespace                       |无名命名空间
-unqualified name                        |未限定名
+unqualified name                        |无限定名       |没有前置限定（`::`,`.`,`->`等）的名字
+unqualified name lookup                 |无限定名查找   |对无限定名在直接作用域中进行无限定搜索：<br>转换函数中的无限定名先依照转换函数标识的方式查找一次，<br>有限定的友元声明先在指定作用域中查找一次
+unqualified search                      |无限定搜索     |对无限定名在指定作用域进行逐层搜索的过程
 unscoped enumeration                    |无作用域枚举
 unscoped enumerator                     |无作用域枚举符
 unsequenced                             |无顺序的
