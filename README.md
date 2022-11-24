@@ -32,7 +32,7 @@ alias template                          |别名模板
 alignment                               |对齐
 alignment requirement                   |对齐要求
 allocate                                |分配
-allocation function                     |分配函数
+allocation function                     |分配函数       |`operator new`, `operator new []`
 alternative token                       |代用记号       |二联符+保留字 `and` 等，11个位和逻辑运算符
 ambiguity                               |歧义
 amendment                               |文档修订
@@ -107,7 +107,7 @@ boolean literal                         |布尔字面量     |`true`, `false`，
 bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
 break statement                         |break 语句
 built-in operator                       |内建运算符
-byte                                    |字节
+byte                                    |字节           |基本存储单元
 
 #### C
 |English|中文|说明|
@@ -153,7 +153,7 @@ common initial sequence                 |共同起始序列
 common type                             |公共类型
 compile                                 |编译
 complete-class context                  |完整类语境 |在类说明符之内需要将类当做完整类型的语境，如内联代码部分
-complete object                         |完整对象
+complete object                         |完整对象   |不是子对象的对象
 complete type                           |完整类型
 compliance                              |遵从性
 component                               |组件
@@ -229,7 +229,7 @@ data race                               |数据竞争
 data structure                          |数据结构
 data type                               |数据类型
 deallocate                              |回收
-deallocation function                   |回收函数
+deallocation function                   |回收函数   |`operator delete`, `operator delete[]`
 decay                                   |退化
 declaration                             |声明式，声明   |代码结构称为‘声明式’，引入实体的名字，类型和编译期存在性
 declaration statement                   |声明语句
@@ -267,6 +267,7 @@ deprecated                              |被摒弃的   |因为有某种问题�
 derived class                           |派生类
 designated initializer                  |定名初始化式
 destroy                                 |销毁
+destroying operator delete              |销毁用 delete 运算符   |成员，非数组，`(T*, destroying_delete_t, ...)`，由此函数负责析构；只要提供就排除非销毁函数
 destruction                             |销毁
 destructor                              |析构函数
 device                                  |设备
@@ -344,7 +345,7 @@ exponent                                |指数
 export declaration                      |导出声明式
 module-keyword                          |导出关键字 |预处理记号，在预处理阶段支持模块
 exported declaration                    |被导出声明式
-exposure                                |显露式
+exposure                                |显露式         |声明式中除函数体、初始化式、友元外指名了TU局部实体
 expression                              |表达式
 expression-equivalent                   |按表达式等价   |表达式求值的真实效果相同（？）
 extend namespace                        |扩展命名空间
@@ -442,7 +443,7 @@ happens before                          |发生早于
 header                                  |头文件
 header name                             |头文件名   |预处理记号，`<[~>]*>` 或 `"[~"]*"`，仅属于 `#include`，`import`，`__has_include`
 header unit                             |头文件单元 |模块
-high-order bit                          |高序位
+high-order bit                          |高序位     |最高有效位
 hosted implementation                   |宿主式实现 |在操作系统下运行
 
 #### I
@@ -463,6 +464,7 @@ implicit                                |隐式，暗中，隐含
 implicit conversion sequence            |隐式转换序列
 implicit type conversion                |隐式类型转换
 implicitly captured                     |隐式俘获
+implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
 import                                  |导入
 import declaration                      |导入声明式
@@ -471,6 +473,7 @@ impose                                  |施加
 incomplete type                         |不完整类型 |`void`，`T[]`，（类作用域外）无定义式的类
 incomplete-defined object type          |定义不完整的对象类型
 increment operator                      |增量运算符
+indeterminate value                     |不确定值   |自动或动态对象的初始化前内容
 indeterminately sequenced               |未定顺序的
 indirect base class                     |间接基类
 indirection operator                    |间接运算符
@@ -540,7 +543,7 @@ library                                 |程序库
 lifetime                                |生存期
 line                                    |行，文本行
 link                                    |连接   |将已翻译实体收集并组合成程序映像
-linkage                                 |连接，连接性
+linkage                                 |连接，连接性   |可被连接器认作同一：无连接、内部、外部、模块
 linkage-specification                   |连接说明   |指定语言连接`extern "xxx"`
 list                                    |列表
 list-initialization                     |列表初始化
@@ -564,8 +567,9 @@ logical and operator                    |逻辑与运算符
 logical negation operator               |逻辑非运算符
 logical or operator                     |逻辑或运算符
 logical source line                     |逻辑源文本行   |行拼接后的结果
+lookup context                          |查找语境       |成员限定名：对象表达式的类型，其他：嵌套名说明符指名的类型或命名空间等。若限定查找未找到则再进行无限定查找
 lookup set                              |查找集合       |类成员名字查找的中间结果，包含声明式集合和所属子对象集合
-low-order bit                           |低序位
+low-order bit                           |低序位         |最低有效位
 lower bound                             |下界
 lvalue                                  |左值
 lvalue-to-rvalue conversion             |左值向右值转换
@@ -581,9 +585,10 @@ member                                  |成员
 member-declaration                      |成员声明式 |可以作为类成员的声明式：比块声明式多出空声明式、模板、函数定义、位字段，支持成员函数特有的语言特性，不支持结构化绑定，不支持成员变量占位符类型
 member-specification                    |成员说明   |类体的内容，包括成员声明式和访问说明符
 member function                         |成员函数
+member-qualified name                   |成员限定名 |限定名的一类，`a.`或`p->`后面的无限定标识或`X::`中的成分名
 member type                             |成员类型
 memory                                  |内存
-memory location                         |内存位置
+memory location                         |内存位置   |非位字段或最长连续非零宽位字段
 memory management                       |内存管理
 memory model                            |内存模型
 modification order                      |改动顺序
@@ -594,8 +599,8 @@ module-keyword                          |模块关键字 |预处理记号，在�
 module-import-declaration               |模块导入声明式 |
 module linkage                          |模块连接   |模块内跨翻译单元可见
 module unit                             |模块单元   |模块机制支持的程序表示
-most derived class                      |全派生类
-most derived object                     |全派生对象
+most derived class                      |全派生类   |非基类子对象的类对象的类型
+most derived object                     |全派生对象 |非基类子对象的对象
 move                                    |移动
 move assignment                         |移动赋值
 move assignment operator                |移动赋值运算符
@@ -613,12 +618,13 @@ mutex                                   |互斥体
 #### N
 |English|中文|说明|
 |-|-|-|
-name                                    |名字       |标识符、运算符函数标识、字面量运算符标识、转换函数标识
+name                                    |名字<br>指名       |标识符、运算符函数标识、字面量运算符标识、转换函数标识<br>声明式包含：模板名、概念名、标识表达式、类型的说明符、闭包类型的lambda、重载集合时，指名相应实体
 name hiding                             |名字隐藏
 name lookup                             |名字查找   |遇到名字时确定其含义
 name mangling                           |名字重整
 named                                   |具名的
 named by                                |被（表达式或转换）指名 |变量：标识表达式<br>函数：被重载决议选中（还包括new/delete）（排除纯虚函数的全限定名或成员指针）
+named module                            |具名模块
 namespace                               |命名空间       |一种实体，名字的层级管理设施
 namespace alias                         |命名空间别名
 namespace-body                          |命名空间体     |每个命名空间定义式的体
@@ -632,10 +638,12 @@ nested class                            |嵌套类
 nested name                             |嵌套名
 nested name specifier                   |嵌套名说明符
 nested type                             |嵌套类型
+nested within                           |嵌套于     |子对象，被提供存储的对象
 new expression                          |new 表达式
 new-line                                |换行       |`\n`
 new operator                            |new 运算符
 no diagnostic is required               |无须诊断
+no linkage                              |无连接     |仅限作用域内可见
 noexcept expression                     |noexcept 表达式
 noexcept function of () cv ref returning| T  T 为返回类型的 () cv ref 的 noexcept 函数
 noexcept operator                       |noexcept 运算符
@@ -742,8 +750,9 @@ postfix increment operator              |后置增量运算符
 potential result                        |潜在结果       |用于挑出某些表达式中并非 ODR 式使用变量的标识表达式
 potential scope                         |潜在作用域
 potentially concurrent                  |潜在并发
-pytentially conflict                    |潜在冲突       |对应声明式代表了不同实体，或被覆盖实体无法再使用（形参、选择/循环的条件、捕获异常不能被覆盖）
+potentially conflict                    |潜在冲突       |对应声明式代表了不同实体，或被覆盖实体无法再使用（形参、选择/循环的条件、捕获异常不能被覆盖）
 potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
+potentially-overlapping subobject       |潜在重叠子对象 |基类子对象、`[no_unique_address]`NSDM，允许空类对象的存储优化
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
 pragma                                  |语用       |预处理指令，预处理运算符
 precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
@@ -763,7 +772,7 @@ primary template                        |主模板
 primary token                           |首选记号   |代用记号所等价的记号
 private                                 |私有
 private-module-fragment                 |私有模块分段   |用于支持单TU模块，非导出部分
-program                                 |程序
+program                                 |程序       |连接起来的翻译单元
 program-defined specialization          |由程序定义的特化式
 program-defined type                    |由程序定义的类型
 programming language                    |程序设计语言
@@ -772,6 +781,7 @@ promise                                 |承诺
 prospective destructor                  |预期析构函数
 protected                               |受保护
 prototype                               |原型
+provides storage                        |提供存储   |字节数组对象为放置构造对象提供存储
 prvalue                                 |纯右值
 pseudo destructor call                  |伪析构函数调用
 public                                  |公用，公开
@@ -783,7 +793,8 @@ purview                                 |视野
 |English|中文|说明|
 |-|-|-|
 qualification                           |限定，限定性
-qualified name                          |限定名
+qualified name                          |限定名     |限定标识，using-声明符，typename-说明符，和具有`A::B`结构的各种说明符等中的终端名，以及成员限定名
+qualified name lookup                   |限定名查找 |一般在查找语境中查找，命名空间还考虑内联命名空间，找不到则进一步查找 uing-指令引入的命名空间
 qualifier                               |限定符
 
 #### R
@@ -895,7 +906,7 @@ static_assert declaration               |static_assert 声明式
 stop token                              |停止令牌
 storage                                 |存储
 storage class specifier                 |存储类说明符
-storage duration                        |存储期
+storage duration                        |存储期     |静态、线程、自动、动态
 storage management                      |存储管理
 stream                                  |流 |输入或输出流
 strict                                  |严格的
@@ -913,10 +924,11 @@ structured binding declaration          |结构化绑定声明式   |`[]`语法�
 sub-expression                          |子表达式   |正则表达式：括号标记的部分
 subexpression                           |子表达式
 subnormal                               |次正规的
-subobject                               |子对象
+subobject                               |子对象     |被其他对象包含：成员、基类、元素
 subscript operator                      |下标运算符
 substatement                            |子语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
+suitable created object                 |适当创建的对象
 surrogate code point                    |代用代码点 |UCS 代用字符的代码点，为 UTF16 用于编码高值字符，D800-DFFF
 suspension                              |暂停
 switch statement                        |switch 语句
@@ -969,7 +981,8 @@ traits class                            |特征类     |提供与某个主类型
 translate                               |翻译       |编译
 translated translation unit             |已翻译的翻译单元   |非模板的二进制代码，模板的二进制表示
 translation phase                       |翻译阶段
-translation unit                        |翻译单元   |预处理后的完整文件
+translation unit                        |翻译单元   |预处理后的完整文件，声明式序列，或模块结构
+transparently replaceable               |可透明替换 |可进行`new (&o) T()`：存储重叠，非const，非空大小
 trivial class                           |平凡类
 trivial copy constructor                |平凡复制构造函数
 trivial default constructor             |平凡默认构造函数
@@ -980,10 +993,11 @@ trivially copyable class                |可平凡复制类
 trivially copyable type                 |可平凡复制类型
 truncation                              |截断
 tuple                                   |元组
-type                                    |类型       |一种实体，决定值表示的意义
+TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型，
+type                                    |类型           |一种实体，决定值表示的意义
 type identification                     |类型标识
 type-only lookup                        |仅限类型查找   |仅查找类型
-type-parameter                          |类型形参   |模板形参，包括类型和模板，支持包组、默认实参
+type-parameter                          |类型形参       |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
 type specifier                          |类型说明符
 typedef declaration                     |typedef 声明式
@@ -1047,6 +1061,7 @@ UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为
 #### V
 |English|中文|说明|
 |-|-|-|
+vacuous initialization                  |无为初始化 |无实际动作（平凡）的默认初始化
 valid                                   |有效，合法
 valid but unspecified state             |有效但未指明的状态     |被移动后的状态
 value                                   |值         |一种实体，对象的状态

@@ -36,17 +36,17 @@ class Index:
         self.items = []
     @staticmethod
     def item(value):
-        if (type(value) is not dict):
+        if type(value) is not dict:
             item = { 'key': value, 'text': value }
         Index.refid += 1
         item.refid = Index.refid
         return item
 
-    def add(self, value, description = None, *contents):
+    def add(self, value, description = None, order= None, styler = None, *contents):
         item = self.item(value)
         if description:
             item.description = description
-        
+
         self.items.append(item)
 
         return f"[.index#{item['refid']}]"
@@ -215,18 +215,18 @@ def CppXI(): return Cpp() + ' 2011'
 def CppXIV(): return Cpp() + ' 2014'
 def CppXVII(): return Cpp() + ' 2017'
 def CppXX(): return Cpp() + ' 2020'
-def opt(_1:str): return _1 + ensuremath(f"_\mathit{{_{text('opt')}}}")
+def opt(_1:str): return _1 + ensuremath(fr"_\mathit{{_{text('opt')}}}")
 @applyTo(['?bigoh'])
-def bigoh(_1:str): return ensuremath(f"\mathscr{{O}}({_1})")
-def O(): return '\mathscr{O}'
+def bigoh(_1:str): return ensuremath(fr"\mathscr{{O}}({_1})")
+def O(): return r'\mathscr{O}'
 
 # States and operators
 def state(_1:str, _2:str): return tcode(_1) + ensuremath(f"_{{{_2}}}")
-def bitand(): return ensuremath(f"\mathbin{{\mathsf{{bitand}}}}")
-def bitor(): return ensuremath(f"\mathbin{{\mathsf{{bitor}}}}")
-def xor(): return ensuremath(f"\mathbin{{\mathsf{{xor}}}}")
-def rightshift(): return ensuremath(f"\mathbin{{\mathsf{{rshift}}}}")
-def leftshift(_1:str): return ensuremath(f"\mathbin{{\mathsf{{lshift}}_{{{_1}}}}}")
+def bitand(): return ensuremath(fr"\mathbin{{\mathsf{{bitand}}}}")
+def bitor(): return ensuremath(fr"\mathbin{{\mathsf{{bitor}}}}")
+def xor(): return ensuremath(fr"\mathbin{{\mathsf{{xor}}}}")
+def rightshift(): return ensuremath(fr"\mathbin{{\mathsf{{rshift}}}}")
+def leftshift(_1:str): return ensuremath(fr"\mathbin{{\mathsf{{lshift}}_{{{_1}}}}}")
 
 # Notes and examples
 def noteintro(_1:str): return f"[=`[][.textid {_1}]: "
