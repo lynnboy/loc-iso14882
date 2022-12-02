@@ -1,13 +1,165 @@
+<!-- markdownlint-disable no-inline-html MD050 MD038 -->
 # Syntax Of Redoc
 
 ## Overview
 
 Redoc is a markup language, all special things are in `[]`.
 
+## Keyword Tables
+
+### Keywords 关键字
+
+|||||||
+|-|-|-|-|-|-|
+`alignas` |`alignof`|`asm`|`auto`|`bool`|`break`|
+`case`|`catch`|`char`|`char8_t`|`char16_t`|`char32_t`|
+`class`|`concept`|`const`|`consteval`|`constexpr`|`constinit`|
+`const_cast`|`continue`|`co_await`|`co_return`|`co_yield`|`decltype`
+`default`|`delete`|`do`|`double`|`dynamic_cast`|`else`|
+`enum`|`explicit`|`export`|`extern`|`false`|`float`|
+`for`|`friend`|`goto`|`if`|`inline`|`int`|
+`long`|`mutable`|`namespace`|`new`|`noexcept`|`nullptr`|
+`operator`|`private`|`protected`|`public`|`register`|`reinterpret_cast`|
+`requires`|`return`|`short`|`signed`|`sizeof`|`static`|
+`static_assert`|`static_cast`|`struct`|`switch`|`template`|`this`|
+`thread_local`|`throw`|`true`|`try`|`typedef`|`typeid`|
+`typename`|`union`|`unsigned`|`using`|`virtual`|`void`|
+`volatile`|`wchar_t`|`while`
+
+### Alternative Representations 标识符替代表示
+
+|||||||
+|-|-|-|-|-|-|
+`and`| `and_eq`| `bitand`| `bitor`| `compl`| `not`
+`not_eq`| `or`| `or_eq`| `xor`| `xor_eq`
+
+### Contextual Keywords 语境关键字
+
+|||||
+|-|-|-|-|
+`final`| `import`| `module`| `override`
+
+### Preprocessing Operators 预处理运算符
+
+|||||
+|-|-|-|-|
+`#`|`##`|`%:`|`%:%:`
+
+### Operators & Punctuators 运算符和标点
+
+||||||||||
+|-|-|-|-|-|-|-|-|-|
+`{`|`}`|`[`|`]`|`(`|`)`
+`<:`|`:>`|`<%`|`%>`|`;`|`:`|`...`
+`?`|`::`|`.`|`.*`|`->`|`->*`|`~`
+`!`|`+`|`-`|`*`|`/`|`%`|`^`|`&`|`\|`
+`=`|`+=`|`-=`|`*=`|`/=`|`%=`|`^=`|`&=`|`\|=`
+`==`|`!=`|`<`|`>`|`<=`|`=>`|`<=>`|`&&`|`\|\|`
+`<<`|`>>`|`<<=`|`=>>`|`++`|`--`|`,`
+
+## Syntax Terms
+
+### Lexical Convensions 词法约定
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*hex-quad*                  |*hex-四位*     | [lex.charset] | *十六进制数字* **{4}**
+*universal-character-name*  |*通用字符名*   | [lex.charset] | `\u` *hex-四位* **{1,2}**
+*preprocessing-token*       |*预处理记号*   | [lex.pptoken] | *头文件名* \|<br> *import-关键字* \|<br> *module-关键字* \|<br> *export-关键字* \|<br> *标识符* \|<br> *预处理数字* \|<br>*字符字面量* \|<br> *用户定义字符字面量* \| <br>*字符串字面量* \|<br> *用户定义字符串字面量* \|<br>其他所有 *通用字符名*
+*token*                     |*记号*         | [lex.token]   | *标识符* \| *关键字* \| *字面量* \| *运算符或标点*
+*header-name*               |*头文件名*     | [lex.header]  | `<` *h-字符序列* `>` \| `"` *q-字符序列* `"`
+*h-char-sequence*           |*h-字符序列*   | [lex.header]  | *h-字符*__+__
+*h-char*                    |*h-字符*       | [lex.header]  | 源字符集 - ( 换行 \| `>` )
+*q-char-sequence*           |*q-字符序列*   | [lex.header]  | *q-字符*__+__
+*q-char*                    |*q-字符*       | [lex.header]  | 源字符集 - ( 换行 \| `"` )
+*pp-number*                 |*预处理数字*   | [lex.ppnumber]| `.`__?__ *数字* ( `.` \| *标识符继续* \| `'` (*数字* \|*非数字*) \| [`eEpP`] *正负号* )__\*__
+*identifier*                |*标识符*       | [lex.name]    | *标识符开头* *标识符继续*__\*__
+*identifier-start*          |*标识符开头*   | [lex.name]    | *非数字* \| *通用字符名* ∈ <XID_Start>
+*identifier-continue*       |*标识符继续*   | [lex.name]    | *数字* \| *非数字* \| *通用字符名* ∈ <XID_Continue>
+*nondigit*                  |*非数字*       | [lex.name]    | [`a-zA-Z_`]
+*digit*                     |*数字*         | [lex.name]    | [`0-9`]
+*keyword*                   |*关键字*       | [lex.key]     | *标识符* ∈ **关键字表**
+*preprocessing-op-or-punc*  |*预处理运算符或标点*| [lex.operators] | *预处理运算符* \| *运算符或标点*
+*preprocessing-operator*    |*预处理运算符* | [lex.operators] | `#` \| `##` \| `%:` \| `%:%:`
+*operator-or-punctuator*    |*运算符或标点* | [lex.operators] | *预处理记号* ∈ **运算符和标点**
+*literal*                   |*字面量*       | [lex.literal.kinds] | *整数字面量* \|<br> *字符字面量* \|<br> *浮点字面量* \|<br> *字符串字面量* \|<br> *布尔字面量* \|<br> *指针字面量* \|<br> *用户定义字面量*
+*integer-literal*           |*整数字面量*   | [lex.icon]    | *二进制字面量* \| *八进制字面量* \| *十进制字面量* \| *十六进制字面量*
+*binary-literal*            |*二进制字面量* | [lex.icon]    | (`0b` \| `0B`) *二进制数字* (`'`__?__ *二进制数字*)__\*__
+*octal-literal*             |*八进制字面量* | [lex.icon]    | `0` (`'`__?__ *八进制数字*)__\*__
+*decimal-literal*           |*十进制字面量* | [lex.icon]    | *非零数字* (`'`__?__ *数字*)__\*__
+*hexadecimal-literal*       |*十六进制字面量* | [lex.icon]  | *十六进制前缀* *十六进制数字序列*
+*binary-digit*              |*二进制数字*   | [lex.icon]    | [`01`]
+*octal-digit*               |*八进制数字*   | [lex.icon]    | [`0-7`]
+*nonzero-digit*             |*非零数字*     | [lex.icon]    | [`1-9`]
+*hexadecimal-prefix*        |*十六进制前缀* | [lex.icon]    | `0x` \| `0X`
+*hexadecimal-digit-sequence*|*十六进制数字序列*| [lex.icon] | *十六进制数字* (`'`__?__ *十六进制数字*)__\*__
+*hexadecimal-digit*         |*十六进制数字* | [lex.icon]    | [`0-9a-fA-F`]
+*integer-suffix*            |*整数后缀*     | [lex.icon]    | *unsigned-后缀* (*long-后缀* \| *long-long-后缀* \| *size-后缀*)__?__ \|<br> (*long-后缀* \| *long-long-后缀* \| *size-后缀*) *unsigned-后缀*__?__
+*unsigned-suffix*           |*unsigned-后缀*| [lex.icon]    | `u` \| `U`
+*long-suffix*               |*long-后缀*    | [lex.icon]    | `l` \| `L`
+*long-long-suffix*          |*long-long-后缀*| [lex.icon]   | `ll` \| `LL`
+*size-suffix*               |*size-后缀*    | [lex.icon]    | `z` \| `Z`
+*character-literal*         |*字符字面量*   | [lex.ccon]    | *编码前缀*__?__ `'` *c-字符序列* `'`
+*encoding-prefix*           |*编码前缀*     | [lex.ccon]    | `u8` \| `u` \| `U` \| `L`
+*c-char-sequence*           |*c-字符序列*   | [lex.ccon]    | *c-char*__\*__
+*c-char*                    |*c-字符*       | [lex.ccon]    | *基本-c-字符* \| *转义序列* \| *通用字符名*
+*basic-c-char*              |*基本-c-字符*  | [lex.ccon]    | **基本源字符集** - (`'` \| `\` \| 换行)
+*escape-sequence*           |*转义序列*     | [lex.ccon]    | *简单转义序列* \| *数值转义序列* \| *有条件转义序列*
+*simple-escape-sequence*    |*简单转义序列* | [lex.ccon]    | `\` *简单转义序列字符*
+*simple-escape-sequence-char* |*简单转义序列字符* | [lex.ccon] | [`'"?\abfnrtv`]
+*numeric-escape-sequence*   |*数值转义序列* | [lex.ccon]    | *八进制转义序列* \| *十六进制转义序列*
+*octal-escape-sequence*     |*八进制转义序列*| [lex.ccon]   | `\` *八进制数字*__{1,3}__
+*hexadecimal-escape-sequence*|*十六进制转义序列*| [lex.ccon]| `\x` *十六进制数字*__\+__
+*conditional-escape-sequence*|*有条件转义序列*| [lex.ccon]  | `\` *有条件转义序列字符*
+*conditional-escape-sequence-char*|*有条件转义序列字符*|[lex.ccon]| **基本源字符集** - ([`0-9'"?\abfnrtvuUx`])
+*floating-point-literal*    |*浮点字面量*   | [lex.fcon]    | *十进制浮点字面量* \| *十六进制浮点字面量*
+*decimal-floating-point-literal* |*十进制浮点字面量*|[lex.fcon]| (*小数常量* *指数部分*__?__ \| *数字序列* *指数部分*) *浮点后缀*__?__
+*hexadecimal-floating-point-literal*|*十六进制浮点字面量*|[lex.fcon]| *十六进制前缀* (*十六进制小数常量* \| *十六进制数字序列*) *二进制指数部分* *浮点后缀*__?__
+*fractional-constant*       |*小数常量*     | [lex.fcon]    | *数字序列*__?__ `.` *数字序列* \| *数字序列* `.`
+*hexadecimal-fractional-constant*|*十六进制小数常量*|[lex.fcon]| *十六进制数字序列*__?__ `.` *十六进制数字序列* \| *十六进制数字序列* `.`
+*exponent-part*             |*指数部分*     | [lex.fcon]    | [`eE`] *正负号*__?__ *数字序列*
+*binary-exponent-part*      |*二进制指数部分*| [lex.fcon]   | [`pP`] *正负号*__?__ *数字序列*
+*sign*                      |*正负号*       | [lex.fcon]    | [`+-`]
+*digit-sequence*            |*数字序列*     | [lex.fcon]    | *数字* (`'`__?__ *数字*)__*__
+*floating-point-suffix*     |*浮点后缀*     | [lex.fcon]    | [`flFL`]
+*string-literal*            |*字符串字面量* | [lex.string]  | *编码前缀*__?__ (`"` *s-字符序列*__?__ `"` \| `R` *原始字符串*)
+*s-char-sequence*           |*s-字符序列*   | [lex.string]  | *s-字符*__+__
+*s-char*                    |*s-字符*       | [lex.string]  | *基本-s-字符* \| *转义序列* \| *通用字符名*
+*basic-s-char*              |*基本-s-字符*  | [lex.string]  | **基本源字符集** - (`"` \| `\` \| 换行)
+*raw-string*                |*原始字符串*   | [lex.string]  | `"` *d-字符序列*__?__ `(` *r-字符序列* `)` *d-字符序列*__?__ `"`
+*r-char-sequence*           |*r-字符序列*   | [lex.string]  | *r-字符*__+__
+*r-char*                    |*r-字符*       | [lex.string]  | **源字符集** - (`)` *d-字符序列*__?__ `"`)
+*d-char-sequence*           |*d-字符序列*   | [lex.string]  | *d-字符*__+__
+*d-char*                    |*d-字符*       | [lex.string]  | **源字符集** - ([` ()\`] \| **控制字符**)
+*boolean-literal*           |*布尔字面量*   | [lex.bool]    | `false` \| `true`
+*pointer-literal*           |*指针字面量*   | [lex.nullptr] | `nullptr`
+*user-defined-literal*      |*用户定义字面量*| [lex.ext]    | *用户定义整数字面量* \|<br> *用户定义浮点字面量* \|<br> *用户定义字符串字面量* \|<br> *用户定义字符字面量*
+*user-defined-integer-literal*|*用户定义整数字面量*|[lex.ext]| (*十进制字面量* \| *八进制字面量* \| *十六进制字面量* \| *二进制字面量*) *ud-后缀*
+*user-defined-floating-point-literal*|*用户定义浮点字面量*|[lex.ext]| (*小数常量* *指数部分*__?__ \| *数字序列* *指数部分* \| *十六进制前缀* (*十六进制小数常量* \| *十六进制数字序列*) *二进制指数部分*) *ud-后缀*
+*user-defined-string-literal*|*用户定义字符串字面量*|[lex.ext]| *字符串字面量* *ud-后缀*
+*user-defined-character-literal*|*用户定义字符字面量*|[lex.ext]| *字符字面量* *ud-后缀*
+*ud-suffix*                 |*ud-后缀*      | [lex.ext]     | *标识符*
+
+### Basics 基本概念
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*translation-unit*          |*翻译单元*     | [basic.link]  | *声明式序列* \|<br> *全局模块分段*__?__ *模块声明式* *声明式序列*__?__ *私有模块分段*__?__
+
+### Expressions 表达式
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*primary-expression*        |*初等表达式*   | [expr.prim]   | *字面量* \|<br> `this` \|<br> `(` *表达式* `)` \|<br> *标识表达式* \|<br> *lambda-表达式* \|<br> *折叠表达式* \|<br> *requires-表达式*
+*id-expression*             |*标识表达式*   | [expr.prim.id.general] | *无限定标识* \| *限定标识*
+*unqualified-id*            |*无限定标识*   | [expr.prim.id.unqual] | *标识符* \|<br> *运算符函数标识* \|<br> *转换函数标识* \|<br> *字面量运算符标识* \|<br> `~` *类型名* \|<br> `~` *decltype-说明符* \|<br> *模板标识*
+*qualified-id*              |*限定标识*     | [expr.prim.id.qual] | *嵌套名说明符* `template`__?__ *无限定标识*
+*nested-name-specifier*     |*嵌套名说明符* | [expr.prim.id.qual] | ( \| *类型名* \| *命名空间名* \| *decltype-说明符* ) `::` ( ( *标识符* \| `template`__?__ *简单模板标识* ) `::`)__*__
 
 ## Terms Translation Table
 
-#### A
+### A
+
 |English|中文|说明|
 |-|-|-|
 abstract class                          |抽象类     |包含纯虚函数
@@ -54,7 +206,7 @@ array declarator                        |函数声明符
 array element                           |数组元素
 array of N T                            |T 的 N 元素数组
 array of unknown bound of T             |T 的边界未知数组
-array-to-pointer conversion             |数组向指针转换
+array-to-pointer conversion             |数组向指针转换 |TempMatC
 arrow operator                          |箭头运算符
 as-if rule                              |“如同”规则     |以可观察行为为准
 asm definition                          |asm 定义式
@@ -75,7 +227,8 @@ automatic storage duration              |自动存储期
 await-expression                        |等待表达式
 awaitable                               |可等待体
 
-#### B
+### B
+
 |English|中文|说明|
 |-|-|-|
 backslash                               |反斜杠     |`\`，用于转义，行拼接等
@@ -107,14 +260,15 @@ block statement                         |块语句         |语句的一种，`{
 block variable                          |块变量         |块作用域的变量
 block with forward progress guarantee delegation |带有向前进展保证委托的阻塞|线程阻塞于线程集合全部完成，保证至少一个线程不比被阻塞线程弱，即确保总保证不会减弱
 boolean                                 |布尔
-boolean conversion                      |布尔转换
+boolean conversion                      |布尔转换       |0->`false`, 非0->`true`
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
 bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
 break statement                         |break 语句
 built-in operator                       |内建运算符
 byte                                    |字节           |基本存储单元
 
-#### C
+### C
+
 |English|中文|说明|
 |-|-|-|
 cache                                   |高速缓存
@@ -163,7 +317,8 @@ complete object                         |完整对象   |不是子对象的对�
 complete type                           |完整类型
 compliance                              |遵从性
 component                               |组件
-composite pointer type                  |组合指针类型
+component name                          |成分名     |无限定标识：名字、类型名、模板标识部分<br>限定标识：各嵌套名和无限定标识的成分名
+composite pointer type                  |组合指针类型   |兼容两个指针操作数的指针类型
 compound assignment expression          |复合赋值表达式
 compound assignment operator            |复合赋值运算符
 compound statement                      |复合语句   |块语句，语句块，花括号
@@ -205,7 +360,8 @@ constructor                             |构造函数
 consume                                 |消费           |同步操作
 container                               |容器
 context                                 |语境，上下文
-contextually converted to bool          |按语境转换为 bool
+contextually converted to bool          |按语境转换为 bool  |IFF可声明`bool t(e);`
+contextually implicitly converted to T  |按语境隐式转换为 T |IFF找到表达式类型C向语句可接受的类型T的非显式转换函数，且T唯一
 contextual keyword                      |语境关键字，上下文关键字   |仅在特定语境中具有特殊含义：`final` `override` `import` `module`
 continue statement                      |continue 语句
 contravariant                           |逆变
@@ -226,15 +382,17 @@ corresponding instance                  |对应实例       |实现所对应的�
 covariant                               |协变
 create                                  |创建
 CTAD, constructor template argument deduction   |构造函数模板实参推断   |可利用推断导引
+current class                           |当前类         |当前位置最内层类作用域
 cv pointer to cv T                      |cv T 的 cv 指针
+cv-combined type                        |cv 合并类型
 cv-decomposition                        |cv 分解
 cv-qualification                        |cv 限定
-cv-qualification signature              |cv 限定签名
+cv-qualification signature              |cv 限定签名    |最长限定分解的除顶层 cv 外的各级 cv
 cv-qualifier                            |cv 限定符
 cv-unqualified                          |无 cv 限定的
 
+### D
 
-#### D
 |English|中文|说明|
 |-|-|-|
 data                                    |数据
@@ -247,6 +405,7 @@ deallocation function                   |回收函数   |`operator delete`, `ope
 decay                                   |退化
 declaration                             |声明式，声明   |代码结构称为‘声明式’，引入实体的名字，类型和编译期存在性
 declaration statement                   |声明语句
+declarative *nested-name-specifier*     |声明性*嵌套名说明符* |用于定名类型，不能有decltype，应当为模板
 declarative region                      |声明区
 declarator                              |声明符
 declare                                 |声明
@@ -296,7 +455,7 @@ directive                               |指令
 directive-introducing token             |指令发起记号
 disambiguation                          |歧义消解
 discarded statement                     |弃用语句       |`constexpr if` 排除的语句
-discarded-value expression              |弃值表达式
+discarded-value expression              |弃值表达式     |仅保留副作用，一些 volatile 访问表达式进行L2R转换（保留读内存副作用）
 disjunction                             |析取
 division operator                       |除法运算符
 do statement                            |do 语句
@@ -307,7 +466,8 @@ dynamic initialization                  |动态初始化     |除静态初始化
 dynamic storage duration                |动态存储期
 dynamic type                            |动态类型       |纯右值的动态类型编译期已知
 
-#### E
+### E
+
 |English|中文|说明|
 |-|-|-|
 ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制造商协会
@@ -375,7 +535,8 @@ extension                               |扩展           |实现提供的额外
 extern specifier                        |extern 说明符
 external linkage                        |外部连接       |跨翻译单元可见
 
-#### F
+### F
+
 |English|中文|说明|
 |-|-|-|
 facet                                   |刻面
@@ -389,12 +550,12 @@ field                                   |字段
 file                                    |文件           |可观察行为
 final overrider                         |最终覆盖函数
 finite state machine                    |有限状态机     |用于实现正则表达式的数据结构
-floating conversion                     |浮点转换
-floating-integral conversion            |浮点整形转换
+floating-integral conversion            |浮点整形转换   |f->i：截断；i->f：尽可能精确
 floating-point                          |浮点
+floating-point conversion               |浮点转换       |除提升外任意浮点间转换
 floating-point literal                  |浮点字面量     |后缀：'fFlL'，十进制'eE'，十六进制'0x|0X' + 'pP'，指数部分仍为10进制
 floating-point type                     |浮点类型       |`float`, `double`, `long double`
-floating-point promotion                |浮点提升
+floating-point promotion                |浮点提升       |float -> double
 fold expression                         |折叠表达式
 for-range-declaration                   |for-范围声明式 |范围式for语句的变量声明式
 for statement                           |for 语句
@@ -420,7 +581,7 @@ function object                         |函数对象
 function overloading                    |函数重载
 function parameter pack                 |函数形参包组
 function parameter scope                |函数形参作用域 |作用域的一种，形参声明子句（不只函数）所在声明符范围，有体则包含体
-function pointer conversion             |函数指针转换
+function pointer conversion             |函数指针转换   |去掉noexcept约束
 function pointer type                   |函数指针类型
 function prototype                      |函数原型
 function scope                          |函数作用域
@@ -428,11 +589,12 @@ function specifier                      |函数说明符
 function template                       |函数模板
 function-try-block                      |函数-try-块    |整个函数放入`try...catch`中
 function-like macro                     |函数式宏
-function-to-pointer conversion          |函数向指针转换
+function-to-pointer conversion          |函数向指针转换 |函数或静态成员函数
 fundamental alignment                   |基础对齐       |FA <= `alignof(max_align_t)`
 fundamental type                        |基础类型       |算术（整型、浮点）, `void`, `nullptr_t`
 
-#### G
+### G
+
 |English|中文|说明|
 |-|-|-|
 generic lambda expression               |泛型 lambda 表达式
@@ -443,14 +605,15 @@ global namespace                        |全局命名空间
 global object                           |全局对象
 global scope                            |全局作用域     |整个程序，全局命名空间的命名空间作用域
 global variable                         |全局变量
-glvalue                                 |泛左值
+glvalue                                 |泛左值     |具有识别性的值（可取地址），结果为实体：LValue+XValue
 glyph                                   |字形       |字符图形，书写效果
 goto statement                          |goto 语句
 grammar                                 |文法
 greater-than operator                   |大于运算符
 greater-than-or-equal-to operator       |大于或等于运算符
 
-#### H
+### H
+
 |English|中文|说明|
 |-|-|-|
 handler                                 |处理器     |捕获并处理异常的代码块
@@ -463,7 +626,8 @@ header unit                             |头文件单元 |模块
 high-order bit                          |高序位     |最高有效位
 hosted implementation                   |宿主式实现 |在操作系统下运行
 
-#### I
+### I
+
 |English|中文|说明|
 |-|-|-|
 identifier                              |标识符     |预处理记号，也是记号，符合 Unicode 标识符文法 XID_Start XID_Continue*
@@ -472,6 +636,7 @@ IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
 if statement                            |if 语句
 ill-formed                              |非良构的   |语法或语义无效的代码
+immediate function                      |直接函数
 immediate invocation                    |直接调用
 immediate scope                         |直接作用域 |最小的外围作用域
 immediate subexpression                 |直接子表达式   |应当在文法位置执行的表达式：成分表达式、隐含函数调用、lambda的捕获的初始化、默认实参、聚合的默认成员初始化式
@@ -479,7 +644,8 @@ implementation                          |实现
 implementation limits                   |实现限额
 implementation-defined                  |由实现定义的   |编译器实现自行决定的某些良构代码的行为
 implicit                                |隐式，暗中，隐含
-implicit conversion sequence            |隐式转换序列
+implicit conversion                     |隐式转换       |iff可声明`T t=e;`，e可隐式转换为 T
+implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
 implicit type conversion                |隐式类型转换
 implicit-lifetime class                 |隐式生存期类   |
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
@@ -518,8 +684,8 @@ integer conversion rank                 |整数转换等级       |宽度越小�
 integer literal                         |整数字面量         |后缀：符号性`u|U`，类型`l|L|ll|LL|z|Z`<br>前缀：进制`0|0b|0B|0x|0X`
 integer type                            |整数类型   |整数*8、字符*5、`bool`
 integral constant expression            |整型常量表达式
-integral conversion                     |整形转换
-integral promotion                      |整形提升
+integral conversion                     |整形转换   |除提升外的任意整型间转换，除bool外同余值
+integral promotion                      |整形提升   |低于int的整型、字符、无作用域枚举，转为足够宽的int及以上最低类型<br>整型位字段提升到int
 integral type                           |整型类型   |整数*8、字符*5、`bool`
 inter-thread happens before             |线程间发生早于 ITHB|明确跨线程顺序性：<br>SeqB、Sync、DepB的跨线程组合<br>DepB+SeqB不足以提供有序性
 interactive device                      |交互设备   |I/O 设备，可观察行为
@@ -535,18 +701,21 @@ ISO, International Organization for Standardization |ISO，国际标准化组织
 iteration statement                     |循环语句，重复语句
 iterator                                |迭代器
 
-#### J
+### J
+
 |English|中文|说明|
 |-|-|-|
 join                                    |合并（线程）
 jump statement                          |跳转语句
 
-#### K
+### K
+
 |English|中文|说明|
 |-|-|-|
 keyword                                 |关键字     |无条件关键字 + `import` `export` `module`
 
-#### L
+### L
+
 |English|中文|说明|
 |-|-|-|
 label                                   |标号
@@ -593,10 +762,11 @@ lookup context                          |查找语境       |成员限定名：�
 lookup set                              |查找集合       |类成员名字查找的中间结果，包含声明式集合和所属子对象集合
 low-order bit                           |低序位         |最低有效位
 lower bound                             |下界
-lvalue                                  |左值
-lvalue-to-rvalue conversion             |左值向右值转换
+lvalue                                  |左值           |并非临限值XValue的泛左值
+lvalue-to-rvalue conversion             |左值向右值转换 |非函数、非数组，GLv->PRv，非类类型去掉cv
 
-#### M
+### M
+
 |English|中文|说明|
 |-|-|-|
 macro                                   |宏
@@ -639,7 +809,8 @@ multiplicative operator                 |乘性运算符
 mutable specifier                       |mutable 说明符
 mutex                                   |互斥体
 
-#### N
+### N
+
 |English|中文|说明|
 |-|-|-|
 name                                    |名字<br>指名       |标识符、运算符函数标识、字面量运算符标识、转换函数标识<br>声明式包含：模板名、概念名、标识表达式、类型的说明符、闭包类型的lambda、重载集合时，指名相应实体
@@ -684,11 +855,11 @@ normalized                              |正规化的
 normative                               |规范性的   |作为正式内容的文本章节或参考文献
 null                                    |空
 null character                          |空字符     |`'\0'`
-null member pointer conversion          |空成员指针转换
-null member pointer value               |空成员指针值
+null member pointer conversion          |空成员指针转换 |空指针常量->成员指针类型的空成员指针值
+null member pointer value               |空成员指针值   |具体成员指针类型的空成员指针值，不指向任何成员
 null pointer                            |空指针
-null pointer constant                   |空指针常量 |包括`nullptr`和`0`等
-null pointer conversion                 |空指针转换
+null pointer constant                   |空指针常量 |包括`nullptr`和`0`等，不是空指针值
+null pointer conversion                 |空指针转换 |空指针常量->指针类型的空指针值
 null pointer literal                    |空指针字面量   |唯一的指针字面量，`nullptr`，类型为`std::nullptr_t`
 null pointer value                      |空指针值   |具体指针类型的空指针值，二进制表示可能不为全0
 null statement                          |空语句
@@ -697,7 +868,8 @@ null wide character                     |空宽字符   |`L'\0'`
 numeric escape sequence                 |数值转义序列   |`\ooo`，`\hh` 八进制最多三个，十六进制无限制
 numeric literal operator template       |数值字面量运算符模板   |自定义数值字面量的通配，`<char...> T operator "" X()`
 
-#### O
+### O
+
 |English|中文|说明|
 |-|-|-|
 object                                  |对象       |一种实体
@@ -719,13 +891,14 @@ operator                                |运算符
 operator-or-punctuator                  |运算符或标点   |记号的一种，包括运算符记号和 `{}[]()...` 等和替代表示
 operator overloading                    |运算符重载
 or operator                             |或运算符
+order of evaluation                     |求值顺序
 ordered initialization                  |有序初始化     |静态变量初始化：非模板特例变量，非内联变量
 ordinary character literal              |普通字符字面量 |除不可编码和多字符外，类型为 `char`，编码为执行字符集
 ordinary character type                 |普通字符类型   |`char`, `signed char`, `unsigned char`
 ordinary string literal                 |普通字符串字面量   |类型为`const char[n]`，编码为执行字符集
 output                                  |输出
 over-aligned type                       |过量对齐类型   |类型的对齐为扩充对齐EA
-overflow                                |溢出
+overflow                                |溢出，上溢
 overload                                |重载
 overload resolution                     |重载决议   |
 overloaded function                     |重载函数
@@ -733,7 +906,8 @@ overloaded operator                     |重载运算符
 override                                |覆盖
 overrider                               |覆盖函数
 
-#### P
+### P
+
 |English|中文|说明|
 |-|-|-|
 pack                                    |包组           |一种实体，概念上类似`tuple`，用于`...`
@@ -764,11 +938,11 @@ point of declaration                    |声明点         |实体声明生效�
 point of definition                     |定义点
 pointer                                 |指针
 pointer arithmetic                      |指针算术
-pointer conversion                      |指针转换
+pointer conversion                      |指针转换       |空指针转换，cv T*->cv void*（地址不变），cv D*->cv B*（地址调整）
 pointer declarator                      |指针声明符
 pointer literal                         |指针字面量     |`nullptr`，类型为`std::nullptr_t`
 pointer to member                       |成员指针       |数据成员指针，成员函数指针
-pointer to member conversion            |成员指针转换
+pointer to member conversion            |成员指针转换   |空成员指针转换，cv T(B::*)->cv T(D::*)
 pointer to member declarator            |成员指针声明符
 pointer to member of X of type cv T     |cv T 类型的 X 的成员指针
 pointer to member operator              |成员指针运算符
@@ -789,6 +963,7 @@ potentially-overlapping subobject       |潜在重叠子对象 |基类子对象�
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
 pragma                                  |语用       |预处理指令，预处理运算符
 precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
+precedence                              |优先级
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符
 prefix increment operator               |前置增量运算符
@@ -799,7 +974,7 @@ preprocessing operator                  |预处理运算符       |由预处理�
 preprocessing operators and punctuators |预处理运算符与标点 |预处理记号，预处理运算符+运算符或标点
 preprocessing token                     |预处理记号 |预处理指令工作对象，预处理后转换为记号
 primary equivalence class               |主等价类   |校排中具有相同主排序键的字符或字符串
-primary expression                      |初等表达式
+primary expression                      |初等表达式 |字面量、this、括号、标识表达式、lambda、折叠、requires
 primary sort key                        |主排序键   |校排中仅按主题字符形状分类的排序字符
 primary template                        |主模板
 primary token                           |首选记号   |代用记号所等价的记号
@@ -815,22 +990,27 @@ prospective destructor                  |预期析构函数
 protected                               |受保护
 prototype                               |原型
 provides storage                        |提供存储   |字节数组对象为放置构造对象提供存储
-prvalue                                 |纯右值
-pseudo destructor call                  |伪析构函数调用
+prvalue                                 |纯右值     |对表达式仅使用其值而不涉及识别性，结果为值
+pseudo-destructor                       |伪析构函数 |标量类型的析构函数
+pseudo destructor call                  |伪析构函数调用 |无操作但结束生存期
 public                                  |公用，公开
 punctuator                              |标点，标点符号
 pure virtual function                   |纯虚函数
 purview                                 |视野
 
-#### Q
+### Q
+
 |English|中文|说明|
 |-|-|-|
 qualification                           |限定，限定性
-qualified name                          |限定名     |限定标识，using-声明符，typename-说明符，和具有`A::B`结构的各种说明符等中的终端名，以及成员限定名
-qualified name lookup                   |限定名查找 |一般在查找语境中查找，命名空间还考虑内联命名空间，找不到则进一步查找 uing-指令引入的命名空间
+qualification-combined type             |限定合并类型   |多级指针/数组的公共类型。非顶层各级 cv 限定符合并，向发生合并层级的所有外层添加 const
+qualification decomposition             |限定分解       |多级指针/成员指针/数组的分解方式
+qualified name                          |限定名         |限定标识，using-声明符，typename-说明符，和具有`A::B`结构的各种说明符等中的终端名，以及成员限定名
+qualified name lookup                   |限定名查找     |一般在查找语境中查找，命名空间还考虑内联命名空间，找不到则进一步查找 uing-指令引入的命名空间
 qualifier                               |限定符
 
-#### R
+### R
+
 |English|中文|说明|
 |-|-|-|
 radix point                             |小数点
@@ -846,6 +1026,7 @@ recursive function call                 |递归函数调用
 ref-qualifier                           |引用限定符     |函数类型，成员函数的 & 或 &&
 reference                               |引用           |一种实体，不是对象，别名
 reference declarator                    |引用声明符
+reference-related to                    |引用相关
 reference to cv T                       |cv T 的引用
 reference to T                          |T 的引用，指代 T 的引用
 reference type                          |引用类型，T& 或 T&&
@@ -880,9 +1061,10 @@ right shift operator                    |右移运算符
 rounding                                |舍入
 run                                     |运行
 runtime type identification             |运行时类型标识
-rvalue                                  |右值
+rvalue                                  |右值       |纯右值PRValue+临限值XValue
 
-#### S
+### S
+
 |English|中文|说明|
 |-|-|-|
 safely-derived pointer                  |安全衍生指针
@@ -906,7 +1088,7 @@ signal handler                          |信号处理函数
 signature                               |签名   |名字，形参类型列表，外围类，命名空间，尾部 requires，（模板）返回类型，模板头，（特化）模板实参
 signed                                  |有符号
 signed integer type                     |有符号整数类型 |标准、扩充有符号整数
-similar type                            |相似类型
+similar type                            |相似类型       |两个同级数多级指针/数组中，不考虑cv，允许数组的无边界/有边界差异外，其余相同
 simple-capture                          |简单俘获符     |不带有初始化式，直接指名被俘获变量的俘获符
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
@@ -916,17 +1098,17 @@ single search                           |单次搜索       |名字查找步骤�
 sizeof operator                         |sizeof 运算符
 source character set                    |源字符集
 source file                             |源文件
-space character                         |空格字符   |` `
+space character                         |空格字符   |``
 specialization                          |特化式，特例   |代码结构为‘特化式’，实体为‘特例’
 specialize                              |特化
 specifier                               |说明符
 stable algorithm                        |稳定算法   |保留输入元素顺序
-standard conversion sequence            |标准转换序列
-standard integer type                   |标准整数类型       |标准有符号、无符号整数
+standard conversion sequence            |标准转换序列   |隐式转换：(Lv2Rv|A2Ptr|F2Ptr)?+(IntP|FltP|IntC|FltC|FIC|PtrP|MptrP|BoolC)?+FPtrC?+QualC?
+standard integer type                   |标准整数类型   |标准有符号、无符号整数
 standard signed integer type            |标准有符号整数类型 |`signed char`, `short`, `int`, `long`, `long long`
 standard unsigned integer type          |标准无符号整数类型 |`unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, `unsigned long long`
 standard-layout class                   |标准布局类
-standard-layout type                    |标准布局类型       |标量、标准布局类，数组
+standard-layout type                    |标准布局类型   |标量、标准布局类，数组
 stateful character encoding             |有状态字符编码
 statement                               |语句
 static                                  |静态
@@ -976,7 +1158,8 @@ syntactic category                      |语法范畴   |BNF 产生式非终结�
 syntax                                  |语法
 syntax notation                         |语法表示法
 
-#### T
+### T
+
 |English|中文|说明|
 |-|-|-|
 target constructor                      |目标构造函数
@@ -996,10 +1179,10 @@ template specialization                 |模板特例，模板特化式   |模�
 template template parameter             |模板模板形参   |三种模板形参之一
 template type parameter                 |模板类型形参   |三种模板形参之一
 temporary expression                    |临时对象表达式
-temporary materialization conversion    |临时对象实质化转换
+temporary materialization conversion    |临时对象实质化转换 |纯右值->临限值，类对象必须可销毁
 temporary object                        |临时对象
 term                                    |术语
-terminal name                           |终端名 |using-声明符的目标
+terminal name                           |终端名     |using-声明符的目标，语言构造中最后一个成分名
 terminate                               |终止
 thread                                  |线程
 thread of execution                     |执行线程，线程
@@ -1042,7 +1225,8 @@ typedef-name                            |typedef-名         |类型别名，`ty
 typedef specifier                       |typedef 说明符
 typename specifier                      |typename 说明符
 
-#### U
+### U
+
 |English|中文|说明|
 |-|-|-|
 UCS, Universal Multiple-Octet Coded Character Set   |UCS，通用字符集，通用多八位编码字符集
@@ -1058,12 +1242,12 @@ unblock                                 |解除阻塞
 undefined                               |未定义的
 undefined behavior                      |UB，未定义行为     |任意可能行为
 underlying type                         |底层类型
-unevaluated operand                     |免求值操作数
+unevaluated operand                     |免求值操作数       |编译期语法结构，仅获得类型/元信息，不求值
 unexpanded parameter pack               |未展开形参包组
 Unicode                                 |Unicode，统一码
 union                                   |联合体
 union-like class                        |类似联合体的类
-universal character name                |UCN，通用字符名    |概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
+universal-character-name                |UCN，通用字符名    |概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 unnamed class                           |无名类
 unnamed enumeration                     |无名枚举
 unnamed namespace                       |无名命名空间
@@ -1090,13 +1274,14 @@ user-defined string literal             |用户定义字符串字面量   |预�
 using-declaration                       |using-声明式           |引入已有实体的名字，所在位置限制其种类，没有连接
 using-directive                         |using-指令             |引入其中所有已有可达实体的名字
 using-enum-declaration                  |using-枚举声明式       |作用类似using-指令，引入所有已有枚举符的名字
-usual arithmetic conversions            |一般算术转换
+usual arithmetic conversions            |一般算术转换           |操作数->公共类型->结果
 UTF, Unicode Transformation Format      |UTF，Unicode 转换格式
 UTF-8 string literal                    |UTF-8 字符串字面量     |前缀为`u8`，类型为`const char8_t[n]`
 UTF-16 string literal                   |UTF-16 字符串字面量    |前缀为`u`，类型为`const char16_t[n]`
 UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为`U`，类型为`const char32_t[n]`
 
-#### V
+### V
+
 |English|中文|说明|
 |-|-|-|
 vacuous initialization                  |无为初始化 |无实际动作（平凡）的默认初始化
@@ -1127,7 +1312,8 @@ volatile                                |易失的     |免除编译器优化，
 volatile object                         |volatile 对象  |volatile T 的对象或其子对象
 volatile-qualified                      |volatile 限定的
 
-#### W
+### W
+
 |English|中文|说明|
 |-|-|-|
 weak order                              |弱序   |自反，传递，连通，不要求反对称性，如某些 <=
@@ -1135,25 +1321,27 @@ weakly parallel forward progress guarantees |弱并行向前进展保证   |不�
 well-formed                             |良构的     |语法和语义没有问题的代码
 while statement                         |while 语句
 whitespace                              |空白       |空白字符和注释
-whitespace character                    |空白字符   |` `, `\t`, `\v`, `\f`, `\n`, `\r` 等
+whitespace character                    |空白字符   |``, `\t`, `\v`, `\f`, `\n`, `\r` 等
 wide character                          |宽字符
 wide character literal                  |宽字符字面量   |类型为 `wchar_t`，除不可编码和多字符外，编码为执行宽字符
 wide string literal                     |宽字符串字面量 |类型为 `const wchar_t[n]`，编码为执行宽字符
 write-read coherence                    |写-读协调性    |原子性 M 的 WA HapB RB，则两个值符合 M 的改动顺序
 write-write coherence                   |写-写协调性    |原子性 M 的 WA HapB WB，则两个值符合 M 的改动顺序
 
-#### X
+### X
+
 |English|中文|说明|
 |-|-|-|
-xvalue                                  |临限值
+xvalue                                  |临限值 |将被重用的对象，有地址但可作为右值
 
-#### Y
+### Y
+
 |English|中文|说明|
 |-|-|-|
-yield-expression                        |产出表达式
+*yield-expression*                      |产出表达式
 
-#### Z
+### Z
+
 |English|中文|说明|
 |-|-|-|
 zero-initialization                     |零初始化       |未以常量初始化的静态/线程变量在线程启动时置零
-
