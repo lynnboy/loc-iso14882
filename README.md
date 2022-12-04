@@ -54,8 +54,16 @@ Redoc is a markup language, all special things are in `[]`.
 `?`|`::`|`.`|`.*`|`->`|`->*`|`~`
 `!`|`+`|`-`|`*`|`/`|`%`|`^`|`&`|`\|`
 `=`|`+=`|`-=`|`*=`|`/=`|`%=`|`^=`|`&=`|`\|=`
-`==`|`!=`|`<`|`>`|`<=`|`=>`|`<=>`|`&&`|`\|\|`
-`<<`|`>>`|`<<=`|`=>>`|`++`|`--`|`,`
+`==`|`!=`|`<`|`>`|`<=`|`>=`|`<=>`|`&&`|`\|\|`
+`<<`|`>>`|`<<=`|`>>=`|`++`|`--`|`,`
+
+### Fold Operators 折叠运算符
+
+||||||||||
+|-|-|-|-|-|-|-|-|-|
+`+` |`-` |`*` |`/` |`%` |`^` |`&` |`\|` |`<<` |`>>`
+`+=`|`-=`|`*=`|`/=`|`%=`|`^=`|`&=`|`\|=`|`<<=`|`>>=`|`=`
+`==`|`!=`|`<` |`>` |`<=`|`>=`|`&&`|`\|\|`|`,` |`.*` |`->*`
 
 ## Syntax Terms
 
@@ -101,7 +109,7 @@ Original   |中文   |章节    |定义
 *size-suffix*               |*size-后缀*    | [lex.icon]    | `z` \| `Z`
 *character-literal*         |*字符字面量*   | [lex.ccon]    | *编码前缀*__?__ `'` *c-字符序列* `'`
 *encoding-prefix*           |*编码前缀*     | [lex.ccon]    | `u8` \| `u` \| `U` \| `L`
-*c-char-sequence*           |*c-字符序列*   | [lex.ccon]    | *c-char*__\*__
+*c-char-sequence*           |*c-字符序列*   | [lex.ccon]    | *c-字符*__\*__
 *c-char*                    |*c-字符*       | [lex.ccon]    | *基本-c-字符* \| *转义序列* \| *通用字符名*
 *basic-c-char*              |*基本-c-字符*  | [lex.ccon]    | **基本源字符集** - (`'` \| `\` \| 换行)
 *escape-sequence*           |*转义序列*     | [lex.ccon]    | *简单转义序列* \| *数值转义序列* \| *有条件转义序列*
@@ -154,7 +162,19 @@ Original   |中文   |章节    |定义
 *id-expression*             |*标识表达式*   | [expr.prim.id.general] | *无限定标识* \| *限定标识*
 *unqualified-id*            |*无限定标识*   | [expr.prim.id.unqual] | *标识符* \|<br> *运算符函数标识* \|<br> *转换函数标识* \|<br> *字面量运算符标识* \|<br> `~` *类型名* \|<br> `~` *decltype-说明符* \|<br> *模板标识*
 *qualified-id*              |*限定标识*     | [expr.prim.id.qual] | *嵌套名说明符* `template`__?__ *无限定标识*
-*nested-name-specifier*     |*嵌套名说明符* | [expr.prim.id.qual] | ( \| *类型名* \| *命名空间名* \| *decltype-说明符* ) `::` ( ( *标识符* \| `template`__?__ *简单模板标识* ) `::`)__*__
+*nested-name-specifier*     |*嵌套名说明符* | [expr.prim.id.qual] | ( ∅ \| *类型名* \| *命名空间名* \| *decltype-说明符* ) `::` ( ( *标识符* \| `template`__?__ *简单模板标识* ) `::`)__*__
+*lambda-expression*         |*lambda-表达式*| [expr.prim.lambda.general] | *lambda-引导符* ( ∅ \| `<` *模板形参列表* `>` *requires-子句*__?__ ) *lambda-声明符* *复合语句*
+*lambda-introducer*         |*lambda-引导符*| [expr.prim.lambda.general] | `[` *lambda-俘获式*__?__ `]`
+*lambda-declarator*         |*lambda-声明符*| [expr.prim.lambda.general] | *lambda-说明符序列* \|<br>`(` *形参声明子句* `)` *lambda-说明符序列* *requires-子句*__?__
+*lambda-specifiers*         |*lambda-说明符序列*|[expr.prim.lambda.general]| *声明说明符序列*__?__ *noexcept-说明符*__?__ *特性说明符序列*__?__ *尾部返回类型*__?__
+*lambda-capture*            |*lambda-俘获式*| [expr.prim.lambda.capture] | *默认俘获符* \| (*默认俘获符* `,`)__?__ *俘获符列表*
+*capture-default*           |*默认俘获符*   | [expr.prim.lambda.capture] | `&` \| `=`
+*capture-list*              |*俘获符列表*   | [expr.prim.lambda.capture] | *俘获符* ( `,` *俘获符* )__*__
+*capture*                   |*俘获符*       | [expr.prim.lambda.capture] | *简单俘获符* \| *带初始化俘获符*
+*simple-capture*            |*简单俘获符*   | [expr.prim.lambda.capture] | `&`__?__ *标识符* `...`__?__ \| `*`__?__ `this`
+*init-capture*              |*带初始化俘获符*| [expr.prim.lambda.capture] | `&`__?__ `...`__?__ *标识符* *初始化式*
+*fold-expression*           |*折叠表达式*   | [expr.prim.fold] | `(` *转型表达式* *折叠运算符* `...` `)` \|<br> `(` `...` *折叠运算符* *转型表达式* `)` \|<br> `(` *转型表达式* *折叠运算符* `...` *折叠运算符* *转型表达式* `)`
+*fold-operator*             |*折叠运算符*   | [expr.prim.fold] | *预处理记号* ∈ **折叠运算符**
 
 ## Terms Translation Table
 
@@ -243,10 +263,10 @@ basic source character set              |基本源字符集   |只有96个字符
 behavior                                |行为
 belong                                  |属于（作用域） |实体属于其声明式的目标作用域
 binary                                  |二进制，二元
-binary fold                             |二元折叠
-binary left fold                        |二元左折叠
+binary fold                             |二元折叠       |展开包组和一个表达式
+binary left fold                        |二元左折叠     |`expr op ... op pack`
 binary operator                         |二元运算符
-binary right fold                       |二元右折叠
+binary right fold                       |二元右折叠     |`pack op ... op expr`
 bit                                     |位
 bit-field                               |位字段         |一种实体
 bitwise and operator                    |按位与运算符
@@ -275,11 +295,11 @@ cache                                   |高速缓存
 call                                    |调用
 capture                                 |俘获，俘获符   |俘获符：语法结构，代表闭包数据成员，可指定初始化
 capture by copy                         |按复制俘获
+capture by reference                    |按引用俘获
 capture-default                         |默认俘获符
-captured by reference                   |按引用俘获
 carry a dependency to                   |传递依赖给 CDep|其值被后者所用（直接，或按顺序写+读）时<br>短路（逻辑、条件、逗号）和`kill_dependency`打破依赖<br>传递依赖是按顺序早于的子集
 case label                              |case 标号
-cast                                    |强制转换，类型强制转换
+cast                                    |转型，类型强制转换
 cast away constness                     |强制移除常量性
 catch                                   |捕获
 character                               |字符
@@ -301,8 +321,8 @@ class-specifier                         |类说明符   |类的定义体
 class template deduction                |类模板推断
 class template                          |类模板
 clause                                  |子句
-closure object                          |闭包对象
-closure type                            |闭包类型
+closure object                          |闭包对象   |lambda表达式纯右值
+closure type                            |闭包类型   |lambda表达式对象的类型，匿名唯一化，捕获为成员，重载`()`，函数指针转换
 code point                              |代码点     |字符在字符集中的数值
 coherence requirements                  |协调性规定 |写-写、写-读、读-写、读-读协调性
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
@@ -337,7 +357,7 @@ conditionally-supported                 |有条件支持的   |编译器实现�
 conflict                                |冲突           |两个求值至少一个改动
 conformance requirements                |一致性规定
 conjunction                             |合取
-const cast                              |const 强制转换
+const_cast                              |const 转型
 const object                            |const 对象     |const T 的对象或其非 mutable 子对象
 const-qualified                         |const 限定的
 const safety                            |const 安全性
@@ -461,7 +481,7 @@ division operator                       |除法运算符
 do statement                            |do 语句
 dot operator                            |点运算符
 dynamic                                 |动态
-dynamic cast                            |动态强制转换
+dynamic cast                            |动态转型
 dynamic initialization                  |动态初始化     |除静态初始化外的所有初始化，运行时发生<br>可以推迟到主函数/线程启动函数开始之后，但早于使用同UT中的任何非内联
 dynamic storage duration                |动态存储期
 dynamic type                            |动态类型       |纯右值的动态类型编译期已知
@@ -514,11 +534,11 @@ explicit instantiation declaration      |显式实例化声明式   |指定某�
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符
 explicit type conversion                |显式类型转换
-explicitly captured                     |显式俘获
+explicitly captured                     |显式俘获       |指定其*简单俘获符*
 explicitly defaulted function           |显式预置的函数
 exponent                                |指数
 export declaration                      |导出声明式
-module-keyword                          |导出关键字 |预处理记号，在预处理阶段支持模块
+module-keyword                          |导出关键字     |预处理记号，在预处理阶段支持模块
 exported declaration                    |被导出声明式
 exposure                                |显露式         |声明式中除函数体、初始化式、友元外指名了TU局部实体
 expression                              |表达式
@@ -649,7 +669,7 @@ implicit conversion sequence            |隐式转换序列   |实现隐式转�
 implicit type conversion                |隐式类型转换
 implicit-lifetime class                 |隐式生存期类   |
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
-implicitly captured                     |隐式俘获
+implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
 import                                  |导入
@@ -720,7 +740,7 @@ keyword                                 |关键字     |无条件关键字 + `im
 |-|-|-|
 label                                   |标号
 labeled statement                       |带标号语句
-lambda-expression                       |lambda-表达式
+lambda-expression                       |lambda-表达式  |函数对象/闭包，有捕获捕获，可泛型可约束，返回`auto`（推断或尾部返回类型）
 language linkage                        |语言连接
 latch                                   |门栓
 layout-compatible enumeration           |布局兼容枚举
@@ -1034,7 +1054,7 @@ referenceable type                      |可被引用的类型 |可以创建 T& 
 regex                                   |正则表达式
 region                                  |区，区域
 regular expression                      |正则表达式
-reinterpret cast                        |重解释强制转换
+reinterpret cast                        |重解释转型
 relational operator                     |关系运算符
 relaxed                                 |宽松的
 relaxed atomic operation                |宽松原子性操作 |不是同步操作，但不会竞争
@@ -1113,7 +1133,7 @@ stateful character encoding             |有状态字符编码
 statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
-static cast                             |静态强制转换
+static cast                             |静态转型
 static data member                      |静态数据成员
 static initialization                   |静态初始化     |静态/线程变量的常量/零初始化，运行前发生。允许动->静优化
 static member function                  |静态成员函数
@@ -1195,7 +1215,7 @@ token concatenation                     |记号拼接   |预处理功能，`a ##
 top-level cv-qualifier                  |顶层 cv 限定符
 total order                             |全序，非严格全序，线序 |具有完全性的偏序，完整的 <=
 traceable pointer                       |可追踪指针
-trailing requires-clause                |尾部 requires 子句 |模板函数
+trailing *requires-clause*              |尾部 *requires-子句* |模板函数
 trailing return type                    |尾部返回类型
 traits class                            |特征类     |提供与某个主类型形参有关的静态自定义能力，模板类
 translate                               |翻译       |编译
@@ -1232,22 +1252,22 @@ typename specifier                      |typename 说明符
 UCS, Universal Multiple-Octet Coded Character Set   |UCS，通用字符集，通用多八位编码字符集
 ud-suffix                               |ud-后缀    |用户定义字面量后缀，用于查找字面量运算符（模板）函数
 unary                                   |一元
-unary fold                              |一元折叠
-unary left fold                         |一元左折叠
+unary fold                              |一元折叠       |仅展开包组
+unary left fold                         |一元左折叠     |`... op pack`
 unary minus operator                    |一元减运算符
 unary operator                          |一元运算符
 unary plus operator                     |一元加运算符
-unary right fold                        |一元右折叠
+unary right fold                        |一元右折叠     |`pack op ...`
 unblock                                 |解除阻塞
 undefined                               |未定义的
-undefined behavior                      |UB，未定义行为     |任意可能行为
+undefined behavior                      |UB，未定义行为 |任意可能行为
 underlying type                         |底层类型
-unevaluated operand                     |免求值操作数       |编译期语法结构，仅获得类型/元信息，不求值
+unevaluated operand                     |免求值操作数   |编译期语法结构，仅获得类型/元信息，不求值
 unexpanded parameter pack               |未展开形参包组
 Unicode                                 |Unicode，统一码
 union                                   |联合体
 union-like class                        |类似联合体的类
-universal-character-name                |UCN，通用字符名    |概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
+universal-character-name                |UCN，通用字符名|概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 unnamed class                           |无名类
 unnamed enumeration                     |无名枚举
 unnamed namespace                       |无名命名空间
