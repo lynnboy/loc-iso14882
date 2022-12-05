@@ -175,6 +175,16 @@ Original   |中文   |章节    |定义
 *init-capture*              |*带初始化俘获符*| [expr.prim.lambda.capture] | `&`__?__ `...`__?__ *标识符* *初始化式*
 *fold-expression*           |*折叠表达式*   | [expr.prim.fold] | `(` *转型表达式* *折叠运算符* `...` `)` \|<br> `(` `...` *折叠运算符* *转型表达式* `)` \|<br> `(` *转型表达式* *折叠运算符* `...` *折叠运算符* *转型表达式* `)`
 *fold-operator*             |*折叠运算符*   | [expr.prim.fold] | *预处理记号* ∈ **折叠运算符**
+*requires-expression*       |*requires-表达式*| [expr.prim.req.general] | `requires` *规定形参列表*__?__ *规定体*
+*requirement-parameter-list*|*规定形参列表* | [expr.prim.req.general] | `(` *形参声明子句* `)`
+*requirement-body*          |*规定体*       | [expr.prim.req.general] | `{` *规定序列* `}`
+*requirement-seq*           |*规定序列*     | [expr.prim.req.general] | *规定*__+__
+*requirement*               |*规定*         | [expr.prim.req.general] | *简单规定* \| *类型规定* \| *复合规定* \| *嵌套规定*
+*simple-requirement*        |*简单规定*     | [expr.prim.req.simple] | *表达式* `;`
+*type-requirement*          |*类型规定*     | [expr.prim.req.type] | `typename` *嵌套名说明符*__?__ *类型名* `;`
+*compound-requirement*      |*复合规定*     | [expr.prim.req.compound] | `{` *表达式* `}` `noexcept`__?__ *返回类型规定*__?__ `;`
+*return-type-requirement*   |*返回类型规定* | [expr.prim.req.compound] | `->` *返回约束*
+*nested-requirement*        |*嵌套规定*     | [expr.prim.req.nested] | `requires` *约束表达式* `;`
 
 ## Terms Translation Table
 
@@ -341,6 +351,7 @@ component name                          |成分名     |无限定标识：名字
 composite pointer type                  |组合指针类型   |兼容两个指针操作数的指针类型
 compound assignment expression          |复合赋值表达式
 compound assignment operator            |复合赋值运算符
+compound requirement                    |复合规定   |`{ expr } noexcept -> T;`
 compound statement                      |复合语句   |块语句，语句块，花括号
 compound type                           |复合类型   |数组、函数、指针、引用、类、联合体、枚举、成员指针
 concept                                 |概念
@@ -853,6 +864,7 @@ nest                                    |嵌套
 nested class                            |嵌套类
 nested name                             |嵌套名
 nested name specifier                   |嵌套名说明符
+nested requirement                      |嵌套规定   |`requires constraint_expr;`
 nested type                             |嵌套类型
 nested within                           |嵌套于     |子对象，被提供存储的对象
 new expression                          |new 表达式
@@ -1066,7 +1078,7 @@ replacement function                    |替代函数   |程序定义的用以�
 repositional stream                     |可重定位流 |可 seek 到之前经过的位置
 representation                          |表示
 required behavior                       |预期行为   |由标准规定的行为，实现或程序提供的函数应当遵守
-requirement                             |规定，要求
+requirement                             |规定，要求 |简单规定、类型规定、复合规定、嵌套规定
 requires-clause                         |requires 子句
 reserved                                |保留的     |规定使用权属于标准或实现的名字或实体
 reserved function                       |保留函数
@@ -1112,6 +1124,7 @@ similar type                            |相似类型       |两个同级数多�
 simple-capture                          |简单俘获符     |不带有初始化式，直接指名被俘获变量的俘获符
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
+simple requirement                      |简单规定       |表达式有效性：`expr;`
 simple-template-id                      |简单模板标识   |模板标识，名字为标识符（不包括运算符/字面量函数）
 simply happens before                   |简单发生早于 SimpHB|不使用消费操作时的简单模型：线程内SeqB或线程间Sync
 single search                           |单次搜索       |名字查找步骤，找到先于搜索点的目标作用域中的全部声明式，using-声明式替换为目标声明式，类/枚举可被隐藏
@@ -1239,9 +1252,10 @@ type identification                     |类型标识
 type-only lookup                        |仅限类型查找   |仅查找类型
 type-parameter                          |类型形参       |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
+type requirement                        |类型规定       |类型有效性：`typename T;`
 type specifier                          |类型说明符
 typedef declaration                     |typedef 声明式
-typedef-name                            |typedef-名         |类型别名，`typedef`或`using`，可为模板
+typedef-name                            |typedef-名     |类型别名，`typedef`或`using`，可为模板
 typedef specifier                       |typedef 说明符
 typename specifier                      |typename 说明符
 
