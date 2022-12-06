@@ -185,6 +185,8 @@ Original   |中文   |章节    |定义
 *compound-requirement*      |*复合规定*     | [expr.prim.req.compound] | `{` *表达式* `}` `noexcept`__?__ *返回类型规定*__?__ `;`
 *return-type-requirement*   |*返回类型规定* | [expr.prim.req.compound] | `->` *返回约束*
 *nested-requirement*        |*嵌套规定*     | [expr.prim.req.nested] | `requires` *约束表达式* `;`
+*postfix-expression*        |*后缀表达式*   | [expr.post.general] | *初等表达式* \|<br> *后缀表达式* `[` *表达式或花括号初始化列表* `]` \|<br> *后缀表达式* `(` *表达式列表*__?__ `)` \|<br> (*简单类型说明符* \| *typename-说明符*) (`(` *表达式列表*__?__ `)` \| *花括号初始化列表*) \|<br> *后缀表达式* (`.`\|`->`) `template`__?__ *标识表达式* \|<br> *后缀表达式* (`++`\|`--`) \|<br> (`dynamic_cast`\|`static_cast`\|`reintepret_cast`\|`const_cast`) `<` *类型标识* `>` \|<br> `typeid` `(` (*表达式*\|*类型标识*) `)`
+*expression-list*           |*表达式列表*   | [expr.post.general] | *初始化式列表*
 
 ## Terms Translation Table
 
@@ -303,6 +305,8 @@ byte                                    |字节           |基本存储单元
 |-|-|-|
 cache                                   |高速缓存
 call                                    |调用
+call by reference                       |按引用调用     |按引用传递参数
+call by value                           |按值调用       |按值传递参数
 capture                                 |俘获，俘获符   |俘获符：语法结构，代表闭包数据成员，可指定初始化
 capture by copy                         |按复制俘获
 capture by reference                    |按引用俘获
@@ -446,8 +450,8 @@ decrement operator                      |减量运算符
 deduce                                  |推断
 deduction guide                         |推断导引
 default argument                        |默认实参
-default argument promotion              |默认实参提升
-default behavior                        |缺省行为   |某些函数，如果程序不提供就采用实现的缺省版本
+default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP)
+default behavior                        |缺省行为       |某些函数，如果程序不提供就采用实现的缺省版本
 default constructor                     |默认构造函数
 default label                           |default 标号
 default member initializer              |默认成员初始化式
@@ -505,6 +509,8 @@ ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制�
 elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明
 element                                 |元素
 eligible special member function        |合格的特殊成员函数
+ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
+ellipsis parameter                      |省略号形参 |`va_xxx`变参函数
 empty-declaration                       |空声明式   |仅有`;`的声明式，不是块语句
 empty-statement                         |空语句     |仅有`;`的语句
 encapsulate                             |封装
@@ -604,7 +610,7 @@ full-expression                         |全表达式       |免求值操作数�
 function                                |函数           |一种实体，不是对象
 function-body                           |函数体         |指定代码或`=default`、`=delete`
 function call expression                |函数调用表达式
-function call operator                  |函数调用运算符
+function call operator                  |函数调用运算符 |内建：静态、非静态、虚、析构/伪析构，`a(b,...)`, a SeqB b, b IndSeq, b SeqB 函数体
 function declaration                    |函数声明式
 function declarator                     |函数声明符
 function-definition                     |函数定义式
@@ -984,7 +990,7 @@ polymorphic                             |多态的
 POSIX, Portable Operating System Interface  |POSIX，可移植操作系统接口
 postfix                                 |后缀
 postfix decrement operator              |后置减量运算符
-postfix expression                      |后缀表达式
+postfix expression                      |后缀表达式     |初等、下标、函数调用、函数式转型、成员访问、后缀增减、X_cast、typeid
 postfix increment operator              |后置增量运算符
 potential result                        |潜在结果       |用于挑出某些表达式中并非 ODR 式使用变量的标识表达式
 potential scope                         |潜在作用域
@@ -1177,7 +1183,7 @@ sub-expression                          |子表达式   |正则表达式：括�
 subexpression                           |子表达式
 subnormal                               |次正规的
 subobject                               |子对象     |被其他对象包含：成员、基类、元素
-subscript operator                      |下标运算符
+subscript operator                      |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
 substatement                            |子语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
 suitable created object                 |适当创建的对象
@@ -1328,7 +1334,7 @@ value representation                    |值表示     |构成对象状态的位
 value-initialize                        |值初始化
 variable                                |变量       |对象或引用，不包括非静态数据成员引用
 variable template                       |变量模板
-variadic function                       |变参函数
+variadic function                       |变参函数   |以`...`形参结尾的函数，需要`va_XX`<br>以函数形参包组结尾的函数
 variadic template                       |变参模板
 variant                                 |变体
 variant member                          |可变成员
