@@ -187,6 +187,16 @@ Original   |中文   |章节    |定义
 *nested-requirement*        |*嵌套规定*     | [expr.prim.req.nested] | `requires` *约束表达式* `;`
 *postfix-expression*        |*后缀表达式*   | [expr.post.general] | *初等表达式* \|<br> *后缀表达式* `[` *表达式或花括号初始化列表* `]` \|<br> *后缀表达式* `(` *表达式列表*__?__ `)` \|<br> (*简单类型说明符* \| *typename-说明符*) (`(` *表达式列表*__?__ `)` \| *花括号初始化列表*) \|<br> *后缀表达式* (`.`\|`->`) `template`__?__ *标识表达式* \|<br> *后缀表达式* (`++`\|`--`) \|<br> (`dynamic_cast`\|`static_cast`\|`reintepret_cast`\|`const_cast`) `<` *类型标识* `>` \|<br> `typeid` `(` (*表达式*\|*类型标识*) `)`
 *expression-list*           |*表达式列表*   | [expr.post.general] | *初始化式列表*
+*unary-expression*          |*一元表达式*   | [expr.unary.general] | *后缀表达式* \|<br> (*一元运算符*\|`++`\|`--`) *转型表达式* \|<br> *等待表达式* \|<br> `sizeof` (*一元表达式* \| `(` *类型标识* `)` \| `...` `(` *标识符* `)`) \|<br> `alignof` `(` *类型标识* `)` \|<br> *noexcept-表达式* \|<br> *new-表达式* \|<br> *delete-表达式*
+*unary-operator*            |*一元运算符*   | [expr.unary.general] | `*` \| `&` \| `+` \| `-` \| `!` \| `~`
+*await-expression*          |*等待表达式*   | [expr.await]  | `co_await` *转型表达式*
+*new-expression*            |*new-表达式*   | [expr.new]    | `::`__?__ `new` *new-放置* (*new-类型标识* \| `(` *类型标识* `)`) *new-初始化式*__?__
+*new-placement*             |*new-放置*     | [expr.new]    | `(` *表达式列表* `)`
+*new-type-id*               |*new-类型标识* | [expr.new]    | *类型说明符序列* *new-声明符*__?__
+*new-declarator*            |*new-声明符*   | [expr.new]    | *指针运算符*__\*__ *非指针-new-声明符*__?__
+*noptr-new-declarator*      |*非指针-new-声明符*| [expr.new] | `[` *表达式*__?__ `]` *特性说明符序列*__?__ (`[` *常量表达式* `]` *特性说明符序列*__?__)__\*__
+*new-initializer*           |*new-初始化式* | [expr.new]    | `(` *表达式列表*__?__ `)` \| *带花括号初始化列表*
+*delete-expression*         |*delete-表达式*| [expr.delete] | `::`__?__ `delete` (`[` `]`)__?__ *转型表达式*
 
 ## Terms Translation Table
 
@@ -205,7 +215,7 @@ active member                           |活跃成员
 addition operator                       |加法运算符
 additive operator                       |加性运算符
 address                                 |地址
-address-of operator                     |取地址运算符
+address-of operator                     |取地址运算符   |一元运算符/表达式，`&`，结果为指针或成员指针，不支持位字段<br>成员指针必须为限定标识且无括号，不考虑`mutable`<br>函数：根据语境进行重载决议
 aggregate                               |聚合，聚合对象
 aggregate initialization                |聚合初始化
 aggregate type                          |聚合类型
@@ -216,8 +226,9 @@ alias template                          |别名模板
 alignment                               |对齐
 alignment requirement                   |对齐要求       |类型给出的地址对齐要求
 alignment specifier                     |对齐说明符     |`alignas`
-`alignof`                               |               |获得完整类型的对齐
+`alignof` expression                    |`alignof` 表达式|一元表达式。整型常量表达式。`alignof(T)`完整类型的对齐要求
 allocate                                |分配
+allocated type                          |被分配类型     |new 表达式创建对象的类型：完整对象类型，非抽象类或其数组，可cv
 allocation function                     |分配函数       |`operator new`, `operator new []`
 alternative token                       |代用记号       |二联符+保留字 `and` 等，11个位和逻辑运算符
 ambiguity                               |歧义
@@ -235,6 +246,7 @@ arithmetic exception                    |算术异常
 arithmetic type                         |算术类型       |整型、浮点
 array                                   |数组
 array declarator                        |函数声明符
+array delete expression                 |数组 delete 表达式|`delete [] p`
 array element                           |数组元素
 array of N T                            |T 的 N 元素数组
 array of unknown bound of T             |T 的边界未知数组
@@ -256,7 +268,7 @@ attach to module                        |附属于模块
 attribute                               |特性标注，特性 |`[[]]`语法，支持
 attribute-declaration                   |特性标注声明式 |仅有特性标注的空声明，不是块声明式
 automatic storage duration              |自动存储期
-await-expression                        |等待表达式
+await-expression                        |等待表达式     |一元表达式。暂停协程等待操作数计算完成<br>不能在`catch`中等待<br>对显式`co_await`：尝试调用承诺的`await_transform`，尝试调用`operator await`，获得可等待对象<br>`await_ready`查询是否需暂停，`await_suspend`实施暂停（支持串联），`await_resume`获得结果
 awaitable                               |可等待体
 
 ### B
@@ -282,7 +294,7 @@ binary right fold                       |二元右折叠     |`pack op ... op ex
 bit                                     |位
 bit-field                               |位字段         |一种实体
 bitwise and operator                    |按位与运算符
-bitwise negation operator               |按位反运算符
+bitwise negation operator               |按位反运算符   |一元运算符/表达式，`~`，整型、无作用域枚举，提升
 bitwise or operator                     |按位或运算符
 bitwise xor operator                    |按位亦或运算符
 block                                   |1. 代码块 <br>2. 阻塞
@@ -327,8 +339,8 @@ class definition                        |类定义式
 class granding friendship               |授予友元关系
 class-head                              |类头           |类定义式中花括号前的部分
 class member                            |类成员         |一种实体
-class member access expression          |类成员访问表达式
-class member access operator            |类成员访问运算符
+class member access expression          |类成员访问表达式 |后缀表达式。`a.idexpr`，`p->idexpr`
+class member access operator            |类成员访问运算符 |内建：`p->m`=>`(*p).m`
 class-name                              |类名       |标识符或简单模板标识
 class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外带限定成员
 class-specifier                         |类说明符   |类的定义体
@@ -373,6 +385,7 @@ conflict                                |冲突           |两个求值至少一
 conformance requirements                |一致性规定
 conjunction                             |合取
 const_cast                              |const 转型
+const cast expression                   |const 转型表达式 |后缀表达式，`const_cast<T>(v)`<br>Ptr=>T*，Lv=>T&，GLv=>T&&，类PRv=>T&&（临时对象）
 const object                            |const 对象     |const T 的对象或其非 mutable 子对象
 const-qualified                         |const 限定的
 const safety                            |const 安全性
@@ -412,6 +425,7 @@ copy assignment operator                |复制赋值运算符
 copy constructor                        |复制构造函数
 copy-initialization                     |复制初始化
 core constant expression                |核心常量表达式
+coroutine                               |协程
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
 corresponding instance                  |对应实例       |实现所对应的抽象机器
 covariant                               |协变
@@ -464,8 +478,8 @@ definition                              |定义式，定义   |代码结构称�
 definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
 delegating constructor                  |委派构造函数
 delete                                  |删除
-delete expression                       |delete 表达式
-delete operator                         |delete 运算符
+delete expression                       |delete 表达式  |一元表达式。单对象/数组。操作数为对象指针或类类型（按语境转换为对象指针）。<br>操作数必须为空指针值或`new`的结果指针，允许不完整类型但当心UB。<br>数组静态/动态类型必须相似。单对象允许虚析构或由销毁用 delete 负责销毁对象<br>与new配合支持存储扩展分配的回收
+`delete` operator                       |`delete` 运算符|调用回收函数`operator delete`或`operator delete[]`<br>名字查找先作用域后全局。虚析构函数定义点处选择回收函数。有销毁用函数时仅考虑它们<br>支持`align_val_t`和`size_t`参数，`destroying_delete_t`标明销毁用函数
 deleted                                 |已删除的，弃置的
 deleted definition                      |弃置定义式
 deleted function                        |弃置函数
@@ -496,7 +510,7 @@ division operator                       |除法运算符
 do statement                            |do 语句
 dot operator                            |点运算符
 dynamic                                 |动态
-dynamic cast                            |动态转型
+dynamic cast expression                 |动态转型表达式 |后缀表达式，`dynamic_cast<T>(v)`，若T不指向v的类型或其基类则要求v多态<br>按需查询RTTI：可转换为v的全派生对象中v的无歧义公开派生类对象，或全派生对象的无歧义公开基类对象<br>引用转换失败抛出`bad_cast`
 dynamic initialization                  |动态初始化     |除静态初始化外的所有初始化，运行时发生<br>可以推迟到主函数/线程启动函数开始之后，但早于使用同UT中的任何非内联
 dynamic storage duration                |动态存储期
 dynamic type                            |动态类型       |纯右值的动态类型编译期已知
@@ -550,7 +564,7 @@ explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化声明式   |指定某个模板特例应当 ODR 式存在
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符
-explicit type conversion                |显式类型转换
+explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、`XX_cast`、初始化
 explicitly captured                     |显式俘获       |指定其*简单俘获符*
 explicitly defaulted function           |显式预置的函数
 exponent                                |指数
@@ -609,7 +623,7 @@ friend specifier                        |friend 说明符
 full-expression                         |全表达式       |免求值操作数，常量表达式，直接调用，声明的初始化式，出作用域的销毁，非子表达式且非全表达式一部分的表达式
 function                                |函数           |一种实体，不是对象
 function-body                           |函数体         |指定代码或`=default`、`=delete`
-function call expression                |函数调用表达式
+function call expression                |函数调用表达式 |后缀表达式
 function call operator                  |函数调用运算符 |内建：静态、非静态、虚、析构/伪析构，`a(b,...)`, a SeqB b, b IndSeq, b SeqB 函数体
 function declaration                    |函数声明式
 function declarator                     |函数声明符
@@ -699,7 +713,7 @@ increment operator                      |增量运算符
 indeterminate value                     |不确定值   |自动或动态对象的初始化前内容
 indeterminately sequenced               |未定顺序的 |线程内，顺序早于或晚于，不重叠
 indirect base class                     |间接基类
-indirection operator                    |间接运算符
+indirection operator                    |间接运算符     |一元运算符/表达式，`*`，左值
 inequality operator                     |不相等运算符
 inhabit                                 |居于           |声明式居于其直接作用域（模板形参作用域单算）
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
@@ -792,7 +806,7 @@ lock-free                               |免锁           |不会被阻塞，仍
 lock-free execution                     |免锁执行       |“免妨碍”，不会阻碍唯一未锁定线程
 locus                                   |位点           |声明点
 logical and operator                    |逻辑与运算符
-logical negation operator               |逻辑非运算符
+logical negation operator               |逻辑非运算符   |一元运算符/表达式，`!`，Ctx2Bool
 logical or operator                     |逻辑或运算符
 logical source line                     |逻辑源文本行   |行拼接后的结果
 lookup context                          |查找语境       |成员限定名：对象表达式的类型，其他：嵌套名说明符指名的类型或命名空间等。若限定查找未找到则再进行无限定查找
@@ -873,15 +887,15 @@ nested name specifier                   |嵌套名说明符
 nested requirement                      |嵌套规定   |`requires constraint_expr;`
 nested type                             |嵌套类型
 nested within                           |嵌套于     |子对象，被提供存储的对象
-new expression                          |new 表达式
+new expression                          |new 表达式 |一元表达式。以初始化式推断占位符类型，获得被分配类型：对象或数组<br>以初始化式推断未知边界数组大小的顶层边界，顶层数组大小检查：静态检查核心常量表达式，动态失败则抛出`bad_array_new_length`<br>支持缺省全局分配省略（如常量求值中）。支持分配扩展
 new-extended alignment                  |new 扩充对齐   |NEA > `__STDCPP_DEFAULT_NEW_ALIGNMENT__`
 new-line                                |换行       |`\n`
-new operator                            |new 运算符
+`new` operator                          |`new` 运算符   |对象/数组。调用分配函数`operator new`或`operator new[]`，异常失败时尽量调用对应回收函数、元素销毁<br>名字查找先作用域后全局。new 扩充对齐类型优先尝试带对齐函数，反之不带对齐函数优先。后附放置实参<br>无初始化式为默认初始化，否则直接初始化，分配 SeqB 初始化式求值，对象初始化 SeqB new返回值
 no diagnostic is required               |无须诊断
 no linkage                              |无连接     |仅限作用域内可见
-noexcept expression                     |noexcept 表达式
+`noexcept` expression                   |`noexcept` 表达式  |一元表达式。整型常量表达式（`bool`）。是否潜在抛出
 noexcept function of () cv ref returning| T  T 为返回类型的 () cv ref 的 noexcept 函数
-noexcept operator                       |noexcept 运算符
+`noexcept` operator                     |`noexcept` 运算符  |免求值表达式，`noexcept(expr)`
 nominable declaration                   |可提名声明式       |类/命名空间某点之前的目标为该作用域（或其内联）的居于非块作用域的声明式，即引入了实体成员而不关心是否绑定名字
 non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
@@ -911,7 +925,7 @@ numeric literal operator template       |数值字面量运算符模板   |自�
 |English|中文|说明|
 |-|-|-|
 object                                  |对象       |一种实体
-object expression                       |对象表达式
+object expression                       |对象表达式 |`a.m`中的`a`
 object model                            |对象模型
 object pointer type                     |对象指针类型   |指向对象类型或`void`
 object representation                   |对象表示   |全部`sizeof(T)`个字节
@@ -970,8 +984,8 @@ physical source line                    |物理源文本行
 placeholder                             |占位符
 placeholder type deduction              |占位符类型推断
 placement allocation function           |放置式分配函数
-placement deallocation function         |放置式回收函数
-placement new                           |放置式 new
+placement deallocation function         |放置式回收函数 |形参与对应放置式分配函数匹配，会在new表达式失败时自动调用，若不唯一则忽略
+placement new-expression                |放置式 new-表达式|放置式语法的 new 表达式`new (args) T`
 point of declaration                    |声明点         |实体声明生效的位点：<br>- 变量/函数/形参在声明符（包括初始化式）之后，<br>- 注入类名和函数预定义变量在`{`前，<br>- 其他（类型、枚举符、using、概念、命名空间等）在标识符（列表）之后
 point of definition                     |定义点
 pointer                                 |指针
@@ -989,9 +1003,11 @@ pointer-interchangable                  |指针可相互转换 |相同地址值�
 polymorphic                             |多态的
 POSIX, Portable Operating System Interface  |POSIX，可移植操作系统接口
 postfix                                 |后缀
-postfix decrement operator              |后置减量运算符
+postfix decrement expression            |后置减量表达式 |后缀表达式
+postfix decrement operator              |后置减量运算符 |内建：结果为原值副本PRv，改动Lv，摒弃volatile，读取 SeqB 改动
 postfix expression                      |后缀表达式     |初等、下标、函数调用、函数式转型、成员访问、后缀增减、X_cast、typeid
-postfix increment operator              |后置增量运算符
+postfix increment expression            |后置增量表达式 |后缀表达式
+postfix increment operator              |后置增量运算符 |内建：结果为原值副本PRv，改动Lv，摒弃volatile，读取 SeqB 改动
 potential result                        |潜在结果       |用于挑出某些表达式中并非 ODR 式使用变量的标识表达式
 potential scope                         |潜在作用域
 potentially concurrent                  |潜在并发       |跨线程，跨信号处理函数
@@ -1003,8 +1019,8 @@ pragma                                  |语用       |预处理指令，预处�
 precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
 precedence                              |优先级
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
-prefix decrement operator               |前置减量运算符
-prefix increment operator               |前置增量运算符
+prefix decrement operator               |前置减量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
+prefix increment operator               |前置增量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
 preprocess                              |预处理
 preprocessing directive                 |预处理指令
 preprocessing number                    |预处理数字 |预处理记号，`[.]? [0-9] ( [.] | [']? [0-9a-zA-Z_] | [eEpP] [-+] )*`
@@ -1023,7 +1039,7 @@ program-defined specialization          |由程序定义的特化式
 program-defined type                    |由程序定义的类型
 programming language                    |程序设计语言
 projection                              |投射       |算法对输入元素进行自定义变换
-promise                                 |承诺
+promise object                          |承诺对象
 prospective destructor                  |预期析构函数
 protected                               |受保护
 prototype                               |原型
@@ -1072,7 +1088,7 @@ referenceable type                      |可被引用的类型 |可以创建 T& 
 regex                                   |正则表达式
 region                                  |区，区域
 regular expression                      |正则表达式
-reinterpret cast                        |重解释转型
+reinterpret cast expression             |重解释转型表达式 |后缀表达式，`reinterpret_cast<T>(v)`<br>函数指针兼容，对象指针兼容，成员指针兼容，指针<=>整数（枚举），通过指针完成引用转换
 relational operator                     |关系运算符
 relaxed                                 |宽松的
 relaxed atomic operation                |宽松原子性操作 |不是同步操作，但不会竞争
@@ -1117,7 +1133,7 @@ semantics                               |语义
 semaphore                               |信号量
 sequence                                |序列   |容器的一种
 sequenced after                         |按顺序晚于 SeqA
-sequenced before                        |按顺序早于 SeqB    |线程内顺序性：全表达式，运算符结果值早于操作数值，函数实参和函数后缀表达式早于函数体，await 表达式切换
+sequenced before                        |按顺序早于 SeqB    |线程内顺序性：全表达式，运算符结果值早于操作数值，函数实参和函数后缀表达式早于函数体，等待表达式处的切换
 sequential consistency                  |顺序一致性     |如同存在全局顺序
 shift operator                          |移位运算符
 side effect                             |副作用 |读volatile，改，调用 I/O 库函数
@@ -1133,8 +1149,10 @@ simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
 simple requirement                      |简单规定       |表达式有效性：`expr;`
 simple-template-id                      |简单模板标识   |模板标识，名字为标识符（不包括运算符/字面量函数）
 simply happens before                   |简单发生早于 SimpHB|不使用消费操作时的简单模型：线程内SeqB或线程间Sync
+single-object delete expression         |单对象 delete 表达式|`delete p`
 single search                           |单次搜索       |名字查找步骤，找到先于搜索点的目标作用域中的全部声明式，using-声明式替换为目标声明式，类/枚举可被隐藏
-sizeof operator                         |sizeof 运算符
+`sizeof` expression                     |`sizeof` 表达式|一元表达式。整形常量表达式。非潜在重叠对象的大小，窄字符为1，其他由实现定义
+`sizeof` operator                       |`sizeof` 运算符|免求值表达式或类型标识：`sizeof expr`或`sizeof(T)`<br>包组元素个数，包组展开：`sizeof...P`
 source character set                    |源字符集
 source file                             |源文件
 space character                         |空格字符   |``
@@ -1152,7 +1170,7 @@ stateful character encoding             |有状态字符编码
 statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
-static cast                             |静态转型
+static cast expression                  |静态转型表达式 |后缀表达式，`static_cast<T>(v)`<br>指针或引用：vB!=>D，左值=>T&，临限值=>T&&<br>转换：ICS，直接初始化的ICS，聚合首元素的ICS
 static data member                      |静态数据成员
 static initialization                   |静态初始化     |静态/线程变量的常量/零初始化，运行前发生。允许动->静优化
 static member function                  |静态成员函数
@@ -1183,12 +1201,14 @@ sub-expression                          |子表达式   |正则表达式：括�
 subexpression                           |子表达式
 subnormal                               |次正规的
 subobject                               |子对象     |被其他对象包含：成员、基类、元素
+subscript expression                    |下标表达式 |后缀表达式
 subscript operator                      |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
 substatement                            |子语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
 suitable created object                 |适当创建的对象
 surrogate code point                    |代用代码点 |UCS 代用字符的代码点，为 UTF16 用于编码高值字符，D800-DFFF
 suspension                              |暂停
+suspension context                      |暂停语境   |函数中允许 `co_await` 的语境
 switch statement                        |switch 语句
 synchronization operation               |同步操作   |一些原子性操作和互斥体操作<br>消费(consume)、获取(aquire)、释放(release)、获取并释放，宽松(relaxed)操作不是同步<br>对内存位置的操作或无关内存位置的栅栏
 synchronize                             |同步
@@ -1254,7 +1274,7 @@ truncation                              |截断
 tuple                                   |元组
 TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型，
 type                                    |类型           |一种实体，决定值表示的意义
-type identification                     |类型标识
+type identification                     |类型识别       |`typeid`
 type-only lookup                        |仅限类型查找   |仅查找类型
 type-parameter                          |类型形参       |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
@@ -1263,6 +1283,7 @@ type specifier                          |类型说明符
 typedef declaration                     |typedef 声明式
 typedef-name                            |typedef-名     |类型别名，`typedef`或`using`，可为模板
 typedef specifier                       |typedef 说明符
+typeid expression                       |typeid 表达式  |后缀表达式。`<typeinfo>`，返回`type_info`或其派生类对象左值，存续直到程序结束<br>非多态对象为免求值操作数，多态对象查询RTTI，全派生对象的动态类型<br>查询空指针解引用的对象抛出`bad_typeid`
 typename specifier                      |typename 说明符
 
 ### U
@@ -1274,9 +1295,9 @@ ud-suffix                               |ud-后缀    |用户定义字面量后�
 unary                                   |一元
 unary fold                              |一元折叠       |仅展开包组
 unary left fold                         |一元左折叠     |`... op pack`
-unary minus operator                    |一元减运算符
-unary operator                          |一元运算符
-unary plus operator                     |一元加运算符
+unary minus operator                    |一元减运算符   |一元运算符/表达式，算术、无作用域枚举，提升整型和枚举，无符号同余
+unary operator                          |一元运算符     |`&`：取地址，`*`：间接，`+`：正，`-`：负，`!`：非，`~`：反
+unary plus operator                     |一元加运算符   |一元运算符/表达式，算术、指针、无作用域枚举，提升整型和枚举
 unary right fold                        |一元右折叠     |`pack op ...`
 unblock                                 |解除阻塞
 undefined                               |未定义的
