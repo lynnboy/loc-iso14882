@@ -65,6 +65,16 @@ Redoc is a markup language, all special things are in `[]`.
 `+=`|`-=`|`*=`|`/=`|`%=`|`^=`|`&=`|`\|=`|`<<=`|`>>=`|`=`
 `==`|`!=`|`<` |`>` |`<=`|`>=`|`&&`|`\|\|`|`,` |`.*` |`->*`
 
+### 文字运算符
+
+|||||
+|-|-|-|-|
+`static_cast`|`dynamic_cast`|`const_cast`|`reinterpret_cast`
+`new`|`delete`|`delete[]`
+`sizeof`|`sizeof...`|`alignof`
+`noexcept`|`throw`|`typeid`|`requires`
+`co_await`|`co_yield`
+
 ## Syntax Terms
 
 ### Lexical Convensions 词法约定
@@ -197,6 +207,26 @@ Original   |中文   |章节    |定义
 *noptr-new-declarator*      |*非指针-new-声明符*| [expr.new] | `[` *表达式*__?__ `]` *特性说明符序列*__?__ (`[` *常量表达式* `]` *特性说明符序列*__?__)__\*__
 *new-initializer*           |*new-初始化式* | [expr.new]    | `(` *表达式列表*__?__ `)` \| *带花括号初始化列表*
 *delete-expression*         |*delete-表达式*| [expr.delete] | `::`__?__ `delete` (`[` `]`)__?__ *转型表达式*
+*cast-expression*           |*转型表达式*   | [expr.cast]   | ( `(` *类型标识* `)` )__\*__ *一元表达式*
+*pm-expression*             |*成员指针表达式*| [expr.mptr.oper] | ( *转型表达式* (`.*`\|`->*`) )__\*__ *转型表达式*
+*multiplicative-expression* |*乘性表达式*   | [expr.mul]    | ( *成员指针表达式* (`*`\|`/`\|`%`))__\*__ *成员指针表达式*
+*additive-expression*       |*加性表达式*   | [expr.add]    | *乘性表达式* ((`+`\|`-`) *乘性表达式*)__\*__
+*shift-expression*          |*移位表达式*   | [expr.shift]  | *加性表达式* ((`<<`\|`>>`) *加性表达式*)__\*__
+*compare-expression*        |*比较表达式*   | [expr.spaceship] | *移位表达式* (`<=>` *移位表达式*)__\*__
+*relational-expression*     |*关系表达式*   | [expr.rel]    | *比较表达式* ((`<`\|`>`\|`<=`\|`>=`) *比较表达式*)__\*__
+*equality-expression*       |*相等性表达式* | [expr.eq]     | *关系表达式* ((`==`\|`!=`) *关系表达式*)__\*__
+*and-expression*            |*与表达式*     | [expr.bit.and] | *相等性表达式* (`&` *相等性表达式*)__\*__
+*exclusive-or-expression*   |*异或表达式*   | [expr.xor]    | *与表达式* (`^` *与表达式*)__\*__
+*or-expression*             |*或表达式*     | [expr.or]     | *异或表达式* (`|` *异或表达式*)__\*__
+*logical-and-expression*    |*逻辑与表达式* | [expr.log.and] | *或表达式* (`&&` *或表达式*)__\*__
+*logical-or-expression*     |*逻辑或表达式* | [expr.log.or] | *逻辑与表达式* (`||` *逻辑与表达式*)__\*__
+*conditional-expression*    |*条件表达式*   | [expr.cond]   | *逻辑或表达式* (*逻辑或表达式* `?` *表达式* `:` *赋值表达式*)__?__
+*yield-expression*          |*产出表达式*   | [expr.yield]  | `co_yield` (*赋值表达式* \| *花括号初始化列表*)
+*throw-expression*          |*throw-表达式* | [expr.throw]  | `throw` *赋值表达式*__?__
+*assignment-expression*     |*赋值表达式*   | [expr.ass]    | *条件表达式* \| *产出表达式* \| *throw-表达式* \|<br> *逻辑或表达式* *赋值运算符* *初始化式子句*
+*assignment-operator*       |*赋值运算符*   | [expr.ass]    | `=` \| `*=` \| `/=` \| `%=` \| `+=` \| `-=` \| `>>=` \| `<<=` \| `&=` \| `^=` \| `\|=`
+*expression*                |*表达式*       | [expr.comma]  | *赋值表达式* (`,` *赋值表达式*)__\*__
+*constant-expression*       |*常量表达式*   | [expr.const]  | *条件表达式*
 
 ## Terms Translation Table
 
@@ -213,7 +243,8 @@ access specifier                        |访问说明符
 acquire                                 |获取       |同步操作
 active member                           |活跃成员
 addition operator                       |加法运算符
-additive operator                       |加性运算符
+additive expression                     |加性表达式 |`mul_expr + mul_expr`, `mul_expr - mul_expr`。内建：一般算术转换，指针+/-整型，指针-指针（`ptrdiff_t`）
+additive operator                       |加性运算符 |`+`, `-`
 address                                 |地址
 address-of operator                     |取地址运算符   |一元运算符/表达式，`&`，结果为指针或成员指针，不支持位字段<br>成员指针必须为限定标识且无括号，不考虑`mutable`<br>函数：根据语境进行重载决议
 aggregate                               |聚合，聚合对象
@@ -234,7 +265,8 @@ alternative token                       |代用记号       |二联符+保留字
 ambiguity                               |歧义
 amendment                               |文档修订
 amortized constant                      |摊销常量
-and operator                            |与运算符
+and expression                          |与表达式       |`eq_expr & eq_expr`。内建：按位与，一般算术转换
+and operator                            |与运算符       |`&`
 appearance-ordered before               |按表现顺序早于 |静态变量初始化顺序：同一UT或UT间接口依赖+出现顺序
 apply                                   |运用，实施，适用于
 arbitrary-positional stream             |可任意定位流   |可seek
@@ -257,8 +289,8 @@ asm definition                          |asm 定义式
 assembler                               |汇编器，汇编
 assertion                               |断言
 assignment                              |赋值
-assignment expression                   |赋值表达式
-assignment operator                     |赋值运算符
+assignment expression                   |赋值表达式     |`ass_expr @= v`。内建：rhs SeqB lhs SeqB 赋值 SeqB 表达式结果<br>摒弃向volatile赋值。rhs隐式转换为lhs类型<br>支持花括号传参
+assignment operator                     |赋值运算符     |`=`，组合赋值：乘、加、移位、按位
 associated character encoding           |关联字符编码   |字符或字符串字面量前缀指定的编码，无前缀的不可编码或多字符类型为 `int`
 associated class                        |关联类
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
@@ -327,6 +359,7 @@ carry a dependency to                   |传递依赖给 CDep|其值被后者所
 case label                              |case 标号
 cast                                    |转型，类型强制转换
 cast away constness                     |强制移除常量性
+cast expression                         |转型表达式     |`(T)unary-expr`。可为`const_cast`，`static_cast`，`reinterpret_cast`的组合效果<br>`D*`到`B*`忽略访问性检查。不完整类型指针转型可能因MI而UB
 catch                                   |捕获
 character                               |字符
 character container type                |字符容器类型   |`basic_string`等模板的类型形参
@@ -352,11 +385,11 @@ closure type                            |闭包类型   |lambda表达式对象�
 code point                              |代码点     |字符在字符集中的数值
 coherence requirements                  |协调性规定 |写-写、写-读、读-写、读-读协调性
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
-comma expression                        |逗号表达式
-comma operator                          |逗号运算符
+comma operator                          |逗号运算符 |`ass_expr, ass_expr`。内建：lhs SeqB rhs，左侧其值。
 comment                                 |注释       | `/* */`，`// \n`
 common initial sequence                 |共同起始序列
 common type                             |公共类型
+compare expression                      |比较表达式 |`shift_expr <=> shift_expr`。内建：算术类型进行一般算术转换，禁止bool混合，禁止除整型到浮点外的窄化<br>整型`strong_ordering`，浮点`partial_ordering`，以合成指针类型比较指针，可比较时为`strong_ordering`
 compile                                 |编译
 complete-class context                  |完整类语境 |在类说明符之内需要将类当做完整类型的语境，如内联代码部分
 complete object                         |完整对象   |不是子对象的对象
@@ -366,7 +399,7 @@ component                               |组件
 component name                          |成分名     |无限定标识：名字、类型名、模板标识部分<br>限定标识：各嵌套名和无限定标识的成分名
 composite pointer type                  |组合指针类型   |兼容两个指针操作数的指针类型
 compound assignment expression          |复合赋值表达式
-compound assignment operator            |复合赋值运算符
+compound assignment operator            |复合赋值运算符 |乘：`*/%`，加：`+-`，移位：`<<>>`，按位：`&^|`
 compound requirement                    |复合规定   |`{ expr } noexcept -> T;`
 compound statement                      |复合语句   |块语句，语句块，花括号
 compound type                           |复合类型   |数组、函数、指针、引用、类、联合体、枚举、成员指针
@@ -377,9 +410,9 @@ concurrent                              |并发的
 concurrent foreward progress guarantees |并发向前进展保证   |实现保证线程终将有进展，无关其他线程
 condition                               |条件       |语法结构：if/while/switch/for中的条件部分，可以声明变量
 conditional escape sequence             |有条件转义序列 |编译器实现支持的其他单字符转移序列
-conditional expression                  |条件表达式
+conditional expression                  |条件表达式     |`logor_expr ? expr : asgn_expr`。操作数1 Ctx2Bool，短路，支持`throw`，支持两个同类型位字段<br>类型不同时，尝试隐式转换为另一个，但不允许歧义<br>部分保留左值性。右值时进行一般算术转换或取合成指针类型
 conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等
-conditional operator                    |条件运算符
+conditional operator                    |条件运算符     |`?:`。不可重载
 conditionally-supported                 |有条件支持的   |编译器实现可以选择不支持
 conflict                                |冲突           |两个求值至少一个改动
 conformance requirements                |一致性规定
@@ -392,9 +425,10 @@ const safety                            |const 安全性
 const volatile object                   |const volatile 对象    |const volatile T 的对象、const T 的 volatile 子对象、volatile T 的 const 子对象，非 mutable
 const-volatile-qualified                |const volatile 限定的
 constant                                |常量
-constant expression                     |常量表达式
+constant destruction                    |常量销毁       |非类类型，或具有constexpr析构函数且销毁为核心常量表达式
+constant expression                     |常量表达式     |PRv核心常量表达式：所有引用也为常量，指针具有静态存储期地址，排除直接函数的地址<br>GLv核心常量表达式：静态存储期非临时对象或常量临时对象，非直接函数
 constant initialization                 |常量初始化     |静态/线程变量或临时对象以常量初始化<br>运行时直接具有初始化结果
-constant-initialized                    |以常量初始化
+constant-initialized                    |以常量初始化   |变量或临时对象的初始化的全表达式是常量表达式，允许调用constexpr构造函数
 constant initializer                    |常量初始化式
 constant subexpression                  |常量子表达式   |不妨碍其外围表达式成为核心常量表达式
 constexpr constructor                   |constexpr 构造函数
@@ -424,7 +458,7 @@ copy                                    |复制，副本
 copy assignment operator                |复制赋值运算符
 copy constructor                        |复制构造函数
 copy-initialization                     |复制初始化
-core constant expression                |核心常量表达式
+core constant expression                |核心常量表达式 |排除：常量外的`this`和虚函数，非constexpr函数，未定义或不满足要求的constexpr函数，UB，volatile，reinterpret_cast，lambda中ODR，非全局且配对的分配/回收，协程，throw，RTTI，asm，va_arg
 coroutine                               |协程
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
 corresponding instance                  |对应实例       |实现所对应的抽象机器
@@ -544,7 +578,8 @@ enumeration type                        |枚举类型
 enumerator                              |枚举符     |一种实体，类型化具名常量值
 enum-specifier                          |枚举说明符 |枚举的定义体
 equality                                |相等
-equality operator                       |相等运算符
+equality expression                     |相等性表达式   |`rel_expr == rel_expr`等。内建：算术类型一般算术转换，指针和成员指针进行合成指针类型比较<br>成员指针比较，虚函数和无继承关系时未指明顺序
+equality operator                       |相等性运算符   |`==`, `!=`
 equivalence                             |等价
 equivalence class                       |等价类 |正则表达式，[=a=]，匹配校排等价字符
 error                                   |错误，误差
@@ -555,6 +590,8 @@ exception                               |异常
 exception-declaration                   |异常声明式 |catch中的异常变量声明式，仅支持一个异常，支持省略号，不支持默认值，不支持占位符？
 exception handler                       |异常处理器
 exception specification                 |异常说明
+exclusive-or expression                 |异或表达式     |`and_expr ^ and_expr`。内建：按位异或，一般算术转换
+exclusive-or operator                   |异或运算符     |`^`
 execute                                 |执行，运行
 execution agent                         |执行代理
 execution character set                 |执行字符集     |LC_CTYPE
@@ -564,7 +601,7 @@ explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化声明式   |指定某个模板特例应当 ODR 式存在
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符
-explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、`XX_cast`、初始化
+explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、运算符`XX_cast`、初始化
 explicitly captured                     |显式俘获       |指定其*简单俘获符*
 explicitly defaulted function           |显式预置的函数
 exponent                                |指数
@@ -688,8 +725,9 @@ IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师
 if statement                            |if 语句
 ill-formed                              |非良构的   |语法或语义无效的代码
 immediate function                      |直接函数
-immediate invocation                    |直接调用
-immediate scope                         |直接作用域 |最小的外围作用域
+immediate function context              |直接函数语境   |直接函数的作用域，或consteval if作用域中
+immediate invocation                    |直接调用       |直接函数调用链的入口
+immediate scope                         |直接作用域     |最小的外围作用域
 immediate subexpression                 |直接子表达式   |应当在文法位置执行的表达式：成分表达式、隐含函数调用、lambda的捕获的初始化、默认实参、聚合的默认成员初始化式
 implementation                          |实现
 implementation limits                   |实现限额
@@ -705,8 +743,10 @@ implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
 import                                  |导入
 import declaration                      |导入声明式
-module-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
+import-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
 impose                                  |施加
+inclusive-or expression                 |或表达式   |`xor_expr | xor_expr`。内建：按位或，一般算术转换
+inclusive-or operator                   |或运算符   |`|`
 incomplete type                         |不完整类型 |`void`，`T[]`，（类作用域外）无定义式的类，某些枚举
 incomplete-defined object type          |定义不完整的对象类型   |仅声明的类、某些情况的枚举、未知边界数组
 increment operator                      |增量运算符
@@ -805,9 +845,11 @@ lock                                    |锁，锁定
 lock-free                               |免锁           |不会被阻塞，仍可能被妨碍（比如CAS循环等）
 lock-free execution                     |免锁执行       |“免妨碍”，不会阻碍唯一未锁定线程
 locus                                   |位点           |声明点
-logical and operator                    |逻辑与运算符
+logical-and expression                  |逻辑与表达式   |`or_expr && or_expr`。内建：逻辑与，Ctx2Bool，短路
+logical-and operator                    |逻辑与运算符   |`&&`
 logical negation operator               |逻辑非运算符   |一元运算符/表达式，`!`，Ctx2Bool
-logical or operator                     |逻辑或运算符
+logical-or expression                   |逻辑或表达式   |`logand_expr || logand_expr`。内建：逻辑或，Ctx2Bool，短路
+logical-or operator                     |逻辑或运算符   |`||`
 logical source line                     |逻辑源文本行   |行拼接后的结果
 lookup context                          |查找语境       |成员限定名：对象表达式的类型，其他：嵌套名说明符指名的类型或命名空间等。若限定查找未找到则再进行无限定查找
 lookup set                              |查找集合       |类成员名字查找的中间结果，包含声明式集合和所属子对象集合
@@ -823,6 +865,7 @@ lvalue-to-rvalue conversion             |左值向右值转换 |非函数、非�
 macro                                   |宏
 macro invocation                        |宏调用     |代码文本中使用宏
 make progress                           |取得进展   |线程发生执行步骤，阻塞或调用未完成的免锁执行函数
+manifestly constant-evaluated           |显然常量求值的 |常量表达式，constexpr if的条件，直接调用，约束求值，从来初始化的初始化式
 match                                   |匹配       |正则表达式模式与目标文本发生对应
 materialize                             |实质化
 member                                  |成员
@@ -856,7 +899,8 @@ multibyte encoding                      |多字节编码
 multicharacter literal                  |多字符字面量
 multidimensional array                  |多维数组
 multiplication operator                 |乘法运算符
-multiplicative operator                 |乘性运算符
+multiplicative expression               |乘性表达式 |`pm_expr * pm_expr`等，内建：一般算数转换，`%`要求整型/无作用域枚举
+multiplicative operator                 |乘性运算符 |`*`, `/`, `%`
 mutable specifier                       |mutable 说明符
 mutex                                   |互斥体
 
@@ -925,7 +969,7 @@ numeric literal operator template       |数值字面量运算符模板   |自�
 |English|中文|说明|
 |-|-|-|
 object                                  |对象       |一种实体
-object expression                       |对象表达式 |`a.m`中的`a`
+object expression                       |对象表达式 |`a.m`和`a.*pm`中的`a`
 object model                            |对象模型
 object pointer type                     |对象指针类型   |指向对象类型或`void`
 object representation                   |对象表示   |全部`sizeof(T)`个字节
@@ -996,8 +1040,9 @@ pointer literal                         |指针字面量     |`nullptr`，类型
 pointer to member                       |成员指针       |数据成员指针，成员函数指针
 pointer to member conversion            |成员指针转换   |空成员指针转换，cv T(B::*)->cv T(D::*)
 pointer to member declarator            |成员指针声明符
+pointer to member expression            |成员指针表达式 |`cast-expr .* cast-expr` `cast-expr ->* cast-expr`。成员函数：检查对象的`&`/`&&`
 pointer to member of X of type cv T     |cv T 类型的 X 的成员指针
-pointer to member operator              |成员指针运算符
+pointer to member operator              |成员指针运算符 |`.*` 和 `->*`，`p->*mp`等价于`(*(p)).*mp`
 pointer to T                            |T 的指针，指向 T 的指针
 pointer-interchangable                  |指针可相互转换 |相同地址值：相同对象、联合体与成员、标准布局类与首成员或基类子对象（不包括数组与首元素）
 polymorphic                             |多态的
@@ -1012,6 +1057,8 @@ potential result                        |潜在结果       |用于挑出某些�
 potential scope                         |潜在作用域
 potentially concurrent                  |潜在并发       |跨线程，跨信号处理函数
 potentially conflict                    |潜在冲突       |对应声明式代表了不同实体，或被覆盖实体无法再使用（形参、选择/循环的条件、捕获异常不能被覆盖）
+potentially-constant                    |潜在常量       |constexpr变量、引用、const整型
+potentially constant evaluated          |潜在常量求值   |显然常量求值的，潜在求值的，花括号的直接子表达式，模板中取地址
 potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
 potentially-overlapping subobject       |潜在重叠子对象 |基类子对象、`[no_unique_address]`NSDM，允许空类对象的存储优化
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
@@ -1089,7 +1136,8 @@ regex                                   |正则表达式
 region                                  |区，区域
 regular expression                      |正则表达式
 reinterpret cast expression             |重解释转型表达式 |后缀表达式，`reinterpret_cast<T>(v)`<br>函数指针兼容，对象指针兼容，成员指针兼容，指针<=>整数（枚举），通过指针完成引用转换
-relational operator                     |关系运算符
+relational expression                   |关系表达式     |`cmp_expr < cmp_expr` 等。内建：算术进行一般算术转换，指针以合成指针类型比较<br>指针部分顺序：数组下标、成员声明顺序
+relational operator                     |关系运算符     |`<`, `>`, `<=`, `>=`
 relaxed                                 |宽松的
 relaxed atomic operation                |宽松原子性操作 |不是同步操作，但不会竞争
 relaxed pointer safety                  |宽松指针安全性
@@ -1135,7 +1183,8 @@ sequence                                |序列   |容器的一种
 sequenced after                         |按顺序晚于 SeqA
 sequenced before                        |按顺序早于 SeqB    |线程内顺序性：全表达式，运算符结果值早于操作数值，函数实参和函数后缀表达式早于函数体，等待表达式处的切换
 sequential consistency                  |顺序一致性     |如同存在全局顺序
-shift operator                          |移位运算符
+shift expression                        |移位表达式     |`add_expr << add_expr` `add_expr >> add_expr`<br>内建：左移、算术右移，IntP，操作数1 SeqB 操作数2
+shift operator                          |移位运算符     |`<<`, `>>`
 side effect                             |副作用 |读volatile，改，调用 I/O 库函数
 signal                                  |信号
 signal handler                          |信号处理函数
@@ -1155,7 +1204,8 @@ single search                           |单次搜索       |名字查找步骤�
 `sizeof` operator                       |`sizeof` 运算符|免求值表达式或类型标识：`sizeof expr`或`sizeof(T)`<br>包组元素个数，包组展开：`sizeof...P`
 source character set                    |源字符集
 source file                             |源文件
-space character                         |空格字符   |``
+space character                         |空格字符   |` `
+spaceship operator                      |飞船运算符 |`<=>`
 specialization                          |特化式，特例   |代码结构为‘特化式’，实体为‘特例’
 specialize                              |特化
 specifier                               |说明符
@@ -1248,7 +1298,9 @@ thread of execution                     |执行线程，线程
 thread storage duration                 |线程存储期
 thread_local specifier                  |thread_local 说明符
 thread-local variable                   |线程局部变量
+three-way comparison                    |三路比较   |比较表达式，`e1 <=> e2`
 throw                                   |抛出
+throw-expression                        |throw表达式|`throw e`：抛出，`throw`重新抛出当前处理的异常
 token                                   |记号       |编译器理解的语法元素：标识符，关键字，字面量，运算符或标点
 token concatenation                     |记号拼接   |预处理功能，`a ## b` -> `ab`
 top-level cv-qualifier                  |顶层 cv 限定符
@@ -1399,7 +1451,7 @@ xvalue                                  |临限值 |将被重用的对象，有�
 
 |English|中文|说明|
 |-|-|-|
-*yield-expression*                      |产出表达式
+yield-expression                        |产出表达式     |`co_yield expr`。等价于`co_await p.yield_value(expr)`
 
 ### Z
 
