@@ -228,6 +228,25 @@ Original   |中文   |章节    |定义
 *expression*                |*表达式*       | [expr.comma]  | *赋值表达式* (`,` *赋值表达式*)__\*__
 *constant-expression*       |*常量表达式*   | [expr.const]  | *条件表达式*
 
+### Statements 语句
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*statement*                 |*语句*         | [stmt.pre]    | *带标号语句* \|<br> *特性说明符序列*__?__ *表达式语句* \|<br> *特性说明符序列*__?__ *复合语句* \|<br> *特性说明符序列*__?__ *选择语句* \|<br> *特性说明符序列*__?__ *循环语句* \|<br> *特性说明符序列*__?__ *跳转语句* \|<br> *声明语句* \|<br> *特性说明符序列*__?__ *try-块*
+*init-statement*            |*初始化语句*   | [stmt.pre]    | *表达式语句* \| *简单声明式*
+*condition*                 |*条件*         | [stmt.pre]    | *表达式* \|<br> *特性说明符序列*__?__ *声明说明符序列* *声明符* *花括号或等号初始化式*
+*labeled-statement*         |*带标号语句*   | [stmt.label]  | *特性说明符序列*__?__ (*标识符* \| `case` *常量表达式* \| `default` ) `:` *语句*
+*expression-statement*      |*表达式语句*   | [stmt.expr]   | *表达式*__?__ `;`
+*compound-statement*        |*复合语句*     | [stmt.block]  | `{` *语句序列*__?__ `}`
+*statement-seq*             |*语句序列*     | [stmt.block]  | *语句*__\+__
+*selection-statement*       |*选择语句*     | [stmt.select.general] | `if` `constexpr`__?__ `(` *初始化语句*__?__ *条件* `)` *语句* (`else` *语句*)__?__ \|<br>`if` `!`__?__ `consteval` *复合语句* (`else` *语句*)__?__ \|<br> `switch` `(` *初始化语句*__?__ *条件* `)` *语句*
+*iteration-statement*       |*循环语句*     | [stmt.iter.general] | `while` `(` *条件* `)` *语句* \|<br> `do` *语句* `while` `(` *表达式* `)` `;` \|<br> `for` `(` *初始化语句* *条件*__?__ `;` *表达式*__?__ `)` *语句* \|<br> `for` `(` *初始化语句*__?__ *for-范围声明式* `:` *for-范围初始化式* `)` *语句*
+*for-range-declaration*     |*for-范围声明式*| [stmt.iter.general] | *特性说明符序列*__?__ *声明说明符序列* *声明符* \|<br> *特性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *标识符列表* `]`
+*for-range-initializer*     |*for-范围初始化式*| [stmt.iter.general] | *表达式或花括号初始化列表*
+*jump-statement*            |*跳转语句*     | [stmt.jump.general] | `break` `;` \| `continue` `;` \|<br> `return` *表达式或花括号初始化列表*__?__ `;` \| *协程返回语句* \|<br> `goto` *标识符* `;`
+*coroutine-return-statement*|*协程返回语句* | [stmt.return.coroutine] | `co_return` *表达式或花括号初始化列表*__?__ `;`
+*declaration-statement*     |*声明语句*     | [stmt.dcl]    | *块声明式*
+
 ## Terms Translation Table
 
 ### A
@@ -242,6 +261,7 @@ access control                          |访问控制
 access specifier                        |访问说明符
 acquire                                 |获取       |同步操作
 active member                           |活跃成员
+active variable                         |活跃变量   |自动存储期变量在作用域中其声明符之后均活跃
 addition operator                       |加法运算符
 additive expression                     |加性表达式 |`mul_expr + mul_expr`, `mul_expr - mul_expr`。内建：一般算术转换，指针+/-整型，指针-指针（`ptrdiff_t`）
 additive operator                       |加性运算符 |`+`, `-`
@@ -339,7 +359,7 @@ boolean                                 |布尔
 boolean conversion                      |布尔转换       |0->`false`, 非0->`true`
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
 bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
-break statement                         |break 语句
+break statement                         |break 语句     |跳出到循环或switch之后
 built-in operator                       |内建运算符
 byte                                    |字节           |基本存储单元
 
@@ -382,6 +402,9 @@ class template                          |类模板
 clause                                  |子句
 closure object                          |闭包对象   |lambda表达式纯右值
 closure type                            |闭包类型   |lambda表达式对象的类型，匿名唯一化，捕获为成员，重载`()`，函数指针转换
+co_await expression                     |co_await 表达式
+co_return statement                     |co_return 语句 |等价于`{p.return_value(initor); goto final_suspend;}`，void时为`p.return_void()`<br>协程无`co_return`相当于无参`co_return`
+co_yield expression                     |co_yield 表达式
 code point                              |代码点     |字符在字符集中的数值
 coherence requirements                  |协调性规定 |写-写、写-读、读-写、读-读协调性
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
@@ -401,14 +424,14 @@ composite pointer type                  |组合指针类型   |兼容两个指�
 compound assignment expression          |复合赋值表达式
 compound assignment operator            |复合赋值运算符 |乘：`*/%`，加：`+-`，移位：`<<>>`，按位：`&^|`
 compound requirement                    |复合规定   |`{ expr } noexcept -> T;`
-compound statement                      |复合语句   |块语句，语句块，花括号
+compound statement                      |复合语句   |块语句，语句块，花括号。块作用域
 compound type                           |复合类型   |数组、函数、指针、引用、类、联合体、枚举、成员指针
 concept                                 |概念
 concept-definition                      |概念定义式 |定义概念时模板头后面的部分，决定概念语义
 concurrency                             |并发性
 concurrent                              |并发的
 concurrent foreward progress guarantees |并发向前进展保证   |实现保证线程终将有进展，无关其他线程
-condition                               |条件       |语法结构：if/while/switch/for中的条件部分，可以声明变量
+condition                               |条件       |语法结构：if/while/switch/for中的条件部分。非switch：Ctx2Bool，switch：Ctx2Int+IntP<br>不能声明函数、数组，不能定义类、枚举。仅允许constexpr说明符
 conditional escape sequence             |有条件转义序列 |编译器实现支持的其他单字符转移序列
 conditional expression                  |条件表达式     |`logor_expr ? expr : asgn_expr`。操作数1 Ctx2Bool，短路，支持`throw`，支持两个同类型位字段<br>类型不同时，尝试隐式转换为另一个，但不允许歧义<br>部分保留左值性。右值时进行一般算术转换或取合成指针类型
 conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等
@@ -431,9 +454,10 @@ constant initialization                 |常量初始化     |静态/线程变�
 constant-initialized                    |以常量初始化   |变量或临时对象的初始化的全表达式是常量表达式，允许调用constexpr构造函数
 constant initializer                    |常量初始化式
 constant subexpression                  |常量子表达式   |不妨碍其外围表达式成为核心常量表达式
+consteval if statement                  |consteval if 语句  |`if constval { ... }`，`if !consteval`，检测显然常量求值
 constexpr constructor                   |constexpr 构造函数
 constexpr function                      |constexpr 函数
-constexpr if statement                  |constexpr if 语句
+constexpr if statement                  |constexpr if 语句  |`if constexpr (cond) ...`，检测编译期常量
 constexpr specifier                     |constexpr 说明符
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
 constness                               |常量性
@@ -445,7 +469,7 @@ context                                 |语境，上下文
 contextually converted to bool          |按语境转换为 bool  |IFF可声明`bool t(e);`
 contextually implicitly converted to T  |按语境隐式转换为 T |IFF找到表达式类型C向语句可接受的类型T的非显式转换函数，且T唯一
 contextual keyword                      |语境关键字，上下文关键字   |仅在特定语境中具有特殊含义：`final` `override` `import` `module`
-continue statement                      |continue 语句
+continue statement                      |continue 语句  |跳出到循环末尾继续循环
 contravariant                           |逆变
 control character                       |控制字符       |代码点 0-1F，7F-9F
 conversion                              |类型转换，转换
@@ -487,7 +511,7 @@ deallocate                              |回收
 deallocation function                   |回收函数   |`operator delete`, `operator delete[]`
 decay                                   |退化
 declaration                             |声明式，声明   |代码结构称为‘声明式’，引入实体的名字，类型和编译期存在性
-declaration statement                   |声明语句
+declaration statement                   |声明语句   |除虚无初始化变量外，跳转不能使变量活跃<br>静态/线程变量初始化异常时认为未初始化，同步保护并发初始化，递归UB
 declarative *nested-name-specifier*     |声明性*嵌套名说明符* |用于定名类型，不能有decltype，应当为模板
 declarative region                      |声明区
 declarator                              |声明符
@@ -789,7 +813,7 @@ invocation                              |调用，执行
 invoke                                  |调用，执行 |多用于除函数之外的场合，如宏等
 iostream                                |输入输出流, I/O 流
 ISO, International Organization for Standardization |ISO，国际标准化组织
-iteration statement                     |循环语句，重复语句
+iteration statement                     |循环语句，重复语句 |while, do-while, for, for-range
 iterator                                |迭代器
 
 ### J
@@ -809,7 +833,7 @@ keyword                                 |关键字     |无条件关键字 + `im
 
 |English|中文|说明|
 |-|-|-|
-label                                   |标号
+label                                   |标号           |标识符标号具有独立命名空间，函数作用域。`switch`中的`case`和`default`
 labeled statement                       |带标号语句
 lambda-expression                       |lambda-表达式  |函数对象/闭包，有捕获捕获，可泛型可约束，返回`auto`（推断或尾部返回类型）
 language linkage                        |语言连接
@@ -958,7 +982,7 @@ null pointer constant                   |空指针常量 |包括`nullptr`和`0`�
 null pointer conversion                 |空指针转换 |空指针常量->指针类型的空指针值
 null pointer literal                    |空指针字面量   |唯一的指针字面量，`nullptr`，类型为`std::nullptr_t`
 null pointer value                      |空指针值   |具体指针类型的空指针值，二进制表示可能不为全0
-null statement                          |空语句
+null statement                          |空语句     |没有表达式的表达式语句
 null-terminated                         |空终结
 null wide character                     |空宽字符   |`L'\0'`
 numeric escape sequence                 |数值转义序列   |`\ooo`，`\hh` 八进制最多三个，十六进制无限制
@@ -1116,7 +1140,7 @@ qualifier                               |限定符
 |-|-|-|
 radix point                             |小数点
 range                                   |范围
-range-based for statement               |基于范围的 for 语句
+range-based for statement               |基于范围的 for 语句|等价于`init; auto && r = initor; auto b = begin(r); auto e = end(r); for (; b!=e; ++b) { decl = *b; ... }`<br>对类类型尝试`r.begin()`和`r.end()`
 raw literal operator                    |原始字面量运算符   |`operator "" X(const char*)`，数值字面量的通配运算符之一
 raw string literal                      |原始字符串字面量   |避免转义等处理的字符串，分隔串用于识别边界`)`，如`R"xx()xx"`
 reachable                               |可达，可达的
@@ -1156,7 +1180,7 @@ reserved identifier                     |保留标识符 |`__` 开头或 `_[A-Z]
 restriction                             |限制，要求
 resumption                              |恢复
 return                                  |返回
-return statement                        |return 语句，返回语句
+return statement                        |return 语句，返回语句|允许在void函数中返回void类型操作数<br>复制初始化，但允许复制消除。结果初始化 SeqB 临时对象销毁 SeqB 局部变量销毁
 return type                             |返回类型
 return value                            |返回值
 right shift operator                    |右移运算符
@@ -1176,7 +1200,7 @@ scope                                   |作用域，范围
 scope resolution operator               |作用域解析运算符   |`::`
 scoped enumeration                      |有作用域枚举
 scoped enumerator                       |有作用域枚举符
-selection statement                     |选择语句
+selection statement                     |选择语句       |if, switch
 semantics                               |语义
 semaphore                               |信号量
 sequence                                |序列   |容器的一种
@@ -1253,7 +1277,7 @@ subnormal                               |次正规的
 subobject                               |子对象     |被其他对象包含：成员、基类、元素
 subscript expression                    |下标表达式 |后缀表达式
 subscript operator                      |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
-substatement                            |子语句
+substatement                            |子语句     |不包括选择和循环中的初始化语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
 suitable created object                 |适当创建的对象
 surrogate code point                    |代用代码点 |UCS 代用字符的代码点，为 UTF16 用于编码高值字符，D800-DFFF
