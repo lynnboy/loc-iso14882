@@ -259,6 +259,15 @@ Original   |中文   |章节    |定义
 *simple-declaration*        |*简单声明式*   | [dcl.pre]     | *声明说明符序列* *带初始化声明符列表*__?__ `;` \|<br> *属性说明符序列* *声明说明符序列* *带初始化声明符列表* `;` \|<br> *属性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *标识符列表* `]` 初始化式 `;`
 *empty-declaration*         |*空声明式*     | [dcl.pre]     | `;`
 *attribute-declaration*     |*属性声明式*   | [dcl.pre]     | *属性说明符序列* `;`
+*decl-specifier*            |*声明说明符*   | [dcl.spec.general] | *存储类说明符* \| *定义类型说明符* \| *函数声明符* \|<br> `friend` \| `typedef` \| `constexpr` \| `consteval` \| `constinit` \| `inline`
+*decl-specifier-seq*        |*声明说明符序列*| [dcl.spec.general] | *声明说明符*__\+__ *属性说明符序列*__?__
+*storage-class-specifier*   |*存储类说明符* | [dcl.stc]     | `static` \| `thread_local` \| `extern` \| `mutable`
+*function-specifier*        |*函数声明符*   | [dcl.fct.spec] | `virtual` \| `explicit` \| `explicit` `(` *常量表达式* `)`
+*typedef-name*              |*typedef-名*   | [dcl.typedef] | *标识符* \| *简单模板标识*
+*type-specifier*            |*类型说明符*   | [dcl.type.general] | *简单类型说明符* \| *详述类型说明符* \| *typename-说明符* \| *cv-限定符*
+*type-specifier-seq*        |*类型说明符序列*| [dcl.type.general] | *类型说明符*__\+__ *属性说明符序列*__?__
+*defining-type-specifier*   |*定义类型说明符*| [dcl.type.general] | *类型说明符* \| *类说明符* \| *枚举说明符*
+*defining-type-specifier-seq*|*定义类型说明符序列*| [dcl.type.general] | *定义类型说明符*__\+__ *属性说明符序列*__?__
 
 ## Terms Translation Table
 
@@ -285,21 +294,21 @@ aggregate initialization                |聚合初始化
 aggregate type                          |聚合类型
 algorithm                               |算法
 alias                                   |别名
-alias declaration                       |别名声明
+alias declaration                       |别名声明   |`using A=T`，与`typedef`语义相同<br>`template<...> using A=...`，别名模板，不可定义类或枚举
 alias template                          |别名模板
 alignment                               |对齐
-alignment requirement                   |对齐要求       |类型给出的地址对齐要求
-alignment specifier                     |对齐说明符     |`alignas`
+alignment requirement                   |对齐要求   |类型给出的地址对齐要求
+alignment specifier                     |对齐说明符 |`alignas`
 `alignof` expression                    |`alignof` 表达式|一元表达式。整型常量表达式。`alignof(T)`完整类型的对齐要求
 allocate                                |分配
-allocated type                          |被分配类型     |new 表达式创建对象的类型：完整对象类型，非抽象类或其数组，可cv
-allocation function                     |分配函数       |`operator new`, `operator new []`
-alternative token                       |代用记号       |二联符+保留字 `and` 等，11个位和逻辑运算符
+allocated type                          |被分配类型 |new 表达式创建对象的类型：完整对象类型，非抽象类或其数组，可cv
+allocation function                     |分配函数   |`operator new`, `operator new []`
+alternative token                       |代用记号   |二联符+保留字 `and` 等，11个位和逻辑运算符
 ambiguity                               |歧义
 amendment                               |文档修订
 amortized constant                      |摊销常量
-and expression                          |与表达式       |`eq_expr & eq_expr`。内建：按位与，一般算术转换
-and operator                            |与运算符       |`&`
+and expression                          |与表达式   |`eq_expr & eq_expr`。内建：按位与，一般算术转换
+and operator                            |与运算符   |`&`
 appearance-ordered before               |按表现顺序早于 |静态变量初始化顺序：同一UT或UT间接口依赖+出现顺序
 apply                                   |运用，实施，适用于
 arbitrary-positional stream             |可任意定位流   |可seek
@@ -330,7 +339,7 @@ associated entities                     |关联实体       |依赖于实参查�
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
 atomic                                  |原子性
 attach to module                        |附属于模块
-attribute                               |属性标注，属性 |`[[]]`语法，支持。实体声明中，声明式之前或标识之后
+attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体
 attribute-declaration                   |属性声明式     |仅有属性的空声明，不是块声明式
 automatic storage duration              |自动存储期
 await-expression                        |等待表达式     |一元表达式。暂停协程等待操作数计算完成<br>不能在`catch`中等待<br>对显式`co_await`：尝试调用承诺的`await_transform`，尝试调用`operator await`，获得可等待对象<br>`await_ready`查询是否需暂停，`await_suspend`实施暂停（支持串联），`await_resume`获得结果
@@ -468,10 +477,13 @@ constant-initialized                    |以常量初始化   |变量或临时�
 constant initializer                    |常量初始化式
 constant subexpression                  |常量子表达式   |不妨碍其外围表达式成为核心常量表达式
 consteval if statement                  |consteval if 语句  |`if constval { ... }`，`if !consteval`，检测显然常量求值
-constexpr constructor                   |constexpr 构造函数
-constexpr function                      |constexpr 函数
+consteval specifier                     |consteval 说明符   |仅修饰函数，隐含内联，非析构函数、new或delete
+constexpr constructor                   |constexpr 构造函数 |除函数规定外，隐含调用的所有构造函数应为constexpr
+constexpr destructor                    |constexpr 析构函数 |除函数规定外，隐含调用的所有析构函数应为constexpr
+constexpr function                      |constexpr 函数     |以`constexpr`或`consteval`修饰的函数<br>字面量类型，非协程；代码中无goto、静态或线程变量；构造或析构的类无虚基类<br>不可能常量求值则非良构但无须诊断
 constexpr if statement                  |constexpr if 语句  |`if constexpr (cond) ...`，检测编译期常量
-constexpr specifier                     |constexpr 说明符
+constexpr specifier                     |constexpr 说明符   |修饰变量或函数，隐含内联
+constinit specifier                     |constinit 说明符   |修饰静态或线程存储期的变量，保证静态初始化
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
 constness                               |常量性
 construct                               |语言构造
@@ -508,7 +520,7 @@ cv-combined type                        |cv 合并类型
 cv-decomposition                        |cv 分解
 cv-qualification                        |cv 限定
 cv-qualification signature              |cv 限定签名    |最长限定分解的除顶层 cv 外的各级 cv
-cv-qualifier                            |cv 限定符
+cv-qualifier                            |cv 限定符      |类型说明符的一种，可与其他说明符组合
 cv-unqualified                          |无 cv 限定的
 
 ### D
@@ -545,6 +557,7 @@ default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
 defaulted function                      |预置函数
 define                                  |定义
+defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符
 definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
 definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
 delegating constructor                  |委派构造函数
@@ -637,7 +650,7 @@ execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化声明式   |指定某个模板特例应当 ODR 式存在
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
-explicit specifier                      |explicit 说明符
+explicit specifier                      |explicit 说明符|`explicit`或`explicit(expr)`，类体内构造函数/转换函数，常量表达式Ctx2Bool
 explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、运算符`XX_cast`、初始化
 explicitly captured                     |显式俘获       |指定其*简单俘获符*
 explicitly defaulted function           |显式预置的函数
@@ -657,7 +670,7 @@ extended signed integer type            |扩充有符号整数类型
 extended source character set           |扩展源字符集
 extended unsigned integer type          |扩充无符号整数类型
 extension                               |扩展           |实现提供的额外功能
-extern specifier                        |extern 说明符
+extern specifier                        |extern 说明符  |变量或函数非定义声明式，外部连接。允许声明不完整类型的实体
 external linkage                        |外部连接       |跨翻译单元可见
 
 ### F
@@ -710,7 +723,7 @@ function pointer conversion             |函数指针转换   |去掉noexcept约
 function pointer type                   |函数指针类型
 function prototype                      |函数原型
 function scope                          |函数作用域
-function specifier                      |函数说明符
+function specifier                      |函数说明符     |`virtual`，`explicit`, `explicit(expr)`
 function template                       |函数模板
 function-try-block                      |函数-try-块    |整个函数放入`try...catch`中
 function-like macro                     |函数式宏
@@ -761,7 +774,7 @@ IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
 if statement                            |if 语句
 ill-formed                              |非良构的   |语法或语义无效的代码
-immediate function                      |直接函数
+immediate function                      |直接函数       |以`consteval`修饰的函数
 immediate function context              |直接函数语境   |直接函数的作用域，或consteval if作用域中
 immediate invocation                    |直接调用       |直接函数调用链的入口
 immediate scope                         |直接作用域     |最小的外围作用域
@@ -796,12 +809,12 @@ inhabit                                 |居于           |声明式居于其直
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
 initialization                          |初始化
 initialize                              |初始化
-initializer                             |初始化式       |`(expr,...)`，`{...}`，`=expr`，`={...}`
-injected-class-name                     |注入类名       |当做成员名的类名
-inline function                         |内联函数
+initializer                             |初始化式   |`(expr,...)`，`{...}`，`=expr`，`={...}`
+injected-class-name                     |注入类名   |当做成员名的类名
+inline function                         |内联函数   |优先内联展开，跨UT多定义
 inline namespace                        |内联命名空间
-inline specifier                        |inline 说明符
-inline variable                         |内联变量
+inline specifier                        |inline 说明符  |变量或函数。首个声明式决定是否内联
+inline variable                         |内联变量   |跨UT多定义
 input                                   |输入
 instance                                |实例
 instantiate                             |实例化，落实
@@ -938,7 +951,7 @@ multidimensional array                  |多维数组
 multiplication operator                 |乘法运算符
 multiplicative expression               |乘性表达式 |`pm_expr * pm_expr`等，内建：一般算数转换，`%`要求整型/无作用域枚举
 multiplicative operator                 |乘性运算符 |`*`, `/`, `%`
-mutable specifier                       |mutable 说明符
+mutable specifier                       |mutable 说明符 |非静态数据成员，免除const
 mutex                                   |互斥体
 
 ### N
@@ -1263,13 +1276,13 @@ static cast expression                  |静态转型表达式 |后缀表达式�
 static data member                      |静态数据成员
 static initialization                   |静态初始化     |静态/线程变量的常量/零初始化，运行前发生。允许动->静优化
 static member function                  |静态成员函数
-static specifier                        |static 说明符
+static specifier                        |static 说明符  |成员：共享，命名空间：UT内部连接，局部：存储期
 static storage duration                 |静态存储期
 static type                             |静态类型   |表达式的可声明类型
 static_assert declaration               |static_assert 声明式|常量表达式，Ctx2Bool
 stop token                              |停止令牌
 storage                                 |存储
-storage class specifier                 |存储类说明符
+storage class specifier                 |存储类说明符   |`static`, `thread_local`, `extern`, `mutable`
 storage duration                        |存储期     |静态、线程、自动、动态
 storage management                      |存储管理
 stream                                  |流 |输入或输出流
@@ -1335,7 +1348,7 @@ terminate                               |终止
 thread                                  |线程
 thread of execution                     |执行线程，线程
 thread storage duration                 |线程存储期
-thread_local specifier                  |thread_local 说明符
+thread_local specifier                  |thread_local 说明符|成员：需加`static`，块：暗含`static`
 thread-local variable                   |线程局部变量
 three-way comparison                    |三路比较   |比较表达式，`e1 <=> e2`
 throw                                   |抛出
@@ -1370,12 +1383,12 @@ type-only lookup                        |仅限类型查找   |仅查找类型
 type-parameter                          |类型形参       |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
 type requirement                        |类型规定       |类型有效性：`typename T;`
-type specifier                          |类型说明符
+type specifier                          |类型说明符     |简单、详述、typename、cv
 typedef declaration                     |typedef 声明式 |带有`typedef`的简单声明式
-typedef-name                            |typedef-名     |类型别名，`typedef`或`using`，可为模板
-typedef specifier                       |typedef 说明符
+typedef-name                            |typedef-名     |类型别名，`typedef`或`using`，可为模板<br>无名类的首个typedef名为连接名，这种类应当与C结构体兼容：无成员代码，无基类
+typedef specifier                       |typedef 说明符 |
 typeid expression                       |typeid 表达式  |后缀表达式。`<typeinfo>`，返回`type_info`或其派生类对象左值，存续直到程序结束<br>非多态对象为免求值操作数，多态对象查询RTTI，全派生对象的动态类型<br>查询空指针解引用的对象抛出`bad_typeid`
-typename specifier                      |typename 说明符
+typename specifier                      |typename 说明符|指定待决名是类型
 
 ### U
 
@@ -1455,7 +1468,7 @@ virtual                                 |虚的
 virtual base                            |虚基类
 virtual function                        |虚函数
 virtual function call                   |虚函数调用
-virtual specifier                       |virtual 说明符
+virtual specifier                       |virtual 说明符 |虚成员函数
 visible                                 |可见
 visible side effect                     |可见副作用 |非原子性ML的可见性由发生早于HapB关系决定
 visit                                   |视察，访问
