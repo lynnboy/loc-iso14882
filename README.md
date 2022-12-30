@@ -268,6 +268,11 @@ Original   |中文   |章节    |定义
 *type-specifier-seq*        |*类型说明符序列*| [dcl.type.general] | *类型说明符*__\+__ *属性说明符序列*__?__
 *defining-type-specifier*   |*定义类型说明符*| [dcl.type.general] | *类型说明符* \| *类说明符* \| *枚举说明符*
 *defining-type-specifier-seq*|*定义类型说明符序列*| [dcl.type.general] | *定义类型说明符*__\+__ *属性说明符序列*__?__
+*simple-type-specifier*     |*简单类型说明符*| [dcl.type.simple] | *嵌套名说明符*__?__ （*类型名* \| *模板名*) \|<br> *嵌套名说明符* `template` *简单模板标识* \|<br> *decltype-说明符* \| *占位符类型说明符* \|<br> `char` \| `char8_t` \| `char16_t` \| `char32_t` \| `wchar_t` \|<br> `bool` \| `short` \| `int` \| `long` \|<br> `signed` \| `unsigned` \| `float` \| `double` \| `void`
+*type-name*                 |*类型名*       | [dcl.type.simple] | *类名* \| *枚举名* \| *typedef-名*
+*elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键字* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键字* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> *详述枚举说明符*
+*elaborated-enum-specifier* |*详述枚举说明符*| [dcl.type.elab] | `enum` *嵌套名说明符*__?__ *标识符*
+*decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
 
 ## Terms Translation Table
 
@@ -541,10 +546,11 @@ declarative *nested-name-specifier*     |声明性*嵌套名说明符* |用于�
 declarative region                      |声明区
 declarator                              |声明符
 declare                                 |声明
-decltype specifier                      |decltype 说明符
+decltype specifier                      |decltype 说明符|免求值操作数。<br>`decltype(expr)`：结构化绑定为被引用类型，NTTP为推断类型，标识或成员访问为实体类型<br>其他以及`decltype((expr))`：根据值类别为`T`,`T&`,`T&&`<br>非直接调用的纯右值并不真进行实例化
 decode                                  |解码
 decrement operator                      |减量运算符
 deduce                                  |推断
+deducible template                      |可推断模板     |类模板，或可推断模板的别名模板
 deduction guide                         |推断导引
 default argument                        |默认实参
 default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP)
@@ -604,7 +610,8 @@ dynamic type                            |动态类型       |纯右值的动态�
 |English|中文|说明|
 |-|-|-|
 ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制造商协会
-elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明
+elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明，或声明友元
+elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
 element                                 |元素
 eligible special member function        |合格的特殊成员函数
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
@@ -1078,6 +1085,7 @@ phases of translation                   |翻译阶段       |1. 物理字符->�
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
 physical source line                    |物理源文本行
 placeholder                             |占位符
+placeholder-type-specifier              |占位符类型说明符|
 placeholder type deduction              |占位符类型推断
 placement allocation function           |放置式分配函数
 placement deallocation function         |放置式回收函数 |形参与对应放置式分配函数匹配，会在new表达式失败时自动调用，若不唯一则忽略
@@ -1247,11 +1255,12 @@ similar type                            |相似类型       |两个同级数多�
 simple-capture                          |简单俘获符     |不带有初始化式，直接指名被俘获变量的俘获符
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）：属性+一系列声明说明符+声明符的列表<br>声明类、枚举时可以没有声明符
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
-simple requirement                      |简单规定       |表达式有效性：`expr;`
-simple-template-id                      |简单模板标识   |模板标识，名字为标识符（不包括运算符/字面量函数）
 simply happens before                   |简单发生早于 SimpHB|不使用消费操作时的简单模型：线程内SeqB或线程间Sync
 single-object delete expression         |单对象 delete 表达式|`delete p`
-single search                           |单次搜索       |名字查找步骤，找到先于搜索点的目标作用域中的全部声明式，using-声明式替换为目标声明式，类/枚举可被隐藏
+simple requirement                      |简单规定       |表达式有效性：`expr;`
+single search                           |单次搜索       |名字查找步骤，找到先于搜索点的目标作用域中的全部声明式，simple-template-id                      |简单模板标识   |模板标识，名字为标识符（不包括运算符/字面量函数）
+using-声明式替换为目标声明式，类/枚举可被隐藏
+simple-type-specifier                   |简单类型说明符 |指定现有类型的名字：内建、类、枚举、占位符、模板化类型
 `sizeof` expression                     |`sizeof` 表达式|一元表达式。整形常量表达式。非潜在重叠对象的大小，窄字符为1，其他由实现定义
 `sizeof` operator                       |`sizeof` 运算符|免求值表达式或类型标识：`sizeof expr`或`sizeof(T)`<br>包组元素个数，包组展开：`sizeof...P`
 source character set                    |源字符集
