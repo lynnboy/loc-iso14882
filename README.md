@@ -274,6 +274,25 @@ Original   |中文   |章节    |定义
 *elaborated-enum-specifier* |*详述枚举说明符*| [dcl.type.elab] | `enum` *嵌套名说明符*__?__ *标识符*
 *decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
 *placeholder-type-specifier*|*占位符类型说明符*| [dcl.spec.auto.general] | *类型约束*__?__ (`auto` \| `decltype` `(` `auto` `)`)
+*init-declarator-list*      |*带初始化声明符列表*| [dcl.decl.general] | *带初始化声明符* (`,` *带初始化声明符*)__\*__
+*init-declarator*           |*带初始化声明符*| [dcl.decl.general] | *声明符* *初始化式*__?__ \| *声明符* *requires-子句*
+*declarator*                |*声明符*       | [dcl.decl.general] | *指针声明符* \| *非指针声明符* *形参和限定符* *尾部返回类型*
+*ptr-declarator*            |*指针声明符*   | [dcl.decl.general] | *指针运算符*__\*__ *非指针声明符*
+*noptr-declarator*          |*非指针声明符* | [dcl.decl.general] | ( *声明符标识* *属性说明符序列*__?__ \| `(` *指针声明符* `)` ) ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
+*parameters-and-qualifiers* |*形参和限定符* | [dcl.decl.general] | `(` *形参声明子句* `)` *cv-限定符序列*__?__ *引用限定符*__?__ *noexcept-说明符*__?__ *属性说明符序列*__?__
+*trailing-returntype*       |*尾部返回类型* | [dcl.decl.general] | `->` *类型标识*
+*ptr-operator*              |*指针运算符*   | [dcl.decl.general] | `*` *属性说明符序列*__?__ *cv-限定符序列*__?__ \| (`&`\|`&&`) *属性说明符序列*__?__ \|<br>  `*` *属性说明符序列*__?__ *cv-限定符序列*__?__
+*cv-qualifier-seq*          |*cv-限定符序列*| [dcl.decl.general] | *cv-限定符*__\+__
+*cv-qualifier*              |*cv-限定符*    | [dcl.decl.general] | `const` \| `volatile`
+*ref-qualifier*             |*引用限定符*   | [dcl.decl.general] | `&` \| `&&`
+*declarator-id*             |*声明符标识*   | [dcl.decl.general] | `...`__?__ *标识表达式*
+*type-id*                   |*类型标识*     | [dcl.name]    | *类型说明符序列* *抽象声明符*__?__
+*defining-type-id*          |*定义类型标识* | [dcl.name]    | *定义类型说明符序列* *抽象声明符*__?__
+*abstract-declarator*       |*抽象声明符*   | [dcl.name]    | *指针抽象声明符* \| *非指针抽象声明符*__?__ *形参和限定符* *尾部返回类型* \| *抽象包组声明符*
+*ptr-abstract-declarator*   |*指针抽象声明符*| [dcl.name]   | *指针运算符*__\*__ *非指针抽象声明符*
+*noptr-abstract-declarator* |*非指针抽象声明符*| [dcl.name] | ( `(` *指针抽象声明符* `)` )__?__ ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
+*abstract-pack-declarator*  |*抽象包组声明符*| [dcl.name]   | *指针运算符*__\*__ *非指针抽象包组声明符*
+*noptr-abstract-pack-declarator*|*非指针抽象包组声明符*| [dcl.name] | `...` ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
 
 ## Terms Translation Table
 
@@ -282,6 +301,7 @@ Original   |中文   |章节    |定义
 |English|中文|说明|
 |-|-|-|
 abstract class                          |抽象类     |包含纯虚函数
+abstract-declarator                     |抽象声明符 |用于指名类型。没有名字的说明符，等价于有唯一名字。函数类型等
 abstract machine                        |抽象机器
 access                                  |访问       |读取或改动标量对象
 access check                            |访问检查
@@ -325,6 +345,7 @@ arithmetic                              |算术的
 arithmetic exception                    |算术异常
 arithmetic type                         |算术类型       |整型、浮点
 array                                   |数组
+array bound                             |数组边界   |顶层可忽略：有初始化时或有之前可达声明式时<br>未知边界：形参类型，衰退为指针
 array declarator                        |函数声明符
 array delete expression                 |数组 delete 表达式|`delete [] p`
 array element                           |数组元素
@@ -425,6 +446,7 @@ class member access operator            |类成员访问运算符 |内建：`p->
 class-name                              |类名       |标识符或简单模板标识
 class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外带限定成员
 class-specifier                         |类说明符   |类的定义体
+class template argument deduction       |类模板实参推断 |只支持`cv T`的对象声明。用于变量声明、new、类型转换、非类型模板形参
 class template deduction                |类模板推断
 class template                          |类模板
 clause                                  |子句
@@ -519,7 +541,7 @@ corresponding declarations              |对应声明式     |引入相同名字
 corresponding instance                  |对应实例       |实现所对应的抽象机器
 covariant                               |协变
 create                                  |创建
-CTAD, constructor template argument deduction   |构造函数模板实参推断   |可利用推断导引
+CTAD, class template argument deduction |类模板实参推断 |可利用推断导引
 current class                           |当前类         |当前位置最内层类作用域
 cv pointer to cv T                      |cv T 的 cv 指针
 cv-combined type                        |cv 合并类型
@@ -545,7 +567,7 @@ declaration                             |声明式，声明   |代码结构称�
 declaration statement                   |声明语句   |除虚无初始化变量外，跳转不能使变量活跃<br>静态/线程变量初始化异常时认为未初始化，同步保护并发初始化，递归UB
 declarative *nested-name-specifier*     |声明性*嵌套名说明符* |用于定名类型，不能有decltype，应当为模板
 declarative region                      |声明区
-declarator                              |声明符
+declarator                              |声明符     |被声明的实体，类型修饰：指针、数组、引用、函数，变量可带初始化式
 declare                                 |声明
 decltype specifier                      |decltype 说明符|免求值操作数。<br>`decltype(expr)`：结构化绑定为被引用类型，NTTP为推断类型，标识或成员访问为实体类型<br>其他以及`decltype((expr))`：根据值类别为`T`,`T&`,`T&&`<br>非直接调用的纯右值并不真进行实例化
 decode                                  |解码
@@ -614,6 +636,7 @@ ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制�
 elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明，或声明友元
 elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
 element                                 |元素
+element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 eligible special member function        |合格的特殊成员函数
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
 ellipsis parameter                      |省略号形参 |`va_xxx`变参函数
@@ -1087,7 +1110,7 @@ physical source file character          |物理源文件字符 |根据文件编�
 physical source line                    |物理源文本行
 placeholder                             |占位符
 placeholder-type-specifier              |占位符类型说明符|`auto`或`decltype(auto)`。泛型形参类型占位符。引入尾部返回类型。推断返回类型。推断变量类型，new类型，模板形参
-placeholder type deduction              |占位符类型推断 |
+placeholder type deduction              |占位符类型推断 |`auto`：函数调用的模板实参推断规则，`decltype(auto)`：`decltype`规则
 placement allocation function           |放置式分配函数
 placement deallocation function         |放置式回收函数 |形参与对应放置式分配函数匹配，会在new表达式失败时自动调用，若不唯一则忽略
 placement new-expression                |放置式 new-表达式|放置式语法的 new 表达式`new (args) T`
@@ -1369,7 +1392,7 @@ token concatenation                     |记号拼接   |预处理功能，`a ##
 top-level cv-qualifier                  |顶层 cv 限定符
 total order                             |全序，非严格全序，线序 |具有完全性的偏序，完整的 <=
 traceable pointer                       |可追踪指针
-trailing *requires-clause*              |尾部 *requires-子句* |模板函数
+trailing *requires-clause*              |尾部 *requires-子句* |仅模板函数，声明式末尾
 trailing return type                    |尾部返回类型
 traits class                            |特征类     |提供与某个主类型形参有关的静态自定义能力，模板类
 translate                               |翻译       |编译
