@@ -273,6 +273,7 @@ Original   |中文   |章节    |定义
 *elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键字* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键字* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> *详述枚举说明符*
 *elaborated-enum-specifier* |*详述枚举说明符*| [dcl.type.elab] | `enum` *嵌套名说明符*__?__ *标识符*
 *decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
+*placeholder-type-specifier*|*占位符类型说明符*| [dcl.spec.auto.general] | *类型约束*__?__ (`auto` \| `decltype` `(` `auto` `)`)
 
 ## Terms Translation Table
 
@@ -1085,8 +1086,8 @@ phases of translation                   |翻译阶段       |1. 物理字符->�
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
 physical source line                    |物理源文本行
 placeholder                             |占位符
-placeholder-type-specifier              |占位符类型说明符|
-placeholder type deduction              |占位符类型推断
+placeholder-type-specifier              |占位符类型说明符|`auto`或`decltype(auto)`。泛型形参类型占位符。引入尾部返回类型。推断返回类型。推断变量类型，new类型，模板形参
+placeholder type deduction              |占位符类型推断 |
 placement allocation function           |放置式分配函数
 placement deallocation function         |放置式回收函数 |形参与对应放置式分配函数匹配，会在new表达式失败时自动调用，若不唯一则忽略
 placement new-expression                |放置式 new-表达式|放置式语法的 new 表达式`new (args) T`
@@ -1218,6 +1219,7 @@ resumption                              |恢复
 return                                  |返回
 return statement                        |return 语句，返回语句|允许在void函数中返回void类型操作数<br>复制初始化，但允许复制消除。结果初始化 SeqB 临时对象销毁 SeqB 局部变量销毁
 return type                             |返回类型
+return type deduction                   |返回类型推断|非虚，非协程。从所有未弃用return语句推断，应当一致<br>实例化时进行推断。每次推断导致实例化
 return value                            |返回值
 right shift operator                    |右移运算符
 rounding                                |舍入
