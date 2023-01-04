@@ -293,6 +293,9 @@ Original   |中文   |章节    |定义
 *noptr-abstract-declarator* |*非指针抽象声明符*| [dcl.name] | ( `(` *指针抽象声明符* `)` )__?__ ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
 *abstract-pack-declarator*  |*抽象包组声明符*| [dcl.name]   | *指针运算符*__\*__ *非指针抽象包组声明符*
 *noptr-abstract-pack-declarator*|*非指针抽象包组声明符*| [dcl.name] | `...` ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
+*parameter-declaration-clause*|*形参声明子句*| [dcl.fct]    | ∅ \| *形参声明式列表* ( `...` \| `,` `...` )__?__
+*parameter-declaration-list*|*形参声明式列表*| [dcl.fct]    | *形参声明式* (`,` *形参声明式*)__\*__
+*parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ *声明说明符序列* (*声明符* \| *抽象声明符*) (`=` *初始化式子句*)__?__
 
 ## Terms Translation Table
 
@@ -300,6 +303,7 @@ Original   |中文   |章节    |定义
 
 |English|中文|说明|
 |-|-|-|
+abbreviated function template           |简写函数模板   |使用泛型形参类型占位符的函数声明式，功能等价于函数模板声明式<br>`auto`->`T`，可带约束，不支持`decltype(auto)`，省略号均为形参包组；可以部分简写，部分模板
 abstract class                          |抽象类     |包含纯虚函数
 abstract-declarator                     |抽象声明符 |用于指名类型。没有名字的说明符，等价于有唯一名字。函数类型等
 abstract machine                        |抽象机器
@@ -575,7 +579,7 @@ decrement operator                      |减量运算符
 deduce                                  |推断
 deducible template                      |可推断模板     |类模板，或可推断模板的别名模板
 deduction guide                         |推断导引
-default argument                        |默认实参
+default argument                        |默认实参       |形参的初始化式。函数：调用时求值；仅在函数声明中允许；同作用域累积；<br>特殊成员不允许默认实参；类模板成员的默认实参必须在类中
 default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP)
 default behavior                        |缺省行为       |某些函数，如果程序不提供就采用实现的缺省版本
 default constructor                     |默认构造函数
@@ -586,7 +590,7 @@ default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
 defaulted function                      |预置函数
 define                                  |定义
-defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符
+defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符<br>函数形参和返回类型不能定义类型
 definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
 definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
 delegating constructor                  |委派构造函数
@@ -743,11 +747,12 @@ function                                |函数           |一种实体，不是
 function-body                           |函数体         |指定代码或`=default`、`=delete`
 function call expression                |函数调用表达式 |后缀表达式
 function call operator                  |函数调用运算符 |内建：静态、非静态、虚、析构/伪析构，`a(b,...)`, a SeqB b, b IndSeq, b SeqB 函数体
-function declaration                    |函数声明式     |非`typedef`简单声明式，类型为函数类型
+function declaration                    |函数声明式     |非`typedef`简单声明式，类型为函数类型。允许typedef名声明函数
 function declarator                     |函数声明符
-function-definition                     |函数定义式
+function-definition                     |函数定义式     |语法不允许用typedef名
 function object                         |函数对象
 function overloading                    |函数重载
+function parameter                      |函数形参       |特殊：`f(void)`等价于`f()`，`void`不能是待决类型。摒弃volatile形参<br>可以无名
 function parameter pack                 |函数形参包组
 function parameter scope                |函数形参作用域 |作用域的一种，形参声明子句（不只函数）所在声明符范围，有体则包含体
 function pointer conversion             |函数指针转换   |去掉noexcept约束
@@ -757,6 +762,7 @@ function scope                          |函数作用域
 function specifier                      |函数说明符     |`virtual`，`explicit`, `explicit(expr)`
 function template                       |函数模板
 function-try-block                      |函数-try-块    |整个函数放入`try...catch`中
+function type                           |函数类型       |返回类型，形参类型列表，cv+ref（仅NSMF或成员指针，或类型标识、typedef名），noexcept<br>忽略函数类型本身的cv
 function-like macro                     |函数式宏
 function-to-pointer conversion          |函数向指针转换 |函数或静态成员函数
 fundamental alignment                   |基础对齐       |FA <= `alignof(max_align_t)`
@@ -1027,6 +1033,7 @@ non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-initialization odr-use              |非初始化 ODR 式使用|非由静态/线程变量初始化导致的 ODR 式使用
 non-static data member                  |非静态数据成员
+non-template function                   |非模板函数 |非函数模板特例的函数
 non-throwing exception specification    |无抛出异常说明
 non-vacuous initialization              |非无为初始化
 normalized                              |正规化的
@@ -1099,7 +1106,7 @@ parameter                               |形参，形式参数 |函数，catch�
 parameter-declaration                   |形参声明式     |函数、lambda、推断导引、模板、requires（不支持默认实参、省略号和占位符推断？）
 parameter-declaration-clause            |形参声明子句   |可调用体的参数列表部分，同上
 parameter pack                          |形参包组
-parameter-type-list                     |形参类型列表   |函数签名
+parameter-type-list                     |形参类型列表   |函数类型的内容：每个形参的类型，数组->指针，免除顶层cv；尾部省略号或函数形参包组
 parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
@@ -1241,7 +1248,7 @@ restriction                             |限制，要求
 resumption                              |恢复
 return                                  |返回
 return statement                        |return 语句，返回语句|允许在void函数中返回void类型操作数<br>复制初始化，但允许复制消除。结果初始化 SeqB 临时对象销毁 SeqB 局部变量销毁
-return type                             |返回类型
+return type                             |返回类型   |非数组对象类型、引用类型、`void`；摒弃volatile返回类型
 return type deduction                   |返回类型推断|非虚，非协程。从所有未弃用return语句推断，应当一致<br>实例化时进行推断。每次推断导致实例化
 return value                            |返回值
 right shift operator                    |右移运算符
