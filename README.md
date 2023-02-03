@@ -296,6 +296,15 @@ Original   |中文   |章节    |定义
 *parameter-declaration-clause*|*形参声明子句*| [dcl.fct]    | ∅ \| *形参声明式列表* ( `...` \| `,` `...` )__?__
 *parameter-declaration-list*|*形参声明式列表*| [dcl.fct]    | *形参声明式* (`,` *形参声明式*)__\*__
 *parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ *声明说明符序列* (*声明符* \| *抽象声明符*) (`=` *初始化式子句*)__?__
+*initializer*               |*初始化式*     | [dcl.init.general] | *花括号或等号初始化式* \| `(` *表达式列表* `)`
+*brace-or-equal-initializer*|*花括号或等号初始化式*| [dcl.init.general] | `=` *初始化式子句* \| *花括号初始化列表*
+*initializer-clause*        |*初始化式子句* | [dcl.init.general] | *赋值表达式* \| *花括号初始化列表*
+*braced-init-list*          |*花括号初始化列表*| [dcl.init.general] | `{` ( *初始化式列表* `,`__?__ \| *定名初始化式列表* `,`__?__ \| ∅ ) `}`
+*initializer-list*          |*初始化式列表* | [dcl.init.general] | *初始化式子句* `...`__?__ ( `,` *初始化式子句* `...`__?__ )__\*__
+*designated-initializer-list*|*定名初始化式列表*| [dcl.init.general] | *定名初始化式子句* ( `,` *定名初始化式子句* )__\*__
+*designated-initializer-clause*|*定名初始化式子句*| [dcl.init.general] | *定名符* *花括号或等号初始化式*
+*designator*                |*定名符*       | [dcl.init.general] | `.` *标识符*
+*expr-or-braced-init-list*  |*表达式或花括初始化列表*| [dcl.init.general] | *表达式* \| *花括号初始化列表*
 
 ## Terms Translation Table
 
@@ -496,6 +505,7 @@ conformance requirements                |一致性规定
 conjunction                             |合取
 const_cast                              |const 转型
 const cast expression                   |const 转型表达式 |后缀表达式，`const_cast<T>(v)`<br>Ptr=>T*，Lv=>T&，GLv=>T&&，类PRv=>T&&（临时对象）
+const-default-constructible             |可 const 默认构造|构造函数或默认成员初始化式覆盖
 const object                            |const 对象     |const T 的对象或其非 mutable 子对象
 const-qualified                         |const 限定的
 const safety                            |const 安全性
@@ -538,7 +548,7 @@ converting constructor                  |转换构造函数
 copy                                    |复制，副本
 copy assignment operator                |复制赋值运算符
 copy constructor                        |复制构造函数
-copy-initialization                     |复制初始化
+copy-initialization                     |复制初始化     |`=`初始化式，实参传递，函数返回，异常，聚合成员
 core constant expression                |核心常量表达式 |排除：常量外的`this`和虚函数，非constexpr函数，未定义或不满足要求的constexpr函数，UB，volatile，reinterpret_cast，lambda中ODR，非全局且配对的分配/回收，协程，throw，RTTI，asm，va_arg
 coroutine                               |协程
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
@@ -614,7 +624,7 @@ diagnosable rule                        |可诊断规则
 diagnostic message                      |诊断消息   |编译器报错
 digraph                                 |二联符，合成符     |6个：`<%`,`%>`,`<:`,`:>`,`%:`,`%:%:`->`{`,`}`,`[`,`]`,`#`,`##`
 direct base class                       |直接基类
-direct-initialization                   |直接初始化
+direct-initialization                   |直接初始化 |new，类型转换，条件的花括号初始化
 direct-list-initialization              |直接列表初始化     |直接进行的列表初始化
 direct-non-list-initialization          |直接非列表初始化   |直接进行的其他初始化
 directive                               |指令
@@ -847,6 +857,7 @@ init-statement                          |初始化语句     |if/switch/for中�
 initialization                          |初始化
 initialize                              |初始化
 initializer                             |初始化式   |`(expr,...)`，`{...}`，`=expr`，`={...}`
+initializing declaration                |初始化声明式   |指定变量初始化的声明式，定义式或带MDI的成员声明式
 injected-class-name                     |注入类名   |当做成员名的类名
 inline function                         |内联函数   |优先内联展开，跨UT多定义
 inline namespace                        |内联命名空间
@@ -1497,7 +1508,7 @@ value                                   |值         |一种实体，对象的�
 value category                          |值类别     |glvalue: lvalue, xvalue; rvalue: xvalue, prvalue
 value computation                       |值计算
 value representation                    |值表示     |构成对象状态的位的值，排除填充位
-value-initialize                        |值初始化
+value-initialize                        |值初始化   |默认初始化或零初始化
 variable                                |变量       |对象或引用，不包括非静态数据成员引用
 variable template                       |变量模板
 variadic function                       |变参函数   |以`...`形参结尾的函数，需要`va_XX`<br>以函数形参包组结尾的函数
