@@ -328,8 +328,8 @@ additive expression                     |加性表达式 |`mul_expr + mul_expr`,
 additive operator                       |加性运算符 |`+`, `-`
 address                                 |地址
 address-of operator                     |取地址运算符   |一元运算符/表达式，`&`，结果为指针或成员指针，不支持位字段<br>成员指针必须为限定标识且无括号，不考虑`mutable`<br>函数：根据语境进行重载决议
-aggregate                               |聚合，聚合对象
-aggregate initialization                |聚合初始化
+aggregate                               |聚合，聚合对象 |无ctor，全公开，非多态
+aggregate initialization                |聚合初始化 |初始化式列表对聚合初始化，类聚合可以单个表达式初始化，异常时潜在销毁
 aggregate type                          |聚合类型
 algorithm                               |算法
 alias                                   |别名
@@ -405,6 +405,7 @@ binary fold                             |二元折叠       |展开包组和一�
 binary left fold                        |二元左折叠     |`expr op ... op pack`
 binary operator                         |二元运算符
 binary right fold                       |二元右折叠     |`pack op ... op expr`
+bind directly                           |直接绑定       |引用初始化中，除了将初始化式转换为被引用类型之外的情况
 bit                                     |位
 bit-field                               |位字段         |一种实体
 bitwise and operator                    |按位与运算符
@@ -649,7 +650,7 @@ dynamic type                            |动态类型       |纯右值的动态�
 ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制造商协会
 elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明，或声明友元
 elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
-element                                 |元素
+element                                 |元素       |数组，聚合
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 eligible special member function        |合格的特殊成员函数
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
@@ -699,6 +700,7 @@ explicit specifier                      |explicit 说明符|`explicit`或`explic
 explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、运算符`XX_cast`、初始化
 explicitly captured                     |显式俘获       |指定其*简单俘获符*
 explicitly defaulted function           |显式预置的函数
+explicitly initialized elements         |显式初始化的元素|聚合初始化，非定名：前N个元素，定名：所指名的各元素
 exponent                                |指数
 export declaration                      |导出声明式
 module-keyword                          |导出关键字     |预处理记号，在预处理阶段支持模块
@@ -1228,6 +1230,7 @@ read-write coherence                    |读-写协调性    |原子性 M 的 RA
 recursive function call                 |递归函数调用
 ref-qualifier                           |引用限定符     |函数类型，成员函数的 & 或 &&
 reference                               |引用           |一种实体，不是对象，别名
+reference-compatible                    |引用兼容       |源与目标引用类型的对应指针类型可以标准转换序列转换
 reference declarator                    |引用声明符
 reference-related to                    |引用相关
 reference to cv T                       |cv T 的引用
