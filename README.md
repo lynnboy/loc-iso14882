@@ -550,6 +550,7 @@ copy                                    |复制，副本
 copy assignment operator                |复制赋值运算符
 copy constructor                        |复制构造函数
 copy-initialization                     |复制初始化     |`=`初始化式，实参传递，函数返回，异常，聚合成员
+copy-list-initialization                |复制列表初始化 |以初始化式列表进行复制初始化
 core constant expression                |核心常量表达式 |排除：常量外的`this`和虚函数，非constexpr函数，未定义或不满足要求的constexpr函数，UB，volatile，reinterpret_cast，lambda中ODR，非全局且配对的分配/回收，协程，throw，RTTI，asm，va_arg
 coroutine                               |协程
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
@@ -650,7 +651,7 @@ dynamic type                            |动态类型       |纯右值的动态�
 ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制造商协会
 elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明，或声明友元
 elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
-element                                 |元素       |数组，聚合
+element                                 |元素       |数组，聚合，初始化式列表
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 eligible special member function        |合格的特殊成员函数
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
@@ -859,6 +860,8 @@ init-statement                          |初始化语句     |if/switch/for中�
 initialization                          |初始化
 initialize                              |初始化
 initializer                             |初始化式   |`(expr,...)`，`{...}`，`=expr`，`={...}`
+initializer list                        |初始化式列表   |带花括号的初始化式列表，可定名初始化
+initializer-list constructor            |初始化式列表构造函数   |仅接受一个initlist的构造函数，在列表初始化中优先<br>模板构造函数为非推断语境而不是初始化式列表构造函数
 initializing declaration                |初始化声明式   |指定变量初始化的声明式，定义式或带MDI的成员声明式
 injected-class-name                     |注入类名   |当做成员名的类名
 inline function                         |内联函数   |优先内联展开，跨UT多定义
@@ -927,7 +930,7 @@ link                                    |连接   |将已翻译实体收集并�
 linkage                                 |连接，连接性   |可被连接器认作同一：无连接、内部、外部、模块
 linkage-specification                   |连接说明   |指定语言连接`extern "xxx"`
 list                                    |列表
-list-initialization                     |列表初始化
+list-initialization                     |列表初始化 |以花括号初始化列表进行的初始化，初始化式列表构造函数优先<br>定名列表初始化聚合，单元素列表复制或直接初始化，字符串、聚合初始化，<br>空列表对默认构造的值初始化，`std::initializer_list`构造函数初始化，<br>其他构造函数排除窄化转换初始化，单元素列表对枚举底层直接初始化，单元素列表无窄化的复制/直接初始化，<br>单元素列表初始化引用，空列表值初始化
 literal                                 |字面量     |字符/字符串/数值，以及自定义变体，布尔，指针
 literal operator                        |字面量运算符       |用户字面量的函数，非模板有类型化和原始两种，`operator "" X(T)`, `operator "" X(const char*)`
 literal operator template               |字面量运算符模板   |用户字面量的函数模板，数值模板和字符串模板两种，无函数形参
@@ -1023,6 +1026,7 @@ namespace-name                          |命名空间名     |标识符：原名
 namespace scope                         |命名空间作用域 |作用域的一种，合并该命名空间的所有体，加上体外带限定成员
 narrow character type                   |窄字符类型     |普通（三种`char`），`char8_t`
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
+narrowing conversion                    |窄化转换   |隐式转换：F2I，I2F，丢失精度，除已知不会丢失精度，可转换回原值
 necessarily reachable                   |必定可达
 nest                                    |嵌套
 nested class                            |嵌套类
