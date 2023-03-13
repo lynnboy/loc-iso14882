@@ -347,6 +347,14 @@ Original   |中文   |章节    |定义
 *balanced-token-seq*        |*平衡记号序列* | [dcl.attr.grammar] | *平衡记号*__\+__
 *balanced-token*            |*平衡记号*     | [dcl.attr.grammar] | `(` *平衡记号序列*__?__ `)` \| `[` *平衡记号序列*__?__ `]` \| `{` *平衡记号序列*__?__ `}` \|<br> *记号* - \[`()[]{}`\]
 
+### Modules 模块
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*module-declaration*        |*模块声明式*   | [module.unit] | *导出关键字*__?__ *模块关键字* *模块名* *模块分区*__?__ *属性说明符序列*__?__ `;`
+*module-name*               |*模块名*       | [module.unit] | *模块名限定符*__?__ *标识符*
+*module-partition*          |*模块分区*     | [module.unit] | `:` *模块名限定符*__?__ *标识符*
+*module-name-qualifier*     |*模块名限定符* | [module.unit] | ( *标识符* `.` )__\+__
 
 ## Terms Translation Table
 
@@ -422,7 +430,7 @@ associated class                        |关联类
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
 atomic                                  |原子性
-attach to module                        |附属于模块
+attach to module                        |附属于模块     |可替换全局`new`/`delete`函数、命名空间、带语言连接说明的声明式等附属全局模块；一些指定目标的友元声明式归属目标所在模块；否则归属当前视野的模块
 attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键字标识符
 attribute-declaration                   |属性声明式     |仅有属性的空声明，不是块声明式
 automatic storage duration              |自动存储期
@@ -751,7 +759,7 @@ explicitly-defaulted function           |显式预置的函数 |特殊成员、�
 explicitly initialized elements         |显式初始化的元素|聚合初始化，非定名：前N个元素，定名：所指名的各元素
 exponent                                |指数
 export declaration                      |导出声明式
-module-keyword                          |导出关键字     |预处理记号，在预处理阶段支持模块
+export-keyword                          |导出关键字     |预处理记号，在预处理阶段支持模块
 exported declaration                    |被导出声明式
 exposure                                |显露式         |声明式中除函数体、初始化式、友元外指名了TU局部实体
 expression                              |表达式
@@ -837,7 +845,7 @@ fundamental type                        |基础类型       |算术（整型、�
 |-|-|-|
 generic lambda expression               |泛型 lambda 表达式
 global                                  |全局的
-global module                           |全局模块
+global module                           |全局模块       |所有全局模块分段和非模块UT
 global-module-fragment                  |全局模块分段   |
 global namespace                        |全局命名空间
 global object                           |全局对象
@@ -1037,12 +1045,17 @@ memory management                       |内存管理
 memory model                            |内存模型
 modification order                      |改动顺序   |对某原子性对象的所有改动，无竞争有顺序
 modifier function                       |改动函数
-module                                  |模块
+module                                  |模块       |具名模块或全局模块
 module-declaration                      |模块声明式 |
 module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
+module implementation unit              |模块实现单元   |非以`export`开始的模块单元。`module M`自动导入`M`
 module-import-declaration               |模块导入声明式 |
+module interface unit                   |模块接口单元   |以`export`开始的模块单元，仅一个
 module linkage                          |模块连接   |模块内跨翻译单元可见
-module unit                             |模块单元   |模块机制支持的程序表示
+module partition                        |模块分区   |主模块中`mod:part`部分，仅模块内可见
+module purview                          |模块视野   |模块的所有模块单元视野
+module unit                             |模块单元   |模块机制支持的程序表示，包含模块声明式的UT
+module unit purview                     |模块单元视野   |模块单元中从模块声明式到UT末尾的部分
 more cv-qualified                       |更加 cv 限定的
 most derived class                      |全派生类   |非基类子对象的类对象的类型
 most derived object                     |全派生对象 |非基类子对象的对象
@@ -1071,7 +1084,7 @@ name lookup                             |名字查找   |遇到名字时确定�
 name mangling                           |名字重整
 named                                   |具名的
 named by                                |被（表达式或转换）指名 |变量：标识表达式<br>函数：被重载决议选中（还包括new/delete）（排除纯虚函数的全限定名或成员指针）
-named module                            |具名模块
+named module                            |具名模块       |具有相同模块名的所有模块单元
 namespace                               |命名空间       |一种实体，名字的层级管理设施
 namespace alias                         |命名空间别名
 namespace-body                          |命名空间体     |每个命名空间定义式的体
@@ -1095,6 +1108,7 @@ new-line                                |换行       |`\n`
 `new` operator                          |`new` 运算符   |对象/数组。调用分配函数`operator new`或`operator new[]`，异常失败时尽量调用对应回收函数、元素销毁<br>名字查找先作用域后全局。new 扩充对齐类型优先尝试带对齐函数，反之不带对齐函数优先。后附放置实参<br>无初始化式为默认初始化，否则直接初始化，分配 SeqB 初始化式求值，对象初始化 SeqB new返回值
 no diagnostic is required               |无须诊断
 no linkage                              |无连接     |仅限作用域内可见
+`no_unique_address`                     |`no_unique_address` 属性|属性，无参数，用于非静态数据成员，标明成员潜在重叠（大小为零）
 nodeclspec-function-declaration         |无声明说明符函数声明式 |模板：声明构造函数、析构函数、转换函数
 nodiscard call                          |nodiscard 调用 |所调用的函数或其返回类型标有`nodiscard`的函数调用；以标有`nodiscard`的构造函数达成的显式类型转换
 nodiscard type                          |nodiscard 类型 |标有`nodiscard`的类或枚举
@@ -1110,6 +1124,7 @@ non-static data member                  |非静态数据成员
 non-template function                   |非模板函数 |非函数模板特例的函数
 non-throwing exception specification    |无抛出异常说明
 non-vacuous initialization              |非无为初始化
+`noreturn`                              |`noreturn` 属性|属性，无参数，用于函数，应在首个声明式指定，标明函数不会返回
 normalized                              |正规化的
 normative                               |规范性的   |作为正式内容的文本章节或参考文献
 null                                    |空
@@ -1241,6 +1256,7 @@ preprocessing operators and punctuators |预处理运算符与标点 |预处理�
 preprocessing token                     |预处理记号 |预处理指令工作对象，预处理后转换为记号
 primary equivalence class               |主等价类   |校排中具有相同主排序键的字符或字符串
 primary expression                      |初等表达式 |字面量、this、括号、标识表达式、lambda、折叠、requires
+primary module interface unit           |主模块接口单元 |主模块的接口单元，应当直接或简洁导出该模块的所有接口单元
 primary sort key                        |主排序键   |校排中仅按主题字符形状分类的排序字符
 primary template                        |主模板
 primary token                           |首选记号   |代用记号所等价的记号
