@@ -355,6 +355,9 @@ Original   |中文   |章节    |定义
 *module-name*               |*模块名*       | [module.unit] | *模块名限定符*__?__ *标识符*
 *module-partition*          |*模块分区*     | [module.unit] | `:` *模块名限定符*__?__ *标识符*
 *module-name-qualifier*     |*模块名限定符* | [module.unit] | ( *标识符* `.` )__\+__
+*export-declaration*        |*导出声明式*   | [module.interface] | `export` ( *声明式* \| `{` *声明式序列*__?__ `}`) \|<br> *导出关键字* *模块导入声明式*
+*module-import-declaration* |*模块导入声明式*| [module.import] | *导入关键字* ( *模块名* \| *模块分区* \| *头文件名* ) *属性说明符序列*__?__ `;`
+*global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键字* `;` *声明式序列*
 
 ## Terms Translation Table
 
@@ -633,6 +636,7 @@ data type                               |数据类型
 deallocate                              |回收
 deallocation function                   |回收函数   |`operator delete`, `operator delete[]`
 decay                                   |退化
+decl-reachable                          |声明可达的 |判定全局模块分段中的声明式是否被弃用
 declaration                             |声明式，声明   |代码结构称为‘声明式’，引入实体的名字，类型和编译期存在性
 declaration statement                   |声明语句   |除虚无初始化变量外，跳转不能使变量活跃<br>静态/线程变量初始化异常时认为未初始化，同步保护并发初始化，递归UB
 declarative *nested-name-specifier*     |声明性*嵌套名说明符* |用于定名类型，不能有decltype，应当为模板
@@ -758,9 +762,10 @@ explicitly captured                     |显式俘获       |指定其*简单俘
 explicitly-defaulted function           |显式预置的函数 |特殊成员、比较运算符，不能有默认实参。特殊成员允许兼容签名，否则自动弃置。遵循constexpr兼容
 explicitly initialized elements         |显式初始化的元素|聚合初始化，非定名：前N个元素，定名：所指名的各元素
 exponent                                |指数
-export declaration                      |导出声明式
+export-declaration                      |导出声明式     |模块接口单元。不建立作用域。不能嵌套。必须引入名字。
 export-keyword                          |导出关键字     |预处理记号，在预处理阶段支持模块
-exported declaration                    |被导出声明式
+exported by M                           |被 M 导出      |M 中的导出*模块导入声明式*所导入的 UT，在导入 M 时也会被导入，称它们被 M 导出
+exported declaration                    |被导出声明式   |导出声明式中居于命名空间的声明式，或涉及被导出实体的命名空间，或头文件单元中的声明式<br>首个声明式决定是否导出<br>using声明式目标（除类型别名外）必须全部具有外部连接
 exposure                                |显露式         |声明式中除函数体、初始化式、友元外指名了TU局部实体
 expression                              |表达式
 expression-equivalent                   |按表达式等价   |表达式求值的真实效果相同（？）
@@ -846,7 +851,7 @@ fundamental type                        |基础类型       |算术（整型、�
 generic lambda expression               |泛型 lambda 表达式
 global                                  |全局的
 global module                           |全局模块       |所有全局模块分段和非模块UT
-global-module-fragment                  |全局模块分段   |
+global module fragment                  |全局模块分段   |模块单元中，以`module;`开始的开头部分，允许添加预处理指令
 global namespace                        |全局命名空间
 global object                           |全局对象
 global scope                            |全局作用域     |整个程序，全局命名空间的命名空间作用域
@@ -868,7 +873,7 @@ happens after                           |发生晚于 HapA
 happens before                          |发生早于 HapB  |确定任意两求值的顺序：线程内SeqB或线程间ITHB
 header                                  |头文件
 header name                             |头文件名   |预处理记号，`<[~>]*>` 或 `"[~"]*"`，仅属于 `#include`，`import`，`__has_include`
-header unit                             |头文件单元 |模块
+header unit                             |头文件单元 |模块导入，头文件经过1-7阶段翻译后的内容，附属全局模块<br>不能包含外部连接非内联函数/变量
 high-order bit                          |高序位     |最高有效位
 hosted implementation                   |宿主式实现 |在操作系统下运行
 
@@ -899,9 +904,10 @@ implicit-lifetime type                  |隐式生存期类型 |标量、隐式�
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
-import                                  |导入
-import declaration                      |导入声明式
+import                                  |导入       |模块导入时导入该模块所有导出的声明式，递归导入<br>不能导入实现单元，不能导入自身
+import declaration                      |导入声明式 |模块导入声明式。必须在模块单元或私有模块分段开头
 import-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
+importable header                       |可导入头文件   |由实现定义，可作为模块导入，允许重复导入，导入宏
 impose                                  |施加
 inclusive-or expression                 |或表达式   |`xor_expr | xor_expr`。内建：按位或，一般算术转换
 inclusive-or operator                   |或运算符   |`|`
@@ -942,7 +948,7 @@ integral promotion                      |整形提升   |低于int的整型、�
 integral type                           |整型类型   |整数*8、字符*5、`bool`
 inter-thread happens before             |线程间发生早于 ITHB|明确跨线程顺序性：<br>SeqB、Sync、DepB的跨线程组合<br>DepB+SeqB不足以提供有序性
 interactive device                      |交互设备   |I/O 设备，可观察行为
-interface dependency                    |接口依赖   |被导入模块
+interface dependency                    |接口依赖   |对直接或间接导入的翻译单元的依赖
 internal linkage                        |内部连接   |翻译单元内可见
 intervening scope                       |介入作用域 |即目标的每层不包含声明点的外围作用域
 invalid                                 |无效，非法
@@ -1049,7 +1055,7 @@ module                                  |模块       |具名模块或全局模�
 module-declaration                      |模块声明式 |
 module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
 module implementation unit              |模块实现单元   |非以`export`开始的模块单元。`module M`自动导入`M`
-module-import-declaration               |模块导入声明式 |
+module-import-declaration               |模块导入声明式 |必须在模块单元或私有模块分段开头。<br>导入模块包含其全部接口，仅同模块可导入分区，导入头文件单元为经过1-7阶段翻译结果
 module interface unit                   |模块接口单元   |以`export`开始的模块单元，仅一个
 module linkage                          |模块连接   |模块内跨翻译单元可见
 module partition                        |模块分区   |主模块中`mod:part`部分，仅模块内可见
