@@ -357,7 +357,8 @@ Original   |中文   |章节    |定义
 *module-name-qualifier*     |*模块名限定符* | [module.unit] | ( *标识符* `.` )__\+__
 *export-declaration*        |*导出声明式*   | [module.interface] | `export` ( *声明式* \| `{` *声明式序列*__?__ `}`) \|<br> *导出关键字* *模块导入声明式*
 *module-import-declaration* |*模块导入声明式*| [module.import] | *导入关键字* ( *模块名* \| *模块分区* \| *头文件名* ) *属性说明符序列*__?__ `;`
-*global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键字* `;` *声明式序列*
+*global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键字* `;` *声明式序列*__?__
+*private-module-fragment*   |*私有模块分段* | [module.private.frag] | *模块关键字* `:` `private` `;` *声明式序列*__?__
 
 ## Terms Translation Table
 
@@ -937,10 +938,11 @@ input                                   |输入
 instance                                |实例
 instantiate                             |实例化，落实
 instantiation                           |实例化式，实例化   |模板实体落实为具体实体
-instantiation unit                      |实例化单元         |根据已翻译翻译单元中的模板表示，为程序所需要的特例生成的二进制代码
+instantiation context                   |实例化语境 |决定ADL可找到哪些声明式，决定哪些声明式对声明式或实例化式可达
+instantiation unit                      |实例化单元 |根据已翻译翻译单元中的模板表示，为程序所需要的特例生成的二进制代码
 integer                                 |整数
-integer conversion rank                 |整数转换等级       |宽度越小等级越小，与符号性无关，标准>扩展，`bool`最小，字符等级与底层类型相同
-integer literal                         |整数字面量         |后缀：符号性`u|U`，类型`l|L|ll|LL|z|Z`<br>前缀：进制`0|0b|0B|0x|0X`
+integer conversion rank                 |整数转换等级   |宽度越小等级越小，与符号性无关，标准>扩展，`bool`最小，字符等级与底层类型相同
+integer literal                         |整数字面量 |后缀：符号性`u|U`，类型`l|L|ll|LL|z|Z`<br>前缀：进制`0|0b|0B|0x|0X`
 integer type                            |整数类型   |整数*8、字符*5、`bool`
 integral constant expression            |整型常量表达式
 integral conversion                     |整形转换   |除提升外的任意整型间转换，除bool外同余值
@@ -1055,10 +1057,11 @@ module                                  |模块       |具名模块或全局模�
 module-declaration                      |模块声明式 |
 module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
 module implementation unit              |模块实现单元   |非以`export`开始的模块单元。`module M`自动导入`M`
-module-import-declaration               |模块导入声明式 |必须在模块单元或私有模块分段开头。<br>导入模块包含其全部接口，仅同模块可导入分区，导入头文件单元为经过1-7阶段翻译结果
+module-import-declaration               |模块导入声明式 |必须在模块单元或私有模块分段开头<br>导入模块包含其全部接口，仅同模块可导入分区，导入头文件单元为经过1-7阶段翻译结果
 module interface unit                   |模块接口单元   |以`export`开始的模块单元，仅一个
 module linkage                          |模块连接   |模块内跨翻译单元可见
-module partition                        |模块分区   |主模块中`mod:part`部分，仅模块内可见
+module name                             |模块名     |标识符和`.`的序列，无特殊语义
+module partition                        |模块分区   |主模块中`mod:part`部分，仅模块内可见，不能跨模块单元
 module purview                          |模块视野   |模块的所有模块单元视野
 module unit                             |模块单元   |模块机制支持的程序表示，包含模块声明式的UT
 module unit purview                     |模块单元视野   |模块单元中从模块声明式到UT末尾的部分
