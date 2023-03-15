@@ -360,6 +360,17 @@ Original   |中文   |章节    |定义
 *global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键字* `;` *声明式序列*__?__
 *private-module-fragment*   |*私有模块分段* | [module.private.frag] | *模块关键字* `:` `private` `;` *声明式序列*__?__
 
+### Classes 类
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*class-name*                |*类名*         | [class.pre]   | *标识符* \| *简单模板标识*
+*class-specifier*           |*类说明符*     | [class.pre]   | *类头* `{` *成员说明*__?__ `}`
+*class-head*                |*类头*         | [class.pre]   | *类关键字* *属性说明符序列*__?__ ( *类头名* *类虚说明符*__?__ \| ∅ ) *基子句*__?__
+*class-head-name*           |*类头名*       | [class.pre]   | *嵌套名说明符*__?__ *类名*
+*class-virt-specifier*      |*类虚说明符*   | [class.pre]   | `final`
+*class-key*                 |*类关键字*     | [class.pre]   | `class` \| `struct` \| `union`
+
 ## Terms Translation Table
 
 ### A
@@ -508,7 +519,7 @@ character literal                       |字符字面量     |预处理记号，
 character set                           |字符集
 class                                   |类
 class declaration                       |类声明式
-class definition                        |类定义式
+class definition                        |类定义式   |类说明符，包含类头和成员说明
 class granding friendship               |授予友元关系
 class-head                              |类头           |类定义式中花括号前的部分
 class member                            |类成员         |一种实体
@@ -900,7 +911,7 @@ implicit                                |隐式，暗中，隐含
 implicit conversion                     |隐式转换       |iff可声明`T t=e;`，e可隐式转换为 T
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
 implicit type conversion                |隐式类型转换
-implicit-lifetime class                 |隐式生存期类   |
+implicit-lifetime class                 |隐式生存期类   |聚合，或至少一个平凡合格构造函数和平凡非弃置析构
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象
@@ -1411,9 +1422,11 @@ standard conversion sequence            |标准转换序列   |隐式转换：(L
 standard integer type                   |标准整数类型   |标准有符号、无符号整数
 standard signed integer type            |标准有符号整数类型 |`signed char`, `short`, `int`, `long`, `long long`
 standard unsigned integer type          |标准无符号整数类型 |`unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, `unsigned long long`
-standard-layout class                   |标准布局类
+standard-layout class                   |标准布局类     |递归要求成员或基类标准布局，非多态，无引用成员，非静态数据访问控制相同，非多继承，所有成员同层，无地址合并
+standard-layout struct                  |标准布局结构体 |`class`和`struct`的标准布局类
 standard-layout type                    |标准布局类型   |标量、标准布局类，数组
 stateful character encoding             |有状态字符编码
+standard-layout union                   |标准布局联合体 |`union`的标准布局类
 statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
@@ -1511,13 +1524,13 @@ translated translation unit             |已翻译的翻译单元   |非模板�
 translation phase                       |翻译阶段
 translation unit                        |翻译单元   |预处理后的完整文件，声明式序列，或模块结构
 transparently replaceable               |可透明替换 |可进行`new (&o) T()`：存储重叠，非const，非空大小
-trivial class                           |平凡类
+trivial class                           |平凡类     |可平凡复制类且有至少一个平凡的合格默认构造
 trivial copy constructor                |平凡复制构造函数
 trivial default constructor             |平凡默认构造函数
 trivial destructor                      |平凡析构函数
 trivial move constructor                |平凡移动构造函数
 trivial type                            |平凡类型       |标量、平凡类，数组
-trivially copyable class                |可平凡复制类
+trivially copyable class                |可平凡复制类   |至少有一个合格四个复制成员之一且全为平凡，析构函数平凡且非弃置。非多态
 trivially copyable type                 |可平凡复制类型 |可用`memcpy`复制：标量、可平凡复制类，数组
 truncation                              |截断
 tuple                                   |元组
