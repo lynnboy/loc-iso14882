@@ -370,6 +370,13 @@ Original   |中文   |章节    |定义
 *class-head-name*           |*类头名*       | [class.pre]   | *嵌套名说明符*__?__ *类名*
 *class-virt-specifier*      |*类虚说明符*   | [class.pre]   | `final`
 *class-key*                 |*类关键字*     | [class.pre]   | `class` \| `struct` \| `union`
+*member-specification*      |*成员说明*     | [class.mem.general] | ( *成员声明式* \| *访问说明符* `:` )__\+__
+*member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
+*member-declaration-list*   |*成员声明符列表*| [class.mem.general] | *成员声明符* ( `,` *成员声明符* )__\*__
+*member-declarator*         |*成员声明符*   | [class.mem.general] | *声明符* *虚说明符序列*__?__ *纯说明符*__?__ \|<br> *声明符* *requires-子句* \|<br> *声明符* *花括号或等号初始化式*__?__ \|<br> *标识符*__?__ *属性说明符序列*__?__ `:` *常量表达式* *花括号或等号初始化式*__?__
+*virt-specifier-seq*        |*虚说明符序列* | [class.mem.general] | *虚说明符*__\+__
+*virt-specifier*            |*虚说明符*     | [class.mem.general] | `override` \| `final`
+*pure-specifier*            |*纯说明符*     | [class.mem.general] | `=` `0`
 
 ## Terms Translation Table
 
@@ -459,6 +466,7 @@ awaitable                               |可等待体
 backslash                               |反斜杠     |`\`，用于转义，行拼接等
 barrier                                 |关卡
 base characteristic                     |基础特征
+base class subobject                    |基类子对象
 base-2 representation                   |以 2 为基的表示    |整数的二进制值表示
 base N integer                          |以 N 为基的整数    |进制
 basic character set                     |基本字符集
@@ -542,11 +550,11 @@ coherence requirements                  |协调性规定 |写-写、写-读、�
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
 comma operator                          |逗号运算符 |`ass_expr, ass_expr`。内建：lhs SeqB rhs，左侧其值。
 comment                                 |注释       | `/* */`，`// \n`
-common initial sequence                 |共同起始序列
+common initial sequence                 |共同起始序列   |多个标准布局结构体中开头非静态数据成员和位字段序列，对应成员布局兼容
 common type                             |公共类型
 compare expression                      |比较表达式 |`shift_expr <=> shift_expr`。内建：算术类型进行一般算术转换，禁止bool混合，禁止除整型到浮点外的窄化<br>整型`strong_ordering`，浮点`partial_ordering`，以合成指针类型比较指针，可比较时为`strong_ordering`
 compile                                 |编译
-complete-class context                  |完整类语境 |在类说明符之内需要将类当做完整类型的语境，如内联代码部分
+complete-class context                  |完整类语境 |在类成员说明之内需要将类当做完整类型的语境：函数体、默认实参、默认模板实参、noexcept、默认成员初始化式、嵌套类定义式
 complete object                         |完整对象   |不是子对象的对象
 complete type                           |完整类型
 compliance                              |遵从性
@@ -589,6 +597,7 @@ constant initializer                    |常量初始化式
 constant subexpression                  |常量子表达式   |不妨碍其外围表达式成为核心常量表达式
 consteval if statement                  |consteval if 语句  |`if constval { ... }`，`if !consteval`，检测显然常量求值
 consteval specifier                     |consteval 说明符   |仅修饰函数，隐含内联，非析构函数、new或delete
+constexpr-compatible                    |constexpr 兼容     |预置的特殊成员函数，当其隐式声明版本为 constexpr
 constexpr constructor                   |constexpr 构造函数 |除函数规定外，隐含调用的所有构造函数应为constexpr
 constexpr destructor                    |constexpr 析构函数 |除函数规定外，隐含调用的所有析构函数应为constexpr
 constexpr function                      |constexpr 函数     |以`constexpr`或`consteval`修饰的函数<br>字面量类型，非协程；代码中无goto、静态或线程变量；构造或析构的类无虚基类<br>不可能常量求值则非良构但无须诊断
@@ -598,7 +607,7 @@ constinit specifier                     |constinit 说明符   |修饰静态或�
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
 constness                               |常量性
 construct                               |语言构造
-constructor                             |构造函数
+constructor                             |构造函数       |没有名字，不能取地址，不能是协程。构造中cv无效
 consume                                 |消费           |同步操作
 container                               |容器
 context                                 |语境，上下文
@@ -662,11 +671,11 @@ deduce                                  |推断
 deducible template                      |可推断模板     |类模板，或可推断模板的别名模板
 deduction guide                         |推断导引
 default argument                        |默认实参       |形参的初始化式。函数：调用时求值；仅在函数声明中允许；同作用域累积；<br>特殊成员不允许默认实参；类模板成员的默认实参必须在类中
-default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP)
+default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP）
 default behavior                        |缺省行为       |某些函数，如果程序不提供就采用实现的缺省版本
-default constructor                     |默认构造函数
+default constructor                     |默认构造函数   |无需实参的构造函数（每个非形参包组均有默认实参）<br>弃置隐含默认构造函数：有任何无法默认构造或通过默认成员初始化式初始化的可变成员、引用成员、const成员，有任何无法调用默认构造或析构的潜在构造子对象
 default label                           |default 标号
-default member initializer              |默认成员初始化式
+default member initializer              |默认成员初始化式   |非静态数据成员，内嵌到构造函数执行
 default template argument               |默认模板实参   |模板形参的默认实参
 default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
@@ -699,6 +708,7 @@ digraph                                 |二联符，合成符     |6个：`<%`,
 direct base class                       |直接基类
 direct-initialization                   |直接初始化 |new，类型转换，条件的花括号初始化
 direct-list-initialization              |直接列表初始化     |直接进行的列表初始化
+direct member                           |直接成员   |在成员说明中声明的成员，包括匿名联合体及其直接成员
 direct-non-list-initialization          |直接非列表初始化   |直接进行的其他初始化
 directive                               |指令
 directive-introducing token             |指令发起记号
@@ -724,7 +734,7 @@ elaborated-type-specifier               |详述类型说明符 |仅引入类型�
 elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
 element                                 |元素       |数组，聚合，初始化式列表
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
-eligible special member function        |合格的特殊成员函数
+eligible special member function        |合格的特殊成员函数 |可被认为存在：未被弃置，满足关联约束，约束偏序中优先
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
 ellipsis parameter                      |省略号形参 |`va_xxx`变参函数
 empty-declaration                       |空声明式   |仅有`;`的声明式，不是块语句
@@ -916,6 +926,7 @@ implicit-lifetime type                  |隐式生存期类型 |标量、隐式�
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
+implicitly defined                      |隐式定义的 |被 ODR 式使用的预置未弃置的特殊成员函数，被隐式定义
 import                                  |导入       |模块导入时导入该模块所有导出的声明式，递归导入<br>不能导入实现单元，不能导入自身
 import declaration                      |导入声明式 |模块导入声明式。必须在模块单元或私有模块分段开头
 import-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
@@ -995,8 +1006,9 @@ labeled statement                       |带标号语句
 lambda-expression                       |lambda-表达式  |函数对象/闭包，有捕获捕获，可泛型可约束，返回`auto`（推断或尾部返回类型）
 language linkage                        |语言连接       |`extern "LANG"`，可嵌套，非作用域，不可包含模块导入声明式。重复声明可忽略语言连接。`extern`说明符生效。
 latch                                   |门栓
-layout-compatible enumeration           |布局兼容枚举   |底层类型相同
 layout-compatible                       |布局兼容       |相同类型、布局兼容枚举、布局兼容的标准布局类
+layout-compatible class                 |布局兼容类     |全部成员构成共同起始序列的多个类
+layout-compatible enumeration           |布局兼容枚举   |底层类型相同
 left shift operator                     |左移运算符
 less-than operator                      |小于运算符
 less-than-or-equal-to operator          |小于或等于运算符
@@ -1057,6 +1069,7 @@ member-declaration                      |成员声明式 |可以作为类成员�
 member-specification                    |成员说明   |类体的内容，包括成员声明式和访问说明符
 member function                         |成员函数
 member-qualified name                   |成员限定名 |限定名的一类，`a.`或`p->`后面的无限定标识或`X::`中的成分名
+member subobject                        |成员子对象 |非引用的非静态数据成员
 member type                             |成员类型
 memory                                  |内存
 memory location                         |内存位置   |非位字段或最长连续非零宽位字段
@@ -1141,8 +1154,11 @@ non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-initialization odr-use              |非初始化 ODR 式使用|非由静态/线程变量初始化导致的 ODR 式使用
 non-static data member                  |非静态数据成员
+non-static member                       |非静态成员 |非静态数据成员，非静态成员函数
+non-static member function              |非静态成员函数
 non-template function                   |非模板函数 |非函数模板特例的函数
 non-throwing exception specification    |无抛出异常说明
+non-trivial                             |非平凡的   |需要真实执行代码
 non-vacuous initialization              |非无为初始化
 `noreturn`                              |`noreturn` 属性|属性，无参数，用于函数，应在首个声明式指定，标明函数不会返回
 normalized                              |正规化的
@@ -1259,6 +1275,7 @@ potentially concurrent                  |潜在并发       |跨线程，跨信�
 potentially conflict                    |潜在冲突       |对应声明式代表了不同实体，或被覆盖实体无法再使用（形参、选择/循环的条件、捕获异常不能被覆盖）
 potentially-constant                    |潜在常量       |constexpr变量、引用、const整型
 potentially constant evaluated          |潜在常量求值   |显然常量求值的，潜在求值的，花括号的直接子表达式，模板中取地址
+potentially constructed subobjects      |潜在构造子对象 |非静态数据成员，非虚直接基类，非抽象类的虚基类
 potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
 potentially-overlapping subobject       |潜在重叠子对象 |基类子对象、`[no_unique_address]`NSDM，允许空类对象的存储优化
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
@@ -1414,6 +1431,7 @@ source character set                    |源字符集
 source file                             |源文件
 space character                         |空格字符   |` `
 spaceship operator                      |飞船运算符 |`<=>`
+special member function                 |特殊成员函数   |默认构造、复制/移动构造和赋值、预期的析构跟具特定规则隐式声明及定义，声明点在`}`，ODR式使用时定义
 specialization                          |特化式，特例   |代码结构为‘特化式’，实体为‘特例’
 specialize                              |特化
 specifier                               |说明符
@@ -1433,6 +1451,7 @@ static assertion                        |静态断言
 static cast expression                  |静态转型表达式 |后缀表达式，`static_cast<T>(v)`<br>指针或引用：vB!=>D，左值=>T&，临限值=>T&&<br>转换：ICS，直接初始化的ICS，聚合首元素的ICS
 static data member                      |静态数据成员
 static initialization                   |静态初始化     |静态/线程变量的常量/零初始化，运行前发生。允许动->静优化
+static member                           |静态成员       |静态数据成员或静态成员函数
 static member function                  |静态成员函数
 static specifier                        |static 说明符  |成员：共享，命名空间：UT内部连接，局部：存储期
 static storage duration                 |静态存储期
@@ -1524,9 +1543,10 @@ translated translation unit             |已翻译的翻译单元   |非模板�
 translation phase                       |翻译阶段
 translation unit                        |翻译单元   |预处理后的完整文件，声明式序列，或模块结构
 transparently replaceable               |可透明替换 |可进行`new (&o) T()`：存储重叠，非const，非空大小
+trivial                                 |平凡       |行为无需真实执行代码
 trivial class                           |平凡类     |可平凡复制类且有至少一个平凡的合格默认构造
 trivial copy constructor                |平凡复制构造函数
-trivial default constructor             |平凡默认构造函数
+trivial default constructor             |平凡默认构造函数   |隐式声明的，非多态类，没有默认成员初始化式，子对象均可平凡默认构造
 trivial destructor                      |平凡析构函数
 trivial move constructor                |平凡移动构造函数
 trivial type                            |平凡类型       |标量、平凡类，数组
