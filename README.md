@@ -377,6 +377,9 @@ Original   |中文   |章节    |定义
 *virt-specifier-seq*        |*虚说明符序列* | [class.mem.general] | *虚说明符*__\+__
 *virt-specifier*            |*虚说明符*     | [class.mem.general] | `override` \| `final`
 *pure-specifier*            |*纯说明符*     | [class.mem.general] | `=` `0`
+*conversion-function-id*    |*转换函数标识* | [class.conv.fct] | `operator` *转换类型标识*
+*conversion-type-id*        |*转换类型标识* | [class.conv.fct] | *类型说明符序列* *转换声明符*__?__
+*conversion-declarator*     |*转换声明符*   | [class.conv.fct] | *指针运算符*__\+__
 
 ## Terms Translation Table
 
@@ -607,7 +610,7 @@ constinit specifier                     |constinit 说明符   |修饰静态或�
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
 constness                               |常量性
 construct                               |语言构造
-constructor                             |构造函数       |没有名字，不能取地址，不能是协程。构造中cv无效
+constructor                             |构造函数       |没有名字，不能取地址，不能是协程。构造中cv无效<br>禁止`T(cv T)`的构造函数，模板构造不会产生此签名
 consume                                 |消费           |同步操作
 container                               |容器
 context                                 |语境，上下文
@@ -618,14 +621,15 @@ continue statement                      |continue 语句  |跳出到循环末尾
 contravariant                           |逆变
 control character                       |控制字符       |代码点 0-1F，7F-9F
 conversion                              |类型转换，转换
-conversion function                     |转换函数
-conversion-function-id                  |转换函数标识   |`operator T`
+conversion function                     |转换函数       |以转换函数标识为名，无返回无参数，以转换类型标识为返回类型<br>非静态，可虚。将`*this`转换为目标类型
+conversion-function-id                  |转换函数标识   |`operator T`，T为转换类型标识，代表目标类型。不允许尾部返回类型或类型推断
+conversion-type-id                      |转换类型标识   |仅支持指针，不支持数组、引用、函数。不能为自身、基类或`void`
 conversion rank                         |转换等级
 converted constant expression           |经转换的常量表达式
-converting constructor                  |转换构造函数
+converting constructor                  |转换构造函数   |非显式构造函数
 copy                                    |复制，副本
-copy assignment operator                |复制赋值运算符
-copy constructor                        |复制构造函数
+copy assignment operator                |复制赋值运算符 |非静态非模板，`X`或`cv T&`单参数赋值运算符<br>若未显式声明，则隐式声明复制赋值，当存在移动时被弃置，否则为预置<br>隐式声明`T&(const T&)`或`T&(T&)`，递归要求潜在构造子对象可以对应赋值
+copy constructor                        |复制构造函数   |非模板，`cv T&`可接受单参数调用的构造函数<br>若未显式声明，则隐式声明非 explicit 复制构造，当存在移动时被弃置，否则为预置<br>隐式声明`const T&`或`T&`，递归要求潜在构造子对象可以对应构造
 copy-initialization                     |复制初始化     |`=`初始化式，实参传递，函数返回，异常，聚合成员
 copy-list-initialization                |复制列表初始化 |以初始化式列表进行复制初始化
 core constant expression                |核心常量表达式 |排除：常量外的`this`和虚函数，非constexpr函数，未定义或不满足要求的constexpr函数，UB，volatile，reinterpret_cast，lambda中ODR，非全局且配对的分配/回收，协程，throw，RTTI，asm，va_arg
@@ -700,7 +704,7 @@ designated initializer                  |定名初始化式
 destroy                                 |销毁
 destroying operator delete              |销毁用 delete 运算符   |成员，非数组，`(T*, destroying_delete_t, ...)`，由此函数负责析构；只要提供就排除非销毁函数
 destruction                             |销毁
-destructor                              |析构函数
+destructor                              |析构函数   |即选中的析构函数，在`}`处基于约束偏序决定唯一的析构函数<br>不能取地址，cv无效。非协程<br>预置析构被弃置：有可变成员的析构非平凡，潜在构造子对象无法销毁，或虚析构中无法`delete`
 device                                  |设备
 diagnosable rule                        |可诊断规则
 diagnostic message                      |诊断消息   |编译器报错
@@ -1094,9 +1098,9 @@ most derived class                      |全派生类   |非基类子对象的�
 most derived object                     |全派生对象 |非基类子对象的对象
 move                                    |移动
 move assignment                         |移动赋值
-move assignment operator                |移动赋值运算符
+move assignment operator                |移动赋值运算符 |非静态非模板，`cv T&&`单参数赋值运算符<br>若未显式声明任何复制/移动/析构，则隐式声明预置移动赋值<br>隐式声明`X&(T&&)`，递归要求潜在构造子对象可以对应赋值
 move construction                       |移动构造
-move constructor                        |移动构造函数
+move constructor                        |移动构造函数   |非模板，`cv T&&`可接受单参数调用的构造函数<br>若未显式声明任何复制/移动/析构，则隐式声明预置非 explicit 移动构造<br>隐式声明`T&&`，递归要求潜在构造子对象可以对应构造
 multibyte character                     |多字节字符
 multibyte encoding                      |多字节编码
 multicharacter literal                  |多字符字面量
@@ -1306,7 +1310,7 @@ programming language                    |程序设计语言
 projection                              |投射       |算法对输入元素进行自定义变换
 promise object                          |承诺对象   |承诺类型的对象，以协程函数各实参构造，若失败则默认构造
 promise type                            |承诺类型   |`std::coroutine_traits<R, P...>::promise_type`<br>提供可等待的`initial_suspend`，`final_suspend`和`unhandled_exception`<br>提供`return_void`或`return_value`之一，提供`get_return_object`，`yield_value`
-prospective destructor                  |预期析构函数   |
+prospective destructor                  |预期析构函数|若未显式声明则隐式声明预置的无约束预期析构函数
 protected                               |受保护
 prototype                               |原型
 provides storage                        |提供存储   |字节数组对象为放置构造对象提供存储
@@ -1400,6 +1404,7 @@ scope                                   |作用域，范围
 scope resolution operator               |作用域解析运算符   |`::`
 scoped enumeration                      |有作用域枚举   |`enum class`或`enum struct`
 scoped enumerator                       |有作用域枚举符
+selected destructor                     |选中的析构函数 |重载决议在预期析构函数中选择，基于约束偏序
 selection statement                     |选择语句       |if, switch
 semantics                               |语义
 semaphore                               |信号量
@@ -1610,7 +1615,7 @@ upper bound                             |上界
 user provided function                  |用户提供的函数 |用户声明且未在首个声明式预置或弃置的函数，可在之后显式预置或弃置
 user-declared                           |用户声明的
 user-defined character literal          |用户定义字符字面量     |预处理记号，记号，字符字面量+后缀，类型运算符 `operator "" X(Tchar t)`
-user-defined conversion                 |用户定义转换
+user-defined conversion                 |用户定义转换           |转换函数、构造函数
 user-defined floating-point literal     |用户定义浮点字面量     |无后缀浮点字面量+自定义后缀，先类型后通配，类型运算符只支持`long double`
 user-defined integer literal            |用户定义整数字面量     |无后缀整数字面量+自定义后缀，先类型后通配，类型运算符只支持`unsigned long long`
 user-defined literal                    |用户定义字面量         |数值/字符/字符串字面量+字面量后缀，字面量运算符（模板）函数
