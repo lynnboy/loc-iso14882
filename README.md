@@ -396,7 +396,7 @@ access check                            |访问检查
 access control                          |访问控制
 access specifier                        |访问说明符
 acquire                                 |获取       |同步操作
-active member                           |活跃成员
+active member                           |活跃成员   |联合体或类似联合体的处于生存期内的可变成员。通过成功赋值改变
 active variable                         |活跃变量   |自动存储期变量在作用域中其声明符之后均活跃
 addition operator                       |加法运算符
 additive expression                     |加性表达式 |`mul_expr + mul_expr`, `mul_expr - mul_expr`。内建：一般算术转换，指针+/-整型，指针-指针（`ptrdiff_t`）
@@ -424,6 +424,9 @@ amendment                               |文档修订
 amortized constant                      |摊销常量
 and expression                          |与表达式   |`eq_expr & eq_expr`。内建：按位与，一般算术转换
 and operator                            |与运算符   |`&`
+anonymous union                         |匿名联合体 |无名类型，内嵌其成员到所在作用域
+anonymous union member                  |匿名联合体成员 |匿名union非静态数据成员，不允许存储类说明符
+anonymous union variable                |匿名联合体变量 |匿名union变量
 appearance-ordered before               |按表现顺序早于 |静态变量初始化顺序：同一UT或UT间接口依赖+出现顺序
 appertain to                            |属于       |属性属于其生效对象
 apply                                   |运用，实施，适用于
@@ -485,7 +488,7 @@ binary operator                         |二元运算符
 binary right fold                       |二元右折叠     |`pack op ... op expr`
 bind directly                           |直接绑定       |引用初始化中，除了将初始化式转换为被引用类型之外的情况
 bit                                     |位
-bit-field                               |位字段         |一种实体
+bit-field                               |位字段         |一种实体。不能为静态成员。大于类型宽度为填充位<br>不能取地址，不能绑定到非const引用
 bitwise and operator                    |按位与运算符
 bitwise negation operator               |按位反运算符   |一元运算符/表达式，`~`，整型、无作用域枚举，提升
 bitwise or operator                     |按位或运算符
@@ -1028,13 +1031,13 @@ linkage-specification                   |连接说明   |指定语言连接`exte
 list                                    |列表
 list-initialization                     |列表初始化 |以花括号初始化列表进行的初始化，初始化式列表构造函数优先<br>定名列表初始化聚合，单元素列表复制或直接初始化，字符串、聚合初始化，<br>空列表对默认构造的值初始化，`std::initializer_list`构造函数初始化，<br>其他构造函数排除窄化转换初始化，单元素列表对枚举底层直接初始化，单元素列表无窄化的复制/直接初始化，<br>单元素列表初始化引用，空列表值初始化
 literal                                 |字面量     |字符/字符串/数值，以及自定义变体，布尔，指针
-literal operator                        |字面量运算符       |用户字面量的函数，非模板有类型化和原始两种，`operator "" X(T)`, `operator "" X(const char*)`
+literal operator                        |字面量运算符   |用户字面量的函数，非模板有类型化和原始两种，`operator "" X(T)`, `operator "" X(const char*)`
 literal operator template               |字面量运算符模板   |用户字面量的函数模板，数值模板和字符串模板两种，无函数形参
-literal suffix literal                  |字面量后缀         |字面量运算符（模板）中的标识符，即字面量后缀
-literal type                            |字面类型           |void、标量、引用，字面类型的数组，constexpr构造和析构，非 volatile 数据
+literal suffix literal                  |字面量后缀     |字面量运算符（模板）中的标识符，即字面量后缀
+literal type                            |字面类型       |void、标量、引用，字面类型的数组，constexpr构造和析构，非 volatile 数据
 local                                   |局部，局部的
-local class                             |局部类
-local entity                            |局部实体           |自动变量，自动变量的结构化绑定，*this
+local class                             |局部类         |块作用域定义的类，仅作用域限定，无局部实体俘获。无静态数据成员，不能类外定义函数
+local entity                            |局部实体       |自动变量，自动变量的结构化绑定，*this
 local lambda expression                 |局部 lambda 表达式
 local scope                             |局部作用域
 local variable                          |局部变量
@@ -1133,7 +1136,7 @@ narrow string literal                   |窄字符串字面量 |普通和UTF-8
 narrowing conversion                    |窄化转换   |隐式转换：F2I，I2F，丢失精度，除已知不会丢失精度，可转换回原值
 necessarily reachable                   |必定可达   |已经被导入的模块接口单元
 nest                                    |嵌套
-nested class                            |嵌套类
+nested class                            |嵌套类     |类作用域中声明的类
 nested name                             |嵌套名
 nested name specifier                   |嵌套名说明符
 nested requirement                      |嵌套规定   |`requires constraint_expr;`
@@ -1454,7 +1457,7 @@ statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
 static cast expression                  |静态转型表达式 |后缀表达式，`static_cast<T>(v)`<br>指针或引用：vB!=>D，左值=>T&，临限值=>T&&<br>转换：ICS，直接初始化的ICS，聚合首元素的ICS
-static data member                      |静态数据成员
+static data member                      |静态数据成员   |可为`thread_local`，不能为`mutable`，无名类、局部类不能有静态数据成员<br>非内联：整型常量SDM可以在类内以常量初始化，若ODR式使用则在类外应有无初始化定义式
 static initialization                   |静态初始化     |静态/线程变量的常量/零初始化，运行前发生。允许动->静优化
 static member                           |静态成员       |静态数据成员或静态成员函数
 static member function                  |静态成员函数
@@ -1593,10 +1596,11 @@ underlying-type                         |底层类型       |字符类型。枚�
 unevaluated operand                     |免求值操作数   |编译期语法结构，仅获得类型/元信息，不求值
 unexpanded parameter pack               |未展开形参包组
 Unicode                                 |Unicode，统一码
-union                                   |联合体
-union-like class                        |类似联合体的类
+union                                   |联合体         |以`union`声明的类。所有非静态数据成员地址相同。无多态，无继承，无引用成员<br>若成员有特殊成员函数，则对应成员函数自动弃置，需要用户提供
+union-like class                        |类似联合体的类 |联合体，直接包含匿名联合体的类。有可变成员
 universal-character-name                |UCN，通用字符名|概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 `unlikely`                              |`unlikely` 属性|属性，无参数，用于标号或语句，标明执行路径非似然性
+unnamed bit-field                       |无名位字段     |不是成员，填充位，宽度可以为0，分隔内存位置，不支持cv
 unnamed class                           |无名类
 unnamed enumeration                     |无名枚举
 unnamed namespace                       |无名命名空间   |相当于具有隐含的唯一名字
@@ -1646,7 +1650,7 @@ variable template                       |变量模板
 variadic function                       |变参函数   |以`...`形参结尾的函数，需要`va_XX`<br>以函数形参包组结尾的函数
 variadic template                       |变参模板
 variant                                 |变体
-variant member                          |可变成员
+variant member                          |可变成员   |共用内存的数据成员：联合体的非静态数据成员，匿名联合体嵌入类中的非静态数据成员
 viable                                  |可行的
 virtual                                 |虚的
 virtual base                            |虚基类
