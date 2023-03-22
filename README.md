@@ -385,6 +385,10 @@ Original   |中文   |章节    |定义
 *base-specifier*            |*基说明符*     | [class.derived.general] | *属性说明符序列*__?__ ( `virtual`__?__ *访问说明符*__?__ \| *访问说明符* `virtual` ) *类或-decltype*
 *class-or-decltype*         |*类或-decltype*| [class.derived.general] | *嵌套名说明符*__?__ *类型名* \| *嵌套名说明符* `template` *简单模板标识* \| *decltype-说明符*
 *access-specifier*          |*访问说明符*   | [class.derived.general] | `private` \| `protected` \| `public`
+*ctor-initializer*          |*构造函数初始化式*| [class.base.init] | `:` *成员初始化式列表*
+*mem-initializer-list*      |*成员初始化式列表*| [class.base.init] | *成员初始化式* `...`__?__ ( `,` *成员初始化式* `...`__?__ )__\*__
+*mem-initializer*           |*成员初始化式* | [class.base.init] | *成员初始化式标识* `(` *表达式列表*__?__ `)` \| *成员初始化式标识* *花括号初始化列表*
+*mem-initializer-id*        |*成员初始化式标识*| [class.base.init] | *类或-decltype* \| *标识符*
 
 ## Terms Translation Table
 
@@ -650,6 +654,7 @@ corresponding instance                  |对应实例       |实现所对应的�
 covariant                               |协变           |虚函数返回类型，派生类/基类的单级指针或引用，允许放松cv<br>即覆盖函数可以放宽对返回类型的限制，但不改变返回值（指针）本身
 create                                  |创建
 CTAD, class template argument deduction |类模板实参推断 |可利用推断导引
+ctor-initializer                        |构造函数初始化式|初始化基类、成员，或其他构造函数（应为唯一项），不可重复，可变成员不可冲突<br>不决定初始化顺序。非最终派生对象忽略虚基类初始化。
 current class                           |当前类         |当前位置最内层类作用域
 cv pointer to cv T                      |cv T 的 cv 指针
 cv-combined type                        |cv 合并类型
@@ -689,7 +694,7 @@ default argument promotion              |默认实参提升   |调用前提升�
 default behavior                        |缺省行为       |某些函数，如果程序不提供就采用实现的缺省版本
 default constructor                     |默认构造函数   |无需实参的构造函数（每个非形参包组均有默认实参）<br>弃置隐含默认构造函数：有任何无法默认构造或通过默认成员初始化式初始化的可变成员、引用成员、const成员，有任何无法调用默认构造或析构的潜在构造子对象
 default label                           |default 标号
-default member initializer              |默认成员初始化式   |非静态数据成员，内嵌到构造函数执行
+default member initializer              |默认成员初始化式   |非静态数据成员，默认的构造函数成员初始化式。引用不能绑定临时对象
 default template argument               |默认模板实参   |模板形参的默认实参
 default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
@@ -698,7 +703,7 @@ define                                  |定义
 defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符<br>函数形参和返回类型不能定义类型
 definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
 definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
-delegating constructor                  |委派构造函数
+delegating constructor                  |委派构造函数   |调用其他构造函数再完成其他行为。以另一个构造函数为唯一成员初始化式
 delete                                  |删除
 delete expression                       |delete 表达式  |一元表达式。单对象/数组。操作数为对象指针或类类型（按语境转换为对象指针）。<br>操作数必须为空指针值或`new`的结果指针，允许不完整类型但当心UB。<br>数组静态/动态类型必须相似。单对象允许虚析构或由销毁用 delete 负责销毁对象<br>与new配合支持存储扩展分配的回收
 `delete` operator                       |`delete` 运算符|调用回收函数`operator delete`或`operator delete[]`<br>名字查找先作用域后全局。虚析构函数定义点处选择回收函数。有销毁用函数时仅考虑它们<br>支持`align_val_t`和`size_t`参数，`destroying_delete_t`标明销毁用函数
@@ -850,10 +855,11 @@ forward progress                        |向前进展，进展 |保证线程会�
 fraction                                |小数，分数
 free store                              |自由存储       |new/delete 或 malloc() 等所管理的堆内存
 freestanding implementation             |自立式实现     |无操作系统支持
-friend                                  |友元
+friend                                  |友元           |授予友元访问所有成员的能力。不传递，不继承
 friend class                            |友元类
+friend declaration                      |友元声明式     |可以指定类型，忽略非类类型。可以指定函数，成员函数，特例。可以模板化<br>可以直接定义新函数，与成员一样为内联函数，并居于类所在命名空间但不绑定名字
 friend function                         |友元函数
-friend specifier                        |friend 说明符
+`friend` specifier                      |`friend` 说明符
 full-expression                         |全表达式       |免求值操作数，常量表达式，直接调用，声明的初始化式，出作用域的销毁，非子表达式且非全表达式一部分的表达式
 function                                |函数           |一种实体，不是对象
 function-body                           |函数体         |指定代码或`=default`、`=delete`
@@ -1079,6 +1085,7 @@ manifestly constant-evaluated           |显然常量求值的 |常量表达式�
 match                                   |匹配       |正则表达式模式与目标文本发生对应
 materialize                             |实质化
 `maybe_unused`                          |`maybe_unused` 属性|属性，无参数，用于名字或实体，抑制名字未使用警告消息
+mem-initializer                         |成员初始化式   |构造函数初始化式中列出，支持包组展开。未列出采用默认成员初始化式，或默认初始化
 member                                  |成员
 member-declaration                      |成员声明式 |可以作为类成员的声明式：比块声明式多出空声明式、模板、函数定义、位字段，支持成员函数特有的语言特性，不支持结构化绑定，不支持成员变量占位符类型
 member-specification                    |成员说明   |类体的内容，包括成员声明式和访问说明符
@@ -1520,7 +1527,7 @@ syntax notation                         |语法表示法
 
 |English|中文|说明|
 |-|-|-|
-target constructor                      |目标构造函数
+target constructor                      |目标构造函数   |被委派构造函数调用的构造函数，由重载决议选择
 target scope                            |目标作用域     |声明式所居作用域（友元/限定名/详述类型/块外部声明式等的目标例外）
 template                                |模板           |一种实体，基于参数生成（实例化）其他实体
 template argument                       |模板实参
