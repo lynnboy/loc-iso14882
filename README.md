@@ -644,6 +644,7 @@ converting constructor                  |转换构造函数   |非显式构造�
 copy                                    |复制，副本
 copy assignment operator                |复制赋值运算符 |非静态非模板，`X`或`cv T&`单参数赋值运算符<br>若未显式声明，则隐式声明复制赋值，当存在移动时被弃置，否则为预置<br>隐式声明`T&(const T&)`或`T&(T&)`，递归要求潜在构造子对象可以对应赋值
 copy constructor                        |复制构造函数   |非模板，`cv T&`可接受单参数调用的构造函数<br>若未显式声明，则隐式声明非 explicit 复制构造，当存在移动时被弃置，否则为预置<br>隐式声明`const T&`或`T&`，递归要求潜在构造子对象可以对应构造
+copy elision                            |复制消除       |return返回类型的自动对象，不能是形参或异常<br>throw（与try块无关的）自动对象<br>协程形参副本，同类型的异常副本<br>常量求值时不能消除。两阶段重载决议，优先尝试移动，即便消除也应成功
 copy-initialization                     |复制初始化     |`=`初始化式，实参传递，函数返回，异常，聚合成员
 copy-list-initialization                |复制列表初始化 |以初始化式列表进行复制初始化
 core constant expression                |核心常量表达式 |排除：常量外的`this`和虚函数，非constexpr函数，未定义或不满足要求的constexpr函数，UB，volatile，reinterpret_cast，lambda中ODR，非全局且配对的分配/回收，协程，throw，RTTI，asm，va_arg
@@ -941,13 +942,14 @@ implementation-defined                  |由实现定义的   |编译器实现�
 implicit                                |隐式，暗中，隐含
 implicit conversion                     |隐式转换       |iff可声明`T t=e;`，e可隐式转换为 T
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
-implicit type conversion                |隐式类型转换
 implicit-lifetime class                 |隐式生存期类   |聚合，或至少一个平凡合格构造函数和平凡非弃置析构
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
+implicit type conversion                |隐式类型转换
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
-implicitly defined                      |隐式定义的 |被 ODR 式使用的预置未弃置的特殊成员函数，被隐式定义
+implicitly defined                      |隐式定义的     |被 ODR 式使用的预置未弃置的特殊成员函数，被隐式定义
+implicitly movable entity               |隐含可移动实体 |自动变量，非volatile，对象或右值引用
 import                                  |导入       |模块导入时导入该模块所有导出的声明式，递归导入<br>不能导入实现单元，不能导入自身
 import declaration                      |导入声明式 |模块导入声明式。必须在模块单元或私有模块分段开头
 import-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
@@ -964,6 +966,7 @@ indirect base class                     |间接基类   |非直接基类
 indirection operator                    |间接运算符     |一元运算符/表达式，`*`，左值
 inequality operator                     |不相等运算符
 inhabit                                 |居于           |声明式居于其直接作用域（模板形参作用域单算）
+inherited constructor                   |继承的构造函数 |相当于委派给基类构造函数，以预置默认构造函数的方式初始化其他子对象<br>using声明式引入的是名字，即所有构造函数
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
 initial suspend point                   |初始暂停点 |协程代码隐含插入`co_await p.initial_suspend();`
 initialization                          |初始化
