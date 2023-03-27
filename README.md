@@ -526,6 +526,7 @@ cache                                   |高速缓存
 call                                    |调用
 call by reference                       |按引用调用     |按引用传递参数
 call by value                           |按值调用       |按值传递参数
+candidate function                      |候选函数       |
 capture                                 |俘获，俘获符   |俘获符：语法结构，代表闭包数据成员，可指定初始化
 capture by copy                         |按复制俘获
 capture by reference                    |按引用俘获
@@ -1238,7 +1239,7 @@ output                                  |输出
 over-aligned type                       |过量对齐类型   |类型的对齐为扩充对齐EA
 overflow                                |溢出，上溢
 overload                                |重载
-overload resolution                     |重载决议   |
+overload resolution                     |重载决议   |函数调用；对象调用（`()`运算符，或到函数指针、函数（指针）的引用的转换）；运算符重载；直接初始化中的构造；复制初始化中的转换；转换类对象以初始化非类对象；转换以绑定到引用<br>候选->（实参数量匹配等）可行->（隐式转换序列ICS等级排序）最佳可行
 overloaded function                     |重载函数
 overloaded operator                     |重载运算符
 override                                |覆盖       |派生类中提供的虚函数替换基类虚函数的行为。不受访问控制影响<br>覆盖和被覆盖必须同时弃置，同时`consteval`
@@ -1638,6 +1639,7 @@ unsigned integer type                   |无符号整数类型 |标准、扩充�
 unspecified                             |未指明的
 unspecified behavior                    |未指明的行为   |多种允许可能行为中的某一种
 upper bound                             |上界
+usable candidate                        |可用候选函数   |重载决议成功，结果可访问、未弃置
 user provided function                  |用户提供的函数 |用户声明且未在首个声明式预置或弃置的函数，可在之后显式预置或弃置
 user-declared                           |用户声明的
 user-defined character literal          |用户定义字符字面量     |预处理记号，记号，字符字面量+后缀，类型运算符 `operator "" X(Tchar t)`
