@@ -568,6 +568,7 @@ coherence requirements                  |协调性规定 |写-写、写-读、�
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
 comma operator                          |逗号运算符 |`ass_expr, ass_expr`。内建：lhs SeqB rhs，左侧其值。
 comment                                 |注释       | `/* */`，`// \n`
+common comparison type                  |公共比较类型   |`strong_ordering`>`weak_ordering`>`partial_ordering`
 common initial sequence                 |共同起始序列   |多个标准布局结构体中开头非静态数据成员和位字段序列，对应成员布局兼容
 common type                             |公共类型
 compare expression                      |比较表达式 |`shift_expr <=> shift_expr`。内建：算术类型进行一般算术转换，禁止bool混合，禁止除整型到浮点外的窄化<br>整型`strong_ordering`，浮点`partial_ordering`，以合成指针类型比较指针，可比较时为`strong_ordering`
@@ -700,6 +701,7 @@ default member initializer              |默认成员初始化式   |非静态�
 default template argument               |默认模板实参   |模板形参的默认实参
 default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
+defaulted comparison operator function  |预置的默认比较运算符函数|`(const C&)const`或`(const C&)const&`，`static(const C&, const C&)`或`static (C, C)`<br>若有引用或可变非静态数据成员则弃置，任何子对象不能`==`则`==`弃置，任何子对象不能`<=>`则`<=>`弃置<br>`==`返回`bool`，`auto`时`<=>`返回公共比较类型。`==`随`<=>`隐式声明
 defaulted function                      |预置函数       |隐式声明或显式预置的函数，具有隐含定义式或被弃置<br>弃置特殊成员函数：预期析构函数非析构时，非预期析构且非合格时
 define                                  |定义
 defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符<br>函数形参和返回类型不能定义类型
@@ -1430,6 +1432,7 @@ scope                                   |作用域，范围
 scope resolution operator               |作用域解析运算符   |`::`
 scoped enumeration                      |有作用域枚举   |`enum class`或`enum struct`
 scoped enumerator                       |有作用域枚举符
+secondary comparison operator           |次级比较运算符 |`<`,`>`,`<=`,`>=`,`!=`
 selected destructor                     |选中的析构函数 |重载决议在预期析构函数中选择，基于约束偏序
 selection statement                     |选择语句       |if, switch
 semantics                               |语义
@@ -1526,6 +1529,7 @@ synchronize with                        |同步于
 syntactic category                      |语法范畴   |BNF 产生式非终结符
 syntax                                  |语法
 syntax notation                         |语法表示法
+synthesized three-way comparison        |合成三路比较   |`static_cast<R>(a <=> b)`，或`a <=> b`重载决议结果，否则：<br>`R`为`strong_ordering`: `a==b ? equal : a<b ? less : greater`<br>`R`为`weak_ordering`: `a==b ? equivalent : a<b ? less : greater`<br>`R`为`partial_ordering`：`a==b ? equivalent : a<b ? less : a>b ? greater : unordered`<br>其他`R`或无`==`、`<`则无定义
 
 ### T
 
