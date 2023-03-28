@@ -414,6 +414,7 @@ additive operator                       |加性运算符 |`+`, `-`
 address                                 |地址
 address-of operator                     |取地址运算符   |一元运算符/表达式，`&`，结果为指针或成员指针，不支持位字段<br>成员指针必须为限定标识且无括号，不考虑`mutable`<br>函数：根据语境进行重载决议
 aggregate                               |聚合，聚合对象 |无ctor，全公开，非多态
+aggregate deduction candidate           |聚合推断候选   |CTAD中，符合聚合的类模板`C`的导引集合中添加虚构`C(T1,...,Tn)`候选
 aggregate initialization                |聚合初始化 |初始化式列表对聚合初始化，类聚合可以单个表达式初始化，异常时潜在销毁
 aggregate type                          |聚合类型
 algorithm                               |算法
@@ -515,6 +516,7 @@ boolean conversion                      |布尔转换       |0->`false`, 非0->`
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
 bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
 break statement                         |break 语句     |跳出到循环或switch之后
+built-in candidates                     |内建候选       |运算符重载中，除`,`、`&`、`->`外的内建运算符<br>内建赋值左操作数不能引入临时对象或用户定义转换
 built-in operator                       |内建运算符
 byte                                    |字节           |基本存储单元
 
@@ -646,6 +648,7 @@ converting constructor                  |转换构造函数   |非显式构造�
 copy                                    |复制，副本
 copy assignment operator                |复制赋值运算符 |非静态非模板，`X`或`cv T&`单参数赋值运算符<br>若未显式声明，则隐式声明复制赋值，当存在移动时被弃置，否则为预置<br>隐式声明`T&(const T&)`或`T&(T&)`，递归要求潜在构造子对象可以对应赋值
 copy constructor                        |复制构造函数   |非模板，`cv T&`可接受单参数调用的构造函数<br>若未显式声明，则隐式声明非 explicit 复制构造，当存在移动时被弃置，否则为预置<br>隐式声明`const T&`或`T&`，递归要求潜在构造子对象可以对应构造
+copy deduction candidate                |复制推断候选   |CTAD中，类模板`C`的导引集合中添加的`C(C)`对应候选函数模板
 copy elision                            |复制消除       |return返回类型的自动对象，不能是形参或异常<br>throw（与try块无关的）自动对象<br>协程形参副本，同类型的异常副本<br>常量求值时不能消除。两阶段重载决议，优先尝试移动，即便消除也应成功
 copy-initialization                     |复制初始化     |`=`初始化式，实参传递，函数返回，异常，聚合成员
 copy-list-initialization                |复制列表初始化 |以初始化式列表进行复制初始化
@@ -947,12 +950,14 @@ implicit conversion                     |隐式转换       |iff可声明`T t=e;
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
 implicit-lifetime class                 |隐式生存期类   |聚合，或至少一个平凡合格构造函数和平凡非弃置析构
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
+implicit object parameter               |隐含对象形参   |重载决议时认为成员函数（非构造函数）有隐含形参<br>非静态成员：类型为引用，跟随成员的cv和引用限定，静态：匹配任意对象
 implicit type conversion                |隐式类型转换
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象
 implicitly declared function            |隐式声明的函数
 implicitly defined                      |隐式定义的     |被 ODR 式使用的预置未弃置的特殊成员函数，被隐式定义
 implicitly movable entity               |隐含可移动实体 |自动变量，非volatile，对象或右值引用
+implied object argument                 |隐含对象实参   |重载决议中代表对象的隐含实参，对应隐含形参
 import                                  |导入       |模块导入时导入该模块所有导出的声明式，递归导入<br>不能导入实现单元，不能导入自身
 import declaration                      |导入声明式 |模块导入声明式。必须在模块单元或私有模块分段开头
 import-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
@@ -1093,6 +1098,7 @@ materialize                             |实质化
 `maybe_unused`                          |`maybe_unused` 属性|属性，无参数，用于名字或实体，抑制名字未使用警告消息
 mem-initializer                         |成员初始化式   |构造函数初始化式中列出，支持包组展开。未列出采用默认成员初始化式，或默认初始化
 member                                  |成员
+member candidates                       |成员候选   |运算符重载中，成员运算符函数
 member-declaration                      |成员声明式 |可以作为类成员的声明式：比块声明式多出空声明式、模板、函数定义、位字段，支持成员函数特有的语言特性，不支持结构化绑定，不支持成员变量占位符类型
 member-specification                    |成员说明   |类体的内容，包括成员声明式和访问说明符
 member function                         |成员函数
@@ -1182,6 +1188,7 @@ nominable declaration                   |可提名声明式       |类/命名空
 non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-initialization odr-use              |非初始化 ODR 式使用|非由静态/线程变量初始化导致的 ODR 式使用
+non-member candidates                   |非成员候选 |运算符重载中，除`=`,`[]`,`->`外允许非成员函数
 non-static data member                  |非静态数据成员
 non-static member                       |非静态成员 |非静态数据成员，非静态成员函数
 non-static member function              |非静态成员函数
@@ -1230,7 +1237,7 @@ opaque-enum-declaration                 |笼统枚举声明式 |不声明枚举�
 operand                                 |操作数
 operator                                |运算符
 operator-or-punctuator                  |运算符或标点   |记号的一种，包括运算符记号和 `{}[]()...` 等和替代表示
-operator overloading                    |运算符重载
+operator overloading                    |运算符重载 |成员候选、非成员候选、内建候选、重写候选。`->`递归
 or operator                             |或运算符
 order of evaluation                     |求值顺序
 ordered initialization                  |有序初始化     |静态变量初始化：非模板特例变量，非内联变量
@@ -1268,6 +1275,7 @@ parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
 partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
 partial specialization                  |部分特化，部分特化式
+permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
 physical source line                    |物理源文本行
@@ -1415,6 +1423,7 @@ return statement                        |return 语句，返回语句|允许在v
 return type                             |返回类型   |非数组对象类型、引用类型、`void`；摒弃volatile返回类型
 return type deduction                   |返回类型推断|非虚，非协程。从所有未弃用return语句推断，应当一致<br>实例化时进行推断。每次推断导致实例化
 return value                            |返回值
+rewritten candidates                    |重写候选   |运算符重载中，关系：`x<=>y`,`y<=>x`，三路：`y<=>x`，不等：`x==y`，相等：`y==x`<br>关系改写规则：正序`(x<=>y)@0`，逆序`0@(y<=>x)`，`!=`：正序`!(x==y)`，逆序`!(y==x)`，`==`为`y==x`
 right shift operator                    |右移运算符
 rounding                                |舍入
 run                                     |运行
@@ -1519,6 +1528,7 @@ subscript operator                      |下标运算符 |内建：数组GLv或�
 substatement                            |子语句     |不包括选择和循环中的初始化语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
 suitable created object                 |适当创建的对象
+surrogate call function                 |代用调用函数   |用于重载决议的代表类对象转换为函数（指针）及其引用后的虚构函数
 surrogate code point                    |代用代码点 |UCS 代用字符的代码点，为 UTF16 用于编码高值字符，D800-DFFF
 suspension                              |暂停
 suspension context                      |暂停语境   |函数中允许 `co_await` 的语境
