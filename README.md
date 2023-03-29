@@ -431,6 +431,7 @@ allocated type                          |被分配类型 |new 表达式创建对
 allocation function                     |分配函数   |`operator new`, `operator new []`
 alternative token                       |代用记号   |二联符+保留字 `and` 等，11个位和逻辑运算符
 ambiguity                               |歧义
+ambiguous conversion sequence           |有歧义转换序列 |重载决议中，ICS有歧义。被当做与任意其他用户定义ICS有歧义
 amendment                               |文档修订
 amortized constant                      |摊销常量
 and expression                          |与表达式   |`eq_expr & eq_expr`。内建：按位与，一般算术转换
@@ -455,7 +456,7 @@ array delete expression                 |数组 delete 表达式|`delete [] p`
 array element                           |数组元素
 array of N T                            |T 的 N 元素数组
 array of unknown bound of T             |T 的边界未知数组
-array-to-pointer conversion             |数组向指针转换 |TempMatC
+array-to-pointer conversion             |数组向指针转换 A2Ptr |TempMatC
 arrow operator                          |箭头运算符
 as-if rule                              |“如同”规则     |以可观察行为为准
 asm-declaration                         |asm 声明式     |`asm ("...")`
@@ -493,6 +494,8 @@ basic execution wide-character set      |基本执行宽字符集
 basic source character set              |基本源字符集   |只有96个字符，至少兼容 ASCII 和 EBCDIC
 behavior                                |行为
 belong                                  |属于（作用域） |实体属于其声明式的目标作用域
+best viable function                    |最佳可行函数   |重载决议中基于ICS从可行函数中选择最佳<br>
+better viable function                  |更好的可行函数 |所有实参ICSi至少一样好。存在更好的ICSi，或用于初始化变量的转换ICS更好，或元编程偏序（函数>函数模板特例，模板偏序殊，约束），或同为构造函数基类>派生类，优先非重写、正序重写、非导引、非复制导引候选、非模板构造函数
 binary                                  |二进制，二元
 binary fold                             |二元折叠       |展开包组和一个表达式
 binary left fold                        |二元左折叠     |`expr op ... op pack`
@@ -512,7 +515,7 @@ block statement                         |块语句         |语句的一种，`{
 block variable                          |块变量         |块作用域的变量
 block with forward progress guarantee delegation |带有向前进展保证委托的阻塞|线程阻塞于线程集合全部完成，保证至少一个线程不比被阻塞线程弱，即确保总保证不会减弱
 boolean                                 |布尔
-boolean conversion                      |布尔转换       |0->`false`, 非0->`true`
+boolean conversion                      |布尔转换 BoolC |转换类别的标准转换。0->`false`, 非0->`true`
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
 bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
 break statement                         |break 语句     |跳出到循环或switch之后
@@ -639,6 +642,7 @@ continue statement                      |continue 语句  |跳出到循环末尾
 contravariant                           |逆变
 control character                       |控制字符       |代码点 0-1F，7F-9F
 conversion                              |类型转换，转换
+Conversion                              |转换 Conv      |重载决议中的标准转换类别，转换级，包括整型转换 IntC，浮点转换 FltC，浮点整型转换 FIC，指针转换 PtrC，成员指针转换 MPtrC，布尔转换 BoolC<br>重载决议中的标准转换等级
 conversion function                     |转换函数       |以转换函数标识为名，无返回无参数，以转换类型标识为返回类型<br>非静态，可虚。将`*this`转换为目标类型
 conversion-function-id                  |转换函数标识   |`operator T`，T为转换类型标识，代表目标类型。不允许尾部返回类型或类型推断
 conversion-type-id                      |转换类型标识   |仅支持指针，不支持数组、引用、函数。不能为自身、基类或`void`
@@ -762,6 +766,7 @@ element                                 |元素       |数组，聚合，初始�
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 eligible special member function        |合格的特殊成员函数 |可被认为存在：未被弃置，满足关联约束，约束偏序中优先
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
+ellipsis conversion sequence            |省略号转换序列 EllipsisCS  |重载决议中ICS的一种，省略号形参对应的转换
 ellipsis parameter                      |省略号形参 |`va_xxx`变参函数
 empty-declaration                       |空声明式   |仅有`;`的声明式，不是块语句
 empty-statement                         |空语句     |仅有`;`的语句
@@ -790,6 +795,7 @@ error                                   |错误，误差
 escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
 evaluation                              |求值       |表达式的求值包括值计算和副作用
+Exact Match                             |精确匹配   |ICS等级，包括恒等Id、左值变换LvTrn、限定调整
 exception                               |异常
 exception-declaration                   |异常声明式 |catch中的异常变量声明式，仅支持一个异常，支持省略号，不支持默认值，不支持占位符？
 exception handler                       |异常处理器
@@ -847,12 +853,12 @@ file                                    |文件           |可观察行为
 final overrider                         |最终覆盖函数   |未在最终派生类中被进一步覆盖，提供实际行为
 final suspend point                     |最终暂停点     |协程代码隐含插入`co_await p.final_suspend();`，不可抛出异常<br>若承诺`unhandled_exception`抛出则认为在最终暂停点暂停
 finite state machine                    |有限状态机     |用于实现正则表达式的数据结构
-floating-integral conversion            |浮点整形转换   |f->i：截断；i->f：尽可能精确
+floating-integral conversion            |浮点整形转换 FIC |转换类别的标准转换。f->i：截断；i->f：尽可能精确
 floating-point                          |浮点
-floating-point conversion               |浮点转换       |除提升外任意浮点间转换
+floating-point conversion               |浮点转换 FltC  |转换类别的标准转换。除提升外任意浮点间转换
 floating-point literal                  |浮点字面量     |后缀：'fFlL'，十进制'eE'，十六进制'0x|0X' + 'pP'，指数部分仍为10进制
 floating-point type                     |浮点类型       |`float`, `double`, `long double`
-floating-point promotion                |浮点提升       |float -> double
+floating-point promotion                |浮点提升 FltP  |提升类别的标准转换。float -> double
 fold expression                         |折叠表达式
 for-range-declaration                   |for-范围声明式 |范围式for语句的变量声明式
 for statement                           |for 语句
@@ -881,7 +887,7 @@ function overloading                    |函数重载
 function parameter                      |函数形参       |特殊：`f(void)`等价于`f()`，`void`不能是待决类型。摒弃volatile形参<br>可以无名
 function parameter pack                 |函数形参包组
 function parameter scope                |函数形参作用域 |作用域的一种，形参声明子句（不只函数）所在声明符范围，有体则包含体
-function pointer conversion             |函数指针转换   |去掉noexcept约束
+function pointer conversion             |函数指针转换 FPtrC|去掉noexcept约束，属于标准转换的限定调整类别
 function pointer type                   |函数指针类型
 function prototype                      |函数原型
 function scope                          |函数作用域
@@ -890,7 +896,7 @@ function template                       |函数模板
 function-try-block                      |函数-try-块    |整个函数放入`try...catch`中
 function type                           |函数类型       |返回类型，形参类型列表，cv+ref（仅NSMF或成员指针，或类型标识、typedef名），noexcept<br>忽略函数类型本身的cv
 function-like macro                     |函数式宏
-function-to-pointer conversion          |函数向指针转换 |函数或静态成员函数
+function-to-pointer conversion          |函数向指针转换 F2Ptr |函数或静态成员函数
 fundamental alignment                   |基础对齐       |FA <= `alignof(max_align_t)`
 fundamental type                        |基础类型       |算术（整型、浮点）, `void`, `nullptr_t`
 
@@ -932,6 +938,8 @@ hosted implementation                   |宿主式实现 |在操作系统下运�
 |English|中文|说明|
 |-|-|-|
 identifier                              |标识符     |预处理记号，也是记号，符合 Unicode 标识符文法 XID_Start XID_Continue*
+Identity                                |恒等Id     |重载决议中标准转换类别，代表不做任何转换，精确匹配级
+ICS, implicit conversion sequence       |隐式转换序列   |重载决议中对实参->形参匹配程度的评级<br>静态成员函数ICS1与任意其他函数ICS1等价，其他按照ICS等级<br>标准、用户定义、省略号
 identifier label                        |标识符标号
 IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
@@ -999,8 +1007,8 @@ integer conversion rank                 |整数转换等级   |宽度越小等�
 integer literal                         |整数字面量 |后缀：符号性`u|U`，类型`l|L|ll|LL|z|Z`<br>前缀：进制`0|0b|0B|0x|0X`
 integer type                            |整数类型   |整数*8、字符*5、`bool`
 integral constant expression            |整型常量表达式
-integral conversion                     |整形转换   |除提升外的任意整型间转换，除bool外同余值
-integral promotion                      |整形提升   |低于int的整型、字符、无作用域枚举，转为足够宽的int及以上最低类型<br>整型位字段提升到int
+integral conversion                     |整形转换 IntC  |转换类别的标准转换<br>除提升外的任意整型间转换，除bool外同余值
+integral promotion                      |整形提升 IntP  |提升类别的标准转换<br>低于int的整型、字符、无作用域枚举，转为足够宽的int及以上最低类型<br>整型位字段提升到int
 integral type                           |整型类型   |整数*8、字符*5、`bool`
 inter-thread happens before             |线程间发生早于 ITHB|明确跨线程顺序性：<br>SeqB、Sync、DepB的跨线程组合<br>DepB+SeqB不足以提供有序性
 interactive device                      |交互设备   |I/O 设备，可观察行为
@@ -1083,7 +1091,8 @@ lookup set                              |查找集合       |类成员名字查�
 low-order bit                           |低序位         |最低有效位
 lower bound                             |下界
 lvalue                                  |左值           |并非临限值XValue的泛左值
-lvalue-to-rvalue conversion             |左值向右值转换 |非函数、非数组，GLv->PRv，非类类型去掉cv
+Lvalue Transformation                   |左值变换 LvTrn |重载决议中的标准转换类别，精确匹配级，包括左值向右值Lv2Rv，数组向指针A2Ptr，函数向指针F2Ptr
+lvalue-to-rvalue conversion             |左值向右值转换 Lv2Rv |非函数、非数组，GLv->PRv，非类类型去掉cv
 
 ### M
 
@@ -1289,15 +1298,15 @@ point of declaration                    |声明点         |实体声明生效�
 point of definition                     |定义点
 pointer                                 |指针
 pointer arithmetic                      |指针算术
-pointer conversion                      |指针转换       |空指针转换，cv T*->cv void*（地址不变），cv D*->cv B*（地址调整）
+pointer conversion                      |指针转换 PtrC  |转换类别的标准转换。空指针转换，cv T*->cv void*（地址不变），cv D*->cv B*（地址调整）
 pointer declarator                      |指针声明符
 pointer literal                         |指针字面量     |`nullptr`，类型为`std::nullptr_t`
-pointer to member                       |成员指针       |数据成员指针，成员函数指针
-pointer to member conversion            |成员指针转换   |空成员指针转换，cv T(B::*)->cv T(D::*)
-pointer to member declarator            |成员指针声明符
-pointer to member expression            |成员指针表达式 |`cast-expr .* cast-expr` `cast-expr ->* cast-expr`。成员函数：检查对象的`&`/`&&`
+pointer-to-member                       |成员指针       |数据成员指针，成员函数指针
+pointer-to-member conversion            |成员指针转换 MPtrC |转换类别的标准转换。空成员指针转换，cv T(B::*)->cv T(D::*)
+pointer-to-member declarator            |成员指针声明符
+pointer-to-member expression            |成员指针表达式 |`cast-expr .* cast-expr` `cast-expr ->* cast-expr`。成员函数：检查对象的`&`/`&&`
 pointer to member of X of type cv T     |cv T 类型的 X 的成员指针
-pointer to member operator              |成员指针运算符 |`.*` 和 `->*`，`p->*mp`等价于`(*(p)).*mp`
+pointer-to-member operator              |成员指针运算符 |`.*` 和 `->*`，`p->*mp`等价于`(*(p)).*mp`
 pointer to T                            |T 的指针，指向 T 的指针
 pointer-interchangable                  |指针可相互转换 |相同地址值：相同对象、联合体与成员、标准布局类与首成员或基类子对象（不包括数组与首元素）
 polymorphic                             |多态的
@@ -1346,6 +1355,7 @@ programming language                    |程序设计语言
 projection                              |投射       |算法对输入元素进行自定义变换
 promise object                          |承诺对象   |承诺类型的对象，以协程函数各实参构造，若失败则默认构造
 promise type                            |承诺类型   |`std::coroutine_traits<R, P...>::promise_type`<br>提供可等待的`initial_suspend`，`final_suspend`和`unhandled_exception`<br>提供`return_void`或`return_value`之一，提供`get_return_object`，`yield_value`
+Promition                               |提升 Prom  |重载决议中的标准转换类别，提升级，包括整型提升 IntP，浮点提升 FltP<br>重载决议中的标准转换等级
 prospective destructor                  |预期析构函数|若未显式声明则隐式声明预置的无约束预期析构函数
 protected                               |受保护     |允许类内部、友元及派生类访问
 prototype                               |原型
@@ -1363,6 +1373,7 @@ purview                                 |视野
 |English|中文|说明|
 |-|-|-|
 qualification                           |限定，限定性
+Qualification Adjustment                |限定调整 QualAdj |重载决议中的标准转换类别，精确匹配级，包括限定转换 QualC，函数指针转换 FPtrC
 qualification-combined type             |限定合并类型   |多级指针/数组的公共类型。非顶层各级 cv 限定符合并，向发生合并层级的所有外层添加 const
 qualification decomposition             |限定分解       |多级指针/成员指针/数组的分解方式
 qualified name                          |限定名         |限定标识，using-声明符，typename-说明符，和具有`A::B`结构的各种说明符等中的终端名，以及成员限定名
@@ -1479,7 +1490,7 @@ specialization                          |特化式，特例   |代码结构为�
 specialize                              |特化
 specifier                               |说明符
 stable algorithm                        |稳定算法   |保留输入元素顺序
-standard conversion sequence            |标准转换序列   |隐式转换：(Lv2Rv|A2Ptr|F2Ptr)?+(IntP|FltP|IntC|FltC|FIC|PtrP|MptrP|BoolC)?+FPtrC?+QualC?
+standard conversion sequence            |标准转换序列 SCS   |重载决议中ICS的一种<br>恒等，或隐式转换：(Lv2Rv|A2Ptr|F2Ptr)?+(IntP|FltP|IntC|FltC|FIC|PtrC|MPtrC|BoolC)?+FPtrC?+QualC?<br>左值变换LvTrn+提升Prom或转换Conv+限定调整QualAdj
 standard integer type                   |标准整数类型   |标准有符号、无符号整数
 standard signed integer type            |标准有符号整数类型 |`signed char`, `short`, `int`, `long`, `long long`
 standard unsigned integer type          |标准无符号整数类型 |`unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, `unsigned long long`
@@ -1658,6 +1669,7 @@ user provided function                  |用户提供的函数 |用户声明且�
 user-declared                           |用户声明的
 user-defined character literal          |用户定义字符字面量     |预处理记号，记号，字符字面量+后缀，类型运算符 `operator "" X(Tchar t)`
 user-defined conversion                 |用户定义转换           |转换函数、构造函数
+user-defined conversion sequence        |用户定义转换序列 UDCS  |重载决议中ICS的一种，SCS1+UDConv+SCS2<br>SCS2蕴含引用绑定部分。模板特例转换之后的SCS2必须为精确匹配级<br>（复制构造）转换为同类型具有精确匹配级，（基类构造）转换为基类具有转换级
 user-defined floating-point literal     |用户定义浮点字面量     |无后缀浮点字面量+自定义后缀，先类型后通配，类型运算符只支持`long double`
 user-defined integer literal            |用户定义整数字面量     |无后缀整数字面量+自定义后缀，先类型后通配，类型运算符只支持`unsigned long long`
 user-defined literal                    |用户定义字面量         |数值/字符/字符串字面量+字面量后缀，字面量运算符（模板）函数
