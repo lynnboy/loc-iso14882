@@ -494,7 +494,9 @@ basic execution wide-character set      |基本执行宽字符集
 basic source character set              |基本源字符集   |只有96个字符，至少兼容 ASCII 和 EBCDIC
 behavior                                |行为
 belong                                  |属于（作用域） |实体属于其声明式的目标作用域
-best viable function                    |最佳可行函数   |重载决议中基于ICS从可行函数中选择最佳<br>
+best viable function                    |最佳可行函数   |重载决议中基于ICS从可行函数中选择最佳
+better conversion                       |更好的转换     |
+better conversion sequence              |更好的转换序列 |重载决议中比较ICS的关系。SCS&lt;UDCS&lt;Ellipsis<br>列表：`initializer_list`优先，短数组优先<br>SCS：子序列优先，比较转换等级，同等级中直接比间接好，引用绑定中右值绑定`&&`比`&`好，函数左值绑定`&`比`&&`好，仅限定转换不同时少cv优先<br>UDCS：UDC相同时按SCS2比较
 better viable function                  |更好的可行函数 |所有实参ICSi至少一样好。存在更好的ICSi，或用于初始化变量的转换ICS更好，或元编程偏序（函数>函数模板特例，模板偏序殊，约束），或同为构造函数基类>派生类，优先非重写、正序重写、非导引、非复制导引候选、非模板构造函数
 binary                                  |二进制，二元
 binary fold                             |二元折叠       |展开包组和一个表达式
@@ -980,6 +982,7 @@ indeterminate value                     |不确定值   |自动或动态对象�
 indeterminately sequenced               |未定顺序的 |线程内，顺序早于或晚于，不重叠
 indirect base class                     |间接基类   |非直接基类
 indirection operator                    |间接运算符     |一元运算符/表达式，`*`，左值
+indistinguishable conversion sequences  |不可区分的转换序列 |重载决议中比较ICS的关系，等价ICS
 inequality operator                     |不相等运算符
 inhabit                                 |居于           |声明式居于其直接作用域（模板形参作用域单算）
 inherited constructor                   |继承的构造函数 |相当于委派给基类构造函数，以预置默认构造函数的方式初始化其他子对象<br>using声明式引入的是名字，即所有构造函数
@@ -1063,6 +1066,7 @@ linkage                                 |连接，连接性   |可被连接器�
 linkage-specification                   |连接说明   |指定语言连接`extern "xxx"`
 list                                    |列表
 list-initialization                     |列表初始化 |以花括号初始化列表进行的初始化，初始化式列表构造函数优先<br>定名列表初始化聚合，单元素列表复制或直接初始化，字符串、聚合初始化，<br>空列表对默认构造的值初始化，`std::initializer_list`构造函数初始化，<br>其他构造函数排除窄化转换初始化，单元素列表对枚举底层直接初始化，单元素列表无窄化的复制/直接初始化，<br>单元素列表初始化引用，空列表值初始化
+list-initialization sequence            |列表初始化序列 |重载决议中ICS的一种。聚合的定名列表：UDCS(UDC+Id)<br>聚合的同类或派生类单元素列表：转换<br>字符数组的字符串字面量单元素列表：Id<br>`initializer_list`或数组的兼容列表：各元素的最差转换，或空列表Id<br>非聚合类重载决议所选构造函数：同类：精确匹配，派生类：转换，其他：UDCS(UDC+Id)<br>聚合初始化：UDCS(UDC+Id)
 literal                                 |字面量     |字符/字符串/数值，以及自定义变体，布尔，指针
 literal operator                        |字面量运算符   |用户字面量的函数，非模板有类型化和原始两种，`operator "" X(T)`, `operator "" X(const char*)`
 literal operator template               |字面量运算符模板   |用户字面量的函数模板，数值模板和字符串模板两种，无函数形参
@@ -1702,6 +1706,7 @@ variadic template                       |变参模板
 variant                                 |变体
 variant member                          |可变成员   |共用内存的数据成员：联合体的非静态数据成员，匿名联合体嵌入类中的非静态数据成员
 viable                                  |可行的
+viable function                         |可行函数   |重载决议中从候选函数中选取，基于实参数量、各实参均存在ICS、满足约束
 virtual                                 |虚的
 virtual base class                      |虚基类     |共享基类子对象，由全派生类维护其布局、创建和销毁
 virtual function                        |虚函数     |声明为`virtual`或覆盖虚函数的非静态成员函数<br>可以标`override`或`final`，不能被约束
@@ -1728,6 +1733,7 @@ whitespace character                    |空白字符   |``, `\t`, `\v`, `\f`, `
 wide character                          |宽字符
 wide character literal                  |宽字符字面量   |类型为 `wchar_t`，除不可编码和多字符外，编码为执行宽字符
 wide string literal                     |宽字符串字面量 |类型为 `const wchar_t[n]`，编码为执行宽字符
+worse conversion sequence               |更差的转换序列 |重载决议中比较ICS的关系，更好ICS的逆反
 write-read coherence                    |写-读协调性    |原子性 M 的 WA HapB RB，则两个值符合 M 的改动顺序
 write-write coherence                   |写-写协调性    |原子性 M 的 WA HapB WB，则两个值符合 M 的改动顺序
 
