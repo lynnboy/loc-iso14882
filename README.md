@@ -75,6 +75,16 @@ Redoc is a markup language, all special things are in `[]`.
 `noexcept`|`throw`|`typeid`|`requires`
 `co_await`|`co_yield`
 
+### Overloadable Operators 可重载运算符
+
+||||||||||
+|-|-|-|-|-|-|-|-|-|
+`new`|`delete`|`new[]`|`delete[]`|`co_await`|`()`|`[]`|`->`|`->*`
+`~`   |`!`  |`+`  |`-`  |`*`  |`/` |`%` |`^`  |`&`
+`\|`  |`=`  |`+=` |`-=` |`*=` |`/=`|`%=`|`^=` |`&=`
+`\|=` |`==` |`!=` |`<`  |`>`  |`<=`|`>=`|`<=>`|`&&`
+`\|\|`|`<<` |`>>` |`<<=`|`>>=`|`++`|`--`|`,`
+
 ## Syntax Terms
 
 ### Lexical Convensions 词法约定
@@ -390,6 +400,14 @@ Original   |中文   |章节    |定义
 *mem-initializer*           |*成员初始化式* | [class.base.init] | *成员初始化式标识* `(` *表达式列表*__?__ `)` \| *成员初始化式标识* *花括号初始化列表*
 *mem-initializer-id*        |*成员初始化式标识*| [class.base.init] | *类或-decltype* \| *标识符*
 
+### Overloading 重载
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*operator-function-id*      |*运算符函数标识*| [over.oper.general] | `operator` *运算符*
+*operator*                  |*运算符*       | [over.oper.general] | *运算符* ∈ **可重载运算符**
+*literal-operator-id*       |*字面量运算符标识*| [over.literal] | `operator` *字符串字面量* *标识符* \| `operator` *用户定义字符串字面量*
+
 ## Terms Translation Table
 
 ### A
@@ -502,6 +520,7 @@ binary                                  |二进制，二元
 binary fold                             |二元折叠       |展开包组和一个表达式
 binary left fold                        |二元左折叠     |`expr op ... op pack`
 binary operator                         |二元运算符
+binary operator function                |二元运算符函数 |`x.operator@(y)`或`operator@(x,y)`
 binary right fold                       |二元右折叠     |`pack op ... op expr`
 bind directly                           |直接绑定       |引用初始化中，除了将初始化式转换为被引用类型之外的情况
 bit                                     |位
@@ -558,6 +577,7 @@ class-head                              |类头           |类定义式中花括
 class member                            |类成员         |一种实体
 class member access expression          |类成员访问表达式 |后缀表达式。`a.idexpr`，`p->idexpr`
 class member access operator            |类成员访问运算符 |内建：`p->m`=>`(*p).m`
+class member access operator function   |类成员访问运算符函数 |`(pf_expr.operator->())->id_expr`，递归
 class-name                              |类名       |标识符或简单模板标识
 class scope                             |类作用域   |作用域的一种，包括类成员说明，加上体外带限定成员
 class-specifier                         |类说明符   |类的定义体
@@ -579,6 +599,7 @@ common comparison type                  |公共比较类型   |`strong_ordering`
 common initial sequence                 |共同起始序列   |多个标准布局结构体中开头非静态数据成员和位字段序列，对应成员布局兼容
 common type                             |公共类型
 compare expression                      |比较表达式 |`shift_expr <=> shift_expr`。内建：算术类型进行一般算术转换，禁止bool混合，禁止除整型到浮点外的窄化<br>整型`strong_ordering`，浮点`partial_ordering`，以合成指针类型比较指针，可比较时为`strong_ordering`
+comparison operator function            |比较运算符函数 |相等性、关系、三路比较
 compile                                 |编译
 complete-class context                  |完整类语境 |在类成员说明之内需要将类当做完整类型的语境：函数体、默认实参、默认模板实参、noexcept、默认成员初始化式、嵌套类定义式
 complete object                         |完整对象   |不是子对象的对象
@@ -698,6 +719,7 @@ declare                                 |声明
 decltype specifier                      |decltype 说明符|免求值操作数。<br>`decltype(expr)`：结构化绑定为被引用类型，NTTP为推断类型，标识或成员访问为实体类型<br>其他以及`decltype((expr))`：根据值类别为`T`,`T&`,`T&&`<br>非直接调用的纯右值并不真进行实例化
 decode                                  |解码
 decrement operator                      |减量运算符
+decrement operator function             |减量运算符函数 |前置--为一元，后置--为二元（占位`int`）
 deduce                                  |推断
 deducible template                      |可推断模板     |类模板，或可推断模板的别名模板
 deduction guide                         |推断导引
@@ -791,6 +813,7 @@ enum-specifier                          |枚举说明符 |枚举的定义体
 equality                                |相等
 equality expression                     |相等性表达式   |`rel_expr == rel_expr`等。内建：算术类型一般算术转换，指针和成员指针进行合成指针类型比较<br>成员指针比较，虚函数和无继承关系时未指明顺序
 equality operator                       |相等性运算符   |`==`, `!=`
+equality operator function              |相等性运算符函数
 equivalence                             |等价
 equivalence class                       |等价类 |正则表达式，[=a=]，匹配校排等价字符
 error                                   |错误，误差
@@ -880,6 +903,7 @@ function                                |函数           |一种实体，不是
 function-body                           |函数体         |指定代码或`=default`、`=delete`
 function call expression                |函数调用表达式 |后缀表达式
 function call operator                  |函数调用运算符 |内建：静态、非静态、虚、析构/伪析构，`a(b,...)`, a SeqB b, b IndSeq, b SeqB 函数体
+function call operator function         |函数调用运算符函数 |`pf_expr.operator()(expr_list)`
 function declaration                    |函数声明式     |非`typedef`简单声明式，类型为函数类型。允许typedef名声明函数
 function declarator                     |函数声明符
 function-definition                     |函数定义式     |语法不允许用typedef名
@@ -978,6 +1002,7 @@ inclusive-or operator                   |或运算符   |`|`
 incomplete type                         |不完整类型 |`void`，`T[]`，（类作用域外）无定义式的类，某些枚举
 incomplete-defined object type          |定义不完整的对象类型   |仅声明的类、某些情况的枚举、未知边界数组
 increment operator                      |增量运算符
+increment operator function             |增量运算符函数 |前置++为一元，后置++为二元（占位`int`）
 indeterminate value                     |不确定值   |自动或动态对象的初始化前内容
 indeterminately sequenced               |未定顺序的 |线程内，顺序早于或晚于，不重叠
 indirect base class                     |间接基类   |非直接基类
@@ -1070,7 +1095,7 @@ list-initialization sequence            |列表初始化序列 |重载决议中I
 literal                                 |字面量     |字符/字符串/数值，以及自定义变体，布尔，指针
 literal operator                        |字面量运算符   |用户字面量的函数，非模板有类型化和原始两种，`operator "" X(T)`, `operator "" X(const char*)`
 literal operator template               |字面量运算符模板   |用户字面量的函数模板，数值模板和字符串模板两种，无函数形参
-literal suffix literal                  |字面量后缀     |字面量运算符（模板）中的标识符，即字面量后缀
+literal suffix identifier               |字面量后缀标识符   |字面量运算符（模板）中的标识符，即字面量后缀
 literal type                            |字面类型       |void、标量、引用，字面类型的数组，constexpr构造和析构，非 volatile 数据
 local                                   |局部，局部的
 local class                             |局部类         |块作用域定义的类，仅作用域限定，无局部实体俘获。无静态数据成员，不能类外定义函数
@@ -1249,6 +1274,8 @@ one-definition rule                     |单一定义规则，ODR  |各翻译单
 opaque-enum-declaration                 |笼统枚举声明式 |不声明枚举符，但指定底层类型，完整的前向声明，完整类型
 operand                                 |操作数
 operator                                |运算符
+operator function                       |运算符函数     |声明符标识是运算符函数标识（`operator @`）的函数<br>非静态成员函数或非成员函数
+operator function template              |运算符函数模板 |声明符标识是运算符函数标识（`operator @`）的函数模板
 operator-or-punctuator                  |运算符或标点   |记号的一种，包括运算符记号和 `{}[]()...` 等和替代表示
 operator overloading                    |运算符重载 |成员候选、非成员候选、内建候选、重写候选。`->`递归
 or operator                             |或运算符
@@ -1338,6 +1365,7 @@ precedence                              |优先级
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
 prefix increment operator               |前置增量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
+prefix unary operator function          |前置一元运算符函数 |`cast_expr.operator@()` 或 `operator@(cast_expr)`
 preprocess                              |预处理
 preprocessing directive                 |预处理指令
 preprocessing number                    |预处理数字 |预处理记号，`[.]? [0-9] ( [.] | [']? [0-9a-zA-Z_] | [eEpP] [-+] )*`
@@ -1359,7 +1387,8 @@ programming language                    |程序设计语言
 projection                              |投射       |算法对输入元素进行自定义变换
 promise object                          |承诺对象   |承诺类型的对象，以协程函数各实参构造，若失败则默认构造
 promise type                            |承诺类型   |`std::coroutine_traits<R, P...>::promise_type`<br>提供可等待的`initial_suspend`，`final_suspend`和`unhandled_exception`<br>提供`return_void`或`return_value`之一，提供`get_return_object`，`yield_value`
-Promition                               |提升 Prom  |重载决议中的标准转换类别，提升级，包括整型提升 IntP，浮点提升 FltP<br>重载决议中的标准转换等级
+promoted integral type                  |已提升整型类型 |排除`char`等会被提升的类型
+Promotion                               |提升 Prom  |重载决议中的标准转换类别，提升级，包括整型提升 IntP，浮点提升 FltP<br>重载决议中的标准转换等级
 prospective destructor                  |预期析构函数|若未显式声明则隐式声明预置的无约束预期析构函数
 protected                               |受保护     |允许类内部、友元及派生类访问
 prototype                               |原型
@@ -1414,6 +1443,7 @@ regular expression                      |正则表达式
 reinterpret cast expression             |重解释转型表达式 |后缀表达式，`reinterpret_cast<T>(v)`<br>函数指针兼容，对象指针兼容，成员指针兼容，指针<=>整数（枚举），通过指针完成引用转换
 relational expression                   |关系表达式     |`cmp_expr < cmp_expr` 等。内建：算术进行一般算术转换，指针以合成指针类型比较<br>指针部分顺序：数组下标、成员声明顺序
 relational operator                     |关系运算符     |`<`, `>`, `<=`, `>=`
+relational operator function            |关系运算符函数
 relaxed                                 |宽松的
 relaxed atomic operation                |宽松原子性操作 |不是同步操作，但不会竞争
 relaxed pointer safety                  |宽松指针安全性
@@ -1474,6 +1504,7 @@ signature                               |签名   |名字，形参类型列表�
 signed                                  |有符号
 signed integer type                     |有符号整数类型 |标准、扩充有符号整数
 similar type                            |相似类型       |两个同级数多级指针/数组中，不考虑cv，允许数组的无边界/有边界差异外，其余相同
+simple assignment operator function     |简单复制运算符函数 |`operator=`，只能为非静态成员函数
 simple-capture                          |简单俘获符     |不带有初始化式，直接指名被俘获变量的俘获符
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）：属性+一系列声明说明符+声明符的列表<br>声明类、枚举时可以没有声明符
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
@@ -1539,7 +1570,8 @@ subexpression                           |子表达式
 subnormal                               |次正规的
 subobject                               |子对象     |被其他对象包含：成员、基类、元素
 subscript expression                    |下标表达式 |后缀表达式
-subscript operator                      |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
+subscripting operator                   |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
+subscripting operator function          |下标运算符函数 |`pf_expr.operator[](expr_or_braced_list)`
 substatement                            |子语句     |不包括选择和循环中的初始化语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
 suitable created object                 |适当创建的对象
@@ -1588,6 +1620,7 @@ thread storage duration                 |线程存储期
 thread_local specifier                  |thread_local 说明符|成员：需加`static`，块：暗含`static`
 thread-local variable                   |线程局部变量
 three-way comparison                    |三路比较   |比较表达式，`e1 <=> e2`
+three-way comparison operator function  |三路比较运算符函数
 throw                                   |抛出
 throw-expression                        |throw表达式|`throw e`：抛出，`throw`重新抛出当前处理的异常
 token                                   |记号       |编译器理解的语法元素：标识符，关键字，字面量，运算符或标点
