@@ -408,6 +408,21 @@ Original   |中文   |章节    |定义
 *operator*                  |*运算符*       | [over.oper.general] | *运算符* ∈ **可重载运算符**
 *literal-operator-id*       |*字面量运算符标识*| [over.literal] | `operator` *字符串字面量* *标识符* \| `operator` *用户定义字符串字面量*
 
+### Templates 模板
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*template-declaration*      |*模板声明式*   | [temp.pre]    | *模板头* *声明式* \| *模板头* *概念定义式*
+*template-head*             |*模板头*       | [temp.pre]    | `template` `<` *模板形参列表 `>` *requires-子句*__?__
+*template-parameter-list*   |*模板形参列表* | [temp.pre]    | *模板形参* ( `,` *模板形参* )__\*__
+*requires-clause*           |*requires-子句*| [temp.pre]    | `requires` *约束逻辑或表达式*
+*constraint-logical-or-expression*|*约束逻辑或表达式*| [temp.pre] | *约束逻辑与表达式* ( `||` *约束逻辑与表达式* )__\*__
+*constraint-logical-and-expression*|*约束逻辑与表达式*| [temp.pre] | *初等表达式* ( `&&` *初等表达式* )__\*__
+*template-parameter*        |*模板形参*     | [temp.param]  | *类型形参* \| *形参声明式*
+*type-parameter*            |*类型形参*     | [temp.param]  | *类型形参关键字* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *类型约束* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *模板头* *类型形参关键字* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型表达式* )
+*type-parameter-key*        |*类型形参关键字*| [temp.param] | `class` \| `typename`
+*type-constraint*           |*类型约束*     | [temp.param]  | *嵌套名说明符*__?__ *概念名* ( `<` *模板实参列表* `>` )__?__
+
 ## Terms Translation Table
 
 ### A
@@ -729,7 +744,7 @@ default behavior                        |缺省行为       |某些函数，如�
 default constructor                     |默认构造函数   |无需实参的构造函数（每个非形参包组均有默认实参）<br>弃置隐含默认构造函数：有任何无法默认构造或通过默认成员初始化式初始化的可变成员、引用成员、const成员，有任何无法调用默认构造或析构的潜在构造子对象
 default label                           |default 标号
 default member initializer              |默认成员初始化式   |非静态数据成员，默认的构造函数成员初始化式。引用不能绑定临时对象
-default template argument               |默认模板实参   |模板形参的默认实参
+default template argument               |默认模板实参   |模板形参的默认实参。类模板外成员定义式、友元类模板不能有默认模板实参，友元函数定义式可以指定默认模板实参<br>与默认实参类似的合并累积，不可重复指定
 default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
 defaulted comparison operator function  |预置的默认比较运算符函数|`(const C&)const`或`(const C&)const&`，`static(const C&, const C&)`或`static (C, C)`<br>若有引用或可变非静态数据成员则弃置，任何子对象不能`==`则`==`弃置，任何子对象不能`<=>`则`<=>`弃置<br>`==`返回`bool`，`auto`时`<=>`返回公共比较类型。`==`随`<=>`隐式声明
@@ -976,6 +991,7 @@ immediate function context              |直接函数语境   |直接函数的�
 immediate invocation                    |直接调用       |直接函数调用链的入口
 immediate scope                         |直接作用域     |最小的外围作用域
 immediate subexpression                 |直接子表达式   |应当在文法位置执行的表达式：成分表达式、隐含函数调用、lambda的捕获的初始化、默认实参、聚合的默认成员初始化式
+immediately-declared constraint         |直接声明约束   |以类型约束`C`声明的模板形参`C T`或`C<arglist> T`或包组形式，生成的约束表达式`C<T>`或`C<T, arglist>`或包组`&&`折叠
 implementation                          |实现
 implementation limits                   |实现限额
 implementation-defined                  |由实现定义的   |编译器实现自行决定的某些良构代码的行为
@@ -1539,6 +1555,7 @@ static                                  |静态
 static assertion                        |静态断言
 static cast expression                  |静态转型表达式 |后缀表达式，`static_cast<T>(v)`<br>指针或引用：vB!=>D，左值=>T&，临限值=>T&&<br>转换：ICS，直接初始化的ICS，聚合首元素的ICS
 static data member                      |静态数据成员   |可为`thread_local`，不能为`mutable`，无名类、局部类不能有静态数据成员<br>非内联：整型常量SDM可以在类内以常量初始化，若ODR式使用则在类外应有无初始化定义式
+static data member template             |静态数据成员模板
 static initialization                   |静态初始化     |静态/线程变量的常量/零初始化，运行前发生。允许动->静优化
 static member                           |静态成员       |静态数据成员或静态成员函数
 static member function                  |静态成员函数
@@ -1562,6 +1579,7 @@ string literal operator template        |字符串字面量运算符模板 |`tem
 stringize                               |字符串化       |预处理功能，获得预处理记号的字面量，`#a` -> `"a"`
 strongly happens before                 |强发生早于 StrgHB  |不允许消费操作时，全局顺序性：线程内SeqB，线程间Sync，SeqB+SimpHB+SeqB
 struct                                  |结构体
+structural type                         |结构式类型     |可用作非类型模板形参的类型：标量、左值引用、全公开字面量类型，数组
 structure tag                           |结构体标签
 structured binding                      |结构化绑定     |实体的一种，一组变量的语法糖<br>声明隐含变量`e`，数组：非引用时为数组副本，各标识符代表各元素<br>元组协议：以`e.get<i>()`或`get<i>(e)`初始化各个引用<br>单层数据成员展开：各标识符按成员声明顺序代表各成员，支持位字段
 structured binding declaration          |结构化绑定声明式   |`[]`语法的简单声明式，仅允许`static`, `thread_local`, `auto` 或 cv<br>初始化式为`=ass_expr`,`{ass_expr}`或`(ass_expr)`，数组或非联合体类类型
@@ -1594,20 +1612,22 @@ synthesized three-way comparison        |合成三路比较   |`static_cast<R>(a
 |-|-|-|
 target constructor                      |目标构造函数   |被委派构造函数调用的构造函数，由重载决议选择
 target scope                            |目标作用域     |声明式所居作用域（友元/限定名/详述类型/块外部声明式等的目标例外）
-template                                |模板           |一种实体，基于参数生成（实例化）其他实体
+template                                |模板           |一种实体，基于参数生成（实例化）其他实体：类、函数、变量、别名、概念
 template argument                       |模板实参
 template argument deduction             |模板实参推断
 template-declaration                    |模板声明式     |声明或定义模板化实体（包括概念），引入模板形参的作用域
 template-head                           |模板头         |模板声明中声明实体前指定模板形参及其约束的部分
 template-id                             |模板标识       |无限定标识的一种，指名模板化实体的特例
 template instantiation                  |模板实例化
-template non-type parameter             |模板非类型形参 |三种模板形参之一
-template-parameter                      |模板形参
-template parameter pack                 |模板形参包组
+template non-type parameter             |模板非类型形参 |三种模板形参之一。结构式类型、包含占位符（支持直接声明约束）、或推断类类型<br>非类类型且非引用：纯右值（数组和函数衰退为指针）。类类型：const左值
+template-parameter                      |模板形参       |类型、非类型、模板。可带约束。不能定义类型
+template parameter object               |模板形参对象   |类类型的非类型模板形参，静态存储期的const对象，常量折叠
+template parameter pack                 |模板形参包组   |非函数模板仅允许最后一个形参是包组，函数模板的形参包组之后的形参必须可推断或有默认实参
 template parameter scope                |模板形参作用域 |作用域的一种，模板形参列表到被模板化声明式末尾，模板模板形参的形参范围<br>模板形参作用域对其他名字透明，仅对模板形参有效
 template specialization                 |模板特例，模板特化式   |模板特例：一种实体，模板基于参数落实的实体
-template template parameter             |模板模板形参   |三种模板形参之一
-template type parameter                 |模板类型形参   |三种模板形参之一
+template template parameter             |模板模板形参   |三种模板形参之一。引入模板名
+template type parameter                 |模板类型形参   |三种模板形参之一。引入typedef名
+templated entity                        |模板化实体
 temporary expression                    |临时对象表达式
 temporary materialization conversion    |临时对象实质化转换 |纯右值->临限值，类对象必须可销毁
 temporary object                        |临时对象
