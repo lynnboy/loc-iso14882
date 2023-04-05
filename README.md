@@ -422,6 +422,11 @@ Original   |中文   |章节    |定义
 *type-parameter*            |*类型形参*     | [temp.param]  | *类型形参关键字* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *类型约束* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *模板头* *类型形参关键字* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型表达式* )
 *type-parameter-key*        |*类型形参关键字*| [temp.param] | `class` \| `typename`
 *type-constraint*           |*类型约束*     | [temp.param]  | *嵌套名说明符*__?__ *概念名* ( `<` *模板实参列表* `>` )__?__
+*simple-template-id*        |*简单模板标识* | [temp.names]  | *模板名* `<` *模板实参列表*__?__ `>`
+*template-id*               |*模板标识*     | [temp.names]  | *简单模板标识* \| ( *运算符函数标识* \| *字面量运算符标识* ) `<` *模板实参列表*__?__ `>` 
+*template-name*             |*模板名*       | [temp.names]  | *标识符*
+*template-argument-list*    |*模板实参列表* | [temp.names]  | *模板实参* `...`__?__ ( `,` *模板实参* `...`__?__ )__\*__
+*template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式*
 
 ## Terms Translation Table
 
@@ -630,6 +635,7 @@ compound statement                      |复合语句   |块语句，语句块�
 compound type                           |复合类型   |数组、函数、指针、引用、类、联合体、枚举、成员指针
 concept                                 |概念
 concept-definition                      |概念定义式 |定义概念时模板头后面的部分，决定概念语义
+concept-id                              |概念标识   |概念的*简单模板标识*，`bool`纯右值，正规化约束表达式的值
 concurrency                             |并发性
 concurrent                              |并发的
 concurrent foreward progress guarantees |并发向前进展保证   |实现保证线程终将有进展，无关其他线程
@@ -1613,19 +1619,21 @@ synthesized three-way comparison        |合成三路比较   |`static_cast<R>(a
 target constructor                      |目标构造函数   |被委派构造函数调用的构造函数，由重载决议选择
 target scope                            |目标作用域     |声明式所居作用域（友元/限定名/详述类型/块外部声明式等的目标例外）
 template                                |模板           |一种实体，基于参数生成（实例化）其他实体：类、函数、变量、别名、概念
-template argument                       |模板实参
+template argument                       |模板实参       |类型、非类型、模板
 template argument deduction             |模板实参推断
 template-declaration                    |模板声明式     |声明或定义模板化实体（包括概念），引入模板形参的作用域
 template-head                           |模板头         |模板声明中声明实体前指定模板形参及其约束的部分
 template-id                             |模板标识       |无限定标识的一种，指名模板化实体的特例
 template instantiation                  |模板实例化
 template non-type parameter             |模板非类型形参 |三种模板形参之一。结构式类型、包含占位符（支持直接声明约束）、或推断类类型<br>非类类型且非引用：纯右值（数组和函数衰退为指针）。类类型：const左值
+template non-type argument              |模板非类型实参 |支持占位符和推断类类型。`const char*`不接受字符串字面量，引用和指针不接受临时对象、`typeid`结果、`__func__`等
 template-parameter                      |模板形参       |类型、非类型、模板。可带约束。不能定义类型
 template parameter object               |模板形参对象   |类类型的非类型模板形参，静态存储期的const对象，常量折叠
 template parameter pack                 |模板形参包组   |非函数模板仅允许最后一个形参是包组，函数模板的形参包组之后的形参必须可推断或有默认实参
 template parameter scope                |模板形参作用域 |作用域的一种，模板形参列表到被模板化声明式末尾，模板模板形参的形参范围<br>模板形参作用域对其他名字透明，仅对模板形参有效
 template specialization                 |模板特例，模板特化式   |模板特例：一种实体，模板基于参数落实的实体
 template template parameter             |模板模板形参   |三种模板形参之一。引入模板名
+template template argument              |模板模板实参   |代表类或别名模板的标识表达式。形参匹配时仅考虑主模板，形参模板应至少和实参模板一样特殊
 template type parameter                 |模板类型形参   |三种模板形参之一。引入typedef名
 templated entity                        |模板化实体
 temporary expression                    |临时对象表达式
@@ -1746,7 +1754,8 @@ UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为
 |-|-|-|
 vacuous initialization                  |无为初始化 |无实际动作（平凡）的默认初始化
 valid                                   |有效，合法
-valid but unspecified state             |有效但未指明的状态     |被移动后的状态
+valid but unspecified state             |有效但未指明的状态 |被移动后的状态
+valid *template-id*                     |有效的*模板标识*   |合适的模板实参列表，形参列表的实参代换成功，非待决时满足约束<br>非函数模板的模板标识必须有效
 value                                   |值         |一种实体，对象的状态
 value category                          |值类别     |glvalue: lvalue, xvalue; rvalue: xvalue, prvalue
 value computation                       |值计算
