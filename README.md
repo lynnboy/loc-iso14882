@@ -427,6 +427,7 @@ Original   |中文   |章节    |定义
 *template-name*             |*模板名*       | [temp.names]  | *标识符*
 *template-argument-list*    |*模板实参列表* | [temp.names]  | *模板实参* `...`__?__ ( `,` *模板实参* `...`__?__ )__\*__
 *template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式*
+*constraint-expression*     |*约束表达式*   | [temp.constr.decl] | *逻辑或表达式*
 
 ## Terms Translation Table
 
@@ -505,9 +506,11 @@ assignment expression                   |赋值表达式     |`ass_expr @= v`。
 assignment operator                     |赋值运算符     |`=`，组合赋值：乘、加、移位、按位
 associated character encoding           |关联字符编码   |字符或字符串字面量前缀指定的编码，无前缀的不可编码或多字符类型为 `int`
 associated class                        |关联类
+associated constraints                  |关联约束       |声明式受到的约束，按范式合取：模板形参的类型约束，模板形参后的requires子句，函数形参中的类型约束，函数尾部requires子句
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
 atomic                                  |原子性
+atomic constraint                       |原子约束       |表达式`E`+形参映射。由约束规范化过程形成<br>模板形参代换后表达式有效且求值为`true`时满足
 attach to module                        |附属于模块     |可替换全局`new`/`delete`函数、命名空间、带语言连接说明的声明式等附属全局模块；一些指定目标的友元声明式归属目标所在模块；否则归属当前视野的模块
 attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键字标识符
 attribute-declaration                   |属性声明式     |仅有属性的空声明，不是块声明式
@@ -635,7 +638,7 @@ compound statement                      |复合语句   |块语句，语句块�
 compound type                           |复合类型   |数组、函数、指针、引用、类、联合体、枚举、成员指针
 concept                                 |概念
 concept-definition                      |概念定义式 |定义概念时模板头后面的部分，决定概念语义
-concept-id                              |概念标识   |概念的*简单模板标识*，`bool`纯右值，正规化约束表达式的值
+concept-id                              |概念标识   |概念的*简单模板标识*，`bool`纯右值，规范化约束表达式的值
 concurrency                             |并发性
 concurrent                              |并发的
 concurrent foreward progress guarantees |并发向前进展保证   |实现保证线程终将有进展，无关其他线程
@@ -647,7 +650,7 @@ conditional operator                    |条件运算符     |`?:`。不可重�
 conditionally-supported                 |有条件支持的   |编译器实现可以选择不支持
 conflict                                |冲突           |两个求值至少一个改动
 conformance requirements                |一致性规定
-conjunction                             |合取
+conjunction                             |合取           |二元约束运算，`&&`，短路
 const_cast                              |const 转型
 const cast expression                   |const 转型表达式 |后缀表达式，`const_cast<T>(v)`<br>Ptr=>T*，Lv=>T&，GLv=>T&&，类PRv=>T&&（临时对象）
 const-default-constructible             |可 const 默认构造|构造函数或默认成员初始化式覆盖
@@ -674,6 +677,7 @@ constexpr specifier                     |constexpr 说明符   |修饰变量或�
 constinit specifier                     |constinit 说明符   |修饰静态或线程存储期的变量，保证静态初始化
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
 constness                               |常量性
+constraint                              |约束           |对模板实参提出要求：合取`&&`、析取`||`、原子
 construct                               |语言构造
 constructor                             |构造函数       |没有名字，不能取地址，不能是协程。构造中cv无效<br>禁止`T(cv T)`的构造函数，模板构造不会产生此签名
 consume                                 |消费           |同步操作
@@ -790,7 +794,7 @@ directive-introducing token             |指令发起记号
 disambiguation                          |歧义消解
 discarded statement                     |弃用语句       |`constexpr if` 排除的语句
 discarded-value expression              |弃值表达式     |仅保留副作用，一些 volatile 访问表达式进行L2R转换（保留读内存副作用）
-disjunction                             |析取
+disjunction                             |析取           |二元约束运算，`||`，短路
 division operator                       |除法运算符
 do statement                            |do 语句
 dot operator                            |点运算符
@@ -1183,6 +1187,7 @@ module partition                        |模块分区   |主模块中`mod:part`�
 module purview                          |模块视野   |模块的所有模块单元视野
 module unit                             |模块单元   |模块机制支持的程序表示，包含模块声明式的UT
 module unit purview                     |模块单元视野   |模块单元中从模块声明式到UT末尾的部分
+more constrained                        |更受约束   |根据约束纳入关系比较声明式
 more cv-qualified                       |更加 cv 限定的
 most derived class                      |全派生类   |非基类子对象的类对象的类型
 most derived object                     |全派生对象 |非基类子对象的对象
@@ -1258,7 +1263,9 @@ non-trivial                             |非平凡的   |需要真实执行代�
 non-vacuous initialization              |非无为初始化
 non-virtual base class                  |非虚基类   |非共享的基类子对象，由该类维护其创建和销毁
 `noreturn`                              |`noreturn` 属性|属性，无参数，用于函数，应在首个声明式指定，标明函数不会返回
-normalized                              |正规化的
+normal form                             |范式，规范形式 |约束规范化：去括号，识别析取、合取，递归对概念展开代换并规范化<br>文件路径规范形式
+normalization                           |规范化     |约束。文件路径
+normalized                              |规范化的
 normative                               |规范性的   |作为正式内容的文本章节或参考文献
 null                                    |空
 null character                          |空字符     |`'\0'`
@@ -1335,8 +1342,9 @@ parameter-type-list                     |形参类型列表   |函数类型的�
 parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
-partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
+partial ordering by constraints         |基于约束的部分排序 |基于纳入关系比较约束的范式：`C1||...`中的每个`C1`均纳入了`C2&&...`中的所有`C2`，则前者纳入后者
 partial specialization                  |部分特化，部分特化式
+partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
@@ -1502,6 +1510,7 @@ rvalue                                  |右值       |纯右值PRValue+临限�
 |English|中文|说明|
 |-|-|-|
 safely-derived pointer                  |安全衍生指针
+satisfy                                 |满足       |符合约束提出的要求
 scalar                                  |标量
 scalar type                             |标量类型   |算术、枚举、指针、成员指针、`nullptr_t`
 scope                                   |作用域，范围
@@ -1596,6 +1605,7 @@ subobject                               |子对象     |被其他对象包含：
 subscript expression                    |下标表达式 |后缀表达式
 subscripting operator                   |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
 subscripting operator function          |下标运算符函数 |`pf_expr.operator[](expr_or_braced_list)`
+subsume                                 |纳入       |比较析取范式和合取范式决定纳入关系
 substatement                            |子语句     |不包括选择和循环中的初始化语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
 suitable created object                 |适当创建的对象
@@ -1621,6 +1631,7 @@ target scope                            |目标作用域     |声明式所居作
 template                                |模板           |一种实体，基于参数生成（实例化）其他实体：类、函数、变量、别名、概念
 template argument                       |模板实参       |类型、非类型、模板
 template argument deduction             |模板实参推断
+template-argument-equivalent            |按模板实参等价 |判别两个非类型模板实参等价：同值的整型、浮点、`nullptr_t`、枚举、指针、成员指针、引用，以上的数组、联合体、类递归符合
 template-declaration                    |模板声明式     |声明或定义模板化实体（包括概念），引入模板形参的作用域
 template-head                           |模板头         |模板声明中声明实体前指定模板形参及其约束的部分
 template-id                             |模板标识       |无限定标识的一种，指名模板化实体的特例
