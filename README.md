@@ -210,6 +210,7 @@ Original   |中文   |章节    |定义
 *unary-expression*          |*一元表达式*   | [expr.unary.general] | *后缀表达式* \|<br> (*一元运算符*\|`++`\|`--`) *转型表达式* \|<br> *等待表达式* \|<br> `sizeof` (*一元表达式* \| `(` *类型标识* `)` \| `...` `(` *标识符* `)`) \|<br> `alignof` `(` *类型标识* `)` \|<br> *noexcept-表达式* \|<br> *new-表达式* \|<br> *delete-表达式*
 *unary-operator*            |*一元运算符*   | [expr.unary.general] | `*` \| `&` \| `+` \| `-` \| `!` \| `~`
 *await-expression*          |*等待表达式*   | [expr.await]  | `co_await` *转型表达式*
+*noexcept-expression*       |*noexcept-表达式*| [expr.unary.noexcept] | `noexcept` `(` *表达式* `)`
 *new-expression*            |*new-表达式*   | [expr.new]    | `::`__?__ `new` *new-放置* (*new-类型标识* \| `(` *类型标识* `)`) *new-初始化式*__?__
 *new-placement*             |*new-放置*     | [expr.new]    | `(` *表达式列表* `)`
 *new-type-id*               |*new-类型标识* | [expr.new]    | *类型说明符序列* *new-声明符*__?__
@@ -267,12 +268,14 @@ Original   |中文   |章节    |定义
 *nodeclspec-function-declaration*|*无声明说明符函数声明式*| [dcl.pre] |*属性说明符序列*__?__ *声明符* `;`
 *alias-declaration*         |*别名声明式*   | [dcl.pre]     | `using` *标识符* *属性说明符序列*__?__ `=` *定义类型标识* `;`
 *simple-declaration*        |*简单声明式*   | [dcl.pre]     | *声明说明符序列* *带初始化声明符列表*__?__ `;` \|<br> *属性说明符序列* *声明说明符序列* *带初始化声明符列表* `;` \|<br> *属性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *标识符列表* `]` 初始化式 `;`
+*static_assert-declaration* |*static_assert-声明式*| [dcl.pre] | `static_assert` `(` *常量表达式* ( `,` *字符串字面量* ) `)` `;`
 *empty-declaration*         |*空声明式*     | [dcl.pre]     | `;`
 *attribute-declaration*     |*属性声明式*   | [dcl.pre]     | *属性说明符序列* `;`
 *decl-specifier*            |*声明说明符*   | [dcl.spec.general] | *存储类说明符* \| *定义类型说明符* \| *函数声明符* \|<br> `friend` \| `typedef` \| `constexpr` \| `consteval` \| `constinit` \| `inline`
 *decl-specifier-seq*        |*声明说明符序列*| [dcl.spec.general] | *声明说明符*__\+__ *属性说明符序列*__?__
 *storage-class-specifier*   |*存储类说明符* | [dcl.stc]     | `static` \| `thread_local` \| `extern` \| `mutable`
-*function-specifier*        |*函数声明符*   | [dcl.fct.spec] | `virtual` \| `explicit` \| `explicit` `(` *常量表达式* `)`
+*function-specifier*        |*函数说明符*   | [dcl.fct.spec] | `virtual` \| *explicit-说明符*
+*explicit-specifier*        |*explicit-说明符* | [dcl.fct.spec] | `explicit` \| `explicit` `(` *常量表达式* `)`
 *typedef-name*              |*typedef-名*   | [dcl.typedef] | *标识符* \| *简单模板标识*
 *type-specifier*            |*类型说明符*   | [dcl.type.general] | *简单类型说明符* \| *详述类型说明符* \| *typename-说明符* \| *cv-限定符*
 *type-specifier-seq*        |*类型说明符序列*| [dcl.type.general] | *类型说明符*__\+__ *属性说明符序列*__?__
@@ -428,6 +431,12 @@ Original   |中文   |章节    |定义
 *template-argument-list*    |*模板实参列表* | [temp.names]  | *模板实参* `...`__?__ ( `,` *模板实参* `...`__?__ )__\*__
 *template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式*
 *constraint-expression*     |*约束表达式*   | [temp.constr.decl] | *逻辑或表达式*
+*deduction-guide*           |*推断导引*     | [temp.deduct.guide] | *explicit-说明符*__?__ *模板名* `(` *形参声明子句* `)` `->` *简单模板标识* `;`
+*concept-definition*        |*概念定义式*   | [] | `concept` *概念名* `=` *约束表达式* `;`
+*concept-name*              |*概念名*       | [] | *标识符*
+*typename-specifier*        |*typename-说明符*| [] | `typename` *嵌套名说明符* ( *标识符* \| `template`__?__ *简单模板标识* )
+*explicit-instantiation*    |*显式实例化式* | [] | `extern`__?__ `template` *声明式*
+*explicit-specialization*   |*显式特化式*   | [] | `template` `<` `>` *声明式*
 
 ## Terms Translation Table
 
@@ -747,7 +756,7 @@ decrement operator                      |减量运算符
 decrement operator function             |减量运算符函数 |前置--为一元，后置--为二元（占位`int`）
 deduce                                  |推断
 deducible template                      |可推断模板     |类模板，或可推断模板的别名模板
-deduction guide                         |推断导引
+deduction guide                         |推断导引       |遵循成员函数模板的推断规则指定类模板特例
 default argument                        |默认实参       |形参的初始化式。函数：调用时求值；仅在函数声明中允许；同作用域累积；<br>特殊成员不允许默认实参；类模板成员的默认实参必须在类中
 default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP）
 default behavior                        |缺省行为       |某些函数，如果程序不提供就采用实现的缺省版本
@@ -920,9 +929,10 @@ free store                              |自由存储       |new/delete 或 mall
 freestanding implementation             |自立式实现     |无操作系统支持
 friend                                  |友元           |授予友元访问所有成员的能力。不传递，不继承
 friend class                            |友元类
-friend declaration                      |友元声明式     |可以指定类型，忽略非类类型。可以指定函数，成员函数，特例。可以模板化<br>可以直接定义新函数，与成员一样为内联函数，并居于类所在命名空间但不绑定名字
+friend declaration                      |友元声明式     |可以指定类型，忽略非类类型。可以指定函数，成员函数，特例。可以模板化<br>可以直接定义新函数，与成员一样为内联函数，并居于类所在命名空间但不绑定名字。带约束函数或函数模板必须为定义式
 friend function                         |友元函数
 `friend` specifier                      |`friend` 说明符
+friend template                         |友元模板       |不能部分特化。局部类不能声明友元模板
 full-expression                         |全表达式       |免求值操作数，常量表达式，直接调用，声明的初始化式，出作用域的销毁，非子表达式且非全表达式一部分的表达式
 function                                |函数           |一种实体，不是对象
 function-body                           |函数体         |指定代码或`=default`、`=delete`
@@ -936,7 +946,7 @@ function-local predefined variable      |函数局部预定义变量 |`__func__`
 function object                         |函数对象
 function overloading                    |函数重载
 function parameter                      |函数形参       |特殊：`f(void)`等价于`f()`，`void`不能是待决类型。摒弃volatile形参<br>可以无名
-function parameter pack                 |函数形参包组
+function parameter pack                 |函数形参包组   |展开类型包组作为函数形参
 function parameter scope                |函数形参作用域 |作用域的一种，形参声明子句（不只函数）所在声明符范围，有体则包含体
 function pointer conversion             |函数指针转换 FPtrC|去掉noexcept约束，属于标准转换的限定调整类别
 function pointer type                   |函数指针类型
@@ -1037,6 +1047,7 @@ indistinguishable conversion sequences  |不可区分的转换序列 |重载决�
 inequality operator                     |不相等运算符
 inhabit                                 |居于           |声明式居于其直接作用域（模板形参作用域单算）
 inherited constructor                   |继承的构造函数 |相当于委派给基类构造函数，以预置默认构造函数的方式初始化其他子对象<br>using声明式引入的是名字，即所有构造函数
+*init-capture* pack                     |*带初始化俘获符*包组   |展开值包组作为lambda的带初始化俘获符的各初始化式
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
 initial suspend point                   |初始暂停点 |协程代码隐含插入`co_await p.initial_suspend();`
 initialization                          |初始化
@@ -1166,8 +1177,10 @@ member candidates                       |成员候选   |运算符重载中，�
 member-declaration                      |成员声明式 |可以作为类成员的声明式：比块声明式多出空声明式、模板、函数定义、位字段，支持成员函数特有的语言特性，不支持结构化绑定，不支持成员变量占位符类型
 member-specification                    |成员说明   |类体的内容，包括成员声明式和访问说明符
 member function                         |成员函数
+member function template                |成员函数模板   |可和非模板函数同时存在，非模板优先。不可为虚函数、不覆盖虚函数
 member-qualified name                   |成员限定名 |限定名的一类，`a.`或`p->`后面的无限定标识或`X::`中的成分名
 member subobject                        |成员子对象 |非引用的非静态数据成员
+member template                         |成员模板   |声明式维持模板头的序列。（非lambda）局部类
 member type                             |成员类型
 memory                                  |内存
 memory location                         |内存位置   |非位字段或最长连续非零宽位字段
@@ -1328,8 +1341,8 @@ overrider                               |覆盖函数   |支持返回类型协�
 
 |English|中文|说明|
 |-|-|-|
-pack                                    |包组           |一种实体，概念上类似`tuple`，用于`...`
-pack expansion                          |包组展开式
+pack                                    |包组           |一种实体，概念上类似`tuple`，用于`...`。模板形参、函数形参、*带初始化俘获符*
+pack expansion                          |包组展开式     |将包组中各实参带入模式并构成列表，`sizeof...`产生包组元素个数，折叠表达式递归求值折叠运算符
 padding bits                            |填充位         |对象表示中不属于值表示的位
 pair                                    |对偶
 parallel                                |并行的
@@ -1343,7 +1356,7 @@ parent scope                            |父作用域       |作用域的直接�
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
 partial ordering by constraints         |基于约束的部分排序 |基于纳入关系比较约束的范式：`C1||...`中的每个`C1`均纳入了`C2&&...`中的所有`C2`，则前者纳入后者
-partial specialization                  |部分特化，部分特化式
+partial specialization                  |部分特化，部分特化式   |类模板，变量模板
 partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
@@ -1718,7 +1731,7 @@ undefined                               |未定义的
 undefined behavior                      |UB，未定义行为 |任意可能行为
 underlying-type                         |底层类型       |字符类型。枚举，默认为`int`或以枚举符求值范围推定
 unevaluated operand                     |免求值操作数   |编译期语法结构，仅获得类型/元信息，不求值
-unexpanded parameter pack               |未展开形参包组
+unexpanded pack                         |未展开的包组
 Unicode                                 |Unicode，统一码
 union                                   |联合体         |以`union`声明的类。所有非静态数据成员地址相同。无多态，无继承，无引用成员<br>若成员有特殊成员函数，则对应成员函数自动弃置，需要用户提供
 union-like class                        |类似联合体的类 |联合体，直接包含匿名联合体的类。有可变成员
