@@ -723,6 +723,7 @@ create                                  |创建
 CTAD, class template argument deduction |类模板实参推断 |可利用推断导引
 ctor-initializer                        |构造函数初始化式|初始化基类、成员，或其他构造函数（应为唯一项），不可重复，可变成员不可冲突<br>不决定初始化顺序。非最终派生对象忽略虚基类初始化。
 current class                           |当前类         |当前位置最内层类作用域
+current instantiation                   |当前实例       |模板或部分特化式中代表当前实体的特例
 cv pointer to cv T                      |cv T 的 cv 指针
 cv-combined type                        |cv 合并类型
 cv-decomposition                        |cv 分解
@@ -780,7 +781,10 @@ deleted                                 |已删除的，弃置的
 deleted definition                      |弃置定义式     |`=delete;`或效果为弃置的`=default;`。弃置定义式应当是首个声明式
 deleted function                        |弃置函数       |显式或隐式弃置的函数
 dependency-ordered before               |按依赖序早于 DepB  |以跨线程值传递确定的顺序：原子性写-读某值+线程内CDep
-dependent name                          |待决名字   |依赖于模板的名字，实例化时决定具体含义
+dependent base class                    |待决基类   |作为基类的待决类型，嵌套类模板的外围类模板当前实例不算
+dependent call                          |待决调用   |函数调用（运算符求值）有任何部分依存于模板形参
+dependent member of the current instantiation|当前实例的待决成员|查找为当前实例的任何成员的声明式
+dependent name                          |待决名字   |依存于模板的名字，实例化时决定具体含义
 deprecated                              |被摒弃的   |因为有某种问题而不建议使用的，未来会被移除的功能设施
 `deprecated`                            |`deprecated` 属性|属性，允许参数`("msg")`，用于任何名字或实体
 derived class                           |派生类
@@ -1710,7 +1714,9 @@ tuple                                   |元组
 TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型
 type                                    |类型           |一种实体，决定值表示的意义
 type concept                            |类型概念       |针对类型（原型形参为类型）的概念
+type-dependent                          |类型待决       |模板中待决名参与的表达式，依存于模板形参的类型
 type identification                     |类型识别       |`typeid`
+type-only context                       |仅限类型语境   |仅需要类型的语境
 type-only lookup                        |仅限类型查找   |仅查找类型
 type-parameter                          |类型形参       |模板形参，包括类型和模板，支持包组、默认实参
 type pun                                |类型双关
@@ -1792,6 +1798,7 @@ valid *template-id*                     |有效的*模板标识*   |合适的模
 value                                   |值         |一种实体，对象的状态
 value category                          |值类别     |glvalue: lvalue, xvalue; rvalue: xvalue, prvalue
 value computation                       |值计算
+value-dependent                         |值待决     |模板中待决名参与的表达式，常量求值依存于模板形参
 value representation                    |值表示     |构成对象状态的位的值，排除填充位
 value-initialize                        |值初始化   |默认初始化或零初始化
 variable                                |变量       |对象或引用，不包括非静态数据成员引用
