@@ -645,7 +645,7 @@ compound assignment operator            |复合赋值运算符 |乘：`*/%`，�
 compound requirement                    |复合规定   |`{ expr } noexcept -> T;`
 compound statement                      |复合语句   |块语句，语句块，花括号。块作用域
 compound type                           |复合类型   |数组、函数、指针、引用、类、联合体、枚举、成员指针
-concept                                 |概念
+concept                                 |概念       |用于定义命名约束。本身不能带有约束，不能特化，只能在命名空间
 concept-definition                      |概念定义式 |定义概念时模板头后面的部分，决定概念语义
 concept-id                              |概念标识   |概念的*简单模板标识*，`bool`纯右值，规范化约束表达式的值
 concurrency                             |并发性
@@ -850,6 +850,9 @@ equality operator                       |相等性运算符   |`==`, `!=`
 equality operator function              |相等性运算符函数
 equivalence                             |等价
 equivalence class                       |等价类 |正则表达式，[=a=]，匹配校排等价字符
+equivalent expressions                  |等价表达式 |模板化表达式除模板形参外符合ODR
+equivalent *template-head*s             |等价*模板头* |各模板形参和它们的类型约束，requires子句均等价
+equivalent *template-parameter*         |等价*模板形参* |同种类，同为包组，非类型形参的类型等价，模板的各模板形参等价
 error                                   |错误，误差
 escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
@@ -958,6 +961,8 @@ function-try-block                      |函数-try-块    |整个函数放入`t
 function type                           |函数类型       |返回类型，形参类型列表，cv+ref（仅NSMF或成员指针，或类型标识、typedef名），noexcept<br>忽略函数类型本身的cv
 function-like macro                     |函数式宏
 function-to-pointer conversion          |函数向指针转换 F2Ptr |函数或静态成员函数
+functionally equivalent expressions     |功能等价表达式 |两个模板化表达式不等价（违反ODR）但求值相同
+functionally equivalent *template-head*s|功能等价的*模板头*|元求值等价：可接受同一组模板实参列表并满足约束
 fundamental alignment                   |基础对齐       |FA <= `alignof(max_align_t)`
 fundamental type                        |基础类型       |算术（整型、浮点）, `void`, `nullptr_t`
 
@@ -1355,8 +1360,10 @@ parameter-type-list                     |形参类型列表   |函数类型的�
 parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
-partial ordering by constraints         |基于约束的部分排序 |基于纳入关系比较约束的范式：`C1||...`中的每个`C1`均纳入了`C2&&...`中的所有`C2`，则前者纳入后者
-partial specialization                  |部分特化，部分特化式   |类模板，变量模板
+partial ordering by constraints         |基于约束的偏序 |基于纳入关系比较约束的范式：`C1||...`中的每个`C1`均纳入了`C2&&...`中的所有`C2`，则前者纳入后者
+partial ordering of function template   |函数模板的偏序 |函数模板“更特殊”关系
+partial ordering of partial specialization|部分特化式的偏序 |基于模板函数偏序规则：归一化变换后互相推断，忽略函数无实参的的形参包组、默认实参和省略号<br>再考虑重排序后对齐的形参列表间比较哪个更受约束
+partial specialization                  |部分特化，部分特化式   |类模板，变量模板。可以加约束。特例的模板实参可以推断出特化式的模板实参且满足约束，则匹配，再基于偏序选择
 partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
@@ -1435,6 +1442,7 @@ Promotion                               |提升 Prom  |重载决议中的标准�
 prospective destructor                  |预期析构函数|若未显式声明则隐式声明预置的无约束预期析构函数
 protected                               |受保护     |允许类内部、友元及派生类访问
 prototype                               |原型
+prototype parameter                     |原型形参   |概念的首个模板形参
 provides storage                        |提供存储   |字节数组对象为放置构造对象提供存储
 prvalue                                 |纯右值     |对表达式仅使用其值而不涉及识别性，结果为值
 pseudo-destructor                       |伪析构函数 |标量类型的析构函数
@@ -1699,8 +1707,9 @@ trivially copyable class                |可平凡复制类   |至少有一个�
 trivially copyable type                 |可平凡复制类型 |可用`memcpy`复制：标量、可平凡复制类，数组
 truncation                              |截断
 tuple                                   |元组
-TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型，
+TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型
 type                                    |类型           |一种实体，决定值表示的意义
+type concept                            |类型概念       |针对类型（原型形参为类型）的概念
 type identification                     |类型识别       |`typeid`
 type-only lookup                        |仅限类型查找   |仅查找类型
 type-parameter                          |类型形参       |模板形参，包括类型和模板，支持包组、默认实参
