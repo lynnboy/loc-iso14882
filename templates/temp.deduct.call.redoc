@@ -10,7 +10,7 @@ parameter type (call it [`P]) that contains [~template-parameter]s that
 participate in template argument deduction with the type of the corresponding
 argument of the call (call it [`A]) as described below.
 [:zh_CN]
-模板实参推断是按如下所述，通过对每个包含了参与模板实参推断的[~模板形参]的函数
+模板实参推断是按如下所述，通过对包含了参与模板实参推断的[~模板形参]的每个函数
 模板形参类型（称其为 [`P]）与调用中的对应实参的类型（称其为 [`A]）进行比较而作出
 的。
 
@@ -22,7 +22,7 @@ is performed instead for each element of the initializer list independently,
 taking [$[`P]'] as separate function template parameter types [$[`P]'_i] and the
 [$i^\text{th}] initializer element the corresponding argument.
 [:zh_CN]
-如果从 [`P] 移除引用和 cv 限定符将会得到（对某个 [$[`P]']）
+如果从 [`P] 移除引用和 cv 限定符将会得到（对某个 [$[`P]'] 和 [`N]）
 [`std::initializer_list<P[$']>] 或者 [`P[$']`[N`]]，并且其实参是个非空初始化式
 列表（[#dcl.init.list]），则为初始化式列表中的每个元素进行独立的推断，其中将
 [$[`P]'] 作为独立的函数模板形参类型 [$[`P]'_i]，并以第 [$i] 个初始化式的元素作为
@@ -45,47 +45,47 @@ non-deduced context ([#temp.deduct.type]).
 [codeblock]
 template<class T> void f(std::initializer_list<T>);
 f({1,2,3});                     // [:en] [`T] deduced as [`int] \
-                                   [:zh_CN] [`T] 被推断为 [`int]
+                                [:zh_CN] [`T] 被推断为 [`int]
 f({1,"asdf"});                  // [:en] error: [`T] deduced as both [`int] and [`const char*] \
-                                   [:zh_CN] 错误：[`T] 同时被推断为 [`int] 和 [`const char*]
+                                [:zh_CN] 错误：[`T] 同时被推断为 [`int] 和 [`const char*]
 
 template<class T> void g(T);
 g({1,2,3});                     // [:en] error: no argument deduced for [`T] \
-                                   [:zh_CN] 错误：未对 [`T] 推断出实参
+                                [:zh_CN] 错误：未对 [`T] 推断出实参
 
 template<class T, int N> void h(T const(&)[N]);
 h({1,2,3});                     // [:en] [`T] deduced as [`int]; [`N] deduced as [`3] \
-                                   [:zh_CN] [`T] 被推断为 [`int]；[`N] 被推断为 [`3]
+                                [:zh_CN] [`T] 被推断为 [`int]；[`N] 被推断为 [`3]
 
 template<class T> void j(T const(&)[3]);
 j({42});                        // [:en] [`T] deduced as [`int]; array bound not considered \
-                                   [:zh_CN] [`T] 被推断为 [`int]；不考虑数组的界
+                                [:zh_CN] [`T] 被推断为 [`int]；不考虑数组的界
 
 struct Aggr { int i; int j; };
 template<int N> void k(Aggr const(&)[N]);
 k({1,2,3});                     // [:en] error: deduction fails, no conversion from [`int] to [`Aggr] \
-                                   [:zh_CN] 错误：推断失败，不存在从 [`int] 向 [`Aggr] 的转换
+                                [:zh_CN] 错误：推断失败，不存在从 [`int] 向 [`Aggr] 的转换
 k({{1},{2},{3}});               // [:en] OK, [`N] deduced as [`3] \
-                                   [:zh_CN] OK，[`N] 被推断为 [`3]
+                                [:zh_CN] OK，[`N] 被推断为 [`3]
 
 template<int M, int N> void m(int const(&)[M][N]);
 m({{1,2},{3,4}});               // [:en] [`M] and [`N] both deduced as [`2] \
-                                   [:zh_CN] [`M] 和 [`N] 都被推断为 [`2]
+                                [:zh_CN] [`M] 和 [`N] 都被推断为 [`2]
 
 template<class T, int N> void n(T const(&)[N], T);
 n({{1},{2},{3}},Aggr());        // [:en] OK, [`T] is [`Aggr], [`N] is [`3] \
-                                   [:zh_CN] OK，[`T] 为 [`Aggr]，[`N] 为 [`3]
+                                [:zh_CN] OK，[`T] 为 [`Aggr]，[`N] 为 [`3]
 
 template<typename T, int N> void o(T (* const (&)[N])(T)) { }
 int f1(int);
 int f4(int);
 char f4(char);
 o({ &f1, &f4 });                                // [:en] OK, [`T] deduced as [`int] from first element, nothing \
-                                                   [:zh_CN] OK，[`T] 从第一个元素推断为 [`int]，
+                                                [:zh_CN] OK，[`T] 从第一个元素推断为 [`int]，
                                                 // [:en@~] deduced from second element, [`N] deduced as [`2] \
-                                                vzh_CN@~] 第二个元素没有推断，[`N] 被推断为 [`2]
+                                                [zh_CN@~] 第二个元素没有推断，[`N] 被推断为 [`2]
 o({ &f1, static_cast<char(*)(char)>(&f4) });    // [:en] error: conflicting deductions for [`T] \
-                                                   [:zh_CN] 错误：对 [`T] 的推断发生冲突
+                                                [:zh_CN] 错误：对 [`T] 的推断发生冲突
 [codeblock:end]
 [end:example]
 
@@ -120,13 +120,13 @@ template<class T1, class ... Types> void g1(Types ..., T1);
 void h(int x, float& y) {
   const int z = x;
   f(x, y, z);                   // [:en] [`Types] deduced as [`int], [`float], [`const int] \
-                                   [:zh_CN] [`Types] 被推断为“[`int], [`float], [`const int]”
+                                [:zh_CN] [`Types] 被推断为“[`int], [`float], [`const int]”
   g(x, y, z);                   // [:en] [`T1] deduced as [`int]; [`Types] deduced as [`float], [`int] \
-                                   [:zh_CN] [`T1] 被推断为 [`int]；[`Types] 被推断为“[`float], [`int]”
+                                [:zh_CN] [`T1] 被推断为 [`int]；[`Types] 被推断为“[`float], [`int]”
   g1(x, y, z);                  // [:en] error: [`Types] is not deduced \
-                                   [:zh_CN] 错误：[`Types] 未推断
+                                [:zh_CN] 错误：[`Types] 未推断
   g1<int, int, int>(x, y, z);   // [:en] OK, no deduction occurs \
-                                   [:zh_CN] OK，未发生推断
+                                [:zh_CN] OK，未发生推断
 }
 [codeblock:end]
 [end:example]
@@ -183,13 +183,13 @@ deduction.
 [codeblock]
 template<class T> int f(const T&);
 int n1 = f(5);                  // [:en] calls [`f<int>(const int&)] \
-                                   [:zh_CN] 调用了 [`f<int>(const int&)]
+                                [:zh_CN] 调用了 [`f<int>(const int&)]
 const int i = 0;
 int n2 = f(i);                  // [:en] calls [`f<int>(const int&)] \
-                                   [:zh_CN] 调用了 [`f<int>(const int&)]
+                                [:zh_CN] 调用了 [`f<int>(const int&)]
 template <class T> int g(volatile T&);
 int n3 = g(i);                  // [:en] calls [`g<const int>(const volatile int&)] \
-                                   [:zh_CN] 调用了 [`g<const int>(const volatile int&)]
+                                [:zh_CN] 调用了 [`g<const int>(const volatile int&)]
 [codeblock:end]
 [end:example]
 
@@ -214,33 +214,33 @@ template <class T> int f(T&& heisenreference);
 template <class T> int g(const T&&);
 int i;
 int n1 = f(i);                  // [:en] calls [`f<int&>(int&)] \
-                                   [:zh_CN] 调用了 [`f<int&>(int&)]
+                                [:zh_CN] 调用了 [`f<int&>(int&)]
 int n2 = f(0);                  // [:en] calls [`f<int>(int&&)] \
-                                   [:zh_CN] 调用了[`f<int>(int&&)]
+                                [:zh_CN] 调用了[`f<int>(int&&)]
 int n3 = g(i);                  // [:en] error: would call [`g<int>(const int&&)], which \
-                                   [:zh_CN] 错误：试图调用 [`g<int>(const int&&)]，
+                                [:zh_CN] 错误：试图调用 [`g<int>(const int&&)]，
                                 // [:en@~] would bind an rvalue reference to an lvalue \
-                                   [:zh_CN@~] 但这将把一个右值引用绑定到左值
+                                [:zh_CN@~] 但这将把一个右值引用绑定到左值
 
 template <class T> struct A {
   template <class U>
     A(T&&, U&&, int*);          // [:en] #1: [`T&&] is not a forwarding reference. \
-                                   [:zh_CN] #1：[`T&&] 不是转发引用。
+                                [:zh_CN] #1：[`T&&] 不是转发引用。
                                 // [:en] [`U&&] is a forwarding reference. \
-                                   [:zh_CN] [`U&&] 是转发引用。
+                                [:zh_CN] [`U&&] 是转发引用。
   A(T&&, int*);                 // #2
 };
 
 template <class T> A(T&&, int*) -> A<T>;    // [:en] #3: [`T&&] is a forwarding reference. \
-                                               [:zh_CN] #3：[`T&&] 是转发引用。
+                                            [:zh_CN] #3：[`T&&] 是转发引用。
 
 int *ip;
 A a{i, 0, ip};                  // [:en] error: cannot deduce from #1 \
-                                   [:zh_CN] 错误：无法从 #1 进行推断
+                                [:zh_CN] 错误：无法从 #1 进行推断
 A a0{0, 0, ip};                 // [:en] uses #1 to deduce [`A<int>] and #1 to initialize \
-                                   [:zh_CN] 使用 #1 推断出 [`A<int>] 并使用 #1 进行初始化
+                                [:zh_CN] 使用 #1 推断出 [`A<int>] 并使用 #1 进行初始化
 A a2{i, ip};                    // [:en] uses #3 to deduce [`A<int&>] and #2 to initialize \
-                                   [:zh_CN] 使用 #3 推断出 [`A<int&>] 并使用 #2 进行初始化
+                                [:zh_CN] 使用 #3 推断出 [`A<int&>] 并使用 #2 进行初始化
 [codeblock:end]
 [end:example]
 
@@ -314,11 +314,11 @@ struct E : X<>, X<int> {};
 template <typename... T>
 int f(const X<T...>&);
 int x = f(D());     // [:en] calls [`f<int>], not [`f<>] \
-                       [:zh_CN] 调用 [`f<int>]，而不是 [`f<>]
+                    [:zh_CN] 调用 [`f<int>]，而不是 [`f<>]
                     // [:en@~] [`B] is [`X<>], [`C] is [`X<int>] \
-                       [:zh_CN@~] [`B] 为 [`X<>]，[`C] 为 [`X<int>]
+                    [:zh_CN@~] [`B] 为 [`X<>]，[`C] 为 [`X<int>]
 int z = f(E());     // [:en] calls [`f<int>], not [`f<>] \
-                       [:zh_CN] 调用 [`f<int>]，而不是 [`f<>]
+                    [:zh_CN] 调用 [`f<int>]，而不是 [`f<>]
 [codeblock:end]
 [end:example]
 [list:end]
@@ -378,19 +378,19 @@ used as the argument value for the deduction.
 If deduction succeeds for more than one member of the overload set the parameter
 is treated as a non-deduced context.
 [:zh_CN]
-若对重载集合的多于一个成员推断成功则该形参被当作是非推断语境。
+若对重载集合的多于一个成员推断成功，则该形参被当作是非推断语境。
 [list:end]
 
 [para]
 [begin:example]
 [codeblock]
 // [:en] Only one function of an overload set matches the call so the function parameter is a deduced context. \
-   [:zh_CN] 重载集合中只有一个函数与调用匹配，故其函数形参是推断语境。
+[:zh_CN] 重载集合中只有一个函数与调用匹配，故其函数形参是推断语境。
 template <class T> int f(T (*p)(T));
 int g(int);
 int g(char);
 int i = f(g);       // [:en] calls [`f(int (*)(int))] \
-                       [:zh_CN] 调用了 [`f(int (*)(int))]
+                    [:zh_CN] 调用了 [`f(int (*)(int))]
 [codeblock:end]
 [end:example]
 
@@ -398,12 +398,12 @@ int i = f(g);       // [:en] calls [`f(int (*)(int))] \
 [begin:example]
 [codeblock]
 // [:en] Ambiguous deduction causes the second function parameter to be a non-deduced context. \
-   [:zh_CN] 有歧义的推断导致第二个函数形参成为非推断语境。
+[:zh_CN] 有歧义的推断导致第二个函数形参成为非推断语境。
 template <class T> int f(T, T (*p)(T));
 int g(int);
 char g(char);
 int i = f(1, g);    // [:en] calls [`f(int, int (*)(int))] \
-                       [:zh_CN] 调用了 [`f(int, int (*)(int))]
+                    [:zh_CN] 调用了 [`f(int, int (*)(int))]
 [codeblock:end]
 [end:example]
 
@@ -411,11 +411,11 @@ int i = f(1, g);    // [:en] calls [`f(int, int (*)(int))] \
 [begin:example]
 [codeblock]
 // [:en] The overload set contains a template, causing the second function parameter to be a non-deduced context. \
-   [:zh_CN] 重载集合包含模板，导致第二个函数形参成为非推断语境。
+[:zh_CN] 重载集合包含模板，导致第二个函数形参成为非推断语境。
 template <class T> int f(T, T (*p)(T));
 char g(char);
 template <class T> T g(T);
 int i = f(1, g);    // [:en] calls [`f(int, int (*)(int))] \
-                       [:zh_CN] 调用了 [`f(int, int (*)(int))]
+                    [:zh_CN] 调用了 [`f(int, int (*)(int))]
 [codeblock:end]
 [end:example]

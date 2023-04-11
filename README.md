@@ -933,6 +933,7 @@ for statement                           |for 语句
 format specifier                        |格式说明符     |正则表达式中被替换部分的格式说明
 forward declaration                     |前置声明式
 forward progress                        |向前进展，进展 |保证线程会产生副作用，或其他线程可见的行为：同步或原子性操作
+forwarding reference                    |转发引用       |类型模板形参的无cv右值引用
 fraction                                |小数，分数
 free store                              |自由存储       |new/delete 或 malloc() 等所管理的堆内存
 freestanding implementation             |自立式实现     |无操作系统支持
