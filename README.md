@@ -751,6 +751,7 @@ declarative *nested-name-specifier*     |声明性*嵌套名说明符* |用于�
 declarative region                      |声明区
 declarator                              |声明符     |被声明的实体，类型修饰：指针、数组、引用、函数，变量可带初始化式
 declare                                 |声明
+declared specialization                 |已声明特例 |已经过显式实例化或显式特化的非内联实体的特例
 decltype specifier                      |decltype 说明符|免求值操作数。<br>`decltype(expr)`：结构化绑定为被引用类型，NTTP为推断类型，标识或成员访问为实体类型<br>其他以及`decltype((expr))`：根据值类别为`T`,`T&`,`T&&`<br>非直接调用的纯右值并不真进行实例化
 decode                                  |解码
 decrement operator                      |减量运算符
@@ -874,7 +875,8 @@ execution character set                 |执行字符集     |LC_CTYPE
 execution step                          |执行步骤       |线程的可观察行为：终止，volatile访问，完成I/O、同步或原子性操作
 execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
-explicit instantiation declaration      |显式实例化声明式|指定某个模板特例应当 ODR 式存在
+explicit instantiation declaration      |显式实例化声明式|指定某个模板特例应当 ODR 式存在，`extern`的显式实例化
+explicit instantiation definition       |显式实例化定义式|实例化一个特例
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符|`explicit`或`explicit(expr)`，类体内构造函数/转换函数，常量表达式Ctx2Bool
 explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、运算符`XX_cast`、初始化
@@ -1381,6 +1383,7 @@ placement deallocation function         |放置式回收函数 |形参与对应�
 placement new-expression                |放置式 new-表达式|放置式语法的 new 表达式`new (args) T`
 point of declaration                    |声明点         |实体声明生效的位点：<br>- 变量/函数/形参在声明符（包括初始化式）之后，<br>- 注入类名和函数预定义变量在`{`前，<br>- 其他（类型、枚举符、using、概念、命名空间等）在标识符（列表）之后
 point of definition                     |定义点
+point of instantiation                  |实例化点       |命名空间作用域声明式末尾，或造成其实例化的特例的实例化点
 pointer                                 |指针
 pointer arithmetic                      |指针算术
 pointer conversion                      |指针转换 PtrC  |转换类别的标准转换。空指针转换，cv T*->cv void*（地址不变），cv D*->cv B*（地址调整）
