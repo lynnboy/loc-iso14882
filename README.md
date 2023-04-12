@@ -348,7 +348,7 @@ Original   |中文   |章节    |定义
 *asm-declaration*           |*asm-声明式*   | [dcl.asm]     | *属性说明符序列*__?__ `asm` `(` *字符串字面量* `)` `;`
 *linkage-specification*     |*连接说明*     | [dcl.link]    | `extern` *字符串字面量* ( `{` *声明式序列*__?__ `}` \| *声明式* )
 *attribute-specifier-seq*   |*属性说明符序列*| [dcl.attr.grammar] | *属性说明符*__\+__
-*attribute-specifier*       |*属性说明符*   | [dcl.attr.grammar] | `[` `[` *属性-using-前缀*__?__ *属性列表* `]` `]` \| *对齐说明符*
+*attribute-specifier*       |*属性说明符*   | [dcl.attr.grammar] | `[` `[` *属性-using-前缀*__?__ *属性列表* `]` `]` \|<br> *对齐说明符*
 *alignment-specifier*       |*对齐说明符*   | [dcl.attr.grammar] | `alignas` `(` (*类型标识* \| *常量表达式*) `...`__?__ `)`
 *attribute-using-prefix*    |*属性-using-前缀*| [dcl.attr.grammar] | `using` *属性命名空间* `:`
 *attribute-list*            |*属性列表*     | [dcl.attr.grammar] | ( ∅ \| *属性* `...`__?__ ) ( `,` ( ∅ \| *属性* `...`__?__ ) )__\*__
@@ -396,11 +396,11 @@ Original   |中文   |章节    |定义
 *base-clause*               |*基子句*       | [class.derived.general] | `:` *基说明符列表*
 *base-specifier-list*       |*基说明符列表* | [class.derived.general] | *基说明符* `...`__?__ ( `,` *基说明符* `...`__?__ )__\*__
 *base-specifier*            |*基说明符*     | [class.derived.general] | *属性说明符序列*__?__ ( `virtual`__?__ *访问说明符*__?__ \| *访问说明符* `virtual` ) *类或-decltype*
-*class-or-decltype*         |*类或-decltype*| [class.derived.general] | *嵌套名说明符*__?__ *类型名* \| *嵌套名说明符* `template` *简单模板标识* \| *decltype-说明符*
+*class-or-decltype*         |*类或-decltype*| [class.derived.general] | *嵌套名说明符*__?__ *类型名* \|<br> *嵌套名说明符* `template` *简单模板标识* \|<br> *decltype-说明符*
 *access-specifier*          |*访问说明符*   | [class.derived.general] | `private` \| `protected` \| `public`
 *ctor-initializer*          |*构造函数初始化式*| [class.base.init] | `:` *成员初始化式列表*
 *mem-initializer-list*      |*成员初始化式列表*| [class.base.init] | *成员初始化式* `...`__?__ ( `,` *成员初始化式* `...`__?__ )__\*__
-*mem-initializer*           |*成员初始化式* | [class.base.init] | *成员初始化式标识* `(` *表达式列表*__?__ `)` \| *成员初始化式标识* *花括号初始化列表*
+*mem-initializer*           |*成员初始化式* | [class.base.init] | *成员初始化式标识* `(` *表达式列表*__?__ `)` \|<br> *成员初始化式标识* *花括号初始化列表*
 *mem-initializer-id*        |*成员初始化式标识*| [class.base.init] | *类或-decltype* \| *标识符*
 
 ### Overloading 重载
@@ -409,7 +409,7 @@ Original   |中文   |章节    |定义
 |-|-|-|-|
 *operator-function-id*      |*运算符函数标识*| [over.oper.general] | `operator` *运算符*
 *operator*                  |*运算符*       | [over.oper.general] | *运算符* ∈ **可重载运算符**
-*literal-operator-id*       |*字面量运算符标识*| [over.literal] | `operator` *字符串字面量* *标识符* \| `operator` *用户定义字符串字面量*
+*literal-operator-id*       |*字面量运算符标识*| [over.literal] | `operator` *字符串字面量* *标识符* \|<br> `operator` *用户定义字符串字面量*
 
 ### Templates 模板
 
@@ -426,7 +426,7 @@ Original   |中文   |章节    |定义
 *type-parameter-key*        |*类型形参关键字*| [temp.param] | `class` \| `typename`
 *type-constraint*           |*类型约束*     | [temp.param]  | *嵌套名说明符*__?__ *概念名* ( `<` *模板实参列表* `>` )__?__
 *simple-template-id*        |*简单模板标识* | [temp.names]  | *模板名* `<` *模板实参列表*__?__ `>`
-*template-id*               |*模板标识*     | [temp.names]  | *简单模板标识* \| ( *运算符函数标识* \| *字面量运算符标识* ) `<` *模板实参列表*__?__ `>` 
+*template-id*               |*模板标识*     | [temp.names]  | *简单模板标识* \|<br> ( *运算符函数标识* \| *字面量运算符标识* ) `<` *模板实参列表*__?__ `>` 
 *template-name*             |*模板名*       | [temp.names]  | *标识符*
 *template-argument-list*    |*模板实参列表* | [temp.names]  | *模板实参* `...`__?__ ( `,` *模板实参* `...`__?__ )__\*__
 *template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式*
@@ -437,6 +437,16 @@ Original   |中文   |章节    |定义
 *typename-specifier*        |*typename-说明符*| [] | `typename` *嵌套名说明符* ( *标识符* \| `template`__?__ *简单模板标识* )
 *explicit-instantiation*    |*显式实例化式* | [] | `extern`__?__ `template` *声明式*
 *explicit-specialization*   |*显式特化式*   | [] | `template` `<` `>` *声明式*
+
+### Exception Handling 异常处理
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*try-block*                 |*try-块*       | [except.pre]  | `try` *复合语句* *处理器序列*
+*function-try-block*        |*函数-try-块*  | [except.pre]  | `try` *构造函数初始化式*__?__ *复合语句* *处理器序列*
+*handler-seq*               |*处理器序列*   | [except.pre]  | *处理器*__\+__
+*handler*                   |*处理器*       | [except.pre]  | `catch` `(` *异常声明式* `)` *复合语句*
+*exception-declaration*     |*异常声明式*   | [except.pre]  | *属性说明符序列*__?__ *类型说明符序列* ( ∅ \| *声明符* \| *抽象声明符* ) \|<br> `...`
 
 ## Terms Translation Table
 
@@ -454,6 +464,7 @@ access control                          |访问控制   |对声明式而非实�
 access specifier                        |访问说明符 |重复声明不能改变访问
 accessible                              |可访问     |可访问基类：存在从访问点到基类公开成员的访问路径。基类可访问则可转换基类指针
 acquire                                 |获取       |同步操作
+active handler                          |活跃处理器 |捕获当前异常对象的处理器，异常形参完成初始化即活跃
 active member                           |活跃成员   |联合体或类似联合体的处于生存期内的可变成员。通过成功赋值改变
 active variable                         |活跃变量   |自动存储期变量在作用域中其声明符之后均活跃
 addition operator                       |加法运算符
@@ -724,6 +735,7 @@ CTAD, class template argument deduction |类模板实参推断 |可利用推断�
 ctor-initializer                        |构造函数初始化式|初始化基类、成员，或其他构造函数（应为唯一项），不可重复，可变成员不可冲突<br>不决定初始化顺序。非最终派生对象忽略虚基类初始化。
 current class                           |当前类         |当前位置最内层类作用域
 current instantiation                   |当前实例       |模板或部分特化式中代表当前实体的特例
+currently handled exception             |当前被处理异常 |存在活跃处理器
 cv pointer to cv T                      |cv T 的 cv 指针
 cv-combined type                        |cv 合并类型
 cv-decomposition                        |cv 分解
@@ -865,7 +877,8 @@ evaluation                              |求值       |表达式的求值包括�
 Exact Match                             |精确匹配   |ICS等级，包括恒等Id、左值变换LvTrn、限定调整
 exception                               |异常
 exception-declaration                   |异常声明式 |catch中的异常变量声明式，仅支持一个异常，支持省略号，不支持默认值，不支持占位符？
-exception handler                       |异常处理器
+exception handler                       |异常处理器 |按顺序匹配，比较动态类型信息。未找到则`terminate`
+exception object                        |异常对象   |从所抛出表达式复制初始化的临时对象，其左值用于初始化处理器形参<br>与活跃处理器末尾销毁，或于其`exception_ptr`代为销毁，最晚销毁点实施
 exception specification                 |异常说明
 exclusive-or expression                 |异或表达式     |`and_expr ^ and_expr`。内建：按位异或，一般算术转换
 exclusive-or operator                   |异或运算符     |`^`
@@ -964,7 +977,7 @@ function prototype                      |函数原型
 function scope                          |函数作用域
 function specifier                      |函数说明符     |`virtual`，`explicit`, `explicit(expr)`
 function template                       |函数模板
-function-try-block                      |函数-try-块    |整个函数放入`try...catch`中
+function-try-block                      |函数-try-块    |整个函数放入`try...catch`中。构造函数的函数-try-块的处理器中不能`return`，构造和析构函数-try-块的处理器自动重新抛出。
 function type                           |函数类型       |返回类型，形参类型列表，cv+ref（仅NSMF或成员指针，或类型标识、typedef名），noexcept<br>忽略函数类型本身的cv
 function-like macro                     |函数式宏
 function-to-pointer conversion          |函数向指针转换 F2Ptr |函数或静态成员函数
@@ -1585,6 +1598,7 @@ specialization                          |特化式，特例   |代码结构为�
 specialize                              |特化
 specifier                               |说明符
 stable algorithm                        |稳定算法   |保留输入元素顺序
+stack unwinding                         |栈解退     |从抛出点到活跃处理器之间逐层销毁自动对象的过程
 standard conversion sequence            |标准转换序列 SCS   |重载决议中ICS的一种<br>恒等，或隐式转换：(Lv2Rv|A2Ptr|F2Ptr)?+(IntP|FltP|IntC|FltC|FIC|PtrC|MPtrC|BoolC)?+FPtrC?+QualC?<br>左值变换LvTrn+提升Prom或转换Conv+限定调整QualAdj
 standard integer type                   |标准整数类型   |标准有符号、无符号整数
 standard signed integer type            |标准有符号整数类型 |`signed char`, `short`, `int`, `long`, `long long`
