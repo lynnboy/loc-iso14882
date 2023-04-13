@@ -432,11 +432,11 @@ Original   |中文   |章节    |定义
 *template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式*
 *constraint-expression*     |*约束表达式*   | [temp.constr.decl] | *逻辑或表达式*
 *deduction-guide*           |*推断导引*     | [temp.deduct.guide] | *explicit-说明符*__?__ *模板名* `(` *形参声明子句* `)` `->` *简单模板标识* `;`
-*concept-definition*        |*概念定义式*   | [] | `concept` *概念名* `=` *约束表达式* `;`
-*concept-name*              |*概念名*       | [] | *标识符*
-*typename-specifier*        |*typename-说明符*| [] | `typename` *嵌套名说明符* ( *标识符* \| `template`__?__ *简单模板标识* )
-*explicit-instantiation*    |*显式实例化式* | [] | `extern`__?__ `template` *声明式*
-*explicit-specialization*   |*显式特化式*   | [] | `template` `<` `>` *声明式*
+*concept-definition*        |*概念定义式*   | [temp.concept] | `concept` *概念名* `=` *约束表达式* `;`
+*concept-name*              |*概念名*       | [temp.concept] | *标识符*
+*typename-specifier*        |*typename-说明符*| [temp.res.general] | `typename` *嵌套名说明符* ( *标识符* \| `template`__?__ *简单模板标识* )
+*explicit-instantiation*    |*显式实例化式* | [temp.explicit] | `extern`__?__ `template` *声明式*
+*explicit-specialization*   |*显式特化式*   | [temp.expl.spec] | `template` `<` `>` *声明式*
 
 ### Exception Handling 异常处理
 
@@ -448,6 +448,31 @@ Original   |中文   |章节    |定义
 *handler*                   |*处理器*       | [except.pre]  | `catch` `(` *异常声明式* `)` *复合语句*
 *exception-declaration*     |*异常声明式*   | [except.pre]  | *属性说明符序列*__?__ *类型说明符序列* ( ∅ \| *声明符* \| *抽象声明符* ) \|<br> `...`
 *noexcept-specifier*        |*noexcept-说明符*| [except.spec] | `noexcept` `(` *常量表达式* `)` \| `noexcept`
+
+### Exception Handling 异常处理
+
+Original   |中文   |章节    |定义
+|-|-|-|-|
+*preprocessing-file*        |*预处理文件*   | [cpp.pre]     | *组*__?__ \| *模块文件*
+*module-file*               |*模块文件*     | [cpp.pre]     | *预处理全局模块分段*__?__ *预处理模块* *组*__?__ *预处理私有模块分段*__?__
+*pp-global-module-fragment* |*预处理全局模块分段*| [cpp.pre] | `module` `;` *换行* *组*__?__
+*pp-private-module-fragment*|*预处理私有模块分段*| [cpp.pre] | `module` `:` `private` `;` *换行* *组*__?__
+*group*                     |*组*           | [cpp.pre]     | *组部分*__\*__
+*group-part*                |*组部分*       | [cpp.pre]     | *控制行* \| *if-节* \| *文本行* \|<br> `#` *有条件支持的指令*
+*control-line*              |*控制行*       | [cpp.pre]     | `#` `include` *预处理记号序列* *换行* \|<br> *预处理导入* \|<br> `#` `define` *标识符* ( ∅ \| *左括号* ( ∅ \| `...`__?__ \| *标识符列表* ( `,` `...` )__?__ ) `)` ) *替换列表* *换行* \|<br> `#` `undef` *标识符* *换行* \|<br> `#` `line` *预处理记号序列* *换行* \|<br> `#` `error` *预处理记号序列*__?__ *换行* \|<br> `#` `pragma` *预处理记号序列*__?__ *换行* \|<br> `#` *换行*
+*if-section*                |*if-节*        | [cpp.pre]     | *if-组* *elif-组*__\*__ *else-组*__?__ *endif-行*
+*if-group*                  |*if-组*        | [cpp.pre]     | `#` `if` *常量表达式* *换行* *组*__?__ \|<br> `#` `ifdef` *标识符* *换行* *组*__?__ \|<br> `#` `ifndef` *标识符* *换行* *组*__?__
+*elif-groups*               |*elif-组序列*  | [cpp.pre]     | *elif-组*__\+__
+*elif-group*                |*elif-组*      | [cpp.pre]     | `#` `elif` *常量表达式* *换行* *组*__?__
+*else-group*                |*else-组*      | [cpp.pre]     | `#` `else` *换行* *组*__?__
+*endif-line*                |*endif-行*     | [cpp.pre]     | `#` `endif` *换行*
+*text-line*                 |*文本和*       | [cpp.pre]     | *预处理记号序列*__?__ *换行*
+*conditionally-supported-directive*|*有条件支持的指令*| [cpp.pre] | *预处理记号序列* *换行*
+*lparen*                    |*左括号*       | [cpp.pre]     | (!&lt; *空白* ) `(`
+*identifier-list*           |*标识符列表*   | [cpp.pre]     | *标识符* ( `,` *标识符* )__\*__
+*replacement-list*          |*替换列表*     | [cpp.pre]     | *预处理记号序列*__?__
+*pp-tokens*                 |*预处理记号序列*| [cpp.pre]    | *预处理记号*__\+__
+*new-line*                  |*换行*         | [cpp.pre]     | 换行
 
 ## Terms Translation Table
 
