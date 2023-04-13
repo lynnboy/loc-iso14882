@@ -447,6 +447,7 @@ Original   |中文   |章节    |定义
 *handler-seq*               |*处理器序列*   | [except.pre]  | *处理器*__\+__
 *handler*                   |*处理器*       | [except.pre]  | `catch` `(` *异常声明式* `)` *复合语句*
 *exception-declaration*     |*异常声明式*   | [except.pre]  | *属性说明符序列*__?__ *类型说明符序列* ( ∅ \| *声明符* \| *抽象声明符* ) \|<br> `...`
+*noexcept-specifier*        |*noexcept-说明符*| [except.spec] | `noexcept` `(` *常量表达式* `)` \| `noexcept`
 
 ## Terms Translation Table
 
@@ -879,7 +880,7 @@ exception                               |异常
 exception-declaration                   |异常声明式 |catch中的异常变量声明式，仅支持一个异常，支持省略号，不支持默认值，不支持占位符？
 exception handler                       |异常处理器 |按顺序匹配，比较动态类型信息。未找到则`terminate`
 exception object                        |异常对象   |从所抛出表达式复制初始化的临时对象，其左值用于初始化处理器形参<br>与活跃处理器末尾销毁，或于其`exception_ptr`代为销毁，最晚销毁点实施
-exception specification                 |异常说明
+exception specification                 |异常说明   |潜在抛出或无抛出。析构或回收默认为无抛出<br>预置或隐式声明的函数的代码中是否有潜在抛出决定该函数的异常说明
 exclusive-or expression                 |异或表达式     |`and_expr ^ and_expr`。内建：按位异或，一般算术转换
 exclusive-or operator                   |异或运算符     |`^`
 execute                                 |执行，运行
@@ -1296,7 +1297,7 @@ non-static data member                  |非静态数据成员
 non-static member                       |非静态成员 |非静态数据成员，非静态成员函数
 non-static member function              |非静态成员函数
 non-template function                   |非模板函数 |非函数模板特例的函数
-non-throwing exception specification    |无抛出异常说明
+non-throwing exception specification    |无抛出异常说明 |`noexcept`或`noexcept(true)`。抛出直接`terminate`
 non-trivial                             |非平凡的   |需要真实执行代码
 non-vacuous initialization              |非无为初始化
 non-virtual base class                  |非虚基类   |非共享的基类子对象，由该类维护其创建和销毁
