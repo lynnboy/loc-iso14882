@@ -449,7 +449,7 @@ Original   |中文   |章节    |定义
 *exception-declaration*     |*异常声明式*   | [except.pre]  | *属性说明符序列*__?__ *类型说明符序列* ( ∅ \| *声明符* \| *抽象声明符* ) \|<br> `...`
 *noexcept-specifier*        |*noexcept-说明符*| [except.spec] | `noexcept` `(` *常量表达式* `)` \| `noexcept`
 
-### Exception Handling 异常处理
+### Preprocessing directives 预处理指令
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
@@ -473,6 +473,15 @@ Original   |中文   |章节    |定义
 *replacement-list*          |*替换列表*     | [cpp.pre]     | *预处理记号序列*__?__
 *pp-tokens*                 |*预处理记号序列*| [cpp.pre]    | *预处理记号*__\+__
 *new-line*                  |*换行*         | [cpp.pre]     | 换行
+*defined-macro-expansion*   |*已定义宏表达式*| [cpp.cond]   | `defined` ( *标识符* \| `(` *标识符* `)` )
+*h-preprocessing-token*     |*h-预处理记号* | [cpp.cond]    | *预处理记号* - `>`
+*h-pp-tokens*               |*h-预处理记号序列*| [cpp.cond] | *h-预处理记号*__\+__
+*header-name-tokens*        |*头文件名记号序列*| [cpp.cond] | *字符串字面量* \| `<` *h-预处理记号序列* `>`
+*has-include-expression*    |*包含查询表达式*| [cpp.cond]   | `__has_include` `(` ( *头文件名* \| *头文件名记号序列* ) `)`
+*has-attribute-expression*  |*属性查询表达式*| [cpp.cond]   | `__has_cpp_attribute` `(` *预处理记号序列* `)`
+*pp-module*                 |*预处理模块指令*| [cpp.module] | `export`__?__ `module` *预处理记号序列*__?__ `;` *换行*
+*pp-import*                 |*预处理导入指令*| [cpp.import] | `export`__?__ `import` ( *头文件名* \| *头文件名记号序列* ) *预处理记号序列*__?__ `;` *换行* \|<br> `export`__?__ `import` *预处理记号序列* `;` *换行*
+*va-opt-replacement*        |*va-可选替代*  | [cpp.subst]   | `__VA_OPT__` `(` *预处理记号序列*__?__ `)`
 
 ## Terms Translation Table
 
@@ -491,6 +500,7 @@ access specifier                        |访问说明符 |重复声明不能改�
 accessible                              |可访问     |可访问基类：存在从访问点到基类公开成员的访问路径。基类可访问则可转换基类指针
 acquire                                 |获取       |同步操作
 active handler                          |活跃处理器 |捕获当前异常对象的处理器，异常形参完成初始化即活跃
+active macro directive                  |活跃宏指令 |宏定义点和去定义点之间
 active member                           |活跃成员   |联合体或类似联合体的处于生存期内的可变成员。通过成功赋值改变
 active variable                         |活跃变量   |自动存储期变量在作用域中其声明符之后均活跃
 addition operator                       |加法运算符
@@ -638,6 +648,7 @@ character container type                |字符容器类型   |`basic_string`等
 character encoding                      |字符编码
 character literal                       |字符字面量     |预处理记号，也是记号，支持编码前缀，转义序列
 character set                           |字符集
+character string literal                |字符字符串字面量 |无前缀的*字符串字面量*
 class                                   |类
 class declaration                       |类声明式
 class definition                        |类定义式   |类说明符，包含类头和成员说明
@@ -691,7 +702,7 @@ concurrent foreward progress guarantees |并发向前进展保证   |实现保�
 condition                               |条件       |语法结构：if/while/switch/for中的条件部分。非switch：Ctx2Bool，switch：Ctx2Int+IntP<br>不能声明函数、数组，不能定义类、枚举。仅允许constexpr说明符
 conditional escape sequence             |有条件转义序列 |编译器实现支持的其他单字符转移序列
 conditional expression                  |条件表达式     |`logor_expr ? expr : asgn_expr`。操作数1 Ctx2Bool，短路，支持`throw`，支持两个同类型位字段<br>类型不同时，尝试隐式转换为另一个，但不允许歧义<br>部分保留左值性。右值时进行一般算术转换或取合成指针类型
-conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等
+conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等。条件表达式经宏展开后，未定义标识符均被替换为`0`，按`intmax_t`和`uintmax_t`求值
 conditional operator                    |条件运算符     |`?:`。不可重载
 conditionally-supported                 |有条件支持的   |编译器实现可以选择不支持
 conflict                                |冲突           |两个求值至少一个改动
@@ -809,6 +820,7 @@ defaulted                               |预置的，默认的，缺省的
 defaulted comparison operator function  |预置的默认比较运算符函数|`(const C&)const`或`(const C&)const&`，`static(const C&, const C&)`或`static (C, C)`<br>若有引用或可变非静态数据成员则弃置，任何子对象不能`==`则`==`弃置，任何子对象不能`<=>`则`<=>`弃置<br>`==`返回`bool`，`auto`时`<=>`返回公共比较类型。`==`随`<=>`隐式声明
 defaulted function                      |预置函数       |隐式声明或显式预置的函数，具有隐含定义式或被弃置<br>弃置特殊成员函数：预期析构函数非析构时，非预期析构且非合格时
 define                                  |定义
+*defined-macro-expression*              |*已定义宏表达式* |`defined XX`或`defined (XX)`，宏是否定义
 defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符<br>函数形参和返回类型不能定义类型
 definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
 definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
@@ -842,7 +854,7 @@ direct-list-initialization              |直接列表初始化     |直接进行
 direct member                           |直接成员   |在成员说明中声明的成员，包括匿名联合体及其直接成员
 direct-non-list-initialization          |直接非列表初始化   |直接进行的其他初始化
 directive                               |指令
-directive-introducing token             |指令发起记号
+directive-introducing token             |指令发起记号   |行首`#`，或模块指令行`module XX`，`import XX`，`export XX`
 disambiguation                          |歧义消解
 discarded statement                     |弃用语句       |`constexpr if` 排除的语句
 discarded-value expression              |弃值表达式     |仅保留副作用，一些 volatile 访问表达式进行L2R转换（保留读内存副作用）
@@ -1039,6 +1051,8 @@ handler                                 |处理器     |捕获并处理异常的
 handler function                        |处理函数   |`new_handler`等
 happens after                           |发生晚于 HapA
 happens before                          |发生早于 HapB  |确定任意两求值的顺序：线程内SeqB或线程间ITHB
+*has-attribute-expression*              |*属性查询表达式* |`__has_cpp_attribute(attr)`，是否支持属性及其版本。属性允许宏展开
+*has-include-expression*                |*包含查询表达式* |`__has_include(hdr)`，是否可包含文件。宏行为同`#include`
 header                                  |头文件
 header name                             |头文件名   |预处理记号，`<[~>]*>` 或 `"[~"]*"`，仅属于 `#include`，`import`，`__has_include`
 header unit                             |头文件单元 |模块导入，头文件经过1-7阶段翻译后的内容，附属全局模块<br>不能包含外部连接非内联函数/变量
@@ -1216,6 +1230,8 @@ lvalue-to-rvalue conversion             |左值向右值转换 Lv2Rv |非函数�
 |English|中文|说明|
 |-|-|-|
 macro                                   |宏
+macro definition                        |宏定义     |每条`#define`指令引入一个独立宏定义。重复定义必须保持等价
+macro expansion                         |宏展开
 macro invocation                        |宏调用     |代码文本中使用宏
 make progress                           |取得进展   |线程发生执行步骤，阻塞或调用未完成的免锁执行函数
 manifestly constant-evaluated           |显然常量求值的 |常量表达式，constexpr if的条件，直接调用，约束求值，从来初始化的初始化式
@@ -1422,8 +1438,10 @@ placement allocation function           |放置式分配函数
 placement deallocation function         |放置式回收函数 |形参与对应放置式分配函数匹配，会在new表达式失败时自动调用，若不唯一则忽略
 placement new-expression                |放置式 new-表达式|放置式语法的 new 表达式`new (args) T`
 point of declaration                    |声明点         |实体声明生效的位点：<br>- 变量/函数/形参在声明符（包括初始化式）之后，<br>- 注入类名和函数预定义变量在`{`前，<br>- 其他（类型、枚举符、using、概念、命名空间等）在标识符（列表）之后
-point of definition                     |定义点
+point of definition                     |定义点         |引入宏定义的`#define`指令，或包含定义的第一个宏导入点
 point of instantiation                  |实例化点       |命名空间作用域声明式末尾，或造成其实例化的特例的实例化点
+point of macro import                   |宏导入点       |预处理阶段导入头文件的`import`指令换行处
+point of undefinition                   |去定义点       |`#undef`指令，或包含它的第一个宏导入点
 pointer                                 |指针
 pointer arithmetic                      |指针算术
 pointer conversion                      |指针转换 PtrC  |转换类别的标准转换。空指针转换，cv T*->cv void*（地址不变），cv D*->cv B*（地址调整）
@@ -1463,8 +1481,8 @@ prefix                                  |前缀       |字符字面量，字符�
 prefix decrement operator               |前置减量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
 prefix increment operator               |前置增量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
 prefix unary operator function          |前置一元运算符函数 |`cast_expr.operator@()` 或 `operator@(cast_expr)`
-preprocess                              |预处理
-preprocessing directive                 |预处理指令
+preprocessing                           |预处理
+preprocessing directive                 |预处理指令 |`include`，宏定义，`line`，`error`，`pragma`，空，自定义<br>仅允许` `和`\t`空白，指令发起部分不接受宏展开
 preprocessing number                    |预处理数字 |预处理记号，`[.]? [0-9] ( [.] | [']? [0-9a-zA-Z_] | [eEpP] [-+] )*`
 preprocessing operator                  |预处理运算符       |由预处理器操作的运算符：`#`, `##`, `%:`, `%:%:`
 preprocessing operators and punctuators |预处理运算符与标点 |预处理记号，预处理运算符+运算符或标点
@@ -1617,6 +1635,7 @@ simple-type-specifier                   |简单类型说明符 |指定现有类�
 `sizeof` operator                       |`sizeof` 运算符|免求值表达式或类型标识：`sizeof expr`或`sizeof(T)`<br>包组元素个数，包组展开：`sizeof...P`
 source character set                    |源字符集
 source file                             |源文件
+source file inclusion                   |源文件包含 |`#include <h>`或`#include "s"`或`#include M`。支持宏替换，没有字符串拼接
 space character                         |空格字符   |` `
 spaceship operator                      |飞船运算符 |`<=>`
 special member function                 |特殊成员函数   |默认构造、复制/移动构造和赋值、预期的析构跟具特定规则隐式声明及定义，声明点在`}`，ODR式使用时定义
@@ -1661,6 +1680,7 @@ string                                  |字符串
 string literal                          |字符串字面量   |预处理记号，也是记号，编码前缀，数组（常量左值）
 string literal operator template        |字符串字面量运算符模板 |`template<A a> A operator "" X()`，`A` 为支持字符串的字面量类型
 stringize                               |字符串化       |预处理功能，获得预处理记号的字面量，`#a` -> `"a"`
+stringizing argument                    |字符串化实参   |预处理实参移的拼写除位置标记记号，空白变空格，移除首尾空白，转移`"`和`\`
 strongly happens before                 |强发生早于 StrgHB  |不允许消费操作时，全局顺序性：线程内SeqB，线程间Sync，SeqB+SimpHB+SeqB
 struct                                  |结构体
 structural type                         |结构式类型     |可用作非类型模板形参的类型：标量、左值引用、全公开字面量类型，数组
@@ -1846,6 +1866,8 @@ value-dependent                         |值待决     |模板中待决名参与
 value representation                    |值表示     |构成对象状态的位的值，排除填充位
 value-initialize                        |值初始化   |默认初始化或零初始化
 variable                                |变量       |对象或引用，不包括非静态数据成员引用
+variable argument                       |变参，可变实参
+variable argument function-like macro   |变参函数式宏 |`...`，多余实参合并作为一个可变实参来替换`__VA_ARGS__`<br>若存在可变实参，则`__VA_OPT__(xx)`替换为`xx`，否则替换为空
 variable template                       |变量模板
 variadic function                       |变参函数   |以`...`形参结尾的函数，需要`va_XX`<br>以函数形参包组结尾的函数
 variadic template                       |变参模板
