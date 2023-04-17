@@ -847,6 +847,7 @@ deprecated                              |被摒弃的   |因为有某种问题�
 `deprecated`                            |`deprecated` 属性|属性，允许参数`("msg")`，用于任何名字或实体
 derived class                           |派生类
 designated initializer                  |定名初始化式
+destringize                             |去字符串化 |字符串恢复为文本，相当于`sputs`
 destroy                                 |销毁
 destroying operator delete              |销毁用 delete 运算符   |成员，非数组，`(T*, destroying_delete_t, ...)`，由此函数负责析构；只要提供就排除非销毁函数
 destruction                             |销毁
@@ -1488,7 +1489,7 @@ potentially constructed subobjects      |潜在构造子对象 |非静态数据�
 potentially-evaluated                   |潜在求值的     |除免求值（`sizeof`等情况）外的一切表达式/转换，编译期或运行时求值
 potentially-overlapping subobject       |潜在重叠子对象 |基类子对象、`[no_unique_address]`NSDM，允许空类对象的存储优化
 potentially throwing                    |潜在抛出异常的 |有能力抛出异常
-pragma                                  |语用       |预处理指令，预处理运算符
+pragma                                  |语用       |预处理指令。预处理运算符将实参字符串去字符串化，再作为语用指令处理
 precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
 precedence                              |优先级
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
