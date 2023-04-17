@@ -604,6 +604,8 @@ binary right fold                       |二元右折叠     |`pack op ... op ex
 bind directly                           |直接绑定       |引用初始化中，除了将初始化式转换为被引用类型之外的情况
 bit                                     |位
 bit-field                               |位字段         |一种实体。不能为静态成员。大于类型宽度为填充位<br>不能取地址，不能绑定到非const引用
+bitmask element                         |掩码元素       |掩码类型每个位的具名常量`Cn`
+bitmask type                            |掩码类型       |支持位操作`&`,`|`,`^`,`~`和`&=`,`|=`,`^=`的类型，可为重载了运算符的列举类型，或整数类型，或`bitset`
 bitwise and operator                    |按位与运算符
 bitwise negation operator               |按位反运算符   |一元运算符/表达式，`~`，整型、无作用域枚举，提升
 bitwise or operator                     |按位或运算符
@@ -647,6 +649,7 @@ character                               |字符
 character container type                |字符容器类型   |`basic_string`等模板的类型形参
 character encoding                      |字符编码
 character literal                       |字符字面量     |预处理记号，也是记号，支持编码前缀，转义序列
+character sequence                      |字符序列       |三种`char`的数组
 character set                           |字符集
 character string literal                |字符字符串字面量 |无前缀的*字符串字面量*
 class                                   |类
@@ -773,6 +776,8 @@ ctor-initializer                        |构造函数初始化式|初始化基�
 current class                           |当前类         |当前位置最内层类作用域
 current instantiation                   |当前实例       |模板或部分特化式中代表当前实体的特例
 currently handled exception             |当前被处理异常 |存在活跃处理器
+customization point                     |定制化点       |实施约束检查，通过ADL调用特定函数，否则调用默认实现
+customization point object              |定制化点对象   |字面类型的无状态函数对象，仅当实参类型满足其约束时才可调用
 cv pointer to cv T                      |cv T 的 cv 指针
 cv-combined type                        |cv 合并类型
 cv-decomposition                        |cv 分解
@@ -793,6 +798,8 @@ data type                               |数据类型
 deallocate                              |回收
 deallocation function                   |回收函数   |`operator delete`, `operator delete[]`
 decay                                   |退化
+decimal                                 |十进制
+decimal-point character                 |小数点字符 |`.`，通过`setlocale`可以改为其他字符
 decl-reachable                          |声明可达的 |判定全局模块分段中的声明式是否被弃用
 declaration                             |声明式，声明   |代码结构称为‘声明式’，引入实体的名字，类型和编译期存在性
 declaration statement                   |声明语句   |除虚无初始化变量外，跳转不能使变量活跃<br>静态/线程变量初始化异常时认为未初始化，同步保护并发初始化，递归UB
@@ -881,6 +888,7 @@ eligible special member function        |合格的特殊成员函数 |可被认�
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
 ellipsis conversion sequence            |省略号转换序列 EllipsisCS  |重载决议中ICS的一种，省略号形参对应的转换
 ellipsis parameter                      |省略号形参 |`va_xxx`变参函数
+empty bitmask                           |空掩码     |掩码类型的`0`值
 empty-declaration                       |空声明式   |仅有`;`的声明式，不是块语句
 empty-statement                         |空语句     |仅有`;`的语句
 encapsulate                             |封装
@@ -893,7 +901,8 @@ end-of-line indicator                   |行结束指示符   |`\n`，`\r\n`，�
 endian                                  |端序
 entity                                  |实体       |值、对象、引用、结构化绑定、函数、枚举符、类型、类成员、位字段、模板、模板特例、命名空间、包组
 entry                                   |入口       |函数，catch，代码块
-enumerated type                         |枚举类型
+enumerated element                      |列举元素   |列举类型中的具名常量`Cn`
+enumerated type                         |列举类型   |枚举+常量定义，以提供ABI：`enum E{Vn..}; inline const Cn(Vn);`
 enumeration                             |枚举       |类型，包含具名常量枚举符
 enumeration scope                       |枚举作用域 |作用域的一种，包括枚举符列表
 enumeration type                        |枚举类型
@@ -1114,6 +1123,7 @@ inhabit                                 |居于           |声明式居于其直
 inherited constructor                   |继承的构造函数 |相当于委派给基类构造函数，以预置默认构造函数的方式初始化其他子对象<br>using声明式引入的是名字，即所有构造函数
 *init-capture* pack                     |*带初始化俘获符*包组   |展开值包组作为lambda的带初始化俘获符的各初始化式
 init-statement                          |初始化语句     |if/switch/for中第一部分，声明并初始化变量
+initial shift state                     |初始迁移状态   |默认和安全的字符编码迁移状态
 initial suspend point                   |初始暂停点 |协程代码隐含插入`co_await p.initial_suspend();`
 initialization                          |初始化
 initialize                              |初始化
@@ -1180,8 +1190,10 @@ layout-compatible                       |布局兼容       |相同类型、布�
 layout-compatible class                 |布局兼容类     |全部成员构成共同起始序列的多个类
 layout-compatible enumeration           |布局兼容枚举   |底层类型相同
 left shift operator                     |左移运算符
+length of NTBS                          |NTBS 的长度    |终结空字符之前的元素数量，但NTBS的值包括终结空字符
 less-than operator                      |小于运算符
 less-than-or-equal-to operator          |小于或等于运算符
+letter                                  |字母   |`a-zA-Z`
 lexical                                 |词法   |如何以字符构成语法记号
 library                                 |程序库
 lifetime                                |生存期
@@ -1347,6 +1359,8 @@ normal form                             |范式，规范形式 |约束规范化�
 normalization                           |规范化     |约束。文件路径
 normalized                              |规范化的
 normative                               |规范性的   |作为正式内容的文本章节或参考文献
+NTBS, null-terminated byte string       |空终结字节字符串   |字符序列，以`\0`终结
+NTMBS, null-terminated multibyte string |空终结多字节字符串 |包含多字节字符的NTBS
 null                                    |空
 null character                          |空字符     |`'\0'`
 null member pointer conversion          |空成员指针转换 |空指针常量->成员指针类型的空成员指针值
@@ -1614,6 +1628,7 @@ sequenced before                        |按顺序早于 SeqB    |线程内顺�
 sequential consistency                  |顺序一致性     |如同存在全局顺序
 shift expression                        |移位表达式     |`add_expr << add_expr` `add_expr >> add_expr`<br>内建：左移、算术右移，IntP，操作数1 SeqB 操作数2
 shift operator                          |移位运算符     |`<<`, `>>`
+shift state                             |迁移状态       |`mbstate_t`维护的有状态字符编码的状态
 side effect                             |副作用 |读volatile，改，调用 I/O 库函数
 signal                                  |信号
 signal handler                          |信号处理函数
@@ -1653,6 +1668,7 @@ standard-layout struct                  |标准布局结构体 |`class`和`struc
 standard-layout type                    |标准布局类型   |标量、标准布局类，数组
 stateful character encoding             |有状态字符编码
 standard-layout union                   |标准布局联合体 |`union`的标准布局类
+standard library                        |标准程序库，标准库
 statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
@@ -1742,6 +1758,7 @@ temporary object                        |临时对象
 term                                    |术语
 terminal name                           |终端名     |using-声明符的目标，语言构造中最后一个成分名
 terminate                               |终止
+terminating null character              |终结空字符 |NTBS中的终结字符，`\0`
 thread                                  |线程
 thread of execution                     |执行线程，线程
 thread storage duration                 |线程存储期
