@@ -524,6 +524,7 @@ alignment specifier                     |对齐说明符 |`alignas`。符合属�
 allocate                                |分配
 allocated type                          |被分配类型 |new 表达式创建对象的类型：完整对象类型，非抽象类或其数组，可cv
 allocation function                     |分配函数   |`operator new`, `operator new []`
+allocator                               |分配器
 alternative token                       |代用记号   |二联符+保留字 `and` 等，11个位和逻辑运算符
 ambiguity                               |歧义
 ambiguous conversion sequence           |有歧义转换序列 |重载决议中，ICS有歧义。被当做与任意其他用户定义ICS有歧义
@@ -918,6 +919,7 @@ equivalence class                       |等价类 |正则表达式，[=a=]，�
 equivalent expressions                  |等价表达式 |模板化表达式除模板形参外符合ODR
 equivalent *template-head*s             |等价*模板头* |各模板形参和它们的类型约束，requires子句均等价
 equivalent *template-parameter*         |等价*模板形参* |同种类，同为包组，非类型形参的类型等价，模板的各模板形参等价
+equivalently-valued pointer value       |具有等价值的指针 |分配器所操作的“指针”，转换为`const_pointer`后相等
 error                                   |错误，误差
 escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
@@ -1719,6 +1721,8 @@ surrogate call function                 |代用调用函数   |用于重载决�
 surrogate code point                    |代用代码点 |UCS 代用字符的代码点，为 UTF16 用于编码高值字符，D800-DFFF
 suspension                              |暂停
 suspension context                      |暂停语境   |函数中允许 `co_await` 的语境
+swappable                               |可交换     |与自身类型可交换`swap(a,a)`
+swappable with                          |与…可互相交换  |在引入`std::swap`后可调用`swap(a,b)`和`swap(b,a)`
 switch statement                        |switch 语句
 synchronization operation               |同步操作   |一些原子性操作和互斥体操作<br>消费(consume)、获取(aquire)、释放(release)、获取并释放，宽松(relaxed)操作不是同步<br>对内存位置的操作或无关内存位置的栅栏
 synchronize                             |同步
