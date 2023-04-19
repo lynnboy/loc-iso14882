@@ -1270,6 +1270,7 @@ memory management                       |内存管理
 memory model                            |内存模型
 modification order                      |改动顺序   |对某原子性对象的所有改动，无竞争有顺序
 modifier function                       |改动函数
+model                                   |构成（概念）|符合概念`C`，并满足其规范中的语义规定
 module                                  |模块       |具名模块或全局模块
 module-declaration                      |模块声明式 |
 module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
