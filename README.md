@@ -1068,6 +1068,7 @@ happens before                          |发生早于 HapB  |确定任意两求�
 header                                  |头文件
 header name                             |头文件名   |预处理记号，`<[~>]*>` 或 `"[~"]*"`，仅属于 `#include`，`import`，`__has_include`
 header unit                             |头文件单元 |模块导入，头文件经过1-7阶段翻译后的内容，附属全局模块<br>不能包含外部连接非内联函数/变量
+hidden friend                           |隐藏友元   |仅在类内部声明并直接定义的友元函数，它们仅能作为运算符或通过ADL可用
 high-order bit                          |高序位     |最高有效位
 hosted implementation                   |宿主式实现 |在操作系统下运行
 
@@ -1291,6 +1292,7 @@ move assignment                         |移动赋值
 move assignment operator                |移动赋值运算符 |非静态非模板，`cv T&&`单参数赋值运算符<br>若未显式声明任何复制/移动/析构，则隐式声明预置移动赋值<br>隐式声明`X&(T&&)`，递归要求潜在构造子对象可以对应赋值
 move construction                       |移动构造
 move constructor                        |移动构造函数   |非模板，`cv T&&`可接受单参数调用的构造函数<br>若未显式声明任何复制/移动/析构，则隐式声明预置非 explicit 移动构造<br>隐式声明`T&&`，递归要求潜在构造子对象可以对应构造
+moved-from state                        |被移走状态     |移动操作后，右操作数的状态，是该类型的有效状态。自移动后也为此状态
 multibyte character                     |多字节字符
 multibyte encoding                      |多字节编码
 multicharacter literal                  |多字符字面量
@@ -1561,6 +1563,7 @@ reaching scope                          |可达作用域
 read-read coherence                     |读-读协调性    |原子性 M 的 RA HapB RB，则两个值符合 M 的改动顺序
 read-write coherence                    |读-写协调性    |原子性 M 的 RA HapB WB，则两个值符合 M 的改动顺序
 recursive function call                 |递归函数调用
+reentrancy                              |可重入性       |可递归调用的算法
 ref-qualifier                           |引用限定符     |函数类型，成员函数的 & 或 &&
 reference                               |引用           |一种实体，不是对象，别名
 reference-compatible                    |引用兼容       |源与目标引用类型的对应指针类型可以标准转换序列转换
