@@ -1322,6 +1322,7 @@ namespace-body                          |命名空间体     |每个命名空间
 namespace-definition                    |命名空间定义式 |
 namespace-name                          |命名空间名     |标识符：原名或别名
 namespace scope                         |命名空间作用域 |作用域的一种，合并该命名空间的所有体，加上体外带限定成员
+NaN, not a number                       |非数字
 narrow character type                   |窄字符类型     |普通（三种`char`），`char8_t`
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
 narrowing conversion                    |窄化转换   |隐式转换：F2I，I2F，丢失精度，除已知不会丢失精度，可转换回原值
@@ -1548,6 +1549,7 @@ qualification decomposition             |限定分解       |多级指针/成员
 qualified name                          |限定名         |限定标识，using-声明符，typename-说明符，和具有`A::B`结构的各种说明符等中的终端名，以及成员限定名
 qualified name lookup                   |限定名查找     |一般在查找语境中查找，命名空间还考虑内联命名空间，找不到则进一步查找 uing-指令引入的命名空间
 qualifier                               |限定符
+quiet NaN                               |静默非数字     |对其运算产生NaN但不引发故障信号
 
 ### R
 
@@ -1639,6 +1641,7 @@ shift state                             |迁移状态       |`mbstate_t`维护�
 side effect                             |副作用 |读volatile，改，调用 I/O 库函数
 signal                                  |信号
 signal handler                          |信号处理函数
+signaling NaN                           |发信非数字     |运算时产生故障信号
 signature                               |签名   |名字，形参类型列表，外围类，命名空间，尾部 requires，（模板）返回类型，模板头，（特化）模板实参
 signed                                  |有符号
 signed integer type                     |有符号整数类型 |标准、扩充有符号整数
