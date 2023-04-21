@@ -1611,7 +1611,7 @@ rewritten candidates                    |重写候选   |运算符重载中，�
 right shift operator                    |右移运算符
 rounding                                |舍入
 run                                     |运行
-runtime type identification             |运行时类型标识
+runtime type identification             |运行时类型识别
 rvalue                                  |右值       |纯右值PRValue+临限值XValue
 
 ### S
