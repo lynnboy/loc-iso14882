@@ -683,6 +683,7 @@ common comparison type                  |公共比较类型   |`strong_ordering`
 common initial sequence                 |共同起始序列   |多个标准布局结构体中开头非静态数据成员和位字段序列，对应成员布局兼容
 common type                             |公共类型
 compare expression                      |比较表达式 |`shift_expr <=> shift_expr`。内建：算术类型进行一般算术转换，禁止bool混合，禁止除整型到浮点外的窄化<br>整型`strong_ordering`，浮点`partial_ordering`，以合成指针类型比较指针，可比较时为`strong_ordering`
+comparison category type                |比较类别类型   |`partial_ordering`, `weak_ordering`, `strong_ordering`
 comparison operator function            |比较运算符函数 |相等性、关系、三路比较
 compile                                 |编译
 complete-class context                  |完整类语境 |在类成员说明之内需要将类当做完整类型的语境：函数体、默认实参、默认模板实参、noexcept、默认成员初始化式、嵌套类定义式
@@ -1715,11 +1716,12 @@ structured binding                      |结构化绑定     |实体的一种，
 structured binding declaration          |结构化绑定声明式   |`[]`语法的简单声明式，仅允许`static`, `thread_local`, `auto` 或 cv<br>初始化式为`=ass_expr`,`{ass_expr}`或`(ass_expr)`，数组或非联合体类类型
 sub-expression                          |子表达式   |正则表达式：括号标记的部分
 subexpression                           |子表达式
-subnormal                               |次正规的
+subnormal                               |次规范的
 subobject                               |子对象     |被其他对象包含：成员、基类、元素
 subscript expression                    |下标表达式 |后缀表达式
 subscripting operator                   |下标运算符 |内建：数组GLv或指针PRv、枚举或整型，等价于`*(a+b)`，`a` SeqB `b`，可交换<br>摒弃逗号表达式，预备多维下标
 subscripting operator function          |下标运算符函数 |`pf_expr.operator[](expr_or_braced_list)`
+substitutability                        |可代换性   |`a==b`=>`f(a)==f(b)`
 subsume                                 |纳入       |比较析取范式和合取范式决定纳入关系
 substatement                            |子语句     |不包括选择和循环中的初始化语句
 suffix                                  |后缀       |整数字面量，浮点字面量：`sSlLuUfFzZ`，自定义字面量
