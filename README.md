@@ -681,6 +681,7 @@ comma operator                          |逗号运算符 |`ass_expr, ass_expr`�
 comment                                 |注释       | `/* */`，`// \n`
 common comparison type                  |公共比较类型   |`strong_ordering`>`weak_ordering`>`partial_ordering`
 common initial sequence                 |共同起始序列   |多个标准布局结构体中开头非静态数据成员和位字段序列，对应成员布局兼容
+common reference type                   |公共引用类型   |`common_reference_t<T,U>`，`T`和`U`均可转换的引用类型
 common type                             |公共类型
 compare expression                      |比较表达式 |`shift_expr <=> shift_expr`。内建：算术类型进行一般算术转换，禁止bool混合，禁止除整型到浮点外的窄化<br>整型`strong_ordering`，浮点`partial_ordering`，以合成指针类型比较指针，可比较时为`strong_ordering`
 comparison category type                |比较类别类型   |`partial_ordering`, `weak_ordering`, `strong_ordering`
@@ -915,6 +916,7 @@ equality                                |相等
 equality expression                     |相等性表达式   |`rel_expr == rel_expr`等。内建：算术类型一般算术转换，指针和成员指针进行合成指针类型比较<br>成员指针比较，虚函数和无继承关系时未指明顺序
 equality operator                       |相等性运算符   |`==`, `!=`
 equality operator function              |相等性运算符函数
+equality-preserving expression          |维持相等性的表达式 |相等输入给出相等输出
 equivalence                             |等价
 equivalence class                       |等价类 |正则表达式，[=a=]，匹配校排等价字符
 equivalent expressions                  |等价表达式 |模板化表达式除模板形参外符合ODR
