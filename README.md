@@ -1455,6 +1455,7 @@ permissible types                       |允许类型       |类对象或引用�
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
 physical source line                    |物理源文本行
+piecewise construction                  |逐段构造       |`ctor(piecewise_construct_t, tuple<A1...> a1, tuple<A2...> a2)`，用于`pair`
 placeholder                             |占位符
 placeholder-type-specifier              |占位符类型说明符|`auto`或`decltype(auto)`。泛型形参类型占位符。引入尾部返回类型。推断返回类型。推断变量类型，new类型，模板形参
 placeholder type deduction              |占位符类型推断 |`auto`：函数调用的模板实参推断规则，`decltype(auto)`：`decltype`规则
