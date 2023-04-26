@@ -841,6 +841,7 @@ delete expression                       |delete 表达式  |一元表达式。�
 deleted                                 |已删除的，弃置的
 deleted definition                      |弃置定义式     |`=delete;`或效果为弃置的`=default;`。弃置定义式应当是首个声明式
 deleted function                        |弃置函数       |显式或隐式弃置的函数
+deleter                                 |删除器     |智能指针用以处置其所拥有的资源的函数对象
 dependency-ordered before               |按依赖序早于 DepB  |以跨线程值传递确定的顺序：原子性写-读某值+线程内CDep
 dependent base class                    |待决基类   |作为基类的待决类型，嵌套类模板的外围类模板当前实例不算
 dependent call                          |待决调用   |函数调用（运算符求值）有任何部分依存于模板形参
@@ -1848,6 +1849,7 @@ unexpanded pack                         |未展开的包组
 Unicode                                 |Unicode，统一码
 union                                   |联合体         |以`union`声明的类。所有非静态数据成员地址相同。无多态，无继承，无引用成员<br>若成员有特殊成员函数，则对应成员函数自动弃置，需要用户提供
 union-like class                        |类似联合体的类 |联合体，直接包含匿名联合体的类。有可变成员
+unique pointer                          |专有指针       |`unique_ptr`，专有所有权
 universal-character-name                |UCN，通用字符名|概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 `unlikely`                              |`unlikely` 属性|属性，无参数，用于标号或语句，标明执行路径非似然性
 unnamed bit-field                       |无名位字段     |不是成员，填充位，宽度可以为0，分隔内存位置，不支持cv
@@ -1876,6 +1878,7 @@ user-defined floating-point literal     |用户定义浮点字面量     |无后
 user-defined integer literal            |用户定义整数字面量     |无后缀整数字面量+自定义后缀，先类型后通配，类型运算符只支持`unsigned long long`
 user-defined literal                    |用户定义字面量         |数值/字符/字符串字面量+字面量后缀，字面量运算符（模板）函数
 user-defined string literal             |用户定义字符串字面量   |预处理记号，记号，字符串字面量+后缀，支持字符串拼接，先模板后非模板`operator "" X(const Tchar*, size_t)`
+uses-allocator construction             |带分配器的构造         |传递分配器给构造函数，若不兼容则忽略，否则尝试调用`T(allocator_arg, alloc, args...)`和`T(args..., alloc)`
 using-declaration                       |using-声明式           |引入已有实体的名字，所在位置限制其种类，没有连接<br>支持基类成员函数和构造函数继承，构造函数不进行访问检查
 using-directive                         |using-指令             |引入其中所有已有可达实体的名字，命名空间或块作用域
 using-enum-declaration                  |using-枚举声明式       |作用类似using-指令，引入所有已有枚举符的名字

@@ -151,7 +151,7 @@ def indexlibrarymember(_1:str, _2:str):
 @applyTo(['%@lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
 
-@applyTo(['?libglobal'], within=['codeblock'])
+@applyTo(['`:lib', '?libglobal'], within=['codeblock'])
 def libglobal(_1:str): return indexlibraryglobal(_1) + _1
 @applyTo(['?libmember'], within=['codeblock'])
 def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
