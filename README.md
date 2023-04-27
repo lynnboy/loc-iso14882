@@ -542,6 +542,7 @@ arbitrary-positional stream             |可任意定位流   |可seek
 architecture                            |体系结构
 argument                                |实参，实际参数 |函数，函数式宏，模板，throw
 argument-dependent name lookup          |依赖于实参的名字查找   |调用无限定函数时查找函数的过程：<br>1. 先查找局部声明或类成员，或者非函数，<br>2. 然后查找：关联命名空间成员，关联实体的友元，与关联实体附属于相同模块
+argument forwarding call wrapper        |实参转发调用包装器 |支持转发任意实参列表
 arithmetic                              |算术的
 arithmetic exception                    |算术异常
 arithmetic type                         |算术类型       |整型、浮点
@@ -581,7 +582,7 @@ awaitable                               |可等待体
 |-|-|-|
 backslash                               |反斜杠     |`\`，用于转义，行拼接等
 barrier                                 |关卡
-base characteristic                     |基础特征
+base characteristic                     |基础特征   |`integral_constant`特例，作为其基类
 base class subobject                    |基类子对象 |未指明布局。同类型零大小子对象不能重叠
 base-clause                             |基子句     |指定基类。可以为类型名，decltype，支持包组展开，模板。忽略cv
 base-2 representation                   |以 2 为基的表示    |整数的二进制值表示
@@ -621,6 +622,7 @@ boolean                                 |布尔
 boolean conversion                      |布尔转换 BoolC |转换类别的标准转换。0->`false`, 非0->`true`
 boolean literal                         |布尔字面量     |`true`, `false`，类型为`bool`
 bound                                   |（名字）绑定   |（除友元和限定名外）声明式在其目标作用域中与名字绑定，<br>块的外部声明式在直接作用域中绑定，<br>无作用域枚举符/匿名联合成员在父作用域中绑定，<br>注入类名
+bound argument entities                 |绑定实参实体   |调用包装器中保存，用于转发给目标对象调用时作为实参
 break statement                         |break 语句     |跳出到循环或switch之后
 built-in candidates                     |内建候选       |运算符重载中，除`,`、`&`、`->`外的内建运算符<br>内建赋值左操作数不能引入临时对象或用户定义转换
 built-in operator                       |内建运算符
@@ -634,6 +636,12 @@ cache                                   |高速缓存
 call                                    |调用
 call by reference                       |按引用调用     |按引用传递参数
 call by value                           |按值调用       |按值传递参数
+call pattern                            |调用模式       |完美转发
+call signature                          |调用签名       |`R(a...)`
+call wrapper                            |调用包装器
+call wrapper type                       |调用包装器类型 |持有可调用对象并向其转发`()`
+callable object                         |可调用对象
+callable type                           |可调用类型     |函数对象类型或成员指针
 candidate function                      |候选函数       |
 capture                                 |俘获，俘获符   |俘获符：语法结构，代表闭包数据成员，可指定初始化
 capture by copy                         |按复制俘获
@@ -1020,7 +1028,7 @@ function declaration                    |函数声明式     |非`typedef`简单
 function declarator                     |函数声明符
 function-definition                     |函数定义式     |语法不允许用typedef名
 function-local predefined variable      |函数局部预定义变量 |`__func__`
-function object                         |函数对象
+function object                         |函数对象       |可作为函数调用的*后缀表达式*：函数指针、带`()`的类、带向函数指针转换的类
 function overloading                    |函数重载
 function parameter                      |函数形参       |特殊：`f(void)`等价于`f()`，`void`不能是待决类型。摒弃volatile形参<br>可以无名
 function parameter pack                 |函数形参包组   |展开类型包组作为函数形参
@@ -1242,6 +1250,7 @@ lookup set                              |查找集合       |类成员名字查�
 low-order bit                           |低序位         |最低有效位
 lower bound                             |下界
 lvalue                                  |左值           |并非临限值XValue的泛左值
+Lvalue-Callable                         |可左值调用的   |
 Lvalue Transformation                   |左值变换 LvTrn |重载决议中的标准转换类别，精确匹配级，包括左值向右值Lv2Rv，数组向指针A2Ptr，函数向指针F2Ptr
 lvalue-to-rvalue conversion             |左值向右值转换 Lv2Rv |非函数、非数组，GLv->PRv，非类类型去掉cv
 
@@ -1452,6 +1461,7 @@ partial ordering of function template   |函数模板的偏序 |函数模板“�
 partial ordering of partial specialization|部分特化式的偏序 |基于模板函数偏序规则：归一化变换后互相推断，忽略函数无实参的的形参包组、默认实参和省略号<br>再考虑重排序后对齐的形参列表间比较哪个更受约束
 partial specialization                  |部分特化，部分特化式   |类模板，变量模板。可以加约束。特例的模板实参可以推断出特化式的模板实参且满足约束，则匹配，再基于偏序选择
 partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
+perfect forwarding call wrapper         |完美转发调用包装器 |实参转发调用包装器，同时转发绑定实参
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
@@ -1654,6 +1664,7 @@ signed                                  |有符号
 signed integer type                     |有符号整数类型 |标准、扩充有符号整数
 similar type                            |相似类型       |两个同级数多级指针/数组中，不考虑cv，允许数组的无边界/有边界差异外，其余相同
 simple assignment operator function     |简单复制运算符函数 |`operator=`，只能为非静态成员函数
+simple call wrapper                     |简单调用包装器 |完美转发调用包装器+可复制+特殊成员constexpr
 simple-capture                          |简单俘获符     |不带有初始化式，直接指名被俘获变量的俘获符
 simple-declaration                      |简单声明式     |声明变量、函数的普通声明式（包括结构化绑定）：属性+一系列声明说明符+声明符的列表<br>声明类、枚举时可以没有声明符
 simple escape sequence                  |简单转义序列   |`\ '"?\abfnrtv`
@@ -1686,6 +1697,7 @@ standard-layout type                    |标准布局类型   |标量、标准�
 stateful character encoding             |有状态字符编码
 standard-layout union                   |标准布局联合体 |`union`的标准布局类
 standard library                        |标准程序库，标准库
+state entities                          |状态实体       |调用包装器中，目标对象和绑定实参对象
 statement                               |语句
 static                                  |静态
 static assertion                        |静态断言
@@ -1706,9 +1718,9 @@ storage duration                        |存储期     |静态、线程、自动
 storage management                      |存储管理
 stream                                  |流 |输入或输出流
 strict                                  |严格的
-strict partial order                    |严格偏序，拟序 |反自反，反对称，传递，不要求完全性，如 <
-strict total order                      |严格全序   |具有完全性的严格偏序，完整的 <
-strict weak order                       |严格弱序   |连通的严格偏序，不可比较关系为等价关系，如 <
+strict partial order                    |严格偏序，拟序 |反自反，反对称，传递，不要求完全性，如 &lt;
+strict total order                      |严格全序   |具有完全性的严格偏序，完整的 &lt;
+strict weak order                       |严格弱序   |连通的严格偏序，不可比较关系为等价关系，如 &lt;
 string                                  |字符串
 string literal                          |字符串字面量   |预处理记号，也是记号，编码前缀，数组（常量左值）
 string literal operator template        |字符串字面量运算符模板 |`template<A a> A operator "" X()`，`A` 为支持字符串的字面量类型
@@ -1752,6 +1764,7 @@ synthesized three-way comparison        |合成三路比较   |`static_cast<R>(a
 |English|中文|说明|
 |-|-|-|
 target constructor                      |目标构造函数   |被委派构造函数调用的构造函数，由重载决议选择
+target object (call wrapper)            |（调用包装器）目标对象 |可调用对象
 target scope                            |目标作用域     |声明式所居作用域（友元/限定名/详述类型/块外部声明式等的目标例外）
 template                                |模板           |一种实体，基于参数生成（实例化）其他实体：类、函数、变量、别名、概念
 template argument                       |模板实参       |类型、非类型、模板
