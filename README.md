@@ -1483,6 +1483,8 @@ pointer to T                            |T 的指针，指向 T 的指针
 pointer-interchangable                  |指针可相互转换 |相同地址值：相同对象、联合体与成员、标准布局类与首成员或基类子对象（不包括数组与首元素）
 polymorphic                             |多态的
 polymorphic class                       |多态类         |有虚函数的类
+pool                                    |内存池         |管理特定大小的区块
+pool resource                           |池化资源       |`synchronized_pool_resource`和`unsynchronized_pool_resource`。管理不同大小的内存池
 POSIX, Portable Operating System Interface  |POSIX，可移植操作系统接口
 postfix                                 |后缀
 postfix decrement expression            |后置减量表达式 |后缀表达式
