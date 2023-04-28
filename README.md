@@ -1177,6 +1177,7 @@ intervening scope                       |介入作用域 |即目标的每层不�
 invalid                                 |无效，非法
 invalid pointer value                   |无效指针值
 invocation                              |调用，执行
+invocation sequence                     |调用序列   |stacktrace反应的调用栈
 invoke                                  |调用，执行 |多用于除函数之外的场合，如宏等
 iostream                                |输入输出流, I/O 流
 ISO, International Organization for Standardization |ISO，国际标准化组织
@@ -1690,7 +1691,10 @@ specialize                              |特化
 specifier                               |说明符
 stable algorithm                        |稳定算法   |保留输入元素顺序
 stack unwinding                         |栈解退     |从抛出点到活跃处理器之间逐层销毁自动对象的过程
+stacktrace                              |栈踪迹     |以一组栈踪迹条目表示调用序列
+stacktrace entry                        |栈踪迹条目
 standard conversion sequence            |标准转换序列 SCS   |重载决议中ICS的一种<br>恒等，或隐式转换：(Lv2Rv|A2Ptr|F2Ptr)?+(IntP|FltP|IntC|FltC|FIC|PtrC|MPtrC|BoolC)?+FPtrC?+QualC?<br>左值变换LvTrn+提升Prom或转换Conv+限定调整QualAdj
+standard format specifier               |标准格式说明   |`FA+#0W.PLT`：F填充，A对齐`<>^`，+正负号，#替代形式（整数带基数前缀，浮点带小数点），0数值填零，W宽度（允许`{}`），P精度（允许`{}`），L地域特定形式，T类型`aAbBcdeEfFgGopsxX`
 standard integer type                   |标准整数类型   |标准有符号、无符号整数
 standard signed integer type            |标准有符号整数类型 |`signed char`, `short`, `int`, `long`, `long long`
 standard unsigned integer type          |标准无符号整数类型 |`unsigned char`, `unsigned short`, `unsigned int`, `unsigned long`, `unsigned long long`
