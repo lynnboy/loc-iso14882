@@ -947,6 +947,7 @@ exclusive-or operator                   |异或运算符     |`^`
 execute                                 |执行，运行
 execution agent                         |执行代理
 execution character set                 |执行字符集     |LC_CTYPE
+execution policy                        |执行策略       |程序库算法：顺序、并行、向量化
 execution step                          |执行步骤       |线程的可观察行为：终止，volatile访问，完成I/O、同步或原子性操作
 execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
@@ -1005,7 +1006,9 @@ floating-point promotion                |浮点提升 FltP  |提升类别的标�
 fold expression                         |折叠表达式
 for-range-declaration                   |for-范围声明式 |范围式for语句的变量声明式
 for statement                           |for 语句
+format specification                    |格式说明       |`format`的格式字符串中为替换字段指定格式的部分：标准格式说明、时间格式说明、`formatter`特例定义的自定义格式说明
 format specifier                        |格式说明符     |正则表达式中被替换部分的格式说明
+format string                           |格式字符串     |`format`系列函数的格式说明：替换字段`{d:s}`+转义序列`{{`或`}}`+非花括号字符
 forward declaration                     |前置声明式
 forward progress                        |向前进展，进展 |保证线程会产生副作用，或其他线程可见的行为：同步或原子性操作
 forwarding reference                    |转发引用       |类型模板形参的无cv右值引用
