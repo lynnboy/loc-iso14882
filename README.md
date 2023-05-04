@@ -1622,6 +1622,7 @@ referenceable type                      |可被引用的类型 |可以创建 T& 
 regex                                   |正则表达式
 region                                  |区，区域
 regular expression                      |正则表达式
+reified object                          |具象对象       |泛左值为原对象，纯右值为实质化后的对象
 reinterpret cast expression             |重解释转型表达式 |后缀表达式，`reinterpret_cast<T>(v)`<br>函数指针兼容，对象指针兼容，成员指针兼容，指针<=>整数（枚举），通过指针完成引用转换
 relational expression                   |关系表达式     |`cmp_expr < cmp_expr` 等。内建：算术进行一般算术转换，指针以合成指针类型比较<br>指针部分顺序：数组下标、成员声明顺序
 relational operator                     |关系运算符     |`<`, `>`, `<=`, `>=`
