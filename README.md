@@ -904,6 +904,7 @@ ECMA, European Computer Manufacturers Association   |ECMA，欧洲计算机制�
 elaborated-type-specifier               |详述类型说明符 |仅引入类型种类和名字，前向声明，或声明友元
 elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
 element                                 |元素       |数组，聚合，初始化式列表
+element access function                 |元素访问函数   |并行算法中使用的迭代器方法或函数对象，用于通过迭代器执行（读写）操作访问序列元素
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 eligible special member function        |合格的特殊成员函数 |可被认为存在：未被弃置，满足关联约束，约束偏序中优先
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
@@ -1471,6 +1472,7 @@ pack expansion                          |包组展开式     |将包组中各实
 padding bits                            |填充位         |对象表示中不属于值表示的位
 pair                                    |对偶
 parallel                                |并行的
+parallel algorithm                      |并行算法       |带有执行策略模板形参`ExecutionPolicy`的算法
 parallel forward progress guarantees    |并行向前进展保证   |启动后提供并发保证。线程池
 parameter                               |形参，形式参数 |函数，catch，函数式宏，模板
 parameter-declaration                   |形参声明式     |函数、lambda、推断导引、模板、requires（不支持默认实参、省略号和占位符推断？）
@@ -1963,6 +1965,7 @@ variadic function                       |变参函数   |以`...`形参结尾的
 variadic template                       |变参模板
 variant                                 |变体
 variant member                          |可变成员   |共用内存的数据成员：联合体的非静态数据成员，匿名联合体嵌入类中的非静态数据成员
+vectorization-unsafe                    |向量化不安全 |包含线程同步的库函数，不包括new/delete
 viable                                  |可行的
 viable function                         |可行函数   |重载决议中从候选函数中选取，基于实参数量、各实参均存在ICS、满足约束
 virtual                                 |虚的
