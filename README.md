@@ -490,6 +490,7 @@ Original   |中文   |章节    |定义
 |English|中文|说明|
 |-|-|-|
 abbreviated function template           |简写函数模板   |使用泛型形参类型占位符的函数声明式，功能等价于函数模板声明式<br>`auto`->`T`，可带约束，不支持`decltype(auto)`，省略号均为形参包组；可以部分简写，部分模板
+absolute path                           |绝对路径
 abstract class                          |抽象类     |包含未被覆盖的纯虚函数<br>不能创建对象，因而不能为形参、返回类型、类型转换、
 abstract-declarator                     |抽象声明符 |用于指名类型。没有名字的说明符，等价于有唯一名字。函数类型等
 abstract machine                        |抽象机器
@@ -883,6 +884,7 @@ direct member                           |直接成员   |在成员说明中声�
 direct-non-list-initialization          |直接非列表初始化   |直接进行的其他初始化
 directive                               |指令
 directive-introducing token             |指令发起记号   |行首`#`，或模块指令行`module XX`，`import XX`，`export XX`
+directory                               |目录
 disambiguation                          |歧义消解
 discarded statement                     |弃用语句       |`constexpr if` 排除的语句
 discarded-value expression              |弃值表达式     |仅保留副作用，一些 volatile 访问表达式进行L2R转换（保留读内存副作用）
@@ -998,6 +1000,7 @@ extractor                               |提取符         |`is >> var`
 facet                                   |刻面
 facility                                |功能设施   |语言功能或程序库组件
 failure                                 |失败，故障
+fallback separator                      |备用分隔符
 fallthrough statement                   |直落语句       |`switch`语句中无`break`的`case`
 `fallthrough`                           |`fallthrough` 属性|属性，无参数，用于`switch`中`case`标号前的空语句，抑制直落语句警告消息
 fault                                   |故障，错误
@@ -1005,6 +1008,7 @@ feature                                 |功能特性，特性
 fence                                   |栅栏，内存栅栏 |无关内存位置的同步操作
 field                                   |字段
 file                                    |文件           |可观察行为
+filesystem                              |文件系统
 `final`                                 |`final`虚说明符|标明类不可被继承，虚函数不可被覆盖
 final overrider                         |最终覆盖函数   |未在最终派生类中被进一步覆盖，提供实际行为
 final suspend point                     |最终暂停点     |协程代码隐含插入`co_await p.final_suspend();`，不可抛出异常<br>若承诺`unhandled_exception`抛出则认为在最终暂停点暂停
@@ -1070,6 +1074,7 @@ fundamental type                        |基础类型       |算术（整型、�
 
 |English|中文|说明|
 |-|-|-|
+generic format pathname                 |通用格式路径名
 generic lambda expression               |泛型 lambda 表达式
 global                                  |全局的
 global module                           |全局模块       |所有全局模块分段和非模块UT
@@ -1094,6 +1099,7 @@ handler                                 |处理器     |捕获并处理异常的
 handler function                        |处理函数   |`new_handler`等
 happens after                           |发生晚于 HapA
 happens before                          |发生早于 HapB  |确定任意两求值的顺序：线程内SeqB或线程间ITHB
+hard link                               |硬连接
 *has-attribute-expression*              |*属性查询表达式* |`__has_cpp_attribute(attr)`，是否支持属性及其版本。属性允许宏展开
 *has-include-expression*                |*包含查询表达式* |`__has_include(hdr)`，是否可包含文件。宏行为同`#include`
 hash function                           |散列函数
@@ -1243,7 +1249,7 @@ lifetime                                |生存期
 likelihood                              |似然性 |`likely`或`unlikely`属性，执行路径的执行概率较高或较低
 `likely`                                |`likely` 属性  |属性，无参数，用于标号或语句，标明执行路径似然性
 line                                    |行，文本行
-link                                    |连接   |将已翻译实体收集并组合成程序映像
+link                                    |连接   |将已翻译实体收集并组合成程序映像<br>文件系统对文件和文件名的关联
 linkage                                 |连接，连接性   |可被连接器认作同一：无连接、内部、外部、模块
 linkage-specification                   |连接说明   |指定语言连接`extern "xxx"`
 list                                    |列表
@@ -1368,6 +1374,7 @@ NaN, not a number                       |非数字
 narrow character type                   |窄字符类型     |普通（三种`char`），`char8_t`
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
 narrowing conversion                    |窄化转换   |隐式转换：F2I，I2F，丢失精度，除已知不会丢失精度，可转换回原值
+native pathname format                  |本地路径名格式
 necessarily reachable                   |必定可达   |已经被导入的模块接口单元
 nest                                    |嵌套
 nested class                            |嵌套类     |类作用域中声明的类
@@ -1486,6 +1493,7 @@ parameter-declaration                   |形参声明式     |函数、lambda、
 parameter-declaration-clause            |形参声明子句   |可调用体的参数列表部分，同上
 parameter pack                          |形参包组
 parameter-type-list                     |形参类型列表   |函数类型的内容：每个形参的类型，数组->指针，免除顶层cv；尾部省略号或函数形参包组
+parent directory                        |父目录
 parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
@@ -1494,6 +1502,9 @@ partial ordering of function template   |函数模板的偏序 |函数模板“�
 partial ordering of partial specialization|部分特化式的偏序 |基于模板函数偏序规则：归一化变换后互相推断，忽略函数无实参的的形参包组、默认实参和省略号<br>再考虑重排序后对齐的形参列表间比较哪个更受约束
 partial specialization                  |部分特化，部分特化式   |类模板，变量模板。可以加约束。特例的模板实参可以推断出特化式的模板实参且满足约束，则匹配，再基于偏序选择
 partially-ordered initialization        |部分有序初始化 |静态变量初始化：非模板特例的内联变量
+path                                    |路径
+pathname                                |路径名
+pathname resolution                     |路径名解析
 past-the-end                            |越过末尾       |数组最后一个之后，或特殊标记迭代器值
 perfect forwarding call wrapper         |完美转发调用包装器 |实参转发调用包装器，同时转发绑定实参
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
@@ -1549,6 +1560,7 @@ potentially throwing                    |潜在抛出异常的 |有能力抛出�
 pragma                                  |语用       |预处理指令。预处理运算符将实参字符串去字符串化，再作为语用指令处理
 precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
 precedence                              |优先级
+preferred separator                     |首选分隔符
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
 prefix increment operator               |前置增量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
@@ -1639,6 +1651,7 @@ reinterpret cast expression             |重解释转型表达式 |后缀表达�
 relational expression                   |关系表达式     |`cmp_expr < cmp_expr` 等。内建：算术进行一般算术转换，指针以合成指针类型比较<br>指针部分顺序：数组下标、成员声明顺序
 relational operator                     |关系运算符     |`<`, `>`, `<=`, `>=`
 relational operator function            |关系运算符函数
+relative path                           |相对路径
 relaxed                                 |宽松的
 relaxed atomic operation                |宽松原子性操作 |不是同步操作，但不会竞争
 relaxed pointer safety                  |宽松指针安全性
@@ -1668,6 +1681,8 @@ reverse iterator                        |反向迭代器
 reversible container                    |可反向容器 |其迭代器为双向或随机访问
 rewritten candidates                    |重写候选   |运算符重载中，关系：`x<=>y`,`y<=>x`，三路：`y<=>x`，不等：`x==y`，相等：`y==x`<br>关系改写规则：正序`(x<=>y)@0`，逆序`0@(y<=>x)`，`!=`：正序`!(x==y)`，逆序`!(y==x)`，`==`为`y==x`
 right shift operator                    |右移运算符
+root directory                          |根目录
+root name                               |根名       |文件系统，根目录之前的部分，如盘符等
 rounding                                |舍入
 run                                     |运行
 runtime type identification             |运行时类型识别
@@ -1799,6 +1814,8 @@ suspension context                      |暂停语境   |函数中允许 `co_awa
 swappable                               |可交换     |与自身类型可交换`swap(a,a)`
 swappable with                          |与…可互相交换  |在引入`std::swap`后可调用`swap(a,b)`和`swap(b,a)`
 switch statement                        |switch 语句
+symbolic link                           |符号连接
+symlink                                 |符号连接
 synchronization operation               |同步操作   |一些原子性操作和互斥体操作<br>消费(consume)、获取(aquire)、释放(release)、获取并释放，宽松(relaxed)操作不是同步<br>对内存位置的操作或无关内存位置的栅栏
 synchronize                             |同步
 synchronize with                        |同步于
