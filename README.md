@@ -1641,6 +1641,7 @@ relaxed pointer safety                  |宽松指针安全性
 release                                 |释放       |同步操作
 release sequence                        |释放序列   |某原子性对象上[释放+读改写*n]的最大序列
 remainder operator                      |求余运算符
+remote time zone database               |远程时区数据库
 replacement function                    |替代函数   |程序定义的用以替换实现的缺省函数的函数，如`operator new`
 repositional stream                     |可重定位流 |可 seek 到之前经过的位置
 representation                          |表示
