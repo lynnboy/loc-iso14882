@@ -989,6 +989,7 @@ extended unsigned integer type          |扩充无符号整数类型
 extension                               |扩展           |实现提供的额外功能
 extern specifier                        |extern 说明符  |变量或函数非定义声明式，外部连接。允许声明不完整类型的实体
 external linkage                        |外部连接       |跨翻译单元可见
+extractor                               |提取符         |`is >> var`
 
 ### F
 
@@ -1020,6 +1021,8 @@ for statement                           |for 语句
 format specification                    |格式说明       |`format`的格式字符串中为替换字段指定格式的部分：标准格式说明、时间格式说明、`formatter`特例定义的自定义格式说明
 format specifier                        |格式说明符     |正则表达式中被替换部分的格式说明
 format string                           |格式字符串     |`format`系列函数的格式说明：替换字段`{d:s}`+转义序列`{{`或`}}`+非花括号字符
+formatted input function                |格式化输入函数 |`operator>>`提取符
+formatted output function               |格式化输出函数 |`operator<<`插入符
 forward declaration                     |前置声明式
 forward iterator                        |前向迭代器 |输入+可复制+相等比较+多遍，概念`forward_iterator`
 forward progress                        |向前进展，进展 |保证线程会产生副作用，或其他线程可见的行为：同步或原子性操作
@@ -1172,6 +1175,7 @@ inline variable                         |内联变量   |跨UT多定义
 input                                   |输入
 input iterator                          |输入迭代器 |支持`*it`+`it++`，概念`input_iterator`
 insert iterator                         |插入迭代器
+inserter                                |插入符     |`os << var`
 instance                                |实例
 instantiate                             |实例化，落实
 instantiation                           |实例化式，实例化   |模板实体落实为具体实体
@@ -1906,6 +1910,8 @@ undefined behavior                      |UB，未定义行为 |任意可能行�
 underlying-type                         |底层类型       |字符类型。枚举，默认为`int`或以枚举符求值范围推定
 unevaluated operand                     |免求值操作数   |编译期语法结构，仅获得类型/元信息，不求值
 unexpanded pack                         |未展开的包组
+unformatted input function              |无格式输入函数 |`get`, `getline`, `ignore`, `peek`, `read`, `readsome`, `putback`, `unget`, `sync`, `tellg`, `seekg`
+unformatted output fnction              |无格式输出函数 |`put`, `write`, `flush`
 Unicode                                 |Unicode，统一码
 uniform random bit generator, URBG      |均匀随机位生成器 |`uint = g()`产生无符号整数，`[g.min(), g.max()]`均匀概率分布
 union                                   |联合体         |以`union`声明的类。所有非静态数据成员地址相同。无多态，无继承，无引用成员<br>若成员有特殊成员函数，则对应成员函数自动弃置，需要用户提供
