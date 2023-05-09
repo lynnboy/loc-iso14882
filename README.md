@@ -570,6 +570,8 @@ associated entities                     |关联实体       |依赖于实参查�
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
 atomic                                  |原子性
 atomic constraint                       |原子约束       |表达式`E`+形参映射。由约束规范化过程形成<br>模板形参代换后表达式有效且求值为`true`时满足
+atomic notifying operation              |原子性通知操作
+atomic waiting operation                |原子性等待操作
 attach to module                        |附属于模块     |可替换全局`new`/`delete`函数、命名空间、带语言连接说明的声明式等附属全局模块；一些指定目标的友元声明式归属目标所在模块；否则归属当前视野的模块
 attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键字标识符
 attribute-declaration                   |属性声明式     |仅有属性的空声明，不是块声明式
@@ -686,6 +688,7 @@ co_await expression                     |co_await 表达式
 co_return statement                     |co_return 语句 |等价于`{p.return_value(initor); goto final_suspend;}`，void时为`p.return_void()`<br>协程无`co_return`相当于无参`co_return`
 co_yield expression                     |co_yield 表达式
 code point                              |代码点     |字符在字符集中的数值
+coherence-ordered before                |按一致性顺序早于 |原子操作间，A写的值被B读到，或改动顺序中A在B前
 coherence requirements                  |协调性规定 |写-写、写-读、读-写、读-读协调性
 collating element                       |校排元素   |一些语言中会将多个字符合并当做一个字符校排
 comma operator                          |逗号运算符 |`ass_expr, ass_expr`。内建：lhs SeqB rhs，左侧其值。
