@@ -569,6 +569,8 @@ associated class                        |关联类
 associated constraints                  |关联约束       |声明式受到的约束，按范式合取：模板形参的类型约束，模板形参后的requires子句，函数形参中的类型约束，函数尾部requires子句
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
+asynchronous provider                   |异步提供者     |`future`对应的`promise`或`task`，向共享状态提供结果
+asynchronous return object              |异步返回对象   |存于`future`的共享状态中
 atomic                                  |原子性
 atomic constraint                       |原子约束       |表达式`E`+形参映射。由约束规范化过程形成<br>模板形参代换后表达式有效且求值为`true`时满足
 atomic notifying operation              |原子性通知操作
@@ -586,6 +588,7 @@ awaitable                               |可等待体
 |-|-|-|
 backslash                               |反斜杠     |`\`，用于转义，行拼接等
 barrier                                 |关卡
+barrier phase                           |关卡阶段
 base characteristic                     |基础特征   |`integral_constant`特例，作为其基类
 base class subobject                    |基类子对象 |未指明布局。同类型零大小子对象不能重叠
 base-clause                             |基子句     |指定基类。可以为类型名，decltype，支持包组展开，模板。忽略cv
@@ -608,6 +611,7 @@ binary left fold                        |二元左折叠     |`expr op ... op pa
 binary operator                         |二元运算符
 binary operator function                |二元运算符函数 |`x.operator@(y)`或`operator@(x,y)`
 binary right fold                       |二元右折叠     |`pack op ... op expr`
+binary semaphore                        |二元信号量
 bind directly                           |直接绑定       |引用初始化中，除了将初始化式转换为被引用类型之外的情况
 bit                                     |位
 bit-field                               |位字段         |一种实体。不能为静态成员。大于类型宽度为填充位<br>不能取地址，不能绑定到非const引用
@@ -722,6 +726,7 @@ concurrency                             |并发性
 concurrent                              |并发的
 concurrent foreward progress guarantees |并发向前进展保证   |实现保证线程终将有进展，无关其他线程
 condition                               |条件       |语法结构：if/while/switch/for中的条件部分。非switch：Ctx2Bool，switch：Ctx2Int+IntP<br>不能声明函数、数组，不能定义类、枚举。仅允许constexpr说明符
+condition variable                      |条件变量
 conditional escape sequence             |有条件转义序列 |编译器实现支持的其他单字符转移序列
 conditional expression                  |条件表达式     |`logor_expr ? expr : asgn_expr`。操作数1 Ctx2Bool，短路，支持`throw`，支持两个同类型位字段<br>类型不同时，尝试隐式转换为另一个，但不允许歧义<br>部分保留左值性。右值时进行一般算术转换或取合成指针类型
 conditional inclusion                   |条件包含       |预处理，`#if`，`#ifdef` 等。条件表达式经宏展开后，未定义标识符均被替换为`0`，按`intmax_t`和`uintmax_t`求值
@@ -792,6 +797,7 @@ coroutine state                         |协程状态       |为实现协程分�
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
 corresponding instance                  |对应实例       |实现所对应的抽象机器
 counted range                           |计数范围       |迭代器+计数
+counting semaphore                      |计数信号量
 covariant                               |协变           |虚函数返回类型，派生类/基类的单级指针或引用，允许放松cv<br>即覆盖函数可以放宽对返回类型的限制，但不改变返回值（指针）本身
 create                                  |创建
 CTAD, class template argument deduction |类模板实参推断 |可利用推断导引
@@ -849,6 +855,7 @@ default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
 defaulted comparison operator function  |预置的默认比较运算符函数|`(const C&)const`或`(const C&)const&`，`static(const C&, const C&)`或`static (C, C)`<br>若有引用或可变非静态数据成员则弃置，任何子对象不能`==`则`==`弃置，任何子对象不能`<=>`则`<=>`弃置<br>`==`返回`bool`，`auto`时`<=>`返回公共比较类型。`==`随`<=>`隐式声明
 defaulted function                      |预置函数       |隐式声明或显式预置的函数，具有隐含定义式或被弃置<br>弃置特殊成员函数：预期析构函数非析构时，非预期析构且非合格时
+deferred function                       |延迟函数       |`async`调用的函数
 define                                  |定义
 *defined-macro-expression*              |*已定义宏表达式* |`defined XX`或`defined (XX)`，宏是否定义
 defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符<br>函数形参和返回类型不能定义类型
@@ -876,6 +883,7 @@ destroy                                 |销毁
 destroying operator delete              |销毁用 delete 运算符   |成员，非数组，`(T*, destroying_delete_t, ...)`，由此函数负责析构；只要提供就排除非销毁函数
 destruction                             |销毁
 destructor                              |析构函数   |即选中的析构函数，在`}`处基于约束偏序决定唯一的析构函数<br>不能取地址，cv无效。非协程<br>预置析构被弃置：有可变成员的析构非平凡，潜在构造子对象无法销毁，或虚析构中无法`delete`
+detached thread                         |已分离线程
 device                                  |设备
 diagnosable rule                        |可诊断规则
 diagnostic message                      |诊断消息   |编译器报错
@@ -1511,6 +1519,8 @@ pathname resolution                     |路径名解析
 past-the-end                            |越过末尾       |数组最后一个之后，或特殊标记迭代器值
 perfect forwarding call wrapper         |完美转发调用包装器 |实参转发调用包装器，同时转发绑定实参
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
+phase completion step                   |阶段完成步骤   |`barrier`当`arrive`、`arrive_and_drop`次数为`expected`时，调用`complete`并唤醒所有线程
+phase synchronization point             |阶段同步点     |`barrier.wait`，等待`expected`达到`0`并完成阶段
 phases of translation                   |翻译阶段       |1. 物理字符->源字符，换行符<br>2. 行接合<br>3. 预处理记号分析<br>4. 执行预处理<br>5. 转义处理<br>6. 字符串拼接<br>7. 编译：记号分析，AST，语义分析等<br>8. 连接，按需实例化<br>9. 连接程序库
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
 physical source line                    |物理源文本行
@@ -1713,6 +1723,9 @@ sequence                                |序列   |容器的一种
 sequenced after                         |按顺序晚于 SeqA
 sequenced before                        |按顺序早于 SeqB    |线程内顺序性：全表达式，运算符结果值早于操作数值，函数实参和函数后缀表达式早于函数体，等待表达式处的切换
 sequential consistency                  |顺序一致性     |如同存在全局顺序
+shared lock                             |共享锁
+shared mutex                            |共享互斥体
+shared timed mutex                      |共享定时互斥体
 shift expression                        |移位表达式     |`add_expr << add_expr` `add_expr >> add_expr`<br>内建：左移、算术右移，IntP，操作数1 SeqB 操作数2
 shift operator                          |移位运算符     |`<<`, `>>`
 shift state                             |迁移状态       |`mbstate_t`维护的有状态字符编码的状态
@@ -1870,6 +1883,7 @@ three-way comparison                    |三路比较   |比较表达式，`e1 <
 three-way comparison operator function  |三路比较运算符函数
 throw                                   |抛出
 throw-expression                        |throw表达式|`throw e`：抛出，`throw`重新抛出当前处理的异常
+timed mutex                             |定时互斥体
 token                                   |记号       |编译器理解的语法元素：标识符，关键字，字面量，运算符或标点
 token concatenation                     |记号拼接   |预处理功能，`a ## b` -> `ab`
 top-level cv-qualifier                  |顶层 cv 限定符
@@ -1937,6 +1951,7 @@ uniform random bit generator, URBG      |均匀随机位生成器 |`uint = g()`�
 union                                   |联合体         |以`union`声明的类。所有非静态数据成员地址相同。无多态，无继承，无引用成员<br>若成员有特殊成员函数，则对应成员函数自动弃置，需要用户提供
 union-like class                        |类似联合体的类 |联合体，直接包含匿名联合体的类。有可变成员
 unique keys                             |唯一键         |关联容器set,map,unordered_set,unordered_map
+unique lock                             |唯一锁
 unique pointer                          |专有指针       |`unique_ptr`，专有所有权
 universal-character-name                |UCN，通用字符名|概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 Unix time                               |Unix 时间      |1970-01-01开始计数的日历秒数（不算闰秒）
