@@ -99,28 +99,53 @@ The result is the entity denoted by the [~unqualified-id] ([#basic.lookup.unqual
 其结果为由该[~无限定标识]（[#basic.lookup.unqual]）所代表的实体。
 
 [:en]
-If the entity is a local entity ([#basic.pre]) and naming it from outside of an
-unevaluated operand within the scope where the [~unqualified-id] appears would
-result in some intervening [~lambda-expression] capturing it by copy
-([#expr.prim.lambda.capture]), the type of the expression is the type of a class
-member access expression ([#expr.ref]) naming the non-static data member that
-would be declared for such a capture in the closure object of the innermost such
-intervening [~lambda-expression].
+If the [~unqualified-id] appears in a [~lambda-expression] at program point [$P]
+and the entity is a local entity ([#basic.pre]) or a variable declared by an
+[~init-capture] ([#expr.prim.lambda.capture]), then let [$S] be the
+[~compound-expression] of the innermost enclosing [~lambda-expression] of [$P].
 [:zh_CN]
-如果该实体是局部实体（[#basic.pre]），而且在出现该[~无限定标识]的作用域中，于
-免求值操作数之外对其进行指名时，会导致某个介入的 [~lambda-表达式]对它按复制捕获
-（[#expr.prim.lambda.capture]），则该表达式的类型为，对于在这个最内层的介入的
-[~lambda-表达式]的闭包对象中为这种俘获所声明的非静态数据成员，指名该成员的
-类成员访问表达式（[#expr.ref]）的类型。
+如果该[~无限定标识]出现于程序位置点 [$P] 的某个 [~lambda-表达式]中，且该实体是
+一个局部实体（[#basic.pre]）或以某个[~带初始化俘获符]所声明的变量，则令 [$S] 为
+[$P] 点的最内层外围 [~lambda-表达式]的[~复合语句]。
+
+[:en]
+If naming the entity from outside of an unevaluated operand within [$S] would
+refer to an entity captured by copy in some intervening [~lambda-expression],
+then let [$E] be the innermost such [~lambda-expression], and:
+[:zh_CN]
+如果在 [$S] 中，于免求值操作数之外指名该实体时，指代的是某个介入的
+[~lambda-表达式]按复制俘获的实体，则令 [$E] 为最内层的这种 [~lambda-表达式]，以及：
+
+[list]
+[item]
+[:en]
+If [$P] is in [$S][=']s function parameter scope but not its
+[~parameter-declaration-clause], then the type of the expression is the type of
+a class member access expression ([#expr.ref]) naming the non-static data member
+that would be declared for such a capture in the object parameter ([#dcl.fct])
+of the function call operator of [$E].
+[:zh_CN]
+如果 [$P] 位于 [$S] 的函数形参作用域而非其[~形参声明式子句]中，则该表达式的类型
+为，[$E] 的函数调用运算符的对象形参（[#dcl.fct]）中，为这种俘获所声明的非静态
+数据成员，指名该成员的类成员访问表达式（[#expr.ref]）的类型。
 
 [begin:note]
 [:en]
-If that [~lambda-expression] is not declared [`:key mutable], the type of such
+If [$E] is not declared [`:key mutable], the type of such
 an identifier will typically be [`:key const] qualified.
 [:zh_CN]
-如果该 [~lambda-表达式] 并未声明为 [`:key mutable]，则这个标识符的类型通常是
-[`:key const] 限定的。
+如果 [$E] 并未声明为 [`:key mutable]，则这个标识符的类型通常是 [`:key const]
+限定的。
 [end:note]
+
+[item]
+[:en]
+Otherwise (if [$P] either precedes [$E][=']s function parameter scope or
+is in [$E][=']s [~parameter-declaration-clause]), the program is ill-formed.
+[:zh_CN]
+否则（或者 [$P] 在 [$E] 的函数形参作用域之前，或者在 [$E] 的[~形参声明式子句]中），
+程序非良构。
+[list:end]
 
 [:en]
 Otherwise, the type of the expression is the type of the result.
@@ -158,17 +183,38 @@ designates a bit-field.
 [codeblock]
 void f() {
   float x, &r = x;
-  [=] {
+  [=]() -> decltype((x)) {      // [:en] lambda returns [`float const&] because this lambda is not [`mutable] and \
+                                [:zh_CN] lambda 返回 [`float const&]，因为这个 lambda 并非 [`mutable] 且
+                                // [:en@~] [`x] is an lvalue \
+                                [:zh_CN@~] [`x] 是左值
     decltype(x) y1;             // [:en] [`y1] has type [`float] \
                                 [:zh_CN] [`y1] 类型为 [`float]
-    decltype((x)) y2 = y1;      // [:en] [`y2] has type [`float const&] because this lambda \
-                                [:zh_CN] [`y2] 类型为 [`float const&]，因为这个 lambda
-                                // [:en@~] is not [`:key mutable] and [`x] is an lvalue \
-                                [:zh_CN@~] 并非 [`:key mutable] 且 [`x] 为左值
+    decltype((x)) y2 = y1;      // [:en] [`y1] has type [`float const&] \
+                                [:zh_CN] [`y1] 类型为 [`float const&]
     decltype(r) r1 = y1;        // [:en] [`r1] has type [`float&] \
                                 [:zh_CN] [`r1] 类型为 [`float&]
     decltype((r)) r2 = y2;      // [:en] [`r2] has type [`float const&] \
                                 [:zh_CN] [`r2] 类型为 [`float const&]
+    return y2;
+  };
+
+  [=]<decltype(x) P>{};         // [:en] error: [`x] refers to local entity but precedes the \
+                                [:zh_CN] 错误：[`x] 指代局部实体，但这早于
+                                // [:en@~] lambda[=']s function parameter scope \
+                                [:zh_CN@~] lambda 的函数形参作用域
+  [=](decltype((x)) y){};       // [:en] error: [`x] refers to local entity but is in the lambda[=']s \
+                                [:zh_CN] 错误：[`x] 指代局部实体，但这位于 lambda 的
+                                // [:en@~] [~parameter-declaration-clause] \
+                                [:zh_CN@~] [~形参声明式子句]之内
+  [=]{
+      []<decltype(x) P>{};      // [:en] OK, [`x] is in the outer lambda[=']s function parameter scope \
+                                [:zh_CN] OK：[`x] 位于外围 lambda 的函数形参作用域中
+      [](decltype((x)) y){};    // [:en] OK, lambda takes a parameter of type [`float const&] \
+                                [:zh_CN] OK：lambda 接受一个 [`float const&] 类型的形参
+      [x=1](decltype((x)) z){}; // [:en] error: [`x] refers to [~init-capture] but is in the lambda[=']s \
+                                [:zh_CN] 错误：[`x] 指代[~带初始化俘获符]，但这位于 lambda 的
+                                // [:en@~] [~parameter-declaration-clause] \
+                                [:zh_CN@~] [~形参声明式子句]之内
   };
 }
 [codeblock:end]

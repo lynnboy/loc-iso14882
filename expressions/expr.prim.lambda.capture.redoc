@@ -153,10 +153,10 @@ void f() {
 
 [para]
 [:en]
-An [~init-capture] inhabits the scope of the [~lambda-expression][=']s
-[~compound-statement].
+An [~init-capture] inhabits the function parameter scope of the
+[~lambda-expression][=']s [~parameter-declaration-clause].
 [:zh_CN]
-[~带初始化俘获符]居于 [~lambda-表达式]的[~复合语句]的作用域。
+[~带初始化俘获符]居于 [~lambda-表达式]的[~形参声明式子句]的函数形参作用域。
 
 [:en]
 An [~init-capture] without ellipsis behaves as if it declares and explicitly
@@ -206,6 +206,10 @@ auto y = [&r = x, x = x+1]()->int {
 
 auto z = [a = 42](int a) { return 1; };     // [:en] error: parameter and local variable have the same name \
                                             [:zh_CN] 错误：形参和局部变量的名字相同
+auto counter = [i=0]() mutable -> decltype(i) {     // [:en] OK, returns [`int] \
+                                                    [:zh_CN] OK，返回 [`int]
+  return i++;
+};
 [codeblock:end]
 [end:example]
 
@@ -336,11 +340,11 @@ An entity is [+captured] if it is captured explicitly or implicitly.
 若某个实体被显式或隐式俘获，则它被[+俘获]。
 
 [:en]
-An entity captured by a [~lambda-expression] is odr-used ([#basic.def.odr]) by
+An entity captured by a [~lambda-expression] is odr-used ([#term.odr.use]) by
 the [~lambda-expression].
 [:zh_CN]
 由某个 [~lambda-表达式]所俘获的实体，被该 [~lambda-表达式] ODR 式使用
-（[#basic.def.odr]）。
+（[#term.odr.use]）。
 
 [begin:note]
 [:en]
@@ -497,11 +501,11 @@ A member of an anonymous union shall not be captured by copy.
 [para]
 [:en]
 Every [~id-expression] within the [~compound-statement] of a
-[~lambda-expression] that is an odr-use ([#basic.def.odr]) of an entity captured
+[~lambda-expression] that is an odr-use ([#term.odr.use]) of an entity captured
 by copy is transformed into an access to the corresponding unnamed data member
 of the closure type.
 [:zh_CN]
-[~lambda-表达式]的[~复合语句]中，每个 ODR 式使用（[#basic.def.odr]）被复制俘获的
+[~lambda-表达式]的[~复合语句]中，每个 ODR 式使用（[#term.odr.use]）被复制俘获的
 实体的[~标识表达式]，均被变换为对其闭包类型的对应无名数据成员的访问。
 
 [begin:note]
@@ -617,12 +621,13 @@ is transformed as follows:
 
 [list]
 [item]
-[:en@~] if [`m1] captures the entity by copy, [`m2] captures the corresponding
-non-static data member of [`m1][=']s closure type;
+[:en@~] If [`m1] captures the entity by copy, [`m2] captures the corresponding
+non-static data member of [`m1][=']s closure type; if [`m1] is not mutable, the
+non-static data member is considered to be const-qualified.
 [:zh_CN@~] 若 [`m1] 复制俘获该实体，则 [`m2] 俘获 [`m1] 的闭包类型的对应非静态
-数据成员；
+数据成员；如果 [`m1] 并非 [`mutable]，则将该非静态成员函数当做 [`const] 限定的。
 [item]
-[:en@~] if [`m1] captures the entity by reference, [`m2] captures the same
+[:en@~] If [`m1] captures the entity by reference, [`m2] captures the same
 entity captured by [`m1].
 [:zh_CN@~] 若 [`m1] 引用俘获该实体，则 [`m2] 俘获 [`m1] 所俘获的相同实体。
 [list:end]

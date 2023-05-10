@@ -308,7 +308,7 @@ Original   |中文   |章节    |定义
 *noptr-abstract-pack-declarator*|*非指针抽象包组声明符*| [dcl.name] | `...` ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
 *parameter-declaration-clause*|*形参声明子句*| [dcl.fct]    | ∅ \| *形参声明式列表* ( `...` \| `,` `...` )__?__
 *parameter-declaration-list*|*形参声明式列表*| [dcl.fct]    | *形参声明式* (`,` *形参声明式*)__\*__
-*parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ *声明说明符序列* (*声明符* \| *抽象声明符*) (`=` *初始化式子句*)__?__
+*parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ `this`__?__ *声明说明符序列* (*声明符* \| *抽象声明符*) (`=` *初始化式子句*)__?__
 *initializer*               |*初始化式*     | [dcl.init.general] | *花括号或等号初始化式* \| `(` *表达式列表* `)`
 *brace-or-equal-initializer*|*花括号或等号初始化式*| [dcl.init.general] | `=` *初始化式子句* \| *花括号初始化列表*
 *initializer-clause*        |*初始化式子句* | [dcl.init.general] | *赋值表达式* \| *花括号初始化列表*
@@ -977,6 +977,7 @@ execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化声明式|指定某个模板特例应当 ODR 式存在，`extern`的显式实例化
 explicit instantiation definition       |显式实例化定义式|实例化一个特例
+explicit-object-parameter-declaration   |显式对象形参声明式 |带有`this`的形参声明式
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符|`explicit`或`explicit(expr)`，类体内构造函数/转换函数，常量表达式Ctx2Bool
 explicit type conversion                |显式类型转换   |后缀表达式。写法：转型、函数式、运算符`XX_cast`、初始化
@@ -1922,6 +1923,7 @@ type requirement                        |类型规定       |类型有效性：`
 type specifier                          |类型说明符     |简单、详述、typename、cv
 typedef declaration                     |typedef 声明式 |带有`typedef`的简单声明式
 typedef-name                            |typedef-名     |类型别名，`typedef`或`using`，可为模板<br>无名类的首个typedef名为连接名，这种类应当与C结构体兼容：无成员代码，无基类
+typedef name for linkage purpose        |用于连接的 typedef 名
 typedef specifier                       |typedef 说明符 |
 typeid expression                       |typeid 表达式  |后缀表达式。`<typeinfo>`，返回`type_info`或其派生类对象左值，存续直到程序结束<br>非多态对象为免求值操作数，多态对象查询RTTI，全派生对象的动态类型<br>查询空指针解引用的对象抛出`bad_typeid`
 typename specifier                      |typename 说明符|指定待决名是类型

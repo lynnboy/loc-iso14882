@@ -138,31 +138,8 @@ constexpr 函数的定义式应当符合如下规定：
 
 [item]
 [:en] if the function is a constructor or destructor, its class shall not have
-any virtual base classes;
-[:zh_CN] 若该函数时构造函数或析构函数，则其类不能具有任何虚基类；
-
-[item]
-[:en] its [~function-body] shall not enclose ([#stmt.pre])
-[:zh_CN] 其[~函数体]不能包含（[#stmt.pre]）：
-
-[list]
-[item]
-[:en@~] a [`goto] statement,
-[:zh_CN@~] [`goto] 语句，
-[item]
-[:en@~] a label with an [~identifier] ([#stmt.label]),
-[:zh_CN@~] 带有[~标识符]的标号（[#stmt.label]），
-[item]
-[:en@~] a definition of a variable of non-literal type or of static or thread
-storage duration.
-[:zh_CN@~] 非字面类型的，或具有静态或线程存储期的变量的定义式。
-[list:end]
-
-[begin:note]
-[:en] A [~function-body] that is [`= delete] or [`= default] encloses none of
-the above.
-[:zh_CN] [~函数体] [`= delete]，[`= default] 并不会包含以上各项。
-[end:note]
+any virtual base classes.
+[:zh_CN] 若该函数时构造函数或析构函数，则其类不能具有任何虚基类。
 [list:end]
 
 [begin:example]
@@ -176,10 +153,12 @@ constexpr int abs(int x) {
     x = -x;
   return x;                     // OK
 }
-constexpr int first(int n) {
-  static int value = n;         // [:en] error: variable has static storage duration \
-                                [:zh_CN] 错误：变量具有静态存储期
-  return value;
+constexpr int constant_non_42(int n) {  // OK
+  if (n == 42) {
+    static int value = n;
+    return value;
+  }
+  return n;
 }
 constexpr int uninit() {
   struct { int a; } s;
@@ -285,6 +264,14 @@ struct D : B {
                                         // [:en@~] lvalue-to-rvalue conversion on non-constant [`global] \
                                         [:zh_CN@~] 对非常量 [`global] 进行左值向右值转换
 };
+
+constexpr int f(int x) {
+  static int n = x;
+  return n + x;                         // [:en] ill-formed, no diagnostic required \
+                                        [:zh_CN] 非良构，无须诊断
+                                        // [:en@~] all calls reach the static variable declaration \
+                                        [:zh_CN@~] 所有调用均可抵达静态变量声明式
+}
 [codeblock:end]
 [end:example]
 

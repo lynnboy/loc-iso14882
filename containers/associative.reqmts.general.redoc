@@ -193,9 +193,22 @@ respect to [`c(r, kl)], with [`r] the key value of [`e] and [`e] in [`a];
 [:zh_CN] [`ku] 是使得 [`a] 根据 [`!c(ku, r)] 进行分区的值；
 [item]
 [:en] [`ke] is a value such that [`a] is partitioned with respect to [`c(r, ke)]
-and [`!c(ke, r)], with [`c(r, ke)] implying [`!c(ke, r)].
+and [`!c(ke, r)], with [`c(r, ke)] implying [`!c(ke, r)];
 [:zh_CN] [`ke] 是使得 [`a] 根据 [`c(r, ke)] 和 [`!c(ke, r)] 进行分区的值，其中
-[`c(r, ke)] 蕴含 [`!c(ke, r)]。
+[`c(r, ke)] 蕴含 [`!c(ke, r)]；
+[item]
+[:en] [`kx] is a value such that
+[:zh_CN] [`kx] 是使以下各项成立的值：
+[list]
+[item]
+[:en] [`a] is partitioned with respect to [`c(r, rx)] and [`!c(kx, r)],
+with [`c(r, kx)] implying [`!c(kx, r)], and
+[:zh_CN] [`a] 根据 [`c(r, rx)] 和 [`!c(kx, r)] 进行分区，其中 [`c(r, kx)] 蕴含
+[`!c(kx, r)]，并且
+[item]
+[:en] [`kx] is not convertible to either [`iterator] or [`const_iterator]; and
+[:zh_CN] [`kx] 不能转换为 [`iterator] 或 [`const_iterator]；以及
+[list:end]
 [item]
 [:en] [`A] denotes the storage allocator used by [`X], if any, or
 [`allocator<X::value_type>] otherwise,
@@ -661,13 +674,27 @@ def indexordmem(_1):
 [|] [`node_type]
 [|] [para:effects]
     [:en] Removes the first element in the container with key equivalent to [`k].
-    [:zh_CN] 移除容器中第一个具有等价于 [`k] 的键的元素。
+    [:zh_CN] 移除容器中第一个其键等价于 [`k] 的元素。
 
     [para:returns]
     [:en] A [`node_type] owning the element if found, otherwise an empty
     [`node_type].
     [:zh_CN] 如果找到则为一个拥有该元素的 [`node_type]，否则为空 [`node_type]。
 [|] [$\log ([`a.size()])]
+[-]
+[|] [`a_tran.extract(kx)]
+[|] [`node_type]
+[|] [para:effects]
+    [:en] Removes the first element in the container with key [`r] such that
+    [`!c(r, kx) && !c(kx, r)] is [`true].
+    [:zh_CN] 移除容器中第一个键其键 [`r] 使得 [`!c(r, kx) && !c(kx, r)] 为
+    [`true] 的元素。
+
+    [para:returns]
+    [:en] A [`node_type] owning the element if found, otherwise an empty
+    [`node_type].
+    [:zh_CN] 如果找到则为一个拥有该元素的 [`node_type]，否则为空 [`node_type]。
+[|] [$\log([`a_tran.size()])]
 [-]
 [|] [`a.extract(q)]
 [|] [`node_type]
@@ -728,6 +755,19 @@ def indexordmem(_1):
     [:en] The number of erased elements.
     [:zh_CN] 所清除的元素数量。
 [|] [$\log ([`a.size()]) + [`a.count(k)]]
+[-]
+[|] [`a_tran.erase(kx)]
+[|] [`size_type]
+[|] [para:effects]
+    [:en] Erases all elements in the container with key [`r] such that
+    [`!c(r, kx) && !c(kx, r)] is [`true].
+    [:zh_CN] 清除容器中所有其键 [`r] 使得 [`!c(r, kx) && !c(kx, r)] 为 [`true]
+    的元素。
+
+    [para:returns]
+    [:en] The number of erased elements.
+    [:zh_CN] 所清除的元素数量。
+[|] [$\log ([`a_tran.size()]) + [`a_tran.count(kx)]]
 [-]
 [|] [`a.erase(q)]
 [|] [`iterator]
@@ -982,12 +1022,21 @@ passed to the target container in its constructor.
 
 [para]
 [:en] The member function templates [`find], [`count], [`contains],
-[`lower_bound], [`upper_bound], and [`equal_range] shall not participate in
-overload resolution unless the [~qualified-id] [`Compare::is_transparent] is
-valid and denotes a type ([#temp.deduct]).
+[`lower_bound], [`upper_bound], [`equal_range], [`erase], and [`extract] shall
+not participate in overload resolution unless the [~qualified-id]
+[`Compare::is_transparent] is valid and denotes a type ([#temp.deduct]).
 [:zh_CN] 成员函数模板 [`find]，[`count]，[`contains]，[`lower_bound]，
-[`upper_bound]，和 [`equal_range]，除非[~限定标识] [`Compare::is_transparent]
-有效且代表某个类型（[#temp.deduct]），否则它们不能参与重载决议。
+[`upper_bound]，[`equal_range]，[`erase]，和 [`extract]，除非[~限定标识]
+[`Compare::is_transparent] 有效且代表某个类型（[#temp.deduct]），否则它们不能
+参与重载决议。
+
+[:en] Additionally, the member function templates [`extract] and [`erase]
+shall not participate in overload resolution if
+[`is_convertible_v<K&&, iterator> || is_convertible_v<K&&, const_iterator>]
+is [`true], where [`K] is the type substituted as the first template argument.
+[:zh_CN] 此外，成员函数模板 [`extract] 和 [`erase]，当
+[`is_convertible_v<K&&, iterator> || is_convertible_v<K&&, const_iterator>] 为
+[`true] 时不能参与重载决议，其中 [`K] 是作为第一个模板实参进行代换的类型。
 
 [para]
 [:en] A deduction guide for an associative container shall not participate in
