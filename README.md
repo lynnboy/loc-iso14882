@@ -1147,7 +1147,8 @@ implicit conversion                     |隐式转换       |iff可声明`T t=e;
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
 implicit-lifetime class                 |隐式生存期类   |聚合，或至少一个平凡合格构造函数和平凡非弃置析构
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
-implicit object parameter               |隐含对象形参   |重载决议时认为成员函数（非构造函数）有隐含形参<br>非静态成员：类型为引用，跟随成员的cv和引用限定，静态：匹配任意对象
+implicit object member function         |隐式对象成员函数 |非静态成员函数
+implicit object parameter               |隐式对象形参   |重载决议时认为成员函数（非构造函数）有隐含形参<br>非静态成员：类型为引用，跟随成员的cv和引用限定，静态：匹配任意对象
 implicit type conversion                |隐式类型转换
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
 implicitly create object                |隐式创建对象

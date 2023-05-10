@@ -142,6 +142,49 @@ parent scope ([#class.union.anon]).
 
 [para]
 [:en]
+Two non-static member functions have
+[+:adj corresponding[!object parameters[%object parameter]]] if:
+[:zh_CN]
+以下情况下，两个非静态成员函数具有[+:adj 对应[!对象形参]]：
+[list]
+[item]
+[:en]
+exactly one is an implicit object member function with no [~ref-qualifier] and
+the types of their object parameters ([#dcl.fct]), after removing top-level
+references, are the same, or
+[:zh_CN]
+刚好其一为没有[~引用限定符]的隐式对象成员函数，且它们的对象形参（[#dcl.fct]）的
+类型移除顶层引用后相同，或者
+[item]
+[:en]
+their object parameters have the same type.
+[:zh_CN]
+它们的对象形参具有相同类型。
+[list:end]
+
+[:en]
+Two non-static member function templates have
+[+:adj corresponding[!object parameters[%object parameter]]] if:
+[:zh_CN]
+以下情况下，两个非静态成员函数模板具有[+:adj 对应[!对象形参]]：
+[list]
+[item]
+[:en]
+exactly one is an implicit object member function with no [~ref-qualifier] and
+the types of their object parameters, after removing any references, are
+equivalent, or
+[:zh_CN]
+刚好其一为没有[~引用限定符]的隐式对象成员函数，且它们的对象形参的类型移除所有
+引用后等价，或者
+[item]
+[:en]
+the types of their object parameters are equivalent.
+[:zh_CN]
+它们的对象形参的类型等价。
+[list:end]
+
+[para]
+[:en]
 Two declarations [+correspond] if they (re)introduce the same name, both declare
 constructors, or both declare destructors, unless
 [:zh_CN]
@@ -170,15 +213,14 @@ each declares a function or function template, except when
 [list]
 [item]
 [:en@~]
-both declare functions with the same parameter-type-list,[#:fn] equivalent
-([#temp.over.link]) trailing [~requires-clause]s (if any, except as specified in
-[#temp.friend]), and, if both are non-static members, the same [~cv-qualifier]s
-(if any) and [~ref-qualifier] (if both have one), or
+both declare functions with the same non-object-parameter-type-list,[#:fn]
+equivalent ([#temp.over.link]) trailing [~requires-clause]s (if any, except as
+specified in [#temp.friend]), and, if both are non-static members, they have
+corresponding object parameters, or
 [:zh_CN@~]
-均声明函数且具有相同形参类型列表[#:fn]，等价（[#temp.over.link]）的尾部
+均声明函数且具有相同非对象形参类型列表[#:fn]，等价（[#temp.over.link]）的尾部
 [~requires-子句]（如果有，但排除 [#temp.friend] 中指定的例外），以及当二者均为
-非静态成员时，均具有相同的 [~cv-限定符]（如果有）和[~引用限定符]（如果二者均有），
-或者
+非静态成员时，具有对应对象形参，或者
 [note:foot]
 [:en]
 An implicit object parameter ([#over.match.funcs]) is not part of the
@@ -188,14 +230,13 @@ parameter-type-list.
 [note:end]
 [item]
 [:en@~]
-both declare function templates with equivalent parameter-type-lists, return
-types (if any), [~template-head]s, and trailing [~requires-clause]s (if any),
-and, if both are non-static members, the same [~cv-qualifier]s (if any) and
-[~ref-qualifier] (if both have one).
+both declare function templates with equivalent non-object-parameter-type-lists,
+return types (if any), [~template-head]s, and trailing [~requires-clause]s
+(if any), and, if both are non-static members, they have corresponding object
+parameters.
 [:zh_CN@~]
-均声明函数模板且具有等价的形参类型列表，返回类型（如果有），[~模板头]，和尾部
-[~requires-子句]（如果有），以及当二者均为非静态成员时，均具有相同的 [~cv-限定符]
-（如果有）和[~引用限定符]（如果二者均有）。
+均声明函数模板且具有等价的非对象形参类型列表，返回类型（如果有），[~模板头]，和
+尾部 [~requires-子句]（如果有），以及当二者均为非静态成员时，具有对应对象形参。
 [list:end]
 [list:end]
 
@@ -222,20 +263,30 @@ struct B {
 [codeblock]
 typedef int Int;
 enum E : int { a };
-void f(int);            // #1
-void f(Int) {}          // [:en] defines #1 \
-                        [:zh_CN] 定义 #1
-void f(E) {}            // [:en] OK: another overload \
-                        [:zh_CN] OK：另一个重载
+void f(int);                    // #1
+void f(Int) {}                  // [:en] defines #1 \
+                                [:zh_CN] 定义 #1
+void f(E) {}                    // [:en] OK: another overload \
+                                [:zh_CN] OK：另一个重载
 
 struct X {
   static void f();
-  void f() const;       // [:en] error: redeclaration \
-                        [:zh_CN] 错误：重复声明
+  void f() const;               // [:en] error: redeclaration \
+                                [:zh_CN] 错误：重复声明
   void g();
-  void g() const;       // OK
-  void g() &;           // [:en] error: redeclaration \
-                        [:zh_CN] 错误：重复声明
+  void g() const;               // OK
+  void g() &;                   // [:en] error: redeclaration \
+                                [:zh_CN] 错误：重复声明
+
+  void h(this X&, int);
+  void h(int) &&;               // [:en] OK: another overload \
+                                [:zh_CN] OK：另一个重载
+  void j(this const X&);
+  void j() const&;              // [:en] error: redeclaration \
+                                [:zh_CN] 错误：重复声明
+  void k();
+  void k(this X&);              // [:en] error: redeclaration \
+                                [:zh_CN] 错误：重复声明
 };
 [codeblock:end]
 [end:example]
