@@ -123,6 +123,49 @@ auto q = p(1, 'a', 3.14);                                       // [:en] OK: out
                                                                 [:zh_CN] OK：输出 [`1a3.14]
 q();                                                            // [:en] OK: outputs [`1a3.14] \
                                                                 [:zh_CN] OK：输出 [`1a3.14]
+
+auto fact = [](this auto self, int n) -> int {                  // [:en] OK: explicit object parameter \
+                                                                [:zh_CN] OK：显式对象形参
+  return (n <= 1) ? 1 : n * self(n-1);
+};
+std::cout << fact(5);                                           // [:en] OK: outputs 120 \
+                                                                [:zh_CN] OK：输出 120
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+Given a lambda with a [~lambda-capture], the type of the explicit object
+parameter, if any, of the lambda[=']s function call operator
+(possibly instantiated from a function call operator template) shall be either:
+[:zh_CN]
+给定带有 [~lambda-俘获式]的 lambda，该 lambda 的函数调用运算符（可能是从函数调用
+运算符模板所实例化）的显式对象形参的类型（如果有），应当为以下之一：
+[list]
+[item]
+[:en@~] the closure type,
+[:zh_CN@~] 闭包类型，
+[item]
+[:en@~] a class type derived from the closure type, or
+[:zh_CN@~] 派生于闭包类型的类类型，或者
+[item]
+[:en@~] a reference to a possibly cv-qualified such type.
+[:zh_CN@~] 指代可能 cv 限定的这种类型的引用。
+[list:end]
+
+[begin:example]
+[codeblock]
+struct C {
+  template <typename T>
+  C(T);
+};
+
+void func(int i) {
+  int x = [=](this auto&&) { return i; }();     // OK
+  int y = [=](this C) { return i; }();          // [:en] error \
+                                                [:zh_CN] 错误
+  int z = [](this C) { return 42; }();          // OK
+}
 [codeblock:end]
 [end:example]
 
@@ -130,10 +173,12 @@ q();                                                            // [:en] OK: out
 [:en]
 The function call operator or operator template is declared [`:key const]
 ([#class.mfct.non-static]) if and only if the [~lambda-expression][=']s
-[~parameter-declaration-clause] is not followed by [`:key mutable].
+[~parameter-declaration-clause] is not followed by [`:key mutable] and the
+[~lambda-declarator] does not contain an explicit object parameter.
 [:zh_CN]
 函数调用运算符和运算符模板，当且仅当 [~lambda-表达式]的[~形参声明子句]不跟着
-[`:key mutable] 时，被声明为 [`:key const]（[#class.mfct.non-static]）。
+[`:key mutable]，且其 [~lambda-声明符]不包括显式对象形参时，被声明为
+[`:key const]（[#class.mfct.non-static]）。
 
 [:en]
 It is neither virtual nor declared [`volatile].

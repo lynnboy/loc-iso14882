@@ -130,12 +130,12 @@ return types.
 [rule:end]
 
 [rule parameter-declaration [:zh_CN] 形参声明式 ]
-    [| [~:opt attribute-specifier-seq] decl-specifier-seq declarator ]
-    [| [~:opt attribute-specifier-seq] decl-specifier-seq declarator
+    [| [~:opt attribute-specifier-seq] [`:key:opt this] decl-specifier-seq declarator ]
+    [| [~:opt attribute-specifier-seq] [`:key:opt this] decl-specifier-seq declarator
         [`=] initializer-clause ]
-    [| [~:opt attribute-specifier-seq] decl-specifier-seq
+    [| [~:opt attribute-specifier-seq] [`:key:opt this] decl-specifier-seq
         [~:opt abstract-declarator] ]
-    [| [~:opt attribute-specifier-seq] decl-specifier-seq
+    [| [~:opt attribute-specifier-seq] [`:key:opt this] decl-specifier-seq
         [~:opt abstract-declarator] [`=] initializer-clause ]
 [rule:end]
 [syntax:end]
@@ -321,6 +321,113 @@ void h(int (*)(int)) {}         // [:en] defines #3 \
                                 [:zh_CN] 定义了 #3
 [codeblock:end]
 [end:example]
+
+[para]
+[:en]
+An [+explicit-object-parameter-declaration] is a [~parameter-declaration] with
+a [`:key this] specifier.
+[:zh_CN]
+[+显式对象形参声明式]是带有 [`:key this] 说明符的[~形参声明式]。
+
+[:en]
+An explicit-object-parameter-declaration shall appear only as the first
+[~parameter-declaration] of a [~parameter-declaration-list] of either:
+[:zh_CN]
+显式对象形参声明式只能作为以下两种[~形参声明式列表]的第一个[~形参声明式]：
+
+[list]
+[item]
+[:en] a [~member-declarator] that declares a member function ([#class.mem]), or
+[:zh_CN] 声明成员函数的[~成员声明符]（[#class.mem]），或者
+[item]
+[:en] a [~lambda-declarator] ([#expr.prim.lambda]).
+[:zh_CN] [~lambda-声明符]（[#expr.prim.lambda]）。
+[list:end]
+
+[:en]
+A [~member-declarator] with an explicit-object-parameter-declaration shall not
+include a [~ref-qualifier] or a [~cv-qualifier-seq] and shall not be declared
+[`:key static] or [`:key virtual].
+[:zh_CN]
+带有显式对象形参声明式的[~成员声明符]不能包含[~引用限定符]或 [~cv-限定符序列]，
+也不能被声明为 [`:key static] 或 [`:key virtual]。
+
+[begin:example]
+[codeblock]
+struct C {
+  void f(this C& self);
+  template <typename Self> void g(this Self&& self, int);
+
+  void h(this C) const;         // [:en] error: [`const] not allowed here \
+                                [:zh_CN] 错误：此处不允许 [`const]
+};
+
+void test(C c) {
+  c.f();                        // [:en] OK, calls [`C::f] \
+                                [:zh_CN] OK，调用 [`C::f]
+  c.g(42);                      // [:en] OK, calls [`C::g<C&>] \
+                                [:zh_CN] OK，调用 [`C::g<C&>]
+  std::move(c).g(42);           // [:en] OK, calls [`C::g<C>] \
+                                [:zh_CN] OK，调用 [`C::g<C>]
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en]
+A function parameter declared with an explicit-object-parameter-declaration
+is an [+:adj explicit object[!parameter]].
+[:zh_CN]
+以显式对象形参声明式声明的函数形参，是[+adj 显式对象[!形参]]。
+
+[:en]
+An explicit object parameter shall not be a function parameter pack
+([#temp.variadic]).
+[:zh_CN]
+显式对象形参不能是函数形参包组（[#temp.variadic]）。
+
+[:en]
+An [+:adj explicit object[!member function]] is a non-static member function
+with an explicit object parameter.
+[:zh_CN]
+[+显式对象[!成员函数]]是带有显式对象形参的非静态成员函数。
+
+[:en]
+An [+:adj implicit object[!member function]] is a non-static member function
+without an explicit object parameter.
+[:zh_CN]
+[+隐式对象[!成员函数]]是不带有显式对象形参的非静态成员函数。
+
+[para]
+[:en]
+The [+:adj object[!parameter]] of a non-static member function is either the
+explicit object parameter or the implicit object parameter ([#over.match.funcs]).
+[:zh_CN]
+非静态成员函数的[+:adj 对象[!形参]]要么为显式对象形参，要么为隐式对象形参
+（[#over.match.funcs]）。
+
+[para]
+[:en]
+A [+:adj non-object[!parameter]] is a function parameter that is not the
+explicit object parameter.
+[:zh_CN]
+[+:adj 非对象[!形参]]是并非显式对象形参的函数形参。
+
+[:en]
+The [+non-object-parameter-type-list] of a member function is
+the parameter-type-list of that function with the explicit object parameter,
+if any, omitted.
+[:zh_CN]
+成员函数的[+非对象形参类型列表]是该函数的形参类型列表，其中忽略显式对象形参
+（如果有）。
+
+[begin:note]
+[:en]
+The non-object-parameter-type-list consists of
+the adjusted types of all the non-object parameters.
+[:zh_CN]
+非对象形参类型列表由所有非对象形参的调整后的类型构成。
+[end:note]
 
 [para]
 [:en]
@@ -693,10 +800,10 @@ void g4(C3 auto);
 [codeblock:end]
 
 [:en]
-These declarations are functionally equivalent (but not equivalent) to the
-following declarations.
+The declarations above are functionally equivalent (but not equivalent) to their
+respective declarations below:
 [:zh_CN]
-这些声明式在功能上等价于（但并不等价于）以下声明式。
+以上各声明式在功能上等价于（但并不等价于）以下相应声明式：
 
 [codeblock]
 template<C1 T, C2 U> void g1(const T*, U&);
