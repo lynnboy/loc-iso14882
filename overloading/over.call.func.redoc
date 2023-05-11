@@ -144,3 +144,38 @@ contrived object will not be the cause to select or reject a function.
 由于所有成员函数都带有相同的隐含对象形参，故这个假对象不会成为选择或拒绝某函数的
 原因。
 [note:end]
+
+[begin:example]
+[codeblock]
+struct C {
+  void a();
+  void b() {
+    a();                // OK, [`(*this).a()]
+  }
+
+  void f(this const C&);
+  void g() const {
+    f();                // OK, [`(*this).f()]
+    f(*this);           // [:en] error: no viable candidate for [`(*this).f(*this)] \
+                        [:zh_CN] 错误：没有 [`(*this).f(*this)] 的可行候选
+    this->f();          // OK
+  }
+
+  static void h() {
+    f();                // [:en] error: contrived object argument, but overload resolution \
+                        [:zh_CN] 错误：认为设置了对象实参，但重载决议
+                        // [:en@~] picked a non-static member function \
+                        [:zh_CN@~] 选择了非静态成员函数
+    f(C{});             // [:en] error: no viable candidate \
+                        [:zh_CN] 错误：没有可行候选
+    C{}.f();            // OK
+  }
+
+  void k(this int);
+  operator int() const;
+  void m(this const C& c) {
+    c.k();              // OK
+  }
+};
+[codeblock:end]
+[end:example]

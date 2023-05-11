@@ -461,9 +461,9 @@ Original   |中文   |章节    |定义
 *group-part*                |*组部分*       | [cpp.pre]     | *控制行* \| *if-节* \| *文本行* \|<br> `#` *有条件支持的指令*
 *control-line*              |*控制行*       | [cpp.pre]     | `#` `include` *预处理记号序列* *换行* \|<br> *预处理导入* \|<br> `#` `define` *标识符* ( ∅ \| *左括号* ( ∅ \| `...`__?__ \| *标识符列表* ( `,` `...` )__?__ ) `)` ) *替换列表* *换行* \|<br> `#` `undef` *标识符* *换行* \|<br> `#` `line` *预处理记号序列* *换行* \|<br> `#` `error` *预处理记号序列*__?__ *换行* \|<br> `#` `pragma` *预处理记号序列*__?__ *换行* \|<br> `#` *换行*
 *if-section*                |*if-节*        | [cpp.pre]     | *if-组* *elif-组*__\*__ *else-组*__?__ *endif-行*
-*if-group*                  |*if-组*        | [cpp.pre]     | `#` `if` *常量表达式* *换行* *组*__?__ \|<br> `#` `ifdef` *标识符* *换行* *组*__?__ \|<br> `#` `ifndef` *标识符* *换行* *组*__?__
+*if-group*                  |*if-组*        | [cpp.pre]     | `#` `if` *常量表达式* *换行* *组*__?__ \|<br> `#` (`ifdef`\|`ifndef`) *标识符* *换行* *组*__?__
 *elif-groups*               |*elif-组序列*  | [cpp.pre]     | *elif-组*__\+__
-*elif-group*                |*elif-组*      | [cpp.pre]     | `#` `elif` *常量表达式* *换行* *组*__?__
+*elif-group*                |*elif-组*      | [cpp.pre]     | `#` (`elif`\|`elifdef`\|`elifndef`) *常量表达式* *换行* *组*__?__
 *else-group*                |*else-组*      | [cpp.pre]     | `#` `else` *换行* *组*__?__
 *endif-line*                |*endif-行*     | [cpp.pre]     | `#` `endif` *换行*
 *text-line*                 |*文本和*       | [cpp.pre]     | *预处理记号序列*__?__ *换行*
