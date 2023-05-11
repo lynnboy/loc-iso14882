@@ -149,6 +149,14 @@ evaluate one of the following:
 
 [item]
 [:en]
+a control flow that passes through a declaration of a variable with static
+([#basic.stc.static]) or thread ([#basic.stc.thread]) storage duration;
+[:zh_CN]
+控制流通过具有静态（[#basic.stc.static]）或线程（[#basic.stc.thread]）存储期的
+变量的声明式。
+
+[item]
+[:en]
 an invocation of a non-constexpr function;[#:fn]
 [:zh_CN]
 进行了非 constexpr 函数的调用[#:fn]；
@@ -204,11 +212,11 @@ an operation that would have undefined behavior as specified in [#intro] through
 
 [note:foot]
 [:en]
-This includes, for example, signed integer overflow ([#expr.prop]), certain pointer
+This includes, for example, signed integer overflow ([#expr.pre]), certain pointer
 arithmetic ([#expr.add]), division by zero ([#expr.mul]), or certain shift
 operations ([#expr.shift])
 [:zh_CN]
-这包括，（例如）有符号整数的溢出（[#expr.prop]），某些指针算术（[#expr.add]），
+这包括，（例如）有符号整数的溢出（[#expr.pre]），某些指针算术（[#expr.add]），
 被零除（[#expr.mul]），或者某些移位操作（[#expr.shift]）
 [note:end]
 
@@ -283,10 +291,10 @@ its lifetime began within the evaluation of [$E];
 [:en]
 in a [~lambda-expression], a reference to [`:key this] or to a variable with
 automatic storage duration defined outside that [~lambda-expression], where the
-reference would be an odr-use ([#basic.def.odr], [#expr.prim.lambda]);
+reference would be an odr-use ([#term.odr.use], [#expr.prim.lambda]);
 [:zh_CN]
 在 [~lambda-表达式]中，涉指了 [`:key this] 或者在该 [~lambda-表达式]之外定义的
-具有动态存储期的变量，而该涉指可能是一次 ODR 式使用（[#basic.def.odr]，
+具有动态存储期的变量，而该涉指可能是一次 ODR 式使用（[#term.odr.use]，
 [#expr.prim.lambda]）；
 
 [begin:example]
@@ -349,6 +357,15 @@ non-volatile object whose lifetime began within the evaluation of [$E];
 对对象的改动（[#expr.ass]，[#expr.post.incr]，[#expr.pre.incr]），除非实施于非
 volatile 的字面类型的左值，并且它指代某个生存期开始于 [$E] 的求值中的非 volatile
 对象；
+
+[item]
+[:en]
+an invocation of a destructor ([#class.dtor]) or a function call whose
+[~postfix-expression] names a pseudo-destructor ([#expr.call]), in either case
+for an object whose lifetime did not begin within the evaluation of [$E];
+[:zh_CN]
+调用析构函数（[#class.dtor]）或者[~后缀表达式]指名伪析构函数（[#expr.call]）的
+函数调用，任何情况中均针对并非在 [$E] 的求值中开始其生存期的对象；
 
 [item]
 [:en]
@@ -420,15 +437,21 @@ expression that would throw an expression;
 
 [item]
 [:en]
-an [~asm-declaration] ([#dcl.asm]); or
+an [~asm-declaration] ([#dcl.asm]);
 [:zh_CN]
-[~asm-声明式]（[#dcl.asm]）；或者
+[~asm-声明式]（[#dcl.asm]）；
 
 [item]
 [:en]
-an invocation of the [`va_arg] macro ([#cstdarg.syn]).
+an invocation of the [`va_arg] macro ([#cstdarg.syn]); or
 [:zh_CN]
-对 [`va_arg] 宏的调用（[#cstdarg.syn]）。
+对 [`va_arg] 宏的调用（[#cstdarg.syn]）；或者
+
+[item]
+[:en]
+a [`:key goto] statement ([#stmt.goto]).
+[:zh_CN]
+[`:key goto] 语句（[#stmt.goto]）。
 [list:end]
 
 [:en]
@@ -510,37 +533,17 @@ constant expression.
 表达式的规定也是如此。
 
 [:en]
-Similarly, the evaluation of a call to [`std::destroy_at],
-[`std::ranges::destroy_at], [`std::construct_at], or [`std::ranges::construct_at]
-does not disqualify [$E] from being a core constant expression unless:
+Similarly, the evaluation of a call to [`std::construct_at] or
+[`std::ranges::construct_at] does not disqualify [$E] from being a core constant
+expression unless the first argument, of type [`T*], does not point to storage
+allocated with [`std::allocator<T>] or to an object whose lifetime began within
+the evaluation of [$E], or the evaluation of the underlying constructor call
+disqualifies [$E] from being a core constant expression.
 [:zh_CN]
-类似地，对 [`std::destroy_at]，[`std::ranges::destroy_at]，[`std::construct_at]，
-或 [`std::ranges::construct_at] 的调用的求值并不会导致 [$E] 无法作为核心常量
-表达式，除非以下情况：
-
-[list]
-[item]
-[:en] for a call to [`std::construct_at] or [`std::ranges::construct_at], the
-first argument, of type [`T*], does not point to storage allocated with
-[`std::allocator<T>] or to an object whose lifetime began within the evaluation
-of [$E], or the evaluation of the underlying constructor call disqualifies [$E]
-from being a core constant expression, or
-[:zh_CN] 对于对 [`std::construct_at] 或 [`std::ranges::construct_at] 的调用，其
-首个实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储或某个生存期
-开始于 [$E] 的求值期间的对象，或者对底层构造函数的调用的求值导致 [$E] 无法作为
-核心常量表达式，或者
-
-[item]
-[:en] for a call to [`std::destroy_at] or [`std::ranges::destroy_at], the first
-argument, of type [`T*], does not point to storage allocated with
-[`std::allocator<T>] or to an object whose lifetime began within the evaluation
-of [$E], or the evaluation of the underlying destructor call disqualifies [$E]
-from being a core constant expression.
-[:zh_CN] 对于对 [`std::destroy_at] 或 [`std::ranges::destroy_at] 的调用，其首个
-实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储或某个生存期
-开始于 [$E] 的求值期间的对象，或者对底层析构函数的调用的求值导致 [$E] 无法作为
-核心常量表达式。
-[list:end]
+类似地，对 [`std::construct_at] 或 [`std::ranges::construct_at] 的调用的求值
+并不会导致 [$E] 无法作为核心常量表达式，除非其首个实参（类型为 [`T*]）并不指向由
+[`std::allocator<T>] 所分配的存储或某个生存期开始于 [$E] 的求值期间的对象，或者
+对底层构造函数的调用的求值导致 [$E] 无法作为核心常量表达式。
 
 [para]
 [:en]
@@ -893,9 +896,9 @@ int q = p + f();                                        // [:en] [`m] is 17 for 
 [begin:note]
 [:en]
 A manifestly constant-evaluated expression is evaluated even in an unevaluated
-operand.
+operand ([#term.unevaluated.operand]).
 [:zh_CN]
-显然常量求值表达式即便在免求值操作数中仍被求值。
+显然常量求值表达式即便在免求值操作数中仍被求值（[#term.unevaluated.operand]）。
 [end:note]
 
 [para]
@@ -951,9 +954,10 @@ expression is value-dependent ([#temp.dep.constexpr]).
 [item]
 [:en]
 a subexpression of one of the above that is not a subexpression of a nested
-unevaluated operand.
+unevaluated operand ([#term.unevaluated.operand]).
 [:zh_CN]
-以上各项之一的子表达式，且不是某个嵌套的免求值操作数的子表达式。
+以上各项之一的子表达式，且不是某个嵌套的免求值操作数的子表达式
+（[#term.unevaluated.operand]）。
 [list:end]
 
 [:en]

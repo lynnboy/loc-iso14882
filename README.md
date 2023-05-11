@@ -977,6 +977,8 @@ execution wide-character set            |执行宽字符集   |LC_CTYPE
 explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化声明式|指定某个模板特例应当 ODR 式存在，`extern`的显式实例化
 explicit instantiation definition       |显式实例化定义式|实例化一个特例
+explicit object member function         |显式对象成员函数|带有`this T v`形参
+explicit object parameter               |显式对象形参
 explicit-object-parameter-declaration   |显式对象形参声明式 |带有`this`的形参声明式
 explicit specialization                 |显式特化式     |改变模板针对特定模板实参时的内容，实体种类应当与主模板一致
 explicit specifier                      |explicit 说明符|`explicit`或`explicit(expr)`，类体内构造函数/转换函数，常量表达式Ctx2Bool
@@ -1148,7 +1150,7 @@ implicit conversion                     |隐式转换       |iff可声明`T t=e;
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
 implicit-lifetime class                 |隐式生存期类   |聚合，或至少一个平凡合格构造函数和平凡非弃置析构
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
-implicit object member function         |隐式对象成员函数 |非静态成员函数
+implicit object member function         |隐式对象成员函数 |非静态成员函数，没有显式对象形参
 implicit object parameter               |隐式对象形参   |重载决议时认为成员函数（非构造函数）有隐含形参<br>非静态成员：类型为引用，跟随成员的cv和引用限定，静态：匹配任意对象
 implicit type conversion                |隐式类型转换
 implicitly captured                     |隐式俘获       |ODR使用但未列为俘获符
@@ -1416,6 +1418,8 @@ non-allocating form                     |非分配形式
 non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-initialization odr-use              |非初始化 ODR 式使用|非由静态/线程变量初始化导致的 ODR 式使用
 non-member candidates                   |非成员候选 |运算符重载中，除`=`,`[]`,`->`外允许非成员函数
+non-object parameter                    |非对象形参 |非静态成员函数的普通形参
+non-object-parameter-type-list          |非对象形参类型列表
 non-static data member                  |非静态数据成员
 non-static member                       |非静态成员 |非静态数据成员，非静态成员函数
 non-static member function              |非静态成员函数
@@ -1455,6 +1459,7 @@ object                                  |对象       |一种实体
 object declaration                      |对象声明式 |非`typedef`简单声明式，类型非函数类型
 object expression                       |对象表达式 |`a.m`和`a.*pm`中的`a`
 object model                            |对象模型
+object parameter                        |对象形参   |非静态成员函数，隐式或显式的对象形参
 object pointer type                     |对象指针类型   |指向对象类型或`void`
 object representation                   |对象表示   |全部`sizeof(T)`个字节
 object type                             |对象类型   |非函数、引用、`void`
