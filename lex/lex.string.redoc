@@ -25,9 +25,10 @@
 
 [rule basic-s-char [:zh_CN] 基本-s-字符 ]
     [|:descriptive
-        [:en] any member of the basic source character set except the
-            double-quote [`"], backslash [`\], or new-line character
-        [:zh_CN] 基本源字符集中的任意成员，除了双引号 [`"]、反斜杠 [`\] 或换行字符
+        [:en] any member of the translation character set except the U+0022 QUOTATION MARK,[br]
+            U+005C REVERSE SOLIDUS, or new-line character
+        [:zh_CN] 翻译字符集中除了 U+0022 QUOTATION MARK，U+005C REVERSE SOLIDUS[br]
+            或换行字符之外的任意成员
     ]
 [rule:end]
 
@@ -43,12 +44,10 @@
 
 [rule r-char [:zh_CN] r-字符 ]
     [|:descriptive
-        [:en] any member of the source character set, except a right parenthesis
-            [`)] followed by [br]
-            the initial [~d-char-sequence] (which may be empty) followed by a
-            double quote [`"].
-        [:zh_CN] 源字符集中的任何成员，除了右圆括号 [`)] 后面跟着 [br]
-            开头的 [~d-字符序列]（可能为空）后面再跟着双引号 [`"]。
+        [:en] any member of the translation character set, except a U+0029 RIGHT PARENTHESIS followed by [br]
+            the initial [~d-char-sequence] (which may be empty) followed by a U+0022 QUOTATION MARK
+        [:zh_CN] 翻译字符集中的任何成员，除了 U+0029 RIGHT PARENTHESIS 后面跟着 [br]
+            开头的 [~d-字符序列]（可能为空）后面再跟着 U+0022 QUOTATION MARK
     ]
 [rule:end]
 
@@ -59,13 +58,14 @@
 
 [rule d-char [:zh_CN] s-字符 ]
     [|:descriptive
-        [:en] any member of the source character set except: [br]
-            space, the left parenthesis [`(], the right parenthesis [`)], the
-            backslash [`\], and the control characters [br]
-            representing horizontal tab, vertical tab, form feed, and newline.
-        [:zh_CN] 源字符集中的任何成员，除了： [br]
-            空格，左圆括号 [`(]，右圆括号 [`)]，反斜杠 [`\]，以及 [br]
-            表示水平制表、垂直制表、换页和换行的控制字符。
+        [:en] any member of the basic character set except: [br]
+            U+0020 SPACE, U+0028 LEFT PARENTHESIS, U+0029 RIGHT PARENTHESIS, [br]
+            U+005C REVERSE SOLIDUS, U+0009 CHARACTER TABULATION, [br]
+            U+000B LINE TABULATION, U+000C FORM FEED (FF), and new-line
+        [:zh_CN] 基本字符集中的任何成员，除了： [br]
+            U+0020 SPACE，U+0028 LEFT PARENTHESIS，U+0029 RIGHT PARENTHESIS，[br]
+            U+005C REVERSE SOLIDUS，U+0009 CHARACTER TABULATION，[br]
+            U+000B LINE TABULATION，U+000C FORM FEED (FF)，以及换行
     ]
 [rule:end]
 
@@ -123,8 +123,8 @@ of encoded code units as described below.
     [:zh_CN] [+普通字符串字面量[%字面量[!字符串[!普通]]]]
 [|] [:en] array of [$n] [`[`:key const] [`:key char]]
     [:zh_CN] [`[`:key const] [`:key char]] 的 [$n] 元数组
-[|] [:en] encoding of the execution character set
-    [:zh_CN] 执行字符集的编码
+[|] [:en] ordinary literal encoding
+    [:zh_CN] 普通字面编码
 [|] [`"ordinary string"] [br] [`R"(ordinary raw string)"]
 [-]
 
@@ -134,8 +134,8 @@ of encoded code units as described below.
     [:zh_CN] [+宽字符串字面量[%字面量[!字符串[!宽]]]]
 [|] [:en] array of [$n] [`[`:key const] [`:key wchar_t]]
     [:zh_CN] [`[`:key const] [`:key wchar_t]] 的 [$n] 元数组
-[|] [:en] encoding of the execution wide-character set
-    [:zh_CN] 执行宽字符集的编码
+[|] [:en] wide literal encoding
+    [:zh_CN] 宽字面编码
 [|] [`L"wide string"] [br] [`LR"w(wide raw string)w"]
 [-]
 
@@ -276,47 +276,80 @@ narrow string literals.
 [para]
 [:en]
 [%concatenation[!string]]
-In translation phase 6 ([#lex.phases]), adjacent [~string-literal]s are
-concatenated.
+The common [~encoding-prefix] for a sequence of adjacent [~string-literal]s is
+determined pairwise as follows:
 [:zh_CN]
 [%拼接[!字符串～]]
-在翻译阶段 6 中（[#lex.phases]），相邻的[~字符串字面量]进行了拼接。
+以如下的成对方式来确定一系列相邻[~字符串字面量]的公共[~编码前缀]：
 
 [:en]
-If both [~string-literal]s have the same [~encoding-prefix], the resulting
-concatenated [~string-literal] has that [~encoding-prefix].
+If two [~string-literal]s have the same [~encoding-prefix], the common
+[~encoding-prefix] has that [~encoding-prefix].
 [:zh_CN]
-若两个[~字符串字面量]具有相同的[~编码前缀]，则拼接后的[~字符串字面量]具有该
+若两个[~字符串字面量]具有相同的[~编码前缀]，则公共[~编码前缀]为该[~编码前缀]。
+
+[:en]
+If one [~string-literal] has no [~encoding-prefix], the common [~encoding-prefix]
+is that of the other [~string-literal].
+[:zh_CN]
+若一个[~字符串字面量]没有[~编码前缀]，则公共[~编码前缀]为另一个[~字符串字面量]的
 [~编码前缀]。
 
 [:en]
-If one [~string-literal] has no [~encoding-prefix], it is treated as a
-[~string-literal] of the same [~encoding-prefix] as the other operand.
+Any other combinations are ill-formed.
 [:zh_CN]
-若一个[~字符串字面量]没有[~编码前缀]，则把它当作与另一个操作数具有相同的
-[~编码前缀]的[~字符串字面量]。
-
-[:en]
-Any other concatenations are ill-formed.
-[:zh_CN]
-任何其他拼接都是非良构的。
+任何其他组合都是非良构的。
 
 [begin:note]
 [:en]
-This concatenation is an interpretation, not a conversion.
+A [~string-literal][=']s rawness has no effect on the determination of the
+common [~encoding-prefix].
 [:zh_CN]
-这种拼接是一种解释，而不是转换。
+[~字符串字面量]是否是原始的，对确定公共[~编码前缀]来说没有影响。
+[end:note]
+
+[para]
+[:en]
+In translation phase 6 ([#lex.phases]), adjacent [~string-literal]s are
+concatenated.
+[:zh_CN]
+在翻译阶段 6 中（[#lex.phases]），相邻的[~字符串字面量]进行了拼接。
 
 [:en]
-Because the interpretation happens in translation phase 6 (after the string
-literal contents have been encoded in the [~string-literal][=']s associated
-character encoding), a [~string-literal][=']s initial rawness has no effect on
-the interpretation or well-formedness of the concatenation.
+The lexical structure and grouping of the contents of the individual
+[~string-literal]s is retained.
 [:zh_CN]
-因为该解释发生于翻译阶段 6（已经将字符串字面量的内容以该[~字符串字面量]的关联
-字符编码进行了编码），所以[~字符串字面量]开始时是否是原始的，并不会影响对拼接的
-解释或其良构性。
-[end:note]
+各个[~字符串字面量]中的词法结构和内容的分组均被保留下来。
+
+[begin:example]
+[codeblock]
+"\xA" "B"
+[codeblock:end]
+[:en]
+represents the code unit [`'\xA'] and the character [`'B'] after concatenation
+(and not the single code unit [`'\xAB']).
+[:zh_CN]
+在拼接之后表示代码单元 [`'\xA'] 和字符 [`'B']（而不是单个代码单元 [`'\xAB']）。
+
+[:en]
+Similarly,
+[:zh_CN]
+相似地，
+[codeblock]
+R"(\u00)" "41"
+[codeblock:end]
+[:en@~]
+represents six characters, starting with a backslash and ending with the digit
+[`1] (and not the single character [`'A'] specified by a [~universal-character-name]).
+[:zh_CN@~]
+表示六个字符，从一个反斜杠开始，结束于数字 [`1]（而不是由[~通用字符名]所指定的
+单个字符 [`'A']）。
+
+[:en]
+[#:tab#lex.string.concat] has some examples of valid concatenations.
+[:zh_CN]
+[#:tab#lex.string.concat] 给出了一些有效拼接的例子。
+[end:example]
 
 [:en]
 [#:tab#lex.string.concat] has some examples of valid concatenations.
@@ -328,13 +361,10 @@ the interpretation or well-formedness of the concatenation.
     [:zh_CN] 字符串字面量的拼接
     [|@headerspan=2
         [:en] Source
-        [:zh_CN] 源代码
-    ]
+        [:zh_CN] 源代码 ]
     [|]
-    [|
-        [:en] Means
-        [:zh_CN] 含义
-    ]
+    [|  [:en] Means
+        [:zh_CN] 含义 ]
 ]
 [|] u"a"    [|] u"b"    [|] u"ab"
 [|] u"a"    [|] "b"     [|] u"ab"
@@ -347,42 +377,7 @@ the interpretation or well-formedness of the concatenation.
 [|] L"a"    [|] L"b"    [|] L"ab"
 [|] L"a"    [|] "b"     [|] L"ab"
 [|] "a"     [|] L"b"    [|] L"ab"
-
 [table:end]
-
-[para:~]
-[:en]
-Characters in concatenated strings are kept distinct.
-[:zh_CN]
-拼接而成的字符串中的字符保持独立性。
-
-[para:~]
-[begin:example]
-
-[codeblock]
-"\xA" "B"
-[codeblock:end]
-
-[:en]
-contains the two characters [`'\xA'] and [`'B'] after concatenation (and not the
-single hexadecimal character [`'\xAB']).
-[:zh_CN]
-在拼接后将包含两个字符 [`'\xA'] 和 [`'B']（而不是单个十六进制字符 [`'\xAB']）。
-[end:example]
-
-[para]
-[:en]
-[%[`0] [%zero[!null]]]
-[%[`0] [!string terminator]]
-[%[`0] [!null character][%character[!null]]]
-In translation phase 6 ([#lex.phases]), after adjacent [~string-literal]s are
-concatenated, a null character is appended to the result.
-[:zh_CN]
-[%[`0] [%零[!空]]]
-[%[`0] [!字符串终止符]]
-[%[`0] [!空字符][%字符[!空～]]]
-在翻译阶段 6 中（[#lex.phases]），经过相邻[~字符串字面量]的拼接之后，向其结果
-追加一个空字符。
 
 [para]
 [:en]
@@ -412,13 +407,20 @@ The effect of attempting to modify a string literal object is undefined.
 
 [para]
 [:en]
+[%[`0][%zero[!null]]]
+[%[`0][!string terminator]]
+[%[`0][!null character[%character[!null]]]]
 String literal objects are initialized with the sequence of code unit values
-corresponding to the [~string-literal][=']s sequence of [~s-char]s (for a
-non-raw string literal) and [~r-char]s (for a raw string literal) in order as
-follows:
+corresponding to the [~string-literal][=']s sequence of [~s-char]s (originally
+from non-raw string literals) and [~r-char]s (originally from raw string
+literals), plus a terminating U+0000 NULL character, in order as follows:
 [:zh_CN]
-字符串字面量对象以对应于该[~字符串字面量]的 [~s-字符]（对于非原始字符串字面量）
-或 [~r-字符]（原始字符串字面量）的序列的代码单元的值的序列依序初始化如下：
+[%[`0][%零[!空]]]
+[%[`0][!字符串终止符]]
+[%[`0][!空字符[%字符[!空]]]]
+字符串字面量对象以对应于该[~字符串字面量]的 [~s-字符]（源于非原始字符串字面量）
+或 [~r-字符]（源于原始字符串字面量）的序列加上一个终止用 U+0000 NULL 字符后各
+代码单元的值的序列依序初始化如下：
 
 [list]
 [item]
@@ -433,27 +435,19 @@ using the [~string-literal][=']s associated character encoding.
 编码编码为代码单元的序列。
 
 [:en]
-If a character lacks representation in the associated character encoding, then:
+If a character lacks representation in the associated character encoding, then
+the [~string-literal] is conditionally-supported and an [?impldef code unit
+sequence for non-representable [~string-literal]] code unit sequence is encoded.
 [:zh_CN]
-如果某个字符在关联字符编码中缺乏表示，则：
+如果某个字符在关联字符编码中缺乏表示，则该[~字符串字面量]是有条件支持的，并编码
+一个[?impldef 用于不可表示的[~字符串字面量]的代码单元序列]代码单元序列。
 
-[list]
-[item]
+[begin:note]
 [:en]
-If the [~string-literal][=']s [~encoding-prefix] is absent or [`L], then the
-[~string-literal] is conditionally-supported and an [?impldef code unit sequence
-for non-representable [~string-literal]] code unit sequence is encoded.
+No character lacks representation in any of the UCS encoding forms.
 [:zh_CN]
-如果该[~字符串字面量]的[~编码前缀]没有或为 [`L]，则该[~字符串字面量]是有条件
-支持的，并编码一个[?impldef 用于不可表示的[~字符串字面量]的代码单元序列]代码单元
-序列。
-
-[item]
-[:en]
-Otherwise, the [~string-literal] is ill-formed.
-[:zh_CN]
-否则，该[~字符串字面量]非良构。
-[list]
+不存在任意 UCS 编码形式中缺乏表示的字符。
+[end:note]
 
 [:en]
 When encoding a stateful character encoding, implementations should encode the
