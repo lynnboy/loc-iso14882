@@ -20,7 +20,7 @@ namespace std {
             const char_type*, basic_string_view<char_type>,
             const void*, handle> value;                                         // [=expos]
 
-    template<class T> explicit basic_format_arg(const T& v) noexcept;           // [=expos]
+    template<class T> explicit basic_format_arg(T&& v) noexcept;                // [=expos]
     explicit basic_format_arg(float n) noexcept;                                // [=expos]
     explicit basic_format_arg(double n) noexcept;                               // [=expos]
     explicit basic_format_arg(long double n) noexcept;                          // [=expos]
@@ -71,7 +71,7 @@ basic_format_arg() noexcept;
 [div:end]
 
 [codeblock:declaration]
-template<class T> explicit basic_format_arg(const T& v) noexcept;
+template<class T> explicit basic_format_arg(T&& v) noexcept;
 [codeblock:end]
 
 [div:description]
@@ -79,22 +79,23 @@ template<class T> explicit basic_format_arg(const T& v) noexcept;
 [:en] The template specialization
 [:zh_CN] 模板特化式
 [codeblock]
-typename Context::template formatter_type<T>
+typename Context::template formatter_type<remove_cvref_t<T>>
 [codeblock:end]
-[:en@~] meets the [^:newoc Formatter] requirements ([#formatter.requirements]).
-[:zh_CN@~] 满足 [^:newoc Formatter] 的规定（[#formatter.requirements]）。
+[:en@~] meets the [^:newoc BasicFormatter] requirements ([#formatter.requirements]).
+[:zh_CN@~] 满足 [^:newoc BasicFormatter] 的规定（[#formatter.requirements]）。
 
 [:en] The extent to which an implementation determines that the specialization
-meets the [^:newoc Formatter] requirements is unspecified, except that as a
+meets the [^:newoc BasicFormatter] requirements is unspecified, except that as a
 minimum the expression
-[:zh_CN] 实现以何种程度确定一个特化满足 [^:newoc Formatter] 的规定是未指明的，但
-至少表达式
+[:zh_CN] 实现以何种程度确定一个特化满足 [^:newoc BasicFormatter] 的规定是
+未指明的，但至少表达式
 [codeblock]
-typename Context::template formatter_type<T>()
-  .format(declval<const T&>(), declval<Context&>())
+typename Context::template formatter_type<remove_cvref_t<T>>()
+  .format(declval<T&>(), declval<Context&>())
 [codeblock:end]
-[:en@~] shall be well-formed when treated as an unevaluated operand.
-[:zh_CN@~] 在被当做免求值操作数时应当是良构的。
+[:en@~] shall be well-formed when treated as an unevaluated operand
+([#term.unevaluated.operand]).
+[:zh_CN@~] 在被当做免求值操作数（[#term.unevaluated.operand]）时应当是良构的。
 
 [para:effects]
 [list]
@@ -245,7 +246,7 @@ namespace std {
     void (*format_)(basic_format_parse_context<char_type>&,
                     Context&, const void*);                     // [=expos]
 
-    template<class T> explicit handle(const T& val) noexcept;   // [=expos]
+    template<class T> explicit handle(T&& val) noexcept;        // [=expos]
 
     friend class basic_format_arg<Context>;                     // [=expos]
 
@@ -257,19 +258,43 @@ namespace std {
 
 [%@lib@ctor basic_format_arg::handle]
 [codeblock:declaration]
-template<class T> explicit handle(const T& val) noexcept;
+template<class T> explicit handle(T&& val) noexcept;
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let
+[:zh_CN] 令
+[list]
+[item]
+[:en] [`TD] be [`remove_cvref_t<T>],
+[:zh_CN] [`TD] 为 [`remove_cvref_t<T>]，
+[item]
+[:en] [*const-formattable] be [`true] if
+[`typename Context::template formatter_type<TD>().format(declval<const TD&>(), declval<Context&>())]
+is well-formed, otherwise [`false],
+[:zh_CN] 如果
+[`typename Context::template formatter_type<TD>().format(declval<const TD&>(), declval<Context&>())]
+良构则 [*const-formattable] 为 [`true]，否则为 [`false]，
+[item]
+[:en] [`TD] be [`const TD] if [*const-formattable] is [`true] and [`TD] otherwise.
+[:zh_CN@~] 如果 [*const-formattable] 为 [`true] 则 [`TD] 为 [`const TD]，否则为 [`TD]。
+[list:end]
+
+[para:mandates]
+[:en] [`[*const-formattable] || !is_const_v<remove_reference_t<T>>] is [`true].
+[:zh_CN] [`[*const-formattable] || !is_const_v<remove_reference_t<T>>] 为 [`true]。
+
 [para:effects]
 [:en] Initializes [`ptr_] with [`addressof(val)] and [`format_] with
 [:zh_CN] 以 [`addressof(val)] 初始化 [`ptr_] 并将 [`format_] 初始化为
 [codeblock]
 [](basic_format_parse_context<char_type>& parse_ctx,
    Context& format_ctx, const void* ptr) {
-  typename Context::template formatter_type<T> f;
+  typename Context::template formatter_type<TD> f;
   parse_ctx.advance_to(f.parse(parse_ctx));
-  format_ctx.advance_to(f.format(*static_cast<const T*>(ptr), format_ctx));
+  format_ctx.advance_to(f.format(*const_cast<TQ*>(static_cast<const TD*>(ptr)),
+                                 format_ctx));
 }
 [codeblock:end]
 [div:end]

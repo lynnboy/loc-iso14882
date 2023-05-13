@@ -1,0 +1,273 @@
+[section#func.wrap.move.ctor
+    [:en] Constructors, assignment, and destructor
+    [:zh_CN] 构造函数，赋值，和析构函数
+]
+
+[%@lib@member [*is-callable-from][!move_only_function]]
+[codeblock:declaration]
+template<class VT>
+  static constexpr bool @\exposid{is-callable-from}@ = @\seebelow@;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] If [^noex] is [`true], [`[*is-callable-from]<VT>] is equal to:
+[:zh_CN] 若 [^noex] 为 [`true]，则 [`[*is-callable-from]<VT>] 等于：
+[codeblock]
+is_nothrow_invocable_r_v<R, VT @\cv{}@ @\placeholder{ref}@, ArgTypes...> &&
+is_nothrow_invocable_r_v<R, VT @\placeholder{inv-quals}@, ArgTypes...>
+[codeblock:end]
+[:en] Otherwise, [`[*is-callable-from]<VT>] is equal to:
+[:zh_CN] 否则，[`[*is-callable-from]<VT>] 等于：
+[codeblock]
+is_invocable_r_v<R, VT @\cv{}@ @\placeholder{ref}@, ArgTypes...> &&
+is_invocable_r_v<R, VT @\placeholder{inv-quals}@, ArgTypes...>
+[codeblock:end]
+[div:end]
+
+[%@lib@ctor move_only_function]
+[codeblock:declaration]
+move_only_function() noexcept;
+move_only_function(nullptr_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`*this] has no target object.
+[:zh_CN] [`*this] 没有目标对象。
+[div:end]
+
+[%@lib@ctor move_only_function]
+[codeblock:declaration]
+move_only_function(move_only_function&& f) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] The target object of [`*this] is the target object [`f] had before
+construction, and [`f] is in a valid state with an unspecified value.
+[:zh_CN] [`*this] 的目标对象为 [`f] 在构造之前的目标对象，而 [`f] 处于某个具有
+未指明的值的有效状态。
+[div:end]
+
+[%@lib@ctor move_only_function]
+[codeblock:declaration]
+template<class F> move_only_function(F&& f);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`VT] be [`decay_t<F>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<F>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`remove_cvref_t<F>] is not the same type as [`move_only_function], and
+[:zh_CN] [`remove_cvref_t<F>] 与 [`move_only_function] 为不同类型，并且
+[item]
+[:en] [`remove_cvref_t<F>] is not a specialization of [`in_place_type_t], and
+[:zh_CN] [`remove_cvref_t<F>] 不是 [`in_place_type_t] 的特例，并且
+[item]
+[:en] [`[*is-callable-from]<VT>] is [`true].
+[:zh_CN] [`[*is-callable-from]<VT>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[:en] [`is_constructible_v<VT, F>] is [`true].
+[:zh_CN] [`is_constructible_v<VT, F>] 为 [`true]。
+
+[para:expects]
+[:en] [`VT] meets the [^:oc Destructible] requirements, and if
+[`is_move_constructible_v<VT>] is [`true], [`VT] meets the
+[^:oc MoveConstructible] requirements.
+[:zh_CN] [`VT] 满足 [^:oc Destructible] 的规定，且如果
+[`is_move_constructible_v<VT>] 为 [`true]，则 [`VT] 满足 [^:oc MoveConstructible]
+的规定。
+
+[para:ensures]
+[:en] [`*this] has no target object if any of the following hold:
+[:zh_CN] 如果符合以下任何情况，则 [`*this] 没有目标对象：
+
+[list]
+[item]
+[:en] [`f] is a null function pointer value.
+[:zh_CN] [`f] 是空函数指针值。
+[item]
+[:en] [`f] is a null member pointer value.
+[:zh_CN] [`f] 是空成员指针值。
+[item]
+[:en] [`remove_cvref_t<F>] is a specialization of the [`move_only_function]
+class template, and [`f] has no target object.
+[:zh_CN] [`remove_cvref_t<F>] 是类模板 [`move_only_function] 的特例，且 [`f]
+没有目标对象。
+[list:end]
+
+[:en] Otherwise, [`*this] has a target object of type [`VT]
+direct-non-list-initialized with [`std::forward<F>(f)].
+[:zh_CN] 否则，[`*this] 具有以 [`std::forward<F>(f)] 直接非列表初始化的 [`VT]
+类型的目标对象。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc] unless [`VT] is a function pointer or a
+specialization of [`reference_wrapper].
+[:zh_CN] 除非 [`VT] 是函数指针或 [`reference_wrapper] 的特例，否则可能抛出
+[`bad_alloc]。
+[div:end]
+
+[%@lib@ctor move_only_function]
+[codeblock:declaration]
+template<class T, class... Args>
+  explicit move_only_function(in_place_type_t<T>, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`is_constructible_v<VT, Args...>] is [`true], and
+[:zh_CN] [`is_constructible_v<VT, Args...>] 为 [`true]，并且
+[item]
+[:en] [`[*is-callable-from]<VT>] is [`true].
+[:zh_CN] [`[*is-callable-from]<VT>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[:en] [`VT] is the same type as [`T].
+[:zh_CN] [`VT] 与 [`T] 为相同类型。
+
+[para:expects]
+[:en] [`VT] meets the [^:oc Destructible] requirements, and if
+[`is_move_constructible_v<VT>] is [`true], [`VT] meets the
+[^:oc MoveConstructible] requirements.
+[:zh_CN] [`VT] 满足 [^:oc Destructible] 的规定，且如果
+[`is_move_constructible_v<VT>] 为 [`true]，则 [`VT] 满足 [^:oc MoveConstructible]
+的规定。
+
+[para:ensures]
+[:en] [`*this] has a target object of type [`VT] direct-non-list-initialized
+with [`std::forward<Args>(args)...].
+[:zh_CN] [`*this] 具有以 [`std::forward<Args>(args)...] 直接非列表初始化的
+[`VT] 类型的目标对象。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc] unless [`VT] is a function pointer or a
+specialization of [`reference_wrapper].
+[:zh_CN] 除非 [`VT] 是函数指针或 [`reference_wrapper] 的特例，否则可能抛出
+[`bad_alloc]。
+[div:end]
+
+[%@lib@ctor move_only_function]
+[codeblock:declaration]
+template<class T, class U, class... Args>
+  explicit move_only_function(in_place_type_t<T>, initializer_list<U> ilist, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`is_constructible_v<VT, initializer_list<U>&, ArgTypes...>] is [`true], and
+[:zh_CN] [`is_constructible_v<VT, initializer_list<U>&, ArgTypes...>] 为 [`true]，并且
+[item]
+[:en] [`[*is-callable-from]<VT>] is [`true].
+[:zh_CN] [`[*is-callable-from]<VT>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[:en] [`VT] is the same type as [`T].
+[:zh_CN] [`VT] 与 [`T] 为相同类型。
+
+[para:expects]
+[:en] [`VT] meets the [^:oc Destructible] requirements, and if
+[`is_move_constructible_v<VT>] is [`true], [`VT] meets the
+[^:oc MoveConstructible] requirements.
+[:zh_CN] [`VT] 满足 [^:oc Destructible] 的规定，且如果
+[`is_move_constructible_v<VT>] 为 [`true]，则 [`VT] 满足 [^:oc MoveConstructible]
+的规定。
+
+[para:ensures]
+[:en] [`*this] has a target object of type [`VT] direct-non-list-initialized
+with [`std::forward<ArgTypes>(args)...].
+[:zh_CN] [`*this] 具有以 [`std::forward<ArgTypes>(args)...] 直接非列表初始化的
+[`VT] 类型的目标对象。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc] unless [`VT] is a function pointer or a
+specialization of [`reference_wrapper].
+[:zh_CN] 除非 [`VT] 是函数指针或 [`reference_wrapper] 的特例，否则可能抛出
+[`bad_alloc]。
+[div:end]
+
+[%@lib@member operator=[!move_only_function]]
+[codeblock:declaration]
+move_only_function& operator=(move_only_function&& f);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`move_only_function(std::move(f)).swap(*this);]
+[:zh_CN] 等价于：[`move_only_function(std::move(f)).swap(*this);]
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator=[!move_only_function]]
+[codeblock:declaration]
+move_only_function& operator=(nullptr_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Destroys the target object of [`*this], if any.
+[:zh_CN] 如果有则销毁 [`*this] 的目标对象。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator=[!move_only_function]]
+[codeblock:declaration]
+template<class F> move_only_function& operator=(F&& f);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`move_only_function(std::forward<F>(f)).swap(*this);]
+[:zh_CN] 等价于：[`move_only_function(std::forward<F>(f)).swap(*this);]
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@dtor move_only_function]
+[codeblock:declaration]
+~move_only_function();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Destroys the target object of [`*this], if any.
+[:zh_CN] 如果有则销毁 [`*this] 的目标对象。
+[div:end]
