@@ -109,13 +109,40 @@ template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(UTy
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [*disambiguating-constraint] be:
+[:zh_CN] 令 [*disambiguating-constraint]：
+[list]
+[item]
+[:en] [`negation<is_same<remove_cvref_t<[$[`U]_0]>, tuple>>]
+if [`sizeof...(Types)] is 1;
+[:zh_CN] 若 [`sizeof...(Types)] 为 1，则为
+[`negation<is_same<remove_cvref_t<[$[`U]_0]>, tuple>>]；
+[item]
+[:en] otherwise,
+[`bool_constant<!is_same_v<remove_cvref_t<[$[`U]_0]>, allocator_arg_t> || is_same_v<remove_cvref_t<[$[`T]_0]>, allocator_arg_t>>]
+if [`sizeof...(Types)] is 2 or 3;
+[:zh_CN] 否则，若 [`sizeof...(Types)] 为 2 或 3，则为
+[`bool_constant<!is_same_v<remove_cvref_t<[$[`U]_0]>, allocator_arg_t> || is_same_v<remove_cvref_t<[$[`T]_0]>, allocator_arg_t>>]；
+[item]
+[:en] otherwise, [`true_type].
+[:zh_CN] 否则，为 [`true_type]。
+[list:end]
+
 [para:constraints]
-[:en] [`sizeof...(Types)] equals [`sizeof...(UTypes)] and
-[$[`sizeof...(Types)] \geq 1] and [`is_constructible_v<[$[`T]_i], [$[`U]_i]>] is
-[`true] for all [$i].
-[:zh_CN] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)] 并且
-[$[`sizeof...(Types)] \geq 1]，并且 [`is_constructible_v<[$[`T]_i], [$[`U]_i]>]
-对于所有 [$i] 均为 [`true]。
+[list]
+[item]
+[:en] [`sizeof...(Types)] equals [`sizeof...(UTypes)],
+[:zh_CN] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)]，
+[item]
+[:en] [$[`sizeof...(Types)] \geq 1], and
+[:zh_CN] [$[`sizeof...(Types)] \geq 1]，并且
+[item]
+[:en] [`conjunction_v<[*disambiguating-constraint], is_constructible<Types, UTypes>...>]
+is [`true].
+[:zh_CN] [`conjunction_v<[*disambiguating-constraint], is_constructible<Types, UTypes>...>]
+为 [`true]。
+[list:end]
 
 [para:effects]
 [:en] Initializes the elements in the tuple with the corresponding value in
@@ -164,142 +191,89 @@ tuple(tuple&& u) = default;
 
 [%@lib@ctor tuple]
 [codeblock:declaration]
+template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(tuple<UTypes...>& u);
 template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(const tuple<UTypes...>& u);
-[codeblock:end]
-
-[div:description]
-[para:constraints]
-[list]
-[item]
-[:en@~] [`sizeof...(Types)] equals [`sizeof...(UTypes)] and
-[:zh_CN@~] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)] 并且
-[item]
-[:en@~] [`is_constructible_v<T[$_i], const U[$_i]&>] is [`true] for all [$i],
-and
-[:zh_CN@~] [`is_constructible_v<T[$_i], const U[$_i]&>] 对于所有 [$i] 均为
-[`true]，并且
-[item]
-[:en@~] either [`sizeof...(Types)] is not 1, or (when [`Types...] expands to [`T]
-and [`UTypes...] expands to [`U]) [`is_convertible_v<const tuple<U>&, T>],
-[`is_constructible_v<T, const tuple<U>&>], and [`is_same_v<T, U>] are all
-[`false].
-[:zh_CN@~] 或者 [`sizeof...(Types)] 不为 1，或者（当 [`Types...] 展开为 [`T] 且
-[`UTypes...] 展开为 [`U] 时）[`is_convertible_v<const tuple<U>&, T>]、
-[`is_constructible_v<T, const tuple<U>&>] 和 [`is_same_v<T, U>] 均为 [`false]。
-[list:end]
-
-[para:effects]
-[:en] Initializes each element of [`*this] with the corresponding element of [`u].
-[:zh_CN] 以 [`u] 的对应元素初始化 [`*this] 的各个元素。
-
-[para:remarks]
-[:en] The expression inside [`:key explicit] is equivalent to:
-[:zh_CN] [`:key explicit] 中的表达式等价于：
-[codeblock]
-!conjunction_v<is_convertible<const UTypes&, Types>...>
-[codeblock:end]
-[div:end]
-
-[%@lib@ctor tuple]
-[codeblock:declaration]
 template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(tuple<UTypes...>&& u);
+template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(const tuple<UTypes...>&& u);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [`I] be the pack [`0, 1, ..., (sizeof...(Types) - 1)].
+[:zh_CN] 令 [`I] 为包组 [`0, 1, ..., (sizeof...(Types) - 1)]。
+
+[:en] Let [`[*FWD](u)] be [`static_cast<decltype(u)>(u)].
+[:zh_CN] 令 [`[*FWD](u)] 为 [`static_cast<decltype(u)>(u)]。
+
 [para:constraints]
 [list]
 [item]
 [:en@~] [`sizeof...(Types)] equals [`sizeof...(UTypes)], and
 [:zh_CN@~] [`sizeof...(Types)] 等于 [`sizeof...(UTypes)]，并且
 [item]
-[:en@~] [`is_constructible_v<T[$_i], U[$_i]>] is [`true] for all [$i], and
-[:zh_CN@~] [`is_constructible_v<T[$_i], U[$_i]>] 对于所有 [$i] 均为 [`true]，
-并且
+[:en@~] [`(is_constructible_v<Types, decltype(get<I>([*FWD](u)))> && ...)] is
+[`true], and
+[:zh_CN@~] [`(is_constructible_v<Types, decltype(get<I>([*FWD](u)))> && ...)] 为
+[`true]，并且
 [item]
 [:en@~] either [`sizeof...(Types)] is not 1, or (when [`Types...] expands to [`T]
-and [`UTypes...] expands to [`U]) [`is_convertible_v<tuple<U>, T>],
-[`is_constructible_v<T, tuple<U>>], and [`is_same_v<T, U>] are all [`false].
+and [`UTypes...] expands to [`U]) [`is_convertible_v<decltype(u), T>],
+[`is_constructible_v<T, decltype(u)>], and [`is_same_v<T, U>] are all [`false].
 [:zh_CN@~] 或者 [`sizeof...(Types)] 不为 1，或者（当 [`Types...] 展开为 [`T] 且
-[`UTypes...] 展开为 [`U] 时）[`is_convertible_v<tuple<U>, T>]、
-[`is_constructible_v<T, tuple<U>>] 和 [`is_same_v<T, U>] 均为 [`false]。
+[`UTypes...] 展开为 [`U] 时）[`is_convertible_v<decltype(u), T>]、
+[`is_constructible_v<T, decltype(u)>] 和 [`is_same_v<T, U>] 均为 [`false]。
 [list:end]
 
 [para:effects]
-[:en] For all [$i], initializes the [$i^\text{th}] element of [`*this] with
-[`std::forward<U[$_i]>(get<[$i]>(u))].
-[:zh_CN] 对于所有 [$i]，以 [`std::forward<U[$_i]>(get<[$i]>(u))] 初始化 [`*this]
-的第 [$i] 个元素。
+[:en] For all [$i], initializes the [$i^\textrm{th}] element of [`*this] with
+[`get<[$i]>([*FWD](u))].
+[:zh_CN] 对于所有 [$i]，以 [`get<[$i]>([*FWD](u))] 初始化 [`*this] 的第 [$i] 个
+元素。
 
 [para:remarks]
 [:en] The expression inside [`:key explicit] is equivalent to:
 [:zh_CN] [`:key explicit] 中的表达式等价于：
 [codeblock]
-!conjunction_v<is_convertible<UTypes, Types>...>
+!(is_convertible_v<decltype(get<I>([[redoc("*>")]]FWD(u))), Types> && ...)
 [codeblock:end]
 [div:end]
 
 [%@lib@ctor tuple]
-[%@lib pair]
 [codeblock:declaration]
+template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(pair<U1, U2>& u);
 template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(const pair<U1, U2>& u);
-[codeblock:end]
-
-[div:description]
-[para:constraints]
-[list]
-[item]
-[:en] [`sizeof...(Types)] is 2,
-[:zh_CN] [`sizeof...(Types)] 为 2，
-[item]
-[:en] [`is_constructible_v<T[$_0], const U1&>] is [`true], and
-[`is_constructible_v<T[$_1], const U2&>] is [`true].
-[:zh_CN] [`is_constructible_v<T[$_0], const U1&>] 为 [`true]，并且
-[`is_constructible_v<T[$_1], const U2&>] 为 [`true]。
-[list:end]
-
-[para:effects]
-[:en] initializes the first element with [`u.first] and the second element with
-[`u.second].
-[:zh_CN] 以 [`u.first] 初始化第一个元素，并以 [`u.second] 初始化第二个元素。
-
-[para:remarks]
-[:en] The expression inside [`:key explicit] is equivalent to:
-[:zh_CN] [`:key explicit] 中的表达式等价于：
-[codeblock:notation]
-!is_convertible_v<const U1&, T[$_0]> || !is_convertible_v<const U2&, T[$_1]>
-[codeblock:end]
-[div:end]
-
-[%@lib@ctor tuple]
-[%@lib pair]
-[codeblock:declaration]
 template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(pair<U1, U2>&& u);
+template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(const pair<U1, U2>&& u);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [`[*FWD](u)] be [`static_cast<decltype(u)>(u)].
+[:zh_CN] 令 [`[*FWD](u)] 为 [`static_cast<decltype(u)>(u)]。
+
 [para:constraints]
 [list]
 [item]
 [:en] [`sizeof...(Types)] is 2,
 [:zh_CN] [`sizeof...(Types)] 为 2，
 [item]
-[:en] [`is_constructible_v<T[$_0], U1>] is [`true], and
-[`is_constructible_v<T[$_1], U2>] is [`true].
-[:zh_CN] [`is_constructible_v<T[$_0], U1>] 为 [`true]，并且
-[`is_constructible_v<T[$_1], U2>] 为 [`true]。
+[:en] [`is_constructible_v<T[$_0], decltype(get<0>([*FWD](u)))>] is [`true], and
+[`is_constructible_v<T[$_1], decltype(get<1>([*FWD](u)))>] is [`true].
+[:zh_CN] [`is_constructible_v<T[$_0], decltype(get<0>([*FWD](u)))>] 为 [`true]，
+并且 [`is_constructible_v<T[$_1], decltype(get<1>([*FWD](u)))>] 为 [`true]。
 [list:end]
 
 [para:effects]
-[:en] initializes the first element with [`std::forward<U1>(u.first)] and the
-second element with [`std::forward<U2>(u.second)].
-[:zh_CN] 以 [`std::forward<U1>(u.first)] 初始化第一个元素，并以
-[`std::forward<U2>(u.second)] 初始化第二个元素。
+[:en] Initializes the first element with [`get<0>([*FWD](u))] and the second
+element with [`get<1>([*FWD](u))].
+[:zh_CN] 以 [`get<0>([*FWD](u))] 初始化第一个元素，并以 [`get<1>([*FWD](u))]
+初始化第二个元素。
 
 [para:remarks]
-[:en] The expression inside [`:key explicit] is equivalent to:
-[:zh_CN] [`:key explicit] 中的表达式等价于：
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
 [codeblock:notation]
-!is_convertible_v<U1, T[$_0]> || !is_convertible_v<U2, T[$_1]>
+!is_convertible_v<decltype(get<0>([*FWD](u))), T[$_0]> || !is_convertible_v<decltype(get<1>([*FWD](u))), T[$_1]>
 [codeblock:end]
 [div:end]
 
@@ -320,16 +294,28 @@ template<class Alloc>
   constexpr tuple(allocator_arg_t, const Alloc& a, tuple&&);
 template<class Alloc, class... UTypes>
   constexpr explicit([[redoc("[=seebelow]")]])
+    tuple(allocator_arg_t, const Alloc& a, tuple<UTypes...>&);
+template<class Alloc, class... UTypes>
+  constexpr explicit([[redoc("[=seebelow]")]])
     tuple(allocator_arg_t, const Alloc& a, const tuple<UTypes...>&);
 template<class Alloc, class... UTypes>
   constexpr explicit([[redoc("[=seebelow]")]])
     tuple(allocator_arg_t, const Alloc& a, tuple<UTypes...>&&);
+template<class Alloc, class... UTypes>
+  constexpr explicit([[redoc("[=seebelow]")]])
+    tuple(allocator_arg_t, const Alloc& a, const tuple<UTypes...>&&);
+template<class Alloc, class U1, class U2>
+  constexpr explicit([[redoc("[=seebelow]")]])
+    tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&);
 template<class Alloc, class U1, class U2>
   constexpr explicit([[redoc("[=seebelow]")]])
     tuple(allocator_arg_t, const Alloc& a, const pair<U1, U2>&);
 template<class Alloc, class U1, class U2>
   constexpr explicit([[redoc("[=seebelow]")]])
     tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&&);
+template<class Alloc, class U1, class U2>
+  constexpr explicit([[redoc("[=seebelow]")]])
+    tuple(allocator_arg_t, const Alloc& a, const pair<U1, U2>&&);
 [codeblock:end]
 
 [div:description]
