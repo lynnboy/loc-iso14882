@@ -1,0 +1,67 @@
+[section#range.owning.view
+    [:en] Class template [`owning_view]
+    [:zh_CN] 类模板 [`owning_view]
+]
+
+[para]
+[:en]
+[`range.owning.view] is a move-only view of the elements of some other [`:c range].
+[:zh_CN]
+[`range.owning.view] 是在某个其他 [`:c range] 中的元素上的一个仅可移动 [`:c view]。
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]range R>
+    requires is_object_v<R>
+    requires [[redoc("`:c>")]]movable<R> && (![[redoc("*>")]]is-initializer-list<R>) // [:en] see [#range.refinements] \
+                                                                                     [:zh_CN] 参见 [#range.refinements]
+  class owning_view : public view_interface<owning_view<R>> {
+  private:
+    R [[redoc("*>")]]r_ = R();         // [=expos]
+  public:
+    owning_view() requires [[redoc("*:c>")]]default_initializable<R> = default;
+    constexpr owning_view(R&& t);
+
+    owning_view(owning_view&&) = default;
+    owning_view& operator=(owning_view&&) = default;
+
+    constexpr R& base() & noexcept { return [[redoc("*>")]]r_; }
+    constexpr const R& base() const& noexcept { return [[redoc("*>")]]r_; }
+    constexpr R&& base() && noexcept { return std::move([[redoc("*>")]]r_); }
+    constexpr const R&& base() const&& noexcept { return std::move([[redoc("*>")]]r_); }
+
+    constexpr iterator_t<R> begin() { return ranges::begin([[redoc("*>")]]r_); }
+    constexpr sentinel_t<R> end() { return ranges::end([[redoc("*>")]]r_); }
+
+    constexpr auto begin() const requires [[redoc("`:c>")]]range<const R>
+    { return ranges::begin([[redoc("*>")]]r_); }
+    constexpr auto end() const requires [[redoc("`:c>")]]range<const R>
+    { return ranges::end([[redoc("*>")]]r_); }
+
+    constexpr bool empty() requires requires { ranges::empty([[redoc("*>")]]r_); }
+    { return ranges::empty([[redoc("*>")]]r_); }
+    constexpr bool empty() const requires requires { ranges::empty([[redoc("*>")]]r_); }
+    { return ranges::empty([[redoc("*>")]]r_); }
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<R>
+    { return ranges::size([[redoc("*>")]]r_); }
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const R>
+    { return ranges::size([[redoc("*>")]]r_); }
+
+    constexpr auto data() requires [[redoc("`:c>")]]contiguous_range<R>
+    { return ranges::data([[redoc("*>")]]r_); }
+    constexpr auto data() const requires [[redoc("`:c>")]]contiguous_range<const R>
+    { return ranges::data([[redoc("*>")]]r_); }
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr owning_view(R&& t);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*r_] with [`std::move(t)].
+[:zh_CN] 以 [`std::move(t)] 初始化 [*r_]。
+[div:end]

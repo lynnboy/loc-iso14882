@@ -1,0 +1,86 @@
+[section#range.adjacent.view
+    [:en] Class template [`adjacent_view]
+    [:zh_CN] 类模板 [`adjacent_view]
+]
+
+[%@lib@member base[!adjacent_view]]
+[%@lib@member begin[!adjacent_view]]
+[%@lib@member end[!adjacent_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]forward_range V, size_t N>
+    requires [[redoc("`:c>")]]view<V> && (N > 0)
+  class adjacent_view : public view_interface<adjacent_view<V, N>> {
+    V [[redoc("*>")]]base_ = V();                      // [=expos]
+
+    // [:en] [#range.adjacent.iterator], class template [`adjacent_view::[*iterator]] \
+    [:zh_CN] [#range.adjacent.iterator]，类模板 [`adjacent_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;      // [=expos]
+
+    // [:en] [#range.adjacent.sentinel], class template [`adjacent_view::[*sentinel]] \
+    [:zh_CN] [#range.adjacent.sentinel]，类模板 [`adjacent_view::[*sentinel]]
+    template<bool> class [[redoc("*>")]]sentinel;      // [=expos]
+
+    struct [[redoc("*>")]]as-sentinel{};               // [=expos]
+
+  public:
+    adjacent_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit adjacent_view(V base);
+
+    constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>) {
+      return [[redoc("*>")]]iterator<false>(ranges::begin([[redoc("*>")]]base_), ranges::end([[redoc("*>")]]base_));
+    }
+
+    constexpr auto begin() const requires [[redoc("`:c>")]]range<const V> {
+      return [[redoc("*>")]]iterator<true>(ranges::begin([[redoc("*>")]]base_), ranges::end([[redoc("*>")]]base_));
+    }
+
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view[[redoc("*:c>")]]<V>) {
+      if constexpr ([[redoc("`:c>")]]common_range<V>) {
+        return [[redoc("*>")]]iterator<false>([[redoc("*>")]]as-sentinel{}, ranges::begin([[redoc("*>")]]base_), ranges::end([[redoc("*>")]]base_));
+      } else {
+        return [[redoc("*>")]]sentinel<false>(ranges::end([[redoc("*>")]]base_));
+      }
+    }
+
+    constexpr auto end() const requires [[redoc("`:c>")]]range<const V> {
+      if constexpr ([[redoc("`:c>")]]common_range<const V>) {
+        return [[redoc("*>")]]iterator<true>([[redoc("*>")]]as-sentinel{}, ranges::begin([[redoc("*>")]]base_), ranges::end([[redoc("*>")]]base_));
+      } else {
+        return [[redoc("*>")]]sentinel<true>(ranges::end([[redoc("*>")]]base_));
+      }
+    }
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit adjacent_view(V base);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using ST = decltype(ranges::size([[redoc("*>")]]base_));
+using CT = common_type_t<ST, size_t>;
+auto sz = static_cast<CT>(ranges::size([[redoc("*>")]]base_));
+sz -= std::min<CT>(sz, N - 1);
+return static_cast<ST>(sz);
+[codeblock:end]
+[div:end]

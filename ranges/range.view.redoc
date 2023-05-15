@@ -5,11 +5,10 @@
 
 [para]
 [:en] The [`:c view] concept specifies the requirements of a [`:c range] type
-that has constant time move construction, move assignment, and destruction;
-that is, the cost of these operations is independent of the number of elements
-in the [`:c view].
-[:zh_CN] [`:c view] 概念指定针对某个 [`:c range] 类型的规定，其具有常量时间的
-移动构造、移动赋值和销毁；就是说，这些操作的成本与 [`:c view] 中的元素数量无关。
+that has the semantic properties below, which make it suitable for use in
+constructing range adaptor pipelines ([#range.adaptors]).
+[:zh_CN] [`:c view] 概念指定针对某个 [`:c range] 类型的规定，其具有以下各项属性，
+因而使其适合在范围适配器管线的构建中使用（[#range.adaptors]）。
 
 [codeblock:declaration]
 template<class T>
@@ -27,20 +26,33 @@ template<class T>
 [:en@~] [`T] has [?bigoh 1] move construction; and
 [:zh_CN@~] [`T] 具有 [?bigoh 1] 的移动构造；且
 [item]
-[:en@~] [`T] has [?bigoh 1] move assignment; and
-[:zh_CN@~] [`T] 具有 [?bigoh 1] 的移动赋值；且
+[:en@~] move assignment of an object of type [`T] is no more complex than
+destruction followed by move construction; and
+[:zh_CN@~] [`T] 类型对象的移动赋值不比析构跟着移动构造更复杂；且
 [item]
-[:en@~] [`T] has [?bigoh 1] destruction; and
-[:zh_CN@~] [`T] 具有 [?bigoh 1] 的销毁；且
+[:en@~] if [$N] copies and/or moves are made from an object of type [`T]
+that contained [$M] elements, then those [$N] objects have [?bigoh N+M]
+destruction; and
+[:zh_CN@~] 如果一个包含 [$M] 个元素的 [`T] 类型对象进行了 [$N] 次赋值和/或移动，
+则这 [$N] 个对象进行 [?bigoh N+M] 次析构；且
 [item]
 [:en@~] [`[`:c copy_constructible]<T>] is [`false], or [`T] has [?bigoh 1] copy
 construction; and
 [:zh_CN@~] [`[`:c copy_constructible]<T>] 为 [`false]，或者 [`T] 具有 [?bigoh 1]
 的复制构造；且
 [item]
-[:en@~] [`[`:c copyable]<T>] is [`false], or [`T] has [?bigoh 1] copy assignment.
-[:zh_CN@~] [`[`:c copyable]<T>] 为 [`false]，或者 [`T] 具有 [?bigoh 1] 的复制赋值。
+[:en@~] [`[`:c copyable]<T>] is [`false], or copy assignment of an object of
+type [`T] is no more complex than destruction followed by copy construction.
+[:zh_CN@~] [`[`:c copyable]<T>] 为 [`false]，或者 [`T] 类型对象的复制赋值不比
+析构跟着复制构造更复杂。
 [list:end]
+
+[para]
+[begin:note]
+[:en] The constraints on copying and moving imply that a moved-from object of
+type [`T] has [?bigoh 1] destruction.
+[:zh_CN] 对复制和移动的约束暗示 [`T] 类型的被移动后对象具有 [?bigoh 1] 的析构。
+[end:note]
 
 [para]
 [begin:example]
@@ -61,10 +73,11 @@ ownership with all its copies.
 [:zh_CN] 按需生成元素的 [`:c range] 类型。
 [list:end]
 
-[:en] Most containers ([#containers]) are not views since destruction of the
-container destroys the elements, which cannot be done in constant time.
-[:zh_CN] 大多数容器（[#containers]）都不是视图，因为容器的销毁都要销毁其元素，而
-这无法在常量时间内完成。
+[:en] A container such as [`vector<string>] does not meet the semantic
+requirements of [`:c view] since copying the container copies all of the
+elements, which cannot be done in constant time.
+[:zh_CN] 诸如 [`vector<string>] 这样的容器并不满足对 [`:c view] 的规定，因为复制
+操作会复制全部元素，而这无法在常量时间内完成。
 [end:example]
 [div:end]
 

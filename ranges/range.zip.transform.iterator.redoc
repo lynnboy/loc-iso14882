@@ -1,0 +1,343 @@
+[section#range.zip.transform.iterator
+    [:en] Class template [`zip_transform_view::[*iterator]]
+    [:zh_CN] 类模板 [`zip_transform_view::[*iterator]]
+]
+
+[%@lib zip_transform_view::iterator]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]copy_constructible F, [[redoc("`:c>")]]input_range... Views>
+    requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0) && is_object_v<F> &&
+              [[redoc("`:c>")]]regular_invocable<F&, range_reference_t<Views>...> &&
+              [[redoc("*:c>")]]can-reference<invoke_result_t<F&, range_reference_t<Views>...>>
+  template<bool Const>
+  class zip_transform_view<F, Views...>::[[redoc("*>")]]iterator {
+    using [[redoc("*>")]]Parent = [[redoc("*>")]]maybe-const<Const, zip_transform_view>;      // [=expos]
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, [[redoc("*>")]]InnerView>;                 // [=expos]
+    [[redoc("*>")]]Parent* [[redoc("*>")]]parent_ = nullptr;                                  // [=expos]
+    [[redoc("*>")]]ziperator<Const> [[redoc("*>")]]inner_;                                    // [=expos]
+
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]ziperator<Const> inner);   // [=expos]
+
+  public:
+    using iterator_category = [[redoc("[=seebelow]", "_")]]_;                        // [:en] not always present \
+                                                                                    [:zh_CN] 不总是提供
+    using iterator_concept  = typename [[redoc("*>")]]ziperator<Const>::iterator_concept;
+    using value_type =
+      remove_cvref_t<invoke_result_t<[[redoc("*>")]]maybe-const<Const, F>&,
+                                     range_reference_t<[[redoc("*>")]]maybe-const<Const, Views>>...>>;
+    using difference_type = range_difference_t<[[redoc("*>")]]Base>;
+
+    [[redoc("*>")]]iterator() = default;
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
+      requires Const && [[redoc("`:c>")]]convertible_to<[[redoc("*>")]]ziperator<false>, [[redoc("*>")]]ziperator<Const>>;
+
+    constexpr decltype(auto) operator*() const noexcept([[redoc("[=seebelow]")]]);
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr void operator++(int);
+    constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
+
+    constexpr [[redoc("*>")]]iterator& operator--() requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
+    constexpr [[redoc("*>")]]iterator operator--(int) requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
+
+    constexpr [[redoc("*>")]]iterator& operator+=(difference_type x) requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    constexpr [[redoc("*>")]]iterator& operator-=(difference_type x) requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]equality_comparable<[[redoc("*>")]]ziperator<Const>>;
+
+    friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base> && [[redoc("`:c>")]]three_way_comparable<[[redoc("*>")]]ziperator<Const>>;
+
+    friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& i, difference_type n)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr [[redoc("*>")]]iterator operator+(difference_type n, const [[redoc("*>")]]iterator& i)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& i, difference_type n)
+      requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]sized_sentinel_for<[[redoc("*>")]]ziperator<Const>, [[redoc("*>")]]ziperator<Const>>;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [~typedef-name] 0[`[*iterator]::iterator_category] is defined
+if and only if [*Base] models [`:c forward_range].
+[:zh_CN] 当且仅当 [*Base] 构成 [`:c forward_range] 时，成员 [~typedef-名]
+[`[*iterator]::iterator_category] 定义如下：
+
+[:en] In that case, [`[*iterator]::iterator_category] is defined as follows:
+[:zh_CN] 这种情况下，[`[*iterator]::iterator_category] 定义如下：
+
+[list]
+[item]
+[:en] If
+[:zh_CN] 如果
+[codeblock]
+invoke_result_t<[[redoc("*>")]]maybe-const<Const, F>&, range_reference_t<[[redoc("*>")]]maybe-const<Const, Views>>...>
+[codeblock:end]
+[:en@~] is not an lvalue reference, [`iterator_category] denotes
+[`input_iterator_tag].
+[:zh_CN@~] 不是左值引用，则 [`iterator_category] 代表 [`input_iterator_tag]。
+
+[item]
+[:en] Otherwise, let [`Cs] denote the pack of types
+[`iterator_traits<iterator_t<[*maybe-const]<Const, Views>>>::iterator_category...].
+[:zh_CN] 否则，令 [`Cs] 代表类型包组
+[`iterator_traits<iterator_t<[*maybe-const]<Const, Views>>>::iterator_category...]。
+
+[list]
+[item]
+[:en] If [`([`:c derived_from]<Cs, random_access_iterator_tag> && ...)] is
+[`true], [`iterator_category] denotes [`random_access_iterator_tag].
+[:zh_CN] 如果 [`([`:c derived_from]<Cs, random_access_iterator_tag> && ...)] 为
+[`true]，则 [`iterator_category] 代表 [`random_access_iterator_tag]。
+[item]
+[:en] Otherwise, if [`([`:c derived_from]<Cs, bidirectional_iterator_tag> && ...)]
+is [`true], [`iterator_category] denotes [`bidirectional_iterator_tag].
+[:zh_CN] 如果 [`([`:c derived_from]<Cs, bidirectional_iterator_tag> && ...)] 为
+[`true]，则 [`iterator_category] 代表 [`bidirectional_iterator_tag]。
+[item]
+[:en] Otherwise, if [`([`:c derived_from]<Cs, forward_iterator_tag> && ...)]
+is [`true], [`iterator_category] denotes [`forward_iterator_tag].
+[:zh_CN] 如果 [`([`:c derived_from]<Cs, forward_iterator_tag> && ...)] 为
+[`true]，则 [`iterator_category] 代表 [`forward_iterator_tag]。
+[item]
+[:en] Otherwise, [`iterator_category] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_category] 代表 [`input_iterator_tag]。
+[list:end]
+[list:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]ziperator<Const> inner);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`addressof(parent)] and [*inner_] with
+[`std::move(inner)].
+[:zh_CN] 以 [`addressof(parent)] 初始化 [*parent_] 并以 [`std::move(inner)]
+初始化 [*inner_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
+  requires Const && [[redoc("`:c>")]]convertible_to<[[redoc("*>")]]ziperator<false>, [[redoc("*>")]]ziperator<Const>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`i.[*parent_]] and [*inner_] with
+[`std::move(i.[*inner_])].
+[:zh_CN] 以 [`i.[*parent_]] 初始化 [*parent_] 并以 [`std::move(i.[*inner_])]
+初始化 [*inner_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr decltype(auto) operator*() const noexcept([[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return apply([&](const auto&... iters) -> decltype(auto) {
+  return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *iters...);
+}, [[redoc("*>")]]inner_.[[redoc("*>")]]current_);
+[codeblock:end]
+
+[para:remarks]
+[:en] Let [`Is] be the pack [$0, 1, \ldots, [`(sizeof...(Views)-1)]].
+[:zh_CN] 令 [`Is] 为包组 [$0, 1, \ldots, [`(sizeof...(Views)-1)]]。
+
+[:en] The exception specification is equivalent to:
+[`noexcept(invoke(*[*parent_]->[*fun_], *std::get<Is>([*inner_].[*current_])...))].
+[:zh_CN] 其异常说明等价于：
+[`noexcept(invoke(*[*parent_]->[*fun_], *std::get<Is>([*inner_].[*current_])...))]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+++[[redoc("*>")]]inner_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`++*this].
+[:zh_CN] 等价于 [`++*this]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator--() requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+--[[redoc("*>")]]inner_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator--(int) requires [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator@& operator+=(difference_type x)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]inner_ += x;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator@& operator-=(difference_type x)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]inner_ -= x;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr decltype(auto) operator[](difference_type n) const
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return apply([&]<class... Is>(const Is&... iters) -> decltype(auto) {
+  return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, iters[iter_difference_t<Is>(n)]...);
+}, [[redoc("*>")]]inner_.[[redoc("*>")]]current_);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]equality_comparable<[[redoc("*>")]]ziperator<Const>>;
+friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base> && [[redoc("`:c>")]]three_way_comparable<[[redoc("*>")]]ziperator<Const>>;
+[codeblock:end]
+
+[div:description]
+[:en] Let [^op] be the operator.
+[:zh_CN] 令 [^op] 为其运算符。
+
+[para:effects]
+[:en] Equivalent to: [`return x.[*inner_] [^op] y.[*inner_];]
+[:zh_CN] 等价于：[`return x.[*inner_] [^op] y.[*inner_];]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& i, difference_type n)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+friend constexpr [[redoc("*>")]]iterator operator+(difference_type n, const [[redoc("*>")]]iterator& i)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](*i.[*parent_], i.[*inner_] + n);]
+[:zh_CN] 等价于：[`return [*iterator](*i.[*parent_], i.[*inner_] + n);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& i, difference_type n)
+  requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](*i.[*parent_], i.[*inner_] - n);]
+[:zh_CN] 等价于：[`return [*iterator](*i.[*parent_], i.[*inner_] - n);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]sized_sentinel_for<[[redoc("*>")]]ziperator<Const>, [[redoc("*>")]]ziperator<Const>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*inner_] - y.[*inner_];]
+[:zh_CN] 等价于：[`return x.[*inner_] - y.[*inner_];]
+[div:end]

@@ -1,0 +1,88 @@
+[section#range.zip.transform.view
+    [:en] Class template [`zip_transform_view]
+    [:zh_CN] 类模板 [`zip_transform_view]
+]
+
+[%@lib@member begin[!zip_transform_view]]
+[%@lib@member end[!zip_transform_view]]
+[%@lib@member size[!zip_transform_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]copy_constructible F, [[redoc("`:c>")]]input_range... Views>
+    requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0) && is_object_v<F> &&
+              [[redoc("`:c>")]]regular_invocable<F&, range_reference_t<Views>...> &&
+              [[redoc("*:c>")]]can-reference<invoke_result_t<F&, range_reference_t<Views>...>>
+  class zip_transform_view : public view_interface<zip_transform_view<F, Views...>> {
+    [[redoc("*>")]]copyable-box<F> [[redoc("*>")]]fun_;                   // [=expos]
+    zip_view<Views...> [[redoc("*>")]]zip_;                // [=expos]
+
+    using [[redoc("*>")]]InnerView = zip_view<Views...>;   // [=expos]
+    template<bool Const>
+      using [[redoc("*>")]]ziperator = iterator_t<[[redoc("*>")]]maybe-const<Const, [[redoc("*>")]]InnerView>>;      // [=expos]
+    template<bool Const>
+      using [[redoc("*>")]]zentinel = sentinel_t<[[redoc("*>")]]maybe-const<Const, [[redoc("*>")]]InnerView>>;       // [=expos]
+
+    // [:en] [#range.zip.transform.iterator], class template [`zip_transform_view::[*iterator]] \
+    [:zh_CN] [#range.zip.transform.iterator]，类模板 [`zip_transform_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;          // [=expos]
+
+    // [:en] [#range.zip.transform.sentinel], class template [`zip_transform_view::[*sentinel]] \
+    [:zh_CN] [#range.zip.transform.sentinel]，类模板 [`zip_transform_view::[*sentinel]]
+    template<bool> class [[redoc("*>")]]sentinel;          // [=expos]
+
+  public:
+    zip_transform_view() = default;
+
+    constexpr explicit zip_transform_view(F fun, Views... views);
+
+    constexpr auto begin() { return [[redoc("*>")]]iterator<false>(*this, [[redoc("*>")]]zip_.begin()); }
+
+    constexpr auto begin() const
+      requires [[redoc("`:c>")]]range<const [[redoc("*>")]]InnerView> &&
+               [[redoc("`:c>")]]regular_invocable<const F&, range_reference_t<const Views>...> {
+      return [[redoc("*>")]]iterator<true>(*this, [[redoc("*>")]]zip_.begin());
+    }
+
+    constexpr auto end() {
+      if constexpr ([[redoc("`:c>")]]common_range<[[redoc("*>")]]InnerView>) {
+        return [[redoc("*>")]]iterator<false>(*this, [[redoc("*>")]]zip_.end());
+      } else {
+        return [[redoc("*>")]]sentinel<false>([[redoc("*>")]]zip_.end());
+      }
+    }
+
+    constexpr auto end() const
+      requires [[redoc("`:c>")]]range<const [[redoc("*>")]]InnerView> &&
+               [[redoc("`:c>")]]regular_invocable<const F&, range_reference_t<const Views>...> {
+      if constexpr ([[redoc("`:c>")]]common_range<const [[redoc("*>")]]InnerView>) {
+        return [[redoc("*>")]]iterator<true>(*this, [[redoc("*>")]]zip_.end());
+      } else {
+        return [[redoc("*>")]]sentinel<true>([[redoc("*>")]]zip_.end());
+      }
+    }
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<[[redoc("*>")]]InnerView> {
+      return [[redoc("*>")]]zip_.size();
+    }
+
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const [[redoc("*>")]]InnerView> {
+      return [[redoc("*>")]]zip_.size();
+    }
+  };
+
+  template<class F, class... Rs>
+    zip_transform_view(F, Rs&&...) -> zip_transform_view<F, views::all_t<Rs>...>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit zip_transform_view(F fun, Views... views);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*fun_] with [`std::move(fun)] and [*zip_] with
+[`std::move(views)...].
+[:zh_CN] 以 [`std::move(fun)] 初始化 [*fun_] 并以 [`std::move(views)...] 初始化
+[*zip_]。
+[div:end]

@@ -1,0 +1,65 @@
+[section#range.zip.transform.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[%@lib zip_transform_view]
+[:en] [`zip_transform_view] takes an invocable object and any number of
+[`:c view]s and produces a [`:c view] whose [$M^\text{th}] element is the result
+applying the invocable object to the [$M^\text{th}] elements of all views.
+[:zh_CN] [`zip_transform_view] 接受一个可调用对象和任意数量的 [`:c view] 并产生
+一个 [`:c view]，其第 [$M] 个元素是对所有视图的第 [$M] 个元素实施可调用对象的
+结果。
+
+[%@lib@member zip_transform[!views]]
+[para]
+[:en] The name [`views::zip_transform] denotes a customization point object
+([#customization.point.object]).
+[:zh_CN] 名字 [`views::zip_transform] 代表一个定制化点对象
+（[#customization.point.object]）。
+
+[:en] Let [`F] be a subexpression, and let [`Es...] be a pack of subexpressions.
+[:zh_CN] 令 [`F] 为子表达式，并令 [`Es...] 为子表达式的包组。
+
+[list]
+[item]
+[:en] If [`Es] is an empty pack, let [`FD] be [`decay_t<decltype((F))>].
+[:zh_CN] 若 [`Es] 为空包组，令 [`FD] 为 [`decay_t<decltype((F))>]。
+
+[list]
+[item]
+[:en] If [`[`:c copy_constructible]<FD> && [`:c regular_invocable]<FD&>] is
+[`false], or if [`decay_t<invoke_result_t<FD&>>] is not an object type,
+[`views::zip_transform(F, Es...)] is ill-formed.
+[:zh_CN] 若 [`[`:c copy_constructible]<FD> && [`:c regular_invocable]<FD&>] 为
+[`false]，或者若 [`decay_t<invoke_result_t<FD&>>] 并非对象类型，则
+[`views::zip_transform(F, Es...)] 非良构。
+[item]
+[:en] Otherwise, the expression [`views::zip_transform(F, Es...)]
+is expression-equivalent to
+[:zh_CN] 否则，表达式 [`views::zip_transform(F, Es...)] 按表达式等价于
+[codeblock]
+((void)F, auto(views::empty<decay_t<invoke_result_t<FD&>>>))
+[codeblock:end]
+[list:end]
+
+[item]
+[:en] Otherwise, the expression [`views::zip_transform(F, Es...)]
+is expression-equivalent to [`zip_transform_view(F, Es...)].
+[:zh_CN] 否则，表达式 [`views::zip_transform(F, Es...)] 按表达式等价于
+[`zip_transform_view(F, Es...)]。
+[list:end]
+
+[para]
+[begin:example]
+[codeblock]
+vector v1 = {1, 2};
+vector v2 = {4, 5, 6};
+
+for (auto i : views::zip_transform(plus(), v1, v2)) {
+  cout << i << ' ';     // [:en] prints: 5 7 \
+                        [:zh_CN] 打印：5 7
+}
+[codeblock:end]
+[end:example]

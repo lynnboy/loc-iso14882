@@ -1,0 +1,120 @@
+[section#range.zip.sentinel
+    [:en] Class template [`zip_view::[*sentinel]]
+    [:zh_CN] 类模板 [`zip_view::[*sentinel]]
+]
+
+[%@lib zip_view::sentinel]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range... Views>
+    requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0)
+  template<bool Const>
+  class zip_view<Views...>::[[redoc("*>")]]sentinel {
+    [[redoc("*>")]]tuple-or-pair<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>...> [[redoc("*>")]]current_;       // [=expos]
+    constexpr explicit [[redoc("*>")]]sentinel([[redoc("*>")]]tuple-or-pair<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>...>);
+                                                                                // [=expos]
+  public:
+    [[redoc("*>")]]sentinel() = default;
+    constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> i)
+      requires Const &&
+               ([[redoc("`:c>")]]convertible_to<sentinel_t<Views>, sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>> && ...);
+
+    template<bool OtherConst>
+      requires ([[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                             iterator_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>> && ...)
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+
+    template<bool OtherConst>
+      requires ([[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                                   iterator_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>> && ...)
+    friend constexpr common_type_t<range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>...>
+      operator-(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+
+    template<bool OtherConst>
+      requires ([[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                                   iterator_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>> && ...)
+    friend constexpr common_type_t<range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>...>
+      operator-(const [[redoc("*>")]]sentinel& y, const [[redoc("*>")]]iterator<OtherConst>& x);
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]sentinel([[redoc("*>")]]tuple-or-pair<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>...> end);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`end].
+[:zh_CN] 以 [`end] 初始化 [*end_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> i)
+  requires Const &&
+           ([[redoc("`:c>")]]convertible_to<sentinel_t<Views>, sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>> && ...);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`std::move(i.[*end_])].
+[:zh_CN] 以 [`std::move(i.[*end_])] 初始化 [*end_]。
+[div:end]
+
+[codeblock:declaration]
+template<bool OtherConst>
+  requires ([[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                         iterator_t<maybe-const<OtherConst, Views>>> && ...)
+friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if there exists an integer [$0 \leq i < [`sizeof...(Views)]] such
+that [`bool(std::get<[$i]>(x.[*current_]) == std::get<[$i]>(y.[*end_]))] is [`true].
+[:zh_CN] 如果存在一个整数 [$0 \leq i < [`sizeof...(Views)]] 使得
+[`bool(std::get<[$i]>(x.[*current_]) == std::get<[$i]>(y.[*end_]))] 为 [`true]
+则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[codeblock:declaration]
+template<bool OtherConst>
+  requires ([[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                               iterator_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>> && ...)
+friend constexpr common_type_t<range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>...>
+  operator-(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`D] be the return type.
+[:zh_CN] 令 [`D] 为返回类型。
+
+[:en] Let [`[*DIST]([$i])] be
+[`D(std::get<[$i]>(x.[*current_]) - std::get<[$i]>(y.[*current_]))].
+[:zh_CN] 令 [`[*DIST]([$i])] 为
+[`D(std::get<[$i]>(x.[*current_]) - std::get<[$i]>(y.[*current_]))]。
+
+[para:returns]
+[:en] The value with the smallest absolute value among [`[*DIST]([$n])] for all
+integers [$0 \leq n < [`sizeof...(Views)]].
+[:zh_CN] 对于 [$0 \leq n < [`sizeof...(Views)]] 中的所有整数，返回绝对值最小的
+[`[*DIST]([$n])] 值。
+[div:end]
+
+[codeblock:declaration]
+template<bool OtherConst>
+  requires ([[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                               iterator_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>> && ...)
+friend constexpr common_type_t<range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, Views>>...>
+  operator-(const [[redoc("*>")]]sentinel& y, const [[redoc("*>")]]iterator<OtherConst>& x);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return -(x - y);]
+[:zh_CN] 等价于：[`return -(x - y);]
+[div:end]

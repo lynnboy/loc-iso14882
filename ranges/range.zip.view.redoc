@@ -1,0 +1,142 @@
+[section#range.zip.view
+    [:en] Class template [`zip_view]
+    [:zh_CN] 类模板 [`zip_view]
+]
+
+[%@lib@member begin[!zip_view]]
+[%@lib@member end[!zip_view]]
+[%@lib@member size[!zip_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class... Rs>
+  concept [[redoc("*:c@def>")]]zip-is-common =                             // [=expos]
+    (sizeof...(Rs) == 1 && ([[redoc("`:c>")]]common_range<Rs> && ...)) ||
+    (!([[redoc("`:c>")]]bidirectional_range<Rs> && ...) && ([[redoc("`:c>")]]common_range<Rs> && ...)) ||
+    (([[redoc("`:c>")]]random_access_range<Rs> && ...) && ([[redoc("`:c>")]]sized_range<Rs> && ...));
+
+  template<class... Ts>
+    using [[redoc("*>")]]tuple-or-pair = [[redoc("[=seebelow]")]];                 // [=expos]
+
+  template<class F, class Tuple>
+  constexpr auto [[redoc("*>")]]tuple-transform(F&& f, Tuple&& tuple) { // [=expos]
+    return apply([&]<class... Ts>(Ts&&... elements) {
+      return [[redoc("*>")]]tuple-or-pair<invoke_result_t<F&, Ts>...>(
+        invoke(f, std::forward<Ts>(elements))...
+      );
+    }, std::forward<Tuple>(tuple));
+  }
+
+  template<class F, class Tuple>
+  constexpr void [[redoc("*>")]]tuple-for-each(F&& f, Tuple&& tuple) { // [=expos]
+    apply([&]<class... Ts>(Ts&&... elements) {
+      (invoke(f, std::forward<Ts>(elements)), ...);
+    }, std::forward<Tuple>(tuple));
+  }
+
+  template<[[redoc("`:c>")]]input_range... Views>
+    requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0)
+  class zip_view : public view_interface<zip_view<Views...>> {
+    tuple<Views...> [[redoc("*>")]]views_;             // [=expos]
+
+    // [:en] [#range.zip.iterator], class template [`zip_view::[*iterator]] \
+    [:zh_CN] [#range.zip.iterator]，类模板 [`zip_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;      // [=expos]
+
+    // [:en] [#range.zip.sentinel], class template [`zip_view::[*sentinel]] \
+    [:zh_CN] [#range.zip.sentinel]，类模板 [`zip_view::[*sentinel]]
+    template<bool> class [[redoc("*>")]]sentinel;      // [=expos]
+
+  public:
+    zip_view() = default;
+    constexpr explicit zip_view(Views... views);
+
+    constexpr auto begin() requires (!([[redoc("*:c>")]]simple-view<Views> && ...)) {
+      return [[redoc("*>")]]iterator<false>([[redoc("*>")]]tuple-transform(ranges::begin, [[redoc("*>")]]views_));
+    }
+    constexpr auto begin() const requires ([[redoc("`:c>")]]range<const Views> && ...) {
+      return [[redoc("*>")]]iterator<true>([[redoc("*>")]]tuple-transform(ranges::begin, [[redoc("*>")]]views_));
+    }
+
+    constexpr auto end() requires (!([[redoc("*:c>")]]simple-view<Views> && ...)) {
+      if constexpr (![[redoc("*:c>")]]zip-is-common<Views...>) {
+        return [[redoc("*>")]]sentinel<false>([[redoc("*>")]]tuple-transform(ranges::end, [[redoc("*>")]]views_));
+      } else if constexpr (([[redoc("`:c>")]]random_access_range<Views> && ...)) {
+        return begin() + iter_difference_t<[[redoc("*>")]]iterator<false>>(size());
+      } else {
+        return [[redoc("*>")]]iterator<false>([[redoc("*>")]]tuple-transform(ranges::end, [[redoc("*>")]]views_));
+      }
+    }
+
+    constexpr auto end() const requires (@\libconcept{range}@<const Views> && ...) {
+      if constexpr (![[redoc("*:c>")]]zip-is-common<const Views...>) {
+        return [[redoc("*>")]]sentinel<true>([[redoc("*>")]]tuple-transform(ranges::end, [[redoc("*>")]]views_));
+      } else if constexpr (([[redoc("`:c>")]]random_access_range<const Views> && ...)) {
+        return begin() + iter_difference_t<[[redoc("*>")]]iterator<true>>(size());
+      } else {
+        return [[redoc("*>")]]iterator<true>([[redoc("*>")]]tuple-transform(ranges::end, [[redoc("*>")]]views_));
+      }
+    }
+
+    constexpr auto size() requires ([[redoc("`:c>")]]sized_range<Views> && ...);
+    constexpr auto size() const requires ([[redoc("`:c>")]]sized_range<const Views> && ...);
+  };
+
+  template<class... Rs>
+    zip_view(Rs&&...) -> zip_view<views::all_t<Rs>...>;
+}
+[codeblock:end]
+
+[para]
+[:en] Given some pack of types [`Ts], the alias template [*tuple-or-pair] is
+defined as follows:
+[:zh_CN] 给定某个类型包组 [`Ts]，别名模板 [*tuple-or-pair] 定义如下：
+[list]
+[item]
+[:en] If [`sizeof...(Ts)] is 2, [`[*tuple-or-pair]<Ts...>] denotes [`pair<Ts...>].
+[:zh_CN] 若 [`sizeof...(Ts)] 为 2，则 [`[*tuple-or-pair]<Ts...>] 代表 [`pair<Ts...>]。
+[item]
+[:en] Otherwise, [`[*tuple-or-pair]<Ts...>] denotes [`tuple<Ts...>].
+[:zh_CN] 否则，[`[*tuple-or-pair]<Ts...>] 代表 [`tuple<Ts...>]。
+[list:end]
+
+[para]
+[:en] Two [`zip_view] objects have the same underlying sequence if and only if
+the corresponding elements of [*views_] are equal ([#concepts.equality]) and
+have the same underlying sequence.
+[:zh_CN] 当且仅当两个 [`zip_view] 对象的 [*views_] 中的对应元素相等
+（[#concepts.equality]）且具有相同的底层序列时，它们具有相同的底层序列。
+
+[begin:note]
+[:en] In particular, comparison of iterators obtained from [`zip_view] objects
+that do not have the same underlying sequence is not required to produce
+meaningful results ([#iterator.concept.forward]).
+[:zh_CN] 特别是，对从并不具有相同底层序列的 [`zip_view] 对象所获得的迭代器进行
+比较，不必产生有意义的结果（[#iterator.concept.forward]）。
+[end:note]
+
+[codeblock:declaration]
+constexpr explicit zip_view(Views... views);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*views_] with [`std::move(views)...].
+[:zh_CN] 以 [`std::move(views)...] 初始化 [*views_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto size() requires ([[redoc("`:c>")]]sized_range<Views> && ...);
+constexpr auto size() const requires ([[redoc("`:c>")]]sized_range<const Views> && ...);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return apply([](auto... sizes) {
+  using CT = [[redoc("*>")]]make-unsigned-like-t<common_type_t<decltype(sizes)...>>;
+  return ranges::min({CT(sizes)...});
+}, [[redoc("*>")]]tuple-transform(ranges::size, [[redoc("*>")]]views_));
+[codeblock:end]
+[div:end]

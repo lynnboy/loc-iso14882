@@ -1,0 +1,96 @@
+[section#range.adjacent.sentinel
+    [:en] Class template [`adjacent_view::[*sentinel]]
+    [:zh_CN] 类模板 [`adjacent_view::[*sentinel]]
+]
+
+[%@lib adjacent_view::sentinel]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]forward_range V, size_t N>
+    requires [[redoc("`:c>")]]view<V> && (N > 0)
+  template<bool Const>
+  class adjacent_view<V, N>::[[redoc("*>")]]sentinel {
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                         // [=expos]
+    sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();                 // \expos
+    constexpr explicit [[redoc("*>")]]sentinel(sentinel_t<[[redoc("*>")]]Base> end);          // [=expos]
+
+  public:
+    [[redoc("*>")]]sentinel() = default;
+    constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> i)
+      requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
+
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, V>>
+      operator-(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, V>>
+      operator-(const [[redoc("*>")]]sentinel& y, const [[redoc("*>")]]iterator<OtherConst>& x);
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]sentinel(sentinel_t<[[redoc("*>")]]Base> end);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`end].
+[:zh_CN] 以 [`end] 初始化 [*end_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> i)
+  requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`std::move(i.[*end_])].
+[:zh_CN] 以 [`std::move(i.[*end_])] 初始化 [*end_]。
+[div:end]
+
+[codeblock:declaration]
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*current_].back() == y.[*end_];]
+[:zh_CN] 等价于：[`return x.[*current_].back() == y.[*end_];]
+[div:end]
+
+[codeblock:declaration]
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, V>>
+  operator-(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*current_].back() - y.[*end_];]
+[:zh_CN] 等价于：[`return x.[*current_].back() - y.[*end_];]
+[div:end]
+
+[codeblock:declaration]
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr range_difference_t<[[redoc("*>")]]maybe-const<OtherConst, V>>
+  operator-(const [[redoc("*>")]]sentinel& y, const [[redoc("*>")]]iterator<OtherConst>& x);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return y.[*end_] - x.[*current_].back();]
+[:zh_CN] 等价于：[`return y.[*end_] - x.[*current_].back();]
+[div:end]

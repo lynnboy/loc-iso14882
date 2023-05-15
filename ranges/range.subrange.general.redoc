@@ -17,11 +17,14 @@ template parameter is [`subrange_kind::sized].
 [%@lib subrange]
 [codeblock:synopsis]
 namespace std::ranges {
+  template<class From, class To>
+    concept [[redoc("*:c@def>")]]uses-nonqualification-pointer-conversion =      // [=expos]
+      is_pointer_v<From> && is_pointer_v<To> &&
+      ![[redoc("*:c>")]]convertible_to<remove_pointer_t<From>(*)[], remove_pointer_t<To>(*)[]>;
+
     concept [[redoc("*:c@def>")]]convertible-to-non-slicing =                    // [=expos]
       [[redoc("`:c>")]]convertible_to<From, To> &&
-      !(is_pointer_v<decay_t<From>> &&
-        is_pointer_v<decay_t<To>> &&
-        [[redoc("*:c>")]]different-from<remove_pointer_t<decay_t<From>>, remove_pointer_t<decay_t<To>>>);
+      ![[redoc("*:c>")]]uses-nonqualification-pointer-conversion<decay_t<From>, decay_t<To>>;
 
   template<class T>
     concept [[redoc("*:c@def>")]]pair-like =                                     // [=expos]
@@ -75,8 +78,7 @@ namespace std::ranges {
                [[redoc("`:c>")]]convertible_to<sentinel_t<R>, S>
     constexpr subrange(R&& r, [[redoc("^>")]]make-unsigned-like-t<iter_difference_t<I>> n)
       requires (K == subrange_kind::sized)
-        : subrange{ranges::begin(r), ranges::end(r), n}
-    {}
+        : subrange{ranges::begin(r), ranges::end(r), n} {}
 
     template<[[redoc("*:c>")]]different-from<subrange> PairLike>
       requires [[redoc("*:c>")]]pair-like-convertible-from<PairLike, const I&, const S&>
@@ -116,7 +118,7 @@ namespace std::ranges {
       subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;
 
   template<size_t N, class I, class S, subrange_kind K>
-    requires (N < 2)
+    requires ((N == 0 && [[redoc("`:c>")]]copyable<I>) || N == 1)
     constexpr auto get(const subrange<I, S, K>& r);
 
   template<size_t N, class I, class S, subrange_kind K>
