@@ -13,6 +13,12 @@ template<class ExecutionPolicy, class ForwardIterator>
   ForwardIterator
     shift_left(ExecutionPolicy&& exec, ForwardIterator first, ForwardIterator last,
                typename iterator_traits<ForwardIterator>::difference_type n);
+
+template<[[redoc("`:c>")]]permutable I, [[redoc("`:c>")]]sentinel_for<I> S>
+  constexpr subrange<I> ranges::shift_left(I first, S last, iter_difference_t<I> n);
+template<[[redoc("`:c>")]]forward_range R>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  constexpr borrowed_subrange_t<R> ranges::shift_left(R&& r, range_difference_t<R> n);
 [codeblock:end]
 
 [div:description]
@@ -20,8 +26,10 @@ template<class ExecutionPolicy, class ForwardIterator>
 [:en] [`n >= 0] is [`true].
 [:zh_CN] [`n >= 0] 为 [`true]。
 
-[:en] The type of [`*first] meets the [^:oc MoveAssignable] requirements.
-[:zh_CN] [`*first] 的类型满足 [^:oc MoveAssignable] 的规定。
+[:en] For the overloads in namespace [`std], the type of [`*first] meets the
+[^:oc MoveAssignable] requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`*first] 的类型满足
+[^:oc MoveAssignable] 的规定。
 
 [para:effects]
 [:en] If [`n == 0] or [`n >= last - first], does nothing.
@@ -32,15 +40,25 @@ template<class ExecutionPolicy, class ForwardIterator>
 [:zh_CN] 否则，对于每个非负整数 [`i < (last - first) - n]，将位置
 [`first + n + i] 的元素移动到位置 [`first + i]。
 
-[:en] In the first overload case, does so in order starting from [`i = 0] and
-proceeding to [`i = (last - first) - n - 1].
-[:zh_CN] 第一种重载的情况中，以从 [`i = 0] 开始直到
+[:en] For the overloads without an [`ExecutionPolicy] template parameter, does
+so in order starting from [`i = 0] and proceeding to [`i = (last - first) - n - 1].
+[:zh_CN] 对于没有 [`ExecutionPolicy] 模板形参的各重载，以从 [`i = 0] 开始直到
 [`i = (last - first) - n - 1] 的顺序进行处理。
 
 [para:returns]
-[:en] [`first + (last - first - n)] if [`n < last - first], otherwise [`first].
-[:zh_CN] 当 [`n < last - first] 时返回 [`first + (last - first - n)]，否则返回
-[`first]。
+[:en] Let [*NEW_LAST] be [`first + (last - first - n)] if [`n < last - first],
+otherwise [`first].
+[:zh_CN] 当 [`n < last - first] 时，令 [*NEW_LAST] 为 [`first + (last - first - n)]，
+否则为 [`first]。
+
+[list]
+[item]
+[:en] [*NEW_LAST] for the overloads in namespace [`std].
+[:zh_CN] 命名空间 [`std] 中的各重载返回 [*NEW_LAST]。
+[item]
+[:en] [`{first, [*NEW_LAST]}] for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`{first, [*NEW_LAST]}]。
+[list:end]
 
 [para:complexity]
 [:en] At most [`(last - first) - n] assignments.
@@ -57,6 +75,12 @@ template<class ExecutionPolicy, class ForwardIterator>
   ForwardIterator
     shift_right(ExecutionPolicy&& exec, ForwardIterator first, ForwardIterator last,
                 typename iterator_traits<ForwardIterator>::difference_type n);
+
+template<[[redoc("`:c>")]]permutable I, [[redoc("`:c>")]]sentinel_for<I> S>
+  constexpr subrange<I> ranges::shift_right(I first, S last, iter_difference_t<I> n);
+template<[[redoc("`:c>")]]forward_range R>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  constexpr borrowed_subrange_t<R> ranges::shift_right(R&& r, range_difference_t<R> n);
 [codeblock:end]
 
 [div:description]
@@ -64,8 +88,10 @@ template<class ExecutionPolicy, class ForwardIterator>
 [:en] [`n >= 0] is [`true].
 [:zh_CN] [`n >= 0] 为 [`true]。
 
-[:en] The type of [`*first] meets the [^:oc MoveAssignable] requirements.
-[:zh_CN] [`*first] 的类型满足 [^:oc MoveAssignable] 的规定。
+[:en] For the overloads in namespace [`std], the type of [`*first] meets the
+[^:oc MoveAssignable] requirements.
+[:zh_CN] 对于命名空间 [`std] 中的各重载，[`*first] 的类型满足
+[^:oc MoveAssignable] 的规定。
 
 [:en] [`ForwardIterator] meets the [^:oc BidirectionalIterator] requirements
 ([#bidirectional.iterators]) or the [^:oc ValueSwappable] requirements.
@@ -81,16 +107,37 @@ template<class ExecutionPolicy, class ForwardIterator>
 [:zh_CN] 否则，对于每个非负整数 [`i < (last - first) - n]，将位置
 [`first + i] 的元素移动到位置 [`first + n + i]。
 
-[:en] In the first overload case, if [`ForwardIterator] meets the
-[^:oc BidirectionalIterator] requirements, does so in order starting from
-[`i = (last - first) - n - 1] and proceeding to [`i = 0].
-[:zh_CN] 第一种重载的情况中，如果 [`ForwardIterator] 满足
-[^:oc BidirectionalIterator] 的规定，则以从 [`i = (last - first) - n - 1] 开始
-直到 [`i = 0] 的顺序进行处理。
+[:en] Does so in order starting from [`i = (last - first) - n - 1] and
+proceeding to [`i = 0] if:
+[:zh_CN] 符合以下条件时，以从 [`i = (last - first) - n - 1] 开始直到 [`i = 0] 的
+顺序进行处理：
+
+[list]
+[item]
+[:en] for the overload in namespace [`std] without an [`ExecutionPolicy]
+template parameter, [`ForwardIterator] meets the [^:oc BidirectionalIterator]
+requirements,
+[:zh_CN] 对于命名空间 [`std] 中没有 [`ExecutionPolicy] 模板形参的重载，
+[`ForwardIterator] 满足 [^:oc BidirectionalIterator] 的规定，
+[item]
+[:en] for the overloads in namespace [`ranges], [`I] models
+[`:c bidirectional_iterator].
+[:zh_CN] 对于命名空间 [`ranges] 中的各重载， [`I] 构成
+[`:c bidirectional_iterator]。
+[list:end]
 
 [para:returns]
-[:en] [`first + n] if [`n < last - first], otherwise [`last].
-[:zh_CN] 当 [`n < last - first] 时返回 [`first + n]，否则返回 [`last]。
+[:en] Let [*NEW_FIRST] be [`first + n] if [`n < last - first], otherwise [`last].
+[:zh_CN] 令 [*NEW_FIRST] 当 [`n < last - first] 时为 [`first + n]，否则为 [`last]。
+
+[list]
+[item]
+[:en] [*NEW_FIRST] for the overloads in namespace [`std].
+[:zh_CN] 命名空间 [`std] 中的各重载返回 [*NEW_FIRST]。
+[item]
+[:en] [`{[*NEW_FIRST], last}] for the overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`{[*NEW_FIRST], last}]。
+[list:end]
 
 [para:complexity]
 [:en] At most [`(last - first) - n] assignments or swaps.
