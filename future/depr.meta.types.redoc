@@ -13,6 +13,14 @@ addition:
 namespace std {
   template<class T> struct is_pod;
   template<class T> inline constexpr bool is_pod_v = is_pod<T>::value;
+  template<size_t Len, size_t Align = [[redoc("*>")]]default-alignment> // [=seebelow]
+    struct aligned_storage;
+  template<size_t Len, size_t Align = [[redoc("*>")]]default-alignment> // [=seebelow]
+    using [[redoc("`:lib>")]]aligned_storage_t = typename aligned_storage<Len, Align>::type;
+  template<size_t Len, class... Types>
+    struct aligned_union;
+  template<size_t Len, class... Types>
+    using [[redoc("`:lib>")]]aligned_union_t = typename aligned_union<Len, Types...>::type;
 }
 [codeblock:end]
 
@@ -23,6 +31,7 @@ the specification of the corresponding template.
 [:zh_CN] 除非由相应模板的规范中所明确允许，否则为本子条款中所定义的任何模板添加
 特化式的程序的行为是未定义的。
 
+[%@lib is_pod]
 [codeblock:declaration]
 template<class T> struct is_pod;
 [codeblock:end]
@@ -57,4 +66,85 @@ cv-qualified version of one of these types.
 a POD type.
 [:zh_CN] 闭包类型（[#expr.prim.lambda.closure]）是否是 POD 类型是未指明的。
 [end:note]
+[div:end]
+
+[%@lib aligned_storage]
+[codeblock:declaration]
+template<size_t Len, size_t Align = [[redoc("*>")]]default-alignment>
+  struct aligned_storage;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The value of [*default-alignment] is the most stringent alignment
+requirement for any object type whose size is no greater than [`Len]
+([#basic.types]).
+[:zh_CN] [*default-alignment] 的值为大小不大于 [`Len] 的任意对象类型中最严格的
+对齐要求（[#basic.types]）。
+
+[para:mandates]
+[:en] [`Len] is not zero.
+[:zh_CN] [`Len] 不为零。
+
+[:en] [`Align] is equal to [`alignof(T)] for some type [`T] or to
+[*default-alignment].
+[:zh_CN] [`Align] 对某类型 [`T] 等于 [`alignof(T)] 或者等于
+[*default-alignment]。
+
+[para]
+[:en] The member typedef [`type] is a trivial standard-layout type suitable for
+use as uninitialized storage for any object whose size is at most [`Len] and
+whose alignment is a divisor of [`Align].
+[:zh_CN] 成员 typedef [`type] 为适合用作其大小最大为 [`Len] 且其对齐能够整除
+[`Align] 的任意对象的未初始化存储的平凡标准布局类型。
+
+[para]
+[begin:note]
+[:en] Uses of [`aligned_storage<Len, Align>::type] can be replaced by an array
+[`std::byte`[Len`]] declared with [`alignas(Align)].
+[:zh_CN] [`aligned_storage<Len, Align>::type] 的使用可以被替换成声明带有
+[`alignas(Align)] 的数组 [`std::byte`[Len`]]。
+[end:note]
+
+[para]
+[begin:note]
+[:en] A typical implementation would define [`aligned_storage] as:
+[:zh_CN] 典型的实现可以将 [`aligned_storage] 定义为：
+[codeblock]
+template<size_t Len, size_t Alignment>
+struct aligned_storage {
+  typedef struct {
+    alignas(Alignment) unsigned char __data[Len];
+  } type;
+};
+[codeblock:end]
+[end:note]
+[div:end]
+
+[%@lib aligned_union]
+[codeblock:declaration]
+template<size_t Len, class... Types>
+  struct aligned_union;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] At least one type is provided.
+[:zh_CN] 至少提供一个类型。
+
+[:en] Each type in the template parameter pack [`Types] is a complete object
+type.
+[:zh_CN] 模板形参包组 [`Types] 中的每个类型都是完整的对象类型。
+
+[para]
+[:en] The member typedef [`type] is a trivial standard-layout type suitable for
+use as uninitialized storage for any object whose type is listed in [`Types];
+its size shall be at least [`Len].
+[:zh_CN] 成员 typedef [`type] 为适合用作在 [`Types] 中列出的任意类型的未初始化
+存储的平凡标准布局类型；其大小至少为 [`Len]。
+
+[:en] The static member [`alignment_value] is an integral constant of type
+[`size_t] whose value is the strictest alignment of all types listed in [`Types].
+[:zh_CN] 静态成员 [`alignment_value] 为 [`size_t] 类型的整型常量，其值为在
+[`Types] 中列出的所有类型中最严格的对齐。
 [div:end]
