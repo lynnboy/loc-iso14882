@@ -271,6 +271,11 @@ def iref(_1:str): return f'[=nbsp]({ref(_1)})'
 def tref(_1:str): return hyperref(tablerefname() + '[=nbsp]' + ref(f'tab:{_1}'), target = f'tab:{_1}')
 def fref(_1:str): return hyperref(figurerefname() + '[=nbsp]' + ref(f'fig:{_1}'), target = f'fig:{_1}')
 
+@applyTo(['span:ucode', '&:ucode'])
+def ucode(_1:str): return f'[.small {_1.upper()}]'
+@applyTo(['span:uname', '&:uname'])
+def uname(_1:str): return f'[.textsc {_1}]'
+def unicode(_1:str,_2:str): return ucode(_1) + ' ' + uname(_2)
 def NTS(_1:str): return f'[.textsc {_1}]'
 def ntbs(): return NTS('ntbs')
 def ntmbs(): return NTS('ntmbs')
@@ -381,8 +386,10 @@ def inlinecode(): pass
 def subindex(): pass
 def setkey(): pass
 def see(): pass
+def span(): pass
 #def ref(): pass
 def macro(): pass
+def eval(): pass
 #def placeholder(): pass
 def definition(): pass
 def quote(): pass
@@ -415,12 +422,12 @@ inline = {
     '@': setkey if at(index, subindex) else None,
     '~': grammarterm,
     '!': subindex if at(index, subindex, see) else None,
-    '&': None,
+    '&': span,
     '*': exposid,
     '-': table_row if within(table) else None,
     '/': comment,
     '|': table_cell if within(table) else syntax_alt if within(rule) else None,
-    '?': None,
+    '?': eval,
     '\\': None,
     '<': None,
     '>': None,
