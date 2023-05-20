@@ -20,11 +20,11 @@ the elements[='] keys are the elements themselves.
 [:zh_CN] [`unordered_set] 类支持前向迭代器。
 
 [para]
-[:en] An [`unordered_set] meets all of the requirements of a container, of
-an unordered associative container, and of an allocator-aware container
-([#:tab#container.alloc.req]).
-[:zh_CN] [`unordered_set] 满足容器的所有规定，无序关联容器的所有规定，以及
-分配器感知容器的所有规定（[#:tab#container.alloc.req]）。
+[:en] A [`unordered_set] meets all of the requirements of a container
+([#container.reqmts]), of an allocator-aware container ([#container.alloc.reqmts]),
+and of an unordered associative container ([#unord.req]).
+[:zh_CN] [`unordered_set] 满足容器（[#container.reqmts]），分配器感知容器
+（[#container.alloc.reqmts]），以及无序关联容器（[#unord.req]）的所有规定。
 
 [:en] It provides the operations described in the preceding requirements table
 for unique keys; that is, an [`unordered_set] supports the [`a_uniq] operations
@@ -111,6 +111,12 @@ namespace std {
                     const hasher& hf = hasher(),
                     const key_equal& eql = key_equal(),
                     const allocator_type& a = allocator_type());
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      unordered_set(from_range_t, R&& rg,
+                    size_type n = @\seebelow@,
+                    const hasher& hf = hasher(),
+                    const key_equal& eql = key_equal(),
+                    const allocator_type& a = allocator_type());
     unordered_set(const unordered_set&);
     unordered_set(unordered_set&&);
     explicit unordered_set(const Allocator&);
@@ -134,6 +140,12 @@ namespace std {
       : unordered_set(f, l, n, hf, key_equal(), a) { }
     unordered_set(initializer_list<value_type> il, size_type n, const allocator_type& a)
       : unordered_set(il, n, hasher(), key_equal(), a) { }
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      unordered_set(from_range_t, R&& rg, size_type n, const allocator_type& a)
+        : unordered_set(from_range, std::forward<R>(rg), n, hasher(), key_equal(), a) { }
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      unordered_set(from_range_t, R&& rg, size_type n, const hasher& hf, const allocator_type& a)
+        : unordered_set(from_range, std::forward<R>(rg), n, hf, key_equal(), a) { }
     unordered_set(initializer_list<value_type> il, size_type n, const hasher& hf,
                   const allocator_type& a)
       : unordered_set(il, n, hf, key_equal(), a) { }
@@ -170,6 +182,8 @@ namespace std {
     iterator insert(const_iterator hint, const value_type& obj);
     iterator insert(const_iterator hint, value_type&& obj);
     template<class InputIterator> void insert(InputIterator first, InputIterator last);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      void insert_range(R&& rg);
     void insert(initializer_list<value_type>);
 
     node_type extract(const_iterator position);
@@ -255,6 +269,14 @@ namespace std {
       -> unordered_set<[[redoc("^>")]]iter-value-type<InputIterator>,
                        Hash, Pred, Allocator>;
 
+  template<ranges::[[redoc("^:c>")]]input_range R,
+           class Hash = hash<ranges::range_value_t<R>>,
+           class Pred = equal_to<ranges::range_value_t<R>>,
+           class Allocator = allocator<ranges::range_value_t<R>>>
+    unordered_set(from_range_t, R&&, typename [[redoc("[=seebelow]")]]::size_type = [[redoc("[=seebelow]")]],
+Hash = Hash(), Pred = Pred(), Allocator = Allocator())
+      -> unordered_set<ranges::range_value_t<R>, Hash, Pred, Allocator>;
+
   template<class T, class Hash = hash<T>,
            class Pred = equal_to<T>, class Allocator = allocator<T>>
     unordered_set(initializer_list<T>, typename [[redoc("[=seebelow]")]]::size_type = [[redoc("[=seebelow]")]],
@@ -274,6 +296,21 @@ namespace std {
       -> unordered_set<[[redoc("^>")]]iter-value-type<InputIterator>, Hash,
                        equal_to<[[redoc("^>")]]iter-value-type<InputIterator>>,
                        Allocator>;
+
+  template<ranges::[[redoc("^:c>")]]input_range R, class Allocator>
+    unordered_set(from_range_t, R&&, typename [[redoc("[=seebelow]")]]::size_type, Allocator)
+      -> unordered_set<ranges::range_value_t<R>, hash<ranges::range_value_t<R>>,
+                       equal_to<ranges::range_value_t<R>>, Allocator>;
+
+  template<ranges::[[redoc("^:c>")]]input_range R, class Allocator>
+    unordered_set(from_range_t, R&&, Allocator)
+      -> unordered_set<ranges::range_value_t<R>, hash<ranges::range_value_t<R>>,
+                       equal_to<ranges::range_value_t<R>>, Allocator>;
+
+  template<ranges::[[redoc("^:c>")]]input_range R, class Hash, class Allocator>
+    unordered_set(from_range_t, R&&, typename [[redoc("[=seebelow]")]]::size_type, Hash, Allocator)
+      -> unordered_set<ranges::range_value_t<R>, Hash,
+                       equal_to<ranges::range_value_t<R>>, Allocator>;
 
   template<class T, class Allocator>
     unordered_set(initializer_list<T>, typename [[redoc("[=seebelow]")]]::size_type, Allocator)

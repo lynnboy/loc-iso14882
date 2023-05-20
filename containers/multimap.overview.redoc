@@ -15,13 +15,13 @@ fast retrieval of values of another type [`T] based on the keys.
 [:zh_CN] [`multimap] 类支持双向迭代器。
 
 [para]
-[:en] A [`multimap] meets all of the requirements of a container and of a
-reversible container ([#container.requirements]), of an associative container
-([#associative.reqmts]), and of an allocator-aware container
-([#:tab#container.alloc.req]).
-[:zh_CN] [`multimap] 满足容器的所有规定，可反向容器的所有规定
-（[#container.requirements]），关联容器的所有规定（[#associative.reqmts]），以及
-分配器感知容器的所有规定（[#:tab#container.alloc.req]）。
+[:en] A [`multimap] meets all of the requirements of a container
+([#container.reqmts]), of a reversible container ([#container.rev.reqmts]), of
+an allocator-aware container ([#container.alloc.reqmts]), and of an associative
+container ([#associative.reqmts]).
+[:zh_CN] [`multimap] 满足容器（[#container.reqmts]），可反向容器
+（[#container.rev.reqmts]），分配器感知容器（[#container.alloc.reqmts]），以及
+关联容器（[#associative.reqmts]）的所有规定。
 
 [:en] A [`multimap] also provides most operations described in
 [#associative.reqmts] for equal keys.
@@ -101,6 +101,9 @@ namespace std {
       multimap(InputIterator first, InputIterator last,
                const Compare& comp = Compare(),
                const Allocator& = Allocator());
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      multimap(from_range_t, R&& rg,
+               const Compare& comp = Compare(), const Allocator& = Allocator());
     multimap(const multimap& x);
     multimap(multimap&& x);
     explicit multimap(const Allocator&);
@@ -112,6 +115,9 @@ namespace std {
     template<class InputIterator>
       multimap(InputIterator first, InputIterator last, const Allocator& a)
         : multimap(first, last, Compare(), a) { }
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      multimap(from_range_t, R&& rg, const Allocator& a)
+        : multimap(from_range, std::forward<R>(rg), Compare(), a) { }
     multimap(initializer_list<value_type> il, const Allocator& a)
       : multimap(il, Compare(), a) { }
     ~multimap();
@@ -157,6 +163,8 @@ namespace std {
     template<class P> iterator insert(const_iterator position, P&& x);
     template<class InputIterator>
       void insert(InputIterator first, InputIterator last);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      void insert_range(R&& rg);
     void insert(initializer_list<value_type>);
 
     node_type extract(const_iterator position);
@@ -226,6 +234,11 @@ namespace std {
       -> multimap<[[redoc("^>")]]iter-key-type<InputIterator>, [[redoc("^>")]]iter-mapped-type<InputIterator>,
                   Compare, Allocator>;
 
+  template<ranges::[[redoc("^:c>")]]input_range R, class Compare = less<[[redoc("*>")]]range-key-type<R>>,
+           class Allocator = allocator<[[redoc("*>")]]range-to-alloc-type<R>>>
+    multimap(from_range_t, R&&, Compare = Compare(), Allocator = Allocator())
+      -> multimap<[[redoc("*>")]]range-key-type<R>, [[redoc("*>")]]range-mapped-type<R>, Compare, Allocator>;
+
   template<class Key, class T, class Compare = less<Key>,
            class Allocator = allocator<pair<const Key, T>>>
     multimap(initializer_list<pair<Key, T>>, Compare = Compare(), Allocator = Allocator())
@@ -235,6 +248,10 @@ namespace std {
     multimap(InputIterator, InputIterator, Allocator)
       -> multimap<[[redoc("^>")]]iter-key-type<InputIterator>, [[redoc("^>")]]iter-mapped-type<InputIterator>,
                   less<[[redoc("^>")]]iter-key-type<InputIterator>>, Allocator>;
+
+  template<ranges::[[redoc("^:c>")]]input_range R, class Allocator>
+    multimap(from_range_t, R&&, Allocator)
+      -> multimap<[[redoc("*>")]]range-key-type<R>, [[redoc("*>")]]range-mapped-type<R>, less<[[redoc("*>")]]range-key-type<R>>, Allocator>;
 
   template<class Key, class T, class Allocator>
     multimap(initializer_list<pair<Key, T>>, Allocator)

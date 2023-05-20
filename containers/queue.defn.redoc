@@ -32,6 +32,7 @@ namespace std {
     explicit queue(const Container&);
     explicit queue(Container&&);
     template<class InputIterator> queue(InputIterator first, InputIterator last);
+    template<[[redoc("*:c>")]]container-compatible-range<T> R> queue(from_range_t, R&& rg);
     template<class Alloc> explicit queue(const Alloc&);
     template<class Alloc> queue(const Container&, const Alloc&);
     template<class Alloc> queue(Container&&, const Alloc&);
@@ -39,6 +40,8 @@ namespace std {
     template<class Alloc> queue(queue&&, const Alloc&);
     template<class InputIterator, class Alloc>
       queue(InputIterator first, InputIterator last, const Alloc&);
+    template<[[redoc("*:c>")]]container-compatible-range<T> R, class Alloc>
+      queue(from_range_t, R&& rg, const Alloc&);
 
     [[nodiscard]] bool empty() const    { return c.empty(); }
     size_type         size()  const     { return c.size(); }
@@ -48,6 +51,7 @@ namespace std {
     const_reference   back() const      { return c.back(); }
     void push(const value_type& x)      { c.push_back(x); }
     void push(value_type&& x)           { c.push_back(std::move(x)); }
+    template<[[redoc("*:c>")]]container-compatible-range<T> R> void push_range(R&& rg);
     template<class... Args>
       decltype(auto) emplace(Args&&... args)
         { return c.emplace_back(std::forward<Args>(args)...); }
@@ -62,6 +66,9 @@ namespace std {
   template<class InputIterator>
     queue(InputIterator, InputIterator) -> queue<[[redoc("*>")]]iter-value-type<InputIterator>>;
 
+  template<ranges::[[redoc("^:c>")]]input_range R>
+    queue(from_range_t, R&&) -> queue<ranges::range_value_t<R>>;
+
   template<class Container, class Allocator>
     queue(Container, Allocator) -> queue<typename Container::value_type, Container>;
 
@@ -69,6 +76,10 @@ namespace std {
     queue(InputIterator, InputIterator, Allocator)
       -> queue<[[redoc("*>")]]iter-value-type<InputIterator>, deque<[[redoc("*>")]]iter-value-type<InputIterator>,
                Allocator>>;
+
+  template<ranges::[[redoc("^:c>")]]input_range R, class Allocator>
+    queue(from_range_t, R&&, Allocator)
+      -> queue<ranges::range_value_t<R>, deque<ranges::range_value_t<R>, Allocator>>;
 
   template<class T, class Container, class Alloc>
     struct uses_allocator<queue<T, Container>, Alloc>

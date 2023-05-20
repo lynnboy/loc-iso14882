@@ -141,13 +141,16 @@ def idxxname(_1:str): return {'key': f"__{_1}", text: xname(_1)}
 # library index entries
 @applyTo(['%@lib'])
 def indexlibraryglobal(_1:str): return indexlibrary(idxcode(_1))
+@applyTo(['%@lib@misc'])
+def indexlibrarymisc(_1:str,_2:str): return indexlibrary(idxcode(_1), sub = _2)
 @applyTo(['%@lib@ctor'])
-def indexlibraryctor(_1:str): return indexlibrary(idxcode(_1), sub = text("constructor"))
+def indexlibraryctor(_1:str): return indexlibrarymisc(_1, text("constructor"))
 @applyTo(['%@lib@dtor'])
-def indexlibrarydtor(_1:str): return indexlibrary(idxcode(_1), sub = text("destructor"))
+def indexlibraryctor(_1:str): return indexlibrarymisc(_1, text("destructor"))
+@applyTo(['%@lib@memberx'])
+def indexlibrarymemberx(_1:str, _2:str): return indexlibrary(idxcode(_1), sub=idxcode(_2))
 @applyTo(['%@lib@member'])
-def indexlibrarymember(_1:str, _2:str):
-    return indexlibrary(idxcode(_1), sub=idxcode(_2)) + indexlibrary(idxcode(_2), sub=idxcode(_1))
+def indexlibrarymember(_1:str, _2:str): return indexlibrarymemberx(_1, _2) + indexlibrarymemberx(_2, _1)
 @applyTo(['%@lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
 

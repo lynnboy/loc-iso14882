@@ -1,0 +1,418 @@
+[section#container.alloc.reqmts
+    [:en] Allocator-aware containers
+    [:zh_CN] 分配器感知容器
+]
+
+[para]
+[:en]
+All of the containers defined in [#containers] and in [#basic.string] except
+[`array] meet the additional requirements of an [+:adj allocator-aware[!container]],
+as described below.
+[:zh_CN]
+除了 [`array] 之外，[#containers] 和 [#basic.string] 中所定义的所有容器都满足
+[+:adj 分配器感知[!容器]]的额外规定，如下文所述。
+
+[para]
+[:en]
+Given an allocator type [`A] and given a container type [`X] having a
+[`value_type] identical to [`T] and an [`allocator_type] identical to
+[`allocator_traits<A>::rebind_alloc<T>] and given an lvalue [`m] of type [`A],
+a pointer [`p] of type [`T*], an expression [`v] of type (possibly [`:key const])
+[`T], and an rvalue [`rv] of type [`T], the following terms are defined.
+[:zh_CN]
+跟定分配器类型 [`A]，给定容器类型 [`X]，其 [`value_type] 等同于 [`T] 且其
+[`allocator_type] 等同于 [`allocator_traits<A>::rebind_alloc<T>]，并给定类型 [`A]
+的左值 [`m]，类型为 [`T*] 的指针 [`p]，类型为（可能为 [`:key const] 的）[`T] 的
+表达式 [`v]，以及类型 [`T] 的右值 [`rv]，定义下列术语。
+
+[:en]
+If [`X] is not allocator-aware or is a specialization of [`basic_string], the
+terms below are defined as if [`A] were [`allocator<T>] [=--] no allocator
+object needs to be created and user specializations of [`allocator<T>] are not
+instantiated:
+[:zh_CN]
+如果 [`X] 不是分配器感知的或它是 [`basic_string] 的特例，则下列术语进行如同
+当 [`A] 为 [`allocator<T>] 时的定义——无须创建任何分配器对象，且用户对
+[`allocator<T>] 的特化式不会被实例化：
+
+[list]
+[item]
+[:en] [`T] is [+[^:oc DefaultInsertable] into [`X]] means that the following
+expression is well-formed:
+[:zh_CN] [`T] 为[+向 [`X] 中 [^:oc DefaultInsertable]] 的含义为以下表达式良构：
+
+[codeblock]
+allocator_traits<A>::construct(m, p)
+[codeblock:end]
+
+[item]
+[:en] An element of [`X] is [+default-inserted] if it is initialized
+by evaluation of the expression
+[:zh_CN] [`X] 的元素被[+默认插入]的含义是它通过以下表达式进行初始化
+
+[codeblock]
+allocator_traits<A>::construct(m, p)
+[codeblock:end]
+
+[:en@~] where [`p] is the address of the uninitialized storage for the element
+allocated within [`X].
+[:zh_CN@~] 其中 [`p] 为 [`X] 中为该元素所分配的未初始化存储的地址。
+	
+[item]
+[:en] [`T] is [+[^:oc MoveInsertable] into [`X]] means that the following
+expression is well-formed:
+[:zh_CN] [`T] 为[+向 [`X] 中 [^:oc MoveInsertable]] 的含义为以下表达式良构：
+
+[codeblock]
+allocator_traits<A>::construct(m, p, rv)
+[codeblock:end]
+
+[:en@~] and its evaluation causes the following postcondition to hold:
+[:zh_CN@~] 并且其求值导致以下后条件成立：
+
+[:en] The value of [`*p] is equivalent to the value of [`rv] before the
+evaluation.
+[:zh_CN] [`*p] 的值等价于 [`rv] 求值之前的值。
+
+[begin:note]
+[:en] [`rv] remains a valid object.
+[:zh_CN] [`rv] 仍为有效的对象。
+
+[:en] Its state is unspecified
+[:zh_CN] 它的状态是未指明的。
+[end:note]
+
+[item]
+[:en] [`T] is [+[^:oc CopyInsertable] into [`X]] means that, in addition to
+[`T] being [^:oc MoveInsertable] into [`X], the following expression is
+well-formed:
+[:zh_CN] [`T] 为[+向 [`X] 中 [^:oc CopyInsertable]] 的含义为，除了 [`T] 为向
+[`X] 中 [^:oc MoveInsertable] 之外，以下表达式也是良构的：
+
+[codeblock]
+allocator_traits<A>::construct(m, p, v)
+[codeblock:end]
+
+[:en@~] and its evaluation causes the following postcondition to hold:
+[:zh_CN@~] 并且其求值导致以下后条件成立：
+
+[:en] The value of [`v] is unchanged and is equivalent to [`*p].
+[:zh_CN] [`v] 的值未改变且等价于 [`*p]。
+
+[item]
+[:en] [`T] is [+[^:oc EmplaceConstructible] into [`X] from [`args]], for zero
+or more arguments [`args], means that the following expression is well-formed:
+[:zh_CN] 对于零或更多实参 [`args]，[`T] 为[+以 [`args] 向 [`X] 中
+[^:oc EmplaceConstructible]] 的含义为以下表达式良构：
+
+[codeblock]
+allocator_traits<A>::construct(m, p, args)
+[codeblock:end]
+
+[item]
+[:en] [`T] is [+[^:oc Erasable] from [`X]] means that the following expression
+is well-formed:
+[:zh_CN] [`T] 为[+从 [`X] 中 [^:oc Erasable]] 的含义为以下表达式良构：
+
+[codeblock]
+allocator_traits<A>::destroy(m, p)
+[codeblock:end]
+[list:end]
+
+[begin:note]
+[:en] A container calls [`allocator_traits<A>::construct(m, p, args)] to
+construct an element at [`p] using [`args], with [`m == get_allocator()].
+[:zh_CN] 容器调用 [`allocator_traits<A>::construct(m, p, args)] 以使用 [`args]
+在 [`p] 构造一个元素，其中 [`m == get_allocator()]。
+
+[:en] The default [`construct] in [`allocator] will call
+[`::new((void*)p) T(args)], but specialized allocators can choose a different
+definition.
+[:zh_CN] [`allocator] 中的默认 [`construct] 将会调用 [`::new((void*)p) T(args)]，
+但专用的分配器可以选择不同的定义。
+[end:note]
+
+[para]
+[:en]
+The following exposition-only concept is used in the definition of containers:
+[:zh_CN]
+容器的定义式中使用了以下仅用于阐释的概念：
+
+[codeblock:synopsis]
+template<class R, class T>
+concept [[redoc("*:c@def>")]]container-compatible-range =    // [=expos]
+  ranges::[[redoc("`:c>")]]input_range<R> && [[redoc("`:c>")]]convertible_to<ranges::range_reference_t<R>, T>;
+[codeblock:end]
+
+[para]
+[:en] In this subclause,
+[:zh_CN] 本子条款中，
+[list]
+[item]
+[:en] [`X] denotes an allocator-aware container class with a [`value_type] of
+[`T] using an allocator of type [`A],
+[:zh_CN] [`X] 代表分配器感知容器类型，其 [`value_type] 为 [`T]，并使用一个 [`A]
+类型的分配器，
+[item]
+[:en] [`u] denotes a variable,
+[:zh_CN] [`u] 代表一个变量，
+[item]
+[:en] [`a] and [`b] denote non-const lvalues of type [`X],
+[:zh_CN] [`a] 和 [`b] 代表类型 [`X] 的非 const 左值，
+[item]
+[:en] [`c] denotes an lvalue of type [`[`:key const] X],
+[:zh_CN] [`c] 代表类型 [`[`:key const] X] 的左值，
+[item]
+[:en] [`t] denotes an lvalue or a const rvalue of type [`X],
+[:zh_CN] [`t] 代表类型 [`X] 的左值或 const 右值，
+[item]
+[:en] [`rv] denotes a non-const rvalue of type [`X], and
+[:zh_CN] [`rv] 代表类型 [`X] 的非 const 右值，而
+[item]
+[:en] [`m] is a value of type [`A].
+[:zh_CN] [`m] 代表类型 [`A] 的值。
+[list:end]
+
+[<
+@applyTo(['?indexcont'])
+def indexcont(_1):
+    return f'''[%@lib@raw [`{_1}][![:en]allocator-aware containers[:zh_CN]分配器感知容器]]
+    [%@lib@raw [`deque][![`{_1}]]]
+    [%@lib@raw [`forward_list][![`{_1}]]]
+    [%@lib@raw [`list][![`{_1}]]]
+    [%@lib@raw [`vector][![`{_1}]]]
+    [%@lib@raw [`map][![`{_1}]]]
+    [%@lib@raw [`set][![`{_1}]]]
+    [%@lib@raw [`multiset][![`{_1}]]]
+    [%@lib@raw [`multimap][![`{_1}]]]
+    [%@lib@raw [`unordered_map][![`{_1}]]]
+    [%@lib@raw [`unordered_set][![`{_1}]]]
+    [%@lib@raw [`unordered_multiset][![`{_1}]]]
+    [%@lib@raw [`unordered_multimap][![`{_1}]]]'''
+>]
+
+[para]
+[:en] A type [`X] meets the allocator-aware container requirements if [`X] meets
+the container requirements and the following types, statements, and expressions
+are well-formed and have the specified semantics.
+[:zh_CN] 如果类型 [`X] 满足容器的规定，并且下列各类型、语句和表达式均良构且具有
+规定的语义，则 [`X] 满足分配器感知容器的规定。
+
+[?indexcont allocator_type]
+[codeblock:declaration]
+typename X::allocator_type
+[codeblock:end]
+
+[div:description]
+[para:result] [`A]
+
+[para:expects]
+[:en] [`allocator_type::value_type] is the same as [`X::value_type].
+[:zh_CN] [`allocator_type::value_type] 与 [`X::value_type] 相同。
+[div:end]
+
+[?indexcont get_allocator]
+[codeblock:declaration]
+c.get_allocator()
+[codeblock:end]
+
+[div:description]
+[para:result] [`A]
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[codeblock:declaration]
+X u;
+X u = X();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`A] meets the [^:oc DefaultConstructible] requirements.
+[:zh_CN] [`A] 满足 [^:oc DefaultConstructible] 的规定。
+
+[para:ensures]
+[:en] [`u.empty()] returns [`true], [`u.get_allocator() == A()].
+[:zh_CN] [`u.empty()] 返回 [`true]，[`u.get_allocator() == A()]。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[codeblock:declaration]
+X u(m);
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`u.empty()] returns [`true], [`u.get_allocator() == a].
+[:zh_CN] [`u.empty()] 返回 [`true]，[`u.get_allocator() == a]。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[codeblock:declaration]
+X u(t, m);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`T] is [^:oc CopyInsertable] into [`X].
+[:zh_CN] [`T] 为向 [`X] 中 [^:oc CopyInsertable]。
+
+[para:ensures]
+[:en] [`u == t], [`u.get_allocator() == m]
+[:zh_CN] [`u == t]，[`u.get_allocator() == m]
+
+[para:complexity]
+[:en] Linear.
+[:zh_CN] 线性。
+[div:end]
+
+[codeblock:declaration]
+X u(rv);
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`u] has the same elements as [`rv] had before this construction; the
+value of [`u.get_allocator()] is the same as the value of [`rv.get_allocator()]
+before this construction.
+[:zh_CN] [`u] 具有 [`rv] 在这次构造前相同的元素；[`u.get_allocator()] 与
+[`rv.get_allocator()] 在这次构造之前的值相同。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[codeblock:declaration]
+X u(rv, m);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`T] is [^:oc MoveInsertable] into [`X].
+[:zh_CN] [`T] 为向 [`X] 中 [^:oc MoveInsertable]。
+
+[para:ensures]
+[:en] [`u] has the same elements, or copies of the elements, that [`rv] had
+before this construction, [`u.get_allocator() == m].
+[:zh_CN] [`u] 具有 [`rv] 在这次构造之前相同的元素，或其元素的副本，
+[`u.get_allocator() == m]。
+
+[para:complexity]
+[:en] Constant if [`m == rv.get_allocator()], otherwise linear.
+[:zh_CN] 如果 [`m == rv.get_allocator()] 则为常量，否则为线性。
+[div:end]
+
+[codeblock:declaration]
+a = t
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] [`X&].
+[:zh_CN] [`X&]。
+
+[para:expects]
+[:en] [`T] is [^:oc CopyInsertable] into [`X] and [^:oc CopyAssignable].
+[:zh_CN] [`T] 为向 [`X] 中 [^:oc CopyInsertable]，且为 [^:oc CopyAssignable]。
+
+[para:ensures]
+[:en] [`a == t] is [`true].
+[:zh_CN] [`a == t] 为 [`true]。
+
+[para:complexity]
+[:en] Linear.
+[:zh_CN] 线性。
+[div:end]
+
+[?indexcont operator=]
+[codeblock:declaration]
+a = rv
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] [`X&].
+[:zh_CN] [`X&]。
+
+[para:expects]
+[:en] If
+[`allocator_traits<allocator_type>::propagate_on_container_move_assignment::value]
+is [`false], [`T] is [^:oc MoveInsertable] into [`X] and [^:oc MoveAssignable].
+[:zh_CN] 如果
+[`allocator_traits<allocator_type>::propagate_on_container_move_assignment::value]
+为 [`false]，则有 [`T] 为向 [`X] 中 [^:oc MoveInsertable]，且为
+[^:oc MoveAssignable]。
+
+[para:effects]
+[:en] All existing elements of [`a] are either move assigned to or destroyed.
+[:zh_CN] [`a] 的所有现存元素要么被移动赋值要么被销毁。
+
+[para:ensures]
+[:en] If [`a] and [`rv] do not refer to the same object, [`a] is equal to
+the value that [`rv] had before this assignment.
+[:zh_CN] 若 [`a] 和 [`rv] 并不指代相同对象，则 [`a] 等于 [`rv] 在这个赋值
+之前所具有的值。
+
+[para:complexity]
+[:en] Linear.
+[:zh_CN] 线性。
+[div:end]
+
+[?indexcont swap]
+[codeblock:declaration]
+a.swap(b)
+[codeblock:end]
+
+[div:description]
+[para:result]
+[`:key void]
+
+[para:effects]
+[:en] Exchanges the contents of [`a] and [`b].
+[:zh_CN] 交换 [`a] 和 [`b] 的内容。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[para]
+[:en] The behavior of certain container member functions and deduction guides
+depends on whether types qualify as input iterators or allocators.
+[:zh_CN] 某些容器成员函数和推断导引的行为，取决于类型是否被当做输入迭代器或
+分配器。
+
+[:en] The extent to which an implementation determines that a type cannot be an
+input iterator is unspecified, except that as a minimum integral types shall not
+qualify as input iterators.
+[:zh_CN] 实现在何种程度上确定某个类型不能作为输入迭代器是未指明的，但至少整型
+类型不能被当作输入迭代器。
+
+[:en] Likewise, the extent to which an implementation determines that a type
+cannot be an allocator is unspecified, except that as a minimum a type [`A]
+shall not qualify as an allocator unless it meets both of the following
+conditions:
+[:zh_CN] 类似地，实现在何种程度上确定某个类型不能作为分配器也是未指明的，但至少
+对于类型 [`A]，除非它同时符合以下条件，否则不能被当做分配器：
+
+[list]
+[item]
+[:en] The [~qualified-id] [`A::value_type] is valid and denotes a type
+([#temp.deduct]).
+[:zh_CN] [~限定标识] [`A::value_type] 有效并代表一个类型（[#temp.deduct]）。
+
+[item]
+[:en] The expression [`declval<A&>().allocate(size_t{})] is well-formed when
+treated as an unevaluated operand.
+[:zh_CN] 表达式 [`declval<A&>().allocate(size_t{})] 作为免求值操作数时是良构的。
+[list:end]
