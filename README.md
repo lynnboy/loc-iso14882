@@ -183,10 +183,11 @@ Original   |中文   |章节    |定义
 *unqualified-id*            |*无限定标识*   | [expr.prim.id.unqual] | *标识符* \|<br> *运算符函数标识* \|<br> *转换函数标识* \|<br> *字面量运算符标识* \|<br> `~` *类型名* \|<br> `~` *decltype-说明符* \|<br> *模板标识*
 *qualified-id*              |*限定标识*     | [expr.prim.id.qual] | *嵌套名说明符* `template`__?__ *无限定标识*
 *nested-name-specifier*     |*嵌套名说明符* | [expr.prim.id.qual] | ( ∅ \| *类型名* \| *命名空间名* \| *decltype-说明符* ) `::` ( ( *标识符* \| `template`__?__ *简单模板标识* ) `::`)__*__
-*lambda-expression*         |*lambda-表达式*| [expr.prim.lambda.general] | *lambda-引导符* ( ∅ \| `<` *模板形参列表* `>` *requires-子句*__?__ ) *lambda-声明符* *复合语句*
+*lambda-expression*         |*lambda-表达式*| [expr.prim.lambda.general] | *lambda-引导符* ( ∅ \| `<` *模板形参列表* `>` *requires-子句*__?__ ) *属性说明符序列*__?__ *lambda-声明符* *复合语句*
 *lambda-introducer*         |*lambda-引导符*| [expr.prim.lambda.general] | `[` *lambda-俘获式*__?__ `]`
-*lambda-declarator*         |*lambda-声明符*| [expr.prim.lambda.general] | *lambda-说明符序列* \|<br>`(` *形参声明子句* `)` *lambda-说明符序列* *requires-子句*__?__
-*lambda-specifiers*         |*lambda-说明符序列*|[expr.prim.lambda.general]| *声明说明符序列*__?__ *noexcept-说明符*__?__ *属性说明符序列*__?__ *尾部返回类型*__?__
+*lambda-declarator*         |*lambda-声明符*| [expr.prim.lambda.general] | ( ( *lambda-说明符序列* *noexcept-说明符*__?__ \| *noexcept-说明符* ) *属性说明符序列*__?__ )? *尾部返回类型*__?__ \|<br>`(` *形参声明子句* `)` *lambda-说明符序列*__?__ *noexcept-说明符*__?__ *属性说明符序列*__?__ *尾部返回类型*__?__ *requires-子句*__?__
+*lambda-specifier*          |*lambda-说明符*|[expr.prim.lambda.general]| `consteval` \| `constexpr` \| `mutable`
+*labmda-specifier-seq*      |*lambda-说明符序列*|[expr.prim.lambda.general]| ( `consteval` \| `constexpr` \| `mutable` )__\+__
 *lambda-capture*            |*lambda-俘获式*| [expr.prim.lambda.capture] | *默认俘获符* \| (*默认俘获符* `,`)__?__ *俘获符列表*
 *capture-default*           |*默认俘获符*   | [expr.prim.lambda.capture] | `&` \| `=`
 *capture-list*              |*俘获符列表*   | [expr.prim.lambda.capture] | *俘获符* ( `,` *俘获符* )__*__
