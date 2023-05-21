@@ -1,0 +1,85 @@
+[section#meta.member
+    [:en] Member relationships
+    [:zh_CN] 成员关系
+]
+
+[%@lib is_pointer_interconvertible_with_class]
+[codeblock:declaration]
+template<class S, class M>
+  constexpr bool is_pointer_interconvertible_with_class(M S::*m) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`S] is a complete type.
+[:zh_CN] [`S] 为完整类型。
+
+[para:returns]
+[:en] [`true] if and only if [`S] is a standard layout type, [`M] is an object
+type, [`m] is not null, and each object [`s] of type [`S] is
+pointer-interconvertible ([#basic.compound]) with its subobject [`s.*m].
+[:zh_CN] 当且仅当 [`S] 为标准布局类型，[`M] 为对象类型，[`m] 非空，且 [`S] 类型
+的每个对象 [`s] 都与其子对象 [`s.*m] 指针可相互转换（[#basic.compound]）时，返回
+[`true]。
+[div:end]
+
+[%@lib is_corresponding_member]
+[codeblock:declaration]
+template<class S1, class S2, class M1, class M2>
+  constexpr bool is_corresponding_member(M1 S1::*m1, M2 S2::*m2) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`S1] and [`S2] are complete types.
+[:zh_CN] [`S1] 和 [`S2] 均为完整类型。
+
+[para:returns]
+[:en] [`true] if and only if [`S1] and [`S2] are standard-layout struct
+([#class.prop]), [`M1] and [`M2] are object types, [`m1] and [`m2] are not null,
+and [`m1] and [`m2] point to corresponding members of the common initial
+sequence ([#class.mem]) of [`S1] and [`S2].
+[:zh_CN] 当且仅当 [`S1] 和 [`S2] 为标准布局结构体（[#class.prop]），[`M1] 和
+[`M2] 为对象类型，[`m1] 和 [`m2] 非空，且 [`m1] 和 [`m2] 指向 [`S1] 和 [`S2] 的
+公共初始序列（[#class.mem]）的对应成员时，返回 [`true]。
+[div:end]
+
+[para]
+[begin:note]
+[:en] The type of a pointer-to-member expression [`&C::b] is not always a
+pointer to member of [`C], leading to potentially surprising results when using
+these functions in conjunction with inheritance.
+[:zh_CN] 成员指针表达式 [`&C::b] 的类型并不总是指向 [`C] 的成员，这导致在与继承
+一同使用这些函数时可能产生意外的结果。
+
+[begin:example]
+[codeblock]
+struct A { int a; };                    // [:en] a standard-layout class \
+                                        [:zh_CN] 标准布局类
+struct B { int b; };                    // [:en] a standard-layout class \
+                                        [:zh_CN] 标准布局类
+struct C: public A, public B { };       // [:en] not a standard-layout class \
+                                        [:zh_CN] 非标准布局类
+
+static_assert( is_pointer_interconvertible_with_class( &C::b ) );
+  // [:en] Succeeds because, despite its appearance, [`&C::b] has type \
+  [:zh_CN] 成功，因为无论其看起来如何，[`&C::b] 都具有类型
+  // [:en@~] [=lq]pointer to member of [`B] of type [`int][=rq]. \
+  [:zh_CN@~] “[`int] 类型的 [`B] 的成员指针”。
+static_assert( is_pointer_interconvertible_with_class<C>( &C::b ) );
+  // [:en] Forces the use of class [`C], and fails. \
+  [:zh_CN] 强制使用类 [`C]，并失败。
+
+static_assert( is_corresponding_member( &C::a, &C::b ) );
+  // [:en] Succeeds because, despite its appearance, [`&C::a] and [`&C::b] have types \
+  [:zh_CN] 成功，因为无论其看起来如何，[`&C::a] 和 [`&C::b] 都分别具有类型
+  // [:en@~] [=lq]pointer to member of [`A] of type [`int][=rq] and \
+  [:zh_CN@~] “[`int] 类型的 [`A] 的成员指针”和
+  // [:en@~] [=lq]pointer to member of [`B] of type [`int][=rq], respectively. \
+  [:zh_CN@~] “[`int] 类型的 [`B] 的成员指针”。
+static_assert( is_corresponding_member<C, C>( &C::a, &C::b ) );
+  // [:en] Forces the use of class [`C], and fails. \
+  [:zh_CN] 强制使用类 [`C]，并失败。
+[codeblock:end]
+[end:example]
+[end:note]
