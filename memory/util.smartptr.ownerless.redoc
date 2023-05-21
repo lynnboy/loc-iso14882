@@ -1,0 +1,72 @@
+[section#util.smartptr.ownerless
+    [:en] Class template [`owner_less]
+    [:zh_CN] 类模板 [`owner_less]
+]
+
+[para]
+[:en]
+The class template [`owner_less] allows ownership-based mixed comparisons of
+shared and weak pointers.
+[:zh_CN]
+类模板 [`owner_less] 允许进行基于所有权的共享指针和弱指针之间的混合比较。
+
+[%@lib owner_less]
+[codeblock:synopsis]
+namespace std {
+  template<class T = void> struct owner_less;
+
+  template<class T> struct owner_less<shared_ptr<T>> {
+    bool operator()(const shared_ptr<T>&, const shared_ptr<T>&) const noexcept;
+    bool operator()(const shared_ptr<T>&, const weak_ptr<T>&) const noexcept;
+    bool operator()(const weak_ptr<T>&, const shared_ptr<T>&) const noexcept;
+  };
+
+  template<class T> struct owner_less<weak_ptr<T>> {
+    bool operator()(const weak_ptr<T>&, const weak_ptr<T>&) const noexcept;
+    bool operator()(const shared_ptr<T>&, const weak_ptr<T>&) const noexcept;
+    bool operator()(const weak_ptr<T>&, const shared_ptr<T>&) const noexcept;
+  };
+
+  template<> struct owner_less<void> {
+    template<class T, class U>
+      bool operator()(const shared_ptr<T>&, const shared_ptr<U>&) const noexcept;
+    template<class T, class U>
+      bool operator()(const shared_ptr<T>&, const weak_ptr<U>&) const noexcept;
+    template<class T, class U>
+      bool operator()(const weak_ptr<T>&, const shared_ptr<U>&) const noexcept;
+    template<class T, class U>
+      bool operator()(const weak_ptr<T>&, const weak_ptr<U>&) const noexcept;
+
+    using is_transparent = [[redoc("[=unspec]")]];
+  };
+}
+[codeblock:end]
+
+[%@lib@member operator()[!owner_less]]
+[para]
+[:en]
+[`operator()(x, y)] returns [`x.owner_before(y)].
+[:zh_CN]
+[`operator()(x, y)] 返回 [`x.owner_before(y)]。
+
+[begin:note]
+[:en]
+Note that
+[:zh_CN]
+注意
+
+[list]
+[item]
+[:en] [`operator()] defines a strict weak ordering as defined in [#alg.sorting];
+[:zh_CN] [`operator()] 定义一种如 [#alg.sorting] 所定义的严格弱序关系；
+
+[item]
+[:en] two [`shared_ptr] or [`weak_ptr] instances are equivalent under the
+equivalence relation defined by [`operator()],
+[`!operator()(a, b) && !operator()(b, a)], if and only if they share ownership
+or are both empty.
+[:zh_CN] 在由 [`operator()] 所定义的等价关系，即
+[`!operator()(a, b) && !operator()(b, a)] 中，当且仅当两个 [`shared_ptr] 或
+[`weak_ptr] 实例共享所有权或二者均为空时，它们等价。
+[list:end]
+[end:note]

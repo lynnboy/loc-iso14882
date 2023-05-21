@@ -1,0 +1,126 @@
+[section#allocator.members
+    [:en] Members
+    [:zh_CN] 成员
+]
+
+[para]
+[:en]
+Except for the destructor, member functions of the default allocator shall not
+introduce data races ([#intro.multithread]) as a result of concurrent calls to
+those member functions from different threads.
+[:zh_CN]
+除了其析构函数之外，当从不同线程对默认分配器的成员函数进行并发调用时，这些成员
+函数不能引入数据竞争（[#intro.multithread]）。
+
+[:en]
+Calls to these functions that allocate or deallocate a particular unit of
+storage shall occur in a single total order, and each such deallocation call
+shall happen before the next allocation (if any) in this order.
+[:zh_CN]
+对分配或回收某个特定单元的存储的函数进行的调用，应当以单个总顺序进行，且每次这种
+回收调用都应当发生早于在这个顺序中的下一次分配（如果有）。
+
+[%@lib@member allocate[!allocator]]
+[codeblock:declaration]
+[[nodiscard]] constexpr T* allocate(size_t n);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is not an incomplete type ([#term.incomplete.type]).
+[:zh_CN] [`T] 不是不完整类型（[#term.incomplete.type]）。
+
+[para:returns]
+[:en] A pointer to the initial element of an array of [`n] [`T].
+[:zh_CN] 指向 [`n] 个 [`T] 的数组的起始元素的指针。
+
+[para:throws]
+[:en] [`bad_array_new_length] if [`numeric_limits<size_t>::max() / sizeof(T) < n],
+or [`bad_alloc] if the storage cannot be obtained.
+[:zh_CN] 当 [`numeric_limits<size_t>::max() / sizeof(T) < n] 时抛出
+[`bad_array_new_length]，或当无法获得存储时抛出 [`bad_alloc]。
+
+[para:remarks]
+[:en] The storage for the array is obtained by calling [`::operator new]
+([#new.delete]), but it is unspecified when or how often this function is called.
+[:zh_CN] 该数组的存储是通过调用 [`::operator new]（[#new.delete]）获得的，但何时
+以及多久进行一次该函数的调用是未指明的。
+
+[:en] This function starts the lifetime of the array object, but not that of any
+of the array elements.
+[:zh_CN] 这个函数启动了数组对象的，而非任何数组元素的生存期。
+[div:end]
+
+[%@lib@member allocate_at_least[!allocator]]
+[codeblock:declaration]
+[[nodiscard]] constexpr allocation_result<T*> allocate_at_least(size_t n);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is not an incomplete type ([#term.incomplete.type]).
+[:zh_CN] [`T] 不是不完整类型（[#term.incomplete.type]）。
+
+[para:returns]
+[:en] [`allocation_result<T*>{ptr, count}], where [`ptr] is a pointer to the
+initial element of an array of [`count] [`T] and [$[`count] \geq [`n]].
+[:zh_CN] [`allocation_result<T*>{ptr, count}]，其中 [`ptr] 为指向某个 [`count]
+个 [`T] 的数组的起始元素的指针，且 [$[`count] \geq [`n]]。
+
+[para:throws]
+[:en] [`bad_array_new_length] if
+[$[`numeric_limits<size_t>::max() / sizeof(T)] < [`n]], or [`bad_alloc] if the
+storage cannot be obtained.
+[:zh_CN] 当 [$[`numeric_limits<size_t>::max() / sizeof(T)] < [`n]] 时抛出
+[`bad_array_new_length]，或当无法获得存储时抛出 [`bad_alloc]。
+
+[para:remarks]
+[:en] The storage for the array is obtained by calling [`::operator new], but it
+is unspecified when or how often this function is called.
+[:zh_CN] 该数组的存储是通过调用 [`::operator new] 获得的，但何时以及多久进行一次
+该函数的调用是未指明的。
+
+[:en] This function starts the lifetime of the array object, but not that of any
+of the array elements.
+[:zh_CN] 这个函数启动了数组对象的，而非任何数组元素的生存期。
+[div:end]
+
+[%@lib@member deallocate[!allocator]]
+[codeblock:declaration]
+constexpr void deallocate(T* p, size_t n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[list]
+[item]
+[:en] If [`p] is memory that was obtained by a call to [`allocate_at_least], let
+[`ret] be the value returned and [`req] be the value passed as the first
+argument to that call.
+[:zh_CN] 若 [`p] 为由调用 [`allocate_at_least] 所获得的内存，令 [`ret] 为返回值，
+[`req] 为这次调用中作为首个实参所传递的值。 
+
+[:en] [`p] is equal to [`ret.ptr] and [`n] is a value such that
+[$[`req] \leq [`n] \leq [`ret.count]].
+[:zh_CN] [`p] 等于 [`ret.ptr]，并且 [`n] 是使得
+[$[`req] \leq [`n] \leq [`ret.count]] 的值。
+
+[item]
+[:en] Otherwise, [`p] is a pointer value obtained from [`allocate].
+[:zh_CN] 否则，[`p] 为从 [`allocate] 获得的指针值。
+
+[:en] [`n] equals the value passed as the first argument to the invocation of
+[`allocate] which returned [`p].
+[:zh_CN] [`n] 等于返回 [`p] 的那次对 [`allocate] 的调用中作为第一个实参所传递的
+值。
+[list:end]
+
+[para:effects]
+[:en] Deallocates the storage referenced by [`p].
+[:zh_CN] 回收由 [`p] 所指代的存储。
+
+[para:remarks]
+[:en] Uses [`::operator delete] ([#new.delete]), but it is unspecified when this
+function is called.
+[:zh_CN] 使用 [`::operator delete]（[#new.delete]），但何时调用该函数是未指明的。
+[div:end]

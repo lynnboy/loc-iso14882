@@ -1,0 +1,616 @@
+[section#memory.syn
+    [:en] Header [`<memory>] synopsis
+    [:zh_CN] 头文件 [`<memory>] 纲要
+]
+
+[para]
+[:en]
+The header [?libheader@def memory] defines several types and function templates
+that describe properties of pointers and pointer-like types, manage memory for
+containers and other template types, destroy objects, and construct objects in
+uninitialized memory buffers ([#pointer.traits][=-][#specialized.addressof] and
+[#specialized.algorithms]).
+[:zh_CN]
+头文件 [?libheader@def memory] 定义了用于描述指针和指针式类型，用于管理容器和
+其他模板类型的内存，以及销毁对象，以及用于在未初始化内存缓冲区中构造多个对象的
+几个类型和函数模板（[#pointer.traits] 至 [#specialized.addressof]，和
+[#specialized.algorithms]）。
+
+[:en]
+The header also defines the templates [`unique_ptr], [`shared_ptr], [`weak_ptr],
+[`out_ptr_t], [`inout_ptr_t], and various function templates that operate on
+objects of these types ([#smartptr]).
+[:zh_CN]
+这个头文件还定义了模板 [`unique_ptr]，[`shared_ptr]，[`weak_ptr]，[`out_ptr_t]，
+[`inout_ptr_t]，以及操作这些类型的对象的各种函数模板（[#smartptr]）。
+
+[para]
+[:en]
+Let [`[*POINTER_OF](T)] denote a type that is
+[:zh_CN]
+令 [`[*POINTER_OF](T)] 代表类型：
+[list]
+[item]
+[:en@~] [`T::pointer] if the [~qualified-id] [`T::pointer] is valid and denotes
+a type,
+[:zh_CN@~] 若[~限定标识] [`T::pointer] 有效且代表某个类型，则为 [`T::pointer]，
+[item]
+[:en@~] otherwise, [`T::element_type*] if the [~qualified-id] [`T::element_type]
+is valid and denotes a type,
+[:zh_CN@~] 否则，若[~限定标识] [`T::element_type] 有效且代表某个类型，则为
+[`T::element_type*]，
+[item]
+[:en@~] otherwise, [`pointer_traits<T>::element_type*].
+[:zh_CN@~] 否则，为 [`pointer_traits<T>::element_type*]。
+[list:end]
+
+[para]
+[:en]
+Let [`[*POINTER_OF_OR](T, U)] denote a type that is:
+[:zh_CN]
+令 [`[*POINTER_OF_OR](T, U)] 代表类型：
+[list]
+[item]
+[:en@~] [`[*POINTER_OF](T)] if [`[*POINTER_OF](T)] is valid and denotes a type,
+[:zh_CN@~] 若 [`[*POINTER_OF](T)] 有效且代表某个类型，则为 [`[*POINTER_OF](T)]，
+[item]
+[:en@~] otherwise, [`U].
+[:zh_CN@~] 否则，为 [`U]。
+[list:end]
+
+[%@header memory]
+[codeblock:synopsis]
+#include <compare>              // [:en] see [#compare.syn] \
+                                [:zh_CN] 参见 [#compare.syn]
+
+namespace std {
+  // [:en] [#pointer.traits], pointer traits \
+  [:zh_CN] [#pointer.traits]，指针特征
+  template<class Ptr> struct pointer_traits;
+  template<class T> struct pointer_traits<T*>;
+
+  // [:en] [#pointer.conversion], pointer conversion \
+  [:zh_CN] [#pointer.conversion]，指针转换
+  template<class T>
+    constexpr T* to_address(T* p) noexcept;
+  template<class Ptr>
+    constexpr auto to_address(const Ptr& p) noexcept;
+
+  // [:en] [#ptr.align], pointer alignment \
+  [:zh_CN] [#ptr.align]，指针对齐
+  void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
+  template<size_t N, class T>
+    [[nodiscard]] constexpr T* assume_aligned(T* ptr);
+
+  // [:en] [#allocator.tag], allocator argument tag \
+  [:zh_CN] [#allocator.tag]，分配器实参标签
+  struct allocator_arg_t { explicit allocator_arg_t() = default; };
+  inline constexpr allocator_arg_t allocator_arg{};
+
+  // [:en] [#allocator.uses], [`uses_allocator] \
+  [:zh_CN] [#allocator.uses]，[`uses_allocator]
+  template<class T, class Alloc> struct uses_allocator;
+
+  // [:en] [#allocator.uses.trait], [`uses_allocator] \
+  [:zh_CN] [#allocator.uses.trait]，[`uses_allocator]
+  template<class T, class Alloc>
+    inline constexpr bool [[redoc("`:lib>")]]uses_allocator_v = uses_allocator<T, Alloc>::value;
+
+  // [:en] [#allocator.uses.construction], uses-allocator construction \
+  [:zh_CN] [#allocator.uses.construction]，带分配器构造
+  template<class T, class Alloc, class... Args>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    Args&&... args) noexcept;
+  template<class T, class Alloc, class Tuple1, class Tuple2>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc, piecewise_construct_t,
+                                                    Tuple1&& x, Tuple2&& y) noexcept;
+  template<class T, class Alloc>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc) noexcept;
+  template<class T, class Alloc, class U, class V>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    U&& u, V&& v) noexcept;
+  template<class T, class Alloc, class U, class V>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    pair<U, V>& pr) noexcept;
+  template<class T, class Alloc, class U, class V>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    const pair<U, V>& pr) noexcept;
+  template<class T, class Alloc, class U, class V>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    pair<U, V>&& pr) noexcept;
+  template<class T, class Alloc, class U, class V>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    const pair<U, V>&& pr) noexcept;
+  template<class T, class Alloc, class U, class V>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc,
+                                                    pair<U,V>&& pr) noexcept;
+  template<class T, class Alloc, class U>
+    constexpr auto uses_allocator_construction_args(const Alloc& alloc, U&& u) noexcept;
+  template<class T, class Alloc, class... Args>
+    constexpr T make_obj_using_allocator(const Alloc& alloc, Args&&... args);
+  template<class T, class Alloc, class... Args>
+    constexpr T* uninitialized_construct_using_allocator(T* p, const Alloc& alloc,
+                                                         Args&&... args);
+
+  // [:en] [#allocator.traits], allocator traits \
+  [:zh_CN] [#allocator.traits]，分配器特征
+  template<class Alloc> struct allocator_traits;
+
+  template<class Pointer>
+  struct allocation_result {
+    Pointer ptr;
+    size_t count;
+  };
+
+  template<class Allocator>
+    [[nodiscard]] constexpr allocation_result<typename allocator_traits<Allocator>::pointer>
+      allocate_at_least(Allocator& a, size_t n);
+
+  // [:en] [#default.allocator], the default allocator: \
+  [:zh_CN] [#default.allocator]，默认分配器：
+  template<class T> class allocator;
+  template<class T, class U>
+    constexpr bool operator==(const allocator<T>&, const allocator<U>&) noexcept;
+
+  // [:en] [#specialized.addressof], addressof: \
+  [:zh_CN] [#specialized.addressof]，[`addressof]：
+  template<class T>
+    constexpr T* addressof(T& r) noexcept;
+  template<class T>
+    const T* addressof(const T&&) = delete;
+
+  // [:en] [#specialized.algorithms], specialized algorithms: \
+  [:zh_CN] [#specialized.algorithms]，特化的算法：
+  // [:en] [#special.mem.concepts], special memory concepts \
+  [:zh_CN] [#special.mem.concepts]，专门的内存概念
+  template<class I>
+    concept [[redoc("*:c>")]]nothrow-input-iterator = [[redoc("[=seebelow]")]];    // [=expos]
+  template<class I>
+    concept [[redoc("*:c>")]]nothrow-forward-iterator = [[redoc("[=seebelow]")]];  // [=expos]
+  template<class S, class I>
+    concept [[redoc("*:c>")]]nothrow-sentinel-for = [[redoc("[=seebelow]")]];      // [=expos]
+  template<class R>
+    concept [[redoc("*:c>")]]nothrow-input-range = [[redoc("[=seebelow]")]];       // [=expos]
+  template<class R>
+    concept [[redoc("*:c>")]]nothrow-forward-range = [[redoc("[=seebelow]")]];     // [=expos]
+
+  template<class NoThrowForwardIterator>
+    void uninitialized_default_construct(NoThrowForwardIterator first,
+                                         NoThrowForwardIterator last);
+  template<class ExecutionPolicy, class NoThrowForwardIterator>
+    void uninitialized_default_construct(ExecutionPolicy&& exec,        // [:en] see [#algorithms.parallel.overloads] \
+                                                                        [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                         NoThrowForwardIterator first,
+                                         NoThrowForwardIterator last);
+  template<class NoThrowForwardIterator, class Size>
+    NoThrowForwardIterator
+      uninitialized_default_construct_n(NoThrowForwardIterator first, Size n);
+  template<class ExecutionPolicy, class NoThrowForwardIterator, class Size>
+    NoThrowForwardIterator
+      uninitialized_default_construct_n(ExecutionPolicy&& exec,         // [:en] see [#algorithms.parallel.overloads] \
+                                                                        [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                        NoThrowForwardIterator first, Size n);
+
+  namespace ranges {
+    template<[[redoc("*:c>")]]nothrow-forward-iterator I, [[redoc("*:c>")]]nothrow-sentinel-for<I> S>
+      requires [[redoc("`:c>")]]default_initializable<iter_value_t<I>>
+        I uninitialized_default_construct(I first, S last);
+    template<[[redoc("*:c>")]]nothrow-forward-range R>
+      requires [[redoc("`:c>")]]default_initializable<iter_value_t<iterator_t<R>>>
+        borrowed_iterator_t<R> uninitialized_default_construct(R&& r);
+
+    template<[[redoc("*:c>")]]nothrow-forward-iterator I>
+      requires [[redoc("`:c>")]]default_initializable<iter_value_t<I>>
+        I uninitialized_default_construct_n(I first, iter_difference_t<I> n);
+  }
+
+  template<class NoThrowForwardIterator>
+    void uninitialized_value_construct(NoThrowForwardIterator first,
+                                       NoThrowForwardIterator last);
+  template<class ExecutionPolicy, class NoThrowForwardIterator>
+    void uninitialized_value_construct(ExecutionPolicy&& exec,  // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                       NoThrowForwardIterator first,
+                                       NoThrowForwardIterator last);
+  template<class NoThrowForwardIterator, class Size>
+    NoThrowForwardIterator
+      uninitialized_value_construct_n(NoThrowForwardIterator first, Size n);
+  template<class ExecutionPolicy, class NoThrowForwardIterator, class Size>
+    NoThrowForwardIterator
+      uninitialized_value_construct_n(ExecutionPolicy&& exec,   // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                      NoThrowForwardIterator first, Size n);
+
+  namespace ranges {
+    template<[[redoc("*:c>")]]nothrow-forward-iterator I, [[redoc("*:c>")]]nothrow-sentinel-for<I> S>
+      requires [[redoc("`:c>")]]default_initializable<iter_value_t<I>>
+        I uninitialized_value_construct(I first, S last);
+    template<[[redoc("*:c>")]]nothrow-forward-range R>
+      requires [[redoc("`:c>")]]default_initializable<iter_value_t<iterator_t<R>>>
+        borrowed_iterator_t<R> uninitialized_value_construct(R&& r);
+
+    template<[[redoc("*:c>")]]nothrow-forward-iterator I>
+      requires [[redoc("`:c>")]]default_initializable<iter_value_t<I>>
+        I uninitialized_value_construct_n(I first, iter_difference_t<I> n);
+  }
+
+  template<class InputIterator, class NoThrowForwardIterator>
+    NoThrowForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
+                                              NoThrowForwardIterator result);
+  template<class ExecutionPolicy, class ForwardIterator, class NoThrowForwardIterator>
+    NoThrowForwardIterator uninitialized_copy(ExecutionPolicy&& exec,   // [:en] see [#algorithms.parallel.overloads] \
+                                                                        [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                              ForwardIterator first, ForwardIterator last,
+                                              NoThrowForwardIterator result);
+  template<class InputIterator, class Size, class NoThrowForwardIterator>
+    NoThrowForwardIterator uninitialized_copy_n(InputIterator first, Size n,
+                                                NoThrowForwardIterator result);
+  template<class ExecutionPolicy, class ForwardIterator, class Size,
+           class NoThrowForwardIterator>
+    NoThrowForwardIterator uninitialized_copy_n(ExecutionPolicy&& exec, // [:en] see [#algorithms.parallel.overloads] \
+                                                                        [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                                ForwardIterator first, Size n,
+                                                NoThrowForwardIterator result);
+
+  namespace ranges {
+    template<class I, class O>
+      using uninitialized_copy_result = in_out_result<I, O>;
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S1,
+             [[redoc("*:c>")]]nothrow-forward-iterator O, [[redoc("*:c>")]]nothrow-sentinel-for<O> S2>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<O>, iter_reference_t<I>>
+        uninitialized_copy_result<I, O>
+          uninitialized_copy(I ifirst, S1 ilast, O ofirst, S2 olast);
+    template<[[redoc("`:c>")]]input_range IR, [[redoc("*:c>")]]nothrow-forward-range OR>
+      requires [[redoc("`:c>")]]constructible_from<range_value_t<OR>, range_reference_t<IR>>
+        uninitialized_copy_result<borrowed_iterator_t<IR>, borrowed_iterator_t<OR>>
+          uninitialized_copy(IR&& in_range, OR&& out_range);
+
+    template<class I, class O>
+      using uninitialized_copy_n_result = in_out_result<I, O>;
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("*:c>")]]nothrow-forward-iterator O, [[redoc("*:c>")]]nothrow-sentinel-for<O> S>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<O>, iter_reference_t<I>>
+        uninitialized_copy_n_result<I, O>
+          uninitialized_copy_n(I ifirst, iter_difference_t<I> n, O ofirst, S olast);
+  }
+
+  template<class InputIterator, class NoThrowForwardIterator>
+    NoThrowForwardIterator uninitialized_move(InputIterator first, InputIterator last,
+                                              NoThrowForwardIterator result);
+  template<class ExecutionPolicy, class ForwardIterator, class NoThrowForwardIterator>
+    NoThrowForwardIterator uninitialized_move(ExecutionPolicy&& exec,   // [:en] see [#algorithms.parallel.overloads] \
+                                                                        [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                              ForwardIterator first, ForwardIterator last,
+                                              NoThrowForwardIterator result);
+  template<class InputIterator, class Size, class NoThrowForwardIterator>
+    pair<InputIterator, NoThrowForwardIterator>
+      uninitialized_move_n(InputIterator first, Size n, NoThrowForwardIterator result);
+  template<class ExecutionPolicy, class ForwardIterator, class Size,
+           class NoThrowForwardIterator>
+    pair<ForwardIterator, NoThrowForwardIterator>
+      uninitialized_move_n(ExecutionPolicy&& exec,              // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                           ForwardIterator first, Size n, NoThrowForwardIterator result);
+
+  namespace ranges {
+    template<class I, class O>
+      using uninitialized_move_result = in_out_result<I, O>;
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S1,
+             [[redoc("*:c>")]]nothrow-forward-iterator O, [[redoc("*:c>")]]nothrow-sentinel-for<O> S2>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<O>, iter_rvalue_reference_t<I>>
+        uninitialized_move_result<I, O>
+          uninitialized_move(I ifirst, S1 ilast, O ofirst, S2 olast);
+    template<[[redoc("`:c>")]]input_range IR, [[redoc("*:c>")]]nothrow-forward-range OR>
+      requires [[redoc("`:c>")]]constructible_from<range_value_t<OR>, range_rvalue_reference_t<IR>>
+        uninitialized_move_result<borrowed_iterator_t<IR>, borrowed_iterator_t<OR>>
+          uninitialized_move(IR&& in_range, OR&& out_range);
+
+    template<class I, class O>
+      using uninitialized_move_n_result = in_out_result<I, O>;
+    template<[[redoc("`:c>")]]input_iterator I,
+             [[redoc("*:c>")]]nothrow-forward-iterator O, [[redoc("*:n>")]]nothrow-sentinel-for<O> S>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<O>, iter_rvalue_reference_t<I>>
+        uninitialized_move_n_result<I, O>
+          uninitialized_move_n(I ifirst, iter_difference_t<I> n, O ofirst, S olast);
+  }
+
+  template<class NoThrowForwardIterator, class T>
+    void uninitialized_fill(NoThrowForwardIterator first, NoThrowForwardIterator last,
+                            const T& x);
+  template<class ExecutionPolicy, class NoThrowForwardIterator, class T>
+    void uninitialized_fill(ExecutionPolicy&& exec,             // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                            NoThrowForwardIterator first, NoThrowForwardIterator last,
+                            const T& x);
+  template<class NoThrowForwardIterator, class Size, class T>
+    NoThrowForwardIterator
+      uninitialized_fill_n(NoThrowForwardIterator first, Size n, const T& x);
+  template<class ExecutionPolicy, class NoThrowForwardIterator, class Size, class T>
+    NoThrowForwardIterator
+      uninitialized_fill_n(ExecutionPolicy&& exec,              // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                           NoThrowForwardIterator first, Size n, const T& x);
+
+  namespace ranges {
+    template<[[redoc("*:c>")]]nothrow-forward-iterator I, [[redoc("*:c>")]]nothrow-sentinel-for<I> S, class T>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, const T&>
+        I uninitialized_fill(I first, S last, const T& x);
+    template<[[redoc("*:c>")]]nothrow-forward-range R, class T>
+      requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, const T&>
+        borrowed_iterator_t<R> uninitialized_fill(R&& r, const T& x);
+
+    template<[[redoc("*:c>")]]nothrow-forward-iterator I, class T>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, const T&>
+        I uninitialized_fill_n(I first, iter_difference_t<I> n, const T& x);
+  }
+
+  // [:en] [#specialized.construct], [`construct_at] \
+  [:zh_CN] [#specialized.construct]，[`construct_at]
+  template<class T, class... Args>
+    constexpr T* construct_at(T* location, Args&&... args);
+
+  namespace ranges {
+    template<class T, class... Args>
+      constexpr T* construct_at(T* location, Args&&... args);
+  }
+
+  // [:en] [#specialized.destroy], [`destroy] \
+  [:zh_CN] [#specialized.destroy]，[`destroy]
+  template<class T>
+    constexpr void destroy_at(T* location);
+  template<class NoThrowForwardIterator>
+    constexpr void destroy(NoThrowForwardIterator first, NoThrowForwardIterator last);
+  template<class ExecutionPolicy, class NoThrowForwardIterator>
+    void destroy(ExecutionPolicy&& exec,                        // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                 NoThrowForwardIterator first, NoThrowForwardIterator last);
+  template<class NoThrowForwardIterator, class Size>
+    constexpr NoThrowForwardIterator destroy_n(NoThrowForwardIterator first, Size n);
+  template<class ExecutionPolicy, class NoThrowForwardIterator, class Size>
+    NoThrowForwardIterator destroy_n(ExecutionPolicy&& exec,    // [:en] see [#algorithms.parallel.overloads] \
+                                                                [:zh_CN] 参见 [#algorithms.parallel.overloads]
+                                     NoThrowForwardIterator first, Size n);
+
+  namespace ranges {
+    template<[[redoc("`:c>")]]destructible T>
+      constexpr void destroy_at(T* location) noexcept;
+
+    template<[[redoc("*:c>")]]nothrow-input-iterator I, [[redoc("*:c>")]]nothrow-sentinel-for<I> S>
+      requires [[redoc("`:c>")]]destructible<iter_value_t<I>>
+        constexpr I destroy(I first, S last) noexcept;
+    template<[[redoc("*:c>")]]nothrow-input-range R>
+      requires [[redoc("`:c>")]]destructible<range_value_t<R>>
+        constexpr borrowed_iterator_t<R> destroy(R&& r) noexcept;
+
+    template<[[redoc("*:c>")]]nothrow-input-iterator I>
+      requires [[redoc("`:c>")]]destructible<iter_value_t<I>>
+        constexpr I destroy_n(I first, iter_difference_t<I> n) noexcept;
+  }
+
+  // [:en] [#unique.ptr], class template [`unique_ptr] \
+  [:zh_CN] [#unique.ptr]，类模板 [`unique_ptr]
+  template<class T> struct default_delete;
+  template<class T> struct default_delete<T[]>;
+  template<class T, class D = default_delete<T>> class unique_ptr;
+  template<class T, class D> class unique_ptr<T[], D>;
+
+  template<class T, class... Args>
+    constexpr unique_ptr<T> make_unique(Args&&... args);                        // [:en] [`T] is not array \
+                                                                                [:zh_CN] [`T] 不是数组
+  template<class T>
+    constexpr unique_ptr<T> make_unique(size_t n);                              // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+  template<class T, class... Args>
+    [[redoc("[=unspec]")]] make_unique(Args&&...) = delete;                                // [:en] [`T] is [`U`[N`]] \
+                                                                                           [:zh_CN] [`T] 为 [`U`[N`]]
+
+  template<class T>
+    constexpr unique_ptr<T> make_unique_for_overwrite();                        // [:en] [`T] is not array \
+                                                                                [:zh_CN] [`T] 不是数组
+  template<class T>
+    constexpr unique_ptr<T> make_unique_for_overwrite(size_t n);                // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+  template<class T, class... Args>
+    [[redoc("[=unspec]")]] make_unique_for_overwrite(Args&&...) = delete;                  // [:en] [`T] is [`U`[N`]] \
+                                                                                           [:zh_CN] [`T] 为 [`U`[N`]]
+
+  template<class T, class D>
+    constexpr void swap(unique_ptr<T, D>& x, unique_ptr<T, D>& y) noexcept;
+
+  template<class T1, class D1, class T2, class D2>
+    constexpr bool operator==(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+  template<class T1, class D1, class T2, class D2>
+    bool operator<(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+  template<class T1, class D1, class T2, class D2>
+    bool operator>(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+  template<class T1, class D1, class T2, class D2>
+    bool operator<=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+  template<class T1, class D1, class T2, class D2>
+    bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+  template<class T1, class D1, class T2, class D2>
+    requires [[redoc("`:c>")]]three_way_comparable_with<typename unique_ptr<T1, D1>::pointer,
+                                       typename unique_ptr<T2, D2>::pointer>
+    compare_three_way_result_t<typename unique_ptr<T1, D1>::pointer,
+                               typename unique_ptr<T2, D2>::pointer>
+      operator<=>(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+
+  template<class T, class D>
+    constexpr bool operator==(const unique_ptr<T, D>& x, nullptr_t) noexcept;
+  template<class T, class D>
+    constexpr bool operator<(const unique_ptr<T, D>& x, nullptr_t);
+  template<class T, class D>
+    constexpr bool operator<(nullptr_t, const unique_ptr<T, D>& y);
+  template<class T, class D>
+    constexpr bool operator>(const unique_ptr<T, D>& x, nullptr_t);
+  template<class T, class D>
+    constexpr bool operator>(nullptr_t, const unique_ptr<T, D>& y);
+  template<class T, class D>
+    constexpr bool operator<=(const unique_ptr<T, D>& x, nullptr_t);
+  template<class T, class D>
+    constexpr bool operator<=(nullptr_t, const unique_ptr<T, D>& y);
+  template<class T, class D>
+    constexpr bool operator>=(const unique_ptr<T, D>& x, nullptr_t);
+  template<class T, class D>
+    constexpr bool operator>=(nullptr_t, const unique_ptr<T, D>& y);
+  template<class T, class D>
+    requires [[redoc("`:c>")]]three_way_comparable<typename unique_ptr<T, D>::pointer>
+    constexpr compare_three_way_result_t<typename unique_ptr<T, D>::pointer>
+      operator<=>(const unique_ptr<T, D>& x, nullptr_t);
+
+  template<class E, class T, class Y, class D>
+    basic_ostream<E, T>& operator<<(basic_ostream<E, T>& os, const unique_ptr<Y, D>& p);
+
+  // [:en] [#util.smartptr.weakptr], class [`bad_weak_ptr] \
+  [:zh_CN] [#util.smartptr.weakptr]，类 [`bad_weak_ptr]
+  class bad_weak_ptr;
+
+  // [:en] [#util.smartptr.shared], class template [`shared_ptr] \
+  [:zh_CN] [#util.smartptr.shared]，类模板 [`shared_ptr]
+  template<class T> class shared_ptr;
+
+  // [:en] [#util.smartptr.shared.create], [`shared_ptr] creation \
+  [:zh_CN] [#util.smartptr.shared.create]，[`shared_ptr] 的创建
+  template<class T, class... Args>
+    shared_ptr<T> make_shared(Args&&... args);                                  // [:en] [`T] is not array \
+                                                                                [:zh_CN] [`T] 不是数组
+  template<class T, class A, class... Args>
+    shared_ptr<T> allocate_shared(const A& a, Args&&... args);                  // [:en] [`T] is not array \
+                                                                                [:zh_CN] [`T] 不是数组
+
+  template<class T>
+    shared_ptr<T> make_shared(size_t N);                                        // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+  template<class T, class A>
+    shared_ptr<T> allocate_shared(const A& a, size_t N);                        // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+
+  template<class T>
+    shared_ptr<T> make_shared();                                                // [:en] [`T] is [`U`[N`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[N`]]
+  template<class T, class A>
+    shared_ptr<T> allocate_shared(const A& a);                                  // [:en] [`T] is [`U`[N`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[N`]]
+
+  template<class T>
+    shared_ptr<T> make_shared(size_t N, const remove_extent_t<T>& u);           // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+  template<class T, class A>
+    shared_ptr<T> allocate_shared(const A& a, size_t N,
+                                  const remove_extent_t<T>& u);                 // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+
+  template<class T>
+    shared_ptr<T> make_shared(const remove_extent_t<T>& u);                     // [:en] [`T] is [`U`[N`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[N`]]
+  template<class T, class A>
+    shared_ptr<T> allocate_shared(const A& a, const remove_extent_t<T>& u);     // [:en] [`T] is [`U`[N`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[N`]]
+
+  template<class T>
+    shared_ptr<T> make_shared_for_overwrite();                                  // [:en] [`T] is not [`U`[`]] \
+                                                                                [:zh_CN] [`T] 不为 [`U`[`]]
+  template<class T, class A>
+    shared_ptr<T> allocate_shared_for_overwrite(const A& a);                    // [:en] [`T] is not [`U`[`]] \
+                                                                                [:zh_CN] [`T] 不为 [`U`[`]]
+
+  template<class T>
+    shared_ptr<T> make_shared_for_overwrite(size_t N);                          // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+  template<class T, class A>
+    shared_ptr<T> allocate_shared_for_overwrite(const A& a, size_t N);          // [:en] [`T] is [`U`[`]] \
+                                                                                [:zh_CN] [`T] 为 [`U`[`]]
+
+  // [:en] [#util.smartptr.shared.cmp], [`shared_ptr] comparisons \
+  [:zh_CN] [#util.smartptr.shared.cmp]，[`shared_ptr] 的比较
+  template<class T, class U>
+    bool operator==(const shared_ptr<T>& a, const shared_ptr<U>& b) noexcept;
+  template<class T, class U>
+    strong_ordering operator<=>(const shared_ptr<T>& a, const shared_ptr<U>& b) noexcept;
+
+  template<class T>
+    bool operator==(const shared_ptr<T>& x, nullptr_t) noexcept;
+  template<class T>
+    strong_ordering operator<=>(const shared_ptr<T>& x, nullptr_t) noexcept;
+
+  // [:en] [#util.smartptr.shared.spec], [`shared_ptr] specialized algorithms \
+  [:zh_CN] [#util.smartptr.shared.spec]，[`shared_ptr] 的特化算法
+  template<class T> void
+    swap(shared_ptr<T>& a, shared_ptr<T>& b) noexcept;
+
+  // [:en] [#util.smartptr.shared.cast], [`shared_ptr] casts \
+  [:zh_CN] [#util.smartptr.shared.cast]，[`shared_ptr] 的转型
+  template<class T, class U>
+    shared_ptr<T> static_pointer_cast(const shared_ptr<U>& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> static_pointer_cast(shared_ptr<U>&& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> dynamic_pointer_cast(const shared_ptr<U>& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> dynamic_pointer_cast(shared_ptr<U>&& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> const_pointer_cast(const shared_ptr<U>& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> const_pointer_cast(shared_ptr<U>&& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> reinterpret_pointer_cast(const shared_ptr<U>& r) noexcept;
+  template<class T, class U>
+    shared_ptr<T> reinterpret_pointer_cast(shared_ptr<U>&& r) noexcept;
+
+  // [:en] [#util.smartptr.getdeleter], [`shared_ptr] [`get_deleter] \
+  [:zh_CN] [#util.smartptr.getdeleter]，[`shared_ptr] 的 [`get_deleter]
+  template<class D, class T>
+    D* get_deleter(const shared_ptr<T>& p) noexcept;
+
+  // [:en] [#util.smartptr.shared.io], [`shared_ptr] I/O \
+  [:zh_CN] [#util.smartptr.shared.io]，[`shared_ptr] 的 I/O
+  template<class E, class T, class Y>
+    basic_ostream<E, T>& operator<<(basic_ostream<E, T>& os, const shared_ptr<Y>& p);
+
+  // [:en] [#util.smartptr.weak], class template [`weak_ptr] \
+  [:zh_CN] [#util.smartptr.weak]，类模板 [`weak_ptr]
+  template<class T> class weak_ptr;
+
+  // [:en] [#util.smartptr.weak.spec], [`weak_ptr] specialized algorithms \
+  [:zh_CN] [#util.smartptr.weak.spec]，[`weak_ptr] 的特化算法
+  template<class T> void swap(weak_ptr<T>& a, weak_ptr<T>& b) noexcept;
+
+  // [:en] [#util.smartptr.ownerless], class template [`owner_less] \
+  [:zh_CN] [#util.smartptr.ownerless]，类模板 [`owner_less]
+  template<class T = void> struct owner_less;
+
+  // [:en] [#util.smartptr.enab], class template [`enable_shared_from_this] \
+  [:zh_CN] [#util.smartptr.enab]，类模板 [`enable_shared_from_this]
+  template<class T> class enable_shared_from_this;
+
+  // [:en] [#util.smartptr.hash], hash support \
+  [:zh_CN] [#util.smartptr.hash]，散列支持
+  template<class T> struct hash;
+  template<class T, class D> struct hash<unique_ptr<T, D>>;
+  template<class T> struct hash<shared_ptr<T>>;
+
+  // [:en] [#util.smartptr.atomic], atomic smart pointers \
+  [:zh_CN] [#util.smartptr.atomic]，原子性智能指针
+  template<class T> struct atomic;
+  template<class T> struct atomic<shared_ptr<T>>;
+  template<class T> struct atomic<weak_ptr<T>>;
+
+  // [:en] [#out.ptr.t], class template [`out_ptr_t] \
+  [:zh_CN] [#out.ptr.t]，类模板 [`out_ptr_t]
+  template<class Smart, class Pointer, class... Args>
+    class out_ptr_t;
+
+  // [:en] [#out.ptr], function template [`out_ptr] \
+  [:zh_CN] [#out.ptr]，函数模板 [`out_ptr]
+  template<class Pointer = void, class Smart, class... Args>
+    auto out_ptr(Smart& s, Args&&... args);
+
+  // [:en] [#inout.ptr.t], class template [`inout_ptr_t] \
+  [:zh_CN] [#inout.ptr.t]，类模板 [`inout_ptr_t]
+  template<class Smart, class Pointer, class... Args>
+    class inout_ptr_t;
+
+  // [:en] [#inout.ptr], function template [`inout_ptr] \
+  [:zh_CN] [#inout.ptr]，函数模板 [`inout_ptr]
+  template<class Pointer = void, class Smart, class... Args>
+    auto inout_ptr(Smart& s, Args&&... args);
+}
+[codeblock:end]

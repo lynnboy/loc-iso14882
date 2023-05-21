@@ -1,0 +1,230 @@
+[section#unique.ptr.special
+    [:en] Specialized algorithms
+    [:zh_CN] 特化的算法
+]
+
+[%@lib swap(unique_ptr&, unique_ptr&)]
+[codeblock:declaration]
+template<class T, class D> constexpr void swap(unique_ptr<T, D>& x, unique_ptr<T, D>& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_swappable_v<D>] is [`true].
+[:zh_CN] [`is_swappable_v<D>] 为 [`true]。
+
+[para:effects]
+[:en] Calls [`x.swap(y)].
+[:zh_CN] 调用 [`x.swap(y)]。
+[div:end]
+
+[%@lib@member operator==[!unique_ptr]]
+[codeblock:declaration]
+template<class T1, class D1, class T2, class D2>
+  constexpr bool operator==(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`x.get() == y.get()].
+[:zh_CN] [`x.get() == y.get()]。
+[div:end]
+
+[%@lib@member operator<[!unique_ptr]]
+[codeblock:declaration]
+template<class T1, class D1, class T2, class D2>
+  bool operator<(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`CT] denote
+[:zh_CN] 令 [`CT] 代表
+[codeblock]
+common_type_t<typename unique_ptr<T1, D1>::pointer,
+              typename unique_ptr<T2, D2>::pointer>
+[codeblock:end]
+
+[para:constraints]
+[list]
+[item]
+[:en] [`unique_ptr<T1, D1>::pointer] is implicitly convertible to [`CT] and
+[:zh_CN] [`unique_ptr<T1, D1>::pointer] 可以隐式转换为 [`CT]，并且
+[item]
+[:en] [`unique_ptr<T2, D2>::pointer] is implicitly convertible to [`CT].
+[:zh_CN] [`unique_ptr<T2, D2>::pointer] 可以隐式转换为 [`CT]。
+[list:end]
+
+[para:expects]
+[:en] The specialization [`less<CT>] shall be a function object type
+([#function.objects]) that induces a strict weak ordering ([#alg.sorting]) on
+the pointer values.
+[:zh_CN] 特例 [`less<CT>] 应当是函数对象类型（[#function.objects]），且为
+指针值引入一种严格弱序（[#alg.sorting]）。
+
+[para:returns]
+[:en] [`less<CT>()(x.get(), y.get())].
+[:zh_CN] [`less<CT>()(x.get(), y.get())]。
+[div:end]
+
+[%@lib@member operator>[!unique_ptr]]
+[codeblock:declaration]
+template<class T1, class D1, class T2, class D2>
+  bool operator>(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`y < x].
+[:zh_CN] [`y < x]。
+[div:end]
+
+[%@lib@member operator<=[!shared_ptr]]
+[codeblock:declaration]
+template<class T1, class D1, class T2, class D2>
+  bool operator<=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`!(y < x)].
+[:zh_CN] [`!(y < x)]。
+[div:end]
+
+[%@lib@member operator>=[!unique_ptr]]
+[codeblock:declaration]
+template<class T1, class D1, class T2, class D2>
+  bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`!(x < y)].
+[:zh_CN] [`!(x < y)]。
+[div:end]
+
+[%@lib@member operator<=>[!unique_ptr]]
+[codeblock:declaration]
+template<class T1, class D1, class T2, class D2>
+  requires [[redoc("`:c>")]]three_way_comparable_with<typename unique_ptr<T1, D1>::pointer,
+                                     typename unique_ptr<T2, D2>::pointer>
+  compare_three_way_result_t<typename unique_ptr<T1, D1>::pointer,
+                             typename unique_ptr<T2, D2>::pointer>
+    operator<=>(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`compare_three_way()(x.get(), y.get())].
+[:zh_CN] [`compare_three_way()(x.get(), y.get())]。
+[div:end]
+
+[%@lib@member operator==[!unique_ptr]]
+[codeblock:declaration]
+template<class T, class D>
+  bool operator==(const unique_ptr<T, D>& x, nullptr_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`!x].
+[:zh_CN] [`!x]。
+[div:end]
+
+[%@lib@member operator<[!unique_ptr]]
+[codeblock:declaration]
+template<class T, class D>
+  constexpr bool operator<(const unique_ptr<T, D>& x, nullptr_t);
+template<class T, class D>
+  constexpr bool operator<(nullptr_t, const unique_ptr<T, D>& x);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The specialization [`less<unique_ptr<T, D>::pointer>] is a function object
+type ([#function.objects]) that induces a strict weak ordering ([#alg.sorting])
+on the pointer values.
+[:zh_CN] 特例 [`less<unique_ptr<T, D>::pointer>] 为函数对象类型
+（[#function.objects]），并为指针值引入一种严格弱序（[#alg.sorting]）。
+
+[para:returns]
+[:en] The first function template returns
+[:zh_CN] 第一个函数模板返回
+[codeblock]
+less<unique_ptr<T, D>::pointer>()(x.get(), nullptr)
+[codeblock:end]
+
+[:en] The second function template returns
+[:zh_CN] 第二个函数模板返回
+[codeblock]
+less<unique_ptr<T, D>::pointer>()(nullptr, x.get())
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator>[!unique_ptr]]
+[codeblock:declaration]
+template<class T, class D>
+  constexpr bool operator>(const unique_ptr<T, D>& x, nullptr_t);
+template<class T, class D>
+  constexpr bool operator>(nullptr_t, const unique_ptr<T, D>& x);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The first function template returns [`nullptr < x].
+[:zh_CN] 第一个函数模板返回 [`nullptr < x]。
+
+[:en] The second function template returns [`x < nullptr].
+[:zh_CN] 第二个函数模板返回 [`x < nullptr]。
+[div:end]
+
+[%@lib@member operator<=[!unique_ptr]]
+[codeblock:declaration]
+template<class T, class D>
+  constexpr bool operator<=(const unique_ptr<T, D>& x, nullptr_t);
+template<class T, class D>
+  constexpr bool operator<=(nullptr_t, const unique_ptr<T, D>& x);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The first function template returns [`!(nullptr < x)].
+[:zh_CN] 第一个函数模板返回 [`!(nullptr < x)]。
+
+[:en] The second function template returns [`!(x < nullptr)].
+[:zh_CN] 第二个函数模板返回 [`!(x < nullptr)]。
+[div:end]
+
+[%@lib@member operator>=[!unique_ptr]]
+[codeblock:declaration]
+template<class T, class D>
+  constexpr bool operator>=(const unique_ptr<T, D>& x, nullptr_t);
+template<class T, class D>
+  constexpr bool operator>=(nullptr_t, const unique_ptr<T, D>& x);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The first function template returns [`!(x < nullptr)].
+[:zh_CN] 第一个函数模板返回 [`!(x < nullptr)]。
+
+[:en] The second function template returns [`!(nullptr < x)].
+[:zh_CN] 第二个函数模板返回 [`!(nullptr < x)]。
+[div:end]
+
+[%@lib@member operator<=>[!unique_ptr]]
+[codeblock:declaration]
+template<class T, class D>
+  requires [[redoc("`:c>")]]three_way_comparable<typename unique_ptr<T, D>::pointer>
+  constexpr compare_three_way_result_t<typename unique_ptr<T, D>::pointer>
+    operator<=>(const unique_ptr<T, D>& x, nullptr_t);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[codeblock]
+compare_three_way()(x.get(), static_cast<typename unique_ptr<T, D>::pointer>(nullptr))
+[codeblock:end]
+[:en] .
+[:zh_CN] 。
+[div:end]
