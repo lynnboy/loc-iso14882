@@ -1,0 +1,70 @@
+[section#range.utility.conv.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] The range conversion functions construct an object (usually a container)
+from a range, by using a constructor taking a range, a [`from_range_t] tagged
+constructor, or a constructor taking a pair of iterators, or by inserting each
+element of the range into the default-constructed object.
+[:zh_CN] 范围转换函数从一个范围构造一个对象（通常是容器），它利用接受一个范围的
+构造函数，带有 [`from_range_t] 标签的构造函数，或接受一对迭代器的构造函数，或者
+通过将范围中的每个元素插入到默认构造的对象来做到这点。
+
+[para]
+[:en] [`ranges::to] is applied recursively, allowing the conversion of a range
+of ranges.
+[:zh_CN] [`ranges::to] 可以递归运用，这允许对范围的范围进行转换。
+
+[para:~]
+[begin:example]
+[codeblock]
+string_view str = "the quick brown fox";
+auto words = views::split(str, ' ') | to<vector<string>>();
+// [:en] [`words] is [`vector<string>{"the", "quick", "brown", "fox"}] \
+[:zh_CN] [`words] 为 [`vector<string>{"the", "quick", "brown", "fox"}]
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] Let [*reservable-container] be defined as follows:
+[:zh_CN] 令 [*reservable-container] 定义如下：
+
+[codeblock:synopsis]
+template<class Container>
+constexpr bool [[redoc("*>")]]reservable-container =          // [=expos]
+  [[redoc("`:c>")]]sized_range<Container> &&
+  requires(Container& c, range_size_t<Container> n) {
+    c.reserve(n);
+    { c.capacity() } -> [[redoc("`:c>")]]same_as<decltype(n)>;
+    { c.max_size() } -> [[redoc("`:c>")]]same_as<decltype(n)>;
+  };
+[codeblock:end]
+
+[para]
+[:en] Let [*container-container] be defined as follows:
+[:zh_CN] 令 [*container-container] 定义如下：
+
+[codeblock:synopsis]
+template<class Container, class Ref>
+constexpr bool [[redoc("*>")]]container-insertable =          // [=expos]
+  requires(Container& c, Ref&& ref) {
+    requires (requires { c.push_back(std::forward<Ref>(ref)); } ||
+              requires { c.insert(c.end(), std::forward<Ref>(ref)); });
+  };
+[codeblock:end]
+
+[para]
+[:en] Let [*container-inserter] be defined as follows:
+[:zh_CN] 令 [*container-inserter] 定义如下：
+
+[codeblock:synopsis]
+template<typename Ref>
+auto [[redoc("*>")]]container-inserter(C& c) {                // [=expos]
+  if constexpr (requires { c.push_back(declval<Ref>()); })
+    return back_inserter(c);
+  else
+    return inserter(c, c.end());
+};
+[codeblock:end]

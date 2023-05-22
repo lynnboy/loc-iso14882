@@ -1,0 +1,140 @@
+[section#range.chunk.inner.iter
+    [:en] Class [`chunk_view::[*inner-iterator]]
+    [:zh_CN] 类 [`chunk_view::[*inner-iterator]]
+]
+
+[%@lib chunk_view::inner-iterator]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]input_range<V>
+  class chunk_view<V>::[[redoc("*>")]]inner-iterator {
+    chunk_view* [[redoc("*>")]]parent_;                                                // [=expos]
+
+    constexpr explicit [[redoc("*>")]]inner-iterator(chunk_view& parent) noexcept;     // [=expos]
+
+  public:
+    using iterator_concept = input_iterator_tag;
+    using difference_type = range_difference_t<V>;
+    using value_type = range_value_t<V>;
+
+    [[redoc("*>")]]inner-iterator([[redoc("*>")]]inner-iterator&&) = default;
+    [[redoc("*>")]]inner-iterator& operator=(@\exposid{inner-iterator}@&&) = default;
+
+    constexpr const iterator_t<V>& base() const &;
+
+    constexpr range_reference_t<V> operator*() const;
+    constexpr [[redoc("*>")]]inner-iterator& operator++();
+    constexpr void operator++(int);
+
+    friend constexpr bool operator==(const [[redoc("*>")]]inner-iterator& x, default_sentinel_t);
+
+    friend constexpr difference_type operator-(default_sentinel_t y, const [[redoc("*>")]]inner-iterator& x)
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<V>, iterator_t<V>>;
+    friend constexpr difference_type operator-(const [[redoc("*>")]]inner-iterator& x, default_sentinel_t y)
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<V>, iterator_t<V>>;
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]inner-iterator(chunk_view& parent) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`addressof(parent)].
+[:zh_CN] 以 [`addressof(parent)] 初始化 [*parent_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr const iterator_t<V>& base() const &;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return *[*parent_]->[*current_];]
+[:zh_CN] 等价于：[`return *[*parent_]->[*current_];]
+[div:end]
+
+[codeblock:declaration]
+constexpr range_reference_t<V> operator*() const;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`*this == default_sentinel] is [`false].
+[:zh_CN] [`*this == default_sentinel] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to: [`return **[*parent_]->[*current_];]
+[:zh_CN] 等价于：[`return **[*parent_]->[*current_];]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]inner-iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`*this == default_sentinel] is [`false].
+[:zh_CN] [`*this == default_sentinel] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+++*[[redoc("*>")]]parent_->[[redoc("*>")]]current_;
+if (*[[redoc("*>")]]parent_->[[redoc("*>")]]current_ == ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_))
+  [[redoc("*>")]]parent_->[[redoc("*>")]]remainder_ = 0;
+else
+  --[[redoc("*>")]]parent_->[[redoc("*>")]]remainder_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`++this].
+[:zh_CN] 等价于 [`++this]。
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]inner-iterator& x, default_sentinel_t);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`x.[*parent_]->[*remainder_] == 0].
+[:zh_CN] [`x.[*parent_]->[*remainder_] == 0]。
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(default_sentinel_t y, const [[redoc("*>")]]inner-iterator& x)
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<V>, iterator_t<V>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return ranges::min(x.[[redoc("*>")]]parent_->[[redoc("*>")]]remainder_,
+                   ranges::end(x.[[redoc("*>")]]parent_->[[redoc("*>")]]base_) - *x.[[redoc("*>")]]parent_->[[redoc("*>")]]current_);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]inner-iterator& x, default_sentinel_t y)
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<V>, iterator_t<V>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return -(y - x);]
+[:zh_CN] 等价于：[`return -(y - x);]
+[div:end]

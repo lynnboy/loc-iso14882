@@ -17,6 +17,7 @@ namespace std::ranges {
     using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                         // [=expos]
     iterator_t<[[redoc("*>")]]Base> [[redoc("*>")]]current_ = iterator_t<[[redoc("*>")]]Base>();             // [=expos]
     [[redoc("*>")]]Parent* [[redoc("*>")]]parent_ = nullptr;                                  // [=expos]
+
   public:
     using iterator_concept  = [[redoc("[=seebelow]")]];
     using iterator_category = [[redoc("[=seebelow]", "_")]]_;                        // [:en] not always present \
@@ -32,7 +33,9 @@ namespace std::ranges {
 
     constexpr const iterator_t<[[redoc("*>")]]Base>& base() const & noexcept;
     constexpr iterator_t<[[redoc("*>")]]Base> base() &&;
-    constexpr decltype(auto) operator*() const {
+
+    constexpr decltype(auto) operator*() const
+      noexcept(noexcept(invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *[[redoc("*>")]]current_))) {
       return invoke(*[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *[[redoc("*>")]]current_);
     }
 
@@ -76,14 +79,6 @@ namespace std::ranges {
       requires [[redoc("`:c>")]]random_access_range<[[redoc("*>")]]Base>;
     friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
       requires [[redoc("`:c>")]]sized_sentinel_for<iterator_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
-
-    friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& i)
-      noexcept(noexcept(invoke(*i.[[redoc("*>")]]parent_->[[redoc("*>")]]fun_, *i.[[redoc("*>")]]current_))) {
-      if constexpr (is_lvalue_reference_v<decltype(*i)>)
-        return std::move(*i);
-      else
-        return *i;
-    }
   };
 }
 [codeblock:end]

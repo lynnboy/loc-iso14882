@@ -1,0 +1,106 @@
+[section#range.chunk.view.input
+    [:en] [`chunk_view] for input ranges
+    [:zh_CN] 针对输入范围的 [`chunk_view]
+]
+
+[%@lib@member begin[!chunk_view]]
+[%@lib@member end[!chunk_view]]
+[%@lib@member size[!chunk_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class I>
+  constexpr I [[redoc("*>")]]div-ceil(I num, I denom) {                  // [=expos]
+    I r = num / denom;
+    if (num % denom)
+      ++r;
+    return r;
+  }
+
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]input_range<V>
+  class chunk_view : public view_interface<chunk_view<V>> {
+    V [[redoc("*>")]]base_ = V();                                        // [=expos]
+    range_difference_t<V> [[redoc("*>")]]n_ = 0;                         // [=expos]
+    range_difference_t<V> [[redoc("*>")]]remainder_ = 0;                 // [=expos]
+
+    [[redoc("*>")]]non-propagating-cache<iterator_t<V>> [[redoc("*>")]]current_;       // [=expos]
+
+    // [:en] [#range.chunk.outer.iter], class [`chunk_view::[*outer-iterator]] \
+    [:zh_CN] [#range.chunk.outer.iter]，类 [`chunk_view::[*outer-iterator]]
+    class [[redoc("*>")]]outer-iterator;                                 // [=expos]
+
+    // [:en] [#range.chunk.inner.iter], class [`chunk_view::[*inner-iterator]] \
+    [:zh_CN] [#range.chunk.inner.iter]，类 [`chunk_view::[*inner-iterator]]
+    class [[redoc("*>")]]inner-iterator;                                 // [=expos]
+
+  public:
+    chunk_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit chunk_view(V base, range_difference_t<V> n);
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr [[redoc("*>")]]outer-iterator begin();
+    constexpr default_sentinel_t end() noexcept;
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+  };
+
+  template<class R>
+    chunk_view(R&& r, range_difference_t<R>) -> chunk_view<views::all_t<R>>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit chunk_view(V base, range_difference_t<V> n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`n > 0] is [`true].
+[:zh_CN] [`n > 0] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)] and [*n_] with [`n].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`n] 初始化 [*n_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]outer-iterator begin();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+current_ = ranges::begin(base_);
+remainder_ = n_;
+return [[redoc("*>")]]outer-iterator(*this);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr default_sentinel_t end() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`default_sentinel].
+[:zh_CN] [`default_sentinel]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return [[redoc("*>")]]to-unsigned-like([[redoc("*>")]]div-ceil(ranges::distance([[redoc("*>")]]base_), [[redoc("*>")]]n_));
+[codeblock:end]
+[div:end]

@@ -1,0 +1,90 @@
+[section#range.chunk.view.fwd
+    [:en] [`chunk_view] for forward ranges
+    [:zh_CN] 针对前向范围的 [`chunk_view]
+]
+
+[%@lib@member begin[!chunk_view]]
+[%@lib@member end[!chunk_view]]
+[%@lib@member size[!chunk_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]forward_range<V>
+  class chunk_view<V> : public view_interface<chunk_view<V>> {
+    V [[redoc("*>")]]base_ = V();                      // [=expos]
+    range_difference_t<V> [[redoc("*>")]]n_ = 0;       // [=expos]
+
+    // [:en] [#range.chunk.fwd.iter], class template [`chunk_view::[*iterator]] \
+    [:zh_CN] [#range.chunk.fwd.iter]，类模板 [`chunk_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;      // [=expos]
+
+  public:
+    chunk_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit chunk_view(V base, range_difference_t<V> n);
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>) {
+      return [[redoc("*>")]]iterator<false>(this, ranges::begin([[redoc("*>")]]base_));
+    }
+
+    constexpr auto begin() const requires [[redoc("`:c>")]]forward_range<const V> {
+      return [[redoc("*>")]]iterator<true>(this, ranges::begin([[redoc("*>")]]base_));
+    }
+
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V>) {
+      if constexpr ([[redoc("`:c>")]]common_range<V> && [[redoc("`:c>")]]sized_range<V>) {
+        auto missing = ([[redoc("*>")]]n_ - ranges::distance([[redoc("*>")]]base_) % [[redoc("*>")]]n_) % [[redoc("*>")]]n_;
+        return [[redoc("*>")]]iterator<false>(this, ranges::end([[redoc("*>")]]base_), missing);
+      } else if constexpr ([[redoc("`:c>")]]common_range<V> && ![[redoc("`:c>")]]bidirectional_range<V>) {
+        return [[redoc("*>")]]iterator<false>(this, ranges::end([[redoc("*>")]]base_));
+      } else {
+        return default_sentinel;
+      }
+    }
+
+    constexpr auto end() const requires [[redoc("`:c>")]]forward_range<const V> {
+      if constexpr ([[redoc("`:c>")]]common_range<const V> && [[redoc("`:c>")]]sized_range<const V>) {
+        auto missing = ([[redoc("*>")]]n_ - ranges::distance([[redoc("*>")]]base_) % [[redoc("*>")]]n_) % [[redoc("*>")]]n_;
+        return [[redoc("*>")]]iterator<true>(this, ranges::end([[redoc("*>")]]base_), missing);
+      } else if constexpr ([[redoc("`:c>")]]common_range<const V> && ![[redoc("`:c>")]]bidirectional_range<const V>) {
+        return [[redoc("*>")]]iterator<true>(this, ranges::end([[redoc("*>")]]base_));
+      } else {
+        return default_sentinel;
+      }
+    }
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit chunk_view(V base, range_difference_t<V> n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`n > 0] is [`true].
+[:zh_CN] [`n > 0] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)] and [*n_] with [`n].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`n] 初始化 [*n_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return [[redoc("*>")]]to-unsigned-like([[redoc("*>")]]div-ceil(ranges::distance([[redoc("*>")]]base_), [[redoc("*>")]]n_));
+[codeblock:end]
+[div:end]

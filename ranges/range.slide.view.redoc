@@ -1,0 +1,170 @@
+[section#range.slide.view
+    [:en] Class template [`slide_view]
+    [:zh_CN] 类模板 [`slide_view]
+]
+
+[%@lib@member begin[!slide_view]]
+[%@lib@member end[!slide_view]]
+[%@lib@member size[!slide_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class V>
+  concept [[redoc("*:c@def>")]]slide-caches-nothing = [[redoc("`:c>")]]random_access_range<V> && [[redoc("`:c>")]]sized_range<V>;       // [=expos]
+
+  template<class V>
+  concept [[redoc("*:c@def>")]]slide-caches-last =                                            // [=expos]
+    ![[redoc("*:c>")]]slide-caches-nothing<V> && [[redoc("`:c>")]]bidirectional_range<V> && [[redoc("`:c>")]]common_range<V>;
+
+  template<class V>
+  concept [[redoc("*:c@def>")]]slide-caches-first =                                           // [=expos]
+    ![[redoc("*:c>")]]slide-caches-nothing<V> && ![[redoc("*:c>")]]slide-caches-last<V>;
+
+  template<[[redoc("`:c>")]]forward_range V>
+    requires [[redoc("`:c>")]]view<V>
+  class slide_view : public view_interface<slide_view<V>> {
+    V [[redoc("*>")]]base_ = V();                      // [=expos]
+    range_difference_t<V> [[redoc("*>")]]n_ = 0;       // [=expos]
+
+    // [:en] [#range.slide.iterator], class template [`slide_view::[*iterator]] \
+    [:zh_CN] [#range.slide.iterator]，类模板 [`slide_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;      // [=expos]
+
+    // [:en] [#range.slide.sentinel], class [`slide_view::[*sentinel]] \
+    [:zh_CN] [#range.slide.sentinel]，类 [`slide_view::[*sentinel]]
+    class [[redoc("*>")]]sentinel;                     // [=expos]
+
+  public:
+    slide_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit slide_view(V base, range_difference_t<V> n);
+
+    constexpr auto begin()
+      requires (!([[redoc("*:c>")]]simple-view<V> && [[redoc("*:c>")]]slide-caches-nothing<const V>));
+    constexpr auto begin() const requires [[redoc("*:c>")]]slide-caches-nothing<const V>;
+
+    constexpr auto end()
+      requires (!([[redoc("*:c>")]]simple-view<V> && [[redoc("*:c>")]]slide-caches-nothing<const V>));
+    constexpr auto end() const requires [[redoc("*:c>")]]slide-caches-nothing<const V>;
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+  };
+
+  template<class R>
+    slide_view(R&& r, range_difference_t<R>) -> slide_view<views::all_t<R>>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit slide_view(V base, range_difference_t<V> n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)], and [*n_] with [`n].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`n] 初始化 [*n_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto begin()
+  requires (!([[redoc("*:c>")]]simple-view<V> && [[redoc("*:c>")]]slide-caches-nothing<const V>));
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`V] models [*:c slide-caches-first],
+[:zh_CN] 若 [`V] 构成 [*:c slide-caches-first]，返回
+[codeblock]
+[[redoc("*>")]]iterator<false>(ranges::begin([[redoc("*>")]]base_),
+                ranges::next(ranges::begin([[redoc("*>")]]base_), [[redoc("*>")]]n_ - 1, ranges::end([[redoc("*>")]]base_)), [[redoc("*>")]]n_)
+[codeblock:end]
+[item]
+[:en] Otherwise, [`[*iterator]<false>(ranges::begin([*base_]), [*n_])].
+[:zh_CN] 否则，返回 [`[*iterator]<false>(ranges::begin([*base_]), [*n_])]。
+[list:end]
+
+[para:remarks]
+[:en] In order to provide the amortized constant-time complexity required by the
+[`:c range] concept, this function caches the result within the [`slide_view]
+for use on subsequent calls when [`V] models [*:c slide-caches-first].
+[:zh_CN] 为了提供 [`:c range] 概念所要求的摊销常量时间复杂度，当 [`V] 构成
+[*:c slide-caches-first] 时，这个函数会将 [`slide_view] 中的结果进行缓存以备后续
+调用中使用。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto begin() const requires [[redoc("*:c>")]]slide-caches-nothing<const V>;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`[*iterator]<true>(ranges::begin([*base_]), [*n_])].
+[:zh_CN] [`[*iterator]<true>(ranges::begin([*base_]), [*n_])]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto end()
+  requires (!([[redoc("*:c>")]]simple-view<V> && [[redoc("*:c>")]]slide-caches-nothing<const V>));
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`V] models [*:c slide-caches-nothing],
+[:zh_CN] 若 [`V] 构成 [*:c slide-caches-nothing]，返回
+[codeblock]
+[[redoc("*>")]]iterator<false>(ranges::begin([[redoc("*>")]]base_) + range_difference_t<V>(size()), [[redoc("*>")]]n_)
+[codeblock:end]
+[item]
+[:en] Otherwise, if [`V] models [*:c slide-caches-last],
+[:zh_CN] 否则，若 [`V] 构成 [*:c slide-caches-last]，返回
+[codeblock]
+[[redoc("*>")]]iterator<false>(ranges::prev(ranges::end([[redoc("*>")]]base_), [[redoc("*>")]]n_ - 1, ranges::begin([[redoc("*>")]]base_)), [[redoc("*>")]]n_)
+[codeblock:end]
+[item]
+[:en] Otherwise, if [`V] models [`:c common_range],
+[:zh_CN] 否则，若 [`V] 构成 [`:c common_range]，返回
+[codeblock]
+[[redoc("*>")]]iterator<false>(ranges::end([[redoc("*>")]]base_), ranges::end([[redoc("*>")]]base_), [[redoc("*>")]]n_)
+[codeblock:end]
+[item]
+[:en] Otherwise, [`[*sentinel](ranges::end([*base_]))].
+[:zh_CN] 否则，返回 [`[*sentinel](ranges::end([*base_]))]。
+[list:end]
+
+[para:remarks]
+[:en] In order to provide the amortized constant-time complexity required by the
+[`:c range] concept, this function caches the result within the [`slide_view]
+for use on subsequent calls when [`V] models [*:c slide-caches-last].
+[:zh_CN] 为了提供 [`:c range] 概念所要求的摊销常量时间复杂度，当 [`V] 构成
+[*:c slide-caches-last] 时，这个函数会将 [`slide_view] 中的结果进行缓存以备后续
+调用中使用。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto end() const requires [[redoc("*:c>")]]slide-caches-nothing<const V>;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`begin() + range_difference_t<const V>(size())].
+[:zh_CN] [`begin() + range_difference_t<const V>(size())]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto sz = ranges::distance([[redoc("*>")]]base_) - [[redoc("*>")]]n_ + 1;
+if (sz < 0) sz = 0;
+return [[redoc("*>")]]to-unsigned-like(sz);
+[codeblock:end]
+[div:end]

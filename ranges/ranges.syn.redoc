@@ -129,6 +129,17 @@ namespace std::ranges {
   template<[[redoc("`:c>")]]range R>
     using borrowed_subrange_t = [[redoc("[=seebelow]")]];
 
+  // [:en] [#range.utility.conv], range conversions \
+  [:zh_CN] [#range.utility.conv]，范围转换
+  template<class C, [[redoc("`:c>")]]input_range R, class... Args> requires (![[redoc("`:c>")]]view<C>)
+    constexpr C to(R&& r, Args&&... args);
+  template<template<class...> class C, [[redoc("`:c>")]]input_range R, class... Args>
+    constexpr auto to(R&& r, Args&&... args) -> [[redoc("[=seebelow]")]];
+  template<class C, class... Args> requires (![[redoc("`:c>")]]view<C>)
+    constexpr auto to(Args&&... args) -> [[redoc("[=seebelow]")]];
+  template<template<class...> class C, class... Args>
+    constexpr auto to(Args&&... args) -> [[redoc("[=seebelow]")]];
+
   // [:en] [#range.empty], empty view \
   [:zh_CN] [#range.empty]，空视图
   template<class T>
@@ -175,7 +186,12 @@ namespace std::ranges {
   template<class Val>
     using wistream_view = basic_istream_view<Val, wchar_t>;
 
-  namespace views { template<class T> inline constexpr @\unspec@ istream = @\unspec@; }
+  namespace views { template<class T> inline constexpr [[redoc("[=unspec]")]] istream = [[redoc("[=unspec]")]]; }
+
+  // \ref{range.adaptor.object}, range adaptor objects
+  template<class D>
+    requires is_class_v<D> && [[redoc("`:c>")]]same_as<D, remove_cv_t<D>>
+  class range_adaptor_closure { };
 
   // [:en] [#range.all], all view \
   [:zh_CN] [#range.all]，全视图
@@ -269,6 +285,19 @@ namespace std::ranges {
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] join = [[redoc("[=unspec]")]]; }
 
+  // [:en] [#range.join.with], join with view \
+  [:zh_CN] [#range.join.with]，联接于视图
+  template<class R, class P>
+    concept [[redoc("*:c>")]]compatible-joinable-ranges = [[redoc("[=seebelow]")]]; // [=expos]
+
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>>
+          && [[redoc("`:c>")]]view<Pattern>
+          && [[redoc("*:c>")]]compatible-joinable-ranges<range_reference_t<V>, Pattern>
+  class join_with_view;
+
+  namespace views { inline constexpr [[redoc("[=unspec]")]] join_with = [[redoc("[=unspec]")]]; }
+
   // [:en] [#range.lazy.split], lazy split view \
   [:zh_CN] [#range.lazy.split]，懒惰分割视图
   template<class R>
@@ -351,7 +380,8 @@ namespace std::ranges {
 
   namespace views { inline constexpr @\unspec@ zip = @\unspec@; }
 
-  // \ref{range.zip.transform}, zip transform view
+  // [:en] [#range.zip.transform], zip transform view \
+  [:zh_CN] [#range.zip.transform]，zip 转换视图
   template<[[redoc("`:c>")]]copy_constructible F, [[redoc("`:c>")]]input_range... Views>
     requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0) && is_object_v<F> &&
              [[redoc("`:c>")]]regular_invocable<F&, range_reference_t<Views>...> &&
@@ -360,7 +390,8 @@ namespace std::ranges {
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] zip_transform =[[redoc("[=unspec]")]]; }
 
-  // \ref{range.adjacent}, adjacent view
+  // [:en] [#range.adjacent], adjacent view \
+  [:zh_CN] [#range.adjacent]，邻接视图
   template<[[redoc("`:c>")]]forward_range V, size_t N>
     requires [[redoc("`:c>")]]view<V> && (N > 0)
   class adjacent_view;
@@ -375,7 +406,8 @@ namespace std::ranges {
     inline constexpr auto [[redoc("\%lib@member pairwise[!views]")]]pairwise = adjacent<2>;
   }
 
-  // \ref{range.adjacent.transform}, adjacent transform view
+  // [:en] [#range.adjacent.transform], adjacent transform view \
+  [:zh_CN] [#range.adjacent.transform]，邻接转换视图
   template<[[redoc("`:c>")]]forward_range V, [[redoc("`:c>")]]copy_constructible F, size_t N>
     requires [[redoc("[=seebelow]")]]
   class adjacent_transform_view;
@@ -385,6 +417,42 @@ namespace std::ranges {
       inline constexpr [[redoc("[=unspec]")]] adjacent_transform = [[redoc("[=unspec]")]];
     inline constexpr auto [[redoc("\%lib@member pairwise_transform[!views]")]]pairwise_transform = adjacent_transform<2>;
   }
+
+  // [:en] [#range.chunk], chunk view \
+  [:zh_CN] [#range.chunk]，区段视图
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]input_range<V>
+  class chunk_view;
+
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]forward_range<V>
+  class chunk_view<V>;
+
+  template<class V>
+    inline constexpr bool enable_borrowed_range<chunk_view<V>> =
+      [[redoc("`:c>")]]forward_range<V> && enable_borrowed_range<V>;
+
+  namespace views { inline constexpr [[redoc("[=unspec]")]] chunk = [[redoc("[=unspec]")]]; }
+
+  // [:en] [#range.slide], slide view \
+  [:zh_CN] [#range.slide]，滑动视图
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]forward_range<V>
+  class slide_view;
+
+  template<class V>
+    inline constexpr bool enable_borrowed_range<slide_view<V>> =
+      enable_borrowed_range<V>;
+
+  namespace views { inline constexpr [[redoc("[=unspec]")]] slide = [[redoc("[=unspec]")]]; }
+
+  // [:en] [#range.chunk.by], chunk by view \
+  [:zh_CN] [#range.chunk.by]，分段视图
+  template<[[redoc("`:c>")]]forward_range V, [[redoc("`:c>")]]indirect_binary_predicate<iterator_t<V>, iterator_t<V>> Pred>
+    requires [[redoc("`:c>")]]view<V> && is_object_v<Pred>
+  class chunk_by_view;
+
+  namespace views { inline constexpr [[redoc("[=unspec]")]] chunk_by = [[redoc("[=unspec]")]]; }
 }
 
 namespace std {
@@ -412,6 +480,9 @@ namespace std {
   struct tuple_element<1, const ranges::subrange<I, S, K>> {
     using type = S;
   };
+
+  struct from_range_t { explicit from_range_t() = default; };
+  inline constexpr from_range_t from_range{};
 }
 [codeblock:end]
 

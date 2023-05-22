@@ -1,0 +1,153 @@
+[section#range.utility.conv.to
+    [`ranges::to]
+]
+
+[%@lib@member to[!ranges]]
+[codeblock:declaration]
+template<class C, [[redoc("`:c>")]]input_range R, class... Args> requires (![[redoc("`:c>")]]view<C>)
+  constexpr C to(R&& r, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An object of type [`C] constructed from the elements of [`r] in the
+following manner:
+[:zh_CN] 一个以如下方式从 [`r] 的元素构造的 [`C] 类型的对象：
+
+[list]
+[item]
+[:en] If [`[`:c convertible_to]<range_reference_t<R>, range_value_t<C>>] is
+[`true]:
+[:zh_CN] 如果 [`[`:c convertible_to]<range_reference_t<R>, range_value_t<C>>] 为
+[`true]:
+
+[list]
+[item]
+[:en] If [`[`:c constructible_from]<C, R, Args...>] is [`true]:
+[:zh_CN] 如果 [`[`:c constructible_from]<C, R, Args...>] 为 [`true]：
+[codeblock]
+C(std::forward<R>(r), std::forward<Args>(args)...)
+[codeblock:end]
+
+[item]
+[:en] Otherwise, if [`[`:c constructible_from]<C, from_range_t, R, Args...>] is
+[`true]:
+[:zh_CN] 否则，如果 [`[`:c constructible_from]<C, from_range_t, R, Args...>] 为
+[`true]：
+[codeblock]
+C(from_range, std::forward<R>(r), std::forward<Args>(args)...)
+[codeblock:end]
+
+[item]
+[:en] Otherwise, if
+[:zh_CN] 否则，如果
+[list]
+[item]
+[:en@~] [`[`:c common_range]<R>] is [`true],
+[:zh_CN@~] [`[`:c common_range]<R>] 为 [`true]，
+[item]
+[:en@~] [`[*:c cpp17-input-iterator]<iterator_t<R>>] is [`true], and
+[:zh_CN@~] [`[*:c cpp17-input-iterator]<iterator_t<R>>] 为 [`true]，并且
+[item]
+[:en@~] [`[`:c constructible_from]<C, iterator_t<R>, sentinel_t<R>, Args...>]
+is [`true]:
+[:zh_CN@~] [`[`:c constructible_from]<C, iterator_t<R>, sentinel_t<R>, Args...>]
+为 [`true]：
+[list:end]
+[codeblock]
+C(ranges::begin(r), ranges::end(r), std::forward<Args>(args)...)
+[codeblock:end]
+
+[item]
+[:en] Otherwise, if
+[:zh_CN] 否则，如果
+[list]
+[item]
+[:en@~] [`[`:c constructible_from]<C, Args...>] is [`true], and
+[:zh_CN@~] [`[`:c constructible_from]<C, Args...>] 为 [`true]，并且
+[item]
+[:en@~] [`[*container-insertable]<C, range_reference_t<R>>] is [`true]:
+[:zh_CN@~] [`[*container-insertable]<C, range_reference_t<R>>] 为 [`true]：
+[list:end]
+[codeblock]
+C c(std::forward<Args>(args)...);
+if constexpr ([[redoc("`:c>")]]sized_range<R> && [[redoc("*>")]]reservable-container<C>)
+  c.reserve(ranges::size(r));
+ranges::copy(r, [[redoc("*>")]]container-inserter<range_reference_t<R>>(c));
+[codeblock:end]
+[list:end]
+
+[item]
+[:en] Otherwise, if [`[`:c input_range]<range_reference_t<R>>] is [`true]:
+[:zh_CN] 否则，如果 [`[`:c input_range]<range_reference_t<R>>] 为 [`true]：
+[codeblock]
+to<C>(r | views::transform([](auto&& elem) {
+  return to<range_value_t<C>>(std::forward<decltype(elem)>(elem));
+}), std::forward<Args>(args)...);
+[codeblock:end]
+
+[item]
+[:en] Otherwise, the program is ill-formed.
+[:zh_CN] 否则，程序非良构。
+[list:end]
+[div:end]
+
+[%@lib@member to[!ranges]]
+[codeblock:declaration]
+template<template<class...> class C, [[redoc("`:c>")]]input_range R, class... Args>
+  constexpr auto to(R&& r, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[:en] Let [*input-iterator] be an exposition-only type:
+[:zh_CN] 令 [*input-iterator] 为仅用于阐释的类型：
+[codeblock:synopsis]
+struct [[redoc("*>")]]input-iterator {                        // [=expos]
+  using iterator_category = input_iterator_tag;
+  using value_type = range_value_t<R>;
+  using difference_type = ptrdiff_t;
+  using pointer = add_pointer_t<range_reference_t<R>>;
+  using reference = range_reference_t<R>;
+  reference operator*() const;
+  pointer operator->() const;
+  [[redoc("*>")]]input-iterator& operator++();
+  [[redoc("*>")]]input-iterator operator++(int);
+  bool operator==(const [[redoc("*>")]]input-iterator&) const;
+};
+[codeblock:end]
+
+[begin:note]
+[:en] [*input-iterator] meets the syntactic requirements of [^:oc InputIterator].
+[:zh_CN] [*input-iterator] 满足 [^:oc InputIterator] 的语法规定。
+[end:note]
+
+[para]
+[:en] Let [`[^DEDUCE_EXPR]] be defined as follows:
+[:zh_CN] 令 [`[^DEDUCE_EXPR]] 定义如下：
+
+[list]
+[item]
+[:en] [`C(declval<R>(), declval<Args>()...)] if that is a valid expression,
+[:zh_CN] 若 [`C(declval<R>(), declval<Args>()...)] 为有效表达式则为该表达式，
+[item]
+[:en] otherwise, [`C(from_range, declval<R>(), declval<Args>()...)] if that is
+a valid expression,
+[:zh_CN] 否则，若 [`C(from_range, declval<R>(), declval<Args>()...)] 为有效
+表达式则为该表达式，
+[item]
+[:en] otherwise,
+[:zh_CN] 否则，若
+[codeblock]
+C(declval<[[redoc("*>")]]input-iterator>(), declval<[[redoc("*>")]]input-iterator>(), declval<Args>()...)
+[codeblock:end]
+[:en@~] if that is a valid expression,
+[:zh_CN@~] 为有效表达式则为该表达式，
+[item]
+[:en] otherwise, the program is ill-formed.
+[:zh_CN] 否则，程序非良构。
+[list:end]
+
+[para:returns]
+[:en] [`to<decltype([^DEDUCE_EXPR])>(std::forward<R>(r), std::forward<Args>(args)...)].
+[:zh_CN] [`to<decltype([^DEDUCE_EXPR])>(std::forward<R>(r), std::forward<Args>(args)...)]。
+[div:end]

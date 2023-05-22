@@ -1,0 +1,148 @@
+[section#range.chunk.by.view
+    [:en] Class template [`chunk_by_view]
+    [:zh_CN] 类模板 [`chunk_by_view]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]forward_range V, [[redoc("`:c>")]]indirect_binary_predicate<iterator_t<V>, iterator_t<V>> Pred>
+    requires [[redoc("`:c>")]]view<V> && is_object_v<Pred>
+  class chunk_by_view : public view_interface<chunk_by_view<V, Pred>> {
+    V [[redoc("*>")]]base_ = V();                       // [=expos]
+    [[redoc("*>")]]copyable-box<Pred> [[redoc("*>")]]pred_ = Pred();  // [=expos]
+
+    // [:en] [#range.chunk.by.iter], class [`chunk_by_view::[*iterator]] \
+    [:zh_CN] [#range.chunk.by.iter]，类 [`chunk_by_view::[*iterator]]
+    class [[redoc("*>")]]iterator;                     // [=expos]
+
+  public:
+    chunk_by_view() requires [[redoc("`:c>")]]default_initializable<V> && [[redoc("`:c>")]]default_initializable<Pred> = default;
+    constexpr explicit chunk_by_view(V base, Pred pred);
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr const Pred& pred() const;
+
+    constexpr [[redoc("*>")]]iterator begin();
+    constexpr auto end();
+
+    constexpr iterator_t<V> [[redoc("*>")]]find-next(iterator_t<V>);                 // [=expos]
+    constexpr iterator_t<V> [[redoc("*>")]]find-prev(iterator_t<V>)                  // [=expos]
+      requires [[redoc("`:c>")]]bidirectional_range<V>;
+  };
+
+  template<class R, class Pred>
+    chunk_by_view(R&&, Pred) -> chunk_by_view<views::all_t<R>, Pred>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit chunk_by_view(V base, Pred pred);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)] and [*pred_] with
+[`std::move(pred)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`std::move(pred)] 初始化
+[*pred_]。
+[div:end]
+
+[%@lib@member pred[!chunk_by_view]]
+[codeblock:declaration]
+constexpr const Pred& pred() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*pred_];]
+[:zh_CN] 等价于：[`return [*pred_];]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator begin();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*pred_].has_value()] is [`true].
+[:zh_CN] [`[*pred_].has_value()] 为 [`true]。
+
+[para:returns]
+[:en] [`[*iterator](*this, ranges::begin([*base_]), [*find-next](ranges::begin([*base_])))].
+[:zh_CN] [`[*iterator](*this, ranges::begin([*base_]), [*find-next](ranges::begin([*base_])))]。
+
+[para:remarks]
+[:en] In order to provide the amortized constant-time complexity required by the
+[`:c range] concept, this function caches the result within the [`chunk_by_view]
+for use on subsequent calls.
+[:zh_CN] 为了提供 [`:c range] 概念所要求的摊销常量时间复杂度，这个函数会将
+[`chunk_by_view] 中的结果进行缓存以备后续调用中使用。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto end();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr ([[redoc("`:c>")]]common_range<V>) {
+  return [[redoc("*>")]]iterator(*this, ranges::end([[redoc("*>")]]base_), ranges::end([[redoc("*>")]]base_));
+} else {
+  return default_sentinel;
+}
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr iterator_t<V> [[redoc("*>")]]find-next(iterator_t<V> current);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*pred_].has_value()] is [`true].
+[:zh_CN] [`[*pred_].has_value()] 为 [`true]。
+
+[para:returns]
+[codeblock]
+ranges::next(ranges::adjacent_find(current, ranges::end([[redoc("*>")]]base_), not_fn(ref(*[[redoc("*>")]]pred_))),
+             1, ranges::end([[redoc("*>")]]base_))
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr iterator_t<V> [[redoc("*>")]]find-prev(iterator_t<V> current) requires [[redoc("`:c>")]]bidirectional_range<V>;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[list]
+[item]
+[:en] [`current] is not equal to [`ranges::begin([*base_])].
+[:zh_CN] [`current] 不等于 [`ranges::begin([*base_])]。
+[item]
+[:en] [`[*pred_].has_value()] is [`true].
+[:zh_CN] [`[*pred_].has_value()] 为 [`true]。
+[list:end]
+
+[para:returns]
+[:en] An iterator [`i] in the range [=range(ranges::begin([*base_]),current)]
+such that:
+[:zh_CN] 范围 [=range(ranges::begin([*base_]),current)] 中的迭代器 [`i]，使得：
+[list]
+[item]
+[:en] [`ranges::adjacent_find(i, current, not_fn(ref(*[*pred_])))] is equal to
+[`current]; and
+[:zh_CN] [`ranges::adjacent_find(i, current, not_fn(ref(*[*pred_])))] 等于
+[`current]；并且
+[item]
+[:en] if [`i] is not equal to [`ranges::begin([*base_])], then
+[`bool(invoke(*[*pred_], *ranges::prev(i), *i))] is [`false].
+[:zh_CN] 如果 [`i] 不等于 [`ranges::begin([*base_])]，则
+[`bool(invoke(*[*pred_], *ranges::prev(i), *i))] 为 [`false]。
+[list:end]
+[div:end]

@@ -1,0 +1,62 @@
+[section#range.join.with.sentinel
+    [:en] Class template [`join_with_view::[*sentinel]]
+    [:zh_CN] 类模板 [`join_with_view::[*sentinel]]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
+    requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>>
+          && [[redoc("`:c>")]]view<Pattern> && [[redoc("*:c>")]]compatible-joinable-ranges<range_reference_t<V>, Pattern>
+  template<bool Const>
+  class join_with_view<V, Pattern>::[[redoc("*>")]]sentinel {
+    using [[redoc("*>")]]Parent = [[redoc("*>")]]maybe-const<Const, join_with_view>;  // \expos
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                 // \expos
+    sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();         // \expos
+
+    constexpr explicit [[redoc("*>")]]sentinel([[redoc("*>")]]Parent& parent);        // \expos
+
+  public:
+    [[redoc("*>")]]sentinel() = default;
+    constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> s)
+      requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
+
+    template <bool OtherConst>
+      requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]sentinel([[redoc("*>")]]Parent& parent);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`ranges::end(parent.[*base_])].
+[:zh_CN] 以 [`ranges::end(parent.[*base_])] 初始化 [*end_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> s)
+  requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`std::move(s.[*end_])].
+[:zh_CN] 以 [`std::move(s.[*end_])] 初始化 [*end_]。
+[div:end]
+
+[codeblock:declaration]
+template <bool OtherConst>
+  requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*outer_] == y.[*end_];]
+[:zh_CN] 等价于：[`return x.[*outer_] == y.[*end_];]
+[div:end]
