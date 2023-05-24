@@ -1,0 +1,382 @@
+[section#atomics.ref.ops
+    [:en] Operations
+    [:zh_CN] 操作
+]
+
+[%@lib@member required_alignment[!atomic_ref]]
+[%@lib@member required_alignment[!atomic_ref<T*>]]
+[%@lib@member required_alignment[!atomic_ref<[^integral]>]]
+[%@lib@member required_alignment[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+static constexpr size_t required_alignment;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The alignment required for an object to be referenced by an atomic
+reference, which is at least [`alignof(T)].
+[:zh_CN] 由原子性引用所引用的对象所要求的对齐，至少为 [`alignof(T)]。
+
+[begin:note]
+[:en] Hardware could require an object referenced by an [`atomic_ref] to have
+stricter alignment ([#basic.align]) than other objects of type [`T].
+[:zh_CN] 硬件可能要求由 [`atomic_ref] 所引用的对象具有比 [`T] 类型的其他对象更
+严格的对齐（[#basic.align]）。
+
+[:en] Further, whether operations on an [`atomic_ref] are lock-free could depend
+on the alignment of the referenced object.
+[:zh_CN] 此外，对 [`atomic_ref] 的操作是否是免锁的，可能取决于所引用对象的对齐。
+
+[:en] For example, lock-free operations on [`std::complex<double>] could be
+supported only if aligned to [`2*alignof(double)].
+[:zh_CN] 例如，对 [`std:;complex<double>] 的免锁操作，可能仅在按
+[`2*alignof(double)] 对齐时才被支持。
+[end:note]
+[div:end]
+
+[%@lib@member is_always_lock_free[!atomic_ref]]
+[%@lib@member is_always_lock_free[!atomic_ref<T*>]]
+[%@lib@member is_always_lock_free[!atomic_ref<[^integral]>]]
+[%@lib@member is_always_lock_free[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+static constexpr bool is_always_lock_free;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The static data member [`is_always_lock_free] is [`true] if the
+[`atomic_ref] type[=']s operations are always lock-free, and [`false] otherwise.
+[:zh_CN] 当 [`atomic_ref] 类型的操作总是免锁时，静态数据成员
+[`is_always_lock_free] 为 [`true]，否则为 [`false]。
+[div:end]
+
+[%@lib@member is_lock_free[!atomic_ref]]
+[%@lib@member is_lock_free[!atomic_ref<T*>]]
+[%@lib@member is_lock_free[!atomic_ref<[^integral]>]]
+[%@lib@member is_lock_free[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+bool is_lock_free() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if operations on all objects of the type [`atomic_ref<T>] are
+lock-free, [`false] otherwise.
+[:zh_CN] 若 [`atomic_ref<T>] 类型的所有对象上的操作均为免锁则返回 [`true]，否则
+返回 [`false]。
+[div:end]
+
+[%@lib@ctor atomic_ref]
+[%@lib@ctor atomic_ref<T*>]
+[%@lib@ctor@raw [`atomic_ref<[^integral]>]]
+[%@lib@ctor@raw [`atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+atomic_ref(T& obj);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The referenced object is aligned to [`required_alignment].
+[:zh_CN] 被引用对象按 [`required_alignment] 对齐.
+
+[para:ensures]
+[:en] [`*this] references [`obj].
+[:zh_CN] [`*this] 引用 [`obj]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+[div:end]
+
+[%@lib@ctor atomic_ref]
+[%@lib@ctor atomic_ref<T*>]
+[%@lib@ctor@raw [`atomic_ref<[^integral]>]]
+[%@lib@ctor@raw [`atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+atomic_ref(const atomic_ref& ref) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] [`*this] references the object referenced by [`ref].
+[:zh_CN] [`*this] 引用 [`ref] 所引用的对象。
+[div:end]
+
+[%@lib@member store[!atomic_ref]]
+[%@lib@member store[!atomic_ref<T*>]]
+[%@lib@member store[!atomic_ref<[^integral]>]]
+[%@lib@member store[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+void store(T desired, memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The [`order] argument is neither [`memory_order::consume],
+[`memory_order::acquire], nor [`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不为 [`memory_order::consume]、[`memory_order::acquire]
+或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Atomically replaces the value referenced by [`*ptr] with the value of
+[`desired].
+[:zh_CN] 原子地将 [`*ptr] 所引用的值替换为 [`desired] 的值。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+[div:end]
+
+[%@lib@member operator=[!atomic_ref]]
+[%@lib@member operator=[!atomic_ref<T*>]]
+[%@lib@member operator=[!atomic_ref<[^integral]>]]
+[%@lib@member operator=[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+T operator=(T desired) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+store(desired);
+return desired;
+[codeblock:end]
+[div:end]
+
+[%@lib@member load[!atomic_ref]]
+[%@lib@member load[!atomic_ref<T*>]]
+[%@lib@member load[!atomic_ref<[^integral]>]]
+[%@lib@member load[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+T load(memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The [`order] argument is neither [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[para:returns]
+[:en] Atomically returns the value referenced by [`*ptr].
+[:zh_CN] 原子地返回由 [`*ptr] 所引用的值。
+[div:end]
+
+[%@lib@member operator [^type][!atomic_ref]]
+[%@lib@member operator T*[!atomic_ref<T*>]]
+[%@lib@member operator [^integral][!atomic_ref<[^integral]>]]
+[%@lib@member operator [^floating-point][!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+operator T() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return load();]
+[:zh_CN] 等价于：[`return load();]
+[div:end]
+
+[%@lib@member exchange[!atomic_ref]]
+[%@lib@member exchange[!atomic_ref<T*>]]
+[%@lib@member exchange[!atomic_ref<[^integral]>]]
+[%@lib@member exchange[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+T exchange(T desired, memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Atomically replaces the value referenced by [`*ptr] with [`desired].
+[:zh_CN] 原子地将 [`*ptr] 所引用的值替换为 [`desired]。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] This operation is an atomic read-modify-write operation
+([#intro.multithread]).
+[:zh_CN] 这个操作是原子性读-改-写操作（[#intro.multithread]）。
+
+[para:returns]
+[:en] Atomically returns the value referenced by [`*ptr] immediately before the
+effects.
+[:zh_CN] 原子地返回紧接其效果生效前 [`*ptr] 所引用的值。
+[div:end]
+
+[%@lib@member compare_exchange_weak[!atomic_ref]]
+[%@lib@member compare_exchange_weak[!atomic_ref<T*>]]
+[%@lib@member compare_exchange_weak[!atomic_ref<[^integral]>]]
+[%@lib@member compare_exchange_weak[!atomic_ref<[^floating-point]>]]
+[%@lib@member compare_exchange_strong[!atomic_ref]]
+[%@lib@member compare_exchange_strong[!atomic_ref<T*>]]
+[%@lib@member compare_exchange_strong[!atomic_ref<[^integral]>]]
+[%@lib@member compare_exchange_strong[!atomic_ref<[^floating-point]>]]
+[codeblock:declaration]
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order success, memory_order failure) const noexcept;
+
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order success, memory_order failure) const noexcept;
+
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order order = memory_order::seq_cst) const noexcept;
+
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The [`failure] argument is neither [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] 实参 [`failure] 不为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Retrieves the value in [`expected].
+[:zh_CN] 获取 [`expected] 中的值。
+
+[:en] It then atomically compares the value representation of the value
+referenced by [`*ptr] for equality with that previously retrieved from
+[`expected], and if [`true], replaces the value referenced by [`*ptr] with that
+in [`desired].
+[:zh_CN] 然后原子地对由 [`*ptr] 所引用的值和之前从 [`expected] 所获取到的值的
+值表示进行比较，当为 [`true] 时，将由 [`*ptr] 所引用的值替换为 [`desired] 中的值。
+
+[:en] If and only if the comparison is [`true], memory is affected according to
+the value of [`success], and if the comparison is [`false], memory is affected
+according to the value of [`failure].
+[:zh_CN] 当且仅当比较结果为 [`true] 时，根据 [`success] 的值影响内存，当比较结果
+为 [`false] 时，则根据 [`failure] 的值影响内存。
+
+[:en] When only one [`memory_order] argument is supplied, the value of [`success]
+is [`order], and the value of [`failure] is [`order] except that a value of
+[`memory_order::acq_rel] shall be replaced by the value [`memory_order::acquire]
+and a value of [`memory_order::release] shall be replaced by the value
+[`memory_order::relaxed].
+[:zh_CN] 当只提供了一个 [`memory_order] 实参时，[`success] 的值即为 [`order]，而
+[`failure] 的值也为 [`order] 但值 [`memory_order::acq_rel] 应当替换为值
+[`memory_order::acquire] 而值 [`memory_order::release] 应当替换为值
+[`memory_order::relaxed]。
+
+[:en] If and only if the comparison is [`false] then, after the atomic operation,
+the value in [`expected] is replaced by the value read from the value referenced
+by [`*ptr] during the atomic comparison.
+[:zh_CN] 当且仅当比较结果为 [`false] 时，在该原子性操作之后，[`expected] 中的值
+被替换为原子性比较过程中从 [`*ptr] 所引用的值中读取到的值。
+
+[:en] If the operation returns [`true], these operations are atomic
+read-modify-write operations ([#intro.races]) on the value referenced by [`*ptr].
+[:zh_CN] 如果该操作返回 [`true]，则这些操作是对由 [`*ptr] 所引用的值的原子性
+读-改-写操作（[#intro.races]）。
+
+[:en] Otherwise, these operations are atomic load operations on that memory.
+[:zh_CN] 否则，这些操作是对该内存的原子性加载操作。
+
+[para:returns]
+[:en] The result of the comparison.
+[:zh_CN] 比较的结果。
+
+[para:remarks]
+[:en] A weak compare-and-exchange operation may fail spuriously.
+[:zh_CN] 弱比较并交换操作可能发生假性失败。
+
+[:en] That is, even when the contents of memory referred to by [`expected] and
+[`ptr] are equal, it may return [`false] and store back to [`expected] the same
+memory contents that were originally there.
+[:zh_CN] 就是说，即便 [`expected] 和 [`ptr] 所指代的内存的内容相等，它也可能
+返回 [`false] 并将 [`expected] 原来的内存内容存储回去。
+
+[begin:note]
+[:en] This spurious failure enables implementation of compare-and-exchange on a
+broader class of machines, e.g., load-locked store-conditional machines.
+[:zh_CN] 这种假性失败使得在更广泛的机器种类上实现比较并交换成为可能，比如一些
+支持加载锁定/条件存储的机器
+
+[:en] A consequence of spurious failure is that nearly all uses of weak
+compare-and-exchange will be in a loop.
+[:zh_CN] 假性失败的后果是，几乎所有的弱比较并交换的使用都要在循环中进行。
+
+[:en] When a compare-and-exchange is in a loop, the weak version will yield
+better performance on some platforms.
+[:zh_CN] 如果比较并交换在循环中进行，弱化版本在某些平台上将会表现出更好的性能。
+
+[:en] When a weak compare-and-exchange would require a loop and a strong one
+would not, the strong one is preferable.
+[:zh_CN] 如果弱比较并交换需要循环而强版本不需要，则优先采用强版本。
+[end:note]
+[div:end]
+
+[%@lib@member wait[!atomic_ref<T>]]
+[codeblock:declaration]
+void wait(T old, memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`order] is neither [`memory_order::release] nor [`memory_order::acq_rel].
+[:zh_CN] [`order] 既不是 [`memory_order::release] 也不是 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Repeatedly performs the following steps, in order:
+[:zh_CN] 重复依序实施以下各步骤：
+
+[list]
+[item]
+[:en] Evaluates [`load(order)] and compares its value representation for
+equality against that of [`old].
+[:zh_CN] 求值 [`load(order)] 并将其值表示与 [`old] 的值表示进行相等性比较。
+[item]
+[:en] If they compare unequal, returns.
+[:zh_CN] 若二者不相等则返回。
+[item]
+[:en] Blocks until it is unblocked by an atomic notifying operation or is
+unblocked spuriously.
+[:zh_CN] 阻塞，直到被原子性通知操作解除阻塞，或假性解除阻塞。
+[list:end]
+
+[para:remarks]
+[:en] This function is an atomic waiting operation ([#atomics.wait]) on atomic
+object [`*ptr].
+[:zh_CN] 这个函数是在原子性对象 [`*ptr] 上的原子性等待操作（[#atomics.wait]）。
+[div:end]
+
+[%@lib@member notify_one[!atomic_ref<T>]]
+[codeblock:declaration]
+void notify_one() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Unblocks the execution of at least one atomic waiting operation on [`*ptr]
+that is eligible to be unblocked ([#atomics.wait]) by this call, if any such
+atomic waiting operations exist.
+[:zh_CN] 使至少一个合乎被本次调用解除阻塞的条件（[#atomics.wait]）的 [`*ptr]
+上的原子性等待操作解除阻塞（若存在任何这种原子性等待操作）。
+
+[para:remarks]
+[:en] This function is an atomic notifying operation ([#atomics.wait]) on atomic
+object [`*ptr].
+[:zh_CN] 这个函数是在原子性对象 [`*ptr] 上的原子性通知操作（[#atomics.wait]）。
+[div:end]
+
+[%@lib@member notify_all[!atomic_ref<T>]]
+[codeblock:declaration]
+void notify_all() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Unblocks the execution of all atomic waiting operations on [`*ptr] that
+are eligible to be unblocked ([#atomics.wait]) by this call.
+[:zh_CN] 使所有合乎被本次调用解除阻塞的条件（[#atomics.wait]）的 [`*ptr] 上的
+原子性等待操作解除阻塞。
+
+[para:remarks]
+[:en] This function is an atomic notifying operation ([#atomics.wait]) on atomic
+object [`*ptr].
+[:zh_CN] 这个函数是在原子性对象 [`*ptr] 上的原子性通知操作（[#atomics.wait]）。
+[div:end]

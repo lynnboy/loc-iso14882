@@ -1,0 +1,90 @@
+[section#util.smartptr.atomic.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en]
+The library provides partial specializations of the [`atomic] template for
+shared-ownership smart pointers ([#util.sharedptr]).
+[:zh_CN]
+程序库为共享所有权的智能指针（[#util.sharedptr]）提供了 [`atomic] 模板的部分
+特化式。
+
+[begin:note]
+[:en]
+The partial specializations are declared in header [?libheader@ref memory].
+[:zh_CN]
+这些部分特化式在 [?libheader@ref memory] 中声明。
+[end:note]
+
+[:en]
+The behavior of all operations is as specified in [#atomics.types.generic],
+unless specified otherwise.
+[:zh_CN]
+除非另有规定，否则其所有操作的行为都如 [#atomics.types.generic] 所述。
+
+[:en]
+The template parameter [`T] of these partial specializations may be an
+incomplete type.
+[:zh_CN]
+这些部分特化式的模板形参 [`T] 可以是不完整类型。
+
+[para]
+[:en]
+All changes to an atomic smart pointer in [#util.smartptr.atomic], and all
+associated [`use_count] increments, are guaranteed to be performed atomically.
+[:zh_CN]
+[#util.smartptr.atomic] 中的原子性智能指针的任何改动，以及关联的 [`use_count] 的
+任何增量，都保证以原子性的方式进行。
+
+[:en]
+Associated [`use_count] decrements are sequenced after the atomic operation,
+but are not required to be part of it.
+[:zh_CN]
+关联的 [`use_count] 的减量按顺序晚于原子性操作，而并不要求是其一部分。
+
+[:en]
+Any associated deletion and deallocation are sequenced after the atomic update
+step and are not part of the atomic operation.
+[:zh_CN]
+任何关联的删除和回收操作，都按顺序晚于原子性的更新步骤且并非原子性操作的一部分。
+
+[begin:note]
+[:en]
+If the atomic operation uses locks, locks acquired by the implementation will be
+held when any [`use_count] adjustments are performed, and will not be held when
+any destruction or deallocation resulting from this is performed.
+[:zh_CN]
+如果原子性操作使用了锁，则由实现所获得的锁，将在进行 [`use_count] 的任何调整时被
+持有，但在进行由此导致的任何销毁或回收操作时并不被持有。
+[end:note]
+
+[para]
+[begin:example]
+[codeblock]
+template<typename T> class atomic_list {
+  struct node {
+    T t;
+    shared_ptr<node> next;
+  };
+  atomic<shared_ptr<node>> head;
+
+public:
+  auto find(T t) const {
+    auto p = head.load();
+    while (p && p->t != t)
+      p = p->next;
+
+    return shared_ptr<node>(move(p));
+  }
+
+  void push_front(T t) {
+    auto p = make_shared<node>();
+    p->t = t;
+    p->next = head;
+    while (!head.compare_exchange_weak(p->next, p)) {}
+  }
+};
+[codeblock:end]
+[end:example]

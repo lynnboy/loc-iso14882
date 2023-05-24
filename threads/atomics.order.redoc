@@ -1,0 +1,309 @@
+[section#atomics.order
+    [:en] Order and consistency
+    [:zh_CN] 顺序与一致性
+]
+
+[%@lib memory_order]
+[%@lib@member relaxed[!memory_order]]
+[%@lib@member consume[!memory_order]]
+[%@lib@member acquire[!memory_order]]
+[%@lib@member release[!memory_order]]
+[%@lib@member acq_rel[!memory_order]]
+[%@lib@member seq_cst[!memory_order]]
+[%@lib memory_order_relaxed]
+[%@lib memory_order_consume]
+[%@lib memory_order_acquire]
+[%@lib memory_order_release]
+[%@lib memory_order_acq_rel]
+[%@lib memory_order_seq_cst]
+[codeblock:synopsis]
+namespace std {
+  enum class memory_order : [[redoc("[=unspec]")]] {
+    relaxed, consume, acquire, release, acq_rel, seq_cst
+  };
+  inline constexpr memory_order memory_order_relaxed = memory_order::relaxed;
+  inline constexpr memory_order memory_order_consume = memory_order::consume;
+  inline constexpr memory_order memory_order_acquire = memory_order::acquire;
+  inline constexpr memory_order memory_order_release = memory_order::release;
+  inline constexpr memory_order memory_order_acq_rel = memory_order::acq_rel;
+  inline constexpr memory_order memory_order_seq_cst = memory_order::seq_cst;
+}
+[codeblock:end]
+
+[para]
+[:en] The enumeration [`memory_order] specifies the detailed regular
+(non-atomic) memory synchronization order as defined in [#intro.multithread] and
+may provide for operation ordering.
+[:zh_CN] 枚举 [`memory_order] 指定了详细的常规（非原子性）内存同步顺序，如
+[#intro.multithread] 所定义，并可作为操作排序依据。
+
+[:en] Its enumerated values and their meanings are as follows:
+[:zh_CN] 其所列举的各个值及其含义如下：
+
+[list]
+[item]
+[:en] [`memory_order::relaxed]: no operation orders memory.
+[:zh_CN] [`memory_order::relaxed]：没有内存排序操作。
+
+[item]
+[:en] [`memory_order::release], [`memory_order::acq_rel], and
+[`memory_order_seq::cst]: a store operation performs a release operation on the
+affected memory location.
+[:zh_CN] [`memory_order::release]、[`memory_order::acq_rel] 和
+[`memory_order::seq_cst]：存储操作在所影响的内存位置上实施释放操作。
+
+[item]
+[:en] [`memory_order::consume]: a load operation performs a consume operation on
+the affected memory location.
+[:zh_CN] [`memory_order::consume]：加载操作在所影响的内存位置上实施消费操作。
+
+[begin:note]
+[:en] Prefer [`memory_order::acquire], which provides stronger guarantees than
+[`memory_order::consume].
+[:zh_CN] 优先采用 [`memory_order::acquire]，它提供比 [`memory_order::consume]
+更强的保证。
+
+[:en] Implementations have found it infeasible to provide performance better
+than that of [`memory_order::acquire].
+[:zh_CN] 各实现已经发现，要提供比 [`memory_order::acquire] 更好的性能并不可行。
+
+[:en] Specification revisions are under consideration.
+[:zh_CN] 正在考虑对规范进行修订。
+[end:note]
+
+[item]
+[:en] [`memory_order::acquire], [`memory_order::acq_rel], and
+[`memory_order::seq_cst]: a load operation performs an acquire operation on the
+affected memory location.
+[:zh_CN] [`memory_order::acquire]、[`memory_order::acq_rel] 和
+[`memory_order::seq_cst]：加载操作在所影响的内存位置上实施获取操作。
+[list:end]
+
+[begin:note]
+[:en] Atomic operations specifying [`memory_order::relaxed] are relaxed with
+respect to memory ordering.
+[:zh_CN] 指定了 [`memory_order::relaxed] 的原子性操作对于内存排序方面是宽松的。
+
+[:en] Implementations must still guarantee that any given atomic access to a
+particular atomic object be indivisible with respect to all other atomic
+accesses to that object.
+[:zh_CN] 但各实现仍必须确保任意给定的到特定原子性对象的原子性访问，对于到该对象
+的任何其他原子性访问来说都是不可分的。
+[end:note]
+
+[para]
+[:en] An atomic operation [$A] that performs a release operation on an atomic
+object [$M] synchronizes with an atomic operation [$B] that performs an acquire
+operation on [$M] and takes its value from any side effect in the release
+sequence headed by [$A].
+[:zh_CN] 在原子性对象 [$M] 上实施释放操作的原子性操作 [$A]，以及在 [$M] 上实施
+获取操作的原子性操作 [$B]，且 [$B] 从以 [$A] 开始的释放序列中的任何副作用获得了
+值，则 [$A] 同步于 [$B]。
+
+[para]
+[:en] An atomic operation [$A] on some atomic object [$M] is
+[+coherence-ordered before] another atomic operation [$B] on [$M] if
+[:zh_CN] 以下情况下，称在原子性对象 [$M] 上的原子性操作 [$A] [+按一致性顺序早于]
+[$M] 上的另一个原子性操作 [$B]：
+
+[list]
+[item]
+[:en] [$A] is a modification, and [$B] reads the value stored by [$A], or
+[:zh_CN] [$A] 是一次改动操作，而 [$B] 读取由 [$A] 所存储的值，或者
+
+[item]
+[:en] [$A] precedes [$B] in the modification order of [$M], or
+[:zh_CN] [$A] 在 [$M] 的改动顺序中先于 [$B]，或者
+
+[item]
+[:en] [$A] and [$B] are not the same atomic read-modify-write operation, and
+there exists an atomic modification [$X] of [$M] such that [$A] reads the value
+stored by [$X] and [$X] precedes [$B] in the modification order of [$M], or
+[:zh_CN] [$A] 和 [$B] 并非相同的读-改-写操作，并且存在 [$M] 上的原子性操作 [$X]
+使得 [$A] 读取由 [$X] 所存储的值，而 [$X] 在 [$M] 的改动顺序中先于 [$B]，或者
+
+[item]
+[:en] there exists an atomic modification [$X] of [$M] such that [$A] is
+coherence-ordered before [$X] and [$X] is coherence-ordered before [$B].
+[:zh_CN] 存在 [$M] 上的原子性操作 [$X] 使得 [$A] 按一致性顺序早于 [$X] 且 [$X]
+按一致性顺序早于 [$B]。
+[list:end]
+
+[para]
+[:en] There is a single total order [$S] on all [`memory_order::seq_cst]
+operations, including fences, that satisfies the following constraints.
+[:zh_CN] 在全部的 [`memory_order::seq_cst] 操作中应当存在单个的全序 [$S]，它包含
+符合下列约束的各种屏障：
+
+[:en] First, if [$A] and [$B] are [`memory_order::seq_cst] operations and [$A]
+strongly happens before [$B], then [$A] precedes [$B] in [$S].
+[:zh_CN] 首先，若 [$A] 和 [$B] 均为 [`memory_order::seq_cst] 操作，且 [$A]
+强发生早于 [$B]，则 [$A] 在 [$S] 中处于 [$B] 之前。
+
+[:en] Second, for every pair of atomic operations [$A] and [$B] on an object [$M],
+where [$A] is coherence-ordered before [$B], the following four conditions are
+required to be satisfied by [$S]:
+[:zh_CN] 然后，对于对象 [$M] 上的每一对原子性操作 [$A] 和 [$B]，其中 [$A]
+按一致性顺序早于 [$B]，则 [$S] 应当遵循以下四个条件：
+
+[list]
+[item]
+[:en] if [$A] and [$B] are both [`memory_order::seq_cst] operations, then [$A]
+precedes [$B] in [$S]; and
+[:zh_CN] 若 [$A] 和 [$B] 均为 [`memory_order::seq_cst] 操作，则 [$A] 在 [$S] 中
+先于 [$B]；并且
+
+[item]
+[:en] if [$A] is a [`memory_order::seq_cst] operation and [$B] happens before
+a [`memory_order::seq_cst] fence [$Y], then [$A] precedes [$Y] in [$S]; and
+[:zh_CN] 若 [$A] 为 [`memory_order::seq_cst] 操作，且 [$B] 发生早于某个
+[`memory_order::seq_cst] 屏障 [$Y]，则 [$A] 在 [$S] 中先于 [$Y]；并且
+
+[item]
+[:en] if a [`memory_order::seq_cst] fence [$X] happens before [$A] and [$B] is a
+[`memory_order::seq_cst] operation, then [$X] precedes [$B] in [$S]; and
+[:zh_CN] 若某个 [`memory_order::seq_cst] 屏障 [$X] 发生早于 [$A]，且 [$B] 为
+[`memory_order::seq_cst] 操作，则 [$X] 在 [$S] 中先于 [$B]；并且
+
+[item]
+[:en] if a [`memory_order::seq_cst] fence [$X] happens before [$A] and [$B]
+happens before a [`memory_order::seq_cst] fence [$Y], then [$X] precedes [$Y] in
+[$S].
+[:zh_CN] 若某个 [`memory_order::seq_cst] 屏障 [$X] 发生早于 [$A]，且 [$B] 发生
+早于某个 [`memory_order::seq_cst] 屏障 [$Y]，则 [$X] 在 [$S] 中先于 [$Y]。
+[list:end]
+
+[para]
+[begin:note]
+[:en] This definition ensures that [$S] is consistent with the modification
+order of any atomic object [$M].
+[:zh_CN] 这条定义确保了 [$S] 和任何原子性对象 [$M] 的改动顺序相一致。
+
+[:en] It also ensures that a [`memory_order::seq_cst] load [$A] of [$M] gets its
+value either from the last modification of [$M] that precedes [$A] in [$S] or
+from some non-[`memory_order::seq_cst] modification of [$M] that does not happen
+before any modification of [$M] that precedes [$A] in [$S].
+[:zh_CN] 它还保证了对 [$M] 的 [`memory_order::seq_cst] 加载操作 [$A]，要么读取到
+在 [$S] 中先于 [$A] 的 [$M] 的最后一次改动操作的值，要么读取到并非发生早于在
+[$S] 中先于 [$A] 的 [$M] 的任何改动操作的对 [$M] 的非 [`memory_order::seq_cst]
+的改动操作的值。
+[end:note]
+
+[para]
+[begin:note]
+[:en] We do not require that [$S] be consistent with [=lq]happens before[=rq]
+([#intro.races]).
+[:zh_CN] 并不要求 [$S] 与“发生早于”关系（[#intro.races]）保持一致。
+
+[:en] This allows more efficient implementation of [`memory_order::acquire] and
+[`memory_order::release] on some machine architectures.
+[:zh_CN] 这样就允许在某些机器架构上能够更高效地实现 [`memory_order::acquire] 和
+[`memory_order::release]。
+
+[:en] It can produce surprising results when these are mixed with
+[`memory_order::seq_cst] accesses.
+[:zh_CN] 而当这些操作与 [`memory_order::seq_cst] 的访问混合使用时可能会导致出人
+意料的结果。
+[end:note]
+
+[para]
+[begin:note]
+[:en] [`memory_order::seq_cst] ensures sequential consistency only for a program
+that is free of data races and uses exclusively [`memory_order::seq_cst] atomic
+operations.
+[:zh_CN] [`memory_order::seq_cst] 仅对没有数据竞争且完全使用
+[`memory_order::seq_cst] 原子性操作的程序保证顺序一致性。
+
+[:en] Any use of weaker ordering will invalidate this guarantee unless extreme
+care is used.
+[:zh_CN] 除非极端小心，否则任何对较弱顺序性的使用，都会使这项保证失效。
+
+[:en] In many cases, [`memory_order::seq_cst] atomic operations are reorderable
+with respect to other atomic operations performed by the same thread.
+[:zh_CN] 许多情况下，[`memory_order::seq_cst] 原子性操作都可以针对由同一个线程所
+实施的其他原子性操作进行重排序。
+[end:note]
+
+[para]
+[:en] Implementations should ensure that no [=lq]out-of-thin-air[=rq] values are
+computed that circularly depend on their own computation.
+[:zh_CN] 各实现应当确保不会出现计算之中循环依赖于其自身的计算的“凭空出现”的值。
+
+[begin:note]
+[:en] For example, with [`x] and [`y] initially zero,
+[:zh_CN] 例如，设 [`x] 和 [`y] 初始为零，
+
+[codeblock]
+// [:en] Thread 1: \
+[:zh_CN] 线程 1：
+r1 = y.load(memory_order::relaxed);
+x.store(r1, memory_order::relaxed);
+[codeblock:end]
+
+[codeblock]
+// [:en] Thread 2: \
+[:zh_CN] 线程 2：
+r2 = x.load(memory_order::relaxed);
+y.store(r2, memory_order::relaxed);
+[codeblock:end]
+
+[:en@~] this recommendation discourages producing [`r1 == r2 == 42], since the
+store of 42 to [`y] is only possible if the store to [`x] stores [`42], which
+circularly depends on the store to [`y] storing [`42].
+[:zh_CN@~] 这项建议不鼓励产生 [`r1 == r2 == 42]，因为将 42 存储到 [`y] 只有当向
+[`x] 所存储的值为 [`42] 时才可能发生，而这循环地依赖于向 [`y] 存储 [`42]。
+
+[:en] Note that without this restriction, such an execution is possible.
+[:zh_CN] 注意，如果没有这条限制，那这种执行就可能发生。
+[end:note]
+
+[para]
+[begin:note]
+[:en] The recommendation similarly disallows [`r1 == r2 == 42] in the following
+example, with [`x] and [`y] again initially zero:
+[:zh_CN] 与此相似，此建议在以下示例中也禁止 [`r1 == r2 == 42]，设 [`x] 和 [`y]
+初始也为零：
+
+[codeblock]
+// [:en] Thread 1: \
+[:zh_CN] 线程 1：
+r1 = x.load(memory_order::relaxed);
+if (r1 == 42) y.store(42, memory_order::relaxed);
+[codeblock:end]
+
+[codeblock]
+// [:en] Thread 2: \
+[:zh_CN] 线程 2：
+r2 = y.load(memory_order::relaxed);
+if (r2 == 42) x.store(42, memory_order::relaxed);
+[codeblock:end]
+[end:note]
+
+[para]
+[:en] Atomic read-modify-write operations shall always read the last value
+(in the modification order) written before the write associated with the
+read-modify-write operation.
+[:zh_CN] 原子性读-改-写操作应当总是读到（改动序列中）在该读-改-写操作所关联的
+写入之前所写入的最后一个值。
+
+[para]
+[:en] Implementations should make atomic stores visible to atomic loads within a
+reasonable amount of time.
+[:zh_CN] 各实现应当使原子性存储操作在某个合理的时间段内对原子性加载操作可见。
+
+[%@lib kill_dependency]
+[codeblock:declaration]
+template<class T>
+  T kill_dependency(T y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] The argument does not carry a dependency to the return value
+([#intro.multithread]).
+[:zh_CN] 实参不传递依赖给返回值（[#intro.multithread]）。
+
+[para:returns]
+[:en] [`y].
+[:zh_CN] [`y]。
+[div:end]

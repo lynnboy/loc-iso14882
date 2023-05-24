@@ -1,0 +1,580 @@
+[section#atomics.types.operations
+    [:en] Operations on atomic types
+    [:zh_CN] 原子性类型的操作
+]
+
+[%@lib@ctor atomic]
+[%@lib@ctor atomic<T*>]
+[%@lib@ctor@raw [`atomic<[^integral]>]]
+[%@lib@ctor@raw [`atomic<[^floating-point]>]]
+[codeblock:declaration]
+constexpr atomic() noexcept(is_nothrow_default_constructible_v<T>);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`is_default_constructible_v<T>] is [`true].
+[:zh_CN] [`is_default_constructible_v<T>] 为 [`true]。
+
+[para:effects]
+[:en] Initializes the atomic object with the value of [`T()].
+[:zh_CN] 以 [`T()] 的值初始化原子性对象。
+
+[:en] Initialization is not an atomic operation ([#intro.multithread]).
+[:zh_CN] 初始化并非原子性操作（[#intro.multithread]）。
+[div:end]
+
+[%@lib@ctor atomic]
+[%@lib@ctor atomic<T*>]
+[%@lib@ctor@raw [`atomic<[^integral]>]]
+[%@lib@ctor@raw [`atomic<[^floating-point]>]]
+[codeblock:declaration]
+constexpr atomic(T desired) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes the object with the value [`desired].
+[:zh_CN] 以值 [`desired] 初始化对象。
+
+[:en] Initialization is not an atomic operation ([#intro.multithread]).
+[:zh_CN] 初始化并非原子性操作（[#intro.multithread]）。
+
+[begin:note]
+[:en] It is possible to have an access to an atomic object [`A] race with its
+construction, for example by communicating the address of the just-constructed
+object [`A] to another thread via [`memory_order::relaxed] operations on a
+suitable atomic pointer variable, and then immediately accessing [`A] in the
+receiving thread.
+[:zh_CN] 使对原子性对象 [`A] 的某次访问与其构造直接产生竞争是可能的，比如通过
+将正在构造的对象 [`A] 的地址，通过在适当的原子性指针变量上的
+[`memory_order::relaxed] 操作通知给另一个线程，然后在接收线程中立即访问 [`A]。
+
+[:en] This results in undefined behavior.
+[:zh_CN] 这将导致未定义的行为。
+[end:note]
+[div:end]
+
+[%@lib@member is_always_lock_free[!atomic]]
+[%@lib@member is_always_lock_free[!atomic<T*>]]
+[%@lib@member is_always_lock_free[!atomic<[^integral]>]]
+[%@lib@member is_always_lock_free[!atomic<[^floating-point]>]]
+[%@lib@member is_always_lock_free[!atomic<shared_ptr<T>>]]
+[%@lib@member is_always_lock_free[!atomic<weak_ptr<T>>]]
+[codeblock:declaration [!:mark ImpDef] ]
+static constexpr bool is_always_lock_free = [[redoc("[?impdefx"
+    "[:en] whether a given [`atomic] type[=']s operations are always lock free"
+    "[:zh_CN] 给定 [`atomic] 类型的操作是否总是免锁的]")]];
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The [`:key static] data member [`is_always_lock_free] is [`true] if the
+atomic type[=']s operations are always lock-free, and [`false] otherwise.
+[:zh_CN] 当原子性类型的操作总是免锁时，[`:key static] 数据成员
+[`is_always_lock_free] 为 [`true]，否则为 [`false]。
+
+[begin:note]
+[:en] The value of [`is_always_lock_free] is consistent with the value of the
+corresponding [`ATOMIC_..._LOCK_FREE] macro, if defined.
+[:zh_CN] [`is_always_lock_free] 与对应的 [`ATOMIC_..._LOCK_FREE] 宏的值一致
+（如果其有定义）。
+[end:note]
+[div:end]
+
+[%@lib atomic_is_lock_free]
+[%@lib@member is_lock_free[!atomic]]
+[%@lib@member is_lock_free[!atomic<T*>]]
+[%@lib@member is_lock_free[!atomic<[^integral]>]]
+[%@lib@member is_lock_free[!atomic<[^floating-point]>]]
+[%@lib@member is_lock_free[!atomic<shared_ptr<T>>]]
+[%@lib@member is_lock_free[!atomic<weak_ptr<T>>]]
+[codeblock:declaration]
+bool is_lock_free() const volatile noexcept;
+bool is_lock_free() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if the object[=']s operations are lock-free, [`false] otherwise.
+[:zh_CN] 若该对象的操作均为免锁则返回 [`true]，否则返回 [`false]。
+
+[begin:note]
+[:en] The return value of the [`is_lock_free] member function is consistent with
+the value of [`is_always_lock_free] for the same type.
+[:zh_CN] [`is_lock_free] 成员函数的返回值与 [`is_always_lock_free] 对相同类型的
+值一致。
+[end:note]
+[div:end]
+
+[%@lib atomic_store]
+[%@lib atomic_store_explicit]
+[%@lib@member store[!atomic]]
+[%@lib@member store[!atomic<T*>]]
+[%@lib@member store[!atomic<[^integral]>]]
+[%@lib@member store[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+void store(T desired, memory_order order = memory_order::seq_cst) volatile noexcept;
+void store(T desired, memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:expects]
+[:en] The [`order] argument is neither [`memory_order::consume],
+[`memory_order::acquire], nor [`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不为 [`memory_order::consume]、[`memory_order::acquire]
+或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Atomically replaces the value pointed to by [`:key this] with the value of
+[`desired].
+[:zh_CN] 原子地将 [`:key this] 所指向的值替换为 [`desired] 的值。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+[div:end]
+
+[%@lib@member operator=[!atomic]]
+[%@lib@member operator=[!atomic<T*>]]
+[%@lib@member operator=[!atomic<[^integral]>]]
+[%@lib@member operator=[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+T operator=(T desired) volatile noexcept;
+T operator=(T desired) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to [`store(desired)].
+[:zh_CN] 等价于 [`store(desired)]。
+
+[para:returns]
+[:en] [`desired].
+[:zh_CN] [`desired]。
+[div:end]
+
+[%@lib atomic_load]
+[%@lib atomic_load_explicit]
+[%@lib@member load[!atomic]]
+[%@lib@member load[!atomic<T*>]]
+[%@lib@member load[!atomic<[^integral]>]]
+[%@lib@member load[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+T load(memory_order order = memory_order::seq_cst) const volatile noexcept;
+T load(memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:expects]
+[:en] The [`order] argument is neither [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] 实参 [`order] 不为 [`memory_order::release] 或 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[para:returns]
+[:en] Atomically returns the value pointed to by [`:key this].
+[:zh_CN] 原子地返回由 [`:key this] 所指向的值。
+[div:end]
+
+[%@lib@member operator [^type][!atomic]]
+[%@lib@member operator T*[!atomic<T*>]]
+[%@lib@member operator [^integral][!atomic<[^integral]>]]
+[%@lib@member operator [^floating-point][!atomic<[^floating-point]>]]
+[codeblock:declaration]
+operator T() const volatile noexcept;
+operator T() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return load();]
+[:zh_CN] 等价于：[`return load();]
+[div:end]
+
+[%@lib atomic_exchange]
+[%@lib atomic_exchange_explicit]
+[%@lib@member exchange[!atomic]]
+[%@lib@member exchange[!atomic<T*>]]
+[%@lib@member exchange[!atomic<[^integral]>]]
+[%@lib@member exchange[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+T exchange(T desired, memory_order order = memory_order::seq_cst) volatile noexcept;
+T exchange(T desired, memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:effects]
+[:en] Atomically replaces the value pointed to by [`:key this] with [`desired].
+[:zh_CN] 原子地将 [`:key this] 所指向的值替换为 [`desired]。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] These operations are atomic read-modify-write operations
+([#intro.multithread]).
+[:zh_CN] 这些操作是原子性读-改-写操作（[#intro.multithread]）。
+
+[para:returns]
+[:en] Atomically returns the value pointed to by [`:key this] immediately before
+the effects.
+[:zh_CN] 原子地返回紧接其效果生效前 [`:key this] 所指向的值。
+[div:end]
+
+[%@lib atomic_compare_exchange_weak]
+[%@lib atomic_compare_exchange_strong]
+[%@lib atomic_compare_exchange_weak_explicit]
+[%@lib atomic_compare_exchange_strong_explicit]
+[%@lib@member compare_exchange_weak[!atomic]]
+[%@lib@member compare_exchange_weak[!atomic<T*>]]
+[%@lib@member compare_exchange_weak[!atomic<[^integral]>]]
+[%@lib@member compare_exchange_weak[!atomic<[^floating-point]>]]
+[%@lib@member compare_exchange_strong[!atomic]]
+[%@lib@member compare_exchange_strong[!atomic<T*>]]
+[%@lib@member compare_exchange_strong[!atomic<[^integral]>]]
+[%@lib@member compare_exchange_strong[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order success, memory_order failure) volatile noexcept;
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order success, memory_order failure) noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order success, memory_order failure) volatile noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order success, memory_order failure) noexcept;
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order order = memory_order::seq_cst) volatile noexcept;
+bool compare_exchange_weak(T& expected, T desired,
+                           memory_order order = memory_order::seq_cst) noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order order = memory_order::seq_cst) volatile noexcept;
+bool compare_exchange_strong(T& expected, T desired,
+                             memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:expects]
+[:en] The [`failure] argument is neither [`memory_order::release] nor
+[`memory_order::acq_rel].
+[:zh_CN] 实参 [`failure] 不为 [`memory_order::release] 或
+[`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Retrieves the value in [`expected].
+[:zh_CN] 获取 [`expected] 中的值。
+
+[:en] It then atomically compares the value representation of the value pointed
+to by [`:key this] for equality with that previously retrieved from [`expected],
+and if true, replaces the value pointed to by [`:key this] with that in
+[`desired].
+[:zh_CN] 然后原子地比较由 [`:key this] 所指向值和之前从 [`expected] 所获取到的值
+的值表示，当为真时，将由 [`:key this] 所指向的值替换为 [`desired] 中的值。
+
+[:en] If and only if the comparison is [`true], memory is affected according to
+the value of [`success], and if the comparison is false, memory is affected
+according to the value of [`failure].
+[:zh_CN] 当且仅当比较结果为 [`true] 时，根据 [`success] 的值影响内存，当比较结果
+为 [`false] 时，则根据 [`failure] 的值影响内存。
+
+[:en] When only one [`memory_order] argument is supplied, the value of [`success]
+is [`order], and the value of [`failure] is [`order] except that a value of
+[`memory_order::acq_rel] shall be replaced by the value [`memory_order::acquire]
+and a value of [`memory_order::release] shall be replaced by the value
+[`memory_order::relaxed].
+[:zh_CN] 当只提供了一个 [`memory_order] 实参时，[`success] 的值即为 [`order]，而
+[`failure] 的值也为 [`order] 但值 [`memory_order::acq_rel] 应当替换为值
+[`memory_order::acquire] 而值 [`memory_order::release] 应当替换为值
+[`memory_order::relaxed]。
+
+[:en] If and only if the comparison is false then, after the atomic operation,
+the value in [`expected] is replaced by the value pointed to by [`:key this]
+during the atomic comparison.
+[:zh_CN] 当且仅当比较结果为假时，在该原子性操作之后，[`expected] 中的值被替换为
+原子性比较过程中 [`:key this] 所指向的值。
+
+[:en] If the operation returns [`true], these operations are atomic
+read-modify-write operations ([#intro.multithread]) on the memory pointed to by
+[`:key this].
+[:zh_CN] 如果该操作返回 [`true]，则这些操作是对由 [`:key this] 所指向的内存的
+原子性读-改-写操作（[#intro.multithread]）。
+
+[:en] Otherwise, these operations are atomic load operations on that memory.
+[:zh_CN] 否则，这些操作是对该内存的原子性加载操作。
+
+[para:returns]
+[:en] The result of the comparison.
+[:zh_CN] 比较的结果。
+
+[para]
+[begin:note]
+[:en] For example, the effect of [`compare_exchange_strong] on objects without
+padding bits ([#term.padding.bits]) is
+[:zh_CN] 例如，对没有填充位（[#term.padding.bits]）的对象进行
+[`compare_exchange_strong] 的效果为：
+
+[codeblock]
+if (memcmp(this, &expected, sizeof(*this)) == 0)
+  memcpy(this, &desired, sizeof(*this));
+else
+  memcpy(&expected, this, sizeof(*this));
+[codeblock:end]
+[end:note]
+
+[begin:example]
+[:en] The expected use of the compare-and-exchange operations is as follows.
+[:zh_CN] 比较并交换操作的预期用法如下。
+
+[:en] The compare-and-exchange operations will update [`expected] when another
+iteration of the loop is needed.
+[:zh_CN] 比较并交换操作将会在需要再一次进行循环迭代时更新 [`expected]。
+
+[codeblock]
+expected = current.load();
+do {
+  desired = function(expected);
+} while (!current.compare_exchange_weak(expected, desired));
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[:en] Because the expected value is updated only on failure, code releasing the
+memory containing the [`expected] value on success will work.
+[:zh_CN] 由于只在失败时才会更新预期值，在成功时释放包含 [`expected] 值的内存的
+代码可以正常工作。
+
+[:en] For example, list head insertion will act atomically and would not
+introduce a data race in the following code:
+[:zh_CN] 例如，下列代码中的列表头插入操作将会原子地进行，并且不会引发数据竞争：
+
+[codeblock]
+do {
+  p->next = head;                                   // [:en] make new list node point to the current head \
+                                                    [:zh_CN] 制造指向当前头部的新列表节点
+} while (!head.compare_exchange_weak(p->next, p));  // [:en] try to insert \
+                                                    [:zh_CN] 尝试插入
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] Implementations should ensure that weak compare-and-exchange operations do
+not consistently return [`false] unless either the atomic object has value
+different from [`expected] or there are concurrent modifications to the atomic
+object.
+[:zh_CN] 各实现应当确保弱比较并交换操作不会总是返回 [`false]，除非原子性对象具有
+与 [`expected] 不同的值，或者发生对该原子性对象的并发修改。
+
+[para:remarks]
+[:en] A weak compare-and-exchange operation may fail spuriously.
+[:zh_CN] 弱比较并交换操作可能发生假性失败。
+
+[:en] That is, even when the contents of memory referred to by [`expected] and
+[`:key this] are equal, it may return [`false] and store back to [`expected] the
+same memory contents that were originally there.
+[:zh_CN] 就是说，即便 [`expected] 和 [`:key this] 所指代的内存的内容相等，它也
+可能返回 [`false] 并将 [`expected] 原来的内存内容存储回去。
+
+[begin:note]
+[:en] This spurious failure enables implementation of compare-and-exchange on a
+broader class of machines, e.g., load-locked store-conditional machines.
+[:zh_CN] 这种假性失败使得在更广泛的机器种类上实现比较并交换成为可能，比如一些
+支持加载锁定/条件存储的机器
+
+[:en] A consequence of spurious failure is that nearly all uses of weak
+compare-and-exchange will be in a loop.
+[:zh_CN] 假性失败的后果是，几乎所有的弱比较并交换的使用都要在循环中进行。
+
+[:en] When a compare-and-exchange is in a loop, the weak version will yield
+better performance on some platforms.
+[:zh_CN] 如果比较并交换在循环中进行，弱化版本在某些平台上将会表现出更好的性能。
+
+[:en] When a weak compare-and-exchange would require a loop and a strong one
+would not, the strong one is preferable.
+[:zh_CN] 如果弱比较并交换需要循环而强版本不需要，则优先采用强版本。
+[end:note]
+
+[para]
+[begin:note]
+[:en] Under cases where the [`memcpy] and [`memcmp] semantics of the
+compare-and-exchange operations apply, the comparisons can fail for values that
+compare equal with [`operator==] if the value representation has trap bits or
+alternate representations of the same value.
+[:zh_CN] 对于适用比较并交换操作的 [`memcpy] 和 [`memcmp] 语义的情况下，当值表示
+中带有陷阱位，或者相同值具有替代表示时，对以 [`operator==] 比较为相等的值进行
+比较可能会失败。
+
+[:en] Notably, on implementations conforming to ISO/IEC/IEEE 60559,
+floating-point [`-0.0] and [`+0.0] will not compare equal with [`memcmp] but
+will compare equal with [`operator==], and NaNs with the same payload will
+compare equal with [`memcmp] but will not compare equal with [`operator==].
+[:zh_CN] 还要注意，在遵循 ISO/IEC/IEEE 60559 的实现中，浮点 [`-0.0] 和 [`+0.0]
+以 [`memcmp] 比较时不相等但以 [`operator==] 比较时相等，而具有相同负荷内容的
+NaN 之间以 [`memcmp] 比较时相等但以 [`operator==] 比较时则不相等。
+[end:note]
+
+[begin:note]
+[:en] Because compare-and-exchange acts on an object[=']s value representation,
+padding bits that never participate in the object[=']s value representation are
+ignored.
+[:zh_CN] 由于比较并交换是在对象的值表示上进行的，从不参与对象的值表示的填充位
+都被忽略。
+
+[:en] As a consequence, the following code is guaranteed to avoid spurious
+failure:
+[:zh_CN] 其结果是，以下的代码可以保证避免假性失败：
+
+[codeblock]
+struct padded {
+  char clank = 0x42;
+  // [:en] Padding here. \
+  [:zh_CN] 此处有填充
+  unsigned biff = 0xC0DEFEFE;
+};
+atomic<padded> pad = {};
+
+bool zap() {
+  padded expected, desired{0, 0};
+  return pad.compare_exchange_strong(expected, desired);
+}
+[codeblock:end]
+[end:note]
+
+[begin:note]
+[:en] For a union with bits that participate in the value representation of some
+members but not others, compare-and-exchange might always fail.
+[:zh_CN] 如果一个联合体带有参与某些成员而非另一些成员的值表示的位，则比较并交换
+可能总是失败。
+
+[:en] This is because such padding bits have an indeterminate value when they
+do not participate in the value representation of the active member.
+[:zh_CN] 这是因为这种填充位在其不参与活跃成员的值表示时具有不确定的值。
+
+[:en] As a consequence, the following code is not guaranteed to ever succeed:
+[:zh_CN] 其结果时，以下代码并不保证总是成功：
+
+[codeblock]
+union pony {
+  double celestia = 0.;
+  short luna;       // [:en] padded \
+                    [:zh_CN] 有填充
+};
+atomic<pony> princesses = {};
+
+bool party(pony desired) {
+  pony expected;
+  return princesses.compare_exchange_strong(expected, desired);
+}
+[codeblock:end]
+[end:note]
+[div:end]
+
+[%@lib@member wait[!atomic]]
+[%@lib@member wait[!atomic<T*>]]
+[%@lib@member wait[!atomic<[^integral]>]]
+[%@lib@member wait[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+void wait(T old, memory_order order = memory_order::seq_cst) const volatile noexcept;
+void wait(T old, memory_order order = memory_order::seq_cst) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`order] is neither [`memory_order::release] nor [`memory_order::acq_rel].
+[:zh_CN] [`order] 既不是 [`memory_order::release] 也不是 [`memory_order::acq_rel]。
+
+[para:effects]
+[:en] Repeatedly performs the following steps, in order:
+[:zh_CN] 重复依序实施以下各步骤：
+
+[list]
+[item]
+[:en] Evaluates [`load(order)] and compares its value representation for
+equality against that of [`old].
+[:zh_CN] 求值 [`load(order)] 并将其值表示与 [`old] 的值表示进行相等性比较。
+[item]
+[:en] If they compare unequal, returns.
+[:zh_CN] 若二者不相等则返回。
+[item]
+[:en] Blocks until it is unblocked by an atomic notifying operation or is
+unblocked spuriously.
+[:zh_CN] 阻塞，直到被原子性通知操作解除阻塞，或假性解除阻塞。
+[list:end]
+
+[para:remarks]
+[:en] This function is an atomic waiting operation ([#atomics.wait]).
+[:zh_CN] 这个函数是原子性等待操作（[#atomics.wait]）。
+[div:end]
+
+[%@lib@member notify_one[!atomic]]
+[%@lib@member notify_one[!atomic<T*>]]
+[%@lib@member notify_one[!atomic<[^integral]>]]
+[%@lib@member notify_one[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+void notify_one() volatile noexcept;
+void notify_one() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Unblocks the execution of at least one atomic waiting operation that is
+eligible to be unblocked ([#atomics.wait]) by this call, if any such atomic
+waiting operations exist.
+[:zh_CN] 使至少一个合乎被本次调用解除阻塞的条件（[#atomics.wait]）的原子性等待
+操作解除阻塞（若存在任何这种原子性等待操作）。
+
+[para:remarks]
+[:en] This function is an atomic notifying operation ([#atomics.wait]).
+[:zh_CN] 这个函数是原子性通知操作（[#atomics.wait]）。
+[div:end]
+
+[%@lib@member notify_all[!atomic]]
+[%@lib@member notify_all[!atomic<T*>]]
+[%@lib@member notify_all[!atomic<[^integral]>]]
+[%@lib@member notify_all[!atomic<[^floating-point]>]]
+[codeblock:declaration]
+void notify_all() volatile noexcept;
+void notify_all() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Unblocks the execution of all atomic waiting operations that are eligible
+to be unblocked ([#atomics.wait]) by this call.
+[:zh_CN] 使所有合乎被本次调用解除阻塞的条件（[#atomics.wait]）的原子性等待操作
+解除阻塞。
+
+[para:remarks]
+[:en] This function is an atomic notifying operation ([#atomics.wait]).
+[:zh_CN] 这个函数是原子性通知操作（[#atomics.wait]）。
+[div:end]

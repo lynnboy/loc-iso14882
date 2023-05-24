@@ -1,0 +1,187 @@
+[section#atomics.types.pointer
+    [:en] Partial specialization for pointers
+    [:zh_CN] 针对指针的部分特化式
+]
+
+[%@lib atomic<T*>]
+[codeblock:synopsis]
+namespace std {
+  template<class T> struct atomic<T*> {
+    using value_type = T*;
+    using difference_type = ptrdiff_t;
+
+    static constexpr bool is_always_lock_free = [[redoc("[?impdefx"
+        "[:en] whether a given [`atomic] type[=']s operations are always lock free"
+        "[:zh_CN] 给定 [`atomic] 类型的操作是否总是免锁的]")]];
+    bool is_lock_free() const volatile noexcept;
+    bool is_lock_free() const noexcept;
+
+    constexpr atomic() noexcept;
+    constexpr atomic(T*) noexcept;
+    atomic(const atomic&) = delete;
+    atomic& operator=(const atomic&) = delete;
+    atomic& operator=(const atomic&) volatile = delete;
+
+    void store(T*, memory_order = memory_order::seq_cst) volatile noexcept;
+    void store(T*, memory_order = memory_order::seq_cst) noexcept;
+    T* operator=(T*) volatile noexcept;
+    T* operator=(T*) noexcept;
+    T* load(memory_order = memory_order::seq_cst) const volatile noexcept;
+    T* load(memory_order = memory_order::seq_cst) const noexcept;
+    operator T*() const volatile noexcept;
+    operator T*() const noexcept;
+
+    T* exchange(T*, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* exchange(T*, memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_weak(T*&, T*, memory_order, memory_order) noexcept;
+    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) volatile noexcept;
+    bool compare_exchange_strong(T*&, T*, memory_order, memory_order) noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_weak(T*&, T*,
+                               memory_order = memory_order::seq_cst) noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order = memory_order::seq_cst) volatile noexcept;
+    bool compare_exchange_strong(T*&, T*,
+                                 memory_order = memory_order::seq_cst) noexcept;
+
+    T* fetch_add(ptrdiff_t, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* fetch_add(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
+    T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
+
+    T* operator++(int) volatile noexcept;
+    T* operator++(int) noexcept;
+    T* operator--(int) volatile noexcept;
+    T* operator--(int) noexcept;
+    T* operator++() volatile noexcept;
+    T* operator++() noexcept;
+    T* operator--() volatile noexcept;
+    T* operator--() noexcept;
+    T* operator+=(ptrdiff_t) volatile noexcept;
+    T* operator+=(ptrdiff_t) noexcept;
+    T* operator-=(ptrdiff_t) volatile noexcept;
+    T* operator-=(ptrdiff_t) noexcept;
+
+    void wait(T*, memory_order = memory_order::seq_cst) const volatile noexcept;
+    void wait(T*, memory_order = memory_order::seq_cst) const noexcept;
+    void notify_one() volatile noexcept;
+    void notify_one() noexcept;
+    void notify_all() volatile noexcept;
+    void notify_all() noexcept;
+  };
+}
+[codeblock:end]
+
+[%@lib atomic<T*>]
+[para]
+[:en] There is a partial specialization of the [`atomic] class template for
+pointers.
+[:zh_CN] [`atomic] 类模板为指针提供了部分特化式。
+
+[:en] Specializations of this partial specialization are standard-layout structs.
+[:zh_CN] 这个部分特化式的特例是标准布局结构体。
+
+[:en] They each have a trivial destructor.
+[:zh_CN] 它们都具有平凡的析构函数。
+
+[para]
+[:en] Descriptions are provided below only for members that differ from the
+primary template.
+[:zh_CN] 下文仅为与主模板不同的成员提供描述。
+
+[para]
+[:en] The following operations perform pointer arithmetic.
+[:zh_CN] 以下各操作实施指针算术。
+
+[:en] The correspondence among key, operator, and computation is specified in
+[#:tab#atomic.types.pointer.comp].
+[:zh_CN] [#:tab#atomic.types.pointer.comp] 给出关键词、运算符和运算之间的对应关系。
+
+[table:listing@shape=?x2@fill=column#atomic.types.pointer.comp
+    [:en] Atomic pointer computations
+    [:zh_CN] 原子性指针运算
+    [|@code [`[^key]] ]
+    [|@code
+        [:en] Op
+        [:zh_CN] op ]
+    [|  [:en] Computation
+        [:zh_CN] 运算 ]
+]
+[|] add [|] +
+[|] [:en] addition
+    [:zh_CN] 加
+[|] sub [|] -
+[|] [:en] subtraction
+    [:zh_CN] 减
+[table:end]
+
+[%@lib atomic_fetch_add]
+[%@lib atomic_fetch_sub]
+[%@lib atomic_fetch_add_explicit]
+[%@lib atomic_fetch_sub_explicit]
+[%@lib@member fetch_add[!atomic<T*>]]
+[%@lib@member fetch_sub[!atomic<T*>]]
+[codeblock:declaration]
+T* fetch_key[[redoc("^<3c")]](ptrdiff_t operand, memory_order order = memory_order::seq_cst) volatile noexcept;
+T* fetch_key[[redoc("^<3c")]](ptrdiff_t operand, memory_order order = memory_order::seq_cst) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:mandates]
+[:en] T is a complete object type.
+[:zh_CN] [`T] 为完整对象类型。
+
+[begin:note]
+[:en] Pointer arithmetic on [`void*] or function pointers is ill-formed.
+[:zh_CN] 对 [`void*] 或函数指针进行指针算术是非良构的。
+[end:note]
+
+[para:effects]
+[:en] Atomically replaces the value pointed to by [`:key this] with the result
+of the computation applied to the value pointed to by [`:key this] and the given
+[`operand].
+[:zh_CN] 原子地将由 [`:key this] 所指向的值替换为对由 [`:key this] 所指向的值和
+给定的 [`operand] 实施运算的结果。
+
+[:en] Memory is affected according to the value of [`order].
+[:zh_CN] 根据 [`order] 的值影响内存。
+
+[:en] These operations are atomic read-modify-write operations
+([#intro.multithread]).
+[:zh_CN] 这些操作是原子性读-改-写操作（[#intro.multithread]）。
+
+[para:returns]
+[:en] Atomically, the value pointed to by [`:key this] immediately before the
+effects.
+[:zh_CN] 原子地返回紧接其效果生效前 [`:key this] 所指向的值。
+
+[para:remarks]
+[:en] The result may be an undefined address, but the operations otherwise have
+no undefined behavior.
+[:zh_CN] 结果可能是未定义的地址，但除此之外该操作没有未定义的行为。
+[div:end]
+
+[%@lib@member operator+=[!atomic<T*>]]
+[%@lib@member operator-=[!atomic<T*>]]
+[codeblock:declaration]
+T* operator [[redoc("^>")]]op=(ptrdiff_t operand) volatile noexcept;
+T* operator [[redoc("^>")]]op=(ptrdiff_t operand) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] For the [`volatile] overload of this function, [`is_always_lock_free] is
+[`true].
+[:zh_CN] 对于本函数的 [`volatile] 重载，[`is_always_lock_free] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return fetch_[^key](operand) [^op] operand;]
+[:zh_CN] 等价于：[`return fetch_[^key](operand) [^op] operand;]
+[div:end]

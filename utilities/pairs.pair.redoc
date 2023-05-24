@@ -106,11 +106,11 @@ constexpr explicit([[redoc("[=seebelow]")]]) pair();
 [para:constraints]
 [list]
 [item]
-[:en] [`is_default_constructible_v<first_type>] is [`true] and
-[:zh_CN] [`is_default_constructible_v<first_type>] 为 [`true] 并且
+[:en] [`is_default_constructible_v<T1>] is [`true] and
+[:zh_CN] [`is_default_constructible_v<T1>] 为 [`true] 并且
 [item]
-[:en] [`is_default_constructible_v<second_type>] is [`true].
-[:zh_CN] [`is_default_constructible_v<second_type>] 为 [`true]。
+[:en] [`is_default_constructible_v<T2>] is [`true].
+[:zh_CN] [`is_default_constructible_v<T2>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -119,15 +119,15 @@ constexpr explicit([[redoc("[=seebelow]")]]) pair();
 
 [para:remarks]
 [:en] The expression inside [`:key explicit] evaluates to [`true] if and only if
-either [`first_type] or [`second_type] is not implicitly default-constructible.
-[:zh_CN] 当且仅当 [`first_type] 或者 [`second_type] 都不能隐式默认构造时，
-[`:key explicit] 中的表达式求值为 [`true]。
+either [`T1] or [`T2] is not implicitly default-constructible.
+[:zh_CN] 当且仅当 [`T1] 或者 [`T2] 都不能隐式默认构造时，[`:key explicit] 中的
+表达式求值为 [`true]。
 
 [begin:note]
 [:en] This behavior can be implemented with a trait that checks whether a
-[`const first_type&] or a [`const second_type&] can be initialized with [`{}].
-[:zh_CN] 这种行为可以利用一个特征来检查 [`const first_type&] 或者
-[`const second_type&] 是否可以由 [`{}] 进行初始化来予以实现。
+[`const T1&] or a [`const T2&] can be initialized with [`{}].
+[:zh_CN] 这种行为可以利用一个特征来检查 [`const T1&] 或者 [`const T2&] 是否可以
+由 [`{}] 进行初始化来予以实现。
 [end:note]
 [div:end]
 
@@ -140,11 +140,11 @@ constexpr explicit([[redoc("[=seebelow]")]]) pair(const T1& x, const T2& y);
 [para:constraints]
 [list]
 [item]
-[:en] [`is_copy_constructible_v<first_type>] is [`true] and
-[:zh_CN] [`is_copy_constructible_v<first_type>] 为 [`true] 并且
+[:en] [`is_copy_constructible_v<T1>] is [`true] and
+[:zh_CN] [`is_copy_constructible_v<T1>] 为 [`true] 并且
 [item]
-[:en] [`is_copy_constructible_v<second_type>] is [`true].
-[:zh_CN] [`is_copy_constructible_v<second_type>] 为 [`true]。
+[:en] [`is_copy_constructible_v<T2>] is [`true].
+[:zh_CN] [`is_copy_constructible_v<T2>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -155,8 +155,7 @@ constexpr explicit([[redoc("[=seebelow]")]]) pair(const T1& x, const T2& y);
 [:en] The expression inside [`:key explicit] is equivalent to:
 [:zh_CN] [`:key explicit] 中的表达式等价于：
 [codeblock]
-!is_convertible_v<const first_type&, first_type> ||
-  !is_convertible_v<const second_type&, second_type>
+!is_convertible_v<const T1&, T1> || !is_convertible_v<const T2&, T2>
 [codeblock:end]
 [div:end]
 
@@ -169,11 +168,11 @@ template<class U1 = T1, class U2 = T2> constexpr explicit([[redoc("[=seebelow]")
 [para:constraints]
 [list]
 [item]
-[:en] [`is_constructible_v<first_type, U1>] is [`true] and
-[:zh_CN] [`is_constructible_v<first_type, U1>] 为 [`true] 并且
+[:en] [`is_constructible_v<T1, U1>] is [`true] and
+[:zh_CN] [`is_constructible_v<T1, U1>] 为 [`true] 并且
 [item]
-[:en] [`is_constructible_v<second_type, U2>] is [`true].
-[:zh_CN] [`is_constructible_v<second_type, U2>] 为 [`true]。
+[:en] [`is_constructible_v<T2, U2>] is [`true].
+[:zh_CN] [`is_constructible_v<T2, U2>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -186,8 +185,15 @@ template<class U1 = T1, class U2 = T2> constexpr explicit([[redoc("[=seebelow]")
 [:en] The expression inside [`:key explicit] is equivalent to:
 [:zh_CN] [`:key explicit] 中的表达式等价于：
 [codeblock]
-!is_convertible_v<U1, first_type> || !is_convertible_v<U2, second_type>
+!is_convertible_v<U1, T1> || !is_convertible_v<U2, T2>
 [codeblock:end]
+
+[:en] This constructor is defined as deleted if
+[`reference_constructs_from_temporary_v<first_type, U1&&>] is [`true] or
+[`reference_constructs_from_temporary_v<second_type, U2&&>] is [`true].
+[:zh_CN] 当 [`reference_constructs_from_temporary_v<first_type, U1&&>] 为 [`true]
+或 [`reference_constructs_from_temporary_v<second_type, U2&&>] 为 [`true] 时，
+本构造函数定义为弃置的。
 [div:end]
 
 [%@lib@ctor pair]
@@ -206,14 +212,11 @@ template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) pair(c
 [para:constraints]
 [list]
 [item]
-[:en] [`is_constructible_v<first_type, decltype(get<0>([*FWD](p)))>] is [`true]
-and
-[:zh_CN] [`is_constructible_v<first_type, decltype(get<0>([*FWD](p)))>] 为
-[`true] 并且
+[:en] [`is_constructible_v<T1, decltype(get<0>([*FWD](p)))>] is [`true] and
+[:zh_CN] [`is_constructible_v<T1, decltype(get<0>([*FWD](p)))>] 为 [`true] 并且
 [item]
-[:en] [`is_constructible_v<second_type, decltype(get<1>([*FWD](p)))>] is [`true].
-[:zh_CN] [`is_constructible_v<second_type, decltype(get<1>([*FWD](p)))>] 为
-[`true]。
+[:en] [`is_constructible_v<T2, decltype(get<1>([*FWD](p)))>] is [`true].
+[:zh_CN] [`is_constructible_v<T2, decltype(get<1>([*FWD](p)))>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -226,9 +229,18 @@ and
 [:en] The expression inside [`:key explicit] is equivalent to:
 [:zh_CN] [`:key explicit] 中的表达式等价于：
 [codeblock]
-!is_convertible_v<decltype(get<0>([[redoc("*>")]]FWD(p))), first_type> ||
-!is_convertible_v<decltype(get<1>([[redoc("*>")]]FWD(p))), second_type>
+!is_convertible_v<decltype(get<0>([[redoc("*>")]]FWD(p))), T1> ||
+!is_convertible_v<decltype(get<1>([[redoc("*>")]]FWD(p))), T2>
 [codeblock:end]
+
+[:en] The constructor is defined as deleted if
+[:zh_CN] 当
+[codeblock]
+reference_constructs_from_temporary_v<first_type, decltype(get<0>([[redoc("*>")]]FWD(p)))> ||
+reference_constructs_from_temporary_v<second_type, decltype(get<1>([[redoc("*>")]]FWD(p)))>
+[codeblock:end]
+[:en@~] is [`true].
+[:zh_CN@~] 为 [`true] 时，本构造函数定义为弃置的。
 [div:end]
 
 [%@lib@ctor pair]
@@ -242,11 +254,11 @@ template<class... Args1, class... Args2>
 [para:constraints]
 [list]
 [item]
-[:en] [`is_constructible_v<first_type, Args1...>] is [`true] and
-[:zh_CN] [`is_constructible_v<first_type, Args1...>] 为 [`true] 并且
+[:en] [`is_constructible_v<T1, Args1...>] is [`true] and
+[:zh_CN] [`is_constructible_v<T1, Args1...>] 为 [`true] 并且
 [item]
-[:en] [`is_constructible_v<second_type, Args2...>] is [`true].
-[:zh_CN] [`is_constructible_v<second_type, Args2...>] 为 [`true]。
+[:en] [`is_constructible_v<T2, Args2...>] is [`true].
+[:zh_CN] [`is_constructible_v<T2, Args2...>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -272,6 +284,13 @@ This form of construction, whereby constructor arguments for [`first] and
 [:zh_CN]
 这种形式的构造，其中为 [`first] 和 [`second] 提供的构造函数实参是以各自独立的
 [`tuple] 对象提供的，称之为[+逐段构造]。
+
+[begin:note]
+[:en] If a data member of [`pair] is of reference type and its initialization
+binds it to a temporary object, the program is ill-formed ([#class.base.init]).
+[:zh_CN] 如果 [`pair] 的数据成员是引用类型，且其初始化绑定到临时对象，则程序
+非良构（[#class.base.init]）。
+[end:note]
 [div:end]
 
 [%@lib@member operator=[!pair]]
@@ -289,11 +308,10 @@ constexpr pair& operator=(const pair& p);
 [:zh_CN] [`*this]。
 
 [para:remarks]
-[:en] This operator is defined as deleted unless
-[`is_copy_assignable_v<first_type>] is [`true] and
-[`is_copy_assignable_v<second_type>] is [`true].
-[:zh_CN] 除非 [`is_copy_assignable_v<first_type>] 为 [`true] 并且
-[`is_copy_assignable_v<second_type>] 为 [`true]，否则这个运算符被定义为弃置的。
+[:en] This operator is defined as deleted unless [`is_copy_assignable_v<T1>] is
+[`true] and [`is_copy_assignable_v<T2>] is [`true].
+[:zh_CN] 除非 [`is_copy_assignable_v<T1>] 为 [`true] 并且
+[`is_copy_assignable_v<T2>] 为 [`true]，否则这个运算符被定义为弃置的。
 [div:end]
 
 [%@lib@member operator=[!pair]]
@@ -305,11 +323,11 @@ constexpr const pair& operator=(const pair& p) const;
 [para:constraints]
 [list]
 [item]
-[:en] [`is_copy_assignable<const first_type>] is [`true] and
-[:zh_CN] [`is_copy_assignable<const first_type>] 为 [`true] 并且
+[:en] [`is_copy_assignable<const T1>] is [`true] and
+[:zh_CN] [`is_copy_assignable<const T1>] 为 [`true] 并且
 [item]
-[:en] [`is_copy_assignable<const second_type>] is [`true].
-[:zh_CN] [`is_copy_assignable<const second_type>] 为 [`true]。
+[:en] [`is_copy_assignable<const T2>] is [`true].
+[:zh_CN] [`is_copy_assignable<const T2>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -330,11 +348,11 @@ template<class U1, class U2> constexpr pair& operator=(const pair<U1, U2>& p);
 [para:constraints]
 [list]
 [item]
-[:en] [`is_assignable_v<first_type&, const U1&>] is [`true] and
-[:zh_CN] [`is_assignable_v<first_type&, const U1&>] 为 [`true] 并且
+[:en] [`is_assignable_v<T1&, const U1&>] is [`true] and
+[:zh_CN] [`is_assignable_v<T1&, const U1&>] 为 [`true] 并且
 [item]
-[:en] [`is_assignable_v<second_type&, const U2&>] is [`true].
-[:zh_CN] [`is_assignable_v<second_type&, const U2&>] 为 [`true]。
+[:en] [`is_assignable_v<T2&, const U2&>] is [`true].
+[:zh_CN] [`is_assignable_v<T2&, const U2&>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -355,11 +373,11 @@ template<class U1, class U2> constexpr const pair& operator=(const pair<U1, U2>&
 [para:constraints]
 [list]
 [item]
-[:en] [`is_assignable_v<const first_type&, const U1&>] is [`true] and
-[:zh_CN] [`is_assignable_v<const first_type&, const U1&>] 为 [`true] 并且
+[:en] [`is_assignable_v<const T1&, const U1&>] is [`true] and
+[:zh_CN] [`is_assignable_v<const T1&, const U1&>] 为 [`true] 并且
 [item]
-[:en] [`is_assignable_v<const second_type&, const U2&>] is [`true].
-[:zh_CN] [`is_assignable_v<const second_type&, const U2&>] 为 [`true]。
+[:en] [`is_assignable_v<const T2&, const U2&>] is [`true].
+[:zh_CN] [`is_assignable_v<const T2&, const U2&>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -380,18 +398,18 @@ constexpr pair& operator=(pair&& p) noexcept([[redoc("[=seebelow]")]]);
 [para:constraints]
 [list]
 [item]
-[:en] [`is_move_assignable_v<first_type>] is [`true] and
-[:zh_CN] [`is_move_assignable_v<first_type>] 为 [`true] 并且
+[:en] [`is_move_assignable_v<T1>] is [`true] and
+[:zh_CN] [`is_move_assignable_v<T1>] 为 [`true] 并且
 [item]
-[:en] [`is_move_assignable_v<second_type>] is [`true].
-[:zh_CN] [`is_move_assignable_v<second_type>] 为 [`true]。
+[:en] [`is_move_assignable_v<T2>] is [`true].
+[:zh_CN] [`is_move_assignable_v<T2>] 为 [`true]。
 [list:end]
 
 [para:effects]
-[:en] Assigns to [`first] with [`std::forward<first_type>(p.first)] and to
-[`second] with [`std::forward<second_type>(p.second)].
-[:zh_CN] 以 [`std::forward<first_type>(p.first)] 对 [`first] 赋值，并以
-[`std::forward<second_type>(p.second)] 对 [`second] 赋值。
+[:en] Assigns to [`first] with [`std::forward<T1>(p.first)] and to [`second]
+with [`std::forward<T2>(p.second)].
+[:zh_CN] 以 [`std::forward<T1>(p.first)] 对 [`first] 赋值，并以
+[`std::forward<T2>(p.second)] 对 [`second] 赋值。
 
 [para:returns]
 [:en] [`*this].
@@ -414,18 +432,18 @@ constexpr const pair& operator=(pair&& p) const;
 [para:constraints]
 [list]
 [item]
-[:en] [`is_assignable<const first_type&, first_type>] is [`true] and
-[:zh_CN] [`is_assignable<const first_type&, first_type>] 为 [`true] 并且
+[:en] [`is_assignable<const T1&, T1>] is [`true] and
+[:zh_CN] [`is_assignable<const T1&, T1>] 为 [`true] 并且
 [item]
-[:en] [`is_assignable<const second_type&, second_type>] is [`true].
-[:zh_CN] [`is_assignable<const second_type&, second_type>] 为 [`true]。
+[:en] [`is_assignable<const T2&, T2>] is [`true].
+[:zh_CN] [`is_assignable<const T2&, T2>] 为 [`true]。
 [list:end]
 
 [para:effects]
-[:en] Assigns [`std::forward<first_type>(p.first)] to [`first] and
-[`std::forward<second_type>(p.second)] to [`second].
-[:zh_CN] 以 [`std::forward<first_type>(p.first)] 对 [`first] 赋值，并以
-[`std::forward<second_type>(p.second)] 对 [`second] 赋值。
+[:en] Assigns [`std::forward<T1>(p.first)] to [`first] and
+[`std::forward<T2>(p.second)] to [`second].
+[:zh_CN] 以 [`std::forward<T1>(p.first)] 对 [`first] 赋值，并以
+[`std::forward<T2>(p.second)] 对 [`second] 赋值。
 
 [para:returns]
 [:en] [`*this].
@@ -441,11 +459,11 @@ template<class U1, class U2> constexpr pair& operator=(pair<U1, U2>&& p);
 [para:constraints]
 [list]
 [item]
-[:en] [`is_assignable_v<first_type&, U1>] is [`true] and
-[:zh_CN] [`is_assignable_v<first_type&, U1>] 为 [`true] 并且
+[:en] [`is_assignable_v<T1&, U1>] is [`true] and
+[:zh_CN] [`is_assignable_v<T1&, U1>] 为 [`true] 并且
 [item]
-[:en] [`is_assignable_v<second_type&, U2>] is [`true].
-[:zh_CN] [`is_assignable_v<second_type&, U2>] 为 [`true]。
+[:en] [`is_assignable_v<T2&, U2>] is [`true].
+[:zh_CN] [`is_assignable_v<T2&, U2>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -468,11 +486,11 @@ template<class U1, class U2> constexpr const pair& operator=(pair<U1, U2>&& p) c
 [para:constraints]
 [list]
 [item]
-[:en] [`is_assignable_v<const first_type&, U1>] is [`true] and
-[:zh_CN] [`is_assignable_v<const first_type&, U1>] 为 [`true] 并且
+[:en] [`is_assignable_v<const T1&, U1>] is [`true] and
+[:zh_CN] [`is_assignable_v<const T1&, U1>] 为 [`true] 并且
 [item]
-[:en] [`is_assignable_v<const second_type&, U2>] is [`true].
-[:zh_CN] [`is_assignable_v<const second_type&, U2>] 为 [`true]。
+[:en] [`is_assignable_v<const T2&, U2>] is [`true].
+[:zh_CN] [`is_assignable_v<const T2&, U2>] 为 [`true]。
 [list:end]
 
 [para:effects]
@@ -522,14 +540,14 @@ constexpr void swap(const pair& p) const noexcept([[redoc("[=seebelow]")]]);
 [:zh_CN] 其异常说明等价于：
 [list]
 [item]
-[:en] [`is_nothrow_swappable_v<first_type> && is_nothrow_swappable_v<second_type>]
-for the first overload, and
+[:en] [`is_nothrow_swappable_v<T1> && is_nothrow_swappable_v<T2>] for the first
+overload, and
 [:zh_CN] 对于第一种重载为
-[`is_nothrow_swappable_v<first_type> && is_nothrow_swappable_v<second_type>] 而
+[`is_nothrow_swappable_v<T1> && is_nothrow_swappable_v<T2>] 而
 [item]
-[:en] [`is_nothrow_swappable_v<const first_type> && is_nothrow_swappable_v<const second_type>]
+[:en] [`is_nothrow_swappable_v<const T1> && is_nothrow_swappable_v<const T2>]
 for the second overload.
 [:zh_CN] 对于第而种重载为
-[`is_nothrow_swappable_v<const first_type> && is_nothrow_swappable_v<const second_type>]。
+[`is_nothrow_swappable_v<const T1> && is_nothrow_swappable_v<const T2>]。
 [list:end]
 [div:end]
