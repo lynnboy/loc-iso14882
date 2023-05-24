@@ -1,0 +1,154 @@
+[section#expected.object.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class T, class E>
+  class expected {
+  public:
+    using [[redoc("\%lib@member value_type[!expected]")]]value_type = T;
+    using [[redoc("\%lib@member error_type[!expected]")]]error_type = E;
+    using [[redoc("\%lib@member unexpected_type[!expected]")]]unexpected_type = unexpected<E>;
+
+    template<class U>
+    using [[redoc("\%lib@member rebind[!expected]")]]rebind = expected<U, error_type>;
+
+    // [:en] [#expected.object.ctor], constructors \
+    [:zh_CN] [#expected.object.ctor]，构造函数
+    constexpr expected();
+    constexpr explicit(@\seebelow@) expected(const expected&);
+    constexpr explicit(@\seebelow@) expected(expected&&) noexcept(@\seebelow@);
+    template<class U, class G>
+      constexpr explicit(@\seebelow@) expected(const expected<U, G>&);
+    template<class U, class G>
+      constexpr explicit(@\seebelow@) expected(expected<U, G>&&);
+
+    template<class U = T>
+      constexpr explicit(@\seebelow@) expected(U&& v);
+
+    template<class G>
+      constexpr expected(const unexpected<G>&);
+    template<class G>
+      constexpr expected(unexpected<G>&&);
+
+    template<class... Args>
+      constexpr explicit expected(in_place_t, Args&&...);
+    template<class U, class... Args>
+      constexpr explicit expected(in_place_t, initializer_list<U>, Args&&...);
+    template<class... Args>
+      constexpr explicit expected(unexpect_t, Args&&...);
+    template<class U, class... Args>
+      constexpr explicit expected(unexpect_t, initializer_list<U>, Args&&...);
+
+    // [:en] [#expected.object.dtor], destructor \
+    [:zh_CN] [#expected.object.dtor]，析构函数
+    constexpr ~expected();
+
+    // [:en] [#expected.object.assign], assignment \
+    [:zh_CN] [#expected.object.assign]，赋值
+    constexpr expected& operator=(const expected&);
+    constexpr expected& operator=(expected&&) noexcept([[redoc("[=seebelow]")]]);
+    template<class U = T> constexpr expected& operator=(U&&);
+    template<class G>
+      constexpr expected& operator=(const unexpected<G>&);
+    template<class G>
+      constexpr expected& operator=(unexpected<G>&&);
+
+    template<class... Args>
+      constexpr T& emplace(Args&&...) noexcept;
+    template<class U, class... Args>
+      constexpr T& emplace(initializer_list<U>, Args&&...) noexcept;
+
+    // [:en] [#expected.object.swap], swap \
+    [:zh_CN] [#expected.object.swap]，交换
+    constexpr void swap(expected&) noexcept([[redoc("[=seebelow]")]]);
+    friend constexpr void swap(expected& x, expected& y) noexcept(noexcept(x.swap(y)));
+
+    // [:en] [#expected.object.obs], observers \
+    [:zh_CN] [#expected.object.obs]，探察函数
+    constexpr const T* operator->() const noexcept;
+    constexpr T* operator->() noexcept;
+    constexpr const T& operator*() const & noexcept;
+    constexpr T& operator*() & noexcept;
+    constexpr const T&& operator*() const && noexcept;
+    constexpr T&& operator*() && noexcept;
+    constexpr explicit operator bool() const noexcept;
+    constexpr bool has_value() const noexcept;
+    constexpr const T& value() const &;
+    constexpr T& value() &;
+    constexpr const T&& value() const &&;
+    constexpr T&& value() &&;
+    constexpr const E& error() const &;
+    constexpr E& error() &;
+    constexpr const E&& error() const &&;
+    constexpr E&& error() &&;
+    template<class U> constexpr T value_or(U&&) const &;
+    template<class U> constexpr T value_or(U&&) &&;
+
+    // [:en] [#expected.object.eq], equality operators \
+    [:zh_CN] [#expected.object.eq]，相等性运算符
+    template<class T2, class E2> requires (!is_void_v<T2>)
+      friend constexpr bool operator==(const expected& x, const expected<T2, E2>& y);
+    template<class T2>
+      friend constexpr bool operator==(const expected&, const T2&);
+    template<class E2>
+      friend constexpr bool operator==(const expected&, const unexpected<E2>&);
+
+  private:
+    bool [[redoc("*>")]]has_val;       // [=expos]
+    union {
+      T [[redoc("*>")]]val;            // [=expos]
+      E [[redoc("*>")]]unex;           // [=expos]
+    };
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Any object of type [`expected<T, E>] either contains a value of type [`T]
+or a value of type [`E] within its own storage.
+[:zh_CN] [`expected<T, E>] 类型的对象在其存储中包含一个 [`T] 类型的值或者一个
+[`E] 类型的值。
+
+[:en] Implementations are not permitted to use additional storage, such as
+dynamic memory, to allocate the object of type [`T] or the object of type [`E].
+[:zh_CN] 不允许实现利用如动态内存这样的额外存储为 [`T] 类型的对象或 [`E] 类型的
+对象进行分配。
+
+[:en] These objects are allocated in a region of the [`expected<T, E>] storage
+suitably aligned for the types [`T] and [`E].
+[:zh_CN] 这些对象是在 [`expected<T, E>] 的存储中一个针对类型 [`T] 和 [`E] 适当
+对其的区域中分配的。
+
+[:en] Members [*has_val], [*val], and [*unex] are provided for exposition only.
+[:zh_CN] 成员 [*has_val]、[*val] 和 [*unex] 仅为阐释目的而提供。
+
+[:en] [*has_val] indicates whether the [`expected<T, E>] object contains an
+object of type [`T].
+[:zh_CN] [*has_val] 标明 [`expected<T, E>] 对象是否包含一个 [`T] 类型的对象。
+
+[para]
+[:en] A program that instantiates the definition of template [`expected<T, E>]
+for a reference type, a function type, or for possibly cv-qualified types
+[`in_place_t], [`unexpect_t], or a specialization of [`unexpected] for the [`T]
+parameter is ill-formed.
+[:zh_CN] 对于引用类型，函数类型，或者可能被 cv 限定的 [`in_place_t]，[`unexpect_t]，
+或 [`unexpected] 的对于 [`T] 形参的特例，针对它们为 [`expected<T, E>] 实例化其
+定义式的程序非良构。
+
+[:en] A program that instantiates the definition of the template [`expected<T, E>]
+with a type for the [`E] parameter that is not a valid template argument for
+[`unexpected] is ill-formed.
+[:zh_CN] 对于使得 [`E] 形参不是 [`unexpected] 的有效模板实参的类型，针对它为
+[`expected<T, E>] 实例化其定义式的程序非良构。
+
+[para]
+[:en] When [`T] is not [=cv] [`void], it shall meet the [^:oc Destructible]
+requirements ([#:tab#cpp17.destructible]).
+[:zh_CN] 当 [`T] 不是 [=cv] [`void] 时，它应当满足 [^:oc Destructible] 的规定
+（[#:tab#cpp17.destructible]）。
+
+[:en] [`E] shall meet the [^:oc Destructible] requirements.
+[:zh_CN] [`E] 应当满足 [^:oc Destructible] 的规定
