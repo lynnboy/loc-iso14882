@@ -198,74 +198,6 @@ elided.
 [end:example]
 
 [para]
-[:en]
-An [+:adj implicitly movable[!entity]] is a variable of automatic storage
-duration that is either a non-volatile object or an rvalue reference to
-a non-volatile object type.
-[:zh_CN]
-[+:adj 隐含可移动[!实体]]是具有自动存储期的变量，它或为非 volatile 对象或为到
-非 volatile 对象类型的右值引用。
-
-[:en]
-In the following copy-initialization contexts, a move operation is first
-considered before attempting a copy operation:
-[:zh_CN]
-以下各种复制初始化语境中，在尝试复制操作之前先考虑移动操作：
-
-[list]
-[item]
-[:en] If the [~expression] in a [`return] ([#stmt.return]) or [`:key co_return]
-([#stmt.return.coroutine]) statement is a (possibly parenthesized)
-[~id-expression] that names an implicitly movable entity declared in the body or
-[~parameter-declaration-clause] of the innermost enclosing function or
-[~lambda-expression], or
-[:zh_CN] 当 [`return]（[#stmt.return]）或 [`:key co_return]（[#stmt.return.coroutine]）
-语句的[~表达式]是（可能带有括号的）[~标识表达式]，并指名其最内层外围函数或
-[~lambda-表达式]的函数体或[~形参声明子句]所声明的隐含可移动实体时，或者
-
-[item]
-[:en] if the operand of a [~throw-expression] ([#expr.throw]) is a (possibly
-parenthesized) [~id-expression] that names an implicitly movable entity that
-belongs to a scope that does not contain the [~compound-statement] of the
-innermost [~try-block] or [~function-try-block] (if any) whose
-[~compound-statement] or [~ctor-initializer] contains the [~throw-expression],
-[:zh_CN] 当 [~throw-表达式]（[#expr.throw]）的操作数是（可能带有括号的）
-[~标识表达式]，并指名某个隐含可移动实体，对于最内层的其[~复合语句]或
-[~构造函数初始化式]包围该 [~throw-表达式]的外围 [~try-块]或[~函数-try-块]
-（如果有），该实体属于某个不包含其[~复合语句]的作用域时，
-[list:end]
-
-[:en]
-overload resolution to select the constructor for the copy or the [`return_value]
-overload to call is first performed as if the expression or operand were an
-rvalue.
-[:zh_CN]
-首先按照如同该表达式或操作数是被右值所代表那样实施重载决议，以选择复制所需的
-构造函数或所要调用的 [`return_value] 重载函数。
-
-[:en]
-If the first overload resolution fails or was not performed, overload resolution
-is performed again, considering the expression or operand as an lvalue.
-[:zh_CN]
-若第一次重载决议失败或者未进行，则把该表达式或操作数作为左值再次实施重载决议。
-
-[begin:note]
-[:en]
-This two-stage overload resolution is performed regardless of whether copy
-elision will occur.
-[:zh_CN]
-无论是否发生复制消除，都会进行这种两阶段重载决议。
-
-[:en]
-It determines the constructor or the [`return_value] overload to be called if
-elision is not performed, and the selected constructor or [`return_value]
-overload must be accessible even if the call is elided.
-[:zh_CN]
-它确定了不实施消除时所调用的构造函数或 [`return_value] 重载，且被选择的构造函数
-或 [`return_value] 重载即使在其调用被消除时也应当是可访问的。
-[end:note]
-
-[para]
 [begin:example]
 [codeblock]
 class Thing {
@@ -294,10 +226,34 @@ struct Weird {
   Weird(Weird&);
 };
 
-Weird g() {
-  Weird w;
-  return w;             // [:en] OK, first overload resolution fails, second overload resolution selects [`Weird(Weird&)] \
-                        [:zh_CN] OK，第一次重载决议失败，第二次重载决议选择了 [`Weird(Weird&)]
+Weird g(bool b) {
+  static Weird w1;
+  Weird w2;
+  if (b)
+    return w1;  // [:en] OK, uses [`Weird(Weird&)] \
+                [:zh_CN] OK，使用 [`Weird(Weird&)]
+  else
+    return w2;  // [:en] error: [`w2] in this context is an xvalue \
+                [:zh_CN] 错误：[`w2] 在此语境中是临限值
+}
+
+int& h(bool b, int i) {
+  static int s;
+  if (b)
+    return s;   // OK
+  else
+    return i;   // [:en] error: [`i] is an xvalue \
+                [:zh_CN] 错误：[`i] 是临限值
+}
+
+decltype(auto) h2(Thing t) {
+  return t;     // [:en] OK, [`t] is an xvalue and [`h2][=']s return type is [`Thing] \
+                [:zh_CN] OK，[`t] 是临限值且 [`h2] 的返回类型为 [`Thing]
+}
+
+decltype(auto) h3(Thing t) {
+  return (t);   // OK, [`(t)] is an xvalue and [`h3][=']s return type is [`Thing&&] \
+                [:zh_CN] OK，[`(t)] 是临限值且 [`h3] 的返回类型为 [`Thing&&]
 }
 [codeblock:end]
 [end:example]
