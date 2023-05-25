@@ -1,0 +1,110 @@
+[section#expected.object.swap
+    [:en] Swap
+    [:zh_CN] 交换
+]
+
+[%@lib@member swap[!expected]]
+[codeblock:declaration]
+constexpr void swap(expected& rhs) noexcept([[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_swappable_v<T>] is [`true] and
+[:zh_CN] [`is_swappable_v<T>] 为 [`true] 并且
+[item]
+[:en] [`is_swappable_v<E>] is [`true] and
+[:zh_CN] [`is_swappable_v<E>] 为 [`true] 并且
+[item]
+[:en] [`is_move_constructible_v<T> && is_move_constructible_v<E>] is [`true],
+and
+[:zh_CN] [`is_move_constructible_v<T> && is_move_constructible_v<E>] 为 [`true]，
+并且
+[item]
+[:en] [`is_nothrow_move_constructible_v<T> || is_nothrow_move_constructible_v<E>]
+is [`true].
+[:zh_CN] [`is_nothrow_move_constructible_v<T> || is_nothrow_move_constructible_v<E>]
+为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] See [#:tab#expected.object.swap].
+[:zh_CN] 参见 [#:tab#expected.object.swap]。
+
+[table:grid#expected.object.swap
+    [:en] [`swap(expected&)] effects
+    [:zh_CN] [`swap(expected&)] 的效果
+    [|]
+    [| [`this->has_value()] ]
+    [| [`!this->has_value()] ]
+]
+[|@head ]   [`rhs.has_value()]
+[|] [:en] equivalent to: [`using std::swap; swap([*val], rhs.[*val]);]
+    [:zh_CN] 等价于：[`using std::swap; swap([*val], rhs.[*val]);]
+[|] [:en] calls [`rhs.swap(*this)]
+    [:zh_CN] 调用 [`rhs.swap(*this)]
+[-]
+[|@head ]   [`!rhs.has_value()]
+[|] [=seebelow]
+[|] [:en] equivalent to: [`using std::swap; swap([*unex], rhs.[*unex]);]
+    [:zh_CN] 等价于：[`using std::swap; swap([*unex], rhs.[*unex]);]
+[-]
+[table:end]
+
+[:en] For the case where [`rhs.value()] is [`false] and [`this->has_value()] is
+[`true], equivalent to:
+[:zh_CN] 对于 [`rhs.value()] 为 [`false] 且 [`this->has_value()] 为 [`true]
+的情况，等价于：
+[codeblock]
+if constexpr (is_nothrow_move_constructible_v<E>) {
+  E tmp(std::move(rhs.[[redoc("*>")]]unex));
+  destroy_at(addressof(rhs.[[redoc("*>")]]unex));
+  try {
+    construct_at(addressof(rhs.[[redoc("*>")]]val), std::move([[redoc("*>")]]val));
+    destroy_at(addressof([[redoc("*>")]]val));
+    construct_at(addressof([[redoc("*>")]]unex), std::move(tmp));
+  } catch(...) {
+    construct_at(addressof(rhs.[[redoc("*>")]]unex), std::move(tmp));
+    throw;
+  }
+} else {
+  T tmp(std::move([[redoc("*>")]]val));
+  destroy_at(addressof([[redoc("*>")]]val));
+  try {
+    construct_at(addressof([[redoc("*>")]]unex), std::move(rhs.[[redoc("*>")]]unex));
+    destroy_at(addressof(rhs.[[redoc("*>")]]unex));
+    construct_at(addressof(rhs.[[redoc("*>")]]val), std::move(tmp));
+  } catch (...) {
+    construct_at(addressof([[redoc("*>")]]val), std::move(tmp));
+    throw;
+  }
+}
+[[redoc("*>")]]has_val = false;
+rhs.[[redoc("*>")]]has_val = true;
+[codeblock:end]
+
+[para:throws]
+[:en] Any exception thrown by the expressions in the [=Effects].
+[:zh_CN] 由 [=Effects] 中的表达式所抛出的任何异常。
+
+[para:remarks]
+[:en] The exception specification is equivalent to:
+[:zh_CN] 其异常说明等价于：
+[codeblock]
+is_nothrow_move_constructible_v<T> && is_nothrow_swappable_v<T> &&
+is_nothrow_move_constructible_v<E> && is_nothrow_swappable_v<E>
+[codeblock:end]
+[div:end]
+
+[%@lib@member swap[!expected]]
+[codeblock:declaration]
+friend constexpr void swap(expected& x, expected& y) noexcept(noexcept(x.swap(y)));
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`x.swap(y)].
+[:zh_CN] 等价于 [`x.swap(y)]。
+[div:end]

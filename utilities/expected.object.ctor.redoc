@@ -1,6 +1,6 @@
 [section#expected.object.ctor
-    [:en] Swap
-    [:zh_CN] 交换
+    [:en] Constructors
+    [:zh_CN] 构造函数
 ]
 
 [%@lib@ctor expected]
@@ -58,6 +58,7 @@ constexpr expected(const expected& rhs);
 [item]
 [:en@~] [`is_copy_constructible_v<E>] is [`true].
 [:zh_CN@~] [`is_copy_constructible_v<E>] 为 [`true]。
+[list:end]
 
 [para]
 [:en] This constructor is trivial if
@@ -69,6 +70,7 @@ constexpr expected(const expected& rhs);
 [item]
 [:en@~] [`is_trivially_copy_constructible_v<E>] is [`true].
 [:zh_CN@~] [`is_trivially_copy_constructible_v<E>] 为 [`true]。
+[list:end]
 [div:end]
 
 [%@lib@ctor expected]
@@ -122,6 +124,7 @@ is [`true].
 [item]
 [:en@~] [`is_trivially_move_constructible_v<E>] is [`true].
 [:zh_CN@~] [`is_trivially_move_constructible_v<E>] 为 [`true]。
+[list:end]
 [div:end]
 
 [%@lib@ctor expected]
@@ -218,4 +221,167 @@ is [`true].
 [`!is_convertible_v<UF, T> || !is_convertible_v<GF, E>].
 [:zh_CN] [`explicit] 中的表达式等价于
 [`!is_convertible_v<UF, T> || !is_convertible_v<GF, E>]。
+[div:end]
+
+[%@lib@ctor expected]
+[codeblock:declaration]
+template<class U = T>
+  constexpr explicit(!is_convertible_v<U, T>) expected(U&& v);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_same_v<remove_cvref_t<U>, in_place_t>] is [`false]; and
+[:zh_CN] [`is_same_v<remove_cvref_t<U>, in_place_t>] 为 [`false]；且
+[item]
+[:en] [`is_same_v<expected<T, E>, remove_cvref_t<U>>] is [`false]; and
+[:zh_CN] [`is_same_v<expected<T, E>, remove_cvref_t<U>>] 为 [`false]；且
+[item]
+[:en] [`remove_cvref_t<U>] is not a specialization of [`unexpected]; and
+[:zh_CN] [`remove_cvref_t<U>] 不是 [`unexpected] 的特例；且
+[item]
+[:en@~] [`is_constructible_v<T, U>] is [`true].
+[:zh_CN@~] [`is_constructible_v<T, U>] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] Direct-non-list-initializes [*val] with [`std::forward<U>(v)].
+[:zh_CN] 以 [`std::forward<U>(v)] 直接非列表初始化 [*val]。
+
+[para:ensures]
+[:en] [`has_value()] is [`true].
+[:zh_CN] [`has_value()] 为 [`true]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [*val].
+[:zh_CN] 由 [*val] 的初始化所抛出的任何异常。
+[div:end]
+
+[%@lib@ctor expected]
+[codeblock:declaration]
+template<class G>
+  constexpr explicit(!is_convertible_v<const G&, E>) expected(const unexpected<G>& e);
+template<class G>
+  constexpr explicit(!is_convertible_v<G, E>) expected(unexpected<G>&& e);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`GF] be [`const G&] for the first overload and [`G] for the second
+overload.
+[:zh_CN] 令 [`GF] 对于第一个重载为 [`const G&]，而对于第二个重载为 [`G]。
+
+[para:constraints]
+[:en] [`is_constructible_v<E, GF>] is [`true].
+[:zh_CN] [`is_constructible_v<E, GF>] 为 [`true]。
+
+[para:effects]
+[:en] Direct-non-list-initializes [*unex] with [`std::forward<GF>(e.value())].
+[:zh_CN] 以 [`std::forward<GF>(e.value())] 直接非列表初始化 [*unex]。
+
+[para:ensures]
+[:en] [`has_value()] is [`false].
+[:zh_CN] [`has_value()] 为 [`false]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [*unex].
+[:zh_CN] 由 [*unex] 的初始化所抛出的任何异常。
+[div:end]
+
+[%@lib@ctor expected]
+[codeblock:declaration]
+template<class... Args>
+  constexpr explicit expected(in_place_t, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<T, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<T, Args...>] 为 [`true]。
+
+[para:effects]
+[:en] Direct-non-list-initializes [*val] with [`std::forward<Args>(args)...].
+[:zh_CN] 以 [`std::forward<Args>(args)...] 直接非列表初始化 [*val]。
+
+[para:ensures]
+[:en] [`has_value()] is [`true].
+[:zh_CN] [`has_value()] 为 [`true]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [*val].
+[:zh_CN] 由 [*val] 的初始化所抛出的任何异常。
+[div:end]
+
+[%@lib@ctor expected]
+[codeblock:declaration]
+template<class U, class... Args>
+  constexpr explicit expected(in_place_t, initializer_list<U> il, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<T, initializer_list<U>&, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<T, initializer_list<U>&, Args...>] 为 [`true]。
+
+[para:effects]
+[:en] Direct-non-list-initializes [*val] with [`il, std::forward<Args>(args)...].
+[:zh_CN] 以 [`il, std::forward<Args>(args)...] 直接非列表初始化 [*val]。
+
+[para:ensures]
+[:en] [`has_value()] is [`true].
+[:zh_CN] [`has_value()] 为 [`true]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [*val].
+[:zh_CN] 由 [*val] 的初始化所抛出的任何异常。
+[div:end]
+
+[%@lib@ctor expected]
+[codeblock:declaration]
+template<class... Args>
+  constexpr explicit expected(unexpect_t, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<E, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<E, Args...>] 为 [`true]。
+
+[para:effects]
+[:en] Direct-non-list-initializes [*unex] with [`std::forward<Args>(args)...].
+[:zh_CN] 以 [`std::forward<Args>(args)...] 直接非列表初始化 [*unex]。
+
+[para:ensures]
+[:en] [`has_value()] is [`false].
+[:zh_CN] [`has_value()] 为 [`false]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [*unex].
+[:zh_CN] 由 [*unex] 的初始化所抛出的任何异常。
+[div:end]
+
+[%@lib@ctor expected]
+[codeblock:declaration]
+template<class U, class... Args>
+  constexpr explicit expected(unexpect_t, initializer_list<U> il, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<E, initializer_list<U>&, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<E, initializer_list<U>&, Args...>] 为 [`true]。
+
+[para:effects]
+[:en] Direct-non-list-initializes [*unex] with [`il, std::forward<Args>(args)...].
+[:zh_CN] 以 [`il, std::forward<Args>(args)...] 直接非列表初始化 [*unex]。
+
+[para:ensures]
+[:en] [`has_value()] is [`false].
+[:zh_CN] [`has_value()] 为 [`false]。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of [*unex].
+[:zh_CN] 由 [*unex] 的初始化所抛出的任何异常。
 [div:end]
