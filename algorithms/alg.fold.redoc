@@ -1,0 +1,169 @@
+[section#alg.fold
+    [:en] Fold
+    [:zh_CN] 折叠
+]
+
+[%@lib fold_left]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T, [[redoc("*:c>")]]indirectly-binary-left-foldable<T, I> F>
+  constexpr auto ranges::fold_left(I first, S last, T init, F f);
+template<[[redoc("`:c>")]]input_range R, class T, [[redoc("*:c>")]]indirectly-binary-left-foldable<T, iterator_t<R>> F>
+  constexpr auto ranges::fold_left(R&& r, T init, F f);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[codeblock]
+ranges::fold_left_with_iter(std::move(first), last, std::move(init), f).value
+[codeblock:end]
+[div:end]
+
+[%@lib fold_left_first]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S,
+         [[redoc("*:c>")]]indirectly-binary-left-foldable<iter_value_t<I>, I> F>
+  requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, iter_reference_t<I>>
+  constexpr auto ranges::fold_left_first(I first, S last, F f);
+template<[[redoc("`:c>")]]input_range R, [[redoc("*:c>")]]indirectly-binary-left-foldable<range_value_t<R>, iterator_t<R>> F>
+  requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, range_reference_t<R>>
+  constexpr auto ranges::fold_left_first(R&& r, F f);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[codeblock]
+ranges::fold_left_first_with_iter(std::move(first), last, f).value
+[codeblock:end]
+[div:end]
+
+[%@lib fold_right]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]bidirectional_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T,
+         [[redoc("*:c>")]]indirectly-binary-right-foldable<T, I> F>
+  constexpr auto ranges::fold_right(I first, S last, T init, F f);
+template<[[redoc("`:c>")]]bidirectional_range R, class T,
+         [[redoc("*:c>")]]indirectly-binary-right-foldable<T, iterator_t<R>> F>
+  constexpr auto ranges::fold_right(R&& r, T init, F f);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using U = decay_t<invoke_result_t<F&, iter_reference_t<I>, T>>;
+if (first == last)
+  return U(std::move(init));
+I tail = ranges::next(first, last);
+U accum = invoke(f, *--tail, std::move(init));
+while (first != tail)
+  accum = invoke(f, *--tail, std::move(accum));
+return accum;
+[codeblock:end]
+[div:end]
+
+[%@lib fold_right_last]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]bidirectional_iterator I, [[redoc("`:c>")]]sentinel_for<I> S,
+         [[redoc("*:c>")]]indirectly-binary-right-foldable<iter_value_t<I>, I> F>
+  requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, iter_reference_t<I>>
+  constexpr auto ranges::fold_right_last(I first, S last, F f);
+template<[[redoc("`:c>")]]bidirectional_range R,
+         [[redoc("*:c>")]]indirectly-binary-right-foldable<range_value_t<R>, iterator_t<R>> F>
+  requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, range_reference_t<R>>
+  constexpr auto ranges::fold_right_last(R&& r, F f);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`U] be
+[`decltype(ranges::fold_right(first, last, iter_value_t<I>(*first), f))].
+[:zh_CN] 令 [`U] 为
+[`decltype(ranges::fold_right(first, last, iter_value_t<I>(*first), f))]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (first == last)
+  return optional<U>();
+I tail = ranges::prev(ranges::next(first, std::move(last)));
+return optional<U>(in_place,
+  ranges::fold_right(std::move(first), tail, iter_value_t<I>(*tail), std::move(f)));
+[codeblock:end]
+[div:end]
+
+[%@lib fold_left_with_iter]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T,
+         [[redoc("*:c>")]]indirectly-binary-left-foldable<T, I> F>
+  constexpr [[redoc("[=seebelow]")]] ranges::fold_left_with_iter(I first, S last, T init, F f);
+template<[[redoc("`:c>")]]input_range R, class T, [[redoc("*:c>")]]indirectly-binary-left-foldable<T, iterator_t<R>> F>
+  constexpr [[redoc("[=seebelow]")]] ranges::fold_left_with_iter(R&& r, T init, F f);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`U] be [`decay_t<invoke_result_t<F&, T, iter_reference_t<I>>>].
+[:zh_CN] 令 [`U] 为 [`decay_t<invoke_result_t<F&, T, iter_reference_t<I>>>]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (first == last)
+  return {std::move(first), U(std::move(init))};
+U accum = invoke(f, std::move(init), *first);
+for (++first; first != last; ++first)
+  accum = invoke(f, std::move(accum), *first);
+return {std::move(first), std::move(accum)};
+[codeblock:end]
+
+[para:remarks]
+[:en] The return type is [`fold_left_with_iter_result<I, U>] for the first
+overload and [`fold_left_with_iter_result<borrowed_iterator_t<R>, U>] for the
+second overload.
+[:zh_CN] 返回类型对于第一个重载为 [`fold_left_with_iter_result<I, U>]，而对于
+第二个重载为 [`fold_left_with_iter_result<borrowed_iterator_t<R>, U>]。
+[div:end]
+
+[%@lib fold_left_first_with_iter]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S,
+         [[redoc("*:c>")]]indirectly-binary-left-foldable<iter_value_t<I>, I> F>
+  requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, iter_reference_t<I>>
+  constexpr [[redoc("[=seebelow]")]] ranges::fold_left_first_with_iter(I first, S last, F f);
+template<[[redoc("`:c>")]]input_range R, [[redoc("*:c>")]]indirectly-binary-left-foldable<range_value_t<R>, iterator_t<R>> F>
+  requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, range_reference_t<R>>
+  constexpr [[redoc("[=seebelow]")]] ranges::fold_left_first_with_iter(R&& r, F f);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`U] be
+[:zh_CN] 令 [`U] 为
+[codeblock]
+decltype(ranges::fold_left(std::move(first), last, iter_value_t<I>(*first), f))
+[codeblock:end]
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (first == last)
+  return {std::move(first), optional<U>()};
+optional<U> init(in_place, *first);
+for (++first; first != last; ++first)
+  *init = invoke(f, std::move(*init), *first);
+return {std::move(first), std::move(init)};
+[codeblock:end]
+
+[para:remarks]
+[:en] The return type is [`fold_left_first_with_iter_result<I, optional<U>>] for
+the first overload and
+[`fold_left_first_with_iter_result<borrowed_iterator_t<R>, optional<U>>] for the
+second overload.
+[:zh_CN] 返回类型对于第一个重载为
+[`fold_left_first_with_iter_result<I, optional<U>>]，而对于第二个重载为
+[`fold_left_first_with_iter_result<borrowed_iterator_t<R>, optional<U>>]。
+[div:end]

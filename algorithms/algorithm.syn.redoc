@@ -6,7 +6,8 @@
 [%@hdr@def algorithm]
 
 [codeblock:synopsis]
-#include <initializer_list>
+#include <initializer_list>     // [:en] see [#initializer.list.syn] \
+                                [:zh_CN] 参见 [#initializer.list.syn]
 
 namespace std {
   namespace ranges {
@@ -32,6 +33,9 @@ namespace std {
 
     template<class I>
       struct in_found_result;
+
+    template<class I, class T>
+      struct in_value_result;
 
     template<class O, class T>
       struct out_value_result;
@@ -91,6 +95,30 @@ namespace std {
     template<[[redoc("`:c>")]]input_range R, class Proj = identity,
              [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
       constexpr bool none_of(R&& r, Pred pred, Proj proj = {});
+  }
+
+  // [:en] [#alg.contains], contains \
+  [:zh_CN] [#alg.contains]，包含
+  namespace ranges {
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T, class Proj = identity>
+      requires [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T*>
+      constexpr bool contains(I first, S last, const T& value, Proj proj = {});
+    template<[[redoc("`:c>")]]input_range R, class T, class Proj = identity>
+      requires
+        [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T*>
+      constexpr bool contains(R&& r, const T& value, Proj proj = {});
+
+    template<[[redoc("`:c>")]]forward_iterator I1, [[redoc("`:c>")]]sentinel_for<I1> S1,
+             [[redoc("`:c>")]]forward_iterator I2, [[redoc("`:c>")]]sentinel_for<I2> S2,
+             class Pred = ranges::equal_to, class Proj1 = identity, class Proj2 = identity>
+      requires [[redoc("`:c>")]]indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+      constexpr bool contains_subrange(I1 first1, S1 last1, I2 first2, S2 last2,
+                                       Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+    template<[[redoc("`:c>")]]forward_range R1, [[redoc("`:c>")]]forward_range R2,
+             class Pred = ranges::equal_to, class Proj1 = identity, class Proj2 = identity>
+      requires [[redoc("`:c>")]]indirectly_comparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+      constexpr bool contains_subrange(R1&& r1, R2&& r2,
+                                       Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
   }
 
   // [:en] [#alg.foreach], for each \
@@ -183,6 +211,30 @@ namespace std {
              [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
       constexpr borrowed_iterator_t<R>
         find_if_not(R&& r, Pred pred, Proj proj = {});
+  }
+
+  // [:en] [#alg.find.last], find last \
+  [:zh_CN] [#alg.find.last]，查找最后一个
+  namespace ranges {
+    template<[[redoc("`:c>")]]forward_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T, class Proj = identity>
+      requires [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T*>
+      constexpr subrange<I> find_last(I first, S last, const T& value, Proj proj = {});
+    template<[[redoc("`:c>")]]forward_range R, class T, class Proj = identity>
+      requires
+        [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T*>
+      constexpr borrowed_subrange_t<R> find_last(R&& r, const T& value, Proj proj = {});
+    template<[[redoc("`:c>")]]forward_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class Proj = identity,
+             [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+      constexpr subrange<I> find_last_if(I first, S last, Pred pred, Proj proj = {});
+    template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
+             [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr borrowed_subrange_t<R> find_last_if(R&& r, Pred pred, Proj proj = {});
+    template<[[redoc("`:c>")]]forward_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class Proj = identity,
+             [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+      constexpr subrange<I> find_last_if_not(I first, S last, Pred pred, Proj proj = {});
+    template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
+             [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+      constexpr borrowed_subrange_t<R> find_last_if_not(R&& r, Pred pred, Proj proj = {});
   }
 
   // [:en] [#alg.find.end], find end \
@@ -604,6 +656,93 @@ namespace std {
                [[redoc("`:c>")]]indirectly_comparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
       constexpr bool ends_with(R1&& r1, R2&& r2, Pred pred = {},
                                Proj1 proj1 = {}, Proj2 proj2 = {});
+  }
+
+  // [:en] [#alg.fold], fold \
+  [:zh_CN] [#alg.fold]，折叠
+    template<class F>
+    class [[redoc("*>")]]flipped {     // [=expos]
+      F [[redoc("*>")]]f;              // [=expos]
+
+    public:
+      template<class T, class U> requires [[redoc("`:c>")]]invocable<F&, U, T>
+      invoke_result_t<F&, U, T> operator()(T&&, U&&);
+    };
+
+    template<class F, class T, class I, class U>
+      concept [[redoc("*:c@def>")]]indirectly-binary-left-foldable-impl =  // [=expos]
+        [[redoc("`:c>")]]movable<T> && [[redoc("`:c>")]]movable<U> &&
+        [[redoc("`:c>")]]convertible_to<T, U> && [[redoc("`:c>")]]invocable<F&, U, iter_reference_t<I>> &&
+        [[redoc("`:c>")]]assignable_from<U&, invoke_result_t<F&, U, iter_reference_t<I>>>;
+
+    template<class F, class T, class I>
+      concept [[redoc("*:c@def>")]]indirectly-binary-left-foldable =      // [=expos]
+        [[redoc("`:c>")]]copy_constructible<F> && [[redoc("`:c>")]]indirectly_readable<I> &&
+        [[redoc("`:c>")]]invocable<F&, T, iter_reference_t<I>> &&
+        [[redoc("`:c>")]]convertible_to<invoke_result_t<F&, T, iter_reference_t<I>>,
+               decay_t<invoke_result_t<F&, T, iter_reference_t<I>>>> &&
+        [[redoc("*:c>")]]indirectly-binary-left-foldable-impl<F, T, I,
+                        decay_t<invoke_result_t<F&, T, iter_reference_t<I>>>>;
+
+    template<class F, class T, class I>
+      concept [[redoc("*:c@def>")]]indirectly-binary-right-foldable =    // [=expos]
+        [[redoc("*:c>")]]indirectly-binary-left-foldable<[[redoc("*>")]]flipped<F>, T, I>;
+
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T,
+             [[redoc("*:c>")]]indirectly-binary-left-foldable<T, I> F>
+      constexpr auto fold_left(I first, S last, T init, F f);
+
+    template<[[redoc("`:c>")]]input_range R, class T, [[redoc("*:c>")]]indirectly-binary-left-foldable<T, iterator_t<R>> F>
+      constexpr auto fold_left(R&& r, T init, F f);
+
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S,
+             [[redoc("*:c>")]]indirectly-binary-left-foldable<iter_value_t<I>, I> F>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, iter_reference_t<I>>
+      constexpr auto fold_left_first(I first, S last, F f);
+
+    template<[[redoc("`:c>")]]input_range R, [[redoc("*:c>")]]indirectly-binary-left-foldable<range_value_t<R>, iterator_t<R>> F>
+      requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, range_reference_t<R>>
+      constexpr auto fold_left_first(R&& r, F f);
+
+    template<[[redoc("`:c>")]]bidirectional_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T,
+      [[redoc("*:c>")]]indirectly-binary-right-foldable<T, I> F>
+      constexpr auto fold_right(I first, S last, T init, F f);
+
+    template<[[redoc("`:c>")]]bidirectional_range R, class T,
+      [[redoc("*:c>")]]indirectly-binary-right-foldable<T, iterator_t<R>> F>
+      constexpr auto fold_right(R&& r, T init, F f);
+
+    template<[[redoc("`:c>")]]bidirectional_iterator I, [[redoc("`:c>")]]sentinel_for<I> S,
+      [[redoc("*:c>")]]indirectly-binary-right-foldable<iter_value_t<I>, I> F>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, iter_reference_t<I>>
+    constexpr auto fold_right_last(I first, S last, F f);
+
+    template<[[redoc("`:c>")]]bidirectional_range R,
+             [[redoc("*:c>")]]indirectly-binary-right-foldable<range_value_t<R>, iterator_t<R>> F>
+      requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, range_reference_t<R>>
+      constexpr auto fold_right_last(R&& r, F f);
+
+    template<class I, class T>
+      using fold_left_with_iter_result = in_value_result<I, T>;
+    template<class I, class T>
+      using fold_left_first_with_iter_result = in_value_result<I, T>;
+
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class T,
+       [[redoc("*:c>")]]indirectly-binary-left-foldable<T, I> F>
+      constexpr [[redoc("[=seebelow]")]] fold_left_with_iter(I first, S last, T init, F f);
+
+    template<[[redoc("`:c>")]]input_range R, class T, [[redoc("*:c>")]]indirectly-binary-left-foldable<T, iterator_t<R>> F>
+      constexpr [[redoc("[=seebelow]")]] fold_left_with_iter(R&& r, T init, F f);
+
+    template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S,
+             [[redoc("*:c>")]]indirectly-binary-left-foldable<iter_value_t<I>, I> F>
+      requires [[redoc("`:c>")]]constructible_from<iter_value_t<I>, iter_reference_t<I>>
+      constexpr [[redoc("[=seebelow]")]] fold_left_first_with_iter(I first, S last, F f);
+
+    template<[[redoc("`:c>")]]input_range R,
+             [[redoc("*:c>")]]indirectly-binary-left-foldable<range_value_t<R>, iterator_t<R>> F>
+      requires [[redoc("`:c>")]]constructible_from<range_value_t<R>, range_reference_t<R>>
+      constexpr [[redoc("[=seebelow]")]] fold_left_first_with_iter(R&& r, F f);
   }
 
   // [:en] [#alg.modifying.operations], modifying sequence operations \
