@@ -4,40 +4,53 @@
 ]
 
 [para]
-[:en] The headers [?libheader queue] and [?libheader stack] define the container
-adaptors [`queue], [`priority_queue], and [`stack].
-[:zh_CN] 头文件 [?libheader queue] 和 [?libheader stack] 定义了容器适配器
-[`queue]，[`priority_queue]，和 [`stack]。
+[:en] The headers [?libheader queue], [?libheader stack], [?libheader flat_map],
+and [?libheader flat_set] define the container adaptors [`queue] and
+[`priority_queue], [`stack], [`flat_map] and [`flat_multimap], and [`flat_set]
+and [`flat_multiset], respectively.
+[:zh_CN] 头文件 [?libheader queue]，[?libheader stack]，[?libheader flat_map]，
+和 [?libheader flat_set] 分别定义了容器适配器 [`queue] 和 [`priority_queue]，
+[`stack]，[`flat_map] 和 [`flat_multimap]，以及 [`flat_set] 和 [`flat_multiset]。
 
 [para]
-[:en] The container adaptors each take a [`Container] template parameter, and
-each constructor takes a [`Container] reference argument.
-[:zh_CN] 每个容器适配器均接受一个 [`Container] 模板形参，并且每个构造函数均接受
-一个 [`Container] 引用实参。
+[:en] Each container adaptor takes one or more template parameters named
+[`Container], [`KeyContainer], or [`MappedContainer] that denote the types of
+containers that the container adaptor adapts.
+[:zh_CN] 每种容器适配器均接受一个或多个名为 [`Container]、[`KeyContainer] 或
+[`MappedContainer] 的模板形参，它们代表该容器适配器所适配的容器的类型。
 
-[:en] This container is copied into the [`Container] member of each adaptor.
-[:zh_CN] 这个容器被复制到各个适配器的 [`Container] 成员中。
+[:en] Each container adaptor has at least one constructor that takes a reference
+argument to one or more such template parameters.
+[:zh_CN] 每种容器适配器均带有至少一个构造函数接受一个引用实参，其指代一个或多个
+这种模板形参。
 
-[:en] If the container takes an allocator, then a compatible allocator may be
-passed in to the adaptor[=']s constructor.
-[:zh_CN] 如果这个容器带有一个分配器，则可以向适配器的构造函数传递一个与之兼容的
+[:en] For each constructor reference argument to a container [`C],
+the constructor copies the container into the container adaptor.
+[:zh_CN] 对于每个指代某个容器 [`C] 的构造函数引用实参，构造函数将该容器复制到
+容器适配器中。
+
+[:en] If [`C] takes an allocator, then a compatible allocator may be passed in
+to the adaptor[=']s constructor.
+[:zh_CN] 如果 [`C] 接受一个分配器，则可以向适配器的构造函数传递一个与之兼容的
 分配器。
 
 [:en] Otherwise, normal copy or move construction is used for the container
 argument.
 [:zh_CN] 否则，对这个容器实参进行常规的复制或移动构造。
 
-[:en] The first template parameter [`T] of the container adaptors shall denote
-the same type as [`Container::value_type].
-[:zh_CN] 容器适配器的第一个模板形参 [`T] 应当代表与 [`Container::value_type]
-相同的类型。
+[:en] For the container adaptors that take a single container template parameter
+[`Container], the first template parameter [`T] of the container adaptors shall
+denote the same type as [`Container::value_type].
+[:zh_CN] 对于接受单个容器模板形参 [`Container] 的容器适配器，它的第一个模板形参
+[`T] 应当代表与 [`Container::value_type] 相同的类型。
 
 [para]
 [:en] For container adaptors, no [`swap] function throws an exception unless
-that exception is thrown by the swap of the adaptor[=']s [`Container] or
-[`Compare] object (if any).
+that exception is thrown by the swap of the adaptor[=']s [`Container],
+[`KeyContainer], [`MappedContainer], or [`Compare] object (if any).
 [:zh_CN] 对于容器适配器，[`swap] 函数都不抛出异常，除非这个异常是由该适配器的
-[`Container] 或 [`Compare] 对象（如果有）的 [`swap] 所抛出的。
+[`Container]，[`KeyContainer]，[`MappedContainer]，或 [`Compare] 对象（如果有）
+的 [`swap] 所抛出的。
 
 [para]
 [:en] A constructor template of a container adaptor shall not participate in
@@ -45,6 +58,21 @@ overload resolution if it has an [`InputIterator] template parameter and
 a type that does not qualify as an input iterator is deduced for that parameter.
 [:zh_CN] 如果容器适配器的构造函数模板带有一个 [`InputIterator] 模板形参，而为该
 形参所推断的类型无法作为输入迭代器，则它不能参与重载决议。
+
+[para]
+[:en] For container adaptors that have them, the [`insert], [`emplace], and
+[`erase] members affect the validity of iterators, references, and pointers
+to the adaptor[=']s container(s) in the same way that the containers[=']
+respective [`insert], [`emplace], and [`erase] members do.
+[:zh_CN] 如果容器适配器带有成员 [`insert]、[`emplace] 和 [`erase]，则它们与
+适配器的容器的相应 [`insert]、[`emplace] 和 [`erase] 成员相同的方式，影响指向
+适配器的容器中的迭代器、引用和指针的有效性。
+
+[begin:example]
+[:en] A call to [`flat_map<Key, T>::insert] can invalidate all iterators to the
+[`flat_map].
+[:zh_CN] 调用 [`flat_map<Key, T>::insert] 会使指向 [`flat_map] 的所有迭代器失效。
+[end:example]
 
 [para]
 [:en] A deduction guide for a container adaptor shall not participate in
@@ -64,26 +92,56 @@ allocator is deduced for that parameter.
 [:zh_CN] 它具有一个 [`Compare] 模板形参，而为该形参所推断的类型可以作为分配器。
 
 [item]
-[:en] It has a [`Container] template parameter and a type that qualifies as an
-allocator is deduced for that parameter.
-[:zh_CN] 它具有一个 [`Container] 模板形参，而为该形参所推断的类型可以作为分配器。
+[:en] It has a [`Container], [`KeyContainer], or [`MappedContainer] template
+parameter and a type that qualifies as an allocator is deduced for that parameter.
+[:zh_CN] 它具有一个 [`Container]、[`KeyContainer] 或 [`MappedContainer] 模板形参，
+而为该形参所推断的类型可以作为分配器。
 
 [item]
-[:en] It has no [`Container] template parameter, and it has an [`Allocator]
-template parameter and a type that does not qualify as an allocator is deduced
-for that parameter.
-[:zh_CN] 它没有 [`Container] 模板形参，并且它具有一个 [`Allocator] 模板形参，而
-为该形参所推断的类型无法作为分配器。
+[:en] It has no [`Container], [`KeyContainer], or [`MappedContainer] template
+parameter, and it has an [`Allocator] template parameter and a type that does
+not qualify as an allocator is deduced for that parameter.
+[:zh_CN] 它没有 [`Container]、[`KeyContainer] 或 [`MappedContainer] 模板形参，
+并且它具有一个 [`Allocator] 模板形参，而为该形参所推断的类型无法作为分配器。
 
 [item]
 [:en] It has both [`Container] and [`Allocator] template parameters, and
 [`uses_allocator_v<Container, Allocator>] is [`false].
-[:zh_CN] 它同时具有 [`Container] 和 [`Allocator] 模板形参，但
+[:zh_CN] 它同时具有 [`Container] 和 [`Allocator] 模板形参，且
 [`uses_allocator_v<Container, Allocator>] 为 [`false]。
+
+[item]
+[:en] It has both [`KeyContainer] and [`Allocator] template parameters, and
+[`uses_allocator_v<KeyContainer, Allocator>] is [`false].
+[:zh_CN] 它同时具有 [`KeyContainer] 和 [`Allocator] 模板形参，且
+[`uses_allocator_v<KeyContainer, Allocator>] 为 [`false]。
+
+[item]
+[:en] It has both [`MappedContainer] and [`Allocator] template parameters, and
+[`uses_allocator_v<MappedContainer, Allocator>] is [`false].
+[:zh_CN] 它同时具有 [`MappedContainer] 和 [`Allocator] 模板形参，且
+[`uses_allocator_v<MappedContainer, Allocator>] 为 [`false]。
 [list:end]
 
 [para]
 [:en] The exposition-only alias template [*iter-value-type] defined in
-[#sequences.general] may appear in deduction guides for container adaptors.
-[:zh_CN] [#sequences.general] 中定义的仅为阐释目的的别名模板 [*iter-value-type]
-可以出现在容器适配器的推断指引之中。
+[#sequences.general] and the exposition-only alias templates [*iter-key-type]
+and [*iter-mapped-type] defined in [#associative.general] may appear in
+deduction guides for container adaptors.
+[:zh_CN] [#sequences.general] 中定义的仅为阐释目的的别名模板 [*iter-value-type]，
+以及 [#associative.general] 中定义的仅为阐释目的的别名模板 [*iter-key-type] 和
+[*iter-mapped-type] 可以出现在容器适配器的推断导引之中。
+
+[para]
+[:en] The following exposition-only alias templates may appear in deduction
+guides for container adaptors:
+[:zh_CN] 以下仅为阐释目的的别名模板可以出现在容器适配器的推断导引之中：
+
+[codeblock:synopsis]
+template<class Container>
+  using [[redoc("*>")]]cont-key-type =                                // [=expos]
+    remove_const_t<typename Container::value_type::first_type>;
+template<class Container>
+  using [[redoc("*>")]]cont-mapped-type =                             // [=expos]
+    typename Container::value_type::second_type;
+[codeblock:end]

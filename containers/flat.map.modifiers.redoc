@@ -1,0 +1,468 @@
+[section#flat.map.modifiers
+    [:en] Modifiers
+    [:zh_CN] 改动函数
+]
+
+[%@lib@member emplace[!flat_map]]
+[codeblock:declaration]
+template<class... Args> pair<iterator, bool> emplace(Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<pair<key_type, mapped_type>, Arg...>] is [`true].
+[:zh_CN] [`is_constructible_v<pair<key_type, mapped_type>, Arg...>] 为 [`true]。
+
+[para:effects]
+[:en] Initializes an object [`t] of type [`pair<key_type, mapped_type>] with
+[`std::forward<Args>(args)...]; if the map already contains an element whose key
+is equivalent to [`t.first], [`*this] is unchanged.
+[:zh_CN] 以 [`std::forward<Args>(args)...] 初始化一个
+[`pair<key_type, mapped_type>] 类型的对象 [`t]；如果该映射已经包含一个其键等价于
+[`t.first] 的元素，则不改变 [`*this]。
+
+[:en] Otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock]
+auto key_it = ranges::upper_bound(c.keys, t.first, compare);
+auto value_it = c.values.begin() + distance(c.keys.begin(), key_it);
+c.keys.insert(key_it, std::move(t.first));
+c.values.insert(value_it, std::move(t.second));
+[codeblock:end]
+
+[para:returns]
+[:en] The [`bool] component of the returned pair is [`true] if and only if the
+insertion took place, and the iterator component of the pair points to the
+element with key equivalent to [`t.first].
+[:zh_CN] 当且仅当发生了插入时，所返回对偶的 [`bool] 成分为 [`true]，且对偶的
+迭代器成分指向其键等价于 [`t.first] 的元素。
+[div:end]
+
+[%@lib@member insert[!flat_map]]
+[codeblock:declaration]
+template<class P> pair<iterator, bool> insert(P&& x);
+template<class P> iterator insert(const_iterator position, P&& x);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<pair<key_type, mapped_type>, P>] is [`true].
+[:zh_CN] [`is_constructible_v<pair<key_type, mapped_type>, P>] 为 [`true]。
+
+[para:effects]
+[:en] The first form is equivalent to [`return emplace(std::forward<P>(x));].
+[:zh_CN] 第一种形式等价于 [`return emplace(std::forward<P>(x));]。
+
+[:en] The second form is equivalent to
+[`return emplace_hint(position, std::forward<P>(x));].
+[:zh_CN] 第二种形式等价于
+[`return emplace_hint(position, std::forward<P>(x));]。
+[div:end]
+
+[%@lib@member insert[!flat_map]]
+[codeblock:declaration]
+template<class InputIterator>
+  void insert(InputIterator first, InputIterator last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Adds elements to [`c] as if by:
+[:zh_CN] 如同以如下代码向 [`c] 添加元素：
+[codeblock]
+for (; first != last; ++first) {
+  value_type value = *first;
+  c.keys.insert(c.keys.end(), std::move(value.first));
+  c.values.insert(c.values.end(), std::move(value.second));
+}
+[codeblock:end]
+
+[:en] Then, sorts the range of newly inserted elements with respect to
+[`value_comp()]; merges the resulting sorted range and the sorted range of
+pre-existing elements into a single sorted range; and finally erases the
+duplicate elements as if by:
+[:zh_CN] 然后，对新插入元素的范围根据 [`value_comp()] 进行排序；将产生的有序范围
+和已存在元素的有序范围归并为单个有序范围；最后如同以如下代码来擦除重复元素：
+[codeblock]
+auto zv = ranges::zip_view(c.keys, c.values);
+auto it = ranges::unique(zv, key_equiv(compare)).begin();
+auto dist = distance(zv.begin(), it);
+c.keys.erase(c.keys.begin() + dist, c.keys.end());
+c.values.erase(c.values.begin() + dist, c.values.end());
+[codeblock:end]
+
+[para:complexity]
+[:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M]
+is [`distance(first, last)].
+[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为
+[`distance(first, last)]。
+
+[para:remarks]
+[:en] Since this operation performs an in-place merge, it may allocate memory.
+[:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
+[div:end]
+
+[%@lib@member insert[!flat_map]]
+[codeblock:declaration]
+template<class InputIterator>
+  void insert(sorted_unique_t, InputIterator first, InputIterator last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Adds elements to [`c] as if by:
+[:zh_CN] 如同以如下代码向 [`c] 添加元素：
+[codeblock]
+for (; first != last; ++first) {
+  value_type value = *first;
+  c.keys.insert(c.keys.end(), std::move(value.first));
+  c.values.insert(c.values.end(), std::move(value.second));
+}
+[codeblock:end]
+
+[:en] Then, merges the sorted range of newly added elements and the sorted range
+of pre-existing elements into a single sorted range; and finally erases the
+duplicate elements as if by:
+[:zh_CN] 然后，将新插入元素的有序范围和已存在元素的有序范围归并为单个有序范围；
+最后如同以如下代码来擦除重复元素：
+[codeblock]
+auto zv = ranges::zip_view(c.keys, c.values);
+auto it = ranges::unique(zv, key_equiv(compare)).begin();
+auto dist = distance(zv.begin(), it);
+c.keys.erase(c.keys.begin() + dist, c.keys.end());
+c.values.erase(c.values.begin() + dist, c.values.end());
+[codeblock:end]
+
+[para:complexity]
+[:en] Linear in [$N], where [$N] is [`size()] after the operation.
+[:zh_CN] 对于 [$N] 为线性，其中 [$N] 为操作后的 [`size()]。
+
+[para:remarks]
+[:en] Since this operation performs an in-place merge, it may allocate memory.
+[:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
+[div:end]
+
+[%@lib@member insert_range[!flat_map]]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+  void insert_range(R&& rg);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Adds elements to [`c] as if by:
+[:zh_CN] 如同以如下代码向 [`c] 添加元素：
+[codeblock]
+for (const auto& e : rg) {
+  c.keys.insert(c.keys.end(), e.first);
+  c.values.insert(c.values.end(), e.second);
+}
+[codeblock:end]
+
+[:en] Then, sorts the range of newly inserted elements with respect to
+[`value_comp()]; merges the resulting sorted range and the sorted range of
+pre-existing elements into a single sorted range; and finally erases the
+duplicate elements as if by:
+[:zh_CN] 然后，对新插入元素的范围根据 [`value_comp()] 进行排序；将产生的有序范围
+和已存在元素的有序范围归并为单个有序范围；最后如同以如下代码来擦除重复元素：
+[codeblock]
+auto zv = ranges::zip_view(c.keys, c.values);
+auto it = ranges::unique(zv, key_equiv(compare)).begin();
+auto dist = distance(zv.begin(), it);
+c.keys.erase(c.keys.begin() + dist, c.keys.end());
+c.values.erase(c.values.begin() + dist, c.values.end());
+[codeblock:end]
+
+[para:complexity]
+[:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M]
+is [`ranges::distance(rg)].
+[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为
+[`ranges::distance(rg)]。
+
+[para:remarks]
+[:en] Since this operation performs an in-place merge, it may allocate memory.
+[:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
+[div:end]
+
+[%@lib@member try_emplace[!flat_map]]
+[codeblock:declaration]
+template<class... Args>
+  pair<iterator, bool> try_emplace(const key_type& k, Args&&... args);
+template<class... Args>
+  pair<iterator, bool> try_emplace(key_type&& k, Args&&... args);
+template<class... Args>
+  iterator try_emplace(const_iterator hint, const key_type& k, Args&&... args);
+template<class... Args>
+  iterator try_emplace(const_iterator hint, key_type&& k, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<mapped_type, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<mapped_type, Args...>] 为 [`true]。
+
+[para:effects]
+[:en] If the map already contains an element whose key is equivalent to [`k],
+[`*this] and [`args...] are unchanged.
+[:zh_CN] 如果该映射中已经存在其键与 [`k] 等价的元素，则不改动 [`*this] 和 [`args...]。
+
+[:en] Otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock]
+auto key_it = ranges::upper_bound(c.keys, k, compare);
+auto value_it = c.values.begin() + distance(c.keys.begin(), key_it);
+c.keys.insert(key_it, std::forward<decltype(k)>(k));
+c.values.emplace(value_it, std::forward<Args>(args)...);
+[codeblock:end]
+
+[para:returns]
+[:en] In the first overload, the [`bool] component of the returned pair is
+[`true] if and only if the insertion took place.
+[:zh_CN] 在第一种重载中，当且仅当发生了插入时，所返回的对偶的 [`bool] 成分为
+[`true]。
+
+[:en] The returned iterator points to the map element whose key is equivalent to
+[`k].
+[:zh_CN] 所返回的迭代器指向其键与 [`k] 等价的映射元素。
+
+[para:complexity]
+[:en] The same as [`emplace] for the first two overloads, and the same as
+[`emplace_hint] for the last two overloads.
+[:zh_CN] 对于前两个重载，与 [`emplace] 相同，对于后两个重载，与 [`emplace_hint]
+相同。
+[div:end]
+
+[%@lib@member try_emplace[!flat_map]]
+[codeblock:declaration]
+template<class K, class... Args>
+  pair<iterator, bool> try_emplace(K&& k, Args&&... args);
+template<class K, class... Args>
+  iterator try_emplace(const_iterator hint, K&& k, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] The [~qualified-id] [`Compare::is_transparent] is valid and denotes a type.
+[:zh_CN] [~限定标识] [`Compare::is_transparent] 有效病代表一个类型。
+[item]
+[:en] [`is_constructible_v<key_type, K>] is [`true].
+[:zh_CN] [`is_constructible_v<key_type, K>] 为 [`true]。
+[item]
+[:en] [`is_constructible_v<mapped_type, Args...>] is [`true].
+[:zh_CN] [`is_constructible_v<mapped_type, Args...>] 为 [`true]。
+[item]
+[:en] For the first overload, [`is_convertible_v<K&&, const_iterator>] and
+[`is_convertible_v<K&&, iterator>] are both [`false].
+[:zh_CN] 对于第一种重载，[`is_convertible_v<K&&, const_iterator>] 和
+[`is_convertible_v<K&&, iterator>] 均为 [`false]。
+[list:end]
+
+[para:expects]
+[:en] The conversion from [`k] into [`key_type] constructs an object [`u],
+for which [`find(k) == find(u)] is [`true].
+[:zh_CN] 从 [`k] 转换为 [`key_type] 会构造一个对象 [`u]，使得
+[`find(k) == find(u)] 为 [`true]。
+
+[para:effects]
+[:en] If the map already contains an element whose key is equivalent to [`k],
+[`*this] and [`args...] are unchanged.
+[:zh_CN] 如果该映射中已经存在其键与 [`k] 等价的元素，则不改动 [`*this] 和 [`args...]。
+
+[:en] Otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock]
+auto key_it = ranges::upper_bound(c.keys, k, compare);
+auto value_it = c.values.begin() + distance(c.keys.begin(), key_it);
+c.keys.emplace(key_it, std::forward<K>(k));
+c.values.emplace(value_it, std::forward<Args>(args)...);
+[codeblock:end]
+
+[para:returns]
+[:en] In the first overload, the [`bool] component of the returned pair is
+[`true] if and only if the insertion took place.
+[:zh_CN] 在第一种重载中，当且仅当发生了插入时，所返回的对偶的 [`bool] 成分为
+[`true]。
+
+[:en] The returned iterator points to the map element whose key is equivalent to
+[`k].
+[:zh_CN] 所返回的迭代器指向具有等价于 [`k] 的键的映射元素。
+
+[para:complexity]
+[:en] The same as [`emplace] and [`emplace_hint], respectively.
+[:zh_CN] 分别与 [`emplace] 和 [`emplace_hint] 相同。
+[div:end]
+
+[%@lib@member insert_or_assign[!flat_map]]
+[codeblock:declaration]
+template<class M>
+  pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj);
+template<class M>
+  pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj);
+template<class M>
+  iterator insert_or_assign(const_iterator hint, const key_type& k, M&& obj);
+template<class M>
+  iterator insert_or_assign(const_iterator hint, key_type&& k, M&& obj);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`is_assignable_v<mapped_type&, M>] is [`true] and
+[`is_constructible_v<mapped_type, M>] is [`true].
+[:zh_CN] [`is_assignable_v<mapped_type&, M>] 为 [`true] 并且
+[`is_constructible_v<mapped_type, M>] 为 [`true]。
+
+[para:effects]
+[:en] If the map already contains an element [`e] whose key is equivalent to [`k],
+assigns [`std::forward<M>(obj)] to [`e.second].
+[:zh_CN] 如果该映射中已经存在其键与 [`k] 等价的元素 [`e]，则将
+[`std::forward<M>(obj)] 赋值给 [`e.second]。
+
+[:en] Otherwise, equivalent to
+[:zh_CN] 否则，对于前两种重载，等价于
+[codeblock]
+try_emplace(std::forward<decltype(k)>(k), std::forward<M>(obj))
+[codeblock:end]
+[:en@~] for the first two overloads or
+[:zh_CN@~] 或对于后两种重载，等价于
+[codeblock]
+try_emplace_hint(hint, std::forward<decltype(k)>(k), std::forward<M>(obj))
+[codeblock:end]
+[:en@~] for the last two overloads.
+[:zh_CN@~] 。
+
+[para:returns]
+[:en] In the first overload, the [`bool] component of the returned pair is
+[`true] if and only if the insertion took place.
+[:zh_CN] 在第一种重载中，当且仅当发生了插入时，所返回的对偶的 [`bool] 成分为
+[`true]。
+
+[:en] The returned iterator points to the map element whose key is equivalent to
+[`k].
+[:zh_CN] 所返回的迭代器指向其键与 [`k] 等价的映射元素。
+
+[para:complexity]
+[:en] The same as [`emplace] for the first two overloads and the same as
+[`emplace_hint] for the last two overloads.
+[:zh_CN] 对于前两个重载，与 [`emplace] 相同，对于后两个重载，与 [`emplace_hint]
+相同。
+[div:end]
+
+[%@lib@member insert_or_assign[!flat_map]]
+[codeblock:declaration]
+template<class K, class M>
+  pair<iterator, bool> insert_or_assign(K&& k, M&& obj);
+template<class K, class M>
+  iterator insert_or_assign(const_iterator hint, K&& k, M&& obj);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] The [~qualified-id] [`Compare::is_transparent] is valid and denotes a type.
+[:zh_CN] [~限定标识] [`Compare::is_transparent] 有效病代表一个类型。
+[item]
+[:en] [`is_constructible_v<key_type, K>] is [`true].
+[:zh_CN] [`is_constructible_v<key_type, K>] 为 [`true]。
+[item]
+[:en] [`is_assignable_v<mapped_type&, M>] is [`true].
+[:zh_CN] [`is_assignable_v<mapped_type&, M>] 为 [`true]。
+[item]
+[:en] [`is_constructible_v<mapped_type, M>] is [`true].
+[:zh_CN] [`is_constructible_v<mapped_type, M>] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] The conversion from [`k] into [`key_type] constructs an object [`u],
+for which [`find(k) == find(u)] is [`true].
+[:zh_CN] 从 [`k] 转换为 [`key_type] 会构造一个对象 [`u]，使得
+[`find(k) == find(u)] 为 [`true]。
+
+[para:effects]
+[:en] If the map already contains an element [`e] whose key is equivalent to [`k],
+assigns [`std::forward<M>(obj)] to [`e.second].
+[:zh_CN] 如果该 [`map] 中已经存在其键与 [`k] 等价的元素 [`e]，则将
+[`std::forward<M>(obj)] 赋值给 [`e.second]。
+
+[:en] Otherwise, equivalent to
+[:zh_CN] 否则，对于前两种重载，等价于
+[codeblock]
+try_emplace(std::forward<decltype(k)>(k), std::forward<M>(obj))
+[codeblock:end]
+[:en@~] for the first two overloads or
+[:zh_CN@~] 或对于后两种重载，等价于
+[codeblock]
+try_emplace_hint(hint, std::forward<decltype(k)>(k), std::forward<M>(obj))
+[codeblock:end]
+[:en@~] for the last two overloads.
+[:zh_CN@~] 。
+
+[para:returns]
+[:en] In the first overload, the [`bool] component of the returned pair is
+[`true] if and only if the insertion took place.
+[:zh_CN] 在第一种重载中，当且仅当发生了插入时，所返回的对偶的 [`bool] 成分为
+[`true]。
+
+[:en] The returned iterator points to the map element whose key is equivalent to
+[`k].
+[:zh_CN] 所返回的迭代器指向其键与 [`k] 等价的映射元素。
+
+[para:complexity]
+[:en] The same as [`emplace] and [`emplace_hint], respectively.
+[:zh_CN] 分别与 [`emplace] 和 [`emplace_hint] 相同。
+[div:end]
+
+[%@lib@member swap[!flat_map]]
+[codeblock:declaration]
+void swap(flat_map& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+ranges::swap(compare, y.compare);
+ranges::swap(c.keys, y.c.keys);
+ranges::swap(c.values, y.c.values);
+[codeblock:end]
+[div:end]
+
+[%@lib@member extract[!flat_map]]
+[codeblock:declaration]
+containers extract() &&;
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`*this] is emptied, even if the function exits via an exception.
+[:zh_CN] [`*this] 被清空，即便函数以异常退出也是如此。
+
+[para:returns]
+[:en] [`std::move(c)].
+[:zh_CN] [`std::move(c)]。
+[div:end]
+
+[%@lib@member replace[!flat_map]]
+[codeblock:declaration]
+void replace(key_container_type&& key_cont, mapped_container_type&& mapped_cont);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`key_cont.size() == mapped_cont.size()] is [`true], the elements of
+[`key_cont] are sorted with respect to [`compare], and [`key_cont] contains no
+equal elements.
+[:zh_CN] [`key_cont.size() == mapped_cont.size()] 为 [`true]，[`key_cont] 的元素
+根据 [`compare] 有序，并且 [`key_cont] 不包含相等元素。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+c.keys = std::move(key_cont);
+c.values = std::move(mapped_cont);
+[codeblock:end]
+[div:end]
