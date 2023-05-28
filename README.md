@@ -554,6 +554,7 @@ array bound                             |数组边界   |顶层可忽略：有�
 array declarator                        |函数声明符
 array delete expression                 |数组 delete 表达式|`delete [] p`
 array element                           |数组元素
+array extent                            |数组尺寸   |动态（`dynamic_extent`）、静态
 array of N T                            |T 的 N 元素数组
 array of unknown bound of T             |T 的边界未知数组
 array-to-pointer conversion             |数组向指针转换 A2Ptr |TempMatC
@@ -977,6 +978,7 @@ execution character set                 |执行字符集     |LC_CTYPE
 execution policy                        |执行策略       |程序库算法：顺序、并行、向量化
 execution step                          |执行步骤       |线程的可观察行为：终止，volatile访问，完成I/O、同步或原子性操作
 execution wide-character set            |执行宽字符集   |LC_CTYPE
+exhaustive layout                       |穷尽布局
 explicit                                |显式，明确
 explicit instantiation declaration      |显式实例化声明式|指定某个模板特例应当 ODR 式存在，`extern`的显式实例化
 explicit instantiation definition       |显式实例化定义式|实例化一个特例
@@ -1256,6 +1258,7 @@ latch                                   |门栓
 layout-compatible                       |布局兼容       |相同类型、布局兼容枚举、布局兼容的标准布局类
 layout-compatible class                 |布局兼容类     |全部成员构成共同起始序列的多个类
 layout-compatible enumeration           |布局兼容枚举   |底层类型相同
+layout mapping                          |布局映射
 left shift operator                     |左移运算符
 length of NTBS                          |NTBS 的长度    |终结空字符之前的元素数量，但NTBS的值包括终结空字符
 less-than operator                      |小于运算符
@@ -1364,6 +1367,7 @@ multibyte character                     |多字节字符
 multibyte encoding                      |多字节编码
 multicharacter literal                  |多字符字面量
 multidimensional array                  |多维数组
+multidimensional index space            |多维索引空间
 multiple inheritance                    |多重继承   |多个直接基类。不允许类型重复，声明顺序决定布局、初始化、销毁顺序
 multiplication operator                 |乘法运算符
 multiplicative expression               |乘性表达式 |`pm_expr * pm_expr`等，内建：一般算数转换，`%`要求整型/无作用域枚举
@@ -1650,6 +1654,7 @@ random number engine                    |随机数引擎 |URBG，通过构造、
 random number engine adaptor            |随机数引擎适配器 |包装基础引擎，对其输出实施转换算法，表现为随机数引擎，状态包括基础引擎的状态
 range                                   |范围       |迭代器+哨位或迭代器+计数
 range-based for statement               |基于范围的 for 语句|等价于`init; auto && r = initor; auto b = begin(r); auto e = end(r); for (; b!=e; ++b) { decl = *b; ... }`<br>对类类型尝试`r.begin()`和`r.end()`
+rank index                              |秩索引
 raw literal operator                    |原始字面量运算符   |`operator "" X(const char*)`，数值字面量的通配运算符之一
 raw string literal                      |原始字符串字面量   |避免转义等处理的字符串，分隔串用于识别边界`)`，如`R"xx()xx"`
 reachable                               |可达，可达的   |翻译单元：必定可达的UT，或其他有接口依赖的UT（实现决定）<br>声明式：从实例化语境处处可达的声明式
@@ -1812,6 +1817,7 @@ strict                                  |严格的
 strict partial order                    |严格偏序，拟序 |反自反，反对称，传递，不要求完全性，如 &lt;
 strict total order                      |严格全序   |具有完全性的严格偏序，完整的 &lt;
 strict weak order                       |严格弱序   |连通的严格偏序，不可比较关系为等价关系，如 &lt;
+strided layout                          |跨步布局
 string                                  |字符串
 string literal                          |字符串字面量   |预处理记号，也是记号，编码前缀，数组（常量左值）
 string literal operator template        |字符串字面量运算符模板 |`template<A a> A operator "" X()`，`A` 为支持字符串的字面量类型
@@ -1965,6 +1971,7 @@ uniform random bit generator, URBG      |均匀随机位生成器 |`uint = g()`�
 union                                   |联合体         |以`union`声明的类。所有非静态数据成员地址相同。无多态，无继承，无引用成员<br>若成员有特殊成员函数，则对应成员函数自动弃置，需要用户提供
 union-like class                        |类似联合体的类 |联合体，直接包含匿名联合体的类。有可变成员
 unique keys                             |唯一键         |关联容器set,map,unordered_set,unordered_map
+unique layout                           |唯一布局
 unique lock                             |唯一锁
 unique pointer                          |专有指针       |`unique_ptr`，专有所有权
 universal-character-name                |UCN，通用字符名|概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`

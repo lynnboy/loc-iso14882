@@ -1,0 +1,204 @@
+[section#mdspan.extents.cons
+    [:en] Constructors
+    [:zh_CN] 构造函数
+]
+
+[%@lib@ctor extents]
+[codeblock:declaration]
+template<class OtherIndexType, size_t... OtherExtents>
+  constexpr explicit([[redoc("[=seebelow]")]])
+    extents(const extents<OtherIndexType, OtherExtents...>& other) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`sizeof...(OtherExtents) == rank()] is [`true].
+[:zh_CN] [`sizeof...(OtherExtents) == rank()] 为 [`true]。
+[item]
+[:en]
+[`((OtherExtents == dynamic_extent || Extents == dynamic_extent || OtherExtents == Extents) && ...)]
+is [`true].
+[:zh_CN]
+[`((OtherExtents == dynamic_extent || Extents == dynamic_extent || OtherExtents == Extents) && ...)]
+为 [`true]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] [`other.extent([$r])] equals [$E_r] for each [$r] for which [$E_r] is a
+static extent, and
+[:zh_CN] 对于 [$E_r] 为静态尺寸的每个 [$r]，[`other.extent([$r])] 等于 [$E_r]，
+并且
+[item]
+[:en] either
+[:zh_CN] 或者
+[list]
+[item]
+[:en@~] [`sizeof...(OtherExtents)] is zero, or
+[:zh_CN@~] [`sizeof...(OtherExtents)] 为零，或者
+[item]
+[:en@~] [`other.extent([$r])] is representable as a value of type [`index_type]
+for every rank index [$r] of [`other].
+[:zh_CN@~] 对于 [`other] 的每个秩索引 [$r]，[`other.extent([$r])] 可以表示为
+[`index_type] 类型的值。
+[list:end]
+[list:end]
+
+[para:ensures]
+[:en] [`*this == other] is [`true].
+[:zh_CN] [`*this == other] 为 [`true]。
+
+[para:remarks]
+[:en] The expression inside [`explicit] is equivalent to:
+[:zh_CN] [`explicit] 中的表达式等价于：
+[codeblock]
+(((Extents != dynamic_extent) && (OtherExtents == dynamic_extent)) || ... ) ||
+(numeric_limits<index_type>::max() < numeric_limits<OtherIndexType>::max())
+[codeblock:end]
+[div:end]
+
+[%@lib@ctor extents]
+[codeblock:declaration]
+template<class... OtherIndexTypes>
+  explicit constexpr extents(OtherIndexTypes... exts) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`N] be [`sizeof...(OtherIndexTypes)], and let [`exts_arr] be
+[`array<index_type, N>{static_cast<index_type>(std::move(exts))...}].
+[:zh_CN] 令 [`N] 为 [`sizeof...(OtherIndexTypes)]，并令 [`exts_arr] 为
+[`array<index_type, N>{static_cast<index_type>(std::move(exts))...}]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`(is_convertible_v<OtherIndexTypes, index_type> && ...)] is [`true],
+[:zh_CN] [`(is_convertible_v<OtherIndexTypes, index_type> && ...)] 为 [`true]，
+[item]
+[:en] [`(is_nothrow_constructible_v<index_type, OtherIndexTypes> && ...)] is
+[`true],
+[:zh_CN] [`(is_nothrow_constructible_v<index_type, OtherIndexTypes> && ...)] 为
+[`true]，
+[item]
+[:en] [`N == rank_dynamic() || N == rank()] is [`true].
+[:zh_CN] [`N == rank_dynamic() || N == rank()] 为 [`true]。
+
+[begin:note]
+[:en] One can construct [`extents] from just dynamic extents, which are all the
+values getting stored, or from all the extents with a precondition.
+[:zh_CN] 仅从动态尺寸构造 [`extents] 是可行的，全部的值均被存储，或者来自前条件
+的全部尺寸。
+[end:note]
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] If [`N != rank_dynamic()] is [`true], [`exts_arr`[[$r]`]] equals [$E_r]
+for each [$r] for which [$E_r] is a static extent, and
+[:zh_CN] 如果 [`N != rank_dynamic()] 为 [`true]，则对于 [$E_r] 为静态尺寸的每个
+[$r]，[`exts_arr`[[$r]`]] 等于 [$E_r]，并且
+[item]
+[:en] either
+[:zh_CN] 或者
+[list]
+[item]
+[:en@~] [`sizeof...(exts) == 0] is [`true], or
+[:zh_CN@~] [`sizeof...(exts) == 0] 为 [`true]，或者
+[item]
+[:en@~] each element of [`exts] is nonnegative and is representable as a value
+of type [`index_type].
+[:zh_CN@~] [`exts] 的每个元素均非负值且可以表示为 [`index_type] 类型的值。
+[list:end]
+[list:end]
+
+[para:ensures]
+[:en] [`*this == extents(exts_arr)] is [`true].
+[:zh_CN] [`*this == extents(exts_arr)] 为 [`true]。
+[div:end]
+
+[%@lib@ctor extents]
+[codeblock:declaration]
+template<class OtherIndexType, size_t N>
+  constexpr explicit(N != rank_dynamic())
+    extents(span<OtherIndexType, N> exts) noexcept;
+template<class OtherIndexType, size_t N>
+  constexpr explicit(N != rank_dynamic())
+    extents(const array<OtherIndexType, N>& exts) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_convertible_v<const OtherIndexType&, index_type>] is [`true],
+[:zh_CN] [`is_convertible_v<const OtherIndexType&, index_type>] 为 [`true]，
+[item]
+[:en] [`is_nothrow_constructible_v<index_type, const OtherIndexType&>] is [`true],
+[:zh_CN] [`is_nothrow_constructible_v<index_type, const OtherIndexType&>] 为
+[`true]，
+[item]
+[:en] [`N == rank_dynamic() || N == rank()] is [`true].
+[:zh_CN] [`N == rank_dynamic() || N == rank()] 为 [`true]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] If [`N != rank_dynamic()] is [`true], [`exts`[[$r]`]] equals [$E_r]
+for each [$r] for which [$E_r] is a static extent, and
+[:zh_CN] 如果 [`N != rank_dynamic()] 为 [`true]，则对于 [$E_r] 为静态尺寸的每个
+[$r]，[`exts`[[$r]`]] 等于 [$E_r]，并且
+[item]
+[:en] either
+[:zh_CN] 或者
+[list]
+[item]
+[:en@~] [`N] is zero, or
+[:zh_CN@~] [`N] 为零，或者
+[item]
+[:en@~] [`exts`[[$r]`]] is nonnegative and is representable as a value
+of type [`index_type] for every rank index [$r].
+[:zh_CN@~] 对于每个秩索引 [$r]，[`exts`[[$r]`]] 非负值且可以表示为 [`index_type]
+类型的值。
+[list:end]
+[list:end]
+
+[para:effects]
+[list]
+[item]
+[:en] If [`N] equals [`dynamic_rank()], for all [$d] in the range
+[$`[0, [`rank_dynamic()])], direct-non-list-initializes
+[`[*dynamic-extent]`[[$d]`]] with [`as_const(exts`[[$d]`])].
+[:zh_CN] 如果 [`N] 等于 [`dynamic_rank()]，则对于范围 [$`[0, [`rank_dynamic()])]
+中的所有 [$d]，以 [`as_const(exts`[[$d]`])] 直接非列表初始化
+[`[*dynamic-extent]`[[$d]`]]。
+[item]
+[:en] Otherwise, for all [$d] in the range [$`[0, [`rank_dynamic()])],
+direct-non-list-initializes [`[*dynamic-extent]`[[$d]`]] with
+[`as_const(exts`[[*dynamic-index-inv]([$d])`])].
+[:zh_CN] 否则，对于范围 [$`[0, [`rank_dynamic()])] 中的所有 [$d]，以
+[`as_const(exts`[[*dynamic-index-inv]([$d])`])] 直接非列表初始化
+[`[*dynamic-extent]`[[$d]`]]。
+[list:end]
+[div:end]
+
+[%@lib@ctor extents]
+[codeblock:declaration]
+template<class... Integrals>
+  explicit extents(Integrals...) -> [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`(is_convertible_v<Integrals, size_t> && ...)] is [`true].
+[:zh_CN] [`(is_convertible_v<Integrals, size_t> && ...)] 为 [`true]。
+
+[para:remarks]
+[:en] The deduced type is [`dextents<size_t, sizeof...(Integrals)>].
+[:zh_CN] 被推断类型为 [`dextents<size_t, sizeof...(Integrals)>]。
+[div:end]

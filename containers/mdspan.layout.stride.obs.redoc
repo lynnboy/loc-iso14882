@@ -1,0 +1,120 @@
+[section#mdspan.layout.stride.obs
+    [:en] Observers
+    [:zh_CN] 探察函数
+]
+
+[%@lib@member required_span_size[!layout_stride::mapping]]
+[codeblock:declaration]
+constexpr index_type required_span_size() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`[*REQUIRED-SPAN-SIZE](extents(), [*strides_])].
+[:zh_CN] [`[*REQUIRED-SPAN-SIZE](extents(), [*strides_])]。
+[div:end]
+
+[%@lib@member operator()[!layout_stride::mapping]]
+[codeblock:declaration]
+template<class... Indices>
+  constexpr index_type operator()(Indices... i) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`sizeof...(Indices) == [*rank_]] is [`true],
+[:zh_CN] [`sizeof...(Indices) == [*rank_]] 为 [`true]，
+[item]
+[:en] [`(is_convertible_v<Indices, index_type> && ...)] is [`true], and
+[:zh_CN] [`(is_convertible_v<Indices, index_type> && ...)] 为 [`true]，并且
+[item]
+[:en] [`(is_nothrow_constructible_v<index_type, Indices> && ...)] is [`true].
+[:zh_CN] [`(is_nothrow_constructible_v<index_type, Indices> && ...)] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`extents_type::[*index-cast](i)] is a multidimensional index in
+[*extents_] ([#mdspan.overview]).
+[:zh_CN] [`extents_type::[*index-cast](i)] 是 [*extents_] 中的多维索引
+（[#mdspan.overview]）。
+
+[para:effects]
+[:en] Let [`P] be a parameter pack such that
+[:zh_CN] 令 [`P] 为使得
+[codeblock]
+is_same_v<index_sequence_for<Indices...>, index_sequence<P...>>
+[codeblock:end]
+[:en@~] is [`true].
+[:zh_CN@~] 为 [`true] 的形参包组。
+
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return ((static_cast<index_type>(i) * stride(P)) + ... + 0);
+[codeblock:end]
+[div:end]
+
+[%@lib@member is_exhaustive[!layout_stride::mapping]]
+[codeblock:declaration]
+constexpr bool is_exhaustive() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] [`true] if [*rank_] is 0.
+[:zh_CN] 当 [*rank_] 为 0 时返回 [`true]。
+[item]
+[:en] Otherwise, [`true] if there is a permutation [$P] of the integers in the
+range [$`[0, [*rank_])] such that [`stride([$p_0])] equals 1, and
+[`stride([$p_i])] equals [`stride([$p_{i-1}]) * extents().extent([$p_{i-1}])]
+for [$i] in the range [$`[1, [*rank_])], where [$p_i] is the [$i^\text{th}]
+element of [$P].
+[:zh_CN] 否则，如果存在范围 [$`[0, [*rank_])] 中的整数的一个排列 [$P]，使得
+[`stride([$p_0])] 等于 1，并且对于范围 [$`[1, [*rank_])] 中的 [$i]，
+[`stride([$p_i])] 等于 [`stride([$p_{i-1}]) * extents().extent([$p_{i-1}])]，
+其中 [$p_i] 为 [$P] 的第 [$i] 个元素。
+[item]
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib@member operator==[!layout_stride::mapping]]
+[codeblock:declaration]
+template<class OtherMapping>
+  friend constexpr bool operator==(const mapping& x, const OtherMapping& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`[*:c layout-mapping-alike]<OtherMapping>] is satisfied.
+[:zh_CN] [`[*:c layout-mapping-alike]<OtherMapping>] 得以满足。
+[item]
+[:en] [`[*rank_] == OtherMapping::extents_type::rank()] is [`true].
+[:zh_CN] [`[*rank_] == OtherMapping::extents_type::rank()] 为 [`true]。
+[item]
+[:en] [`OtherMapping::is_always_strided()] is [`true].
+[:zh_CN] [`OtherMapping::is_always_strided()] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`OtherMapping] meets the layout mapping requirements
+([#mdspan.layout.policy.reqmts]).
+[:zh_CN] [`OtherMapping] 满足布局映射的规定（[#mdspan.layout.policy.reqmts]）。
+
+[para:returns]
+[:en] [`true] if [`x.extents() == y.extents()] is [`true], [`[*OFFSET](y) == 0]
+is [`true], and each of [`x.stride([$r]) == y.stride([$r])] is [`true] for [$r]
+in the range [$`[0, [`x.extents().rank()])].
+[:zh_CN] 如果 [`x.extents() == y.extents()] 为 [`true]，[`[*OFFSET](y) == 0] 为
+[`true]，并且对于范围 [$`[0, [`x.extents().rank()])] 中的每个 [$r]，
+[`x.stride([$r]) == y.stride([$r])] 为 [`true]，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]

@@ -1,0 +1,106 @@
+[section#mdspan.extents.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] The class template [`extents] represents a multidimensional index space
+of rank equal to [`sizeof...(Extents)].
+[:zh_CN] 类模板 [`extents] 表示秩等于 [`sizeof...(Extents)] 的多维索引空间。
+
+[:en] In subclause [#views], [`extents] is used synonymously with
+multidimensional index space.
+[:zh_CN] 子条款 [#views] 中，[`extents] 被用作多维索引空间的同义词。
+
+[codeblock:synopsis]
+namespace std {
+  template<class IndexType, size_t... Extents>
+  class [[redoc("`:lib>")]]extents {
+  public:
+    using index_type = IndexType;
+    using size_type = make_unsigned_t<index_type>;
+    using rank_type = size_t;
+
+    // [:en] [#mdspan.extents.obs], observers of the multidimensional index space \
+    [:zh_CN] [#mdspan.extents.obs]，多维索引空间的探察函数
+    static constexpr rank_type rank() noexcept { return sizeof...(Extents); }
+    static constexpr rank_type rank_dynamic() noexcept { return [[redoc("*>")]]dynamic-index(rank()); }
+    static constexpr size_t static_extent(rank_type) noexcept;
+    constexpr index_type extent(rank_type) const noexcept;
+
+    // [:en] [#mdspan.extents.cons], constructors \
+    [:zh_CN] [#mdspan.extents.cons]，构造函数
+    constexpr extents() noexcept = default;
+
+    template<class OtherIndexType, size_t... OtherExtents>
+      constexpr explicit([[redoc("[=seebelow]")]])
+        extents(const extents<OtherIndexType, OtherExtents...>&) noexcept;
+    template<class... OtherIndexTypes>
+      constexpr explicit extents(OtherIndexTypes...) noexcept;
+    template<class OtherIndexType, size_t N>
+      constexpr explicit(N != rank_dynamic())
+        extents(span<OtherIndexType, N>) noexcept;
+    template<class OtherIndexType, size_t N>
+      constexpr explicit(N != rank_dynamic())
+        extents(const array<OtherIndexType, N>&) noexcept;
+
+    // [:en] [#mdspan.extents.cmp], comparison operators \
+    [:zh_CN] [#mdspan.extents.cmp]，比较运算符
+    template<class OtherIndexType, size_t... OtherExtents>
+      friend constexpr bool operator==(const extents&,
+                                       const extents<OtherIndexType, OtherExtents...>&) noexcept;
+
+    // [:en] [#mdspan.extents.expo], exposition-only helpers \
+    [:zh_CN] [#mdspan.extents.expo]，仅用于阐释的辅助函数
+    constexpr size_t [[redoc("*>")]]fwd-prod-of-extents(rank_type) const noexcept;     // [=expos]
+    constexpr size_t [[redoc("*>")]]rev-prod-of-extents(rank_type) const noexcept;     // [=expos]
+    template<class OtherIndexType>
+      static constexpr auto [[redoc("*>")]]index-cast(OtherIndexType&&) noexcept;      // [=expos]
+
+  private:
+    static constexpr rank_type [[redoc("*>")]]dynamic-index(rank_type) noexcept;       // [=expos]
+    static constexpr rank_type [[redoc("*>")]]dynamic-index-inv(rank_type) noexcept;   // [=expos]
+    array<index_type, rank_dynamic()> [[redoc("*>")]]dynamic-extents{};                // [=expos]
+  };
+
+  template<class... Integrals>
+    explicit extents(Integrals...)
+      -> [[redoc("[=seebelow]")]];
+}
+[codeblock:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`IndexType] is a signed or unsigned integer type, and
+[:zh_CN] [`IndexType] 为有符号或无符号整数类型，并且
+[item]
+[:en@~] each element of [`Extents] is either equal to [`dynamic_extent], or
+is representable as a value of type [`IndexType].
+[:zh_CN@~] [`Extents] 的各个元素要么等于 [`dynamic_extent]，要么是 [`IndexType]
+类型可表示的值。
+[list:end]
+
+[para]
+[:en] Each specialization of [`extents] models [`:c regular] and is trivially
+copyable.
+[:zh_CN] [`extents] 的每个特例均构成 [`:c regular] 且为可平凡复制的。
+
+[para]
+[:en] Let [$E_r] be the [$r^\text{th}] element of [`Extents].
+[:zh_CN] 令 [$E_r] 为 [`Extents] 的第 [$r] 个元素。
+
+[:en] [$E_r] is a [+:adj dynamic[!extent]] if it is equal to [`dynamic_extent],
+otherwise [$E_r] is a [+:adj static[!extent]].
+[:zh_CN] 如果 [$E_r] 等于 [`dynamic_extent]，则它是[+:adj 动态[!尺寸]]，否则
+[$E_r] 是[+:adj 静态[!尺寸]]。
+
+[:en] Let [$D_r] be the value of [`[*dynamic-extents]`[[*dynamic-index]([$r])`]]
+if [$E_r] is a dynamic extent, otherwise [$E_r].
+[:zh_CN] 令 [$D_r] 在当 [$E_r] 是动态尺寸时为
+[`[*dynamic-extents]`[[*dynamic-index]([$r])`]] 的值，否则为 [$E_r]。
+
+[para]
+[:en] The [$r^\text{th}] interval of the multidimensional index space
+represented by an [`extents] object is [$`[0, D_r)].
+[:zh_CN] 由 [`extents] 对象所表示的多维索引空间的第 [$r] 个区间为 [$`[0, D_r)]。

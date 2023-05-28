@@ -1,0 +1,172 @@
+[section#flat.set.modifiers
+    [:en] Modifiers
+    [:zh_CN] 改动函数
+]
+
+[%@lib@member insert[!flat_set]]
+[codeblock:declaration]
+template<class K> pair<iterator, bool> insert(K&& x);
+template<class K> iterator insert(const_iterator hint, K&& x);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] The [~qualified-id] [`Compare::is_transparent] is valid and denotes a type.
+[:zh_CN] [~限定标识] [`Compare::is_transparent] 有效病代表一个类型。
+
+[:en] [`is_constructible_v<value_type, K>] is [`true].
+[:zh_CN] [`is_constructible_v<value_type, K>] 为 [`true]。
+
+[para:expects]
+[:en] The conversion from [`x] into [`value_type] constructs an object [`u],
+for which [`find(x) == find(u)] is [`true].
+[:zh_CN] 从 [`x] 转换为 [`value_type] 会构造一个对象 [`u]，使得
+[`find(x) == find(u)] 为 [`true]。
+
+[para:effects]
+[:en] If the set already contains an element equivalent to [`x], [`*this] and
+[`x] are unchanged.
+[:zh_CN] 如果该集合中已经存在与 [`x] 等价的元素，则不改动 [`*this] 和 [`x]。
+
+[:en] Otherwise, inserts a new element as if by [`emplace(std::forward<K>(x))].
+[:zh_CN] 否则，如同以 [`emplace(std::forward<K>(x))] 来插入一个新元素。
+
+[para:returns]
+[:en] In the first overload, the [`bool] component of the returned pair is
+[`true] if and only if the insertion took place.
+[:zh_CN] 在第一种重载中，当且仅当发生了插入时，所返回的对偶的 [`bool] 成分为
+[`true]。
+
+[:en] The returned iterator points to the element whose key is equivalent to [`x].
+[:zh_CN] 所返回的迭代器指向其键与 [`x] 等价的元素。
+[div:end]
+
+[%@lib@member insert[!flat_set]]
+[codeblock:declaration]
+template<class InputIterator>
+  void insert(InputIterator first, InputIterator last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Adds elements to [*c] as if by:
+[:zh_CN] 如同以如下代码向 [*c] 添加元素：
+[codeblock]
+[[redoc("*>")]]c.insert([[redoc("*>")]]c.end(), first, last);
+[codeblock:end]
+
+[:en] Then, sorts the range of newly inserted elements with respect to [*compare];
+merges the resulting sorted range and the sorted range of pre-existing elements
+into a single sorted range; and finally erases all but the first element from
+each group of consecutive equivalent elements.
+[:zh_CN] 然后，对新插入元素的范围根据 [*compare] 进行排序；将产生的有序范围
+和已存在元素的有序范围归并为单个有序范围；最后擦除每个连续等价元素组中除第一个
+之外的所有元素。
+
+[para:complexity]
+[:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M]
+is [`distance(first, last)].
+[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为
+[`distance(first, last)]。
+
+[para:remarks]
+[:en] Since this operation performs an in-place merge, it may allocate memory.
+[:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
+[div:end]
+
+[%@lib@member insert[!flat_set]]
+[codeblock:declaration]
+template<class InputIterator>
+  void insert(sorted_unique_t, InputIterator first, InputIterator last);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`insert(first, last)].
+[:zh_CN] 等价于 [`insert(first, last)]。
+
+[para:complexity]
+[:en] Linear.
+[:zh_CN] 线性。
+[div:end]
+
+[%@lib@member insert_range[!flat_set]]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+  void insert_range(R&& rg);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Adds elements to [`c] as if by:
+[:zh_CN] 如同以如下代码向 [`c] 添加元素：
+[codeblock]
+for (const auto& e : rg) {
+  [[redoc("*>")]]c.insert([[redoc("*>")]]c.end(), e);
+}
+[codeblock:end]
+
+[:en] Then, sorts the range of newly inserted elements with respect to
+[*compare]; merges the resulting sorted range and the sorted range of
+pre-existing elements into a single sorted range; and finally erases all but the
+first element from each group of consecutive equivalent elements.
+[:zh_CN] 然后，对新插入元素的范围根据 [*compare] 进行排序；将产生的有序范围
+和已存在元素的有序范围归并为单个有序范围；最后擦除每个连续等价元素组中除第一个
+之外的所有元素。
+
+[para:complexity]
+[:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M]
+is [`ranges::distance(rg)].
+[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为
+[`ranges::distance(rg)]。
+
+[para:remarks]
+[:en] Since this operation performs an in-place merge, it may allocate memory.
+[:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
+[div:end]
+
+[%@lib@member swap[!flat_set]]
+[codeblock:declaration]
+void swap(flat_set& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+ranges::swap(compare, y.compare);
+ranges::swap([[redoc("*>")]]c, y.[[redoc("*>")]]c);
+[codeblock:end]
+[div:end]
+
+[%@lib@member extract[!flat_set]]
+[codeblock:declaration]
+container_type extract() &&;
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`*this] is emptied, even if the function exits via an exception.
+[:zh_CN] [`*this] 被清空，即便函数以异常退出也是如此。
+
+[para:returns]
+[:en] [`std::move([*c])].
+[:zh_CN] [`std::move([*c])]。
+[div:end]
+
+[%@lib@member replace[!flat_set]]
+[codeblock:declaration]
+void replace(container_type&& cont);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] the elements of [`cont] are sorted with respect to [*compare], and [`cont]
+contains no equal elements.
+[:zh_CN] [`cont] 的元素根据 [*compare] 有序，并且 [`cont] 不包含相等元素。
+
+[para:effects]
+[:en] Equivalent to: [`[*c] = std::move(cont);]
+[:zh_CN] 等价于：[`[*c] = std::move(cont);]
+[div:end]

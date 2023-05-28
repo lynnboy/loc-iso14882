@@ -1,0 +1,128 @@
+[section#mdspan.mdspan.members
+    [:en] Members
+    [:zh_CN] 成员
+]
+
+[%@lib@member operator`[`][!mdspan]]
+[codeblock:declaration]
+template<class... OtherIndexTypes>
+  constexpr reference operator[](OtherIndexTypes... indices) const;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`(is_convertible_v<OtherIndexTypes, index_type> && ...)] is [`true],
+[:zh_CN] [`(is_convertible_v<OtherIndexTypes, index_type> && ...)] 为 [`true]，
+[item]
+[:en] [`(is_nothrow_constructible_v<index_type, OtherIndexTypes> && ...)] is
+[`true], and
+[:zh_CN] [`(is_nothrow_constructible_v<index_type, OtherIndexTypes> && ...)] 为
+[`true]，并且
+[item]
+[:en] [`sizeof...(OtherIndexTypes) == rank()] is [`true].
+[:zh_CN] [`sizeof...(OtherIndexTypes) == rank()] 为 [`true]。
+[list:end]
+
+[para]
+[:en] Let [`I] be [`extents_type::[*index-cast](std::move(indices))].
+[:zh_CN] 令 [`I] 为 [`extents_type::[*index-cast](std::move(indices))]。
+
+[para:expects]
+[:en] [`I] is a multidimensional index in [`extents()].
+[:zh_CN] [`I] 是 [`extents()] 多维索引。
+
+[begin:note]
+[:en] This implies that [`[*map_](I) < [*map_].required_span_size()] is [`true].
+[:zh_CN] 这意味着 [`[*map_](I) < [*map_].required_span_size()] 为 [`true]。
+[end:note]
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return [[redoc("*>")]]acc_.access([[redoc("*>")]]ptr_, [[redoc("*>")]]map_(static_cast<index_type>(std::move(indices))...));
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator`[`][!mdspan]]
+[codeblock:declaration]
+template<class OtherIndexType>
+  constexpr reference operator[](span<OtherIndexType, rank()> indices) const;
+template<class OtherIndexType>
+  constexpr reference operator[](const array<OtherIndexType, rank()>& indices) const;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_convertible_v<const OtherIndexType&, index_type>] is [`true], and
+[:zh_CN] [`is_convertible_v<const OtherIndexType&, index_type>] 为 [`true]，并且
+[item]
+[:en] [`is_nothrow_constructible_v<index_type, const OtherIndexType&>] is [`true].
+[:zh_CN] [`is_nothrow_constructible_v<index_type, const OtherIndexType&>] 为
+[`true]。
+[list:end]
+
+[para:effects]
+[:en] Let [`P] be a parameter pack such that
+[:zh_CN] 令 [`P] 为使得
+[codeblock]
+is_same_v<make_index_sequence<rank()>, index_sequence<P...>>
+[codeblock:end]
+[:en@~] is [`true].
+[:zh_CN@~] 为 [`true] 的形参包组。
+
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return operator[](as_const(indices[P])...);
+[codeblock:end]
+[div:end]
+
+[%@lib@member size[!mdspan]]
+[codeblock:declaration]
+constexpr size_type size() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The size of the multidimensional index space [`extents()] is representable
+as a value of type [`size_type] ([#basic.fundamental]).
+[:zh_CN] 多维索引空间 [`extents()] 的大小可以表示为 [`size_type] 类型的值
+（[#basic.fundamental]）。
+
+[para:returns]
+[:en] [`extents().[*fwd-prod-of-extents](rank())].
+[:zh_CN] [`extents().[*fwd-prod-of-extents](rank())]。
+[div:end]
+
+[%@lib@member empty[!mdspan]]
+[codeblock:declaration]
+[[nodiscard]] constexpr bool empty() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if the size of the multidimensional index space [`extents()] is 0,
+otherwise [`false].
+[:zh_CN] 当多维索引空间 [`extents()] 的大小为 0 时返回 [`true]，否则返回 [`false]。
+[div:end]
+
+[%@lib@member swap[!mdspan]]
+[codeblock:declaration]
+friend constexpr void swap(mdspan& x, mdspan& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+swap(x.[[redoc("*>")]]ptr_, y.[[redoc("*>")]]ptr_);
+swap(x.[[redoc("*>")]]map_, y.[[redoc("*>")]]map_);
+swap(x.[[redoc("*>")]]acc_, y.[[redoc("*>")]]acc_);
+[codeblock:end]
+[div:end]

@@ -1,0 +1,74 @@
+[section#mdspan.layout.stride.expo
+    [:en] Exposition-only helpers
+    [:zh_CN] 仅用于阐释的辅助函数
+]
+
+[para]
+[:en] Let [`[*REQUIRED-SPAN-SIZE](e, strides)] be:
+[:zh_CN] 令 [`[*REQUIRED-SPAN-SIZE](e, strides)]：
+[list]
+[item]
+[:en@~] [`1], if [`e.rank() == 0] is [`true],
+[:zh_CN@~] 当 [`e.rank() == 0] 为 [`true] 时为 [`1]，
+[item]
+[:en@~] otherwise [`0], if the size of the multidimensional index space [`e] is 0,
+[:zh_CN@~] 否则当多维索引空间 [`e] 的大小为 0 时为 [`0]，
+[item]
+[:en@~] otherwise [`1] plus the sum of products of [`(e.extent([$r]) - 1)] and
+[`strides`[[$r]`]] for all [$r] in the range [$`[0, [`e.rank()])].
+[:zh_CN@~] 否则为 [`1] 加上对于范围 [$`[0, [`e.rank()])] 中的所有 [$r] 的
+[`(e.extent([$r]) - 1)] 与 [`strides`[[$r]`]] 的乘积的和。
+[list:end]
+
+[para]
+[:en] Let [`[*OFFSET](m)] be:
+[:zh_CN] 令 [`[*OFFSET](m)]：
+[list]
+[item]
+[:en@~] [`m()], if [`e.rank() == 0] is [`true],
+[:zh_CN@~] 当 [`e.rank() == 0] 为 [`true] 时为 [`m()]，
+[item]
+[:en@~] otherwise [`0], if the size of the multidimensional index space [`e] is 0,
+[:zh_CN@~] 否则当多维索引空间 [`e] 的大小为 0 时为 [`0]，
+[item]
+[:en@~] otherwise [`m(z...)] for a pack of integers [`z] that is a
+multidimensional index in [`m.extents()] and each element of [`z] equals 0.
+[:zh_CN@~] 否则，对于作为 [`m.extents()] 中的多维索引的整数包组 [`z]，且 [`z]
+的每个元素均等于 0，为 [`m(z...)]。
+[list:end]
+
+[para]
+[:en] Let [*is-extents] be the exposition-only variable template defined as
+follows:
+[:zh_CN] 令 [*is-extents] 为如下定义的仅用于阐释的变量模板：
+[codeblock]
+template<class T>
+  constexpr bool [[redoc("*>")]]is-extents = false;                              // [=expos]
+template<class IndexType, size_t... Args>
+  constexpr bool [[redoc("*>")]]is-extents<extents<IndexType, Args...>> = true;  // [=expos]
+[codeblock:end]
+
+[para]
+[:en] Let [*:c layout-mapping-alike] be the exposition-only concept defined as
+follows:
+[:zh_CN] 令 [*:c layout-mapping-alike] 为如下定义的仅用于阐释的概念：
+[codeblock]
+template<class M>
+concept [[redoc("*:c@def>")]]layout-mapping-alike = requires {                         // \expos
+  requires [[redoc("*>")]]is-extents<typename M::extents_type>;
+  { M::is_always_strided() } -> [[redoc("`:c>")]]same_as<bool>;
+  { M::is_always_exhaustive() } -> [[redoc("`:c>")]]same_as<bool>;
+  { M::is_always_unique() } -> [[redoc("`:c>")]]same_as<bool>;
+  bool_constant<M::is_always_strided()>::value;
+  bool_constant<M::is_always_exhaustive()>::value;
+  bool_constant<M::is_always_unique()>::value;
+};
+[codeblock:end]
+
+[begin:note]
+[:en] This concept checks that the functions [`M::is_always_strided()],
+[`M::is_always_exhaustive()], and [`M::is_always_unique()] exist, are constant
+expressions, and have a return type of [`bool].
+[:zh_CN] 这个概念检查函数 [`M::is_always_strided()]，[`M::is_always_exhaustive()]，
+和 [`M::is_always_unique()] 的存在，是常量表达式，并具有返回类型 [`bool]。
+[end:note]

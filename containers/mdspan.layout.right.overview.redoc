@@ -1,0 +1,77 @@
+[section#mdspan.layout.right.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] [`layout_right] provides a layout mapping where the rightmost extent is
+stride 1, and strides increase right-to-left as the product of extents.
+[:zh_CN] [`layout_right] 提供一种布局映射，其最右侧尺寸步长为 1，且步长随尺寸的
+乘积从右向左增长。
+
+[codeblock:synopsis]
+namespace std {
+  template<class Extents>
+  class layout_right::mapping {
+  public:
+    using extents_type = Extents;
+    using index_type = typename extents_type::index_type;
+    using size_type = typename extents_type::size_type;
+    using rank_type = typename extents_type::rank_type;
+    using layout_type = layout_right;
+
+    // [:en] [#mdspan.layout.right.cons], constructors \
+    [:zh_CN] [#mdspan.layout.right.cons]，构造函数
+    constexpr mapping() noexcept = default;
+    constexpr mapping(const mapping&) noexcept = default;
+    constexpr mapping(const extents_type&) noexcept;
+    template<class OtherExtents>
+      constexpr explicit(!is_convertible_v<OtherExtents, extents_type>)
+        mapping(const mapping<OtherExtents>&) noexcept;
+    template<class OtherExtents>
+      constexpr explicit(!is_convertible_v<OtherExtents, extents_type>)
+        mapping(const layout_left::mapping<OtherExtents>&) noexcept;
+    template<class OtherExtents>
+      constexpr explicit(extents_type::rank() > 0)
+        mapping(const layout_stride::mapping<OtherExtents>&) noexcept;
+
+    constexpr mapping& operator=(const mapping&) noexcept = default;
+
+    // [:en] [#mdspan.layout.right.obs], observers \
+    [:zh_CN] [#mdspan.layout.right.obs]，探察函数
+    constexpr const extents_type& extents() const noexcept { return [[redoc("*>")]]extents_; }
+
+    constexpr index_type required_span_size() const noexcept;
+
+    template<class... Indices>
+      constexpr index_type operator()(Indices...) const noexcept;
+
+    static constexpr bool is_always_unique() noexcept { return true; }
+    static constexpr bool is_always_exhaustive() noexcept { return true; }
+    static constexpr bool is_always_strided() noexcept { return true; }
+
+    static constexpr bool is_unique() noexcept { return true; }
+    static constexpr bool is_exhaustive() noexcept { return true; }
+    static constexpr bool is_strided() noexcept { return true; }
+
+    constexpr index_type stride(rank_type) const noexcept;
+
+    template<class OtherExtents>
+      friend constexpr bool operator==(const mapping&, const mapping<OtherExtents>&) noexcept;
+
+  private:
+    extents_type [[redoc("*>")]]extents_{};    // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] If [`Extents] is not a specialization of [`extents], then the program is
+ill-formed.
+[:zh_CN] 如果 [`Extents] 不是 [`extents] 的特例，则程序非良构。
+
+[para]
+[:en] [`layout_right::mapping<E>] is a trivially copyable type that models
+[`:c regular] for each [`E].
+[:zh_CN] 对于每个 [`E]，[`layout_right::mapping<E>] 是可平凡复制类型且构成
+[`:c regular]。

@@ -1,0 +1,288 @@
+[section#mdpan.layout.reqmts
+    [:en] Requirements
+    [:zh_CN] 规定
+]
+
+[para]
+[:en] A type [`M] meets the [+layout mapping] requirements if
+[:zh_CN] 以下情况下，类型 [`M] 满足[+布局映射]的规定：
+
+[list]
+[item]
+[:en] [`M] models [`:c copyable] and [`:c equality_comparable],
+[:zh_CN] [`M] 构成 [`:c copyable] 和 [`:c equality_comparable]，
+[item]
+[:en] [`is_nothrow_move_constructible_v<M>] is [`true],
+[:zh_CN] [`is_nothrow_move_constructible_v<M>] 为 [`true]，
+[item]
+[:en] [`is_nothrow_move_assignable_v<M>] is [`true],
+[:zh_CN] [`is_nothrow_move_assignable_v<M>] 为 [`true]，
+[item]
+[:en] [`is_nothrow_swappable_v<M>] is [`true], and
+[:zh_CN] [`is_nothrow_swappable_v<M>] 为 [`true]，并且
+[item]
+[:en] the following types and expressions are well-formed and have the specified
+semantics.
+[:zh_CN] 下列各类型和表达式均良构并具有规定的语义。
+[list:end]
+
+[codeblock:declaration]
+typename M::extents_type
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A type that is a specialization of [`extents].
+[:zh_CN] 一种作为 [`extents] 的特例的类型。
+[div:end]
+
+[codeblock:declaration]
+typename M::index_type
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] [`typename M::extents_type::index_type].
+[:zh_CN] [`typename M::extents_type::index_type]。
+[div:end]
+
+[codeblock:declaration]
+typename M::rank_type
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] [`typename M::extents_type::rank_type].
+[:zh_CN] [`typename M::extents_type::rank_type]。
+[div:end]
+
+[codeblock:declaration]
+typename M::layout_type
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A type [`MP] that meets the layout mapping policy requirements
+([#mdspan.layout.policy.reqmts]) and for which [`[*is-mapping-of]<MP, M>] is
+[`true].
+[:zh_CN] 一种满足布局映射策略规定（[#mdspan.layout.policy.reqmts]）的类型 [`MP]，
+使得 [`[*is-mapping-of]<MP, M>] 为 [`true]。
+[div:end]
+
+[codeblock:declaration]
+m.extents()
+[codeblock:end]
+
+[div:description]
+[para:result]
+[`const typename M::extents_type&]
+[div:end]
+
+[codeblock:declaration]
+m(i...)
+[codeblock:end]
+
+[div:description]
+[para:result] [`typename M::index_type&]
+
+[para:returns]
+[:en] A nonnegative integer less than
+[`numeric_limits<typename M::index_type>::max()] and less than or equal to
+[`numeric_limits<size_t>::max()].
+[:zh_CN] 小于 [`numeric_limits<typename M::index_type>::max()] 并且小于或等于
+[`numeric_limits<size_t>::max()] 的非负整数。
+[div:end]
+
+[codeblock:declaration]
+m(i...) == m(static_cast<typename M::index_type>(i)...)
+[codeblock:end]
+
+[div:description]
+[para:result] [`bool]
+
+[para:returns] [`true]
+[div:end]
+
+[codeblock:declaration]
+m.required_span_size()
+[codeblock:end]
+
+[div:description]
+[para:result] [`typename M::index_type]
+
+[para:returns]
+[:en] If the size of the multidimensional index space [`m.extents()] is 0,
+then [`0], else [`1] plus the maximum value of [`m(i...)] for all [`i].
+[:en] 如果多维索引空间 [`m.extents()] 的大小为 0，则返回 [`0]，否则返回
+[`1] 加上所有 [`i] 的 [`m(i...)] 中的最大值。
+[div:end]
+
+[codeblock:declaration]
+m.is_unique()
+[codeblock:end]
+
+[div:description]
+[para:result] [`bool]
+
+[para:returns]
+[:en] [`true] only if for every [`i] and [`j] where [`(i != j || ...)] is [`true],
+[`m(i...) != m(j...)] is [`true].
+[:en] 仅当对于每对使得 [`(i != j || ...)] 为 [`true] 的 [`i] 和 [`j]，
+[`m(i...) != m(j...)] 均为 [`true] 时，返回 [`true]。
+
+[begin:note]
+[:en] A mapping can return [`false] even if the condition is met.
+[:zh_CN] 即便满足条件，映射仍可以返回 [`false]。
+
+[:en] For certain layouts, it is possibly not feasible to determine efficiently
+whether the layout is unique.
+[:zh_CN] 对于某些布局，高效地确定是否是唯一布局可能是不可行的。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+m.is_exhaustive()
+[codeblock:end]
+
+[div:description]
+[para:result] [`bool]
+
+[para:returns]
+[:en] [`true] only if for all [$k] in the range [$`[0, [`m.required_span_size()])]
+there exists an [`i] such that [`m(i...)] equals [$k].
+[:en] 仅当对于范围 [$`[0, [`m.required_span_size()])] 中的所有 [$k]，均存在一个
+使得 [`m(i...)] 等于 [$k] 的 [`i] 时，返回 [`true]。
+
+[begin:note]
+[:en] A mapping can return [`false] even if the condition is met.
+[:zh_CN] 即便满足条件，映射仍可以返回 [`false]。
+
+[:en] For certain layouts, it is possibly not feasible to determine efficiently
+whether the layout is exhaustive.
+[:zh_CN] 对于某些布局，高效地确定是否是穷尽布局可能是不可行的。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+m.is_strided()
+[codeblock:end]
+
+[div:description]
+[para:result] [`bool]
+
+[para:returns]
+[:en] [`true] only if for every rank index [$r] of [`m.extents()] there exists
+an integer [$s_r] such that, for all [`i] where [$([`i]+d_r)] is
+a multidimensional index in [`m.extents()] ([#mdspan.overview]),
+[`m((i + [$d_r])...) - m(i...)] equals [$s_r].
+[:en] 仅当对于[`m.extents()] 的每个秩索引 [$r]，均存在一个整数 [$s_r]，使得对于
+所有使得 [$([`i]+d_r)] 为 [`m.extents()] 中的多维索引（[#mdspan.overview]）的
+[`i]，[`m((i + [$d_r])...) - m(i...)] 均等于 [$s_r] 时，返回 [`true]。
+
+[begin:note]
+[:en] This implies that for a strided layout
+[$m(i_0, \dotsc, i_k) = m(0, \dotsc, 0) + i_0 \times s_0 + \dotsb + i_k \times s_k].
+[:zh_CN] 这意味着对于跨步布局，有
+[$m(i_0, \dotsc, i_k) = m(0, \dotsc, 0) + i_0 \times s_0 + \dotsb + i_k \times s_k]。
+[end:note]
+
+[begin:note]
+[:en] A mapping can return [`false] even if the condition is met.
+[:zh_CN] 即便满足条件，映射仍可以返回 [`false]。
+
+[:en] For certain layouts, it is possibly not feasible to determine efficiently
+whether the layout is strided.
+[:zh_CN] 对于某些布局，高效地确定是否是跨步布局可能是不可行的。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+m.stride(r)
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`m.is_strided()] is [`true].
+[:zh_CN] [`m.is_strided()] 为 [`true]。
+
+[para:result] [`typename M::index_type]
+
+[para:returns]
+[:en] [$s_r] as defined in [`m.is_strided()] above.
+[:en] 返回上文 [`m.is_strided()] 中所定义的 [$s_r]。
+[div:end]
+
+[codeblock:declaration]
+M::is_always_unique()
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A constant expression ([#expr.const]) of type [`bool].
+[:zh_CN] [`bool] 类型的常量表达式（[#expr.const]）。
+
+[para:returns]
+[:en] [`true] only if [`m.is_unique()] is [`true] for all possible objects [`m]
+of type [`M].
+[:en] 仅当对于 [`M] 类型的所有可能对象 [`m] 均有 [`m.is_unique()] 为 [`true] 时
+返回 [`true]。
+
+[begin:note]
+[:en] A mapping can return [`false] even if the above condition is met.
+[:zh_CN] 即便满足上述条件，映射仍可以返回 [`false]。
+
+[:en] For certain layout mappings, it is possibly not feasible to determine
+whether every instance is unique.
+[:zh_CN] 对于某些布局映射，确定是否每个实例均唯一可能是不可行的。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+M::is_always_exhaustive()
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A constant expression ([#expr.const]) of type [`bool].
+[:zh_CN] [`bool] 类型的常量表达式（[#expr.const]）。
+
+[para:returns]
+[:en] [`true] only if [`m.is_exhaustive()] is [`true] for all possible objects
+[`m] of type [`M].
+[:en] 仅当对于 [`M] 类型的所有可能对象 [`m] 均有 [`m.is_exhaustive()] 为 [`true]
+时返回 [`true]。
+
+[begin:note]
+[:en] A mapping can return [`false] even if the above condition is met.
+[:zh_CN] 即便满足上述条件，映射仍可以返回 [`false]。
+
+[:en] For certain layout mappings, it is possibly not feasible to determine
+whether every instance is exhaustive.
+[:zh_CN] 对于某些布局映射，确定是否每个实例均为穷尽的可能是不可行的。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+M::is_always_strided()
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A constant expression ([#expr.const]) of type [`bool].
+[:zh_CN] [`bool] 类型的常量表达式（[#expr.const]）。
+
+[para:returns]
+[:en] [`true] only if [`m.is_strided()] is [`true] for all possible objects [`m]
+of type [`M].
+[:en] 仅当对于 [`M] 类型的所有可能对象 [`m] 均有 [`m.is_strided()] 为 [`true] 时
+返回 [`true]。
+
+[begin:note]
+[:en] A mapping can return [`false] even if the above condition is met.
+[:zh_CN] 即便满足上述条件，映射仍可以返回 [`false]。
+
+[:en] For certain layout mappings, it is possibly not feasible to determine
+whether every instance is exhaustive.
+[:zh_CN] 对于某些布局映射，确定是否每个实例均跨步可能是不可行的。
+[end:note]
+[div:end]

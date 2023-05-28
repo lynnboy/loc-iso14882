@@ -1,0 +1,154 @@
+[section#mdpan.accessor.reqmts
+    [:en] Requirements
+    [:zh_CN] 规定
+]
+
+[para]
+[:en] A type [`A] meets the accessor policy requirements if
+[:zh_CN] 以下情况下，类型 [`A] 满足访问器策略的规定：
+
+[list]
+[item]
+[:en] [`A] models [`:c copyable],
+[:zh_CN] [`A] 构成 [`:c copyable]，
+[item]
+[:en] [`is_nothrow_move_constructible_v<A>] is [`true],
+[:zh_CN] [`is_nothrow_move_constructible_v<A>] 为 [`true]，
+[item]
+[:en] [`is_nothrow_move_assignable_v<A>] is [`true],
+[:zh_CN] [`is_nothrow_move_assignable_v<A>] 为 [`true]，
+[item]
+[:en] [`is_nothrow_swappable_v<A>] is [`true], and
+[:zh_CN] [`is_nothrow_swappable_v<A>] 为 [`true]，并且
+[item]
+[:en] the following types and expressions are well-formed and have the specified
+semantics.
+[:zh_CN] 下列各类型和表达式均良构并具有规定的语义。
+[list:end]
+
+[codeblock:declaration]
+typename A::element_type
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A complete object type that is not an abstract class type.
+[:zh_CN] 一个并非抽象类类型的完整对象类型。
+[div:end]
+
+[codeblock:declaration]
+typename A::data_handle_type
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A type that models [`:c copyable], and for which
+[`is_nothrow_move_constructible_v<A::data_handle_type>] is [`true],
+[`is_nothrow_move_assignable_v<A::data_handle_type>] is [`true], and
+[`is_nothrow_swappable_v<A::data_handle_type>] is [`true].
+[:zh_CN] 一种构成 [`:c copyable] 的类型，且有
+[`is_nothrow_move_constructible_v<A::data_handle_type>] 为 [`true]，
+[`is_nothrow_move_assignable_v<A::data_handle_type>] 为 [`true]，并且
+[`is_nothrow_swappable_v<A::data_handle_type>] 为 [`true]。
+
+[begin:note]
+[:en] The type of [`data_handle_type] need not be [`element_type*].
+[:zh_CN] [`data_handle_type] 的类型不必为 [`element_type*]。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+typename A::reference
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A type that models
+[`[`:c common_reference_with]<A::reference&&, A::element_type&>].
+[:zh_CN] 构成 [`[`:c common_reference_with]<A::reference&&, A::element_type&>]
+的类型。
+
+[begin:note]
+[:en] The type of [`reference] need not be [`element_type&].
+[:zh_CN] [`reference] 的类型不必为 [`element_type&]。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+typename A::offset_policy
+[codeblock:end]
+
+[div:description]
+[para:result]
+[:en] A type [`OP] such that:
+[:zh_CN] 一种类型 [`OP]，使得：
+[list]
+[item]
+[:en@~] [`OP] meets the accessor policy requirements,
+[:zh_CN@~] [`OP] 满足访问器策略的规定。
+[item]
+[:en@~] [`[`:c constructible_from]<OP, const A&>] is modeled, and
+[:zh_CN@~] [`[`:c constructible_from]<OP, const A&>] 得以构成，并且
+[item]
+[:en@~] [`is_same_v<typename OP::element_type, typename A::element_type>] is
+[`true].
+[:zh_CN@~] [`is_same_v<typename OP::element_type, typename A::element_type>] 为
+[`true]。
+[div:end]
+
+[codeblock:declaration]
+a.access(p, i)
+[codeblock:end]
+
+[div:description]
+[para:result] [`A::reference]
+
+[para:remarks]
+[:en] The expression is equality preserving.
+[:zh_CN] 该表达式维持相等性。
+
+[para]
+[begin:note]
+[:en] Concrete accessor policies can impose preconditions for their [`access]
+function.
+[:zh_CN] 独立的访问策略可以在它们的 [`access] 函数上指定前条件。
+
+[:en] However, they might not.
+[:zh_CN] 不过，它们也可以不这样做。
+
+[:en] For example, an accessor where [`p] is
+[`span<A::element_type, dynamic_extent>] and [`access(p, i)] returns
+[`p`[i % p.size()`]] does not need to impose a precondition on [`i].
+[:zh_CN] 例如，某个访问器的 [`p] 为 [`span<A::element_type, dynamic_extent>]，
+而 [`access(p, i)] 返回 [`p`[i % p.size()`]] 并不需要对 [`i] 指定前条件。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+a.offset(p, i)
+[codeblock:end]
+
+[div:description]
+[para:result] [`A::offset_policy::data_handle_type]
+
+[para:returns]
+[:en] [`q] such that for [`b] being [`A::offset_policy(a)], and any integer [`n]
+for which [$`[0, [`n])] is an accessible range of [`p] and [`a]:
+[:zh_CN] [`q]，令 [`b] 为 [`A::offset_policy(a)]，以及对于使得 [$`[0, [`n])] 为
+[`p] 和 [`a] 的可访问范围的任何整数 [`n]，有：
+
+[list]
+[item]
+[:en] [$`[0, [`n] - [`i])] is an accessible range of [`q] and [`b]; and
+[:zh_CN] [$`[0, [`n] - [`i])] 为 [`q] 和 [`b] 的可访问范围；并且
+[item]
+[:en] [`b.access(q, j)] provides access to the same element as
+[`a.access(p, i + j)], for every [`j] in the range [$`[0, [`n] - [`i])].
+[:zh_CN] 对于范围 [$`[0, [`n] - [`i])] 中的每个 [`j]，[`b.access(q, j)] 与
+[`a.access(p, i + j)] 提供对同一个元素的访问。
+[list:end]
+
+[para:remarks]
+[:en] The expression is equality-preserving.
+[:zh_CN] 该表达式维持相等性。
+[div:end]

@@ -1,0 +1,243 @@
+[section#flat.set.defn
+    [:en] Definition
+    [:zh_CN] 定义式
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class Key, class Compare = less<Key>, class KeyContainer = vector<Key>>
+  class [[redoc("`:lib>")]]flat_set {
+  public:
+    // [:en] types \
+    [:zh_CN] 类型
+    using key_type                  = Key;
+    using value_type                = Key;
+    using key_compare               = Compare;
+    using value_compare             = Compare;
+    using reference                 = value_type&;
+    using const_reference           = const value_type&;
+    using size_type                 = typename KeyContainer::size_type;
+    using difference_type           = typename KeyContainer::difference_type;
+    using iterator               = [[redoc("[?impdefx"
+          " [:en] type of [`flat_set::iterator]"
+        "[:zh_CN] [`flat_set::iterator] 的类型]")]];  // [:en] See [#container.requirements] \
+                                                      [:zh_CN] 参见 [#container.requirements]
+    using const_iterator         = [[redoc("[?impdefx"
+          " [:en] type of [`flat_set::const_iterator]"
+        "[:zh_CN] [`flat_set::const_iterator] 的类型]")]];  // [:en] See [#container.requirements] \
+                                                            [:zh_CN] 参见 [#container.requirements]
+    using reverse_iterator          = std::reverse_iterator<iterator>;
+    using const_reverse_iterator    = std::reverse_iterator<const_iterator>;
+    using container_type            = KeyContainer;
+
+    // [:en] [#flat.set.cons], constructors \
+    [:zh_CN] [#flat.set.cons]，构造函数
+    flat_set() : flat_set(key_compare()) { }
+
+    explicit flat_set(container_type cont);
+    template<class Allocator>
+      flat_set(const container_type& cont, const Allocator& a);
+
+    flat_set(sorted_unique_t, container_type cont)
+      : [[redoc("*>")]]c(std::move(cont)), [[redoc("*>")]]compare(key_compare()) { }
+    template<class Allocator>
+      flat_set(sorted_unique_t, const container_type& cont, const Allocator& a);
+
+    explicit flat_set(const key_compare& comp)
+      : [[redoc("*>")]]c(), [[redoc("*>")]]compare(comp) { }
+    template<class Allocator>
+      flat_set(const key_compare& comp, const Allocator& a);
+    template<class Allocator>
+      explicit flat_set(const Allocator& a);
+
+    template<class InputIterator>
+      flat_set(InputIterator first, InputIterator last, const key_compare& comp = key_compare())
+        : [[redoc("*>")]]c(), [[redoc("*>")]]compare(comp)
+        { insert(first, last); }
+    template<class InputIterator, class Allocator>
+      flat_set(InputIterator first, InputIterator last,
+               const key_compare& comp, const Allocator& a);
+    template<class InputIterator, class Allocator>
+      flat_set(InputIterator first, InputIterator last, const Allocator& a);
+
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      flat_set(from_range_t fr, R&& rg)
+        : flat_set(fr, std::forward<R>(rg), key_compare()) { }
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R, class Allocator>
+      flat_set(from_range_t, R&& rg, const Allocator& a);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      flat_set(from_range_t, R&& rg, const key_compare& comp)
+        : flat_set(comp)
+        { insert_range(std::forward<R>(rg)); }
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R, class Allocator>
+       flat_set(from_range_t, R&& rg, const key_compare& comp, const Allocator& a);
+
+    template<class InputIterator>
+      flat_set(sorted_unique_t, InputIterator first, InputIterator last,
+               const key_compare& comp = key_compare())
+        : [[redoc("*>")]]c(first, last), [[redoc("*>")]]compare(comp) { }
+    template<class InputIterator, class Allocator>
+      flat_set(sorted_unique_t, InputIterator first, InputIterator last,
+               const key_compare& comp, const Allocator& a);
+    template<class InputIterator, class Allocator>
+      flat_set(sorted_unique_t, InputIterator first, InputIterator last, const Allocator& a);
+
+    flat_set(initializer_list<key_type> il, const key_compare& comp = key_compare())
+        : flat_set(il.begin(), il.end(), comp) { }
+    template<class Allocator>
+      flat_set(initializer_list<key_type> il, const key_compare& comp, const Allocator& a);
+    template<class Allocator>
+      flat_set(initializer_list<key_type> il, const Allocator& a);
+
+    flat_set(sorted_unique_t s, initializer_list<key_type> il,
+             const key_compare& comp = key_compare())
+        : flat_set(s, il.begin(), il.end(), comp) { }
+    template<class Allocator>
+      flat_set(sorted_unique_t, initializer_list<key_type> il,
+               const key_compare& comp, const Allocator& a);
+    template<class Allocator>
+      flat_set(sorted_unique_t, initializer_list<key_type> il, const Allocator& a);
+
+    flat_set& operator=(initializer_list<key_type>);
+
+    // [:en] iterators \
+    [:zh_CN] 迭代器
+    iterator               begin() noexcept;
+    const_iterator         begin() const noexcept;
+    iterator               end() noexcept;
+    const_iterator         end() const noexcept;
+
+    reverse_iterator       rbegin() noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+    reverse_iterator       rend() noexcept;
+    const_reverse_iterator rend() const noexcept;
+
+    const_iterator         cbegin() const noexcept;
+    const_iterator         cend() const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
+    const_reverse_iterator crend() const noexcept;
+
+    // [:en] capacity \
+    [:zh_CN] 容量
+    [[nodiscard]] bool empty() const noexcept;
+    size_type size() const noexcept;
+    size_type max_size() const noexcept;
+
+    // [:en] [#flat.set.modifiers], modifiers \
+    [:zh_CN] [#flat.set.modifiers]，改动函数
+    template<class... Args> pair<iterator, bool> emplace(Args&&... args);
+    template<class... Args>
+      iterator emplace_hint(const_iterator position, Args&&... args);
+
+    pair<iterator, bool> insert(const value_type& x)
+      { return emplace(x); }
+    pair<iterator, bool> insert(value_type&& x)
+      { return emplace(std::move(x)); }
+    template<class K> pair<iterator, bool> insert(K&& x);
+    iterator insert(const_iterator position, const value_type& x)
+      { return emplace_hint(position, x); }
+    iterator insert(const_iterator position, value_type&& x)
+      { return emplace_hint(position, std::move(x)); }
+    template<class K> iterator insert(const_iterator hint, K&& x);
+
+    template<class InputIterator>
+      void insert(InputIterator first, InputIterator last);
+    template<class InputIterator>
+      void insert(sorted_unique_t, InputIterator first, InputIterator last);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      void insert_range(R&& rg);
+
+    void insert(initializer_list<key_type> il)
+      { insert(il.begin(), il.end()); }
+    void insert(sorted_unique_t s, initializer_list<key_type> il)
+      { insert(s, il.begin(), il.end()); }
+
+    container_type extract() &&;
+    void replace(container_type&&);
+
+    iterator erase(iterator position);
+    iterator erase(const_iterator position);
+    size_type erase(const key_type& x);
+    template<class K> size_type erase(K&& x);
+    iterator erase(const_iterator first, const_iterator last);
+
+    void swap(flat_set& y) noexcept;
+    void clear() noexcept;
+
+    // [:en] observers \
+    [:zh_CN] 探察函数
+    key_compare key_comp() const;
+    value_compare value_comp() const;
+
+    // [:en] set operations \
+    [:zh_CN] set 的操作
+    iterator find(const key_type& x);
+    const_iterator find(const key_type& x) const;
+    template<class K> iterator find(const K& x);
+    template<class K> const_iterator find(const K& x) const;
+
+    size_type count(const key_type& x) const;
+    template<class K> size_type count(const K& x) const;
+
+    bool contains(const key_type& x) const;
+    template<class K> bool contains(const K& x) const;
+
+    iterator lower_bound(const key_type& x);
+    const_iterator lower_bound(const key_type& x) const;
+    template<class K> iterator lower_bound(const K& x);
+    template<class K> const_iterator lower_bound(const K& x) const;
+
+    iterator upper_bound(const key_type& x);
+    const_iterator upper_bound(const key_type& x) const;
+    template<class K> iterator upper_bound(const K& x);
+    template<class K> const_iterator upper_bound(const K& x) const;
+
+    pair<iterator, iterator> equal_range(const key_type& x);
+    pair<const_iterator, const_iterator> equal_range(const key_type& x) const;
+    template<class K>
+      pair<iterator, iterator> equal_range(const K& x);
+    template<class K>
+      pair<const_iterator, const_iterator> equal_range(const K& x) const;
+
+    friend bool operator==(const flat_set& x, const flat_set& y);
+
+    friend [[redoc("^>")]]synth-three-way-result<value_type>
+      operator<=>(const flat_set& x, const flat_set& y);
+
+    friend void swap(flat_set& x, flat_set& y) noexcept { x.swap(y); }
+
+  private:
+    container_type [[redoc("*>")]]c;           // [=expos]
+    key_compare [[redoc("*>")]]compare;        // [=expos]
+  };
+
+  template<class InputIterator, class Compare = less<[[redoc("^>")]]iter-value-type<InputIterator>>>
+    flat_set(InputIterator, InputIterator, Compare = Compare())
+      -> flat_set<[[redoc("^>")]]iter-value-type<InputIterator>, Compare>;
+
+  template<class InputIterator, class Compare = less<[[redoc("^>")]]iter-value-type<InputIterator>>>
+    flat_set(sorted_unique_t, InputIterator, InputIterator, Compare = Compare())
+      -> flat_set<[[redoc("^>")]]iter-value-type<InputIterator>, Compare>;
+
+  template<ranges::[[redoc("`:c>")]]input_range R, class Compare = less<ranges::range_value_t<R>>,
+          class Allocator = allocator<ranges::range_value_t<R>>>
+    flat_set(from_range_t, R&&, Compare = Compare(), Allocator = Allocator())
+      -> flat_set<ranges::range_value_t<R>, Compare>;
+
+   template<ranges::[[redoc("`:c>")]]input_range R, class Allocator>
+     flat_set(from_range_t, R&&, Allocator)
+       -> flat_set<ranges::range_value_t<R>, less<ranges::range_value_t<R>>>;
+
+  template<class Key, class Compare = less<Key>>
+    flat_set(initializer_list<Key>, Compare = Compare())
+      -> flat_set<Key, Compare>;
+
+  template<class Key, class Compare = less<Key>>
+    flat_set(sorted_unique_t, initializer_list<Key>, Compare = Compare())
+      -> flat_set<Key, Compare>;
+
+  template<class Key, class Compare, class KeyContainer, class Allocator>
+    struct uses_allocator<flat_set<Key, Compare, KeyContainer>, Allocator>
+      : bool_constant<uses_allocator_v<KeyContainer, Allocator>> { };
+}
+[codeblock:end]
