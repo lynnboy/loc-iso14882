@@ -106,10 +106,10 @@ called the [+object expression].
 [:en]
 If the object expression is of scalar type, [`E2] shall name the
 pseudo-destructor of that same type (ignoring cv-qualifications) and [`E1.E2] is
-an lvalue of type [=lq]function of () returning [`:key void][=rq].
+a prvalue of type [=lq]function of () returning [`:key void][=rq].
 [:zh_CN]
 如果对象表达式为标量类型，则 [`E2] 应当指名相同类型（忽略 cv 限定）的伪析构函数，
-且 [`E1.E2] 为类型“返回 [`:key void] 的 () 函数”的左值。
+且 [`E1.E2] 为类型“返回 [`:key void] 的 () 函数”的纯右值。
 
 [begin:note]
 [:en]
@@ -307,14 +307,12 @@ The type of [`E1.E2] is [`T].
 
 [para]
 [:en]
-If [`E2] is a non-static data member or a non-static member function, the
-program is ill-formed if the class of which [`E2] is directly a member is an
-ambiguous base ([#class.member.lookup]) of the naming class ([#class.access.base])
-of [`E2].
+If [`E2] is a non-static member, the program is ill-formed if the class of which
+[`E2] is directly a member is an ambiguous base ([#class.member.lookup]) of the
+naming class ([#class.access.base]) of [`E2].
 [:zh_CN]
-若 [`E2] 为非静态数据成员或非静态成员函数，则当以 [`E2] 作为直接成员的类是指名
-[`E2] 的类（[#class.access.base]）的有歧义基类（[#class.member.lookup]）时，程序
-非良构。
+若 [`E2] 为非静态成员，则当以 [`E2] 作为直接成员的类是指名 [`E2] 的类
+（[#class.access.base]）的有歧义基类（[#class.member.lookup]）时，程序非良构。
 
 [begin:note]
 [:en]
@@ -324,3 +322,26 @@ class type of the object expression; see [#class.access.base].
 如果所指明的类是对象表达式的类类型的一个有歧义基类，程序也是非良构的；参见
 [#class.access.base]。
 [end:note]
+
+[para]
+[:en]
+If [`E2] is a non-static member and the result of [`E1] is an object whose type
+is not similar ([#conv.qual]) to the type of [`E1], the behavior is undefined.
+[:zh_CN]
+若 [`E2] 为非静态成员，且 [`E1] 的结果是类型与 [`E1] 的类型不相似（[#conv.qual]）
+的对象，则其行为未定义。
+
+[begin:example]
+[codeblock]
+struct A { int i; };
+struct B { int j; };
+struct D : A, B {};
+void f() {
+  D d;
+  static_cast<B&>(d).j;             // [:en] OK, object expression designates the [`B] subobject of [`d] \
+                                    [:zh_CN] OK，对象表达式代表 [`d] 的 [`B] 子对象
+  reinterpret_cast<B&>(d).j;        // [:en] undefined behavior \
+                                    [:zh_CN] 未定义行为
+}
+[codeblock:end]
+[end:example]

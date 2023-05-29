@@ -571,6 +571,7 @@ associated class                        |关联类
 associated constraints                  |关联约束       |声明式受到的约束，按范式合取：模板形参的类型约束，模板形参后的requires子句，函数形参中的类型约束，函数尾部requires子句
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
+assumption                              |假设
 asynchronous provider                   |异步提供者     |`future`对应的`promise`或`task`，向共享状态提供结果
 asynchronous return object              |异步返回对象   |存于`future`的共享状态中
 atomic                                  |原子性
@@ -763,6 +764,7 @@ constexpr destructor                    |constexpr 析构函数 |除函数规定
 constexpr function                      |constexpr 函数     |以`constexpr`或`consteval`修饰的函数<br>字面量类型，非协程；代码中无goto、静态或线程变量；构造或析构的类无虚基类<br>不可能常量求值则非良构但无须诊断
 constexpr if statement                  |constexpr if 语句  |`if constexpr (cond) ...`，检测编译期常量
 constexpr specifier                     |constexpr 说明符   |修饰变量或函数，隐含内联
+constexpr-unknown                       |constexpr 未知     |动态类型
 constinit specifier                     |constinit 说明符   |修饰静态或线程存储期的变量，保证静态初始化
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
 constness                               |常量性
@@ -1361,6 +1363,7 @@ move assignment                         |移动赋值
 move assignment operator                |移动赋值运算符 |非静态非模板，`cv T&&`单参数赋值运算符<br>若未显式声明任何复制/移动/析构，则隐式声明预置移动赋值<br>隐式声明`X&(T&&)`，递归要求潜在构造子对象可以对应赋值
 move construction                       |移动构造
 move constructor                        |移动构造函数   |非模板，`cv T&&`可接受单参数调用的构造函数<br>若未显式声明任何复制/移动/析构，则隐式声明预置非 explicit 移动构造<br>隐式声明`T&&`，递归要求潜在构造子对象可以对应构造
+move-eligible                           |有移动资格
 move iterator                           |移动迭代器
 moved-from state                        |被移走状态     |移动操作后，右操作数的状态，是该类型的有效状态。自移动后也为此状态
 multibyte character                     |多字节字符

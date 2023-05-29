@@ -26,6 +26,7 @@
     [| [`:key consteval] ]
     [| [`:key constexpr] ]
     [| [`:key mutable] ]
+    [| [`:key static] ]
 [rule:end]
 
 [rule lambda-specifier-seqs [:zh_CN] lambda-说明符序列 ]
@@ -97,10 +98,19 @@ and shall not contain both [`:key constexpr] and [`:key consteval].
 
 [:en]
 If the [~lambda-declarator] contains an explicit object parameter ([#dcl.fct]),
-then no [~lambda-specifier] in the [~lambda-specifier-seq] shall be [`:key mutable].
+then no [~lambda-specifier] in the [~lambda-specifier-seq] shall be
+[`:key mutable] or [`:key static].
 [:zh_CN]
 如果 [~lambda-说明符]包含显式对象形参（[#dcl.fct]），则[~lambda-说明符序列]中
-不能有 [~lambda-说明符] [`:key mutable]。
+不能有 [~lambda-说明符] [`:key mutable] 或 [`:key static]。
+
+[:en] The [~lambda-specifier-seq] shall not contain both [`:key mutable] and
+[`:key static].
+[:zh_CN] [~lambda-说明符序列]不能同时包含 [`:key mutable] 和 [`:key static]。
+
+[:en] If the [~lambda-specifier-seq] contains [`:key static], there shall be no
+[~lambda-capture].
+[:zh_CN] 如果 [~lambda-说明符序列]包含 [`:key static]，则不应当有 [~lambda-俘获式]。
 
 [begin:note]
 [:en]
@@ -118,12 +128,18 @@ is as if [`()] were inserted at the start of the [~lambda-declarator].
 插入了 [`()]。
 
 [:en]
-If the [~lambda-declarator] does not include a [~trailing-return-type],
-the lambda return type is [`:key auto], which is deduced from [`:key return]
-statements as described in [#dcl.spec.auto].
+If the [~lambda-declarator] does not include a [~trailing-return-type], it is
+considered to be [`-> [`:key auto]].
 [:zh_CN]
-如果 [~lambda-声明符]并不包含[~尾部返回类型]，则 lambda 的返回类型为 [`:key auto]，
-并根据 [#dcl.spec.auto] 的说明从 [`return] 语句进行推断。
+如果 [~lambda-声明符]并不包含[~尾部返回类型]，则认为它是 [`-> [`:key] auto]。
+
+[begin:note]
+[:en]
+In that case, the return type is deduced from [`:key return] statements as
+described in [#dcl.spec.auto].
+[:zh_CN]
+这种情况下，其返回类型根据 [#dcl.spec.auto] 所述从 [`return] 语句进行推断。
+[end:note]
 
 [begin:example]
 [codeblock]
@@ -132,7 +148,7 @@ auto x1 = [](int i) { return i; };      // [:en] OK, return type is [`int] \
 auto x2 = []{ return { 1, 2 }; };       // [:en] error: deducing return type from [~braced-init-list] \
                                         [:zh_CN] 错误：从[~花括号初始化列表]推断返回类型
 int j;
-auto x3 = []()->auto&& { return j; };   // [:en] OK, return type is [`int&] \
+auto x3 = [&]()->auto&& { return j; };  // [:en] OK, return type is [`int&] \
                                         [:zh_CN] OK，返回类型为 [`int&]
 [codeblock:end]
 [end:example]

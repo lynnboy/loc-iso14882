@@ -111,23 +111,24 @@ and the entity is a local entity ([#basic.pre]) or a variable declared by an
 [:en]
 If naming the entity from outside of an unevaluated operand within [$S] would
 refer to an entity captured by copy in some intervening [~lambda-expression],
-then let [$E] be the innermost such [~lambda-expression], and:
+then let [$E] be the innermost such [~lambda-expression].
 [:zh_CN]
 如果在 [$S] 中，于免求值操作数之外指名该实体时，指代的是某个介入的
-[~lambda-表达式]按复制俘获的实体，则令 [$E] 为最内层的这种 [~lambda-表达式]，以及：
+[~lambda-表达式]按复制俘获的实体，则令 [$E] 为最内层的这种 [~lambda-表达式]。
 
 [list]
 [item]
 [:en]
-If [$P] is in [$S][=']s function parameter scope but not its
-[~parameter-declaration-clause], then the type of the expression is the type of
-a class member access expression ([#expr.ref]) naming the non-static data member
-that would be declared for such a capture in the object parameter ([#dcl.fct])
-of the function call operator of [$E].
+If there is such a [~lambda-expression] and if [$P] is in [$S][=']s function
+parameter scope but not its [~parameter-declaration-clause], then the type of
+the expression is the type of a class member access expression ([#expr.ref])
+naming the non-static data member that would be declared for such a capture in
+the object parameter ([#dcl.fct]) of the function call operator of [$E].
 [:zh_CN]
-如果 [$P] 位于 [$S] 的函数形参作用域而非其[~形参声明式子句]中，则该表达式的类型
-为，[$E] 的函数调用运算符的对象形参（[#dcl.fct]）中，为这种俘获所声明的非静态
-数据成员，指名该成员的类成员访问表达式（[#expr.ref]）的类型。
+如果存在这样的 [~lambda-表达式]，且如果 [$P] 位于 [$S] 的函数形参作用域而非其
+[~形参声明式子句]中，则该表达式的类型为，[$E] 的函数调用运算符的对象形参
+（[#dcl.fct]）中，为这种俘获所声明的非静态数据成员，指名该成员的类成员访问表达式
+（[#expr.ref]）的类型。
 
 [begin:note]
 [:en]
@@ -140,17 +141,14 @@ an identifier will typically be [`:key const] qualified.
 
 [item]
 [:en]
-Otherwise (if [$P] either precedes [$E][=']s function parameter scope or
-is in [$E][=']s [~parameter-declaration-clause]), the program is ill-formed.
+Otherwise (if there is no such [~lambda-expression] or if [$P] either precedes
+[$E][=']s function parameter scope or is in [$E][=']s
+[~parameter-declaration-clause]), the type of the expression is the type of the
+result.
 [:zh_CN]
-否则（或者 [$P] 在 [$E] 的函数形参作用域之前，或者在 [$E] 的[~形参声明式子句]中），
-程序非良构。
+否则（不存在这样的 [~lambda-表达式]，或者 [$P] 在 [$E] 的函数形参作用域之前，
+或者在 [$E] 的[~形参声明式子句]中），表达式的类型就是该结果的类型。
 [list:end]
-
-[:en]
-Otherwise, the type of the expression is the type of the result.
-[:zh_CN]
-否则，表达式的类型就是该结果的类型。
 
 [begin:note]
 [:en]
@@ -170,19 +168,20 @@ is a reference type.
 [end:note]
 
 [:en]
-The expression is an lvalue if the entity is a function, variable, structured
-binding ([#dcl.struct.bind]), data member, or template parameter object and a
-prvalue otherwise ([#basic.lval]); it is a bit-field if the identifier
-designates a bit-field.
+The expression is an xvalue if it is move-eligible (see below); an lvalue if the
+entity is a function, variable, structured binding ([#dcl.struct.bind]), data
+member, or template parameter object and a prvalue otherwise ([#basic.lval]);
+it is a bit-field if the identifier designates a bit-field.
 [:zh_CN]
-如果该实体是函数、变量、结构化绑定（[#dcl.struct.bind]）、数据成员或模板形参对象，
-则表达式是左值，否则是纯右值（[#basic.lval]）；如果该标识符代表的是位字段则它也
-是位字段。
+如果该表达式有移动资格（见下文）则其为临限值；如果该实体是函数、变量、结构化绑定
+（[#dcl.struct.bind]）、数据成员或模板形参对象，则表达式是左值，否则是纯右值
+（[#basic.lval]）；如果该标识符代表的是位字段则它也是位字段。
 
 [begin:example]
 [codeblock]
 void f() {
   float x, &r = x;
+
   [=]() -> decltype((x)) {      // [:en] lambda returns [`float const&] because this lambda is not [`mutable] and \
                                 [:zh_CN] lambda 返回 [`float const&]，因为这个 lambda 并非 [`mutable] 且
                                 // [:en@~] [`x] is an lvalue \
@@ -198,24 +197,51 @@ void f() {
     return y2;
   };
 
-  [=]<decltype(x) P>{};         // [:en] error: [`x] refers to local entity but precedes the \
-                                [:zh_CN] 错误：[`x] 指代局部实体，但这早于
-                                // [:en@~] lambda[=']s function parameter scope \
-                                [:zh_CN@~] lambda 的函数形参作用域
-  [=](decltype((x)) y){};       // [:en] error: [`x] refers to local entity but is in the lambda[=']s \
-                                [:zh_CN] 错误：[`x] 指代局部实体，但这位于 lambda 的
-                                // [:en@~] [~parameter-declaration-clause] \
-                                [:zh_CN@~] [~形参声明式子句]之内
-  [=]{
-      []<decltype(x) P>{};      // [:en] OK, [`x] is in the outer lambda[=']s function parameter scope \
-                                [:zh_CN] OK：[`x] 位于外围 lambda 的函数形参作用域中
-      [](decltype((x)) y){};    // [:en] OK, lambda takes a parameter of type [`float const&] \
-                                [:zh_CN] OK：lambda 接受一个 [`float const&] 类型的形参
-      [x=1](decltype((x)) z){}; // [:en] error: [`x] refers to [~init-capture] but is in the lambda[=']s \
-                                [:zh_CN] 错误：[`x] 指代[~带初始化俘获符]，但这位于 lambda 的
-                                // [:en@~] [~parameter-declaration-clause] \
-                                [:zh_CN@~] [~形参声明式子句]之内
+  [=](decltype((x)) y) {
+    decltype((x)) z = x;        // [:en] OK, [`y] has type [`float&], [`z] has type [`float const&] \
+                                [:zh_CN] OK，[`y] 的类型为 [`float&]，[`z] 的类型为 [`float const&]
+  };
+
+  [=] {
+    [](decltype((x)) y) {};     // [:en] OK, lambda takes a parameter of type [`float const&] \
+                                [:zh_CN] OK，lambda 接受一个 [`float const&] 类型的形参
+
+    [x=1](decltype((x)) y) {
+      decltype((x)) z = x;      // [:en] OK, [`y] has type [`int&], [z] has type [`int const&] \
+                                [:zh_CN] OK，[`y] 的类型为 [`int&]，[`z] 的类型为 [`int const&]
+    };
   };
 }
 [codeblock:end]
 [end:example]
+
+[para]
+[:en] An [+:adj implicitly movable[!entity]] is a variable of automatic storage
+duration that is either a non-volatile object or an rvalue reference to a
+non-volatile object type.
+[:zh_CN] [+:adj 隐式可移动[!实体]]是具有自动存储期的变量，或者是非 volatile 对象，
+或者是到非 volatile 对象类型的右值引用。
+
+[:en] In the following contexts, an [~id-expression] is [+move-eligible]:
+[:zh_CN] 下列语境中，[~标识表达式][+有移动资格]：
+
+[list]
+[item]
+[:en] If the [~id-expression] (possibly parenthesized) is the operand of a
+[`return] ([#stmt.return]) or [`:key co_return] ([#stmt.return.coroutine])
+statement, and names an implicitly movable entity declared in the body
+or [~parameter-declaration-clause] of the innermost enclosing function or
+[~lambda-expression], or
+[:zh_CN] 如果（可能带括号的）[~标识表达式]是 [`return]（[#stmt.return]）或
+[`:key co_return]（[#stmt.return.coroutine]）语句的操作数，并指名某个最内层外围
+函数或 [~lambda-表达式]的函数体或[~形参声明子句]中声明的隐式可移动实体，或者
+
+[item]
+[:en] if the [~id-expression] (possibly parenthesized) is the operand of a
+[~throw-expression] ([#expr.throw]), and names an implicitly movable entity that
+belongs to a scope that does not contain the [~compound-statement] of the
+innermost [~lambda-expression], [~try-block], or [~function-try-block] (if any)
+whose [~compound-statement] or [~ctor-initializer] contains the
+[~throw-expression].
+[:zh_CN] 如果（可能带括号的）[~标识表达式]是 [~]
+[list:end]

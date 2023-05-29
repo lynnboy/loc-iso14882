@@ -141,11 +141,20 @@ evaluate one of the following:
 [list]
 [item]
 [:en]
-[`:key this] ([#expr.prim.this]), except in a constexpr function
-([#dcl.constexpr]) that is being evaluated as part of [$E];
+[`:key this] ([#expr.prim.this]), except
 [:zh_CN]
-[`:key this]（[#expr.prim.this]），但作为 [$E] 的求值的一部分而求值的 constexpr
-函数（[#dcl.constexpr]）中的不算作其中；
+[`:key this]（[#expr.prim.this]），但
+[list]
+[item]
+[:en@~] in a constexpr function ([#dcl.constexpr]) that is being evaluated as
+part of [$E] or
+[:zh_CN@~] 作为 [$E] 的求值的一部分而求值的 constexpr 函数（[#dcl.constexpr]）
+中的，或者
+[item]
+[:en@~] when appearing as the [~postfix-expression] of an implicit or explicit
+class member access expression ([#expr.ref]);
+[:zh_CN@~] 作为隐式或显式成员访问表达式（[#expr.ref]）的[~后缀表达式]不算作其中；
+[list:end]
 
 [item]
 [:en]
@@ -183,18 +192,10 @@ requirements for a constexpr function;
 
 [item]
 [:en]
-an invocation of a virtual function ([#class.virtual]) for an object unless
+an invocation of a virtual function ([#class.virtual]) for an object whose
+dynamic type is constexpr-unknown;
 [:zh_CN]
-为某个对象调用虚函数（[#class.virtual]），除非
-
-[list]
-[item]
-[:en@~] the object is usable in constant expressions or
-[:zh_CN@~] 该对象可被用在常量表达式中，或
-[item]
-[:en@~] its lifetime began within the evaluation of [$E];
-[:zh_CN@~] 其生存期开始于 [$E] 的求值之中；
-[list:end]
+为某个动态类型 constexpr 未知的对象调用虚函数（[#class.virtual]）；
 
 [item]
 [:en]
@@ -206,9 +207,10 @@ an expression that would exceed the implementation-defined limits (see
 [item]
 [:en]
 an operation that would have undefined behavior as specified in [#intro] through
-[#cpp];[#:fn]
+[#cpp], excluding [#dcl.attr.assume];[#:fn]
 [:zh_CN]
-可能具有在本文档从 [#intro] 到 [#cpp] 中所述的未定义行为的操作[#:fn]；
+可能具有在本文档从 [#intro] 到 [#cpp]，除了 [#dcl.attr.assume] 中所述的未定义
+行为的操作[#:fn]；
 
 [note:foot]
 [:en]
@@ -265,27 +267,6 @@ the lifetime of the union object began within the evaluation of [$E];
 [:zh_CN]
 对其活跃成员（如果有）为 mutable 成员的联合体调用隐式定义的复制/移动构造函数或
 复制/移动赋值运算符，除非该联合体对象的生存期开始于 [$E] 的求值之中；
-
-[item]
-[:en]
-an [~id-expression] that refers to a variable or data member of reference type
-unless the reference has a preceding initialization and either
-[:zh_CN]
-代表引用类型的变量或数据成员的[~标识表达式]，除非这个引用此前进行了初始化，并且
-
-[list]
-[item]
-[:en@~]
-it is usable in constant expressions or
-[:zh_CN@~]
-可被用在常量表达式之中，或者
-
-[item]
-[:en@~]
-its lifetime began within the evaluation of [$E];
-[:zh_CN@~]
-其生存期开始于 [$E] 的执行中；
-[list:end]
 
 [item]
 [:en]
@@ -430,10 +411,11 @@ a [~throw-expression] ([#expr.throw]);
 [item]
 [:en]
 a [`:key dynamic_cast] ([#expr.dynamic.cast]) or [`:key typeid] ([#expr.typeid])
-expression that would throw an expression;
+expression on a glvalue that refers to an object whose dynamic type is
+constexpr-unknown or that would throw an expression;
 [:zh_CN]
-可能抛出异常的 [`:key dynamic_cast]（[#expr.dynamic.cast]）或 [`typeid]
-（[#expr.typeid]）表达式；
+运用于代表具有 constexpr 未知的动态类型的对象的泛左值上，或者可能抛出异常的
+[`:key dynamic_cast]（[#expr.dynamic.cast]）或 [`typeid]（[#expr.typeid]）表达式；
 
 [item]
 [:en]
@@ -461,15 +443,40 @@ a [`:key goto] statement ([#stmt.goto]).
 [list:end]
 
 [:en]
-If [$E] satisfies the constraints of a core constant expression, but evaluation
-of [$E] would evaluate an operation that has undefined behavior as specified in
-[#library] through [#[=lastlibchapter]], or an invocation of the [`va_start]
-macro ([#cstdarg.syn]), it is unspecified whether [$E] is a core constant
-expression.
+It is unspecified whether [$E] is a core constant expression if [$E] satisfies
+the constraints of a core constant expression, but evaluation of [$E] would
+evaluate
 [:zh_CN]
-如果 [$E] 满足对核心常量表达式的约束，但对 [$E] 的求值可能会求值某个具有在从
-[#library] 到 [#[=lastlibchapter]] 中所述的未定义行为的操作，或者调用了
-[`va_start] 宏（[#cstdarg.syn]），那么 [$E] 是否是核心常量表达式是未指明的
+如果 [$E] 满足对核心常量表达式的约束，但对 [$E] 的求值可能会求值以下各项，那么
+[$E] 是否是核心常量表达式是未指明的：
+
+[list]
+[item]
+[:en@~] an operation that has undefined behavior as specified in [#library]
+through [#[=lastlibchapter]],
+[:zh_CN@~] 某个具有在从 [#library] 到 [#[=lastlibchapter]] 中所述的未定义行为的
+操作，
+[item]
+[:en@~] an invocation of the [`va_start] macro ([#cstdarg.syn]), or
+[:zh_CN@~] 调用了 [`va_start] 宏（[#cstdarg.syn]），或者
+[item]
+[:en@~] a statement with an assumption ([#dcl.attr.assume]) whose converted
+[~conditional-expression], if evaluated where the assumption appears,
+would not disqualify [$E] from being a core constant expression and
+would not evaluate to [`true].
+[:zh_CN@~] 带有假设（[#dcl.attr.assume]）的语句，其转换后的[~条件表达式]如果在
+假设出现之处求值本不会妨碍 [$E] 作为核心常量表达式且本会求值为 [`true]。
+
+[begin:note]
+[:en]
+[$E] is not disqualified from being a core constant expression if the
+hypothetical evaluation of the converted [~conditional-expression] would
+disqualify [$E] from being a core constant expression.
+[:zh_CN]
+如果虚构的对转换后的[~条件表达式]的求值妨碍 [$E] 作为核心常量表达式，则不妨碍
+[$E] 称为核心常量表达式。
+[end:note]
+[list:end]
 
 [begin:example]
 [codeblock]
@@ -551,6 +558,93 @@ underlying constructor call disqualifies [$E] from being a core constant express
 除非其首个实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储或某个
 生存期开始于 [$E] 的求值期间的对象，或者对底层构造函数的调用的求值导致 [$E] 无法
 作为核心常量表达式。
+
+[para]
+[:en]
+During the evaluation of an expression [$E] as a core constant expression,
+all [~id-expression]s and uses of [`*[`:key this]] that refer to an object or
+reference whose lifetime did not begin with the evaluation of [$E] are treated
+as referring to a specific instance of that object or reference whose lifetime
+and that of all subobjects (including all union members) includes the entire
+constant evaluation.
+[:zh_CN]
+将表达式 [$E] 作为核心常量表达式的求值过程中，所有[~标识表达式]和对
+[`*[`:key this]] 的使用，若其所代表的对象或引用的生存期并非开始于 [$E] 的求值，
+则均被当做代表该对象或引用的一个特定实例，其生存期和其所有子对象（包括所有联合体
+成员）的生存期均包含整个常量求值。
+
+[:en]
+For such an object that is not usable in constant expressions, the dynamic type
+of the object is [+constexpr-unknown].
+[:zh_CN]
+不能在常量表达式中使用的这种对象，其动态类型是 [+constexpr 未知]的。
+
+[:en]
+For such a reference that is not usable in constant expressions, the reference
+is treated as binding to an unspecified object of the referenced type whose
+lifetime and that of all subobjects includes the entire constant evaluation and
+whose dynamic type is constexpr-unknown.
+[:zh_CN]
+不能在常量表达式中使用的这种引用，被当作绑定到某个被引用类型的一个特定对象，其
+生存期和所有子对象的生存期均包含整个常量求值，且其动态类型是 constexpr 未知的。
+
+[begin:example]
+[codeblock]
+template <typename T, size_t N>
+constexpr size_t array_size(T (&)[N]) {
+  return N;
+}
+
+void use_array(int const (&gold_medal_mel)[2]) {
+  constexpr auto gold = array_size(gold_medal_mel);     // OK
+}
+
+constexpr auto olympic_mile() {
+  const int ledecky = 1500;
+  return []{ return ledecky; };
+}
+static_assert(olympic_mile()() == 1500);                // OK
+
+struct Swim {
+  constexpr int phelps() { return 28; }
+  virtual constexpr int lochte() { return 12; }
+  int coughlin = 12;
+};
+
+constexpr int how_many(Swim& swam) {
+  Swim* p = &swam;
+  return (p + 1 - 1)->phelps();
+}
+
+void splash(Swim& swam) {
+  static_assert(swam.phelps() == 28);           // OK
+  static_assert((&swam)->phelps() == 28);       // OK
+  Swim* pswam = &swam;
+  static_assert(pswam->phelps() == 28);         // [:en] error: lvalue-to-rvalue conversion on a pointer \
+                                                [:zh_CN] 错误：对不能用与常量表达式的指针
+                                                // [:en@~] not usable in constant expressions \
+                                                [:zh_CN] 进行左值向右值转换
+  static_assert(how_many(swam) == 28);          // OK
+  static_assert(Swim().lochte() == 12);         // OK
+  static_assert(swam.lochte() == 12);           // [:en] error: invoking virtual function on reference \
+                                                [:zh_CN] 错误：在具有 constexpr 未知动态类型的引用上
+                                                // [:en@~] with constexpr-unknown dynamic type \
+                                                [:zh_CN@~] 调用虚函数
+  static_assert(swam.coughlin == 12);           // [:en] error: lvalue-to-rvalue conversion on an object \
+                                                [:zh_CN] 错误：对不能用与常量表达式的对象
+                                                // [:en@~] not usable in constant expressions \
+                                                [:zh_CN] 进行左值向右值转换
+}
+
+extern Swim dc;
+extern Swim& trident;
+
+constexpr auto& sandeno   = typeid(dc);         // [:en] OK, can only be [`typeid(Swim)] \
+                                                [:zh_CN] OK，只能是 [`typeid(Swim)]
+constexpr auto& gallagher = typeid(trident);    // [:en] error: constexpr-unknown dynamic type \
+                                                [:zh_CN] 错误：constexpr 未知的动态类型
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]
@@ -748,6 +842,14 @@ the above constraints, or if it is a non-immediate function.
 若某个实体是具有静态存储期的对象，并且要么不是临时对象，要么是临时对象但其值满足
 上述约束条件，或者它是个非直接函数，则该实体是[+常量表达式允许的结果
 [%常量表达式[!～允许的结果]]]。
+
+[begin:note]
+[:en]
+A glvalue core constant expression that either refers to or points to an
+unspecified object is not a constant expression.
+[:zh_CN]
+指代或指向未指明对象的泛左值核心常量表达式不是常量表达式。
+[end:note]
 
 [begin:example]
 [codeblock]
