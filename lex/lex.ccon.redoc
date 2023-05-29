@@ -54,15 +54,22 @@
     [| hexadecimal-escape-sequence ]
 [rule:end]
 
+[rule simple-octal-digit-sequence [:zh_CN] 简单八进制数字序列 ]
+    [| octal-digit ]
+    [| simple-octal-digit-sequence octal-digit ]
+[rule:end]
+
 [rule octal-escape-sequence [:zh_CN] 八进制转义序列 ]
     [| [`\] octal-digit ]
     [| [`\] octal-digit octal-digit ]
     [| [`\] octal-digit octal-digit octal-digit ]
+    [| [`\o{] simple-octal-digit-sequence [`}] ]
 [rule:end]
 
 [rule hexadecimal-escape-sequence [:zh_CN] 十六进制转义序列 ]
     [| [`\x] hexadecimal-digit ]
     [| hexadecimal-escape-sequence hexadecimal-digit ]
+    [| [`\x{] simple-hexadecimal-digit-sequence [`}] ]
 [rule:end]
 
 [rule conditional-escape-sequence [:zh_CN] 有条件转义序列 ]
@@ -73,9 +80,9 @@
     [|:descriptive
         [:en] any member of the basic character set that is not an
             [~octal-digit], [~simple-escape-sequence-char], or the characters
-            [`u], [`U], or [`x]
+            [`N], [`o], [`u], [`U], or [`x]
         [:zh_CN] 基本字符集中的任意成员，除了[~八进制数字]，[~简单转义序列字符]，
-            或字符 [`u]、[`U] 或 [`x]
+            或字符 [`N]、[`o]、[`u]、[`U] 或 [`x]
     ]
 [rule:end]
 [syntax:end]
@@ -123,9 +130,9 @@ A [+:adj multicharacter[!literal]] is a [~character-literal] whose
 
 [:en]
 The [~encoding-prefix] of a non-encodable character literal or a multicharacter
-literal shall be absent or [`L].
+literal shall be absent.
 [:zh_CN]
-不可编码字符字面量或多字符字面量的[~编码前缀]应当没有或为 [`L]。
+不可编码字符字面量或多字符字面量应当没有[~编码前缀]。
 
 [:en]
 Such [~character-literal]s are conditionally-supported.
@@ -143,27 +150,27 @@ as defined by [#:tab#lex.ccon.literal].
 
 [:en]
 The special cases for non-encodable character literals and multicharacter
-literals take precedence over their respective base kinds.
+literals take precedence over the base kinds.
 [:zh_CN]
-不可编码字符字面量和多字符字面量的特殊情况，优先于它们的相应基本种类。
+不可编码字符字面量和多字符字面量的特殊情况，优先于基本种类。
 
 [begin:note]
 [:en]
-The associated character encoding for ordinary and wide character literals
-determines encodability, but does not determine the value of non-encodable
-ordinary or wide character literals or ordinary or wide multicharacter literals.
+The associated character encoding for ordinary character literals determines
+encodability, but does not determine the value of non-encodable ordinary
+character literals or ordinary multicharacter literals.
 [:zh_CN]
-普通和宽字符字面量的关联字符编码决定其是否可编码，但并不决定不可编码的普通或宽
-字符字面量或者普通或宽多字符字面量的值。
+普通字符字面量的关联字符编码决定其是否可编码，但并不决定不可编码的普通字符字面量
+或者普通多字符字面量的值。
 
 [:en]
-The examples in [#:tab#lex.ccon.literal] for non-encodable ordinary and wide
-character literals assume that the specified character lacks representation in
-the ordinary literal encoding or wide literal encoding, respectively, or
-that encoding the character would require more than one code unit.
+The examples in [#:tab#lex.ccon.literal] for non-encodable ordinary character
+literals assume that the specified character lacks representation in the
+ordinary literal encoding or that encoding the character would require more than
+one code unit.
 [:zh_CN]
-[#:tab#lex.ccon.literal] 中针对不可编码的普通和宽字符字面量的示例，假定所指定的
-字符分别在普通字面编码或宽字面编码中缺乏表示，或者该字符的编码需要多于一个代码点。
+[#:tab#lex.ccon.literal] 中针对不可编码的普通字符字面量的示例，假定所指定的字符
+在普通字面编码中缺乏表示，或者该字符的编码需要多于一个代码点。
 [end:note]
 
 [table:grid#lex.ccon.literal
@@ -201,25 +208,13 @@ that encoding the character would require more than one code unit.
 [|] [`'abcd']
 [-@sep]
 
-[|@rowspan=3]
-    [`L]
+[|] [`L]
 [|] [:en] [+wide character literal[%literal[!character[!wide]]]]
     [:zh_CN] [+宽字符字面量[%字面量[!字符[!宽]]]]
 [|] [`:key wchar_t]
-[|@rowspan=3]
-    [:en] wide literal encoding
+[|] [:en] wide literal encoding
     [:zh_CN] 宽字面编码
 [|] [`L'w']
-[-]
-[|] [:en] non-encodable wide character literal
-    [:zh_CN] 不可编码的宽字符字面量
-[|] [`:key wchar_t]
-[|] [`L'\U0001F32A']
-[-]
-[|] [:en] wide multicharacter literal
-    [:zh_CN] 宽多字符字面量
-[|] [`:key wchar_t]
-[|] [`L'abcd']
 [-@sep]
 
 [|] [`u8]
@@ -292,13 +287,21 @@ then the literal is a non-encodable character literal.
 [item]
 [:en]
 A [~character-literal] with a [~c-char-sequence] consisting of a single
-[~numeric-escape-sequence] that specifies an integer value [$v] has a value as
-follows:
+[~numeric-escape-sequence] has a value as follows:
 [:zh_CN]
-具有由单个的指定某个整数值 [$v] 的[~数值转义序列]构成的 [~c-字符序列]的
-[~字符字面量]的值如下：
+具有由单个[~数值转义序列]构成的 [~c-字符序列]的[~字符字面量]的值如下：
 
 [list]
+[item]
+[:en]
+Let [$v] be the integer value represented by the octal number comprising the
+sequence of [~octal-digit]s in an [~octal-escape-sequence] or by the hexadecimal
+number comprising the sequence of [~hexadecimal-digit]s in a
+[~hexadecimal-escape-sequence].
+[:zh_CN]
+令 [$v] 为[~八进制转义序列]中的[~八进制数字]的序列构成的八进制数，或
+[~十六进制转义序列]中的[~十六进制数字]的序列构成的十六进制数所代表的整数值。
+
 [item]
 [:en]
 If [$v] does not exceed the range of representable values of the

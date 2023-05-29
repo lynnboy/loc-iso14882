@@ -1,0 +1,184 @@
+[section#print.fun
+    [:en] Print
+    [:zh_CN] 打印
+]
+
+[%@lib print]
+[codeblock:declaration]
+template<class... Args>
+  void print(format_string<Args...> fmt, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+print(stdout, fmt, std::forward<Args>(args)...);
+[codeblock:end]
+[div:end]
+
+[%@lib print]
+[codeblock:declaration]
+template<class... Args>
+  void print(FILE* stream, format_string<Args...> fmt, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If the ordinary literal encoding ([#lex.charset]) is UTF-8, equivalent to:
+[:zh_CN] 如果普通字面量编码（[#lex.charset]）是 UTF-8，则等价于：
+[codeblock]
+vprint_unicode(stream, fmt.[[redoc("*>")]]str, make_format_args(std::forward<Args>(args)...));
+[codeblock:end]
+
+[:en] Otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock]
+vprint_nonunicode(stream, fmt.[[redoc("*>")]]str, make_format_args(std::forward<Args>(args)...));
+[codeblock:end]
+[div:end]
+
+[%@lib println]
+[codeblock:declaration]
+template<class... Args>
+  void println(format_string<Args...> fmt, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+println(stdout, fmt, std::forward<Args>(args)...);
+[codeblock:end]
+[div:end]
+
+[%@lib println]
+[codeblock:declaration]
+template<class... Args>
+  void println(FILE* stream, format_string<Args...> fmt, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+print(stream, "{}\n", format(fmt, std::forward<Args>(args)...));
+[codeblock:end]
+[div:end]
+
+[%@lib vprint_unicode]
+[codeblock:declaration]
+void vprint_unicode(string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+vprint_unicode(stdout, fmt, args);
+[codeblock:end]
+[div:end]
+
+[%@lib vprint_unicode]
+[codeblock:declaration]
+void vprint_unicode(FILE* stream, string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`stream] is a valid pointer to an output C stream.
+[:zh_CN] [`stream] 是指向 C 输出流的有效指针。
+
+[para:effects]
+[:en] The function initializes an automatic variable via
+[:zh_CN] 本函数以如下代码初始化一个自动对象
+[codeblock]
+string out = vformat(fmt, args);
+[codeblock:end]
+
+[:en] If [`stream] refers to a terminal capable of displaying Unicode, writes
+[`out] to the terminal using the native Unicode API; if [`out] contains invalid
+code units, [%undefined]the behavior is undefined and implementations are
+encouraged to diagnose it.
+[:zh_CN] 如果 [`stream] 代表有能力显示 Unicode 的终端，则利用本地 Unicode API 将
+[`out] 写出到终端；如果 [`out] 包含无效字符单元，则[%未定义]其行为未定义，鼓励
+实现对此进行诊断。
+
+[:en] Otherwise writes [`out] to [`stream] unchanged.
+[:zh_CN] 否则，将 [`out] 无改动地写入到 [`stream]。
+
+[begin:note]
+[:en] On POSIX and Windows, [`stream] referring to a terminal means that,
+respectively, [`isatty(fileno(stream))] and
+[`GetConsoleMode(_get_osfhandle(_fileno(stream)), ...)] return nonzero.
+[:zh_CN] 在 POSIX 和 Windows 上，[`stream] 代表终端的含义分别为，
+[`isatty(fileno(stream))] 和
+[`GetConsoleMode(_get_osfhandle(_fileno(stream)), ...)] 返回非零。
+[end:note]
+
+[begin:note]
+[:en] On Windows, the native Unicode API is [`WriteConsoleW].
+[:zh_CN] 在 Windows 上，本地 Unicode API 为 [`WriteConsoleW]。
+[end:note]
+
+[para:throws]
+[:en] Any exception thrown by the call to [`vformat] ([#format.err.report]).
+[:zh_CN] 由调用 [`vformat] 所抛出的任何异常（[#format.err.report]）。
+
+[:en] [`system_error] if writing to the terminal or [`stream] fails.
+[:zh_CN] 当向终端或 [`stream] 的写入失败时抛出 [`system_error]。
+
+[:en] May throw [`bad_alloc].
+[:zh_CN] 可能会抛出 [`bad_alloc]。
+
+[para:recommended]
+[:en] If invoking the native Unicode API requires transcoding, implementations
+should substitute invalid code units with [=unicode(fffd,replacement character)]
+per The Unicode Standard Version 14.0 - Core Specification, Chapter 3.9.
+[:zh_CN] 如果调用本地 Unicode API 时需要进行转码，则根据
+《Unicode 标准 14.0 版——核心规范》的章节 3.9，实现最好将无效代码单元替换为
+[=unicode(fffd,replacement character)]。
+[div:end]
+
+[%@lib vprint_nonunicode]
+[codeblock:declaration]
+void vprint_nonunicode(string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+vprint_nonunicode(stdout, fmt, args);
+[codeblock:end]
+[div:end]
+
+[%@lib vprint_nonunicode]
+[codeblock:declaration]
+void vprint_nonunicode(FILE* stream, string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`stream] is a valid pointer to an output C stream.
+[:zh_CN] [`stream] 是指向 C 输出流的有效指针。
+
+[para:effects]
+[:en] Writes the result of [`vformat(fmt, args)] to [`stream].
+[:zh_CN] 将 [`vformat(fmt, args)] 的结果写入到 [`stream]。
+
+[para:throws]
+[:en] Any exception thrown by the call to [`vformat] ([#format.err.report]).
+[:zh_CN] 由调用 [`vformat] 所抛出的任何异常（[#format.err.report]）。
+
+[:en] [`system_error] if writing to [`stream] fails.
+[:zh_CN] 当向 [`stream] 的写入失败时抛出 [`system_error]。
+
+[:en] May throw [`bad_alloc].
+[:zh_CN] 可能会抛出 [`bad_alloc]。
+[div:end]

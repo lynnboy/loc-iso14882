@@ -1,0 +1,84 @@
+[section#obj.lifetime
+    [:en] Explicit lifetime management
+    [:zh_CN] 显式生存期管理
+]
+
+[%@lib start_lifetime_as]
+[codeblock:declaration]
+template<class T>
+  T* start_lifetime_as(void* p) noexcept;
+template<class T>
+  const T* start_lifetime_as(const void* p) noexcept;
+template<class T>
+  volatile T* start_lifetime_as(volatile void* p) noexcept;
+template<class T>
+  const volatile T* start_lifetime_as(const volatile void* p) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is an implicit-lifetime type ([#basic.types.general]).
+[:zh_CN] [`T] 为隐式生存期类型（[#basic.type.general]）。
+
+[para:expects]
+[:en] [=range(p,(char*)p + sizeof(T))] denotes a region of allocated storage
+that is a subset of the region of storage reachable through ([#basic.compound])
+[`p] and suitably aligned for the type [`T].
+[:zh_CN] [=range(p,(char*)p + sizeof(T))] 代表一个已分配存储区域，它是通过 [`p]
+可达的存取区域（[#basic.compound]）的子集，且已为类型 [`T] 适当对齐。
+
+[para:effects]
+[:en] Implicitly creates objects ([#intro.object]) within the denoted region
+consisting of an object [^a] of type [`T] whose address is [`p], and objects
+nested within [^a], as follows:
+[:zh_CN] 在所代表的区域中隐式创建一组对象（[#intro.object]），包括一个地址为 [`p]
+的 [`T] 类型的对象 [^a]，以及 [^a] 中嵌套的对象，方式如下：
+
+[:en] The object representation of [^a] is the contents of the storage prior to
+the call to [`start_lifetime_as].
+[:zh_CN] [^a] 的对象表示就是调用 [`start_lifetime_as] 之前的存储内容。
+
+[:en] The value of each created object [^o] of trivially-copyable type [`U]
+is determined in the same manner as for a call to [`bit_cast<U>(E)] ([#bit.cast]),
+where [`E] is an lvalue of type [`U] denoting [^o], except that the storage is
+not accessed.
+[:zh_CN] 所创建的每个可平凡复制类型 [`U] 的对象 [^o] 的值，以和调用
+[`bit_cast<U>(E)]（[#bit.cast]）相同的方式确定，其中 [`E] 为代表 [^o] 的 [`U]
+类型的左值，但并不访问存储。
+
+[:en] The value of any other created object is unspecified.
+[:zh_CN] 所创建的其他任何对象的值均是未指明的。
+
+[begin:note]
+[:en] The unspecified value can be indeterminate.
+[:zh_CN] 未指明的值可以是不确定值。
+[end:note]
+
+[para:returns]
+[:en] A pointer to the [^a] defined in the [=Effects] paragraph.
+[:zh_CN] 指向 [=Effects] 段落中定义的 [^a] 的指针。
+[div:end]
+
+[%@lib start_lifetime_as_array]
+[codeblock:declaration]
+template<class T>
+  T* start_lifetime_as_array(void* p, size_t n) noexcept;
+template<class T>
+  const T* start_lifetime_as_array(const void* p, size_t n) noexcept;
+template<class T>
+  volatile T* start_lifetime_as_array(volatile void* p, size_t n) noexcept;
+template<class T>
+  const volatile T* start_lifetime_as_array(const volatile void* p, size_t n) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`n > 0] is [`true].
+[:zh_CN] [`n > 0] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return *start_lifetime_as<U>(p);] where [`U] is the type
+[=lq]array of [`n] [`T][=rq].
+[:zh_CN] 等价于：[`return *start_lifetime_as<U>(p);]，其中 [`U] 类型为
+“[`n] 个 [`T] 的数组”。
+[div:end]

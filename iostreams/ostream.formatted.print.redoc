@@ -1,0 +1,102 @@
+[section#ostream.formatted.print
+    [:en] Print
+    [:zh_CN] 打印
+]
+
+[%@lib print]
+[codeblock:declaration]
+template<class... Args>
+  void print(ostream& os, format_string<Args...> fmt, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If the ordinary literal encoding ([#lex.charset]) is UTF-8, equivalent to:
+[:zh_CN] 如果普通字面量编码（[#lex.charset]）是 UTF-8，则等价于：
+[codeblock]
+vprint_unicode(os, fmt.[[redoc("*>")]]str, make_format_args(std::forward<Args>(args)...));
+[codeblock:end]
+
+[:en] Otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock]
+vprint_nonunicode(os, fmt.[[redoc("*>")]]str, make_format_args(std::forward<Args>(args)...));
+[codeblock:end]
+[div:end]
+
+[%@lib println]
+[codeblock:declaration]
+template<class... Args>
+  void println(ostream& os, format_string<Args...> fmt, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+print(os, "{}\n", format(fmt, std::forward<Args>(args)...));
+[codeblock:end]
+[div:end]
+
+[%@lib vprint_unicode]
+[%@lib vprint_nonunicode]
+[codeblock:declaration]
+void vprint_unicode(ostream& os, string_view fmt, format_args args);
+void vprint_nonunicode(ostream& os, string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Behaves as a formatted output function ([#ostream.formatted.reqmts]) of
+[`os], except that:
+[:zh_CN] 表现为如同 [`os] 的格式化输出函数（[#ostream.formatted.reqmts]），但：
+
+[list]
+[item]
+[:en] failure to generate output is reported as specified below, and
+[:zh_CN] 按下文规定报告输出生成的失败，并且
+[item]
+[:en] any exception thrown by the call to [`vformat] is propagated without
+regard to the value of [`os.exceptions()] and without turning on
+[`ios_base::badbit] in the error state of [`os].
+[:zh_CN] 由 [`vformat] 的调用所抛出的任何异常均被传播，而不管 [`os.exceptions()]
+的值，也不会打开 [`os] 的错误状态中的 [`ios_base::badbit]。
+[list:end]
+
+[:en] After constructing a [`sentry] object, the function initializes an
+automatic variable via
+[:zh_CN] 构造一个 [`sentry] 对象之后，该函数以如下代码初始化一个自动变量：
+[codeblock]
+string out = vformat(os.getloc(), fmt, args);
+[codeblock:end]
+
+[:en] If the function is [`vprint_unicode] and [`os] is a stream that refers to
+a terminal capable of displaying Unicode which is determined in an
+implementation-defined manner, writes [`out] to the terminal using the native
+Unicode API; if [`out] contains invalid code units, [%undefined] the behavior is
+undefined and implementations are encouraged to diagnose it.
+[:zh_CN] 如果是 [`vprint_unicode] 函数且 [`os] 是代表有能力显示 Unicode（以
+由实现定义的方式确定）的终端的流，则利用本地 Unicode API 将 [`out] 写出到终端；
+如果 [`out] 包含无效字符单元，则[%未定义]其行为未定义，鼓励实现对此进行诊断。
+
+[:en] Otherwise (if [`os] is not such a stream or the function is
+[`vprint_nonunicode]), inserts the character sequence
+[=range(out.begin(),out.end())] into [`os].
+[:zh_CN] 否则（[`os] 不是这种流，或不是 [`vprint_nonunicode] 函数），则将字符
+序列 [=range(out.begin(),out.end())] 插入到 [`os] 中。
+
+[:en] If writing to the terminal or inserting into [`os] fails, calls
+[`os.setstate(ios_base::badbit)] (which may throw [`ios_base::failure]).
+[:zh_CN] 如果向终端的写入或向 [`os] 的插入失败，则调用
+[`os.setstate(ios_base::badbit)]（这可能会抛出异常）。
+
+[para:recommended]
+[:en] For [`vprint_unicode], if invoking the native Unicode API requires
+transcoding, implementations should substitute invalid code units with
+[=unicode(fffd,replacement character)] per
+The Unicode Standard Version 14.0 - Core Specification, Chapter 3.9.
+[:zh_CN] 对于 [`vprint_unicode]，如果调用本地 Unicode API 时需要进行转码，则根据
+《Unicode 标准 14.0 版——核心规范》的章节 3.9，实现最好将无效代码单元替换为
+[=unicode(fffd,replacement character)]。
+[div:end]

@@ -91,8 +91,12 @@ Redoc is a markup language, all special things are in `[]`.
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
+*n-char*                    |*n-字符*       | [lex.charset] | [`-A-Z0-9 `]
+*n-char-sequence*           |*n-字符序列*   | [lex.charset] | *n-字符*__+__
+*named-universal-character* |*具名通用字符* | [lex.charset] | `\N{` *n-字符序列* `}`
 *hex-quad*                  |*hex-四位*     | [lex.charset] | *十六进制数字* **{4}**
-*universal-character-name*  |*通用字符名*   | [lex.charset] | `\u` *hex-四位* **{1,2}**
+*simple-hexadecimal-digit-sequence*|*简单十六进制数字序列*| [lex.charset] | *十六进制数字*__+__
+*universal-character-name*  |*通用字符名*   | [lex.charset] | `\u` *hex-四位* \| `\U` *hex-四位* *hex-四位* \| `\u{` *简单十六进制数字序列* `}` \| *具名通用字符*
 *preprocessing-token*       |*预处理记号*   | [lex.pptoken] | *头文件名* \|<br> *import-关键字* \|<br> *module-关键字* \|<br> *export-关键字* \|<br> *标识符* \|<br> *预处理数字* \|<br>*字符字面量* \|<br> *用户定义字符字面量* \| <br>*字符串字面量* \|<br> *用户定义字符串字面量* \|<br>其他所有 *通用字符名*
 *token*                     |*记号*         | [lex.token]   | *标识符* \| *关键字* \| *字面量* \| *运算符或标点*
 *header-name*               |*头文件名*     | [lex.header]  | `<` *h-字符序列* `>` \| `"` *q-字符序列* `"`
@@ -136,10 +140,11 @@ Original   |中文   |章节    |定义
 *simple-escape-sequence*    |*简单转义序列* | [lex.ccon]    | `\` *简单转义序列字符*
 *simple-escape-sequence-char* |*简单转义序列字符* | [lex.ccon] | [`'"?\abfnrtv`]
 *numeric-escape-sequence*   |*数值转义序列* | [lex.ccon]    | *八进制转义序列* \| *十六进制转义序列*
-*octal-escape-sequence*     |*八进制转义序列*| [lex.ccon]   | `\` *八进制数字*__{1,3}__
-*hexadecimal-escape-sequence*|*十六进制转义序列*| [lex.ccon]| `\x` *十六进制数字*__\+__
+*simple-octal-digit-sequence*|*简单八进制数字序列*| [lex.ccon] | *八进制数字*__+__
+*octal-escape-sequence*     |*八进制转义序列*| [lex.ccon]   | `\` *八进制数字*__{1,3}__ \| `\o{` *八进制数字*__+__ `}`
+*hexadecimal-escape-sequence*|*十六进制转义序列*| [lex.ccon]| `\x` *十六进制数字*__\+__\| `\o{` *十六进制数字*__+__ `}`
 *conditional-escape-sequence*|*有条件转义序列*| [lex.ccon]  | `\` *有条件转义序列字符*
-*conditional-escape-sequence-char*|*有条件转义序列字符*|[lex.ccon]| **基本源字符集** - ([`0-9'"?\abfnrtvuUx`])
+*conditional-escape-sequence-char*|*有条件转义序列字符*|[lex.ccon]| **基本源字符集** - ([`0-9'"?\abfnrtvNouUx`])
 *floating-point-literal*    |*浮点字面量*   | [lex.fcon]    | *十进制浮点字面量* \| *十六进制浮点字面量*
 *decimal-floating-point-literal* |*十进制浮点字面量*|[lex.fcon]| (*小数常量* *指数部分*__?__ \| *数字序列* *指数部分*) *浮点后缀*__?__
 *hexadecimal-floating-point-literal*|*十六进制浮点字面量*|[lex.fcon]| *十六进制前缀* (*十六进制小数常量* \| *十六进制数字序列*) *二进制指数部分* *浮点后缀*__?__
@@ -149,7 +154,7 @@ Original   |中文   |章节    |定义
 *binary-exponent-part*      |*二进制指数部分*| [lex.fcon]   | [`pP`] *正负号*__?__ *数字序列*
 *sign*                      |*正负号*       | [lex.fcon]    | [`+-`]
 *digit-sequence*            |*数字序列*     | [lex.fcon]    | *数字* (`'`__?__ *数字*)__*__
-*floating-point-suffix*     |*浮点后缀*     | [lex.fcon]    | [`flFL`]
+*floating-point-suffix*     |*浮点后缀*     | [lex.fcon]    | [`flFL`] \| `fF` (`16`\|`32`\|`64`\|`128`) \| (`bf`\|`BF`) `16`
 *string-literal*            |*字符串字面量* | [lex.string]  | *编码前缀*__?__ (`"` *s-字符序列*__?__ `"` \| `R` *原始字符串*)
 *s-char-sequence*           |*s-字符序列*   | [lex.string]  | *s-字符*__+__
 *s-char*                    |*s-字符*       | [lex.string]  | *基本-s-字符* \| *转义序列* \| *通用字符名*
@@ -1054,6 +1059,7 @@ forward progress                        |向前进展，进展 |保证线程会�
 forwarding reference                    |转发引用       |类型模板形参的无cv右值引用
 fraction                                |小数，分数
 free store                              |自由存储       |new/delete 或 malloc() 等所管理的堆内存
+freestanding entity                     |自立式实体
 freestanding implementation             |自立式实现     |无操作系统支持
 friend                                  |友元           |授予友元访问所有成员的能力。不传递，不继承
 friend class                            |友元类

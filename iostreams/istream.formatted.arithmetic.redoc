@@ -117,3 +117,71 @@ if (lval < numeric_limits<int>::min()) {
 setstate(err);
 [codeblock:end]
 [div:end]
+
+[codeblock:declaration]
+basic_istream& operator>>([[redoc("^>")]]extended-floating-point-type& val);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] If the floating-point conversion rank of [`[^extended-floating-point-type]]
+is not less than or equal to that of [`long double], then an invocation of the
+operator function is conditionally supported with [?impldef [`operator>>] for
+large extended floating-point types] semantics.
+[:zh_CN] 如果 [`[^extended-floating-point-type]] 的浮点转换等级并不小于或等于
+[`long double] 的等级，则调用该运算符函数是有条件支持的，并具有[?impldef 大型
+扩充浮点类型的 [`operator>>]]语义。
+
+[para]
+[:en] Otherwise, let [`FP] be a standard floating-point type:
+[:zh_CN] 否则，令 [`FP] 为一种标准浮点类型：
+[list]
+[item]
+[:en] if the floating-point conversion rank of [`[^extended-floating-point-type]]
+is less than or equal to that of [`float], then [`FP] is [`float],
+[:zh_CN] 如果 [`[^extended-floating-point-type]] 的浮点转换等级小于或等于
+[`float] 的等级，则 [`FP] 为 [`float]，
+[item]
+[:en] otherwise, if the floating-point conversion rank of
+[`[^extended-floating-point-type]] is less than or equal to that of [`double],
+then [`FP] is [`double],
+[:zh_CN] 否则，如果 [`[^extended-floating-point-type]] 的浮点转换等级小于或等于
+[`double] 的等级，则 [`FP] 为 [`double]，
+[item]
+[:en] otherwise, [`FP] is [`long double].
+[:zh_CN] 否则，[`FP] 为 [`long double]。
+[list:end]
+
+[para]
+[:en] The conversion occurs as if performed by the following code fragment
+(using the same notation as for the preceding code fragment):
+[:zh_CN] 进行如同以下代码片段所进行的转换（采用与前一个代码片段相同的记法）：
+
+[codeblock]
+using numget = num_get<charT, istreambuf_iterator<charT, traits>>;
+iostate err = ios_base::goodbit;
+FP fval;
+use_facet<numget>(loc).get(*this, 0, *this, err, fval);
+if (fval < -numeric_limits<[[redoc("^>")]]extended-floating-point-type>::max()) {
+  err |= ios_base::failbit;
+  val = -numeric_limits<[[redoc("^>")]]extended-floating-point-type>::max();
+} else if (numeric_limits<[[redoc("^>")]]extended-floating-point-type>::max() < fval) {
+  err |= ios_base::failbit;
+  val = numeric_limits<[[redoc("^>")]]extended-floating-point-type>::max();
+} else {
+  val = static_cast<[[redoc("^>")]]extended-floating-point-type>(fval);
+}
+setstate(err);
+[codeblock:end]
+
+[begin:note]
+[:en] When the extended floating-point type has a floating-point conversion rank
+that is not equal to the rank of any standard floating-point type,
+then double rounding during the conversion can result in inaccurate results.
+[:zh_CN] 如果扩充浮点类型的浮点转换等级不等于任何标准浮点类型的等级，则转换过程
+中的 double 舍入可能造成不精确结果。
+
+[:en] [`from_chars] can be used in situations where maximum accuracy is important.
+[:zh_CN] 最大化精确性的情况下可以使用 [`from_chars]。
+[end:note]
+[div:end]
