@@ -42,8 +42,8 @@ struct String {
 String operator + (const String&, const String&);
 
 void f(void) {
-  const char* p= "one" + "two"; // [:en] error: cannot add two pointers; overloaded [`operator+] not considered \
-                                [:zh_CN] 错误：不能将两个指针相加；不考虑重载的 [`operator+]，
+  const char* p= "one" + "two"; // [:en] error: cannot add two pointers; overloaded [`[`:key operator]+] not considered \
+                                [:zh_CN] 错误：不能将两个指针相加；不考虑重载的 [`[`:key operator]+]，
                                 // [:en@~] because neither operand has class or enumeration type \
                                 [:zh_CN@~] 由于其操作数都不是用户定义的类型
   int I = 1 + 1;                // [:en] always evaluates to [`2] even if class or enumeration types exist \
@@ -88,22 +88,17 @@ operator ([#expr.compound]).
 [table:grid@border=column#over.match.oper
     [:en] Relationship between operator and function call notation
     [:zh_CN] 运算符和函数调用记法之间的关系
-    [|
-        [:en] Subclause
-        [:zh_CN] 章节
-    ]
+    [|  [:en] Subclause
+        [:zh_CN] 章节 ]
     [|@code
         [:en] Expression
-        [:zh_CN] 表达式
-    ]
+        [:zh_CN] 表达式 ]
     [|@code
         [:en] As member function
-        [:zh_CN] 作为成员函数
-    ]
+        [:zh_CN] 作为成员函数 ]
     [|@code
         [:en] As non-member function
-        [:zh_CN] 作为非成员函数
-    ]
+        [:zh_CN] 作为非成员函数 ]
 ]
 [|] [#over.unary]   [|] @a      [|] (a).[`:key operator]@ ( )   [|] [`:key operator]@ (a)    [-]
 [|] [#over.binary]  [|] a@b     [|] (a).[`:key operator]@ (b)   [|] [`:key operator]@ (a, b) [-]
@@ -218,18 +213,21 @@ the expression [`y <=> x].
 [item]
 [:en]
 For the [`!=] operator ([#expr.eq]), the rewritten candidates include all
-non-rewritten candidates for the expression [`x == y].
+non-rewritten candidates for the expression [`x == y] that are rewrite targets
+with first operand [`x] (see below).
 [:zh_CN]
-对于 [`!=] 运算符（[#expr.eq]），重写候选包括表达式 [`x == y] 的所有非重写候选。
+对于 [`!=] 运算符（[#expr.eq]），重写候选包括表达式 [`x == y] 的作为第一个操作数
+为 [`x] 的重写目标（见下文）的所有非重写候选。
 
 [item]
 [:en]
 For the equality operators, the rewritten candidates also include a synthesized
 candidate, with the order of the two parameters reversed, for each non-rewritten
-candidate for the expression [`y == x].
+candidate for the expression [`y == x] that is a rewrite target with first
+operand [`y].
 [:zh_CN]
 对于相等性运算符，对于表达式 [`y == x] 的每个非重写候选，重写候选还包括一个具有
-顺序相反的两个形参的合成候选。
+顺序相反的两个形参的合成候选，它是第一个操作数为 [`y] 的重写候选。
 
 [item]
 [:en]
@@ -248,6 +246,66 @@ not for the second, parameter.
 但对第二个形参则不会。
 [end:note]
 [list:end]
+
+[para]
+[:en]
+A non-template function or function template [`F] named [`[`:key operator]==]
+is a rewrite target with first operand [`o] unless a search for the name
+[`[`:key operator]!=] in the scope [$S] from the instantiation context of the
+operator expression finds a function or function template that would correspond
+([#basic.scope.scope]) to [`F] if its name were [`[`:key operator]==], where [$S]
+is the scope of the class type of [`o] if [`F] is a class member, and the
+namespace scope of which [`F] is a member otherwise.
+[:zh_CN]
+对于名为 [`[`:key operator]==] 的非模板函数或函数模板 [`F]，如果在运算符表达式的
+实例化语境中在作用域 [$S] 中搜索名字 [`[`:key operator]!=] 找到了一个函数或函数
+模板，假若其名字是 [`[`:key operator]==] 就会与 [`F] 对应（[#basic.scope.scope]），
+若非这种情况，则 [`F] 是第一个操作数为 [`o] 的重写目标，其中当 [`F] 是类成员时
+[$S]  为 [`o] 的类类型的作用域，否则为以 [`F] 为成员的命名空间作用域。
+
+[:en]
+A function template specialization named [`[:key operator]==] is a rewrite
+target if its function template is a rewrite target.
+[:zh_CN]
+名为 [`[`:key oeprator]==] 的函数模板特例，如果其函数模板是重写目标则它也是
+重写目标。
+
+[begin:example]
+[codeblock]
+struct A {};
+template<typename T> bool operator==(A, T);     // #1
+bool a1 = 0 == A();                             // [:en] OK, calls reversed #1 \
+                                                [:zh_CN] OK，调用反转的 #1
+template<typename T> bool operator!=(A, T);
+bool a2 = 0 == A();                             // [:en] error, #1 is not a rewrite target \
+                                                [:zh_CN] 错误，#1 不是重写目标
+
+struct B {
+  bool operator==(const B&);    // #2
+};
+struct C : B {
+  C();
+  C(B);
+  bool operator!=(const B&);    // #3
+};
+bool c1 = B() == C();           // [:en] OK, calls #2; reversed #2 is not a candidate \
+                                [:zh_CN] OK，调用 #2；反转的 #2 并非候选，
+                                // [:en@~] because search for [`[`:key operator]!=] in [`C] finds #3 \
+                                [:zh_CN@~] 因为在 [`C] 中搜索 [`[`:key operator]!=] 找到了 #3
+bool c2 = C() == B();           // [:en] error: ambiguous between #2 found when searching [`C] and \
+                                [:zh_CN] 错误：搜索 [`C] 找到的 #2 与
+                                // [:en@~] reversed #2 found when searching [`B] \
+                                [:zh_CN@~] 搜索 [`B] 找到的反转的 #2 之间有歧义
+
+struct D {};
+template<typename T> bool operator==(D, T);     // #4
+inline namespace N {
+  template<typename T> bool operator!=(D, T);   // #5
+}
+bool d1 = 0 == D();             // [:en] OK, calls reversed #4; #5 does not forbid #4 as a rewrite target \
+                                [:zh_CN] OK，调用反转的 #4；#5 并不会禁止 #4 成为重写目标
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]

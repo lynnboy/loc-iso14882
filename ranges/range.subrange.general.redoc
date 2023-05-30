@@ -26,21 +26,9 @@ namespace std::ranges {
       [[redoc("`:c>")]]convertible_to<From, To> &&
       ![[redoc("*:c>")]]uses-nonqualification-pointer-conversion<decay_t<From>, decay_t<To>>;
 
-  template<class T>
-    concept [[redoc("*:c@def>")]]pair-like =                                     // [=expos]
-      !is_reference_v<T> && requires(T t) {
-        typename tuple_size<T>::type;                       // [:en] ensures [`tuple_size<T>] is complete \
-                                                            [:zh_CN] 确保 [`tuple_size<T>] 是完整的
-        requires [[redoc("`:c>")]]derived_from<tuple_size<T>, integral_constant<size_t, 2>>;
-        typename tuple_element_t<0, remove_const_t<T>>;
-        typename tuple_element_t<1, remove_const_t<T>>;
-        { std::get<0>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<0, T>&>;
-        { std::get<1>(t) } -> [[redoc("`:c>")]]convertible_to<const tuple_element_t<1, T>&>;
-      };
-
   template<class T, class U, class V>
     concept [[redoc("*:c@def>")]]pair-like-convertible-from =                    // [=expos]
-      ![[redoc("`:c>")]]range<T> && [[redoc("*:c>")]]pair-like<T> &&
+      ![[redoc("`:c>")]]range<T> && !is_reference_v<T> && [[redoc("*:c>")]]pair-like<T> &&
       [[redoc("`:c>")]]constructible_from<T, U, V> &&
       [[redoc("*:c>")]]convertible-to-non-slicing<U, tuple_element_t<0, T>> &&
       [[redoc("`:c>")]]convertible_to<V, tuple_element_t<1, T>>;
@@ -116,17 +104,5 @@ namespace std::ranges {
   template<[[redoc("`:c>")]]borrowed_range R>
     subrange(R&&, [[redoc("^>")]]make-unsigned-like-t<range_difference_t<R>>) ->
       subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;
-
-  template<size_t N, class I, class S, subrange_kind K>
-    requires ((N == 0 && [[redoc("`:c>")]]copyable<I>) || N == 1)
-    constexpr auto get(const subrange<I, S, K>& r);
-
-  template<size_t N, class I, class S, subrange_kind K>
-    requires (N < 2)
-    constexpr auto get(subrange<I, S, K>&& r);
-}
-
-namespace std {
-  using ranges::get;
 }
 [codeblock:end]

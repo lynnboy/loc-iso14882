@@ -181,6 +181,85 @@ is replaced by a single parameter of the form [$[`T]_n [`...]].
 而对应于作为包组展开的尾部聚合元素（如果有）的尾部的形参序列，替换为一个形式为
 [$[`T]_n [`...]] 的形参。
 
+[:en]
+In addition, if [`C] is defined and inherits constructors ([#namespace.udecl])
+from a direct base class denoted in the [~base-specifier-list] by a
+[~class-or-decltype] [`B], let [`A] be an alias template whose template
+parameter list is that of [`C] and whose [~defining-type-id] is [`B].
+[:zh_CN]
+此外，如果 [`C] 已定义并从[~基说明符列表]中的[~类或-decltype] [`B] 所代表的直接
+基类继承了构造函数（[#namespace.udecl]），令 [`A] 为一个别名模板，其模板形参列表
+为 [`C] 的模板形参列表，其 [~定义类型标识] 为 [`B]。
+
+[:en]
+If [`A] is a deducible template ([#dcl.type.simple]), the set contains the
+guides of [`A] with the return type [`R] of each guide replaced with
+[`typename CC<R>::type] given a class template
+[:zh_CN]
+如果 [`A] 是可推断模板（[#dcl.type.simple]），则集合包含 [`A] 的各项导引，每项
+导引的返回类型 [`R] 均被替换为 [`typename CC<R>::type]，给定类模板
+[codeblock]
+template <typename> class CC;
+[codeblock:end]
+[:en@~] whose primary template is not defined and with a single partial
+specialization whose template parameter list is that of [`A] and whose template
+argument list is a specialization of [`A] with the template argument list of [`A]
+([#temp.dep.type]) having a member typedef [`type] designating a template
+specialization with the template argument list of [`A] but with [`C] as the
+template.
+[:zh_CN@~] 其主模板无定义，并具有一个部分特化式，其模板形参列表是 [`A] 的模板
+形参列表，其模板实参列表为 [`A] 的特例，具有 [`A] 的模板实参列表（[#temp.dep.type]），
+它还带有一个成员 typedef [`type]，代表以 [`A] 的模板实参列表并以 [`C] 为模板的
+模板特例。
+
+[begin:note]
+[:en]
+Equivalently, the template parameter list of the specialization is that of [`C],
+the template argument list of the specialization is [`B], and
+the member typedef names [`C] with the template argument list of [`C].
+[:zh_CN]
+等价地，该特例的模板形参列表是 [`C] 的模板形参列表，该特例的模板实参列表为 [`B]，
+而成员 typedef 指名 [`C] 并具有 [`C] 的模板实参列表。
+[end:note]
+
+[para]
+[begin:example]
+[codeblock]
+template <typename T> struct B {
+  B(T);
+};
+template <typename T> struct C : public B<T> {
+  using B<T>::B;
+};
+template <typename T> struct D : public B<T> {};
+
+C c(42);            // [:en] OK, deduces [`C<int>] \
+                    [:zh_CN] OK，代表 [`C<int>]
+D d(42);            // [:en] error: deduction failed, no inherited deduction guides \
+                    [:zh_CN] 错误：推断失败，没有继承的推断导引
+B(int) -> B<char>;
+C c2(42);           // [:en] OK, deduces [`C<char>] \
+                    [:zh_CN] OK，推断出 [`C<char>]
+
+template <typename T> struct E : public B<int> {
+  using B<int>::B;
+};
+
+E e(42);            // [:en] error: deduction failed, arguments of [`E] cannot be deduced from introduced guides \
+                    [:zh_CN] 错误：推断失败，无法从所引入的各导引推断 [`E] 的实参
+
+template <typename T, typename U, typename V> struct F {
+  F(T, U, V);
+};
+template <typename T, typename U> struct G : F<U, T, int> {
+  using G::F::F;
+}
+
+G g(true, 'a', 1);  // [:en] OK, deduces [`G<char, bool>] \
+                    [:zh_CN] OK，推断出 [`G<char, bool>]
+[codeblock:end]
+[end:example]
+
 [para]
 [:en]
 When resolving a placeholder for a deduced class type ([#dcl.type.simple]) where
@@ -450,8 +529,8 @@ F f1 = {Types<X, Y, Z>{}, {}, {}};      // [:en] OK, [`F<X, Y, Z>] deduced \
                                         [:zh_CN] OK，推断为 [`F<X, Y, Z>]
 F f2 = {Types<X, Y, Z>{}, X{}, Y{}};    // [:en] OK, [`F<X, Y, Z>] deduced \
                                         [:zh_CN] OK，推断为 [`F<X, Y, Z>]
-F f3 = {Types<X, Y, Z>{}, X{}, W{}};    // [:en] error: conflicting types deduced; [`operator Y] not considered \
-                                        [:zh_CN] 错误：推断出冲突的类型；不考虑 [`operator Y]
+F f3 = {Types<X, Y, Z>{}, X{}, W{}};    // [:en] error: conflicting types deduced; [`[`:key operator] Y] not considered \
+                                        [:zh_CN] 错误：推断出冲突的类型；不考虑 [`[`:key operator] Y]
 [codeblock:end]
 [end:example]
 
@@ -497,7 +576,7 @@ template <class T> concept deduces_A = requires { sizeof(AA<T>); };
 
 // [:en] [`f1] is formed from the constructor #1 of [`C], generating the following function template \
 [:zh_CN] [`f1] 由 [`C] 的构造函数 #1 构成，产生以下函数模板
-template<T, U>
+template<class T, class U>
   auto f1(T, U) -> C<T, U>;
 
 // [:en] Deducing arguments for [`C<T, U>] from [`C<V *, V*>] deduces [`T] as [`V *] and [`U] as [`V *]; \
