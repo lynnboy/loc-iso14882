@@ -1,0 +1,144 @@
+[section#range.repeat.view
+    [:en] Class template [`repeat_view]
+    [:zh_CN] 类模板 [`repeat_view]
+]
+
+[%@lib repeat_view]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]move_constructible W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
+    requires (is_object_v<W> && [[redoc("`:c>")]]same_as<W, remove_cv_t<W>> &&
+              ([[redoc("*>")]]is-integer-like<Bound> || [[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>))
+  class [[redoc("`:c>")]]repeat_view : public view_interface<repeat_view<W, Bound>> {
+  private:
+    // [:en] [#range.repeat.iterator], class [`repeat_view::[*iterator]] \
+    [:zh_CN] [#range.repeat.iterator]，类 [`repeat_view::[*iterator]]
+    struct [[redoc("*>")]]iterator;                            // [=expos]
+
+    [[redoc("*>")]]movable-box<W> [[redoc("*>")]]value_ = W();                // [:en] [=expos], see [#range.move.wrap] \
+                                                                              [:zh_CN] [=expos]，参见 [#range.move.wrap]）
+    Bound [[redoc("*>")]]bound_ = Bound();                     // [=expos]
+
+  public:
+    repeat_view() requires [[redoc("`:c>")]]default_initializable<W> = default;
+
+    constexpr explicit repeat_view(const W& value, Bound bound = Bound())
+      requires [[redoc("`:c>")]]copy_constructible<W>;
+    constexpr explicit repeat_view(W&& value, Bound bound = Bound());
+    template<class... WArgs, class... BoundArgs>
+      requires [[redoc("`:c>")]]constructible_from<W, WArgs...> &&
+               [[redoc("`:c>")]]constructible_from<Bound, BoundArgs...>
+    constexpr explicit repeat_view(piecewise_construct_t,
+      tuple<WArgs...> value_args, tuple<BoundArgs...> bound_args = tuple<>{});
+
+    constexpr [[redoc("*>")]]iterator begin() const;
+    constexpr [[redoc("*>")]]iterator end() const requires (![[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>);
+    constexpr unreachable_sentinel_t end() const noexcept;
+
+    constexpr auto size() const requires (![[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>);
+  };
+
+  template<class W, class Bound>
+    repeat_view(W, Bound) -> repeat_view<W, Bound>;
+}
+[codeblock:end]
+
+[%@lib@ctor repeat_view]
+[codeblock:declaration]
+constexpr explicit repeat_view(const W& value, Bound bound = Bound())
+  requires [[redoc("`:c>")]]copy_constructible<W>;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] If [`Bound] is not [`unreachable_sentinel_t], [$[`bound] \ge 0].
+[:zh_CN] 当 [`Bound] 不是 [`unreachable_sentinel_t] 时，[$[`bound] \ge 0]。
+
+[para:effects]
+[:en] Initializes [*value_] with [`value] and [*bound_] with [`bound].
+[:zh_CN] 以 [`value] 初始化 [*value_] 并以 [`bound] 初始化 [*bound_]。
+[div:end]
+
+[%@lib@ctor repeat_view]
+[codeblock:declaration]
+constexpr explicit repeat_view(W&& value, Bound bound = Bound());
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] If [`Bound] is not [`unreachable_sentinel_t], [$[`bound] \ge 0].
+[:zh_CN] 当 [`Bound] 不是 [`unreachable_sentinel_t] 时，[$[`bound] \ge 0]。
+
+[para:effects]
+[:en] Initializes [*value_] with [`std::move(value)] and [*bound_] with [`bound].
+[:zh_CN] 以 [`std::move(value)] 初始化 [*value_] 并以 [`bound] 初始化 [*bound_]。
+[div:end]
+
+[%@lib@ctor repeat_view]
+[codeblock:declaration]
+template<class... WArgs, class... BoundArgs>
+  requires [[redoc("`:c>")]]constructible_from<W, WArgs...> &&
+           [[redoc("`:c>")]]constructible_from<Bound, BoundArgs...>
+constexpr explicit repeat_view(piecewise_construct_t,
+  tuple<Wargs...> value_args, tuple<BoundArgs...> bound_args = tuple<>{});
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*value_] with arguments of types [`WArgs...] obtained by
+forwarding the elements of [`value_args] and initializes [*bound_] with
+arguments of types [`BoundArgs...] obtained by forwarding the elements of
+[`bound_args].
+[:en] 以从转发 [`value_args] 的各元素获得的 [`WArgs...] 类型的实参初始化
+[*value_]，并以从转发 [`bound_args] 的各元素获得的 [`BoundArgs...] 类型的实参
+初始化 [*bound_]。
+
+[:en] (Here, forwarding an element [`x] of type [`U] within a tuple object means
+calling [`std::forward<U>(x)].)
+[:zh_CN] （此处，转发元组对象中的一个 [`U] 类型的元素 [`x] 的含义是调用
+[`std::forward<U>(x)]。）
+[div:end]
+
+[%@lib@member begin[!repeat_view]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator begin() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](addressof([*value_]));]
+[:zh_CN] 等价于：[`return [*iterator](addressof([*value_]));]
+[div:end]
+
+[%@lib@member end[!repeat_view]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator end() const requires (![[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](addressof([*value_]), [*bound_]);]
+[:zh_CN] 等价于：[`return [*iterator](addressof([*value_]), [*bound_]);]
+[div:end]
+
+[%@lib@member end[!repeat_view]]
+[codeblock:declaration]
+constexpr unreachable_sentinel_t end() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return unreachable_sentinel;]
+[:zh_CN] 等价于：[`return unreachable_sentinel;]
+[div:end]
+
+[%@lib@member size[!single_view]]
+[codeblock:declaration]
+constexpr auto size() const requires (![[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*to-unsigned-like]([*bound_]);]
+[:zh_CN] 等价于：[`return [*to-unsigned-like]([*bound_]);]
+[div:end]

@@ -1,0 +1,262 @@
+[section#range.repeat.iterator
+    [:en] Class [`repeat_view::[*iterator]]
+    [:zh_CN] 类 [`repeat_view::[*iterator]]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]move_constructible W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
+    requires (is_object_v<W> && [[redoc("`:c>")]]same_as<W, remove_cv_t<W>> &&
+              ([[redoc("*>")]]is-integer-like<Bound> || [[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>))
+  class repeat_view<W, Bound>::[[redoc("*>")]]iterator {
+  private:
+    using [[redoc("*>")]]index-type =                          // [=expos]
+      conditional_t<[[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>, ptrdiff_t, Bound>;
+    const W* [[redoc("*>")]]value_ = nullptr;                  // [=expos]
+    [[redoc("*>")]]index-type [[redoc("*>")]]current_ = [[redoc("*>")]]index-type();         // [=expos]
+
+    constexpr explicit [[redoc("*>")]]iterator(const W* value, [[redoc("*>")]]index-type b = [[redoc("*>")]]index-type());   // [=expos]
+
+  public:
+    using iterator_concept = random_access_iterator_tag;
+    using iterator_category = random_access_iterator_tag;
+    using value_type = W;
+    using difference_type = conditional_t<[[redoc("*>")]]is-signed-integer-like<[[redoc("*>")]]index-type>,
+        [[redoc("*>")]]index-type,
+        [[redoc("^>")]]IOTA-DIFF-T([[redoc("*>")]]index-type)>;
+
+    [[redoc("*>")]]iterator() = default;
+
+    constexpr const W& operator*() const noexcept;
+
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr [[redoc("*>")]]iterator operator++(int);
+
+    constexpr [[redoc("*>")]]iterator& operator--();
+    constexpr [[redoc("*>")]]iterator operator--(int);
+
+    constexpr [[redoc("*>")]]iterator& operator+=(difference_type n);
+    constexpr [[redoc("*>")]]iterator& operator-=(difference_type n);
+    constexpr const W& operator[](difference_type n) const noexcept;
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+    friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+
+    friend constexpr [[redoc("*>")]]iterator operator+([[redoc("*>")]]iterator i, difference_type n);
+    friend constexpr [[redoc("*>")]]iterator operator+(difference_type n, [[redoc("*>")]]iterator i);
+
+    friend constexpr [[redoc("*>")]]iterator operator-([[redoc("*>")]]iterator i, difference_type n);
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+  };
+}
+[codeblock:end]
+
+[%@lib@ctor repeat_view::iterator]
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]iterator(const W* value, [[redoc("*>")]]index-type b = [[redoc("*>")]]index-type());
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] If [`Bound] is not [`unreachable_sentinel_t], [$[`b] \ge 0].
+[:zh_CN] 当 [`Bound] 不是 [`unreachable_sentinel_t] 时，[$[`b] \ge 0]。
+
+[para:effects]
+[:en] Initializes [*value_] with [`value] and [*current_] with [`b].
+[:zh_CN] 以 [`value] 初始化 [*value_] 并以 [`b] 初始化 [*current_]。
+[div:end]
+
+[%@lib@member operator*[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr const W& operator*() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*value_];]
+[:zh_CN] 等价于：[`return [*value_];]
+[div:end]
+
+[%@lib@member operator++[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+++[[redoc("*>")]]current_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator++[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator--[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator--();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] If [`Bound] is not [`unreachable_sentinel_t], [$[*current_] > 0].
+[:zh_CN] 当 [`Bound] 不是 [`unreachable_sentinel_t] 时，[$[*current_] > 0]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+--[[redoc("*>")]]current_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator--[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator--(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator+=[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator+=(difference_type n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] If [`Bound] is not [`unreachable_sentinel_t], [$[*current_] + [*n] \ge 0].
+[:zh_CN] 当 [`Bound] 不是 [`unreachable_sentinel_t] 时，
+[$[*current_] + [*n] \ge 0]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]current_ += n;
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator-=[!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator-=(difference_type n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] If [`Bound] is not [`unreachable_sentinel_t], [$[*current_] - [*n] \ge 0].
+[:zh_CN] 当 [`Bound] 不是 [`unreachable_sentinel_t] 时，
+[$[*current_] - [*n] \ge 0]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]current_ -= n;
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator`[`][!repeat_view::iterator]]
+[codeblock:declaration]
+constexpr const W& operator[](difference_type n) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return *(*this + n);]
+[:zh_CN] 等价于：[`return *(*this + n);]
+[div:end]
+
+[%@lib@member operator==[!repeat_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*current_] == y.[*current_];].
+[:zh_CN] 等价于：[`return x.[*current_] == y.[*current_];]。
+[div:end]
+
+[%@lib@member operator<=>[!repeat_view::iterator]]
+[codeblock:declaration]
+friend constexpr bool operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*current_] <=> y.[*current_];].
+[:zh_CN] 等价于：[`return x.[*current_] <=> y.[*current_];]。
+[div:end]
+
+[%@lib@member operator+[!repeat_view::iterator]]
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator+([[redoc("*>")]]iterator i, difference_type n);
+friend constexpr [[redoc("*>")]]iterator operator+(difference_type n, [[redoc("*>")]]iterator i);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+i += n;
+return i;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator-[!repeat_view::iterator]]
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator-([[redoc("*>")]]iterator i, difference_type n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+i -= n;
+return i;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator-[!repeat_view::iterator]]
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return static_cast<difference_type>(x.[[redoc("*>")]]current_) - static_cast<difference_type>(y.[[redoc("*>")]]current_);
+[codeblock:end]
+[div:end]

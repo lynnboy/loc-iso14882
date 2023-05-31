@@ -1,0 +1,58 @@
+[section#range.as.rvalue.view
+    [:en] Class template [`as_rvalue_view]
+    [:zh_CN] 类模板 [`as_rvalue_view]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("`:c>")]]input_range<V>
+  class [[redoc("`:lib>")]]as_rvalue_view : public view_interface<as_rvalue_view<V>> {
+    V [[redoc("*>")]]base_ = V();      // [=expos]
+
+  public:
+    as_rvalue_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit as_rvalue_view(V base);
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>)
+      { return move_iterator(ranges::begin([[redoc("*>")]]base_)); }
+    constexpr auto begin() const requires [[redoc("`:c>")]]range<const V>
+      { return move_iterator(ranges::begin([[redoc("*>")]]base_)); }
+
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V>) {
+      if constexpr ([[redoc("`:c>")]]common_range<V>) {
+        return move_iterator(ranges::end([[redoc("*>")]]base_));
+      } else {
+        return move_sentinel(ranges::end([[redoc("*>")]]base_));
+      }
+    }
+    constexpr auto end() const requires [[redoc("`:c>")]]range<const V> {
+      if constexpr ([[redoc("`:c>")]]common_range<const V>) {
+        return move_iterator(ranges::end([[redoc("*>")]]base_));
+      } else {
+        return move_sentinel(ranges::end([[redoc("*>")]]base_));
+      }
+    }
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V> { return ranges::size([[redoc("*>")]]base_); }
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V> { return ranges::size([[redoc("*>")]]base_); }
+  };
+
+  template<class R>
+    as_rvalue_view(R&&) -> as_rvalue_view<views::all_t<R>>;
+}
+[codeblock:end]
+
+[%@lib@ctor as_rvalue_view]
+[codeblock:declaration]
+constexpr explicit as_rvalue_view(V base);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_]。
+[div:end]
