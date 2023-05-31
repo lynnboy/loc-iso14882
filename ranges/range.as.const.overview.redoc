@@ -1,0 +1,57 @@
+[section#range.as.const.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] [`as_const_view] presents a [`:c view] of an underlying sequence as
+constant.
+[:zh_CN] [`as_const_view] 将其底层序列呈现为一个常量的 [`:c view]。
+
+[:en] That is, the elements of an [`as_const_view] cannot be modified.
+[:zh_CN] 就是说，[`as_const_view] 的元素不能被改动。
+
+[para]
+[:en] The name [`views::as_const] denotes a range adaptor object
+([#range.adaptor.object]).
+[:zh_CN] 名字 [`views::as_const] 代表一个范围适配器对象（[#range.adaptor.object]）。
+
+[:en] Let [`E] be an expression, let [`T] be [`decltype((E))], and let [`U] be
+[`remove_cvref_t<T>].
+[:zh_CN] 令 [`E] 为一个表达式，令 [`T] 为 [`decltype((E))]，并令 [`U] 为
+[`remove_cvref_t<T>]。
+
+[:en] The expression [`views::as_const(E)] is expression-equivalent to:
+[:zh_CN] 表达式 [`views::as_const(E)] 按表达式等价于：
+
+[list]
+[item]
+[:en] If [`views::all_t<T>] models [`:c constant_range], then [`views::all(E)].
+[:zh_CN] 如果 [`views::all_t<T>] 构成 [`:c constant_range]，则为 [`views::all(E)].
+[item]
+[:en] Otherwise, if [`U] denotes [`span<X, Extent>] for some type [`X] and some
+extent [`Extent], then [`span<const X, Extent>(E)].
+[:zh_CN] 否则，如果对于某个类型 [`X] 和尺寸 [`Extent]，[`U] 代表
+[`span<X, Extent>]，则为 [`span<const X, Extent>(E)]。
+[item]
+[:en] Otherwise, if [`E] is an lvalue, [`const U] models [`:c constant_range],
+and [`U] does not model [`:c view], then [`ref_view(static_cast<const U&>(E))].
+[:zh_CN] 否则，如果 [`E] 为左值，[`const U] 构成 [`:c constant_range]，且 [`U]
+并不构成 [`:c view]，则为 [`ref_view(static_cast<const U&>(E))]。
+[item]
+[:en] Otherwise, [`as_const_view(E)].
+[:zh_CN] 否则，为 [`as_const_view(E)]。
+[list:end]
+
+[para]
+[begin:example]
+[codeblock]
+template<ranges::[[redoc("`:c>")]]constant_range R>
+void cant_touch_this(R&&);
+
+vector<char> hammer = {'m', 'c'};
+span<char> beat = hammer;
+cant_touch_this(views::as_const(beat));         // [:en] will not modify the elements of [`hammer] \
+                                                [:zh_CN] 不会改动 [`hammer] 的元素
+[codeblock:end]
+[end:example]

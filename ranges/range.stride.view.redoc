@@ -1,0 +1,102 @@
+[section#range.stride.view
+    [:en] Class template [`stride_view]
+    [:zh_CN] 类模板 [`stride_view]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range V>
+    requires [[redoc("`:c>")]]view<V>
+  class stride_view : public view_interface<stride_view<V>> {
+    V [[redoc("*>")]]base_;                                    // [=expos]
+    range_difference_t<V> [[redoc("*>")]]stride_;              // [=expos]
+    // [:en] [#range.stride.iterator], class template [`stride_view::[*iterator]] \
+    [:zh_CN] [#range.stride.iterator]，类模板 [`stride_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;              // [=expos]
+  public:
+    constexpr explicit stride_view(V base, range_difference_t<V> stride);
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr range_difference_t<V> stride() const noexcept;
+
+    constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>) {
+      return [[redoc("*>")]]iterator<false>(this, ranges::begin([[redoc("*>")]]base_));
+    }
+
+    constexpr auto begin() const requires [[redoc("`:c>")]]range<const V> {
+      return [[redoc("*>")]]iterator<true>(this, ranges::begin([[redoc("*>")]]base_));
+    }
+
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V>) {
+      if constexpr ([[redoc("`:c>")]]common_range<V> && [[redoc("`:c>")]]sized_range<V> && [[redoc("`:c>")]]forward_range<V>) {
+        auto missing = ([[redoc("*>")]]stride_ - ranges::distance([[redoc("*>")]]base_) % [[redoc("*>")]]stride_) % [[redoc("*>")]]stride_;
+        return [[redoc("*>")]]iterator<false>(this, ranges::end([[redoc("*>")]]base_), missing);
+      } else if constexpr ([[redoc("`:c>")]]common_range<V> && ![[redoc("`:c>")]]bidirectional_range<V>) {
+        return [[redoc("*>")]]iterator<false>(this, ranges::end([[redoc("*>")]]base_));
+      } else {
+        return default_sentinel;
+      }
+    }
+
+    constexpr auto end() const requires [[redoc("`:c>")]]range<const V> {
+      if constexpr ([[redoc("`:c>")]]common_range<const V> && [[redoc("`:c>")]]sized_range<const V> && [[redoc("`:c>")]]forward_range<const V>) {
+        auto missing = ([[redoc("*>")]]stride_ - ranges::distance([[redoc("*>")]]base_) % [[redoc("*>")]]stride_) % [[redoc("*>")]]stride_;
+        return [[redoc("*>")]]iterator<true>(this, ranges::end([[redoc("*>")]]base_), missing);
+      } else if constexpr ([[redoc("`:c>")]]common_range<const V> && ![[redoc("`:c>")]]bidirectional_range<const V>) {
+        return [[redoc("*>")]]iterator<true>(this, ranges::end([[redoc("*>")]]base_));
+      } else {
+        return default_sentinel;
+      }
+    }
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+  };
+
+  template<class R>
+    stride_view(R&&, range_difference_t<R>) -> stride_view<views::all_t<R>>;
+}
+[codeblock:end]
+
+[%@lib@ctor stride_view]
+[codeblock:declaration]
+constexpr stride_view(V base, range_difference_t<V> stride);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`stride > 0] is [`true].
+[:zh_CN] [`stride > 0] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)], and [*stride_] with [`stride].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_] 并以 [`stride] 初始化 [*stride_]。
+[div:end]
+
+[%@lib@member stride[!stride_view]]
+[codeblock:declaration]
+constexpr range_difference_t<V> stride() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [*stride_].
+[:zh_CN] [*stride_]。
+[div:end]
+
+[%@lib@member size[!stride_view]]
+[codeblock:declaration]
+constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return [[redoc("*>")]]to-unsigned-like([[redoc("*>")]]div-ceil(ranges::distance([[redoc("*>")]]base_), [[redoc("*>")]]stride_));
+[codeblock:end]
+[div:end]
