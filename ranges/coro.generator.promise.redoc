@@ -1,0 +1,317 @@
+[section#coro.generator.promise
+    [:en] Class [`generator::promise_type]
+    [:zh_CN] 类 [`generator::promise_type]
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class Ref, class V, class Allocator>
+  class generator<Ref, V, Allocator>::promise_type {
+  public:
+    generator get_return_object() noexcept;
+
+    suspend_always initial_suspend() const noexcept { return {}; }
+    auto final_suspend() noexcept;
+
+    suspend_always yield_value(yielded val) noexcept;
+
+    auto yield_value(const remove_reference_t<yielded>& lval)
+      requires is_rvalue_reference_v<yielded> &&
+        [[redoc("`:c>")]]constructible_from<remove_cvref_t<yielded>, const remove_reference_t<yielded>&>;
+
+    template<class R2, class V2, class Alloc2, class Unused>
+      requires [[redoc("`:c>")]]same_as<typename generator<T2, V2, Alloc2>::yielded, yielded>
+        auto yield_value(ranges::elements_of<generator<T2, V2, Alloc2>&&, Unused> g) noexcept;
+
+    template<ranges::[[redoc("`:c>")]]input_range R, class Alloc>
+      requires [[redoc("`:c>")]]convertible_to<ranges::range_reference_t<R>, yielded>
+        auto yield_value(ranges::elements_of<R, Alloc> r) noexcept;
+
+    void await_transform() = delete;
+
+    void return_void() const noexcept {}
+    void unhandled_exception();
+
+    void* operator new(size_t size)
+      requires [[redoc("`:c>")]]same_as<Allocator, void> || [[redoc("`:c>")]]default_initializable<Allocator>;
+
+    template<class Alloc, class... Args>
+      requires [[redoc("`:c>")]]same_as<Allocator, void> || [[redoc("`:c>")]]convertible_to<const Alloc&, Allocator>
+        void* operator new(size_t size, allocator_arg_t, const Alloc& alloc, const Args&...);
+
+    template<class This, class Alloc, class... Args>
+      requires [[redoc("`:c>")]]same_as<Allocator, void> || [[redoc("`:c>")]]convertible_to<const Alloc&, Allocator>
+        void* operator new(size_t size, const This&, allocator_arg_t, const Alloc& alloc,
+                           const Args&...);
+
+    void operator delete(void* pointer, size_t size) noexcept;
+
+  private:
+    add_pointer_t<yielded> [[redoc("*>")]]value_ = nullptr;    // [=expos]
+    exception_ptr [[redoc("*>")]]except_;                      // [=expos]
+  };
+}
+[codeblock:end]
+
+[%@lib@member get_return_object[!generator::promise_type]]
+[codeblock:declaration]
+generator get_return_object() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A [`generator] object whose member [*coroutine_] is
+[`coroutine_handle<promise_type>::from_promise(*this)], and whose member
+[*active_] points to an empty stack.
+[:zh_CN] 一个 [`generator] 对象，其 [*coroutine_] 成员为
+[`coroutine_handle<promise_type>::from_promise(*this)]，而其 [*active_] 成员指向
+一个空栈。
+[div:end]
+
+[%@lib@member final_suspend[!generator::promise_type]]
+[codeblock:declaration]
+auto final_suspend() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] A handle referring to the coroutine whose promise object is [`*this]
+is at the top of [`*[*active_]] of some [`generator] object [`x].
+[:zh_CN] 某个 [`generator] 对象 [`x] 的 [`*[*active_]] 的栈顶是一个代表以
+[`*this] 为承诺对象的协程的句柄。
+
+[:en] This function is called by that coroutine upon reaching its final suspend
+point ([#dcl.fct.def.coroutine]).
+[:zh_CN] 当该协程到达其最终暂停点时将调用本函数（[#dcl.fct.def.coroutine]）。
+
+[para:returns]
+[:en] An awaitable object of unspecified type ([#expr.await]) whose member
+functions arrange for the calling coroutine to be suspended, pop the coroutine
+handle from the top of [`*x.[*active_]], and resume execution of the coroutine
+referred to by [`x.[*active_]->top()] if [`*x.[*active_]] is not empty.
+[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），其各成员函数被编排为支持
+调用方协程的暂停，从 [`*x.[*active_]] 的栈顶弹出协程句柄，以及当 [`*x.[*active_]]
+不为空时恢复 [`x.[*active_]->top()] 所代表的协程的执行。
+
+[:en] If it is empty, control flow returns to the current coroutine caller or
+resumer ([#dcl.fct.def.coroutine]).
+[:zh_CN] 当其为空时，控制流返回到当前协程的调用方或恢复方
+（[#dcl.fct.def.coroutine]）。
+[div:end]
+
+[%@lib@member yield_value[!generator::promise_type]]
+[codeblock:declaration]
+suspend_always yield_value(yielded val) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`[*value_] = addressof(val)].
+[:zh_CN] 等价于 [`[*value_] = addressof(val)]。
+
+[para:returns]
+[:en] [`{}].
+[:zh_CN] [`{}]。
+[div:end]
+
+[%@lib@member yield_value[!generator::promise_type]]
+[codeblock:declaration]
+auto yield_value(const remove_reference_t<yielded>& lval)
+  requires is_rvalue_reference_v<yielded> &&
+    [[redoc("`:c>")]]constructible_from<remove_cvref_t<yielded>, const remove_reference_t<yielded>&>;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] A handle referring to the coroutine whose promise object is [`*this]
+is at the top of [`*[*active_]] of some [`generator] object [`x].
+[:zh_CN] 某个 [`generator] 对象 [`x] 的 [`*[*active_]] 的栈顶是一个代表以
+[`*this] 为承诺对象的协程的句柄。
+
+[para:returns]
+[:en] An awaitable object of unspecified type ([#expr.await]) that stores an
+object of type [`remove_cvref_t<yielded>] direct-non-list-initialized with
+[`lval], whose member functions arrange for [*value_] to point to that stored
+object and then suspend the coroutine.
+[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），储存一个以 [`lval] 直接
+非列表初始化的 [`remove_cvref_t<yielded>] 类型的对象，其各成员函数被编排为使得
+[*value] 指向所存储的这个对象，然后恢复该协程。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the stored object.
+[:zh_CN] 由所存储对象的初始化抛出的任何异常。
+
+[para:remarks]
+[:en] A [~yield-expression] that calls this function has type [`void]
+([#expr.yield]).
+[:zh_CN] 调用这个函数的[~产出表达式]的类型为 [`void]（[#expr.yield]）。
+[div:end]
+
+[%@lib@member yield_value[!generator::promise_type]]
+[codeblock:declaration]
+template<class T2, class V2, class Alloc2, class Unused>
+  requires [[redoc("`:c>")]]same_as<typename generator<T2, V2, Alloc2>::yielded, yielded>
+  auto yield_value(ranges::elements_of<generator<T2, V2, Alloc2>&&, Unused> g) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] A handle referring to the coroutine whose promise object is [`*this]
+is at the top of [`*[*active_]] of some [`generator] object [`x].
+[:zh_CN] 某个 [`generator] 对象 [`x] 的 [`*[*active_]] 的栈顶是一个代表以
+[`*this] 为承诺对象的协程的句柄。
+
+[:en] The coroutine referred to by [`g.range.[*coroutine_]] is suspended at its
+initial suspend point.
+[:zh_CN] [`g.range.[*coroutine_]] 所代表的协程暂停于其初始暂停点。
+
+[para:returns]
+[:en] An awaitable object of unspecified type ([#expr.await]) into which
+[`g.range] is moved, whose member [`await_ready] returns [`false], whose member
+[`await_suspend] pushes [`g.range.[*coroutine_]] into [`*x.[*active_]] and
+resumes execution of the coroutine referred to by [`g.range.[*coroutine_]], and
+whose member [`await_resume] evaluates [`rethrow_exception([*except_])]
+if [`bool([*except_])] is [`true].
+[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），其为 [`g.range] 的移动目标，
+其 [`await_ready] 成员返回 [`false]，其 [`await_suspend] 成员将
+[`g.range.[*coroutine_]] 推入 [`*x.[*active_]]，并恢复由 [`g.range.[*coroutine_]]
+所代表的协程的执行，而其 [`await_resume] 成员当 [`bool([*except_])] 为 [`true]
+时则求值 [`rethrow_exception([*except_])]。
+
+[:en] If [`bool([*except_])] is [`false], the [`await_resume] member has no
+effects.
+[:zh_CN] 如果 [`bool([*except_])] 为 [`false]，[`await_resume] 成员没有效果。
+
+[para:remarks]
+[:en] A [~yield-expression] that calls this function has type [`void]
+([#expr.yield]).
+[:zh_CN] 调用这个函数的[~产出表达式]的类型为 [`void]（[#expr.yield]）。
+[div:end]
+
+[%@lib@member yield_value[!generator::promise_type]]
+[codeblock:declaration]
+template<ranges::[[redoc("`:c>")]]input_range R, class Alloc>
+  requires [[redoc("`:c>")]]convertible_to<ranges::range_reference_t<R>, yielded>
+  auto yield_value(ranges::elements_of<R, Alloc> r) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto nested = [](allocator_arg_t, Alloc, ranges::iterator_t<R> i, ranges::sentinel_t<R> s)
+  -> generator<yielded, ranges::range_value_t<R>, Alloc> {
+    for (; i != s; ++i) {
+      co_yield static_cast<yielded>(*i);
+    }
+  };
+return yield_value(ranges::elements_of(nested(
+  allocator_arg, r.allocator, ranges::begin(r.range), ranges::end(r.range))));
+[codeblock:end]
+
+[para:remarks]
+[:en] A [~yield-expression] that calls this function has type [`void]
+([#expr.yield]).
+[:zh_CN] 调用这个函数的[~产出表达式]的类型为 [`void]（[#expr.yield]）。
+[div:end]
+
+[%@lib@member unhandled_exception[!generator::promise_type]]
+[codeblock:declaration]
+void unhandled_exception();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] A handle referring to the coroutine whose promise object is [`*this]
+is at the top of [`*[*active_]] of some [`generator] object [`x].
+[:zh_CN] 某个 [`generator] 对象 [`x] 的 [`*[*active_]] 的栈顶是一个代表以
+[`*this] 为承诺对象的协程的句柄。
+
+[para:effects]
+[:en] If the handle referring to the coroutine whose promise object is [`*this]
+is the sole element of [`*x.[*active_]] equivalent to: [`throw;]
+[:zh_CN] 当 [`*x.[*active_]] 的唯一元素就是指代以 [`*this] 为承诺对象的协程的
+句柄时，等价于：[`throw;]
+
+[:en] Otherwise, assigns [`current_exception()] to [*except_].
+[:zh_CN] 否则，将 [`current_exception()] 赋值给 [*except_]。
+[div:end]
+
+[%@lib@member operator new[!generator::promise_type]]
+[codeblock:declaration]
+void* operator new(size_t size)
+  requires [[redoc("`:c>")]]same_as<Allocator, void> || [[redoc("`:c>")]]default_initializable<Allocator>;
+
+template<class Alloc, class... Args>
+  requires [[redoc("`:c>")]]same_as<Allocator, void> || [[redoc("`:c>")]]convertible_to<const Alloc&, Allocator>
+  void* operator new(size_t size, allocator_arg_t, const Alloc& alloc, const Args&...);
+
+template<class This, class Alloc, class... Args>
+  requires [[redoc("`:c>")]]same_as<Allocator, void> || [[redoc("`:c>")]]convertible_to<const Alloc&, Allocator>
+  void* operator new(size_t size, const This&, allocator_arg_t, const Alloc& alloc,
+                     const Args&...);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`A] be
+[:zh_CN] 令 [`A]
+[list]
+[item]
+[:en@~] [`Allocator], if it is not [`void],
+[:zh_CN@~] 当 [`Allocator] 不是 [`void] 时为 [`Allocator]，
+[item]
+[:en@~] [`Alloc] for the overloads with a template parameter [`Alloc], or
+[:zh_CN@~] 对于带有模板形参 [`Alloc] 的形参为 [`Alloc]，
+[item]
+[:en@~] [`allocator<void>] otherwise.
+[:zh_CN@~] 否则为 [`allocator<void>]。
+[list:end]
+
+[:en] Let [`B] be [`allocator_traits<A>::template rebind_alloc<U>] where [`U] is
+an unspecified type whose size and alignment are both
+[`__STDCPP_DEFAULT_NEW_ALIGNMENT__].
+[:zh_CN] 令 [`B] 为 [`allocator_traits<A>::template rebind_alloc<U>]，其中 [`U]
+为大小和对齐均为 [`__STDCPP_DEFAULT_NEW_ALIGNMENT__] 的未指明类型。
+
+[para:mandates]
+[:en] [`allocator_traits<B>::pointer] is a pointer type.
+[:zh_CN] [`allocator_traits<B>::pointer] 为指针类型。
+
+[para:effects]
+[:en] Initializes an allocator [`b] of type [`B] with [`A(alloc)], for the
+overloads with a function parameter [`alloc], and with [`A()] otherwise.
+[:zh_CN] 对于带有函数形参 [`alloc] 的重载，以 [`A(alloc)] 初始化一个 [`B] 类型的
+分配器 [`b]，否则以 [`A()] 进行初始化。
+
+[:en] Uses [`b] to allocate storage for the smallest array of [`U] sufficient to
+provide storage for a coroutine state of size [`size], and unspecified
+additional state necessary to ensure that [`operator delete] can later
+deallocate this memory block with an allocator equal to [`b].
+[:zh_CN] 使用 [`b] 来为最小的 [`U] 的数组分配存储，使其足以为 [`size] 大小的协程
+状态，和用以确保 [`operator delete] 其后可以用等于 [`b] 的分配器回收这段内存块
+的额外状态提供存储。
+
+[para:returns]
+[:en] A pointer to the allocated storage.
+[:zh_CN] 指向所分配存储的指针。
+[div:end]
+
+[%@lib@member operator delete[!generator::promise_type]]
+[codeblock:declaration]
+void operator delete(void* pointer, size_t size) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`pointer] was returned from an invocation of one of the above overloads
+of [`operator new] with a [`size] argument equal to [`size].
+[:zh_CN] [`pointer] 是由上述 [`operator new] 重载之一以等于 [`size] 的实参
+[`size] 调用所返回的值。
+
+[para:effects]
+[:en] Deallocates the storage pointed to by [`pointer] using an allocator
+equivalent to that used to allocate it.
+[:zh_CN] 使用等价于用以分配的分配器来回收 [`pointer] 所指向的存储。
+[div:end]

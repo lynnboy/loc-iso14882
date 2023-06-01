@@ -1,0 +1,95 @@
+[section#coro.generator.class
+    [:en] Class template [`generator]
+    [:zh_CN] 类模板 [`generator]
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class Ref, class V = void, class Allocator = void>
+  class [[redoc("`:c>")]]generator : public ranges::view_interface<generator<Ref, V, Allocator>> {
+  private:
+    using [[redoc("*>")]]value = conditional_t<is_void_v<V>, remove_cvref_t<Ref>, V>;  // [=expos]
+    using [[redoc("*>")]]reference = conditional_t<is_void_v<V>, Ref&&, Ref>;          // [=expos]
+
+    // [:en] [#coro.generator.iterator], class [`generator::[*iterator]] \
+    [:zh_CN] [#coro.generator.iterator]，类 [`generator::[*iterator]]
+    class [[redoc("*>")]]iterator;                                                     // [=expos]
+
+  public:
+    using yielded =
+      conditional_t<is_reference_v<[[redoc("*>")]]reference>, [[redoc("*>")]]reference, const [[redoc("*>")]]reference&>;
+
+    // [:en] [#coro.generator.promise], class [`generator::promise_type] \
+    [:zh_CN] [#coro.generator.promise]，类 [`generator::promise_type]
+    class promise_type;
+
+    generator(const generator&) = delete;
+    generator(generator&& other) noexcept;
+
+    ~generator();
+
+    generator& operator=(generator other) noexcept;
+
+    [[redoc("*>")]]iterator begin();
+    default_sentinel_t end() const noexcept;
+
+  private:
+    coroutine_handle<promise_type> [[redoc("*>")]]coroutine_ = nullptr;  // [=expos]
+    unique_ptr<stack<coroutine_handle<>>> [[redoc("*>")]]active_;        // [=expos]
+  };
+}
+[codeblock:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] If [`Allocator] is not [`void], [`allocator_traits<Allocator>::pointer] is
+a pointer type.
+[:zh_CN] 当 [`Allocator] 不是 [`void] 时，[`allocator_traits<Allocator>::pointer]
+是一种指针类型。
+
+[item]
+[:en] [*value] is a cv-unqualified object type.
+[:zh_CN] [*value] 是一种未被 cv 限定的对象类型。
+
+[item]
+[:en] [*reference] is either a reference type, or a cv-unqualified object type
+that models [`:c copy_constructible].
+[:zh_CN] [*reference] 或者是引用类型，或者是未被 cv 限定的构成了
+[`:c copy_constructible] 的对象类型。
+
+[item]
+[:en] Let [`RRef] denote [`remove_reference_t<[*reference]>&&] if [*reference]
+is a reference type, and [*reference] otherwise.
+[:zh_CN] 令 [`RRef] 当 [*reference] 是引用类型时代表
+[`remove_reference_t<[*reference]>&&]，否则代表 [*reference]。
+
+[:en] Each of:
+[:zh_CN] 以下各项：
+[list]
+[item]
+[:en@~] [`[`:c common_reference_with]<[*reference]&&, [*value]&>],
+[:zh_CN@~] [`[`:c common_reference_with]<[*reference]&&, [*value]&>]，
+[item]
+[:en@~] [`[`:c common_reference_with]<[*reference]&&, RRef&>], and
+[:zh_CN@~][`[`:c common_reference_with]<[*reference]&&, RRef&&>]，以及
+[item]
+[`[`:c common_reference_with]<RRef&&, const [*value]&>]
+[list:end]
+[:en@~] is modeled.
+[:zh_CN@~] 均被构成。
+[list:end]
+
+[para]
+[:en] If [`Allocator] is not [`void], it shall meet the [^:oc Allocator]
+requirements.
+[:zh_CN] 如果 [`Allocator] 不是 [`void]，则它应当满足 [^:oc Allocator] 的规定。
+
+[para]
+[:en] Specializations of [`generator] model [`:c view] and [`:c input_range].
+[:zh_CN] [`generator] 的特例构成 [`:c view] 和 [`:c input_range]。
+
+[para]
+[:en] The behavior of a program that adds a specialization for [`generator]
+is undefined.
+[:zh_CN] 为 [`generator] 增添特化式的程序的行为是未定义的。

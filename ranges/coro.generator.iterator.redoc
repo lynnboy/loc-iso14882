@@ -1,0 +1,111 @@
+[section#coro.generator.iterator
+    [:en] Class [`generator::[*iterator]]
+    [:zh_CN] 类 [`generator::[*iterator]]
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class Ref, class V, class Allocator>
+  class generator<Ref, V, Allocator>::[[redoc("*>")]]iterator {
+  public:
+    using value_type = [[redoc("*>")]]value;
+    using difference_type = ptrdiff_t;
+
+    [[redoc("*>")]]iterator([[redoc("*>")]]iterator&& other) noexcept;
+    [[redoc("*>")]]iterator& operator=([[redoc("*>")]]iterator&& other) noexcept;
+
+    [[redoc("*>")]]reference operator*() const noexcept(is_nothrow_copy_constructible_v<[[redoc("*>")]]reference>);
+    [[redoc("*>")]]iterator& operator++();
+    void operator++(int);
+
+    friend bool operator==([[redoc("*>")]]iterator i, default_sentinel_t);
+
+  private:
+    coroutine_handle<promise_type> [[redoc("*>")]]coroutine_; // [=expos]
+  };
+}
+[codeblock:end]
+
+[%@lib@ctor generator::iterator]
+[codeblock:declaration]
+[[redoc("*>")]]iterator([[redoc("*>")]]iterator&& other) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*coroutine_] with [`exchange(other.[*coroutine_], {})].
+[:zh_CN] 以 [`exchange(other.[*coroutine_], {})] 初始化 [*coroutine_]。
+[div:end]
+
+[%@lib@member operator=[!generator::iterator]]
+[codeblock:declaration]
+[[redoc("*>")]]iterator& operator=([[redoc("*>")]]iterator&& other) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`[*coroutine_] = exchange(other.[*coroutine_], {})].
+[:zh_CN] 等价于 [`[*coroutine_] = exchange(other.[*coroutine_], {})]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator*[!generator::generator]]
+[codeblock:declaration]
+[[redoc("*>")]]reference operator*() const noexcept(is_nothrow_copy_constructible_v<[[redoc("*>")]]reference>);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] For some [`generator] object [`x], [*coroutine_] is in [`*x.[*active_]]
+and [`x.[*active_]->top()] refers to a suspended coroutine with promise object [`p].
+[:zh_CN] 对于某个 [`generator] 对象 [`x]，[*coroutine_] 在 [`*x.[*active_]] 中，
+且 [`x.[*active_]->top()] 代表具有承诺对象 [`p] 的已暂停协程。
+
+[para:effects]
+[:en] Equivalent to [`return static_cast<[`reference]>(*p.[*value_]);]
+[:zh_CN] 等价于 [`return static_cast<[`reference]>(*p.[*value_]);]
+[div:end]
+
+[%@lib@member operator++[!generator::iterator]]
+[codeblock:declaration]
+[[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] For some [`generator] object [`x], [*coroutine_] is in [`*x.[*active_]].
+[:zh_CN] 对于某个 [`generator] 对象 [`x]，[*coroutine_] 在 [`*[*active_]] 之中。
+
+[para:effects]
+[:en] Equivalent to [`rx.[*active_]->top().resume()].
+[:zh_CN] 等价于 [`rx.[*active_]->top().resume()]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator++[!generator::iterator]]
+[codeblock:declaration]
+void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`++*this].
+[:zh_CN] 等价于 [`++*this]。
+[div:end]
+
+[%@lib@member operator==[!generator::iterator]]
+[codeblock:declaration]
+friend bool operator==([[redoc("*>")]]iterator i, default_sentinel_t);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`return i.[*coroutine_].done();]
+[:zh_CN] 等价于 [`return i.[*coroutine_].done();]
+[div:end]
