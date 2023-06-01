@@ -1,0 +1,573 @@
+[section#range.cartesian.iterator
+    [:en] Class template [`cartesian_product_view::[*iterator]]
+    [:zh_CN] 类模板 [`cartesian_product_view::[*iterator]]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range First, [[redoc("`:c>")]]forward_range... Vs>
+    requires ([[redoc("`:c>")]]view<First> && ... && [[redoc("`:c>")]]view<Vs>)
+  template<bool Const>
+  class cartesian_product_view<First, Vs...>::[[redoc("*>")]]iterator {
+  public:
+    using iterator_category = input_iterator_tag;
+    using iterator_concept  = [[redoc("[=seebelow]")]];
+    using value_type = tuple<range_value_t<[[redoc("*>")]]maybe-const<Const, First>>,
+      range_value_t<[[redoc("*>")]]maybe-const<Const, Vs>>...>;
+    using reference = tuple<range_reference_t<[[redoc("*>")]]maybe-const<Const, First>>,
+      range_reference_t<[[redoc("*>")]]maybe-const<Const, Vs>>...>;
+    using difference_type = [[redoc("[=seebelow]")]];
+
+    [[redoc("*>")]]iterator() requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]maybe-const<Const, First>> = default;
+
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i) requires Const &&
+      ([[redoc("`:c>")]]convertible_to<iterator_t<First>, iterator_t<const First>> &&
+        ... && [[redoc("`:c>")]]convertible_to<iterator_t<Vs>, iterator_t<const Vs>>);
+
+    constexpr auto operator*() const;
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr void operator++(int);
+    constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]maybe-const<Const, First>>;
+
+    constexpr [[redoc("*>")]]iterator& operator--()
+      requires [[redoc("*:c>")]]cartesian-product-is-bidirectional<Const, First, Vs...>;
+    constexpr [[redoc("*>")]]iterator operator--(int)
+      requires [[redoc("*:c>")]]cartesian-product-is-bidirectional<Const, First, Vs...>;
+
+    constexpr [[redoc("*>")]]iterator& operator+=(difference_type x)
+      requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+    constexpr [[redoc("*>")]]iterator& operator-=(difference_type x)
+      requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+
+    constexpr reference operator[](difference_type n) const
+      requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>>;
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, default_sentinel_t);
+
+    friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]all-random-access<Const, First, Vs...>;
+
+    friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& x, difference_type y)
+      requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+    friend constexpr [[redoc("*>")]]iterator operator+(difference_type x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+    friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& x, difference_type y)
+      requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
+
+    friend constexpr difference_type operator-([[redoc("*>")]]iterator i, default_sentinel_t)
+      requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, sentinel_t, First, Vs...>;
+    friend constexpr difference_type operator-(default_sentinel_t, [[redoc("*>")]]iterator i)
+      requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, sentinel_t, First, Vs...>;
+
+    friend constexpr auto iter_move(const [[redoc("*>")]]iterator& i) noexcept([[redoc("[=seebelow]")]]);
+
+    friend constexpr void iter_swap(const [[redoc("*>")]]iterator& l, const [[redoc("*>")]]iterator& r) noexcept([[redoc("[=seebelow]")]])
+      requires ([[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>> && ... &&
+        [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>>);
+
+  private:
+    [[redoc("*>")]]maybe-const<Const, cartesian_product_view>* [[redoc("*>")]]parent_ = nullptr;      // [=expos]
+    tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
+      iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>...> [[redoc("*>")]]current_;                  // [=expos]
+
+    template<size_t N = sizeof...(Vs)>
+      constexpr void [[redoc("*>")]]next();                                            // [=expos]
+
+    template<size_t N = sizeof...(Vs)>
+      constexpr void [[redoc("*>")]]prev();                                            // [=expos]
+
+    template<class Tuple>
+      constexpr difference_type [[redoc("*>")]]distance-from(Tuple t);                 // [=expos]
+
+    constexpr explicit [[redoc("*>")]]iterator(tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
+      iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>...> current);                  // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`[*iterator]::iterator_concept] is defined as follows:
+[:zh_CN] [`[*iterator]::iterator_concept] 的定义如下：
+
+[list]
+[item]
+[:en] If [`[*:c cartesian-product-is-random-access]<Const, First, Vs...>] is
+modeled, then [`iterator_concept] denotes [`random_access_iterator_tag].
+[:zh_CN] 若构成了 [`[*:c cartesian-product-is-random-access]<Const, First, Vs...>]，
+则 [`iterator_concept] 代表 [`random_access_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`[*:c cartesian-product-is-bidirectional]<Const, First, Vs...>]
+is modeled, then [`iterator_concept] denotes [`bidirectional_iterator_tag].
+[:zh_CN] 否则，若构成了
+[`[*:c cartesian-product-is-bidirectional]<Const, First, Vs...>]，
+则 [`iterator_concept] 代表 [`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`[*maybe-const]<Const, First>] models [`:c forward_range],
+then [`iterator_concept] denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`[*maybe-const]<Const, First>] 构成 [`:c forward_range]，
+则 [`iterator_concept] 代表 [`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_concept] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_concept] 代表 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[:en] [`[*iterator]::difference_type] is an [?impldef type of
+[`ranges::cartesian_product_view::[*iterator]::difference_type]]
+signed-integer-like type.
+[:zh_CN] [`[*iterator]::difference_type] 是一种[?impldef
+[`ranges::cartesian_product_view::[*iterator]::difference_type] 的类型]有符号
+整数式类型。
+
+[para:recommended]
+[:en] [`[*iterator]::difference_type] should be the smallest signed-integer-like
+type that is sufficiently wide to store the product of the maximum sizes of all
+underlying ranges if such a type exists.
+[:zh_CN] [`[*iterator]::difference_type] 最好是宽度足以存储各底层范围的最大大小
+的乘积的最小有符号整数式类型，如果存在这种类型。
+
+[codeblock:declaration]
+template<size_t N = sizeof...(Vs)>
+  constexpr void [[redoc("*>")]]next();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto& it = std::get<N>([[redoc("*>")]]current_);
+++it;
+if constexpr (N > 0) {
+  if (it == ranges::end(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]bases_))) {
+    it = ranges::begin(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]bases_));
+    [[redoc("*>")]]next<N - 1>();
+  }
+}
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<size_t N = sizeof...(Vs)>
+  constexpr void [[redoc("*>")]]prev();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto& it = std::get<N>([[redoc("*>")]]current_);
+if (it == ranges::begin(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]bases_))) {
+  it = [[redoc("*>")]]cartesian-common-arg-end(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]bases_));
+  if constexpr (N > 0) {
+    [[redoc("*>")]]prev<N - 1>();
+  }
+}
+--it;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class Tuple>
+  constexpr difference_type [[redoc("*>")]]distance-from(Tuple t);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let:
+[:zh_CN] 令：
+
+[list]
+[item]
+[:en] [$[*scaled-size](N)] be the product of
+[`static_cast<difference_type>(ranges::size(std::get<[$N]>([*parent_]->[*bases_])))]
+and [$[*scaled-size](N+1)] if [$N < [`sizeof...(Vs)]], otherwise 
+[`static_cast<difference_type>(1)];
+[:zh_CN] 当 [$N < [`sizeof...(Vs)]] 时，[$[*scaled-size](N)] 为
+[`static_cast<difference_type>(ranges::size(std::get<[$N]>([*parent_]->[*bases_])))]
+和 [$[*scaled-size](N+1)] 的乘积，否则为 [`static_cast<difference_type>(1)]；
+[item]
+[:en] [$[*scaled-distance](N)] be the product of
+[`static_cast<difference_type>(std::get<[$N]>([*current_]) - std::get<[$N]>(t))]
+and [$[*scaled-size](N+1)]; and
+[:zh_CN] [$[*scaled-distance](N)] 为
+[`static_cast<difference_type>(std::get<[$N]>([*current_]) - std::get<[$N]>(t))]
+和 [$[*scaled-size](N+1)] 的乘积；以及
+[item]
+[:en] [*scaled-sum] be the sum of [$[*scaled-distance](N)] for every integer
+[$0 \le N \le [`sizeof...(Vs)]].
+[:zh_CN] [*scaled-sum] 为对于 [$0 \le N \le [`sizeof...(Vs)]] 的每个整数的
+[$[*scaled-distance](N)] 的和。
+[list:end]
+
+[para:expects]
+[:en] [*scaled-sum] can be represented by [`difference_type].
+[:zh_CN] [*scaled-sum] 可由 [`difference_type] 表示。
+
+[para:returns]
+[:en] [*scaled-sum].
+[:zh_CN] [*scaled-sum]。
+[div:end]
+
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]iterator(tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
+  iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>...> current);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*current_] with [`std::move(current)].
+[:zh_CN] 以 [`std::move(current)] 初始化 [*current_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i) requires Const &&
+  ([[redoc("`:c>")]]convertible_to<iterator_t<First>, iterator_t<const First>> &&
+    ... && [[redoc("`:c>")]]convertible_to<iterator_t<Vs>, iterator_t<const Vs>>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*current_] with [`std::move(i.[*current_])].
+[:zh_CN] 以 [`std::move(i.[*current_])] 初始化 [*current_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto operator*() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return [[redoc("*>")]]tuple-transform([](auto& i) -> decltype(auto) { return *i; }, [[redoc("*>")]]current_);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]next();
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`++*this].
+[:zh_CN] 等价于 [`++this]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator++(int) requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]maybe-const<Const, First>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator--()
+  requires [[redoc("*:c>")]]cartesian-product-is-bidirectional<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]prev();
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator--(int)
+  requires [[redoc("*:c>")]]cartesian-product-is-bidirectional<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator+=(difference_type x)
+  requires [[redoc("*:c>")]]cartesian-product-is-bidirectional<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`orig] be the value of [`*this] before the call.
+[:zh_CN] 令 [`orig] 为调用前 [`*this] 的值。
+
+[:en] Let [`ret] be:
+[:zh_CN] 令 [`ret] 为：
+[list]
+[item]
+[:en] If [`x > 0], the value of [`*this] had [*next] been called [`x] times.
+[:zh_CN] 如果 [`x > 0]，则为调用 [`x] 次 [*next] 后 [`*this] 的值。
+[item]
+[:en] Otherwise, if [`x < 0], the value of [`*this] had [*prev] been called [`-x]
+times.
+[:zh_CN] 否则，如果 [`x < 0]，则为调用 [`-x] 次 [*prev] 后 [`*this] 的值。
+[item]
+[:en] Otherwise, [`orig].
+[:zh_CN] 否则，为 [`orig]。
+[list:end]
+
+[para:expects]
+[:en] [`x] is in the range
+[$`[[`ranges::distance(*this, ranges::begin(*[*parent_]))],[`ranges::distance(*this, ranges::end(*[*parent_]))]`]].
+[:zh_CN] [`x] 处于范围
+[$`[[`ranges::distance(*this, ranges::begin(*[*parent_]))],[`ranges::distance(*this, ranges::end(*[*parent_]))]`]]
+之内。
+
+[para:effects]
+[:en] Sets the value of [`*this] to [`ret].
+[:zh_CN] 将 [`*this] 的值设置为 [`ret]。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator-=(difference_type x)
+  requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+*this += -x;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr reference operator[](difference_type n) const
+  requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return *((*this) + n);]
+[:zh_CN] 等价于：[`return *((*this) + n);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*current_] == y.[*current_];]
+[:zh_CN] 等价于：[`return x.[*current_] == y.[*current_];]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator@& x, default_sentinel_t);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if
+[`std::get<[$i]>(x.[*current_]) == ranges::end(std::get<[$i]>(x.[*parent_]->[*bases_]))]
+is [`true] for any integer [$0 \le i \le [`sizeof...(Vs)]]; otherwise, [`false].
+[:zh_CN] 如果对于任何整数 [$0 \le i \le [`sizeof...(Vs)]]，
+[`std::get<[$i]>(x.[*current_]) == ranges::end(std::get<[$i]>(x.[*parent_]->[*bases_]))]
+均为 [`true]，则返回 [`true]；否则返回 [`false]。
+[div:end]
+
+[codeblock:declaration]
+friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]all-random-access<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*current_] <=> y.[*current_];]
+[:zh_CN] 等价于：[`return x.[*current_] <=> y.[*current_];]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& x, difference_type y)
+  requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](x) += y;]
+[:zh_CN] 等价于：[`return [*iterator](x) += y;]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator+(difference_type x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return y + x;]
+[:zh_CN] 等价于：[`return y + x;]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& x, difference_type y)
+  requires [[redoc("*:c>")]]cartesian-product-is-random-access<Const, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](x) -= y;]
+[:zh_CN] 等价于：[`return [*iterator](x) -= y;]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.[*distance-from](y.[*current_]);]
+[:zh_CN] 等价于：[`return x.[*distance-from](y.[*current_]);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-([[redoc("*>")]]iterator i, default_sentinel_t)
+  requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [*end-tuple] be an object of a type that is a specialization of
+[`tuple], such that:
+[:zh_CN] 令 [*end-tuple] 是类型为 [`tuple] 的特例的对象，使得：
+[list]
+[item]
+[:en] [`std::get<0>([*end-tuple])] has the same value as
+[`ranges::end(std::get<0>(i.[*parent_]->[*bases_]))];
+[:zh_CN] [`std::get<0>([*end-tuple])] 的值与
+[`ranges::end(std::get<0>(i.[*parent_]->[*bases_]))] 相同；
+[item]
+[:en] [`std::get<[$N]>([*end-tuple])] has the same value as
+[`ranges::begin(std::get<[$N]>(i.[*parent_]->[*bases_]))] for every integer
+[$1 \le N \le [`sizeof...(Vs)]].
+[:zh_CN] 对于每个整数 [$1 \le N \le [`sizeof...(Vs)]]，
+[`std::get<[$N]>([*end-tuple])] 的值均与
+[`ranges::begin(std::get<[$N]>(i.[*parent_]->[*bases_]))] 相同。
+[list:end]
+
+[para:effects]
+[:en] Equivalent to: [`return i.[*distance-from]([*end-tuple]);]
+[:zh_CN] 等价于：[`return i.[*distance-from]([*end-tuple]);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(default_sentinel_t s, [[redoc("*>")]]iterator i)
+  requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return -(i - s);]
+[:zh_CN] 等价于：[`return -(i - s);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr auto iter_move(const [[redoc("*>")]]iterator& i) noexcept([[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*tuple-transform](ranges::iter_move, i.[*current_]);]
+[:zh_CN] 等价于：[`return [*tuple-transform](ranges::iter_move, i.[*current_]);]
+
+[para:remarks]
+[:en] The exception specification is equivalent to the logical [=logop and] of
+the following expressions:
+[:zh_CN] 其异常说明等价于下列表达式的逻辑与（[=logop and]）：
+[list]
+[item]
+[:en@~] [`noexcept(ranges::iter_move(std::get<[$N]>(i.[*current_])))] for every
+integer [$0 \le N \le [`sizeof...(Vs)]],
+[:zh_CN@~] 对于每个 [$0 \le N \le [`sizeof...(Vs)]] 的整数，有
+[`noexcept(ranges::iter_move(std::get<[$N]>(i.[*current_])))]，
+[item]
+[:en@~]
+[`is_nothrow_move_constructible_v<range_rvalue_reference_t<[*maybe-const]<Const, T>>>]
+for every type [`T] in [`First, Vs...].
+[:zh_CN@~] 对于 [`First, Vs...] 中的每个 [`T]，有
+[`is_nothrow_move_constructible_v<range_rvalue_reference_t<[*maybe-const]<Const, T>>>]
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr void iter_swap(const [[redoc("*>")]]iterator& l, const [[redoc("*>")]]iterator& r) noexcept([[redoc("[=seebelow]")]])
+  requires ([[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>> && ... &&
+        [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] For every integer [$0 \le i \le [`sizeof...(Vs)]], performs:
+[:zh_CN] 对于每个 [$0 \le i \le [`sizeof...(Vs)]] 的整数，实施：
+[codeblock]
+ranges::iter_swap(std::get<[[redoc("$>")]]i>(l.[[redoc("*>")]]current_), std::get<[[redoc("$>")]]i>(r.[[redoc("*>")]]current_))
+[codeblock:end]
+
+[para:remarks]
+[:en] The exception specification is equivalent to the logical [=logop and] of
+the following expressions:
+[:zh_CN] 其异常说明等价于下列表达式的逻辑与（[=logop and]）：
+[list]
+[item]
+[:en@~]
+[`noexcept(ranges::iter_swap(std::get<[$i]>(l.[*current_]), std::get<[$i]>(r.[*current_])))]
+for every integer [$0 \le i \le [`sizeof...(Vs)]].
+[:zh_CN@~] 对于每个 [$0 \le i \le [`sizeof...(Vs)]] 的整数，有
+[`noexcept(ranges::iter_swap(std::get<[$i]>(l.[*current_]), std::get<[$i]>(r.[*current_])))]。
+[list:end]
+[div:end]
