@@ -8,3 +8,48 @@
 that represents unexpected objects stored in [`expected] objects.
 [:zh_CN] 子条款 [#expected.unexpected] 描述类模板 [`unexpected]，它表示存储于
 [`expected] 对象中的非预期对象。
+
+[%@lib unexpected]
+[codeblock:synopsis]
+namespace std {
+  template<class E>
+  class unexpected {
+  public:
+    constexpr unexpected(const unexpected&) = default;
+    constexpr unexpected(unexpected&&) = default;
+    template<class Err = E>
+      constexpr explicit unexpected(Err&&);
+    template<class... Args>
+      constexpr explicit unexpected(in_place_t, Args&&...);
+    template<class U, class... Args>
+      constexpr explicit unexpected(in_place_t, initializer_list<U>, Args&&...);
+
+    constexpr unexpected& operator=(const unexpected&) = default;
+    constexpr unexpected& operator=(unexpected&&) = default;
+
+    constexpr const E& error() const & noexcept;
+    constexpr E& error() & noexcept;
+    constexpr const E&& error() const && noexcept;
+    constexpr E&& error() && noexcept;
+
+    constexpr void swap(unexpected& other) noexcept([[redoc("[=seebelow]")]]);
+
+    template<class E2>
+      friend constexpr bool operator==(const unexpected&, const unexpected<E2>&);
+
+    friend constexpr void swap(unexpected& x, unexpected& y) noexcept(noexcept(x.swap(y)));
+
+  private:
+    E [[redoc("*>")]]unex;              // [=expos]
+  };
+
+  template<class E> unexpected(E) -> unexpected<E>;
+}
+[codeblock:end]
+
+[para]
+[:en] A program that instantiates the definition of [`unexpected] for
+a non-object type, an array type, a specialization of [`unexpected], or
+a cv-qualified type is ill-formed.
+[:en] 针对非对象类型，数组类型，[`unexpected] 的特例，或者被 cv 限定的类型，
+为 [`unexpected] 实例化其定义式的程序非良构。

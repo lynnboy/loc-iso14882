@@ -5,8 +5,8 @@
 
 [%@lib apply]
 [codeblock:declaration]
-template<class F, class Tuple>
-  constexpr decltype(auto) apply(F&& f, Tuple&& t);
+template<class F, [[redoc("*:c>")]]tuple-like Tuple>
+  constexpr decltype(auto) apply(F&& f, Tuple&& t) noexcept([[redoc("[=seebelow]")]]);
 [codeblock:end]
 
 [div:description]
@@ -16,7 +16,7 @@ template<class F, class Tuple>
 
 [codeblock]
 namespace std {
-  template<class F, class Tuple, size_t... I>
+  template<class F, [[redoc("*:c>")]]tuple-like Tuple, size_t... I>
   constexpr decltype(auto) [[redoc("^>")]]apply-impl(F&& f, Tuple&& t, index_sequence<I...>) {
                                                                         // [=expos]
     return [[redoc("^>")]]INVOKE(std::forward<F>(f), get<I>(std::forward<Tuple>(t))...);     // [:en] see [#func.require] \
@@ -27,16 +27,27 @@ namespace std {
 
 [:en] Equivalent to:
 [:zh_CN] 等价于：
-
 [codeblock]
 return [[redoc("^>")]]apply-impl(std::forward<F>(f), std::forward<Tuple>(t),
                   make_index_sequence<tuple_size_v<remove_reference_t<Tuple>>>{});
+[codeblock:end]
+
+[para:remarks]
+[:en] Let [`I] be the pack
+[`0, 1, ..., (tuple_size_v<remove_reference_t<Tuple>> - 1)].
+[:zh_CN] 令 [`I] 为包组
+[`0, 1, ..., (tuple_size_v<remove_reference_t<Tuple>> - 1)]。
+
+[:en] The exception specification is equivalent to:
+[:zh_CN] 其异常说明等价于：
+[codeblock]
+noexcept(invoke(std::forward<F>(f), get<I>(std::forward<Tuple>(t))...))
 [codeblock:end]
 [div:end]
 
 [%@lib make_from_tuple]
 [codeblock:declaration]
-template<class T, class Tuple>
+template<class T, [[redoc("*:c>")]]tuple-like Tuple>
   constexpr T make_from_tuple(Tuple&& t);
 [codeblock:end]
 
@@ -52,10 +63,9 @@ is [`false].
 [para:effects]
 [:en] Given the exposition-only function:
 [:zh_CN] 给定仅用于阐释的函数：
-
 [codeblock]
 namespace std {
-  template<class T, class Tuple, size_t... I>
+  template<class T, [[redoc("*:c>")]]tuple-like Tuple, size_t... I>
     requires is_constructible_v<T, decltype(get<I>(declval<Tuple>()))...>
   constexpr T @\placeholdernc{make-from-tuple-impl}@(Tuple&& t, index_sequence<I...>) {   // [=expos]
     return T(get<I>(std::forward<Tuple>(t))...);

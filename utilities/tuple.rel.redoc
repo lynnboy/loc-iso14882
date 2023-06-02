@@ -7,9 +7,15 @@
 [codeblock:declaration]
 template<class... TTypes, class... UTypes>
   constexpr bool operator==(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
+template<class... TTypes, [[redoc("*:c>")]]tuple-like UTuple>
+  constexpr bool operator==(const tuple<TTypes...>& t, const UTuple& u);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] For the first overload let [`UTuple] be [`tuple<UTypes...>].
+[:zh_CN] 对于第一种重载，令 [`UTuple] 为 [`tuple<UTypes...>]。
+
 [para:mandates]
 [:en] For all [`i], where [$0 \leq [`i] < [`sizeof...(TTypes)]],
 [`get<i>(t) == get<i>(u)] is a valid expression returning a type that is
@@ -17,18 +23,22 @@ convertible to [`bool].
 [:zh_CN] 对于所有 [`i]，其中 [$0 \leq [`i] < [`sizeof...(TTypes)]]，
 [`get<i>(t) == get<i>(u)] 为有效表达式，且其返回类型可以转换为 [`bool]。
 
-[:en] [`sizeof...(TTypes)] equals [`sizeof...(UTypes)].
-[:zh_CN] [`sizeof...(TTypes)] 等于 [`sizeof...(UTypes)]。
+[:en] [`sizeof...(TTypes)] equals [`tuple_size_v<UTuple>].
+[:zh_CN] [`sizeof...(TTypes)] 等于 [`tuple_size_v<UTuple>]。
 
 [para:returns]
 [:en] [`true] if [`get<i>(t) == get<i>(u)] for all [`i], otherwise [`false].
 [:zh_CN] 若对于所有 [`i] 均有 [`get<i>(t) == get<i>(u)] 则为 [`true]，否则为
 [`false]。
 
-[:en] For any two zero-length tuples [`e] and [`f], [`e == f] returns [`true].
-[:zh_CN] 对于任意两个零长度元组 [`e] 和 [`f]，[`e == f] 返回 [`true]。
+[begin:note]
+[:en] If [`sizeof...(TTypes)] equals zero, returns [`true].
+[:zh_CN] 当 [`sizeof...(TTypes)] 等于零时，返回 [`true]。
+[end:note]
 
 [para:remarks]
+[list]
+[item]
 [:en] The elementary comparisons are performed in order from the zeroth index
 upwards.
 [:zh_CN] 从第零个索引开始依增序进行按元素比较。
@@ -36,6 +46,11 @@ upwards.
 [:en] No comparisons or element accesses are performed after the first equality
 comparison that evaluates to [`false].
 [:zh_CN] 在第一个求值为 [`false] 的比较之后不再实施任何比较或元素访问。
+[item]
+[:en] The second overload is to be found via argument-dependent lookup
+([#basic.lookup.argdep]) only.
+[:zh_CN] 第二种重载仅会被依赖于实参的查找找到（[#basic.lookup.argdep]）。
+[list:end]
 [div:end]
 
 [%@lib@member operator<=>[!tuple]]
@@ -43,17 +58,26 @@ comparison that evaluates to [`false].
 template<class... TTypes, class... UTypes>
   constexpr common_comparison_category_t<[[redoc("^>")]]synth-three-way-result<TTypes, UTypes>...>
     operator<=>(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
+template<class... TTypes, [[redoc("*:c>")]]tuple-like UTuple>
+  constexpr common_comparison_category_t<[[redoc("^>")]]synth-three-way-result<TTypes, Elems>...>
+    operator<=>(const tuple<TTypes...>& t, const UTuple& u);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] For the second overload, [`Elems] denotes the pack of types
+[`tuple_element_t<0, UTuple>], [`tuple_element_t<1, UTuple>], [$\ldots],
+[`tuple_element_t<tuple_size_v<UTuple> - 1, UTuple>].
+[:zh_CN] 对于第二种重载，[`Elems] 代表类型包组
+[`tuple_element_t<0, UTuple>], [`tuple_element_t<1, UTuple>], [$\ldots],
+[`tuple_element_t<tuple_size_v<UTuple> - 1, UTuple>]。
+
 [para:effects]
 [:en] Performs a lexicographical comparison between [`t] and [`u].
 [:zh_CN] 在 [`t] 和 [`u] 之间实施字典序比较。
 
-[:en] For any two zero-length tuples [`t] and [`u], [`t <=> u] returns
-[`strong_ordering::equal].
-[:zh_CN] 对于任意两个零长度元组 [`t] 和 [`u]，[`t <=> u] 返回
-[`strong_ordering::equal]。
+[:en] If [`sizeof...(TTypes)] equals zero, returns [`strong_ordering::equal].
+[:zh_CN] 当 [`sizeof...(TTypes)] 等于零时，返回 [`strong_ordering::equal]。
 
 [:en] Otherwise, equivalent to:
 [:zh_CN] 否则，等价于：
@@ -65,6 +89,11 @@ return t[[redoc("[$_\\mathrm{tail}]")]] <=> u[[redoc("[$_\\mathrm{tail}]")]];
 all but the first element of [`r].
 [:zh_CN@~] 其中对于某个元组 [`r]，[$[`r]_\mathrm{tail}] 为包含 [`r] 除第一个之外
 所有元素的元组。
+
+[para:remarks]
+[:en] The second overload is to be found via argument-dependent lookup
+([#basic.lookup.argdep]) only.
+[:zh_CN] 第二种重载仅会被依赖于实参的查找找到（[#basic.lookup.argdep]）。
 [div:end]
 
 [para]

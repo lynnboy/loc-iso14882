@@ -57,7 +57,7 @@ width, alignment, padding, and decimal precision.
 [rule:end]
 
 [rule:oneof@fmt type [:zh_CN] 类型 ]
-    [| [`a A b B c d e E f F g G o p s x X] ]
+    [| [`a A b B c d e E f F g G o p s x X ?] ]
 [rule:end]
 [syntax:end]
 
@@ -226,7 +226,7 @@ to be used for the conversion.
 
 [:en] This option is valid for arithmetic types other than [`charT] and [`bool]
 or when an integer presentation type is specified, and not otherwise.
-[:zh_CN] 这个选项对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数表示
+[:zh_CN] 这个选项对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数表现
 类型时有效，否则无效。
 
 [:en] For integral types, the alternate form inserts the base prefix (if any)
@@ -251,6 +251,34 @@ from the result.
 [:zh_CN] 此外，对于 [`g] 和 [`G] 转换，不会从结果中移除末尾的零。
 
 [para]
+[:en] A zero ([`0]) character preceding the [~@fmt width] field pads the field
+with leading zeros (following any indication of sign or base) to the field width,
+except when applied to an infinity or NaN.
+[:zh_CN] [~@fmt 宽度]字段前的字符零（[`0]），指定（在任何正负号或基数之后）填充
+前导零直到字段宽度，但不适用于无穷或 NaN 值。
+
+[:en] This option is only valid for arithmetic types other than [`charT] and
+[`bool] or when an integer presentation type is specified.
+[:zh_CN] 这个选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
+表现类型时有效。
+
+[:en] If the [`0] character and an [~@fmt align] option both appear, the [`0]
+character is ignored.
+[:zh_CN] 当同时出现 [`0] 字符和[~@fmt 对齐]选项时，[`0] 字符被忽略。
+
+[begin:example]
+[codeblock]
+char c = 120;
+string s1 = format("{:+06d}", c);       // [:en] value of [`s1] is [`"+00120"] \
+                                        [:zh_CN] [`s1] 的值为 [`"+00120"]
+string s2 = format("{:#06x}", 0xa);     // [:en] value of [`s2] is [`"0x000a"] \
+                                        [:zh_CN] [`s2] 的值为 [`"0x000a"]
+string s3 = format("{:<06}", -42);      // [:en] value of [`s3] is [`"-42   "] ([`0] is ignored because of [`<] alignment) \
+                                        [:zh_CN] [`s3] 的值为 [`"-42   "]（由于 [`<] 对齐而忽略 [`0]）
+[codeblock:end]
+[end:example]
+
+[para]
 [:en] If [`{ [~:opt@fmt arg-id] }] is used in a [~@fmt width] or
 [~@fmt precision], the value of the corresponding formatting argument is used in
 its place.
@@ -258,10 +286,9 @@ its place.
 在其位置上使用对应的格式化实参的值。
 
 [:en] If the corresponding formatting argument is not of integral type, or its
-value is negative for [~@fmt precision] or non-positive for [~@fmt width],
-an exception of type [`format_error] is thrown.
-[:zh_CN] 如果其对应格式化实参不是整形类型，或者对于[~@fmt 精度]其值为负数或对于
-[~@fmt 宽度]为非正数，则抛出 [`format_error] 类型的异常。
+value is negative, an exception of type [`format_error] is thrown.
+[:zh_CN] 如果其对应格式化实参不是整形类型，或者其值为负数，则抛出 [`format_error]
+类型的异常。
 
 [para]
 [:en] The [~@fmt positive-integer] in [~@fmt width] is a decimal integer
@@ -354,34 +381,6 @@ For a string in a non-Unicode encoding, the width of a string is unspecified.
 [:zh_CN] 对于非 Unicode 编码的字符串，未指名字符串宽度。
 
 [para]
-[:en] A zero ([`0]) character preceding the [~@fmt width] field pads the field
-with leading zeros (following any indication of sign or base) to the field width,
-except when applied to an infinity or NaN.
-[:zh_CN] [~@fmt 宽度]字段前的字符零（[`0]），指定（在任何正负号或基数之后）填充
-前导零直到字段宽度，但不适用于无穷或 NaN 值。
-
-[:en] This option is only valid for arithmetic types other than [`charT] and
-[`bool] or when an integer presentation type is specified.
-[:zh_CN] 这个选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
-表现时有效。
-
-[:en] If the [`0] character and an [~@fmt align] option both appear, the [`0]
-character is ignored.
-[:zh_CN] 当同时出现 [`0] 字符和[~@fmt 对齐]选项时，[`0] 字符被忽略。
-
-[begin:example]
-[codeblock]
-char c = 120;
-string s1 = format("{:+06d}", c);       // [:en] value of [`s1] is [`"+00120"] \
-                                        [:zh_CN] [`s1] 的值为 [`"+00120"]
-string s2 = format("{:#06x}", 0xa);     // [:en] value of [`s2] is [`"0x000a"] \
-                                        [:zh_CN] [`s2] 的值为 [`"0x000a"]
-string s3 = format("{:<06}", -42);      // [:en] value of [`s3] is [`"-42   "] ([`0] is ignored because of [`<] alignment) \
-                                        [:zh_CN] [`s3] 的值为 [`"-42   "]（由于 [`<] 对齐而忽略 [`0]）
-[codeblock:end]
-[end:example]
-
-[para]
 [:en] The [~@fmt nonnegative-integer] in [~@fmt precision] is a decimal integer
 defining the precision or maximum field size.
 [:zh_CN] [~@fmt 精度]中的[~@fmt 非负整数]是定义精度或最大字段大小的十进制整数。
@@ -456,6 +455,10 @@ obtained with [`numpunct::truename] or [`numpunct::falsename].
     [:zh_CN] 无，[`s]
 [|] [:en] Copies the string to the output.
     [:zh_CN] 向输出复制字符串。
+[-]
+[|] [`?]
+[|] [:en] Copies the escaped string ([#format.string.escaped]) to the output.
+    [:zh_CN] 向输出复制经转义字符串（[#format.string.escaped]）。
 [-]
 [table:end]
 
@@ -594,6 +597,10 @@ string s3 = format("{:L}", 1234);                       // [:en] value of [`s3] 
 [|] [`b], [`B], [`d], [`o], [`x], [`X]
 [|] [:en] As specified in [#:tab#format.type.int].
     [:zh_CN] 如 [#:tab#format.type.int] 中的规定。
+[-]
+[|] [`?]
+[|] [:en] Copies the escaped string ([#format.string.escaped]) to the output.
+    [:zh_CN] 向输出复制经转义字符串（[#format.string.escaped]）。
 [-]
 [table:end]
 

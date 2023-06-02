@@ -1,0 +1,175 @@
+[section#format.string.escaped
+    [:en] Formatting escaped characters and strings
+    [:zh_CN] 经转义字符和字符串的格式化
+]
+
+[para]
+[:en]
+[%string[!formatted as escaped]]
+[%character[!formatted as escaped]]
+A character or string can be formatted as [+escaped] to make it more suitable
+for debugging or for logging.
+[:zh_CN]
+[%字符串[!格式化为经转义～]]
+[%字符[!格式化为经转义～]]
+可以将字符或字符串格式化为[+经转义]的，以使其更适用于调试或日志。
+
+[para]
+[:en] The escaped string [^E] representation of a string [^S] is constructed by
+encoding a sequence of characters as follows.
+[:zh_CN] 字符串 [^S] 的经转义字符串表示 [^E] 是以如下方式对字符的序列进行编码而
+构造的。
+
+[:en] The associated character encoding [^CE] for [`charT]
+([#:tab#lex.string.literal]) is used to both interpret [^S] and construct [^E].
+[:zh_CN] [^S] 的解释和 [^E] 的构造均适用针对 [`charT] 的关联字符编码
+（[#:tab#lex.string.literal]）。
+
+[list]
+[item]
+[:en] [=unicode(0022,quotation mark)] ([`"]) is appended to [^E].
+[:zh_CN] 向 [^E] 追加 [=unicode(0022,quotation mark)]（[`"]）。
+
+[item]
+[:en] For each code unit sequence [^X] in [^S] that either encodes a single
+character, is a shift sequence, or is a sequence of ill-formed code units,
+processing is in order as follows:
+[:zh_CN] 对于 [^S] 中每个代码单元序列 [^X]，其或者编码单个字符，或者是换档序列，
+或者是非良构代码单元的序列，以如下次序进行处理：
+
+[list]
+[item]
+[:en] If [^X] encodes a single character [^C], then:
+[:zh_CN] 如果 [^X] 编码单个字符 [^C]，则：
+
+[list]
+[item]
+[:en] If [^C] is one of the characters in [#:tab#format.escape.sequences], then
+the two characters shown as the corresponding escape sequence are appended to [^E].
+[:zh_CN] 如果 [^C] 是 [#:tab#format.escape.sequences] 中的字符之一，则将所给出的
+两个字符作为其对应的转移序列追加到 [^E]。
+
+[item]
+[:en] Otherwise, if [^C] is not [=unicode(0020,space)] and
+[:zh_CN] 否则，如果 [^C] 不是 [=unicode(0020,space)] 并且
+
+[list]
+[item]
+[:en] [^CE] is a Unicode encoding and [^C] corresponds to either a UCS scalar
+value whose Unicode property [`General_Category] has a value in the groups
+[`Separator] ([`Z]) or [`Other] ([`C]) or to a UCS scalar value which has the
+Unicode property [`Grapheme_Extend=Yes], as described by table 12 of UAX #44, or
+[:zh_CN] [^CE] 是一种 Unicode 编码，且 [^C] 要么对应于 Unicode 属性
+[`General_Category] 的值属于 [`Separator]（[`Z]）组或 [`Other]（[`C]）组的
+UCS 标量值，要么对应于具有 Unicode 属性 [`Grapheme_Extend=Yes] 的 UCS 标量值，
+如 UAX #44 的表 12 所述，或者
+
+[item]
+[:en] [^CE] is not a Unicode encoding and [^C] is one of an
+implementation-defined set of separator or non-printable characters
+[:zh_CN] [^CE] 不是 Unicode 编码，且 [^C] 为由实现定义的分隔符或不可打印字符集合
+之一
+[list:end]
+
+[:en] then the sequence [`\u{[^hex-digit-sequence]}] is appended to [^E], where
+[`[^hex-digit-sequence]] is the shortest hexadecimal representation of [^C]
+using lower-case hexadecimal digits.
+[:zh_CN] 则将序列 [`\u{[^hex-digit-sequence]}] 追加到 [^E]，其中
+[`[^hex-digit-sequence]] 为 [^C] 使用小写十六进制数字的最短十六进制表示。
+
+[item]
+[:en] Otherwise, [^C] is appended to [^E].
+[:zh_CN] 否则，将 [^C] 追加到 [^E]。
+[list:end]
+
+[item]
+[:en] Otherwise, if [^X] is a shift sequence, the effect on [^E] and further
+decoding of [^S] is unspecified.
+[:zh_CN] 否则，如果 [^X] 是换档序列，则未指明其对 [^E] 的效果和 [^S] 的后续编码。
+
+[para:recommended:~]
+[:en] A shift sequence should be represented in [^E] such that the original code
+unit sequence of [^S] can be reconstructed.
+[:zh_CN] 换档序列在 [^E] 中的表示，最好使其可以重构 [^S] 的原始代码单元序列。
+
+[item]
+[:en] Otherwise ([^X] is a sequence of ill-formed code units), each code unit
+[^U] is appended to [^E] in order as the sequence [`\x{[^hex-digit-sequence]}],
+where [`[^hex-digit-sequence]] is the shortest hexadecimal representation of [^U]
+using lower-case hexadecimal digits.
+[:zh_CN] 否则（[^X] 为非良构代码单元的序列），则将每个代码单元 [^U] 以序列
+[`\x{[^hex-digit-sequence]}] 的形式追加到 [^E]，其中 [`[^hex-digit-sequence]] 为
+[^U] 使用小写十六进制数字的最短十六进制表示。
+[list:end]
+
+[item]
+[:en] Finally, [=unicode(0022,quotation mark)] ([`"]) is appended to [`E].
+[:zh_CN] 最后，向 [^E] 追加 [=unicode(0022,quotation mark)]（[`"]）。
+[list:end]
+
+[table:grid#format.escape.sequences
+    [:en] Mapping of characters to escape sequences
+    [:zh_CN] 字符到转义序列的映射
+    [|  [:en] Character
+        [:zh_CN] 字符 ]
+    [|  [:en] Escape sequence
+        [:zh_CN] 转义序列 ]
+]
+[|] [=unicode(0009,character tabulation)]
+[|] [`\t]
+[-]
+[|] [=unicode(000a,line feed)]
+[|] [`\n]
+[-]
+[|] [=unicode(000d,carriage return)]
+[|] [`\r]
+[-]
+[|] [=unicode(0022,quotation mark)]
+[|] [`\"]
+[-]
+[|] [=unicode(005c,reverse solidus)]
+[|] [`\\]
+[-]
+[table:end]
+
+[para]
+[:en] The escaped string representation of a character [^C] is equivalent to the
+escaped string representation of a string of [^C], except that:
+[:zh_CN] 字符 [^C] 的经转义字符串表示与 [^C] 的字符串的经转义字符串表示相同，但：
+
+[list]
+[item]
+[:en] the result starts and ends with [=unicode(0027,apostrophe)] ([`'])
+instead of [=unicode(0022,quotation mark)] ([`"]), and
+[:zh_CN] 结果的开始和结尾是 [=unicode(0027,apostrophe)]（[`']）而不是
+[=unicode(0022,quotation mark)]（[`"]），并且
+[item]
+[:en] if [^C] is [=unicode(0027,apostrophe)], the two characters [`\'] are
+appended to [^E], and
+[:zh_CN] 若 [^C] 是 [=unicode(0027,apostrophe)]，则向 [^E] 追加两个字符 [`\']，
+并且
+[item]
+[:en] if [^C] is [=unicode(0022,quotation mark)], then [^C] is appended unchanged.
+[:zh_CN] 若 [^C] 是 [=unicode(0022,quotation mark)]，则不改动地追加 [^C]。
+[list:end]
+
+[begin:example]
+[codeblock]
+string s0 = format("[{}]", "h\tllo");               // [:en] [`s0] has value: [``[h    llo`]] \
+                                                    [:zh_CN] [`s0] 的值为：[``[h    llo`]]
+string s1 = format("[{:?}]", "h\tllo");             // [:en] [`s1] has value: [``["h\tllo"`]] \
+                                                    [:zh_CN] [`s1] 的值为：[``["h\tllo"`]]
+string s3 = format("[{:?}, {:?}]", '\'', '"');      // [:en] [`s3] has value: [``['\'', '"'`]] \
+                                                    [:zh_CN] [`s3] 的值为：[``['\'', '"'`]]
+
+// [:en] The following examples assume use of the UTF-8 encoding \
+[:zh_CN] 以下例子假设使用 UTF-8 编码
+string s4 = format("[{:?}]", string("\0 \n \t \x02 \x1b", 9));
+                                                    // [:en] [`s4] has value: [``["\u{0} \n \t \u{2} \u{1b}"`]] \
+                                                    [:zh_CN] [`s4] 的值为：[``["\u{0} \n \t \u{2} \u{1b}"`]]
+string s5 = format("[{:?}]", "\xc3\x28");           // [:en] invalid UTF-8 \
+                                                    [:zh_CN] 无效 UTF-8
+                                                    // [:en@~] [`s5] has value: [``["\x{c3}\x{28}"`]] \
+                                                    [:zh_CN@~] [`s5] 的值为：[``["\x{c3}\x{28}"`]]
+[codeblock:end]
+[end:example]

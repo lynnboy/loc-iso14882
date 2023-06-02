@@ -81,6 +81,66 @@ constructor as an rvalue.
 [end:example]
 [div:end]
 
+[%@lib forward_like]
+[codeblock:declaration]
+template<class T, class U>
+  [[nodiscard]] constexpr auto forward_like(U&& x) noexcept -> [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para]
+[list]
+[item]
+[:en] Let [`[*COPY_CONST](A, B)] be [`const B] if [`A] is a const type,
+otherwise [`B].
+[:zh_CN] 令 [`[*COPY_CONST](A, B)] 在 [`A] 是 const 类型时为 [`const B]，否则为
+[`B]。
+[item]
+[:en] Let [`[*OVERRIDE_REF](A, B)] be [`remove_reference_t<B>&&] if [`A] is an
+rvalue reference type, otherwise [`B&].
+[:zh_CN] 令 [`[*OVERRIDE_REF](A, B)] 在 [`A] 是右值引用类型时为
+[`remove_reference_t<B>&&]，否则为 [`B&]。
+[item]
+[:en] Let [`V] be
+[:zh_CN] 令 [`V] 为
+[codeblock]
+[[redoc("*>")]]OVERRIDE_REF(T&&, [[redoc("*>")]]COPY_CONST(remove_reference_t<T>, remove_reference_t<U>))
+[codeblock:end]
+[list:end]
+
+[para:returns]
+[:en] [`static_cast<V>(x)].
+[:zh_CN] [`static_cast<V>(x)]。
+
+[para:remarks]
+[:en] The return type is [`V].
+[:zh_CN] 返回类型为 [`V]。
+
+[para]
+[begin:example]
+[codeblock]
+struct accessor {
+  vector<string>* container;
+  decltype(auto) operator[](this auto&& self, size_t i) {
+    return std::forward_like<decltype(self)>((*container)[i]);
+  }[[redoc("!>")]];
+};
+void g() {
+  vector v{"a"s, "b"s};
+  accessor a{&v};
+  string& x = a[0];                             // [:en] OK, binds to lvalue reference \
+                                                [:zh_CN] OK，绑定到左值引用
+  string&& y = std::move(a)[0];                 // [:en] OK, is rvalue reference \
+                                                [:zh_CN] OK，为右值引用
+  string const&& z = std::move(as_const(a))[1]; // [:en] OK, is [`const&&] \
+                                                [:zh_CN] OK，为 [`const&&]
+  string& w = as_const(a)[1];                   // [:en] error: will not bind to non-const \
+                                                [:zh_CN] 错误：不会绑定到非 const
+}
+[codeblock:end]
+[end:example]
+[div:end]
+
 [%@lib@raw [`move][![:en]function][:zh_CN]函数]
 [%[`move]]
 [codeblock:declaration]

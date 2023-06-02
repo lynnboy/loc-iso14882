@@ -19,7 +19,7 @@ template<class... TTypes>
 [begin:example]
 [codeblock]
 int i; float j;
-make_tuple(1, ref(i), cref(j))
+make_tuple(1, ref(i), cref(j));
 [codeblock:end]
 
 [:en@~] creates a tuple of type [`tuple<int, int&, const float&>].
@@ -89,80 +89,60 @@ tie(i, ignore, s) = make_tuple(42, 3.14, "C++");
 
 [%@lib tuple_cat]
 [codeblock:declaration]
-template<class... Tuples>
+template<[[redoc("*:c>")]]tuple-like... Tuples>
   constexpr tuple<CTypes...> tuple_cat(Tuples&&... tpls);
 [codeblock:end]
 
 [div:description]
 [para]
-[:en]
-In the following paragraphs, let [$[`T]_i] be the [$i^\text{th}] type in
-[`Tuples], [$[`U]_i] be [`remove_reference_t<Ti>], and [$[`tp]_i] be the
-[$i^\text{th}] parameter in the function parameter pack [`tpls], where all
-indexing is zero-based.
-[:zh_CN]
-下列段落中，令 [$[`T]_i] 为 [`Tuples] 中的第 [$i] 个类型，[$[`U]_i] 为
-[`remove_reference_t<Ti>]]，而 [$[`tp]_i] 为函数形参包组 [`tpls] 中的第 [$i]
-个形参，其中索引均基于零。
+[:en] Let [$n] be [`sizeof...(Tuples)].
+[:zh_CN] 令 [$n] 为 [`sizeof...(Tuples)]。
 
-[para:expects]
-[:en] For all [$i], [$[`U]_i] is the type [$[=cv]_i] [`tuple<Args[$_i]...>],
-where [$[=cv]_i] is the (possibly empty) [$i^\text{th}] [~cv-qualifier-seq] and
-[$[`Args]_i] is the template parameter pack representing the element types in
-[$[`U]_i].
-[:zh_CN] 对于所有 [$i]，[$[`U]_i] 为类型“[$[=cv]_i] [`tuple<Args[_[$i]]...>]”，
-其中 [$[=cv]_i] 为（可能为空的）第 [$i] 个 [~cv-限定符序列]，而 [$[`Args]_i] 为
-表示 [$[`U]_i] 中的元素类型的模板形参包组。
-
-[:en] Let [$[`A]_{ik}] be the [$k^\text{th}] type in [$[`Args]_i].
-[:zh_CN] 令 [$[`A]_{ik}] 为 [$[`Args]_i] 中的第 [$k] 个类型。
-
-[:en] For all [$[`A]_{ik}] the following requirements are met:
-[:zh_CN] 对于所有 [$[`A]_{ik}]，下列规定均得以满足：
-
+[:en] For every integer [$0 \eq i < n]:
+[:zh_CN] 对于每个整数 [$0 \eq i < n]：
 [list]
 [item]
-[:en] If [$[`T]_i] is deduced as an lvalue reference type, then
-[`is_constructible_v<A[$_{ik}], [$[=cv]_i] A[$_{ik}]&> == true], otherwise
-[:zh_CN] 若 [$[`T]_i] 被推断为左值引用类型，则有
-[`is_constructible_v<A[$_{ik}], [$[=cv]_i] A[$_{ik}]&> == true]，否则有
+[:en] Let [$[`T]_i] be the [$i^\text{th}] type in [`Tuples].
+[:zh_CN] 令 [$[`T]_i] 为 [`Tuples] 中的第 [$i] 个类型。
 [item]
-[:en@~] [`is_constructible_v<A[$_{ik}], [$[=cv]_i] A[$_{ik}]&&> == true].
-[:zh_CN@~] [`is_constructible_v<A[$_{ik}], [$[=cv]_i] A[$_{ik}]&&> == true]。
+[:en] Let [$[`U]_i] be [`remove_cvref_t<[$[`T]_i]>].
+[:zh_CN] 令 [$[`U]_i] 为 [`remove_cvref_t<[$[`T]_i]>]。
+[item]
+[:en] Let [$[`tp]_i] be the [$i^\text{th}] element in the function parameter
+pack [`tpls].
+[:zh_CN] 令 [$[`tp]_i] 为函数形参包组 [`tpls] 中的第 [$i] 个元素。
+[item]
+[:en] Let [$[`S]_i] be [`tuple_size_v<[$[`U]_i]>].
+[:zh_CN] 令 [$[`S]_i] 为 [`tuple_size_v<[$[`U]_i]>]。
+[item]
+[:en] Let [$[`E]_i^k] be [`tuple_element_t<[$k], [$[`U]_i]>].
+[:zh_CN] 令 [$[`E]_i^k] 为 [`tuple_element_t<[$k], [$[`U]_i]>]。
+[item]
+[:en] Let [$[`e]_i^k] be [`get<[$k]>(std::forward<[$[`T]_i]>([$[`tp]_i]))].
+[:zh_CN] 令 [$[`e]_i^k] 为 [`get<[$k]>(std::forward<[$[`T]_i]>([$[`tp]_i]))]。
+[item]
+[:en] Let [$Elems_i] be a pack of the types [$E_i^0, \dotsc, E_i^{S_{i-1}}].
+[:zh_CN] 令 [$Elems_i] 为类型 [$E_i^0, \dotsc, E_i^{S_{i-1}}] 的包组。
+[item]
+[:en] Let [$elems_i] be a pack of the expressions [$e_i^0, \dotsc, e_i^{S_{i-1}}].
+[:zh_CN] 令 [$elems_i] 为表达式 [$e_i^0, \dotsc, e_i^{S_{i-1}}] 的包组。
 [list:end]
 
-[para:remarks]
-[:en] The types in [`CTypes] are equal to the ordered sequence of the extended
-types [`Args[$_0]..., Args[$_1]..., [$\dotsc], Args[$_{n-1}]...], where [$n] is
-equal to [`sizeof...(Tuples)].
-[:zh_CN] [`Ctypes] 中的各类型等同于展开后类型的有序序列
-[`Args[$_0]..., Args[$_1]..., [$\dotsc], Args[$_{n-1}]...]，其中 [$n] 等于
-[`sizeof...(Tuples)]。
+[:en] The types in [`CTypes] are equal to the ordered sequence of the expanded
+packs of types [`[$Elems_0]...], [`[$Elems_1]...], [$\ldots], [`[$Elems_{n-1}]...].
+[:zh_CN] [`CTypes] 中的各类型等于展开的类型包组的有序序列
+[`[$Elems_0]...], [`[$Elems_1]...], [$\ldots], [`[$Elems_{n-1}]...]。
 
-[:en] Let [`e[$_i]...] be the [$i^\text{th}] ordered sequence of tuple elements
-of the resulting [`tuple] object corresponding to the type sequence [$[`Args]_i].
-[:zh_CN] 令 [`e[$_i]...] 为结果 [`tuple] 对象中对应于类型序列 [$[`Args]_i] 的第
-[$i] 个元组元素的有序序列。
+[:en] Let [`celems] be the ordered sequence of the expanded packs of expressions
+[`[$elems_0]...], [$\ldots], [`[$elems_{n-1}]...].
+[:zh_CN] 令 [`celems] 为展开的表达式包组的有序序列
+[`[$elems_0]...], [$\ldots], [`[$elems_{n-1}]...]。
+
+[para:mandates]
+[:en] [`(is_constructible_v<CTypes, decltype(celems)> && ...)] is [`true].
+[:zh_CN] [`(is_constructible_v<CTypes, decltype(celems)> && ...)] 为 [`true]。
 
 [para:returns]
-[:en] A [`tuple] object constructed by initializing the [${k_i}^\text{th}] type
-element [$[`e]_{ik}] in [`e[$_i]...] with
-[:zh_CN] 一个 [`tuple] 对象，其构造是对于每个有效的 [$k_i] 和每个分组 [$[`e]_i]，
-以
-
-[codeblock:notation]
-get<[$k_i]>(std::forward<T[$_i]>(tp[$_i]))
-[codeblock:end]
-
-[:en@~] for each valid [$k_i] and each group [$[`e]_i] in order.
-[:zh_CN@~] 对 [`e[$_i]...] 中的第 [$k_i] 个类型元素 [$[`e]_{ik}] 进行初始化。
-
-[para]
-[begin:note]
-[:en] An implementation can support additional types in the template parameter
-pack [`Tuples] that support the [`tuple]-like protocol, such as [`pair] and
-[`array].
-[:zh_CN] 实现可以在模板形参包组 [`Tuples] 中支持其他支持 [`tuple] 式协议的类型，
-比如 [`pair] 和 [`array]。
-[end:note]
+[:en] [`tuple<CTypes...>(celems...)].
+[:zh_CN] [`tuple<CTypes...>(celems...)]。
 [div:end]
