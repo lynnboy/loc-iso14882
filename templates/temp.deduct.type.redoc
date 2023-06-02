@@ -58,10 +58,10 @@ non-type values:
 [list]
 [item]
 [:en]
-A function type includes the types of each of the function parameters and the
-return type.
+A function type includes the types of each of the function parameters, the
+return type, and its exception specification.
 [:zh_CN]
-函数类型，其中包括每个函数形参的类型和其返回类型。
+函数类型，其中包括每个函数形参的类型，返回类型，及其异常说明。
 [item]
 [:en]
 A pointer-to-member type includes the type of the class object pointed to and
@@ -278,6 +278,31 @@ void r() {
 [codeblock:end]
 
 [:en]
+Here is an example where the exception specification of a function type
+is deduced:
+[:zh_CN]
+以下为函数类型中的异常说明被推断出来的例子：
+
+[codeblock]
+template<bool E> void f1(void (*)() noexcept(E));
+template<bool> struct A { };
+template<bool B> void f2(void (*)(A<B>) noexcept(B));
+
+void g1();
+void g2() noexcept;
+void g3(A<true>);
+
+void h() {
+  f1(g1);           // [:en] OK, [`E] is [`false] \
+                    [:zh_CN] OK，[`E] 为 [`false]
+  f1(g2);           // [:en] OK, [`E] is [`true] \
+                    [:zh_CN] OK，[`E] 为 [`false]
+  f2(g3);           // [:en] error: [`B] deduced as both [`true] and [`false] \
+                    [:zh_CN] 错误，[`B] 同时被推断为 [`true] 和 [`false]
+}
+[codeblock:end]
+
+[:en]
 Here is an example where a qualification conversion applies between the argument
 type on the function call and the deduced template argument type:
 [:zh_CN]
@@ -315,7 +340,7 @@ void t() {
 
 [para]
 [:en]
-A template type argument [`T], a template template argument [`TT] or a template
+A template type argument [`T], a template template argument [`TT], or a template
 non-type argument [`i] can be deduced if [`P] and [`A] have one of the following
 forms:
 [:zh_CN]
@@ -323,54 +348,57 @@ forms:
 模板非类型实参 [`i] 可以被推断出来：
 
 [syntax:explanation]
-[| [`T] ]
-[| [`[=cv] T] ]
+[| [`[`:opt[=cv]] T] ]
 [| [`T*] ]
 [| [`T&] ]
 [| [`T&&] ]
-[| [`T`[[^integer-constant]`]] ]
-[| [`[~template-name]<T>]
-    [:en] (where [`[~template-name]] refers to a class template)
-    [:zh_CN] （其中 [`[~template-name]] 代表某个类模板） ]
-[| [`[^type](T)] ]
-[| [`T()] ]
-[| [`T(T)] ]
-[| [`T [^type]::*] ]
-[| [`[^type] T::*] ]
-[| [`T T::*] ]
-[| [`T ([^type]::*)()] ]
-[| [`[^type] (T::*)()] ]
-[| [`[^type] ([^type]::*)(T)] ]
-[| [`[^type] (T::*)(T)] ]
-[| [`T ([^type]::*)(T)] ]
-[| [`T (T::*)()] ]
-[| [`T (T::*)(T)] ]
-[| [`[^type]`[i`]] ]
-[| [`[~template-name]<i>]
-    [:en] (where [`[~template-name]] refers to a class template)
-    [:zh_CN] （其中 [`[~template-name]] 代表某个类模板） ]
-[| [`TT<T>] ]
-[| [`TT<i>] ]
-[| [`TT<>] ]
+[| [`[`:opt T]`[[`:opt i]`]] ]
+[| [`[`:opt T]([`:opt T]) noexcept([`:opt i])] ]
+[| [`[`:opt T] [`:opt T]::*] ]
+[| [`[`:opt TT]<T>] ]
+[| [`[`:opt TT]<i>] ]
+[| [`[`:opt TT]<TT>] ]
+[| [`[`:opt TT]<>] ]
 [syntax:end]
 
-[:en@~]
-where [`(T)] represents a parameter-type-list ([#dcl.fct]) where at least one
-parameter type contains a [`T], and [`()] represents a parameter-type-list where
-no parameter type contains a [`T].
-[:zh_CN@~]
-其中 [`(T)] 表示其中至少有一个形参类型含有 [`T] 的形参类型列表（[#dcl.fct]），而
-[`()] 表示其中没有含有 [`T] 的形参类型的形参类型列表。
+[:en@~] where
+[:zh_CN@~] 其中
 
-[:en]
-Similarly, [`<T>] represents template argument lists where at least one argument
-contains a [`T], [`<i>] represents template argument lists where at least one
-argument contains an [`i] and [`<>] represents template argument lists where no
-argument contains a [`T] or an [`i].
-[:zh_CN]
-相似地，[`<T>] 表示其中至少有一个实参含有 [`T] 的模板实参列表，[`<i>] 表示其中
-至少有一个实参含有 [`i] 的模板实参列表而 [`<>] 表示其中没有含有 [`T] 或 [`i] 的
-实参的模板实参列表。
+[list]
+[item]
+[:en] [`:opt T] represents a type or parameter-type-list that either satisfies
+these rules recursively, is a non-deduced context in [`P] or [`A], or is the
+same non-dependent type in [`P] and [`A],
+[:zh_CN@~]
+其中 [`:opt T] 一个类型或形参类型列表，其要么递归地满足这些规则，要么是 [`P] 或
+[`A] 中的非推断语境，要么是 [`P] 和 [`A] 中的相同非待决类型。
+
+[item]
+[:en] [`:opt TT] represents either a class template or a template template
+parameter,
+[:zh_CN] [`:opt TT] 要么表示类模板，要么表示模板模板形参，
+
+[item]
+[:en] [`:opt i] represents an expression that either is an [`i], is
+value-dependent in [`P] or [`A], or has the same constant value in [`P] and [`A],
+and
+[:zh_CN] [`:opt i] 表示一个表达式，要么为 [`i]，在 [`P] 或 [`A] 中值待决，要么
+是 [`P] 和 [`A] 中的相同常量值，以及
+
+[item]
+[:en] [`[`:key noexcept]([`:opt i])] represents an exception specification
+([#except.spec]) in which the (possibly-implicit, see [#dcl.fct])
+[~noexcept-specifier][=']s operand satisfies the rules for an [`:opt i] above.
+[:zh_CN] [`[`:key noexcept]([`:opt i])] 表示一个异常说明（[#except.spec]），其中
+（可能为隐式，见 [#dcl.fct]）[~noexcept-说明符]的操作数满足以上 [`:opt i] 的规则。
+[list:end]
+
+[begin:note]
+[:en] If a type matches such a form but contains no [`T]s, [`i]s, or [`TT]s,
+deduction is not possible.
+[:zh_CN] 如果与这种形式匹配的类型并不包含任何 [`T]，[`i]，或者 [`TT]，那就不可能
+进行推断。
+[end:note]
 
 [para]
 [:en]
@@ -619,6 +647,26 @@ using V = S<int[42]>::Q;        // [:en] OK; [`T] was deduced as [`std::size_t] 
 [end:example]
 
 [para]
+[:en]
+The type of [`B] in the [~noexcept-specifier] [`[`:key noexcept](B)] of a
+function type is [`bool].
+[:zh_CN]
+函数类型的 [~noexcept-说明符] [`[`:key noexcept](B)] 中的 [`B] 的类型为 [`bool]。
+
+[begin:example]
+[codeblock]
+template<bool> struct A { };
+template<auto> struct B;
+template<auto X, void (*F)() noexcept(X)> struct B<F> {
+  A<X> ax;
+};
+void f_nothrow() noexcept;
+B<f_nothrow> bn;                // [:en] OK, type of [`X] deduced as [`bool] \
+                                [:zh_CN] OK，[`X] 的类型被推断为 [`bool]
+[codeblock:end]
+[end:example]
+
+[para]
 [begin:example]
 [codeblock]
 template<class T, T i> void f(int (&a)[i]);
@@ -741,6 +789,13 @@ be [`true] because the array bound will be nonzero.
 因为数组边界是非零的，其结果将总为 [`true]。
 [note:end]
 
+[:en]
+If [`P] has a form that includes [`[`:key noexcept](i)] and the type of [`i] is
+not [`bool], deduction fails.
+[:zh_CN]
+若 [`P] 的形式中包含 [`[`:key noexcept](i)]，且若 [`i] 的类型不是 [`bool]，则
+推断失败。
+
 [begin:example]
 [codeblock]
 template<int i> class A { /* ... */ };
@@ -857,7 +912,7 @@ X<int(int, float, double)> x2;  // [:en] uses partial specialization; [`ArgTypes
                                 [:zh_CN] 使用了部分特化式；[`ArgTypes] 包含 [`float]，[`double]
 X<int(float, int)> x3;          // [:en] uses primary template \
                                 [:zh_CN] 使用了主模板
-Y<> y1;                         // [:en] use primary template; [`Types] is empty \
+Y<> y1;                         // [:en] uses primary template; [`Types] is empty \
                                 [:zh_CN] 使用了主模板；[`Types] 为空
 Y<int&, float&, double&> y2;    // [:en] uses partial specialization; [`T] is [`int&], [`Types] contains [`float], [`double] \
                                 [:zh_CN] 使用了部分特化式；[`T] 为 [`int&]，[`Types] 包含 [`float]，[`double]
