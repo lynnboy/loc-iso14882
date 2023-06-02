@@ -1,0 +1,82 @@
+[section#format.range.fmtmap
+    [:en] Specialization of [*range-default-formatter] for maps
+    [:zh_CN] [*range-default-formatter] 针对映射的特化式
+]
+
+[%@lib [*range-default-formatter]]
+[codeblock:synopsis]
+namespace std {
+  template<ranges::[[redoc("`:c>")]]input_range R, class charT>
+  struct [[redoc("*>")]]range-default-formatter<range_format::map, R, charT> {
+  private:
+    using [[redoc("*>")]]maybe-const-map = [[redoc("*>")]]fmt-maybe-const<R, charT>;                  // [=expos]
+    using [[redoc("*>")]]element-type =                                                // [=expos]
+      remove_cvref_t<ranges::range_reference_t<[[redoc("*>")]]maybe-const-map>>;
+    range_formatter<[[redoc("*>")]]element-type, charT> [[redoc("*>")]]underlying_;                   // [=expos]
+  public:
+    constexpr [[redoc("*>")]]range-default-formatter();
+
+    template<class ParseContext>
+      constexpr typename ParseContext::iterator
+        parse(ParseContext& ctx);
+
+    template<class FormatContext>
+      typename FormatContext::iterator
+        format([[redoc("*>")]]maybe-const-map& r, FormatContext& ctx) const;
+  };
+}
+[codeblock:end]
+
+[%@lib@ctor [*range-default-formatter]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]range-default-formatter();
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] Either:
+[:zh_CN] 以下之一成立：
+[list]
+[item]
+[:en] [*element-type] is a specialization of [`pair], or
+[:zh_CN] [*element-type] 为 [`pair] 的特例，或者
+[item]
+[:en] [*element-type] is a specialization of [`tuple] and [`tuple_size_v<T> == 2].
+[:zh_CN] [*element-type] 为 [`tuple] 的特例，且 [`tuple_size_v<T> == 2]。
+[list:end]
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]underlying_.set_brackets([[redoc("*>")]]STATICALLY-WIDEN<charT>("{"), [[redoc("*>")]]STATICALLY-WIDEN<charT>("}"));
+[[redoc("*>")]]underlying_.underlying().set_brackets({}, {});
+[[redoc("*>")]]underlying_.underlying().set_separator([[redoc("*>")]]STATICALLY-WIDEN<charT>(": "));
+[codeblock:end]
+[div:end]
+
+[%@lib@member parse[![*range-default-formatter]]]
+[codeblock:declaration]
+template<class ParseContext>
+  constexpr typename ParseContext::iterator
+    parse(ParseContext& ctx);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*underlying_].parse(ctx);]
+[:zh_CN] 等价于：[`return [*underlying_].parse(ctx);]
+[div:end]
+
+[%@lib@member format[![*range-default-formatter]]]
+[codeblock:declaration]
+template<class FormatContext>
+  typename FormatContext::iterator
+    format([[redoc("*>")]]maybe-const-map& r, FormatContext& ctx) const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*underlying_].format(r, ctx);]
+[:zh_CN] 等价于：[`return [*underlying_].format(r, ctx);]
+[div:end]

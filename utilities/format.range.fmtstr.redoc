@@ -1,0 +1,73 @@
+[section#format.range.fmtstr
+    [:en] Specialization of [*range-default-formatter] for strings
+    [:zh_CN] [*range-default-formatter] 针对字符串的特化式
+]
+
+[%@lib [*range-default-formatter]]
+[codeblock:synopsis]
+namespace std {
+  template<range_format K, ranges::[[redoc("`:c>")]]input_range R, class charT>
+    requires (K == range_format::string || K == range_format::debug_string)
+  struct [[redoc("*>")]]range-default-formatter<K, R, charT> {
+  private:
+    formatter<basic_string<charT>, charT> [[redoc("*>")]]underlying_;                  // [=expos]
+
+  public:
+    template<class ParseContext>
+      constexpr typename ParseContext::iterator
+        parse(ParseContext& ctx);
+
+    template<class FormatContext>
+      typename FormatContext::iterator
+        format([[redoc("[=seebelow]")]]& r, FormatContext& ctx) const;
+  };
+}
+[codeblock:end]
+
+[para:mandates]
+[:en] [`[`:c same_as]<remove_cvref_t<range_reference_t<R>>, charT>] is [`true].
+[:zh_CN] [`[`:c same_as]<remove_cvref_t<range_reference_t<R>>, charT>] 为 [`true]。
+
+[%@lib@member parse[![*range-default-formatter]]]
+[codeblock:declaration]
+template<class ParseContext>
+  constexpr typename ParseContext::iterator
+    parse(ParseContext& ctx);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto i = [[redoc("*>")]]underlying_.parse(ctx);
+if constexpr (K == range_format::debug_string) {
+  [[redoc("*>")]]underlying_.set_debug_format();
+}
+return i;
+[codeblock:end]
+[div:end]
+
+[%@lib@member format[![*range-default-formatter]]]
+[codeblock:declaration]
+template<class FormatContext>
+  typename FormatContext::iterator
+    format([[redoc("[=seebelow]")]]& r, FormatContext& ctx) const;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The type of [`r] is [`const R&] if [`ranges::[`:c input_range]<const R>]
+is [`true] and [`R&] otherwise.
+[:zh_CN] 当 [`ranges::[`:c input_range]<const R>] 为 [`true] 时，[`r] 的类型为
+[`const R&]，否则为 [`R&]。
+
+[para:effects]
+[:en] Let [`[^s]] be a [`basic_string<charT>] such that [`ranges::equal([^s], r)]
+is [`true].
+[:zh_CN] 令 [`[^s]] 为一个 [`basic_string<charT>] 并使得 [`ranges::equal([^s], r)]
+为 [`true]。
+
+[:en] Equivalent to: [`return [*underlying_].format([^s], ctx);]
+[:zh_CN] 等价于：[`return [*underlying_].format([^s], ctx);]
+[div:end]
