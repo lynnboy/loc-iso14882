@@ -48,3 +48,41 @@ int check(A x, A y) {
                                 [:zh_CN] 调用 #1，之前选择 #3
 }
 [codeblock:end]
+
+[para:diff] [#over.match.oper]
+[?change]
+[:en] Overload resolution may change for equality operators ([#expr.eq]).
+[:zh_CN] 可能改变相等性运算符的重载决议（[#expr.eq]）。
+
+[?rationale]
+[:en] Support calling [`operator==] with reversed order of arguments.
+[:zh_CN] 支持以反转实参顺序调用 [`operator==]。
+
+[?effect]
+[:en] Valid [=CppXVII] code that uses equality operators with conversion functions
+may be ill-formed or have different semantics in this revision of [=Cpp].
+[:zh_CN] 以转换函数使用相等性运算符的有效 [=CppXVII] 代码，在 [=Cpp] 的此版本中
+可能非良构或具有不同语义。
+
+[:en] For example:
+[:zh_CN] 例如：
+
+[codeblock]
+struct A {
+  operator int() const { return 10; }
+};
+
+bool operator==(A, int);        // #1
+// [:en] #2 is built-in candidate: [`bool operator==(int, int);] \
+[:zh_CN] #2 为内建候选：[`bool operator==(int, int);]
+bool b = 10 == A();             // [:en] calls #1 with reversed order of arguments; previously selected #2 \
+                                [:zh_CN] 以反转的实参顺序调用 #1；之前则会选择 #2
+
+struct B {
+  bool operator==(const B&);    // [:en] member function with no cv-qualifier \
+                                [:zh_CN] 没有 cv 限定符的成员函数
+};
+B b1;
+bool eq = (b1 == b1);           // [:en] ambiguous; previously well-formed \
+                                [:zh_CN] 有歧义；之前为良构
+[codeblock:end]

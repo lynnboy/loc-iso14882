@@ -810,6 +810,8 @@ coroutine                               |协程           |函数体中包含`co
 coroutine state                         |协程状态       |为实现协程分配的额外存储<br>调用在承诺类型和全局作用域中搜索的分配函数，尝试实参`(size, p...)`，再尝试`(size)`<br>承诺类型提供成员`get_return_object_on_allocation_failure`调节是否无抛出<br>协程代码完成或暂停协程的句柄`destroy`时销毁状态，在承诺类型和全局作用域中搜索回收函数，尝试实参`(p, size)`，在尝试`(p)`
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
 corresponding instance                  |对应实例       |实现所对应的抽象机器
+corresponding object parameter          |对应对象形参
+corresponding signature                 |对应签名
 counted range                           |计数范围       |迭代器+计数
 counting semaphore                      |计数信号量
 covariant                               |协变           |虚函数返回类型，派生类/基类的单级指针或引用，允许放松cv<br>即覆盖函数可以放宽对返回类型的限制，但不改变返回值（指针）本身

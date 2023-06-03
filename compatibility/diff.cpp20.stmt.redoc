@@ -1,0 +1,36 @@
+[section#diff.cpp20.stmt
+    [:en] [#stmt.stmt]: statements
+    [:zh_CN] [#stmt.stmt]：语句
+]
+
+[para:diff] [#stmt.ranged]
+[?change]
+[:en] The lifetime of temporary objects in the [~for-range-initializer]
+is extended until the end of the loop ([#class.temporary]).
+[:zh_CN] [~for-范围初始化式]中的临时对象的生存期扩展到循环末尾
+（[#class.temporary]）。
+
+[?rationale]
+[:en] Improve usability of the range-based [`:key for] statement.
+[:zh_CN] 提升基于范围的 [`:key for] 语句的可用性。
+
+[?effect]
+[:en] Destructors of some temporary objects are invoked later.
+[:zh_CN] 更晚调用某些临时对象的析构函数。
+
+[:en] For example:
+[:zh_CN] 例如：
+
+[codeblock]
+void f() {
+  std::vector<int> v = { 42, 17, 13 };
+  std::mutex m;
+
+  for (int x :
+       static_cast<void>(std::lock_guard<std::mutex>(m)), v) {  // [:en] lock released in [=CppXX] \
+                                                                [:zh_CN] [=CppXX] 中会释放锁
+    std::lock_guard<std::mutex> guard(m);                       // [:en] OK in [=CppXX], now deadlocks \
+                                                                [:zh_CN] [=CppXX] 中 OK，现在会死锁
+  }
+}
+[codeblock:end]
