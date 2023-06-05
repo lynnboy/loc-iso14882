@@ -8,15 +8,15 @@ namespace std {
   template<class T, class E>
   class expected {
   public:
-    using [[redoc("\%lib@member value_type[!expected]")]]value_type = T;
-    using [[redoc("\%lib@member error_type[!expected]")]]error_type = E;
-    using [[redoc("\%lib@member unexpected_type[!expected]")]]unexpected_type = unexpected<E>;
+    using [[redoc("[=%@lib@member value_type[!expected]]")]]value_type = T;
+    using [[redoc("[=%@lib@member error_type[!expected]]")]]error_type = E;
+    using [[redoc("[=%@lib@member unexpected_type[!expected]]")]]unexpected_type = unexpected<E>;
 
     template<class U>
-    using [[redoc("\%lib@member rebind[!expected]")]]rebind = expected<U, error_type>;
+    using [[redoc("[=%@lib@member rebind[!expected]]")]]rebind = expected<U, error_type>;
 
-    // [:en] [#expected.object.ctor], constructors \
-    [:zh_CN] [#expected.object.ctor]，构造函数
+    // [:en] [#expected.object.cons], constructors \
+    [:zh_CN] [#expected.object.cons]，构造函数
     constexpr expected();
     constexpr expected(const expected&);
     constexpr expected(expected&&) noexcept([[redoc("[=seebelow]")]]);
@@ -29,9 +29,9 @@ namespace std {
       constexpr explicit([[redoc("[=seebelow]")]]) expected(U&& v);
 
     template<class G>
-      constexpr expected(const unexpected<G>&);
+      constexpr explicit([[redoc("[=seebelow]")]]) expected(const unexpected<G>&);
     template<class G>
-      constexpr expected(unexpected<G>&&);
+      constexpr explicit([[redoc("[=seebelow]")]]) expected(unexpected<G>&&);
 
     template<class... Args>
       constexpr explicit expected(in_place_t, Args&&...);
@@ -86,6 +86,27 @@ namespace std {
     constexpr E&& error() && noexcept;
     template<class U> constexpr T value_or(U&&) const &;
     template<class U> constexpr T value_or(U&&) &&;
+    template<class G = E> constexpr E error_or(G&&) const &;
+    template<class G = E> constexpr E error_or(G&&) &&;
+
+    // [:en] [#expected.object.monadic], monadic operations \
+    [:zh_CN] [#expected.object.monadic]，monad 式操作
+    template<class F> constexpr auto and_then(F&& f) &;
+    template<class F> constexpr auto and_then(F&& f) &&;
+    template<class F> constexpr auto and_then(F&& f) const &;
+    template<class F> constexpr auto and_then(F&& f) const &&;
+    template<class F> constexpr auto or_else(F&& f) &;
+    template<class F> constexpr auto or_else(F&& f) &&;
+    template<class F> constexpr auto or_else(F&& f) const &;
+    template<class F> constexpr auto or_else(F&& f) const &&;
+    template<class F> constexpr auto transform(F&& f) &;
+    template<class F> constexpr auto transform(F&& f) &&;
+    template<class F> constexpr auto transform(F&& f) const &;
+    template<class F> constexpr auto transform(F&& f) const &&;
+    template<class F> constexpr auto transform_error(F&& f) &;
+    template<class F> constexpr auto transform_error(F&& f) &&;
+    template<class F> constexpr auto transform_error(F&& f) const &;
+    template<class F> constexpr auto transform_error(F&& f) const &&;
 
     // [:en] [#expected.object.eq], equality operators \
     [:zh_CN] [#expected.object.eq]，相等性运算符
@@ -123,13 +144,17 @@ an object of type [`T].
 对象。
 
 [para]
-[:en] A program that instantiates the definition of template [`expected<T, E>]
-for a reference type, a function type, or for possibly cv-qualified types
-[`in_place_t], [`unexpect_t], or a specialization of [`unexpected] for the [`T]
-parameter is ill-formed.
-[:zh_CN] 对于引用类型，函数类型，或者可能被 cv 限定的 [`in_place_t]，[`unexpect_t]，
-或 [`unexpected] 的对于 [`T] 形参的特例，针对它们为 [`expected<T, E>] 实例化其
-定义式的程序非良构。
+[:en] A type [`T] is a [+:% valid value type for [`expected]], if
+[`remove_cv_t<T>] is [`void] or a complete non-array object type that is not
+[`in_place_t], [`unexpect_t], or a specialization of [`unexpected].
+[:zh_CN] 如果 [`remove_cv_t<T>] 为 [`void] 或并非 [`in_place_t]，[`unexpect_t]，
+或 [`unexpected] 的特例的完整非数组对象类型，则类型 [`T] 是[+:% [`expected] 的
+有效值类型]。
+
+[:en] A program which instantiates class template [`expected<T, E>] with an
+argument [`T] that is not a valid value type for [`expected] is ill-formed.
+[:zh_CN] 以并非是 [`expected] 的有效值类型的实参 [`T] 来实例化类模板
+[`expected<T, E>] 的程序非良构。
 
 [:en] A program that instantiates the definition of the template [`expected<T, E>]
 with a type for the [`E] parameter that is not a valid template argument for

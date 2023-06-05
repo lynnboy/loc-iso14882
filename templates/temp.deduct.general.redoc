@@ -266,10 +266,28 @@ deduced or obtained from default arguments are substituted.
 
 [para]
 [:en]
-The substitution occurs in all types and expressions that are used in the
-function type and in template parameter declarations.
+[%deduction[!deduction substitution loci]]
+The [+deduction substitution loci] are
 [:zh_CN]
-这种代换发生在函数类型和模板形参声明式中所使用的所有类型和表达式上。
+[%推断[!推断代换位置]]
+[+推断代换位置]为
+[list]
+[item]
+[:en@~] the function type outside of the [~noexcept-specifier],
+[:zh_CN@~] [~noexcept-说明符]外面的函数类型，
+[item]
+[:en@~] the [~explicit-specifier], and
+[:zh_CN@~] 其 [~explicit-说明符]，以及
+[item]
+[:en@~] the template parameter declarations.
+[:zh_CN@~] 各模板实参声明式。
+[list:end]
+
+[:en]
+The substitution occurs in all types and expressions that are used in the
+deduction substitution loci.
+[:zh_CN]
+这种代换发生在推断代换位置中所使用的所有类型和表达式上。
 
 [:en]
 The expressions include not only constant expressions such as those that appear
@@ -354,12 +372,10 @@ Access checking is done as part of the substitution process.
 [end:note]
 
 [:en]
-Only invalid types and expressions in the immediate context of the function type,
-its template parameter types, and its [~explicit-specifier] can result in
-a deduction failure.
+Invalid types and expressions can result in a deduction failure
+only in the immediate context of the deduction substitution loci.
 [:zh_CN]
-只有函数类型，其模板形参的类型，以及其 [~explicit-说明符]的直接语境中的无效类型
-和表达式才能导致推断失败。
+仅在推断代换位置的直接语境中，无效的类型和表达式可以导致推断失败。
 
 [begin:note]
 [:en]
@@ -578,9 +594,12 @@ Attempting to give an invalid type to a non-type template parameter.
 [begin:example]
 [codeblock]
 template <class T, T> struct S {};
-template <class T> int f(S<T, T()>*);
-struct X {};
-int i0 = f<X>(0);
+template <class T> int f(S<T, T{}>*);   // #1
+class X {
+  int m;
+};
+int i0 = f<X>(0);   // [:en] #1 uses a value of non-structural type [`X] as a non-type template argument \
+                    [:zh_CN] #1 使用费结构化类型 [`X] 的值作为非类型模板实参
 [codeblock:end]
 [end:example]
 
@@ -594,7 +613,7 @@ expression, or an expression used in the function declaration.
 [begin:example]
 [codeblock]
 template <class T, T*> int f(int);
-int i2 = f<int,1>(0);           // [:en] can[=']t conv [`1] to [`int*] \
+int i2 = f<int,1>(0);           // [:en] can[=']t convert [`1] to [`int*] \
                                 [:zh_CN] 不能把 [`1] 转换为 [`int*]
 [codeblock:end]
 [end:example]
