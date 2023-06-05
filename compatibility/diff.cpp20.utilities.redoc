@@ -52,7 +52,6 @@ may become ill-formed.
 
 [:en] For example:
 [:zh_CN] 例如：
-
 [codeblock]
 struct tiny {
   int bit: 1;
@@ -62,3 +61,51 @@ auto t = tiny();
 std::format("{}", t.bit);       // [:en] ill-formed, previously returned [`"0"] \
                                 [:zh_CN] 非良构，之前返回 [`"0"]
 [codeblock:end]
+
+[para:diff] [#format.string.std]
+[?change]
+[:en] Restrict types of formatting arguments used as [~@fmt width] or
+[~@fmt precision] in a [~@fmt std-format-spec].
+[:zh_CN] 限制了用作[~@fmt 标准格式说明]中[~@fmt 宽度]或[~@fmt 精度]的格式化实参
+的类型。
+
+[?rationale]
+[:en] Disallow types that do not have useful or portable semantics as
+a formatting width or precision.
+[:zh_CN] 禁止没有有意义或可移植语义的类型作为格式化宽度或精度。
+
+[?effect]
+[:en] Valid [=CppXX] code that passes a boolean or character type as
+[~@fmt arg-id] becomes invalid.
+[:zh_CN] 将布尔或字符类型作为[~@fmt 实参标识]的类型传递的有效 [=CppXX] 代码变为
+无效。
+
+[:en] For example:
+[:zh_CN] 例如：
+[codeblock]
+std::format("{:*^{}}", "", true);   // [:en] ill-formed, previously returned [`"*"] \
+                                    [:zh_CN] 非良构，之前返回 [`"*"]
+std::format("{:*^{}}", "", '1');    // [:en] ill-formed, previously returned an \
+                                    [:zh_CN] 非良构，之前返回
+                                    // [:en@~] implementation-defined number of [`'*'] characters \
+                                    [:zh_CN@~] 由实现定义的数量的 [`'*'] 字符
+[codeblock:end]
+
+[para:diff] [#format.formatter.spec]
+[?change]
+[:en] Removed the [`formatter] specialization:
+[:zh_CN] 移除 [`formatter] 特化式：
+[codeblock]
+template<size_t N> struct formatter<const charT[N], charT>;
+[codeblock:end]
+
+[?rationale]
+[:en] The specialization is inconsistent with the design of [`formatter],
+which is intended to be instantiated only with cv-unqualified object types.
+[:zh_CN] 该特化式与 [`formatter] 的设计不一致，其本意仅用于对 cv 未限定的对象
+类型实例化。
+
+[?effect]
+[:en] Valid [=CppXX] code that instantiated the removed specialization
+can become ill-formed.
+[:zh_CN] 实例化被移除特化式的有效 [=CppXX] 代码变得非良构。
