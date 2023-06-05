@@ -3,7 +3,6 @@
     [:zh_CN] 类模板 [`join_view::[*iterator]]
 ]
 
-[%@lib join_view::iterator]
 [codeblock:synopsis]
 namespace std::ranges {
   template<[[redoc("`:c>")]]input_range V>
@@ -20,7 +19,7 @@ namespace std::ranges {
       is_reference_v<range_reference_t<[[redoc("*>")]]Base>>;
 
     [[redoc("*>")]]OuterIter [[redoc("*>")]]outer_ = [[redoc("*>")]]OuterIter();                             // [=expos]
-    [[redoc("*>")]]InnerIter [[redoc("*>")]]inner_ = [[redoc("*>")]]InnerIter();                             // [=expos]
+    optional<[[redoc("*>")]]InnerIter> [[redoc("*>")]]inner_;                                 // [=expos]
     [[redoc("*>")]]Parent* [[redoc("*>")]]parent_  = nullptr;                                 // [=expos]
 
     constexpr void [[redoc("*>")]]satisfy();                                   // [=expos]
@@ -32,15 +31,14 @@ namespace std::ranges {
     using value_type        = range_value_t<range_reference_t<[[redoc("*>")]]Base>>;
     using difference_type   = [[redoc("[=seebelow]")]];
 
-    [[redoc("*>")]]iterator() requires [[redoc("`:c>")]]default_initializable<[[redoc("*>")]]OuterIter> &&
-                        [[redoc("`:c>")]]default_initializable<[[redoc("*>")]]InnerIter> = default;
+    [[redoc("*>")]]iterator() requires [[redoc("`:c>")]]default_initializable<[[redoc("*>")]]OuterIter> = default;
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]OuterIter outer);
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
       requires Const &&
                [[redoc("`:c>")]]convertible_to<iterator_t<V>, [[redoc("*>")]]OuterIter> &&
                [[redoc("`:c>")]]convertible_to<iterator_t<[[redoc("*>")]]InnerRng>, [[redoc("*>")]]InnerIter>;
 
-    constexpr decltype(auto) operator*() const { return *[[redoc("*>")]]inner_; }
+    constexpr decltype(auto) operator*() const { return **[[redoc("*>")]]inner_; }
 
     constexpr [[redoc("*>")]]InnerIter operator->() const
       requires [[redoc("*:c>")]]has-arrow<[[redoc("*>")]]InnerIter> && [[redoc("`:c>")]]copyable<[[redoc("*>")]]InnerIter>;
@@ -66,12 +64,12 @@ namespace std::ranges {
                [[redoc("`:c>")]]equality_comparable<iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
 
     friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& i)
-    noexcept(noexcept(ranges::iter_move(i.[[redoc("*>")]]inner_))) {
-      return ranges::iter_move(i.[[redoc("*>")]]inner_);
+    noexcept(noexcept(ranges::iter_move(*i.[[redoc("*>")]]inner_))) {
+      return ranges::iter_move(*i.[[redoc("*>")]]inner_);
     }
 
     friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]inner_, y.[[redoc("*>")]]inner_)))
+      noexcept(noexcept(ranges::iter_swap(*x.[[redoc("*>")]]inner_, *y.[[redoc("*>")]]inner_)))
       requires [[redoc("`:c>")]]indirectly_swappable<[[redoc("*>")]]InnerIter>;
   };
 }
@@ -181,15 +179,15 @@ auto update_inner = [this](const iterator_t<[[redoc("*>")]]Base> x) -> auto& {
 for (; [[redoc("*>")]]outer_ != ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_); ++[[redoc("*>")]]outer_) {
   auto&& inner = update_inner([[redoc("*>")]]outer_);
   [[redoc("*>")]]inner_ = ranges::begin(inner);
-  if ([[redoc("*>")]]inner_ != ranges::end(inner))
+  if (*[[redoc("*>")]]inner_ != ranges::end(inner))
     return;
 }
 if constexpr ([[redoc("*>")]]ref-is-glvalue)
-  [[redoc("*>")]]inner_ = [[redoc("*>")]]InnerIter();
+  [[redoc("*>")]]inner_.reset();
 [codeblock:end]
 [div:end]
 
-[%@lib@ctor join_view::iterator]
+[%@lib@ctor join_view::[*iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]OuterIter outer)
 [codeblock:end]
@@ -202,7 +200,7 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]
 初始化 [*parent_]；然后调用 [`[*satisfy]()]。
 [div:end]
 
-[%@lib@ctor join_view::iterator]
+[%@lib@ctor join_view::[*iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
   requires Const &&
@@ -218,7 +216,7 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
 [`std::move(i.[*inner_])] 初始化 [*inner_]，并以 [`i.[*parent_]] 初始化 [*parent_]。
 [div:end]
 
-[%@lib@member operator->[!join_view::iterator]]
+[%@lib@member operator->[!join_view::[*iterator]]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]InnerIter operator->() const
   requires [[redoc("*:c>")]]has-arrow<[[redoc("*>")]]InnerIter> && [[redoc("`:c>")]]copyable<[[redoc("*>")]]InnerIter>;
@@ -226,11 +224,11 @@ constexpr [[redoc("*>")]]InnerIter operator->() const
 
 [div:description]
 [para:effects]
-[:en] Equivalent to [`return [*inner_];]
-[:zh_CN] 等价于 [`return [*inner_];]
+[:en] Equivalent to [`return *[*inner_];]
+[:zh_CN] 等价于 [`return *[*inner_];]
 [div:end]
 
-[%@lib@member operator++[!join_view::iterator]]
+[%@lib@member operator++[!join_view::[*iterator]]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator& operator++();
 [codeblock:end]
@@ -253,7 +251,7 @@ constexpr [[redoc("*>")]]iterator& operator++();
 [:zh_CN] 等价于：
 [codeblock]
 auto&& inner_rng = [[redoc("^>")]]inner-range;
-if (++[[redoc("*>")]]inner_ == ranges::end(inner_rng)) {
+if (++*[[redoc("*>")]]inner_ == ranges::end(inner_rng)) {
   ++[[redoc("*>")]]outer_;
   [[redoc("*>")]]satisfy();
 }
@@ -261,7 +259,7 @@ return *this;
 [codeblock:end]
 [div:end]
 
-[%@lib@member operator++[!join_view::iterator]]
+[%@lib@member operator++[!join_view::[*iterator]]]
 [codeblock:declaration]
 constexpr void operator++(int);
 [codeblock:end]
@@ -272,7 +270,7 @@ constexpr void operator++(int);
 [:zh_CN] 等价于：[`++*this]。
 [div:end]
 
-[%@lib@member operator++[!join_view::iterator]]
+[%@lib@member operator++[!join_view::[*iterator]]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator operator++(int)
   requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base> &&
@@ -290,7 +288,7 @@ return tmp;
 [codeblock:end]
 [div:end]
 
-[%@lib@member operator--[!join_view::iterator]]
+[%@lib@member operator--[!join_view::[*iterator]]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator& operator--()
   requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base> &&
@@ -305,14 +303,14 @@ constexpr [[redoc("*>")]]iterator& operator--()
 [codeblock]
 if ([[redoc("*>")]]outer_ == ranges::end([[redoc("*>")]]parent_->vbase_))
   [[redoc("*>")]]inner_ = ranges::end(*--[[redoc("*>")]]outer_);
-while ([[redoc("*>")]]inner_ == ranges::begin(*[[redoc("*>")]]outer_))
-  [[redoc("*>")]]inner_ = ranges::end(*--[[redoc("*>")]]outer_);
---[[redoc("*>")]]inner_;
+while (*[[redoc("*>")]]inner_ == ranges::begin(*[[redoc("*>")]]outer_))
+  *[[redoc("*>")]]inner_ = ranges::end(*--[[redoc("*>")]]outer_);
+--*[[redoc("*>")]]inner_;
 return *this;
 [codeblock:end]
 [div:end]
 
-[%@lib@member operator--[!join_view::iterator]]
+[%@lib@member operator--[!join_view::[*iterator]]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator operator--(int)
   requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]bidirectional_range<[[redoc("*>")]]Base> &&
@@ -331,7 +329,7 @@ return tmp;
 [codeblock:end]
 [div:end]
 
-[%@lib@member operator==[!join_view::iterator]]
+[%@lib@member operator==[!join_view::[*iterator]]]
 [codeblock:declaration]
 friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
   requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]Base>> &&
@@ -346,15 +344,15 @@ friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc
 [`return x.[*outer_] == y.[*outer_] && x.[*inner_] == y.[*inner_];]
 [div:end]
 
-[%@lib@member iter_swap[!join_view::iterator]]
+[%@lib@member iter_swap[!join_view::[*iterator]]]
 [codeblock:declaration]
 friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]inner_, y.[[redoc("*>")]]inner_)))
+  noexcept(noexcept(ranges::iter_swap(*x.[[redoc("*>")]]inner_, *y.[[redoc("*>")]]inner_)))
   requires [[redoc("`:c>")]]indirectly_swappable<[[redoc("*>")]]InnerIter>;
 [codeblock:end]
 
 [div:description]
 [para:effects]
-[:en] Equivalent to: [`return ranges::iter_swap(x.[*inner_], y.[*inner_]);]
-[:zh_CN] 等价于：[`return ranges::iter_swap(x.[*inner_], y.[*inner_]);]
+[:en] Equivalent to: [`return ranges::iter_swap(*x.[*inner_], *y.[*inner_]);]
+[:zh_CN] 等价于：[`return ranges::iter_swap(*x.[*inner_], *y.[*inner_]);]
 [div:end]

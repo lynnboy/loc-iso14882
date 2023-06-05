@@ -77,10 +77,10 @@ returns [`:key true].
 [para]
 [:en]
 A variable is [+potentially-constant] if it is constexpr or it has reference or
-const-qualified integral or enumeration type.
+non-volatile const-qualified integral or enumeration type.
 [:zh_CN]
-如果变量是 constexpr 变量，或者它具有引用或 [`const] 限定的整型或枚举类型，则它
-是[+潜在常量]。
+如果变量是 constexpr 变量，或者它具有引用或非 volatile 的 const 限定的整型或
+枚举类型，则它是[+潜在常量]。
 
 [para]
 [:en]
@@ -159,10 +159,22 @@ class member access expression ([#expr.ref]);
 [item]
 [:en]
 a control flow that passes through a declaration of a variable with static
-([#basic.stc.static]) or thread ([#basic.stc.thread]) storage duration;
+([#basic.stc.static]) or thread ([#basic.stc.thread]) storage duration, unless
+that variable is usable in constant expressions;
 [:zh_CN]
 控制流通过具有静态（[#basic.stc.static]）或线程（[#basic.stc.thread]）存储期的
-变量的声明式。
+变量的声明式，除非该变量可在常量表达式中使用；
+
+[begin:example]
+[codeblock]
+constexpr char test() {
+  static const int x = 5;
+  static constexpr char c[] = "Hello World";
+  return *(c + x);
+}
+static_assert(' ' == test());
+[codeblock:end]
+[end:example]
 
 [item]
 [:en]
@@ -534,30 +546,22 @@ constexpr int y = h(1);             // [:en] OK, initializes [`y] with the value
 [para]
 [:en]
 For the purposes of determining whether an expression [$E] is a core constant
-expression, the evaluation of a call to a member function of [`std::allocator<T>]
-as defined in [#allocator.members], where [`T] is a literal type, does not
-disqualify [$E] from being a core constant expression, even if the actual
-evaluation of such a call would otherwise fail the requirements for a core
-constant expression.
+expression, the evaluation of the body of a member function of [`std::allocator<T>]
+as defined in [#allocator.members], where [`T] is a literal type, is ignored.
 [:zh_CN]
-在确定某个表达式 [$E] 是否是核心常量表达式时，对 [#allocator.members] 中所定义的
-[`std::allocator<T>]（其中 [`T] 为字面类型）的成员函数的调用的求值，并不会导致
-[$E] 无法作为核心常量表达式，即便对这样的调用的实际求值其实不满足对核心常量
-表达式的规定也是如此。
+在确定某个表达式 [$E] 是否是核心常量表达式时，忽略对 [#allocator.members] 中
+所定义的 [`std::allocator<T>]（其中 [`T] 为字面类型）的成员函数的函数体的求值。
 
 [:en]
-Similarly, the evaluation of a call to [`std::construct_at] or
-[`std::ranges::construct_at] ([#specialized.construct]) does not disqualify [$E]
-from being a core constant expression unless the first argument, of type [`T*],
-does not point to storage allocated with [`std::allocator<T>] or to an object
-whose lifetime began within the evaluation of [$E], or the evaluation of the
-underlying constructor call disqualifies [$E] from being a core constant expression.
+Similarly, the evaluation of the body of [`std::construct_at] or
+[`std::ranges::construct_at] is considered to include only the underlying
+constructor call if the first argument (of type [`T*]) points to storage
+allocated with [`std::allocator<T>] or to an object whose lifetime began within
+the evaluation of [$E].
 [:zh_CN]
-类似地，对 [`std::construct_at] 或 [`std::ranges::construct_at]
-（[#specialized.construct]）的调用的求值并不会导致 [$E] 无法作为核心常量表达式，
-除非其首个实参（类型为 [`T*]）并不指向由 [`std::allocator<T>] 所分配的存储或某个
-生存期开始于 [$E] 的求值期间的对象，或者对底层构造函数的调用的求值导致 [$E] 无法
-作为核心常量表达式。
+类似地，[`std::construct_at] 或 [`std::ranges::construct_at] 的函数体的求值，
+在其第一个实参（类型为 [`T*]）指向由 [`std::allocator<T>] 所分配的存储或某个
+生存期开始于 [$E] 的求值期间的对象时，被当作仅包括其底层构造函数调用。
 
 [para]
 [:en]
@@ -912,8 +916,12 @@ potentially evaluated and either:
 [list]
 [item]
 [:en@~] its innermost enclosing non-block scope is a function parameter scope of
-an immediate function, or
-[:zh_CN@~] 其最内层外围非块作用域是某个直接函数的函数形参作用域，或者
+an immediate function,
+[:zh_CN@~] 其最内层外围非块作用域是某个直接函数的函数形参作用域，
+[item]
+[:en@~] it is a subexpression of a manifestly constant-evaluated expression or
+conversion, or
+[:zh_CN@~] 它是显然常量求值的表达式或转换的子表达式，或者
 [item]
 [:en@~] its enclosing statement is enclosed ([#stmt.pre]) by the
 [~compound-statement] of a consteval if statement ([#stmt.if]).
@@ -922,17 +930,154 @@ an immediate function, or
 [list:end]
 
 [:en]
-An expression or conversion is an [+immediate invocation] if it is a
-potentially-evaluated explicit or implicit invocation of an immediate function
-and is not in an immediate function context.
+An invocation is an [+immediate invocation] if it is a potentially-evaluated
+explicit or implicit invocation of an immediate function and is not in an
+immediate function context.
 [:zh_CN]
-一个表达式或转换，如果它是潜在求值的对某个直接函数的显式或隐式调用，且并非处于
-直接函数语境之中，则它是一次[+直接调用]。
+一次调用，如果它是潜在求值的对某个直接函数的显式或隐式调用，且并非处于直接函数
+语境之中，则它是一次[+直接调用]。
 
 [:en]
-An immediate invocation shall be a constant expression.
+An aggregate initialization is an immediate invocation
+if it evaluates a default member initializer
+that has a subexpression that is an immediate-escalating expression.
 [:zh_CN]
-直接调用应当是常量表达式。
+如果聚合初始化求值的某个默认成员初始化式带有子表达式是直接性扩散表达式，则它是
+一次直接调用。
+
+[para]
+[:en]
+[%@defn expression[!immediate-escalating]]
+[%@defn conversion[!immediate-escalating]]
+[%@defn immediate-escalating[!expression][%expression[!immediate-escalating]]]
+[%@defn immediate-escalating[!conversion][%conversion[!immediate-escalating]]]
+An expression or conversion is [+immediate-escalating] if it is not initially in
+an immediate function context and it is either
+[:zh_CN]
+[%@defn 表达式[!直接性扩散]]
+[%@defn 转换[!直接性扩散]]
+[%@defn 直接性扩散[!表达式][%表达式[!直接性扩散]]]
+[%@defn 直接性扩散[!转换][%转换[!直接性扩散]]]
+如果表达式或转换并非起初处于直接函数语境中，且其为以下之一，则它是[+直接性扩散]
+的：
+[list]
+[item]
+[:en] a potentially-evaluated [~id-expression] that denotes an immediate
+function that is not a subexpression of an immediate invocation, or
+[:zh_CN] 代表某个直接函数的潜在求值的[~标识表达式]，它不是某个直接调用的子表达式，
+或者
+[item]
+[:en] an immediate invocation that is not a constant expression and is not a
+subexpression of an immediate invocation.
+[:zh_CN] 并非常量表达式且并非直接调用的子表达式的直接调用。
+[list:end]
+
+[para]
+[:en] [%@defn immediate-escalating[!function][%function[!immediate-escalating]]]
+An [+immediate-escalating[%function[!immediate-escalating]]] function is
+[:zh_CN] [%@defn 直接性扩散[!函数][%函数[!直接性扩散]]]
+[+直接性扩散[%函数[!直接性扩散]]]函数是
+[list]
+[item]
+[:en] the call operator of a lambda that is not declared
+with the [`:key consteval] specifier,
+[:zh_CN] 并非以 [`:key consteval] 说明符声明的 lambda 表达式的的与运算符，
+[item]
+[:en] a defaulted special member function that is not declared with the
+[`:key consteval] specifier, or
+[:zh_CN] 并非以 [`:key consteval] 说明符声明的预置的特殊成员函数，或者
+[item]
+[:en] a function that results from the instantiation of a templated entity
+defined with the [`:key constexpr] specifier.
+[:zh_CN] 从对以 [`:key constexpr] 说明符定义的模板化实体进行实例化所得到的函数。
+[list:end]
+
+[:en]
+An immediate-escalating expression shall appear only in an immediate-escalating
+function.
+[:zh_CN]
+直接性扩散表达式只能出现于直接性扩散函数之中。
+
+[para]
+[:en] An [+:adj immediate[!function]] is a function or constructor that is
+[:zh_CN] [+:adj 直接[!函数]]是以下函数或构造函数：
+[list]
+[item]
+[:en] declared with the [`:key consteval] specifier, or
+[:zh_CN] 以 [`:key consteval] 声明，或者
+[item]
+[:en] an immediate-escalating function [`[^F]] whose function body contains an
+immediate-escalating expression [`[^E]] such that [`[^E]][=']s innermost
+enclosing non-block scope is [`[^F]][=']s function parameter scope.
+[:zh_CN] 直接性扩散函数 [`[^F]]，其函数体包含某个直接性扩散表达式 [`[^E]]，
+使得 [`[^E]] 的最内层外围非块作用域是 [`[^F]] 的函数形参作用域。
+[list:end]
+
+[begin:example]
+[codeblock]
+consteval int id(int i) { return i; }
+constexpr char id(char c) { return c; }
+
+template<class T>
+constexpr int f(T t) {
+  return t + id(t);
+}
+
+auto a = &f<char>;              // [:en] OK, [`f<char>] is not an immediate function \
+                                [:zh_CN] OK，[`f<char>] 不是直接函数
+auto b = &f<int>;               // [:en] error: [`f<int>] is an immediate function \
+                                [:zh_CN] 初吻：[`f<int>] 是直接函数
+
+static_assert(f(3) == 6);       // OK
+
+template<class T>
+constexpr int g(T t) {          // [:en] [`g<int>] is not an immediate function \
+                                [:zh_CN] [`g<int>] 不是直接函数
+  return t + id(42);            // [:en@~] because [`id(42)] is already a constant \
+                                [:zh_CN@~] 因为 [`id(42)] 已经是常量
+}
+
+template<class T, class F>
+constexpr bool is_not(T t, F f) {
+  return not f(t);
+}
+
+consteval bool is_even(int i) { return i % 2 == 0; }
+
+static_assert(is_not(5, is_even));      // OK
+
+int x = 0;
+
+template<class T>
+constexpr T h(T t = id(x)) {    // [:en] [`h<int>] is not an immediate function \
+                                [:zh_CN] [`h<int>] 不是直接函数
+    return t;
+}
+
+template<class T>
+constexpr T hh() {              // [:en] [`hh<int>] is an immediate function \
+                                [:zh_CN] [`hh<int>] 是直接函数
+  return h<T>();
+}
+
+int i = hh<int>();              // [:en] error: [`hh<int>()] is an immediate-escalating expression \
+                                [:zh_CN] 错误：[`hh<int>()] 是直接性扩散函数 \
+                                // [:en@~] outside of an immediate-escalating function \
+                                [:zh_CN@~] 外面的直接性扩散表达式
+
+struct A {
+  int x;
+  int y = id(x);
+};
+
+template<class T>
+constexpr int k(int) {          // [:en] [`k<int>] is not an immediate function because [`A(42)] is a \
+                                [:zh_CN] [`k<int>] 不是直接函数，因为 [`A(42)] 是
+  return A(42).y;               // [:en@~] constant expression and thus not immediate-escalating \
+                                [:zh_CN@~] 常量表达式因而不是直接性扩散的
+}
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]
@@ -1062,11 +1207,9 @@ expression is value-dependent ([#temp.dep.constexpr]).
 
 [item]
 [:en]
-a subexpression of one of the above that is not a subexpression of a nested
-unevaluated operand ([#term.unevaluated.operand]).
+a potentially-evaluated subexpression ([#intro.execution]) of one of the above.
 [:zh_CN]
-以上各项之一的子表达式，且不是某个嵌套的免求值操作数的子表达式
-（[#term.unevaluated.operand]）。
+以上各项之一的潜在求值子表达式（[#intro.execution]）。
 [list:end]
 
 [:en]
@@ -1088,10 +1231,8 @@ potentially constant evaluated, or
 
 [item]
 [:en]
-a variable named by a potentially constant evaluated expression that is either
-a constexpr variable or is of non-volatile const-qualified integral type or of
-reference type.
+a potentially-constant variable named by a potentially constant evaluated
+expression.
 [:zh_CN]
-被潜在常量求值表达式所指名的变量，它要么是 constexpr 变量，要么具有非 volatile
-的 const 限定的整型类型或引用类型。
+被潜在常量求值表达式所指名的潜在常量变量。
 [list:end]

@@ -1,0 +1,55 @@
+[section#expos.only.entity
+    [:en] Exposition-only entities, etc.
+    [:zh_CN] 仅用于阐释的实体等
+]
+
+[para]
+[:en]
+Several entities and [~typedef-name]s defined in [#[=firstlibchapter]] through
+[#[=lastlibchapter]] and [#depr] are only defined for the purpose of exposition.
+[:zh_CN]
+从 [#[=firstlibchapter]] 到 [#[=lastlibchapter]] 以及 [#depr] 中定义的一些
+实体和 [~typedef-名]，只是为了进行阐释的目的而定义的。
+
+[:en]
+The declaration of such an entity or [~typedef-name] is followed by a comment
+ending in [=expos].
+[:zh_CN]
+这种实体或 [~typedef-名]的声明式后面跟着以“[=expos]”结尾的代码注释。
+
+[para]
+[:en]
+The following are defined for exposition only to aid in the specification of the
+library:
+[:zh_CN]
+下面各项仅用于阐释目的而定义，用在程序库的规范中：
+
+[%@lib@raw [`[^decay-copy]][@decay-copy]]
+[codeblock]
+namespace std {
+  template<class T>
+    requires [[redoc("`:c>")]]convertible_to<T, decay_t<T>>
+      constexpr decay_t<T> [[redoc("^>")]]decay-copy(T&& v)
+        noexcept(is_nothrow_convertible_v<T, decay_t<T>>)       // [=expos]
+      { return std::forward<T>(v); }
+
+  constexpr auto [[redoc("^>")]]synth-three-way =
+    []<class T, class U>(const T& t, const U& u)
+      requires requires {
+        { t < u } -> [[redoc("*:c>")]]boolean-testable;
+        { u < t } -> [[redoc("*:c>")]]boolean-testable;
+      }
+    {
+      if constexpr ([[redoc("`:c>")]]three_way_comparable_with<T, U>) {
+        return t <=> u;
+      } else {
+        if (t < u) return weak_ordering::less;
+        if (u < t) return weak_ordering::greater;
+        return weak_ordering::equivalent;
+      }
+    };
+
+  template<class T, class U=T>
+  using [[redoc("^>")]]synth-three-way-result = decltype([[redoc("^>")]]synth-three-way(declval<T&>(), declval<U&>()));
+}
+[codeblock:end]

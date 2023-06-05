@@ -91,7 +91,7 @@ Redoc is a markup language, all special things are in `[]`.
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
-*n-char*                    |*n-字符*       | [lex.charset] | [`-A-Z0-9 `]
+*n-char*                    |*n-字符*       | [lex.charset] | **翻译字符集** - [`}\n`]
 *n-char-sequence*           |*n-字符序列*   | [lex.charset] | *n-字符*__+__
 *named-universal-character* |*具名通用字符* | [lex.charset] | `\N{` *n-字符序列* `}`
 *hex-quad*                  |*hex-四位*     | [lex.charset] | *十六进制数字* **{4}**
@@ -191,8 +191,8 @@ Original   |中文   |章节    |定义
 *lambda-expression*         |*lambda-表达式*| [expr.prim.lambda.general] | *lambda-引导符* ( ∅ \| `<` *模板形参列表* `>` *requires-子句*__?__ ) *属性说明符序列*__?__ *lambda-声明符* *复合语句*
 *lambda-introducer*         |*lambda-引导符*| [expr.prim.lambda.general] | `[` *lambda-俘获式*__?__ `]`
 *lambda-declarator*         |*lambda-声明符*| [expr.prim.lambda.general] | ( ( *lambda-说明符序列* *noexcept-说明符*__?__ \| *noexcept-说明符* ) *属性说明符序列*__?__ )? *尾部返回类型*__?__ \|<br>`(` *形参声明子句* `)` *lambda-说明符序列*__?__ *noexcept-说明符*__?__ *属性说明符序列*__?__ *尾部返回类型*__?__ *requires-子句*__?__
-*lambda-specifier*          |*lambda-说明符*|[expr.prim.lambda.general]| `consteval` \| `constexpr` \| `mutable`
-*labmda-specifier-seq*      |*lambda-说明符序列*|[expr.prim.lambda.general]| ( `consteval` \| `constexpr` \| `mutable` )__\+__
+*lambda-specifier*          |*lambda-说明符*|[expr.prim.lambda.general]| `consteval` \| `constexpr` \| `mutable` \| `static`
+*labmda-specifier-seq*      |*lambda-说明符序列*|[expr.prim.lambda.general]| ( `consteval` \| `constexpr` \| `mutable` \| `static`)__\+__
 *lambda-capture*            |*lambda-俘获式*| [expr.prim.lambda.capture] | *默认俘获符* \| (*默认俘获符* `,`)__?__ *俘获符列表*
 *capture-default*           |*默认俘获符*   | [expr.prim.lambda.capture] | `&` \| `=`
 *capture-list*              |*俘获符列表*   | [expr.prim.lambda.capture] | *俘获符* ( `,` *俘获符* )__*__
@@ -271,7 +271,9 @@ Original   |中文   |章节    |定义
 Original   |中文   |章节    |定义
 |-|-|-|-|
 *declaration-seq*           |*声明式序列*   | [dcl.pre]     | *声明式*__\+__
-*declaration*               |*声明式*       | [dcl.pre]     | *块声明式* \| *无声明说明符函数声明式* \| *函数定义式* \|<br> *模板声明式* \| *推断导引* \| *显式实例化式* \| *显式特化式* \|<br> *导出声明式* \| *连接说明* \| *命名空间定义式* \|<br> *空声明式* \| *属性声明式* \| *模块导入声明式*
+*declaration*               |*声明式*       | [dcl.pre]     | *命名声明式* \| *特殊声明式*
+*declaration*               |*命名声明式*   | [dcl.pre]     | *块声明式* \| *无声明说明符函数声明式* \| *函数定义式* \|<br> *模板声明式* \| *推断导引* \|<br> *连接说明* \| *命名空间定义式* \|<br> *空声明式* \| *属性声明式* \| *模块导入声明式*
+*declaration*               |*特殊声明式*   | [dcl.pre]     | *显式实例化式* \| *显式特化式* \| *导出声明式*
 *block-declaration*         |*块声明式*     | [dcl.pre]     | *简单声明式* \| *asm-声明式* \| *命名空间别名定义式* \|<br> *using-声明式* \| *using-枚举声明式* \| *using-指令* \|<br> *static_assert-声明式* \| *别名声明式* \| *笼统枚举声明式*
 *nodeclspec-function-declaration*|*无声明说明符函数声明式*| [dcl.pre] |*属性说明符序列*__?__ *声明符* `;`
 *alias-declaration*         |*别名声明式*   | [dcl.pre]     | `using` *标识符* *属性说明符序列*__?__ `=` *定义类型标识* `;`
@@ -291,8 +293,7 @@ Original   |中文   |章节    |定义
 *defining-type-specifier-seq*|*定义类型说明符序列*| [dcl.type.general] | *定义类型说明符*__\+__ *属性说明符序列*__?__
 *simple-type-specifier*     |*简单类型说明符*| [dcl.type.simple] | *嵌套名说明符*__?__ （*类型名* \| *模板名*) \|<br> *嵌套名说明符* `template` *简单模板标识* \|<br> *decltype-说明符* \| *占位符类型说明符* \|<br> `char` \| `char8_t` \| `char16_t` \| `char32_t` \| `wchar_t` \|<br> `bool` \| `short` \| `int` \| `long` \|<br> `signed` \| `unsigned` \| `float` \| `double` \| `void`
 *type-name*                 |*类型名*       | [dcl.type.simple] | *类名* \| *枚举名* \| *typedef-名*
-*elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键字* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键字* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> *详述枚举说明符*
-*elaborated-enum-specifier* |*详述枚举说明符*| [dcl.type.elab] | `enum` *嵌套名说明符*__?__ *标识符*
+*elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键字* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键字* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> `enum` *嵌套名说明符*__?__ *标识符*
 *decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
 *placeholder-type-specifier*|*占位符类型说明符*| [dcl.spec.auto.general] | *类型约束*__?__ (`auto` \| `decltype` `(` `auto` `)`)
 *init-declarator-list*      |*带初始化声明符列表*| [dcl.decl.general] | *带初始化声明符* (`,` *带初始化声明符*)__\*__
@@ -316,7 +317,7 @@ Original   |中文   |章节    |定义
 *noptr-abstract-pack-declarator*|*非指针抽象包组声明符*| [dcl.name] | `...` ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
 *parameter-declaration-clause*|*形参声明子句*| [dcl.fct]    | ∅ \| *形参声明式列表* ( `...` \| `,` `...` )__?__
 *parameter-declaration-list*|*形参声明式列表*| [dcl.fct]    | *形参声明式* (`,` *形参声明式*)__\*__
-*parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ `this`__?__ *声明说明符序列* (*声明符* \| *抽象声明符*) (`=` *初始化式子句*)__?__
+*parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ `this`__?__ *声明说明符序列* (*声明符* \| *抽象声明符*)__?__ \|<br> *属性说明符序列*__?__ *声明说明符序列* (*声明符* \| *抽象声明符*)__?__ (`=` *初始化式子句*)
 *initializer*               |*初始化式*     | [dcl.init.general] | *花括号或等号初始化式* \| `(` *表达式列表* `)`
 *brace-or-equal-initializer*|*花括号或等号初始化式*| [dcl.init.general] | `=` *初始化式子句* \| *花括号初始化列表*
 *initializer-clause*        |*初始化式子句* | [dcl.init.general] | *赋值表达式* \| *花括号初始化列表*
@@ -338,7 +339,8 @@ Original   |中文   |章节    |定义
 *enumerator-list*           |*枚举符列表*   | [dcl.enum]    | *枚举符定义式* (`,` *枚举符定义式*)__\*__
 *enumerator-definition*     |*枚举符定义式* | [dcl.enum]    | *枚举符* \| *枚举符* `=` *常量表达式*
 *enumerator*                |*枚举符*       | [dcl.enum]    | *标识符* *属性说明符序列*__?__
-*using-enum-declaration*    |*using-枚举声明式*| [enum.udecl] | `using` *详述枚举说明符* `;`
+*using-enum-declaration*    |*using-枚举声明式*| [enum.udecl] | `using` `enum` *using-枚举声明符* `;`
+*using-enum-declarator*     |*using-枚举声明符*| [enum.udecl] | *嵌套名说明符*__?__ ( *标识符* \| *简单模板标识* )
 *namespace-name*            |*命名空间名*   | [namespace.def.general] | *标识符* \| *命名空间别名*
 *namespace-definition*      |*命名空间定义式*| [namespace.def.general] | *具名命名空间定义式* \| *无名命名空间定义式* \| *嵌套命名空间定义式*
 *named-namespace-definition*|*具名命名空间定义式*| [namespace.def.general] | `inline`__?__ `namespace` *属性说明符序列*__?__ *标识符* `{` *命名空间体* `}`
@@ -354,7 +356,7 @@ Original   |中文   |章节    |定义
 *using-declarator-list*     |*using-声明符列表*| [namespace.udecl] | *using-声明符* `...`__?__ ( `,` *using-声明符* `...`__?__ )__\*__
 *using-declarator*          |*using-声明符* | [namespace.udecl] | `typename`__?__ *嵌套名说明符* *无限定标识*
 *asm-declaration*           |*asm-声明式*   | [dcl.asm]     | *属性说明符序列*__?__ `asm` `(` *字符串字面量* `)` `;`
-*linkage-specification*     |*连接说明*     | [dcl.link]    | `extern` *字符串字面量* ( `{` *声明式序列*__?__ `}` \| *声明式* )
+*linkage-specification*     |*连接说明*     | [dcl.link]    | `extern` *字符串字面量* ( `{` *声明式序列*__?__ `}` \| *命名声明式* )
 *attribute-specifier-seq*   |*属性说明符序列*| [dcl.attr.grammar] | *属性说明符*__\+__
 *attribute-specifier*       |*属性说明符*   | [dcl.attr.grammar] | `[` `[` *属性-using-前缀*__?__ *属性列表* `]` `]` \|<br> *对齐说明符*
 *alignment-specifier*       |*对齐说明符*   | [dcl.attr.grammar] | `alignas` `(` (*类型标识* \| *常量表达式*) `...`__?__ `)`
@@ -376,7 +378,7 @@ Original   |中文   |章节    |定义
 *module-name*               |*模块名*       | [module.unit] | *模块名限定符*__?__ *标识符*
 *module-partition*          |*模块分区*     | [module.unit] | `:` *模块名限定符*__?__ *标识符*
 *module-name-qualifier*     |*模块名限定符* | [module.unit] | ( *标识符* `.` )__\+__
-*export-declaration*        |*导出声明式*   | [module.interface] | `export` ( *声明式* \| `{` *声明式序列*__?__ `}`) \|<br> *导出关键字* *模块导入声明式*
+*export-declaration*        |*导出声明式*   | [module.interface] | `export` ( *命名声明式* \| `{` *声明式序列*__?__ `}`) \|<br> *导出关键字* *模块导入声明式*
 *module-import-declaration* |*模块导入声明式*| [module.import] | *导入关键字* ( *模块名* \| *模块分区* \| *头文件名* ) *属性说明符序列*__?__ `;`
 *global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键字* `;` *声明式序列*__?__
 *private-module-fragment*   |*私有模块分段* | [module.private.frag] | *模块关键字* `:` `private` `;` *声明式序列*__?__
@@ -1064,7 +1066,7 @@ forward progress                        |向前进展，进展 |保证线程会�
 forwarding reference                    |转发引用       |类型模板形参的无cv右值引用
 fraction                                |小数，分数
 free store                              |自由存储       |new/delete 或 malloc() 等所管理的堆内存
-freestanding entity                     |自立式实体
+freestanding item                       |自立式项目
 freestanding implementation             |自立式实现     |无操作系统支持
 friend                                  |友元           |授予友元访问所有成员的能力。不传递，不继承
 friend class                            |友元类
@@ -1154,6 +1156,7 @@ IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
 if statement                            |if 语句
 ill-formed                              |非良构的   |语法或语义无效的代码
+immediate-escalating expression         |直接性扩散表达式
 immediate function                      |直接函数       |以`consteval`修饰的函数
 immediate function context              |直接函数语境   |直接函数的作用域，或consteval if作用域中
 immediate invocation                    |直接调用       |直接函数调用链的入口

@@ -38,7 +38,7 @@ namespace std::ranges {
     concept range = [[redoc("[=seebelow]")]];                                                      // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range = false;                            // [=freestanding]
+    constexpr bool enable_borrowed_range = false;                                   // [=freestanding]
 
   template<class T>
     concept borrowed_range = [[redoc("[=seebelow]")]];                                             // [=freestanding]
@@ -49,6 +49,8 @@ namespace std::ranges {
     using sentinel_t = decltype(ranges::end(declval<R&>()));                        // [=freestanding]
   template<[[redoc("`:c>")]]range R>
     using const_iterator_t = const_iterator<iterator_t<R>>;                         // [=freestanding]
+  template<[[redoc("`:c>")]]range R>
+    using const_sentinel_t = const_sentinel<sentinel_t<R>>;                         // [=freestanding]
   template<[[redoc("`:c>")]]range R>
     using range_difference_t = iter_difference_t<iterator_t<R>>;                    // [=freestanding]
   template<[[redoc("`:c>")]]sized_range R>
@@ -65,7 +67,7 @@ namespace std::ranges {
   // [:en] [#range.sized], sized ranges \
   [:zh_CN] [#range.sized]，有大小范围
   template<class>
-    inline constexpr bool disable_sized_range = false;                              // [=freestanding]
+    constexpr bool disable_sized_range = false;                                     // [=freestanding]
 
   template<class T>
     concept sized_range = [[redoc("[=seebelow]")]];                                                // [=freestanding]
@@ -73,7 +75,7 @@ namespace std::ranges {
   // [:en] [#range.view], views \
   [:zh_CN] [#range.view]，视图
   template<class T>
-    inline constexpr bool enable_view = [[redoc("[=seebelow]")]];                                  // [=freestanding]
+    constexpr bool enable_view = [[redoc("[=seebelow]")]];                                         // [=freestanding]
 
   struct view_base {};                                                              // [=freestanding]
 
@@ -117,26 +119,26 @@ namespace std::ranges {
 
   // [:en] [#range.subrange], sub-ranges \
   [:zh_CN] [#range.subrange]，子范围
-  enum class subrange_kind : bool { unsized, sized };                               // [=freestanding]
+  enum class [[redoc("`:lib>")]]subrange_kind : bool { [[redoc("[%@lib@member unsized[!subrange_kind]]")]]unsized, [[redoc("[%@lib@member sized[!subrange_kind]]")]]sized };                               // [=freestanding]
 
   template<[[redoc("`:c>")]]input_or_output_iterator I, [[redoc("`:c>")]]sentinel_for<I> S = I, subrange_kind K = [[redoc("[=seebelow]")]]>
     requires (K == subrange_kind::sized || ![[redoc("`:c>")]]sized_sentinel_for<S, I>)
   class subrange;                                                                   // [=freestanding]
 
   template<class I, class S, subrange_kind K>
-    inline constexpr bool enable_borrowed_range<subrange<I, S, K>> = true;          // [=freestanding]
+    constexpr bool enable_borrowed_range<subrange<I, S, K>> = true;                 // [=freestanding]
 
   template<size_t N, class I, class S, subrange_kind K>
     requires ((N == 0 && [[redoc("`:c>")]]copyable<I>) || N == 1)
-    constexpr auto get(const subrange<I, S, K>& r);
+    constexpr auto get(const subrange<I, S, K>& r);                                 // [=freestanding]
 
   template<size_t N, class I, class S, subrange_kind K>
     requires (N < 2)
-    constexpr auto get(subrange<I, S, K>&& r);
+    constexpr auto get(subrange<I, S, K>&& r);                                      // [=freestanding]
 }
 
 namespace std {
-  using ranges::get;
+  using ranges::get;                                                                // [=freestanding]
 }
 
 namespace std::ranges {
@@ -144,8 +146,8 @@ namespace std::ranges {
   [:zh_CN] [#range.dangling]，悬挂迭代器处理
   struct dangling;                                                                  // [=freestanding]
 
-  // [:en] [#ranges.elementsof], class template [`elements_of] \
-  [:zh_CN] [#ranges.elementsof]，类模板 [`elements_of]
+  // [:en] [#range.elementsof], class template [`elements_of] \
+  [:zh_CN] [#range.elementsof]，类模板 [`elements_of]
   template<[[redoc("`:c>")]]range R, class Allocator = allocator<byte>>
     struct elements_of;
 
@@ -173,11 +175,11 @@ namespace std::ranges {
   class empty_view;                                                                 // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<empty_view<T>> = true;              // [=freestanding]
+    constexpr bool enable_borrowed_range<empty_view<T>> = true;                     // [=freestanding]
 
   namespace views {
     template<class T>
-      inline constexpr empty_view<T> [[redoc("\%lib@member empty[!views]")]]empty{};                                       // [=freestanding]
+      constexpr empty_view<T> [[redoc("[%@lib@member empty[!views]]")]]empty{};                                              // [=freestanding]
   }
 
   // [:en] [#range.single], single view \
@@ -198,18 +200,18 @@ namespace std::ranges {
   class iota_view;                                                                  // [=freestanding]
 
   template<class W, class Bound>
-    inline constexpr bool enable_borrowed_range<iota_view<W, Bound>> = true;        // [=freestanding]
+    constexpr bool enable_borrowed_range<iota_view<W, Bound>> = true;               // [=freestanding]
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] iota = [[redoc("[=unspec]")]]; }              // [=freestanding]
 
   // [:en] [#range.repeat], repeat view \
   [:zh_CN] [#range.repeat]，重复视图
-  template<[[redoc("`:c>")]]move_constructible W, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
-    requires (is_object_v<W> && [[redoc("`:c>")]]same_as<W, remove_cv_t<W>>
+  template<[[redoc("`:c>")]]move_constructible T, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
+    requires (is_object_v<T> && [[redoc("`:c>")]]same_as<T, remove_cv_t<T>>
       && ([[redoc("*>")]]is-integer-like<Bound> || [[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>))
-  class repeat_view;
+  class repeat_view;                                                                // [=freestanding]
 
-  namespace views { inline constexpr [[redoc("[=unspec]")]] repeat = [[redoc("[=unspec]")]]; }
+  namespace views { inline constexpr [[redoc("[=unspec]")]] repeat = [[redoc("[=unspec]")]]; }            // [=freestanding]
 
   // [:en] [#range.istream], istream view \
   [:zh_CN] [#range.istream]，istream 视图
@@ -221,7 +223,7 @@ namespace std::ranges {
   template<class Val>
     using wistream_view = basic_istream_view<Val, wchar_t>;
 
-  namespace views { template<class T> inline constexpr [[redoc("[=unspec]")]] istream = [[redoc("[=unspec]")]]; }
+  namespace views { template<class T> constexpr [[redoc("[=unspec]")]] istream = [[redoc("[=unspec]")]]; }
 
   // [:en] [#range.adaptor.object], range adaptor objects \
   [:zh_CN] [#range.adaptor.object]，范围适配器对象
@@ -245,7 +247,7 @@ namespace std::ranges {
   class ref_view;                                                                   // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<ref_view<T>> = true;                // [=freestanding]
+    constexpr bool enable_borrowed_range<ref_view<T>> = true;                       // [=freestanding]
 
   // [:en] [#range.owning.view], owning view \
   [:zh_CN] [#range.owning.view]，所有权视图
@@ -254,7 +256,7 @@ namespace std::ranges {
   class owning_view;                                                                // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<owning_view<T>> =                   // [=freestanding]
+    constexpr bool enable_borrowed_range<owning_view<T>> =                          // [=freestanding]
       enable_borrowed_range<T>;
 
   // [:en] [#range.as.rvalue], as rvalue view \
@@ -264,7 +266,7 @@ namespace std::ranges {
   class as_rvalue_view;                                                             // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<as_rvalue_view<T>> =                // [=freestanding]
+    constexpr bool enable_borrowed_range<as_rvalue_view<T>> =                       // [=freestanding]
       enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] as_rvalue = [[redoc("[=unspec]")]]; }         // [=freestanding]
@@ -292,7 +294,7 @@ namespace std::ranges {
   template<[[redoc("`:c>")]]view> class take_view;                                                   // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<take_view<T>> =                     // [=freestanding]
+    constexpr bool enable_borrowed_range<take_view<T>> =                            // [=freestanding]
       enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] take = [[redoc("[=unspec]")]]; }              // [=freestanding]
@@ -312,7 +314,7 @@ namespace std::ranges {
     class drop_view;                                                                // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<drop_view<T>> =                     // [=freestanding]
+    constexpr bool enable_borrowed_range<drop_view<T>> =                            // [=freestanding]
       enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] drop = [[redoc("[=unspec]")]]; }              // [=freestanding]
@@ -325,7 +327,7 @@ namespace std::ranges {
     class drop_while_view;                                                          // [=freestanding]
 
   template<class T, class Pred>
-    inline constexpr bool enable_borrowed_range<drop_while_view<T, Pred>> =         // [=freestanding]
+    constexpr bool enable_borrowed_range<drop_while_view<T, Pred>> =                // [=freestanding]
       enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] drop_while = [[redoc("[=unspec]")]]; }        // [=freestanding]
@@ -385,7 +387,7 @@ namespace std::ranges {
   class common_view;                                                                // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<common_view<T>> =                   // [=freestanding]
+    constexpr bool enable_borrowed_range<common_view<T>> =                          // [=freestanding]
       enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] common = [[redoc("[=unspec]")]]; }            // [=freestanding]
@@ -397,7 +399,8 @@ namespace std::ranges {
   class reverse_view;                                                               // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<reverse_view<T>> = enable_borrowed_range<T>;
+    constexpr bool enable_borrowed_range<reverse_view<T>> =                         // [=freestanding]
+      enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] reverse = [[redoc("[=unspec]")]]; }           // [=freestanding]
 
@@ -417,7 +420,7 @@ namespace std::ranges {
   class as_const_view;                                                              // [=freestanding]
 
   template<class T>
-    inline constexpr bool enable_borrowed_range<as_const_view<T>> =                 // [=freestanding]
+    constexpr bool enable_borrowed_range<as_const_view<T>> =                        // [=freestanding]
       enable_borrowed_range<T>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] as_const = [[redoc("[=unspec]")]] }          // [=freestanding]
@@ -429,7 +432,7 @@ namespace std::ranges {
   class elements_view;                                                              // [=freestanding]
 
   template<class T, size_t N>
-    inline constexpr bool enable_borrowed_range<elements_view<T, N>> =              // [=freestanding]
+    constexpr bool enable_borrowed_range<elements_view<T, N>> =                     // [=freestanding]
       enable_borrowed_range<T>;
 
   template<class R>
@@ -439,9 +442,9 @@ namespace std::ranges {
 
   namespace views {
     template<size_t N>
-      inline constexpr [[redoc("[=unspec]")]] elements = [[redoc("[=unspec]")]];                          // [=freestanding]
-    inline constexpr auto [[redoc("\%lib@member keys[!views]")]]keys = elements<0>;                                       // [=freestanding]
-    inline constexpr auto [[redoc("\%lib@member values[!views]")]]values = elements<1>;                                     // [=freestanding]
+      constexpr [[redoc("[=unspec]")]] elements = [[redoc("[=unspec]")]];                                 // [=freestanding]
+    inline constexpr auto [[redoc("[%@lib@member keys[!views]]")]]keys = elements<0>;                                       // [=freestanding]
+    inline constexpr auto [[redoc("[%@lib@member values[!views]]")]]values = elements<1>;                                     // [=freestanding]
   }
 
   // [:en] [#range.zip], zip view \
@@ -451,7 +454,7 @@ namespace std::ranges {
   class zip_view;                                                                   // [=freestanding]
 
   template<class... Views>
-    inline constexpr bool enable_borrowed_range<zip_view<Views...>> =               // [=freestanding]
+    constexpr bool enable_borrowed_range<zip_view<Views...>> =                      // [=freestanding]
       (enable_borrowed_range<Views> && ...);
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] zip = [[redoc("[=unspec]")]]; }               // [=freestanding]
@@ -473,7 +476,7 @@ namespace std::ranges {
   class adjacent_view;                                                              // [=freestanding]
 
   template<class V, size_t N>
-    inline constexpr bool enable_borrowed_range<adjacent_view<V, N>> =              // [=freestanding]
+    constexpr bool enable_borrowed_range<adjacent_view<V, N>> =                     // [=freestanding]
       enable_borrowed_range<V>;
 
   namespace views {
@@ -505,7 +508,7 @@ namespace std::ranges {
   class chunk_view<V>;                                                              // [=freestanding]
 
   template<class V>
-    inline constexpr bool enable_borrowed_range<chunk_view<V>> =                    // [=freestanding]
+    constexpr bool enable_borrowed_range<chunk_view<V>> =                           // [=freestanding]
       [[redoc("`:c>")]]forward_range<V> && enable_borrowed_range<V>;
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] chunk = [[redoc("[=unspec]")]]; }             // [=freestanding]
@@ -517,7 +520,7 @@ namespace std::ranges {
   class slide_view;                                                                 // [=freestanding]
 
   template<class V>
-    inline constexpr bool enable_borrowed_range<slide_view<V>> =
+    constexpr bool enable_borrowed_range<slide_view<V>> =
       enable_borrowed_range<V>;                                                     // [=freestanding]
 
   namespace views { inline constexpr [[redoc("[=unspec]")]] slide = [[redoc("[=unspec]")]]; }             // [=freestanding]
@@ -534,20 +537,21 @@ namespace std::ranges {
   [:zh_CN] [#range.stride]，跨步视图
   template<[[redoc("`:c>")]]input_range V>
     requires [[redoc("`:c>")]]view<V>
-  class stride_view;
+  class stride_view;                                                                // [=freestanding]
 
   template<class V>
-    inline constexpr bool enable_borrowed_range<stride_view<V>> = enable_borrowed_range<V>;
+    constexpr bool enable_borrowed_range<stride_view<V>> =                          // [=freestanding]
+      enable_borrowed_range<V>;
 
-  namespace views { inline constexpr [[redoc("[=unspec]")]] stride = [[redoc("[=unspec]")]]; }
+  namespace views { inline constexpr [[redoc("[=unspec]")]] stride = [[redoc("[=unspec]")]]; }            // [=freestanding]
 
   // [:en] [#range.cartesian], cartesian product view \
   [:zh_CN] [#range.cartesian]，笛卡尔积视图
   template<[[redoc("`:c>")]]input_range First, [[redoc("`:c>")]]forward_range... Vs>
     requires ([[redoc("`:c>")]]view<First> && ... && [[redoc("`:c>")]]view<Vs>)
-  class cartesian_product_view;
+  class cartesian_product_view;                                                     // [=freestanding]
 
-  namespace views { inline constexpr [[redoc("[=unspec]")]] cartesian_product = [[redoc("[=unspec]")]]; }
+  namespace views { inline constexpr [[redoc("[=unspec]")]] cartesian_product = [[redoc("[=unspec]")]]; } // [=freestanding]
 }
 
 namespace std {

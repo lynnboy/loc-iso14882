@@ -59,9 +59,9 @@ namespace std::ranges {
     friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
       requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
 
-    friend constexpr difference_type operator-([[redoc("*>")]]iterator i, default_sentinel_t)
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& i, default_sentinel_t)
       requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, sentinel_t, First, Vs...>;
-    friend constexpr difference_type operator-(default_sentinel_t, [[redoc("*>")]]iterator i)
+    friend constexpr difference_type operator-(default_sentinel_t, const [[redoc("*>")]]iterator& i)
       requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, sentinel_t, First, Vs...>;
 
     friend constexpr auto iter_move(const [[redoc("*>")]]iterator& i) noexcept([[redoc("[=seebelow]")]]);
@@ -71,7 +71,8 @@ namespace std::ranges {
         [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>>);
 
   private:
-    [[redoc("*>")]]maybe-const<Const, cartesian_product_view>* [[redoc("*>")]]parent_ = nullptr;      // [=expos]
+    using [[redoc("*>")]]Parent = [[redoc("*>")]]maybe-const<Const, cartesian_product_view>;          // [=expos]
+    [[redoc("*>")]]Parent* [[redoc("*>")]]parent_ = nullptr;                                          // [=expos]
     tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
       iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>...> [[redoc("*>")]]current_;                  // [=expos]
 
@@ -82,9 +83,9 @@ namespace std::ranges {
       constexpr void [[redoc("*>")]]prev();                                            // [=expos]
 
     template<class Tuple>
-      constexpr difference_type [[redoc("*>")]]distance-from(Tuple t);                 // [=expos]
+      constexpr difference_type [[redoc("*>")]]distance-from(const Tuple& t) const;    // [=expos]
 
-    constexpr explicit [[redoc("*>")]]iterator(tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
       iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>...> current);                  // [=expos]
   };
 }
@@ -178,7 +179,7 @@ if (it == ranges::begin(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]bases
 
 [codeblock:declaration]
 template<class Tuple>
-  constexpr difference_type [[redoc("*>")]]distance-from(Tuple t);
+  constexpr difference_type [[redoc("*>")]]distance-from(const Tuple& t);
 [codeblock:end]
 
 [div:description]
@@ -190,9 +191,9 @@ template<class Tuple>
 [item]
 [:en] [$[*scaled-size](N)] be the product of
 [`static_cast<difference_type>(ranges::size(std::get<[$N]>([*parent_]->[*bases_])))]
-and [$[*scaled-size](N+1)] if [$N < [`sizeof...(Vs)]], otherwise 
+and [$[*scaled-size](N+1)] if [$N \le [`sizeof...(Vs)]], otherwise 
 [`static_cast<difference_type>(1)];
-[:zh_CN] 当 [$N < [`sizeof...(Vs)]] 时，[$[*scaled-size](N)] 为
+[:zh_CN] 当 [$N \le [`sizeof...(Vs)]] 时，[$[*scaled-size](N)] 为
 [`static_cast<difference_type>(ranges::size(std::get<[$N]>([*parent_]->[*bases_])))]
 和 [$[*scaled-size](N+1)] 的乘积，否则为 [`static_cast<difference_type>(1)]；
 [item]
@@ -219,14 +220,16 @@ and [$[*scaled-size](N+1)]; and
 [div:end]
 
 [codeblock:declaration]
-constexpr explicit [[redoc("*>")]]iterator(tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, tuple<iterator_t<[[redoc("*>")]]maybe-const<Const, First>>,
   iterator_t<[[redoc("*>")]]maybe-const<Const, Vs>>...> current);
 [codeblock:end]
 
 [div:description]
 [para:effects]
-[:en] Initializes [*current_] with [`std::move(current)].
-[:zh_CN] 以 [`std::move(current)] 初始化 [*current_]。
+[:en] Initializes [*parent_] with [`std::move(parent)] and [*current_] with
+[`std::move(current)].
+[:zh_CN] 以 [`std::move(parent)] 初始化 [*parent_] 并以 [`std::move(current)]
+初始化 [*current_]。
 [div:end]
 
 [codeblock:declaration]
@@ -237,8 +240,10 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i) requires Co
 
 [div:description]
 [para:effects]
-[:en] Initializes [*current_] with [`std::move(i.[*current_])].
-[:zh_CN] 以 [`std::move(i.[*current_])] 初始化 [*current_]。
+[:en] Initializes [*parent_] with [`i.[*parent_]] and [*current_] with
+[`std::move(i.[*current_])].
+[:zh_CN] 以 [`i.[*parent_]] 初始化 [*parent_] 并以 [`std::move(i.[*current_])]
+初始化 [*current_]。
 [div:end]
 
 [codeblock:declaration]
@@ -476,7 +481,7 @@ friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, con
 [div:end]
 
 [codeblock:declaration]
-friend constexpr difference_type operator-([[redoc("*>")]]iterator i, default_sentinel_t)
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& i, default_sentinel_t)
   requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
 [codeblock:end]
 
@@ -506,7 +511,7 @@ friend constexpr difference_type operator-([[redoc("*>")]]iterator i, default_se
 [div:end]
 
 [codeblock:declaration]
-friend constexpr difference_type operator-(default_sentinel_t s, [[redoc("*>")]]iterator i)
+friend constexpr difference_type operator-(default_sentinel_t s, const [[redoc("*>")]]iterator& i)
   requires [[redoc("*:c>")]]cartesian-is-sized-sentinel<Const, iterator_t, First, Vs...>;
 [codeblock:end]
 

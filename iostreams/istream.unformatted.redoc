@@ -5,10 +5,15 @@
 
 [para]
 [:en] Each unformatted input function begins execution by constructing an object
-of class [`sentry] with the default argument [`noskipws] (second) argument
-[`true].
-[:zh_CN] 每个无格式输入函数，都以 [`true] 作为 [`noskipws]（第二个）实参构造
-一个类 [`sentry] 的对象开始其执行。
+of type [`ios_base::iostate], termed the local error state, and initializing it
+to [`ios_base::goodbit].
+[:zh_CN] 每个无格式化输入函数，都以构造一个 [`ios_base::iostate] 类型的对象，称之
+为局部错误状态，并将其初始化为 [`ios_base::goodbit] 开始其执行。
+
+[:en] It then creates an object of class [`sentry] with the default argument
+[`noskipws] (second) argument [`true].
+[:zh_CN] 然后它以默认实参 [`true] 作为 [`noskipws]（第二个）实参构造一个类
+[`sentry] 的对象。
 
 [:en] If the [`sentry] object returns [`true], when converted to a value of type
 [`bool], the function endeavors to obtain the requested input.
@@ -16,10 +21,10 @@ of class [`sentry] with the default argument [`noskipws] (second) argument
 该函数尽力获取所请求的输入。
 
 [:en] Otherwise, if the [`sentry] constructor exits by throwing an exception or
-if the [`sentry] object returns [`false], when converted to a value of type
+if the [`sentry] object produces [`false], when converted to a value of type
 [`bool], the function returns without attempting to obtain any input.
 [:zh_CN] 否则，如果 [`sentry] 的构造函数以抛出异常退出，或者当将 [`sentry] 对象
-转换为 [`bool] 类型时返回 [`false]，则该函数将不获取任何输入而返回。
+转换为 [`bool] 类型时产生 [`false]，则该函数将不获取任何输入而返回。
 
 [:en] In either case the number of extracted characters is set to 0; unformatted
 input functions taking a character array of nonzero size as an argument shall
@@ -28,29 +33,27 @@ array.
 [:zh_CN] 各种情况下，其所提取的字符数都设为 0；接受一个非零大小字符数组作为实参
 的无格式输入函数，还应当在该数组的首个位置中存储一个空字符（使用 [`charT()]）。
 
-[:en] If an exception is thrown during input then [`ios_base::badbit] is turned
-on[#:fn] in [`*this][=']s error state.
-[:zh_CN] 如果输入过程中抛出了异常，则在 [`*this] 的错误状态中打开
-[`ios_base::badbit][#:fn]。
+[:en] If [`rdbuf()->sbumpc()] or [`rdbuf()->sgetc()] returns [`traits::eof()],
+then [`ios_base::eofbit] is set in the local error state and the input function
+stops trying to obtain the requested input.
+[:zh_CN] 如果 [`rdbuf()->sbumpc()] 或 [`rdbuf()->sgetc()] 返回了 [`traits::eof()]，
+则在局部错误状态中设置 [`ios_base::eofbit]，且输入函数停止尝试获取所请求的输入。
 
-[note:foot]
-[:en] This is done without causing an [`ios_base::failure] to be thrown.
-[:zh_CN] 这样做不会导致抛出 [`ios_base::failure]。
-[note:end]
+[:en] If an exception is thrown during input then [`ios_base::badbit] is set in
+the local error state, [`*this][=']s error state is set to the local error state,
+and the exception is rethrown if [`(exceptions() & badbit) != 0].
+[:zh_CN] 如果输入过程中抛出了异常，则在局部错误状态中设置 [`ios_base::badbit]，
+将 [`*this] 的错误状态设置为局部错误状态，并在 [`(exceptions() & badbit) != 0]
+时重新抛出异常。
 
-[:en] (Exceptions thrown from [`basic_ios<>::clear()] are not caught or rethrown.)
-[:zh_CN] （从 [`basic_ios<>::clear()] 中抛出的异常不进行捕获或重新抛出。）
+[:en] If no exception has been thrown it stores the number of characters
+extracted in a member object.
+[:zh_CN] 如果未抛出任何异常，则它将所抽取的字符数量存储到一个成员对象中。
 
-[:en] If [`(exceptions()&badbit) != 0] then the exception is rethrown.
-[:zh_CN] 如果 [`(exceptions()&badbit) != 0] 则重新抛出该异常。
-
-[:en] It also counts the number of characters extracted.
-[:zh_CN] 它还要对所提取的字符数进行计数。
-
-[:en] If no exception has been thrown it ends by storing the count in a member
-object and returning the value specified.
-[:zh_CN] 如果没有抛出异常，它最后将该计数值存储到某个成员对象中，并返回其所指定
-的值。
+[:en] After extraction is done, the input function calls [`setstate], which sets
+[`*this][=']s error state to the local error state, and may throw an exception.
+[:zh_CN] 当提取完成后，输入函数调用 [`setstate]，这将 [`*this] 的错误状态设置为
+局部错误状态，并可能会抛出异常。
 
 [:en] In any event the [`sentry] object is destroyed before leaving the
 unformatted input function.
@@ -94,10 +97,10 @@ int_type get();
 is available.
 [:zh_CN] 构造一个 [`sentry] 对象之后，如果有可用的字符则提取一个字符 [`c]。
 
-[:en] Otherwise, the function calls [`setstate(failbit)], which may throw
-[`ios_base::failure] ([#iostate.flags]).
-[:zh_CN] 否则，该函数调用 [`setstate(failbit)]，这可能会抛出
-[`ios_base::failure]（[#iostate.flags]）。
+[:en] Otherwise, [`ios_base::failbit] is set in the input function[=']s local
+error state before [`setstate] is called.
+[:zh_CN] 否则，在调用 [`setstate] 之前在输入函数的局部错误状态中设置
+[`ios_base::failbit]。
 
 [para:returns]
 [:en] [`c] if available, otherwise [`traits::eof()].
@@ -125,10 +128,10 @@ available, and assigns it to [`c].[#:fn]
 [:zh_CN] 注意这个函数并未针对 [`signed char] 和 [`unsigned char] 进行重载。
 [note:end]
 
-[:en] Otherwise, the function calls [`setstate(failbit)] (which may throw
-[`ios_base::failure] ([#iostate.flags])).
-[:zh_CN] 否则，该函数调用 [`setstate(failbit)]，这可能会抛出
-[`ios_base::failure]（[#iostate.flags]）。
+[:en] Otherwise, [`ios_base::failbit] is set in the input function[=']s local
+error state before [`setstate] is called.
+[:zh_CN] 否则，在调用 [`setstate] 之前在输入函数的局部错误状态中设置
+[`ios_base::failbit]。
 
 [para:returns]
 [:en] [`*this].
@@ -164,9 +167,8 @@ into successive locations of an array whose first element is designated by [`s].
 [:en@~] [`n] is less than one or [`n - 1] characters are stored;
 [:zh_CN@~] [`n] 小于一或者已经存储了 [`n - 1] 个字符；
 [item]
-[:en@~] end-of-file occurs on the input sequence (in which case the function
-calls [`setstate(eofbit)]);
-[:zh_CN@~] 输入序列遇到了文件末尾（此时该函数调用 [`setstate(eofbit)]）；
+[:en@~] end-of-file occurs on the input sequence;
+[:zh_CN@~] 输入序列遇到了文件末尾；
 [item]
 [:en@~] [`traits::eq(c, delim)] for the next available input character [`c] (in
 which case [`c] is not extracted).
@@ -175,10 +177,10 @@ which case [`c] is not extracted).
 [list:end]
 
 [para]
-[:en] If the function stores no characters, it calls [`setstate(failbit)] (which
-may throw [`ios_base::failure] ([#iostate.flags])).
-[:zh_CN] 如果函数没有存储任何字符，则它调用 [`setstate(failbit)]（这可能会抛出
-[`ios_base::failure]（[#iostate.flags]））。
+[:en] If the function stores no characters, [`ios_base::failbit] is set in the
+input function[=']s local error state before [`setstate] is called.
+[:zh_CN] 如果函数没有存储任何字符，则在调用 [`setstate] 之前在输入函数的局部
+错误状态中设置 [`ios_base::failbit]。
 
 [:en] In any case, if [`n] is greater than zero it then stores a null character
 into the next successive location of the array.
@@ -243,10 +245,10 @@ rethrown).
 [list:end]
 
 [para]
-[:en] If the function inserts no characters, it calls [`setstate(failbit)],
-which may throw [`ios_base::failure] ([#iostate.flags]).
-[:zh_CN] 如果函数没有插入任何字符，则它调用 [`setstate(failbit)]（这可能会抛出
-[`ios_base::failure]（[#iostate.flags]））。
+[:en] If the function inserts no characters, [`ios_base::failbit] is set in the
+input function[=']s local error state before [`setstate] is called.
+[:zh_CN] 如果函数没有插入任何字符，则在调用 [`setstate] 之前在输入函数的局部
+错误状态中设置 [`ios_base::failbit]。
 
 [para:returns]
 [:en] [`*this].
@@ -293,9 +295,8 @@ into successive locations of an array whose first element is designated by [`s].
 [:zh_CN] 字符的提取和插入持续进行到出现以下情况之一：
 [list]
 [item]
-[:en@~] end-of-file occurs on the input sequence (in which case the function
-calls [`setstate(eofbit)]);
-[:zh_CN@~] 输入序列遇到了文件末尾（此时该函数调用 [`setstate(eofbit)]）；
+[:en@~] end-of-file occurs on the input sequence;
+[:zh_CN@~] 输入序列遇到了文件末尾；
 [item]
 [:en@~] [`traits::eq(c, delim)] for the next available input character [`c] (in
 which case the input character is extracted but not stored);[#:fn]
@@ -330,10 +331,10 @@ the function calls [`setstate(failbit)]).
 [note:end]
 
 [para]
-[:en] If the function extracts no characters, it calls [`setstate(failbit)]
-(which may throw [`ios_base::failure] ([#iostate.flags])).[#:fn]
-[:zh_CN] 如果函数没有提取任何字符，则它调用 [`setstate(failbit)]（这可能会抛出
-[`ios_base::failure]（[#iostate.flags]））[#:fn]。
+[:en] If the function extracts no characters, [`ios_base::failbit] is set in the
+input function[=']s local error state before [`setstate] is called.[#:fn]
+[:zh_CN] 如果函数没有提取到任何字符，则在调用 [`setstate] 之前在输入函数的局部
+错误状态中设置 [`ios_base::failbit][#:fn]。
 
 [note:foot]
 [:en] This implies an empty input line will not cause [`failbit] to be set.

@@ -5,27 +5,44 @@
 
 [para]
 [:en] Each formatted input function begins execution by constructing an object
-of class [`sentry] with the [`noskipws] (second) argument [`false].
-[:zh_CN] 每个格式化输入函数，都以 [`false] 作为 [`noskipws]（第二个）实参构造
-一个类 [`sentry] 的对象开始其执行。
+of type [`ios_base::iostate], termed the local error state, and initializing it
+to [`ios_base::goodbit].
+[:zh_CN] 每个格式化输入函数，都以构造一个 [`ios_base::iostate] 类型的对象，称之
+为局部错误状态，并将其初始化为 [`ios_base::goodbit] 开始其执行。
+
+[:en] It then creates an object of class [`sentry] with the [`noskipws] (second)
+argument [`false].
+[:zh_CN] 然后它以 [`false] 作为 [`noskipws]（第二个）实参构造一个类 [`sentry] 的
+对象。
 
 [:en] If the [`sentry] object returns [`true], when converted to a value of type
 [`bool], the function endeavors to obtain the requested input.
 [:zh_CN] 如果该 [`sentry] 对象当将其转换为 [`bool] 类型的值时返回 [`true]，则
 该函数尽力获取所请求的输入。
 
-[:en] If an exception is thrown during input then [`ios_base::badbit] is turned
-on[#:fn] in [`*this][=']s error state.
-[:zh_CN] 如果输入过程中抛出了异常，则在 [`*this] 的错误状态中打开
-[`ios_base::badbit][#:fn]。
+[:en] Otherwise, if the [`sentry] constructor exits by throwing an exception or
+if the [`sentry] object produces [`false] when converted to a value of type
+[`bool], the function returns without attempting to obtain any input.
+[:zh_CN] 否则，如果 [`sentry] 的构造函数以抛出异常退出，或者如果该 [`sentry]
+对象当将其转换为 [`bool] 类型的值时产生 [`false]，则函数返回而不尝试获取任何输入。
 
-[note:foot]
-[:en] This is done without causing an [`ios_base::failure] to be thrown.
-[:zh_CN] 这样做不会导致抛出 [`ios_base::failure]。
-[note:end]
+[:en] If [`rdbuf()->sbumpc()] or [`rdbuf()->sgetc()] returns [`traits::eof()],
+then [`ios_base::eofbit] is set in the local error state and the input function
+stops trying to obtain the requested input.
+[:zh_CN] 如果 [`rdbuf()->sbumpc()] 或 [`rdbuf()->sgetc()] 返回了 [`traits::eof()]，
+则在局部错误状态中设置 [`ios_base::eofbit]，且输入函数停止尝试获取所请求的输入。
 
-[:en] If [`(exceptions()&badbit) != 0] then the exception is rethrown.
-[:zh_CN] 如果 [`(exceptions()&badbit) != 0] 则重新抛出该异常。
+[:en] If an exception is thrown during input then [`ios_base::badbit] is set in
+the local error state, [`*this][=']s error state is set to the local error state,
+and the exception is rethrown if [`(exceptions() & badbit) != 0].
+[:zh_CN] 如果输入过程中抛出了异常，则在局部错误状态中设置 [`ios_base::badbit]，
+将 [`*this] 的错误状态设置为局部错误状态，并在 [`(exceptions() & badbit) != 0]
+时重新抛出异常。
+
+[:en] After extraction is done, the input function calls [`setstate], which sets
+[`*this][=']s error state to the local error state, and may throw an exception.
+[:zh_CN] 当提取完成后，输入函数调用 [`setstate]，这将 [`*this] 的错误状态设置为
+局部错误状态，并可能会抛出异常。
 
 [:en] In any case, the formatted input function destroys the [`sentry] object.
 [:zh_CN] 无论何种情况，该格式化输出函数都销毁这个 [`sentry] 对象。
