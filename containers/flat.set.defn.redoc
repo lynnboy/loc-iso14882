@@ -34,14 +34,19 @@ namespace std {
     [:zh_CN] [#flat.set.cons]，构造函数
     flat_set() : flat_set(key_compare()) { }
 
-    explicit flat_set(container_type cont);
+    explicit flat_set(container_type cont, const key_compare& comp = key_compare());
     template<class Allocator>
       flat_set(const container_type& cont, const Allocator& a);
+    template<class Allocator>
+      flat_set(const container_type& cont, const key_compare& comp, const Allocator& a);
 
-    flat_set(sorted_unique_t, container_type cont)
-      : [[redoc("*>")]]c(std::move(cont)), [[redoc("*>")]]compare(key_compare()) { }
+    flat_set(sorted_unique_t, container_type cont, const key_compare& comp = key_compare())
+      : [[redoc("*>")]]c(std::move(cont)), [[redoc("*>")]]compare(comp) { }
     template<class Allocator>
       flat_set(sorted_unique_t, const container_type& cont, const Allocator& a);
+    template<class Allocator>
+      flat_set(sorted_unique_t, const container_type& cont,
+               const key_compare& comp, const Allocator& a);
 
     explicit flat_set(const key_compare& comp)
       : [[redoc("*>")]]c(), [[redoc("*>")]]compare(comp) { }
@@ -211,6 +216,28 @@ namespace std {
     key_compare [[redoc("*>")]]compare;        // [=expos]
   };
 
+  template<class KeyContainer, class Compare = less<typename KeyContainer::value_type>>
+    flat_set(KeyContainer, Compare = Compare())
+      -> flat_set<typename KeyContainer::value_type, Compare, KeyContainer>;
+  template<class KeyContainer, class Allocator>
+    flat_set(KeyContainer, Allocator)
+      -> flat_set<typename KeyContainer::value_type,
+                  less<typename KeyContainer::value_type>, KeyContainer>;
+  template<class KeyContainer, class Compare, class Allocator>
+    flat_set(KeyContainer, Compare, Allocator)
+      -> flat_set<typename KeyContainer::value_type, Compare, KeyContainer>;
+
+  template<class KeyContainer, class Compare = less<typename KeyContainer::value_type>>
+    flat_set(sorted_unique_t, KeyContainer, Compare = Compare())
+      -> flat_set<typename KeyContainer::value_type, Compare, KeyContainer>;
+  template<class KeyContainer, class Allocator>
+    flat_set(sorted_unique_t, KeyContainer, Allocator)
+      -> flat_set<typename KeyContainer::value_type,
+                  less<typename KeyContainer::value_type>, KeyContainer>;
+  template<class KeyContainer, class Compare, class Allocator>
+    flat_set(sorted_unique_t, KeyContainer, Compare, Allocator)
+      -> flat_set<typename KeyContainer::value_type, Compare, KeyContainer>;
+
   template<class InputIterator, class Compare = less<[[redoc("^>")]]iter-value-type<InputIterator>>>
     flat_set(InputIterator, InputIterator, Compare = Compare())
       -> flat_set<[[redoc("^>")]]iter-value-type<InputIterator>, Compare>;
@@ -220,13 +247,17 @@ namespace std {
       -> flat_set<[[redoc("^>")]]iter-value-type<InputIterator>, Compare>;
 
   template<ranges::[[redoc("`:c>")]]input_range R, class Compare = less<ranges::range_value_t<R>>,
-          class Allocator = allocator<ranges::range_value_t<R>>>
+           class Allocator = allocator<ranges::range_value_t<R>>>
     flat_set(from_range_t, R&&, Compare = Compare(), Allocator = Allocator())
-      -> flat_set<ranges::range_value_t<R>, Compare>;
+      -> flat_set<ranges::range_value_t<R>, Compare,
+                  vector<ranges::range_value_t<R>,
+                         [[redoc("*>")]]alloc-rebind<Allocator, ranges::range_value_t<R>>>>;
 
-   template<ranges::[[redoc("`:c>")]]input_range R, class Allocator>
-     flat_set(from_range_t, R&&, Allocator)
-       -> flat_set<ranges::range_value_t<R>, less<ranges::range_value_t<R>>>;
+  template<ranges::[[redoc("`:c>")]]input_range R, class Allocator>
+    flat_set(from_range_t, R&&, Allocator)
+      -> flat_set<ranges::range_value_t<R>, less<ranges::range_value_t<R>>,
+                  vector<ranges::range_value_t<R>,
+                         [[redoc("*>")]]alloc-rebind<Allocator, ranges::range_value_t<R>>>>;
 
   template<class Key, class Compare = less<Key>>
     flat_set(initializer_list<Key>, Compare = Compare())

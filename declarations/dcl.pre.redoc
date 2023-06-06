@@ -285,11 +285,11 @@ is of array or non-union class type.
 [para]
 [:en]
 If the [~decl-specifier-seq] contains the [`:key typedef] specifier, the
-declaration is called a [+typedef declaration[%declaration[!typedef]]] and each
+declaration is a [+typedef declaration[%declaration[!typedef]]] and each
 [~declarator-id] is declared to be a [~typedef-name], synonymous with its
 associated type ([#dcl.typedef]).
 [:zh_CN]
-若[~声明说明符序列]包含 [`:key typedef] 说明符，则该声明式被称为
+若[~声明说明符序列]包含 [`:key typedef] 说明符，则该声明式为
 [+typedef 声明式[%声明式[!typedef ～]]]，而每个[~声明符标识]则被声明为
 [~typedef-名]，它们是其所关联的类型的同义词（[#dcl.typedef]）。
 
@@ -299,6 +299,36 @@ Such a [~declarator-id] is an [~identifier] ([#class.conv.fct]).
 [:zh_CN]
 这种[~声明符标识]是一个[~标识符]（[#class.conv.fct]）。
 [end:note]
+
+[:en]
+Otherwise, if the type associated with a [~declarator-id] is a function type
+([#dcl.fct]), the declaration is a [+function declaration[%declaration[!function]]].
+[:zh_CN]
+否则，如果与[~声明符标识]关联的类型为函数类型（[#dcl.fct]），则该声明式是
+[+函数声明式[%声明式[!函数]]]。
+
+[:en]
+Otherwise, if the type associated with a [~declarator-id] is an object or
+reference type, the declaration is an [+object declaration[%declaration[!object]]].
+[:zh_CN]
+否则，如果与[~声明符标识]关联的类型为对象或引用类型，则该声明式是[+对象声明式
+[%声明式[!对象]]]。
+
+[:en]
+Otherwise, the program is ill-formed.
+[:zh_CN]
+否则，程序非良构。
+
+[begin:example]
+[codeblock]
+int f(), x;             // [:en] OK, function declaration for [`f] and object declaration for [`x] \
+                        [:zh_CN] OK，[`f] 的函数声明式和 [`x] 的对象声明式
+extern void g(),        // [:en] OK, function declaration for [`g] \
+                        [:zh_CN] OK，[`g] 的函数声明式
+  y;                    // [:en] error: [`void] is not an object type \
+                        [:zh_CN] 错误：[`void] 不是对象类型
+[codeblock:end]
+[end:example]
 
 [:en]
 If the [~decl-specifier-seq] contains no [`:key typedef] specifier, the
@@ -356,7 +386,7 @@ a [~nodeclspec-function-declaration] can only be used in a
 [end:note]
 
 [para]
-[%[~static_assert]]
+[%[`static_assert]]
 [:en]
 In a [~static_assert-declaration], the [~constant-expression] is contextually
 converted to [`bool] and the converted expression shall be a constant expression
@@ -366,24 +396,42 @@ converted to [`bool] and the converted expression shall be a constant expression
 表达式应当为常量表达式（[#expr.const]）。
 
 [:en]
-If the value of the expression when so converted is [`true], the declaration has
-no effect.
+If the value of the expression when so converted is [`true] or the expression is
+evaluated in the conetxt of a template definition, the declaration has no effect.
 [:zh_CN]
-如果表达式经此转换后的值是 [`true]，则声明式没有效果。
+如果表达式经此转换后的值是 [`true] 或者该表达式是在模板定义式的语境中求值，则
+声明式没有效果。
 
 [:en]
-Otherwise, the program is ill-formed, and the resulting diagnostic message
+Otherwise, the [~static_assert-declaration] [+fails[%[`static_assert][!failed]]],
+the program is ill-formed, and the resulting diagnostic message
 ([#intro.compliance]) should include the text of the [~string-literal], if one
 is supplied.
 [:zh_CN]
-否则，程序是非良构的，且如果提供了[~字符串字面量]，则所产生的诊断消息
-（[#intro.compliance]）最好包含其中的文本。
+否则，该 [~static_assert-声明式][+失败[%[`static_assert][!失败]]]，程序非良构，
+且如果提供了[~字符串字面量]，则所产生的诊断消息（[#intro.compliance]）最好包含
+其中的文本。
 
 [begin:example]
 [codeblock]
 static_assert(sizeof(int) == sizeof(void*), "wrong pointer size");
 static_assert(sizeof(int[2]));          // [:en] OK, narrowing allowed \
                                         [:zh_CN] OK，允许窄化
+
+template <class T>
+void f(T t) {
+  if constexpr (sizeof(T) == sizeof(int)) {
+    use(t);
+  } else {
+    static_assert(false, "must be int-sized");
+  }
+}
+
+void g(char c) {
+  f(0);                                 // OK
+  f(c);                                 // [:en] error on implementations where [`sizeof(int) > 1]: must be [`int]-sized \
+                                        [:zh_CN] 在 [`sizeof(int) > 1] 的实现上发生错误：必须为 [`int] 的大小
+}
 [codeblock:end]
 [end:example]
 

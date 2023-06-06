@@ -773,6 +773,7 @@ constexpr destructor                    |constexpr 析构函数 |除函数规定
 constexpr function                      |constexpr 函数     |以`constexpr`或`consteval`修饰的函数<br>字面量类型，非协程；代码中无goto、静态或线程变量；构造或析构的类无虚基类<br>不可能常量求值则非良构但无须诊断
 constexpr if statement                  |constexpr if 语句  |`if constexpr (cond) ...`，检测编译期常量
 constexpr specifier                     |constexpr 说明符   |修饰变量或函数，隐含内联
+constexpr-suitable                      |适于 constexpr 的
 constexpr-unknown                       |constexpr 未知     |动态类型
 constinit specifier                     |constinit 说明符   |修饰静态或线程存储期的变量，保证静态初始化
 constituent expression                  |成分表达式     |表达式、初始化式等结构中的各表达式
