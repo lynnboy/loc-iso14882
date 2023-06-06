@@ -142,7 +142,7 @@ Original   |中文   |章节    |定义
 *numeric-escape-sequence*   |*数值转义序列* | [lex.ccon]    | *八进制转义序列* \| *十六进制转义序列*
 *simple-octal-digit-sequence*|*简单八进制数字序列*| [lex.ccon] | *八进制数字*__+__
 *octal-escape-sequence*     |*八进制转义序列*| [lex.ccon]   | `\` *八进制数字*__{1,3}__ \| `\o{` *八进制数字*__+__ `}`
-*hexadecimal-escape-sequence*|*十六进制转义序列*| [lex.ccon]| `\x` *十六进制数字*__\+__\| `\o{` *十六进制数字*__+__ `}`
+*hexadecimal-escape-sequence*|*十六进制转义序列*| [lex.ccon]| `\x` *十六进制数字*__\+__ \| `\o{` *十六进制数字*__+__ `}`
 *conditional-escape-sequence*|*有条件转义序列*| [lex.ccon]  | `\` *有条件转义序列字符*
 *conditional-escape-sequence-char*|*有条件转义序列字符*|[lex.ccon]| **基本源字符集** - ([`0-9'"?\abfnrtvNouUx`])
 *floating-point-literal*    |*浮点字面量*   | [lex.fcon]    | *十进制浮点字面量* \| *十六进制浮点字面量*
@@ -1619,6 +1619,7 @@ preprocessing number                    |预处理数字 |预处理记号，`[.]
 preprocessing operator                  |预处理运算符       |由预处理器操作的运算符：`#`, `##`, `%:`, `%:%:`
 preprocessing operators and punctuators |预处理运算符与标点 |预处理记号，预处理运算符+运算符或标点
 preprocessing token                     |预处理记号 |预处理指令工作对象，预处理后转换为记号
+preprocessing translation unit          |预处理翻译单元
 primary equivalence class               |主等价类   |校排中具有相同主排序键的字符或字符串
 primary expression                      |初等表达式 |字面量、this、括号、标识表达式、lambda、折叠、requires
 primary module interface unit           |主模块接口单元 |主模块的接口单元，应当直接或简洁导出该模块的所有接口单元

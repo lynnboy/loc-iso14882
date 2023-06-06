@@ -57,7 +57,7 @@ with the same type and value category as [`declval<T>()].
 [:en] Otherwise, [`[^VAL]<T>] is a prvalue that initially has type [`T].
 [:zh_CN] 否则，[`[^VAL]<T>] 为起初具有类型 [`T] 的纯右值。
 
-[begin:note]
+[begin:note 1]
 [:en] If [`T] is cv-qualified, the cv-qualification is subject to adjustment
 ([#expr.type]).
 [:zh_CN] 如果 [`T] 被 cv 限定，则其 cv 限定被调整（[#expr.type]）。
@@ -167,7 +167,7 @@ with the same type and value category as [`declval<T>()].
 [|] [:en] [`T] is a class type marked with the [~class-virt-specifier] [`final]
     ([#class.pre]).
     [:zh_CN] [`T] 为被标以[~类虚说明符] [`final] 的类类型（[#class.pre]）。
-    [begin:note]
+    [begin:note 2]
     [:en] A union is a class type that can be marked with [`final].
     [:zh_CN] 联合体是可以被标以 [`final] 的类类型。
     [end:note]                                        &
@@ -303,7 +303,7 @@ with the same type and value category as [`declval<T>()].
     expression is considered.
     [:zh_CN] 只考察赋值表达式的直接语境的有效性。
 
-    [begin:note]
+    [begin:note 3]
     [:en] The compilation of the expression can result in side effects such as
     the instantiation of class template specializations and function template
     specializations, the generation of implicitly-defined functions, and so on.
@@ -366,7 +366,7 @@ with the same type and value category as [`declval<T>()].
     is considered.
     [:zh_CN] 只考察 [`swap] 表达式的直接语境的有效性。
 
-    [begin:note]
+    [begin:note 4]
     [:en] The compilation of the expression can result in side effects such as
     the instantiation of class template specializations and function template
     specializations, the generation of implicitly-defined functions, and so on.
@@ -650,6 +650,15 @@ with the same type and value category as [`declval<T>()].
     unknown bound.
     [:zh_CN] [`T] 应当为完整类型，[=cv] [`:key void]，或者未知边界的数组。
 
+[%@lib is_implicit_lifetime]
+[|]
+[`template<class T>] [br]
+[`struct is_implicit_lifetime;]
+[|] [:en] [`T] is an implicit-lifetime type ([#basic.types.general]).
+    [:zh_CN] [`T] 为隐式生存期类型（[#basic.types.general]）。
+[|] [:en] [`T] shall be an array type, a complete type, or [=cv] [`:key void].
+    [:zh_CN] [`T] 应当为数组类型，完整类型，或者 [=cv] [`:key void]。
+
 [%@lib has_virtual_destructor]
 [|]
 [`template<class T>] [br]
@@ -678,12 +687,31 @@ with the same type and value category as [`declval<T>()].
 [|]
 [`template<class T, class U>] [br]
 [`struct reference_constructs_from_temporary;]
-[|] [:en] [`conjunction_v<is_reference<T>, is_constructible<T, U>>] is [`true],
-    and the initialization [`T t([*VAL]<U>);] binds [`t] to a temporary object
-    whose lifetime is extended ([#class.temporary]).
-    [:zh_CN] [`conjunction_v<is_reference<T>, is_constructible<T, U>>] 为 [`true]，
-    并且初始化 [`T t([*VAL]<U>);] 将 [`t] 绑定到一个扩展了生存期的临时对象
-    （[#class.temporary]）。
+[|] [:en] [`T] is a reference type, and the initialization [`T t([*VAL]<U>);] is
+    well-formed and binds [`t] to a temporary object whose lifetime is extended
+    ([#class.temporary]).
+    [:zh_CN] [`T] 为引用类型，并且初始化 [`T t([*VAL]<U>);] 良构且将 [`t] 绑定到
+    一个扩展了生存期的临时对象（[#class.temporary]）。
+
+    [:en] Access checking is performed as if in a context unrelated to [`T] and
+    [`U].
+    [:zh_CN] 如同在与 [`T] 和 [`U] 无关的语境那样进行访问检查。
+
+    [:en] Only the validity of the immediate context of the variable
+    initialization is considered.
+    [:zh_CN] 只考察变量初始化的直接语境的有效性。
+
+    [begin:note 5]
+    [:en] The initialization can result in effects such as the instantiation of
+    class template specializations and function template specializations, the
+    generation of implicitly-defined functions, and so on.
+    [:zh_CN] 初始化可能导致的效果包括对类模板特例和函数模板特例的实例化，生成
+    隐式声明的函数，等等。
+
+    [:en] Such effects are not in the [=lq]immediate context[=rq] and can
+    result in the program being ill-formed.
+    [:zh_CN] 这些效果并非处于其“直接语境”，并可能导致程序非良构。
+    [end:note]
 [|] [:en] [`T] and [`U] shall be complete types, [=cv] [`:key void], or arrays
     of unknown bound.
     [:zh_CN] [`T] 和 [`U] 应当为完整类型，[=cv] [`:key void]，或者未知边界的数组。
@@ -693,12 +721,31 @@ with the same type and value category as [`declval<T>()].
 [|]
 [`template<class T, class U>] [br]
 [`struct reference_converts_from_temporary;]
-[|] [:en] [`conjunction_v<is_reference<T>, is_convertible<U, T>>] is [`true],
-    and the initialization [`T t = [*VAL]<U>;] binds [`t] to a temporary object
-    whose lifetime is extended ([#class.temporary]).
-    [:zh_CN] [`conjunction_v<is_reference<T>, is_constructible<U, T>>] 为 [`true]，
-    并且初始化 [`T t = [*VAL]<U>;] 将 [`t] 绑定到一个扩展了生存期的临时对象
-    （[#class.temporary]）。
+[|] [:en] [`T] is a reference type, and the initialization [`T t = [*VAL]<U>;] is
+    well-formed and binds [`t] to a temporary object whose lifetime is extended
+    ([#class.temporary]).
+    [:zh_CN] [`T] 为引用类型，并且初始化 [`T t = [*VAL]<U>;] 良构且将 [`t] 绑定到
+    一个扩展了生存期的临时对象（[#class.temporary]）。
+
+    [:en] Access checking is performed as if in a context unrelated to [`T] and
+    [`U].
+    [:zh_CN] 如同在与 [`T] 和 [`U] 无关的语境那样进行访问检查。
+
+    [:en] Only the validity of the immediate context of the variable
+    initialization is considered.
+    [:zh_CN] 只考察变量初始化的直接语境的有效性。
+
+    [begin:note 6]
+    [:en] The initialization can result in effects such as the instantiation of
+    class template specializations and function template specializations, the
+    generation of implicitly-defined functions, and so on.
+    [:zh_CN] 初始化可能导致的效果包括对类模板特例和函数模板特例的实例化，生成
+    隐式声明的函数，等等。
+
+    [:en] Such effects are not in the [=lq]immediate context[=rq] and can
+    result in the program being ill-formed.
+    [:zh_CN] 这些效果并非处于其“直接语境”，并可能导致程序非良构。
+    [end:note]
 [|] [:en] [`T] and [`U] shall be complete types, [=cv] [`:key void], or arrays
     of unknown bound.
     [:zh_CN] [`T] 和 [`U] 应当为完整类型，[=cv] [`:key void]，或者未知边界的数组。
