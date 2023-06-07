@@ -27,10 +27,14 @@ namespace std::ranges {
 
     V [[redoc("*>")]]base_ = V();                                          // [=expos]
 
+    [[redoc("*>")]]non-propagating-cache<iterator_t<V>> [[redoc("*>")]]outer_;            // [:en] [=expos], present only \
+                                                                                          [:zh_CN] [=expos]，仅当
+                                                            // [:en@~] when [`![`:c forward_range]<V>] \
+                                                            [:zh_CN@~] [`![`:c forward_range]<V>] 时提供
     [[redoc("*>")]]non-propagating-cache<remove_cv_t<[[redoc("*>")]]InnerRng>> [[redoc("*>")]]inner_;    // [:en] [=expos], present only \
                                                                                                          [:zh_CN] [=expos]，仅当
-                                                            // [:en@~] when [`!is_reference_v<[*InnerRng]>] \
-                                                            [:zh_CN@~] [`!is_reference_v<[*InnerRng]>] 时出现
+                                                            // [:en@~] if [`is_reference_v<[*InnerRng]>] is [`false] \
+                                                            [:zh_CN@~] [`is_reference_v<[*InnerRng]>] 为 [`false] 时提供
 
   public:
     join_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
@@ -40,14 +44,20 @@ namespace std::ranges {
     constexpr V base() && { return std::move([[redoc("*>")]]base_); }
 
     constexpr auto begin() {
-      constexpr bool use_const = [[redoc("*:c>")]]simple-view<V> &&
-                                 is_reference_v<[[redoc("*>")]]InnerRng>;
-      return [[redoc("*>")]]iterator<use_const>{*this, ranges::begin([[redoc("*>")]]base_)};
+      if constexpr ([[redoc("`:c>")]]forward_range<V>) {
+        constexpr bool use_const = [[redoc("*:c>")]]simple-view<V> &&
+                                   is_reference_v<[[redoc("*>")]]InnerRng>;
+        return [[redoc("*>")]]iterator<use_const>{*this, ranges::begin([[redoc("*>")]]base_)};
+      } else {
+        [[redoc("*>")]]outer_ = ranges::begin([[redoc("*>")]]base_);
+        return [[redoc("*>")]]iterator<false>{*this};
+      }
     }
 
     constexpr auto begin() const
-      requires [[redoc("`:c>")]]input_range<const V> &&
-               is_reference_v<range_reference_t<const V>>
+      requires [[redoc("`:c>")]]forward_range<const V> &&
+               is_reference_v<range_reference_t<const V>> &&
+               [[redoc("`:c>")]]input_range<range_reference_t<const V>>
     { return [[redoc("*>")]]iterator<true>{*this, ranges::begin([[redoc("*>")]]base_)}; }
 
     constexpr auto end() {
@@ -60,10 +70,10 @@ namespace std::ranges {
     }
 
     constexpr auto end() const
-      requires [[redoc("`:c>")]]input_range<const V> &&
-               is_reference_v<range_reference_t<const V>> {
-      if constexpr ([[redoc("`:c>")]]forward_range<const V> &&
-                    [[redoc("`:c>")]]forward_range<range_reference_t<const V>> &&
+      requires [[redoc("`:c>")]]forward_range@<const V> &&
+               is_reference_v<range_reference_t<const V>> &&
+               [[redoc("`:c>")]]input_range<range_reference_t<const V>> {
+      if constexpr ([[redoc("`:c>")]]forward_range<range_reference_t<const V>> &&
                     [[redoc("`:c>")]]common_range<const V> &&
                     [[redoc("`:c>")]]common_range<range_reference_t<const V>>)
         return [[redoc("*>")]]iterator<true>{*this, ranges::end([[redoc("*>")]]base_)};

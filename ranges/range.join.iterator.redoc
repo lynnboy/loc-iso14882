@@ -18,11 +18,22 @@ namespace std::ranges {
     static constexpr bool [[redoc("*>")]]ref-is-glvalue =                      // [=expos]
       is_reference_v<range_reference_t<[[redoc("*>")]]Base>>;
 
-    [[redoc("*>")]]OuterIter [[redoc("*>")]]outer_ = [[redoc("*>")]]OuterIter();                             // [=expos]
+    [[redoc("*>")]]OuterIter [[redoc("*>")]]outer_ = [[redoc("*>")]]OuterIter();                     // [:en] [=expos], present only \
+                                                                                                     [:zh_CN] [=expos]，仅当
+                                                        // [:en@~] if [*Base] models [`:c forward_range] \
+                                                        [:zh_CN@~] [*Base] 构成 [`:c forward_range] 时提供
     optional<[[redoc("*>")]]InnerIter> [[redoc("*>")]]inner_;                                 // [=expos]
     [[redoc("*>")]]Parent* [[redoc("*>")]]parent_  = nullptr;                                 // [=expos]
 
     constexpr void [[redoc("*>")]]satisfy();                                   // [=expos]
+
+    constexpr [[redoc("*>")]]OuterIter& [[redoc("*>")]]outer();                               // [=expos]
+    constexpr const [[redoc("*>")]]OuterIter& [[redoc("*>")]]outer() const;                   // [=expos]
+
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]OuterIter outer)
+      requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;                             // [=expos]
+    constexpr explicit [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent)
+      requires (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>);                          // [=expos]
 
   public:
     using iterator_concept  = [[redoc("[=seebelow]")]];
@@ -31,8 +42,7 @@ namespace std::ranges {
     using value_type        = range_value_t<range_reference_t<[[redoc("*>")]]Base>>;
     using difference_type   = [[redoc("[=seebelow]")]];
 
-    [[redoc("*>")]]iterator() requires [[redoc("`:c>")]]default_initializable<[[redoc("*>")]]OuterIter> = default;
-    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]OuterIter outer);
+    [[redoc("*>")]]iterator() = default;
     constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
       requires Const &&
                [[redoc("`:c>")]]convertible_to<iterator_t<V>, [[redoc("*>")]]OuterIter> &&
@@ -60,7 +70,7 @@ namespace std::ranges {
                [[redoc("`:c>")]]common_range<range_reference_t<[[redoc("*>")]]Base>>;
 
     friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-      requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]Base>> &&
+      requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base> &&
                [[redoc("`:c>")]]equality_comparable<iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
 
     friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& i)
@@ -160,6 +170,19 @@ inner ranges.
 [:zh_CN] [`join_view] 迭代器使用 [*satisfy] 函数以跳过空的内部范围。
 
 [codeblock:declaration]
+constexpr [[redoc("*>")]]OuterIter& [[redoc("*>")]]outer();
+constexpr const [[redoc("*>")]]OuterIter& [[redoc("*>")]]outer() const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [*outer_] if [*Base] models [`:c forward_range]; otherwise,
+[`*[*parent_]->[*outer_]].
+[:zh_CN] 若 [*Base] 构成 [`:c forward_range] 则返回 [*outer_]；否则返回
+[`*[*parent_]->[*outer_]]。
+[div:end]
+
+[codeblock:declaration]
 constexpr void [[redoc("*>")]]satisfy();
 [codeblock:end]
 
@@ -176,8 +199,8 @@ auto update_inner = [this](const iterator_t<[[redoc("*>")]]Base> x) -> auto& {
     return [[redoc("*>")]]parent_->[[redoc("*>")]]inner_.[[redoc("*>")]]emplace-deref(x);
 };
 
-for (; [[redoc("*>")]]outer_ != ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_); ++[[redoc("*>")]]outer_) {
-  auto&& inner = update_inner([[redoc("*>")]]outer_);
+for (; [[redoc("*>")]]outer() != ranges::end([[redoc("*>")]]parent_->[[redoc("*>")]]base_); ++[[redoc("*>")]]outer()) {
+  auto&& inner = update_inner([[redoc("*>")]]outer());
   [[redoc("*>")]]inner_ = ranges::begin(inner);
   if (*[[redoc("*>")]]inner_ != ranges::end(inner))
     return;
@@ -190,6 +213,7 @@ if constexpr ([[redoc("*>")]]ref-is-glvalue)
 [%@lib@ctor join_view::[*iterator]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]OuterIter outer)
+  requires [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>;
 [codeblock:end]
 
 [div:description]
@@ -198,6 +222,18 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent, [[redoc("*>")]]
 [`addressof(parent)]; then calls [`[*satisfy]()].
 [:zh_CN] 以 [`std::move(outer)] 初始化 [*outer_] 并以 [`addressof(parent)]
 初始化 [*parent_]；然后调用 [`[*satisfy]()]。
+[div:end]
+
+[%@lib@ctor join_view::[*iterator]]
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]iterator([[redoc("*>")]]Parent& parent)
+  requires (![[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`addressof(parent)]; then calls [`[*satisfy]()].
+[:zh_CN] 以 [`addressof(parent)] 初始化 [*parent_]；然后调用 [`[*satisfy]()]。
 [div:end]
 
 [%@lib@ctor join_view::[*iterator]]
@@ -214,6 +250,12 @@ constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
 [`std::move(i.[*inner_])], and [*parent_] with [`i.[*parent_]].
 [:zh_CN] 以 [`std::move(i.[*outer_])] 初始化 [*outer_]，以
 [`std::move(i.[*inner_])] 初始化 [*inner_]，并以 [`i.[*parent_]] 初始化 [*parent_]。
+
+[para]
+[begin:note]
+[:en] [`Const] can only be [`true] when [*Base] models [`:c forward_range].
+[:zh_CN] [`Const] 仅能在 [*Base] 构成 [`:c forward_range] 时为 [`true]。
+[end:note]
 [div:end]
 
 [%@lib@member operator->[!join_view::[*iterator]]]
@@ -239,8 +281,8 @@ constexpr [[redoc("*>")]]iterator& operator++();
 [:zh_CN] 令 [`[^inner-range]] 为：
 [list]
 [item]
-[:en] If [*ref-is-glvalue] is [`true], [`*[*outer_]].
-[:zh_CN] 当 [*ref-is-glvalue] 为 [`true] 时，为 [`*[*outer_]]。
+[:en] If [*ref-is-glvalue] is [`true], [`*[*outer]()].
+[:zh_CN] 当 [*ref-is-glvalue] 为 [`true] 时，为 [`*[*outer]()]。
 [item]
 [:en] Otherwise, [`*[*parent_]->[*inner_]].
 [:zh_CN] 否则，为 [`*[*parent_]->[*inner_]]。
@@ -250,9 +292,8 @@ constexpr [[redoc("*>")]]iterator& operator++();
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-auto&& inner_rng = [[redoc("^>")]]inner-range;
-if (++*[[redoc("*>")]]inner_ == ranges::end(inner_rng)) {
-  ++[[redoc("*>")]]outer_;
+if (++*[[redoc("*>")]]inner_ == ranges::end([[redoc("*>")]]as-lvalue([[redoc("^>")]]inner-range))) {
+  ++[[redoc("*>")]]outer();
   [[redoc("*>")]]satisfy();
 }
 return *this;
@@ -302,9 +343,9 @@ constexpr [[redoc("*>")]]iterator& operator--()
 [:zh_CN] 等价于：
 [codeblock]
 if ([[redoc("*>")]]outer_ == ranges::end([[redoc("*>")]]parent_->vbase_))
-  [[redoc("*>")]]inner_ = ranges::end(*--[[redoc("*>")]]outer_);
-while (*[[redoc("*>")]]inner_ == ranges::begin(*[[redoc("*>")]]outer_))
-  *[[redoc("*>")]]inner_ = ranges::end(*--[[redoc("*>")]]outer_);
+  [[redoc("*>")]]inner_ = ranges::end([[redoc("*>")]]as-lvalue(*--[[redoc("*>")]]outer_));
+while (*[[redoc("*>")]]inner_ == ranges::begin([[redoc("*>")]]as-lvalue(*[[redoc("*>")]]outer_)))
+  *[[redoc("*>")]]inner_ = ranges::end([[redoc("*>")]]as-lvalue(*--[[redoc("*>")]]outer_));
 --*[[redoc("*>")]]inner_;
 return *this;
 [codeblock:end]
@@ -332,7 +373,7 @@ return tmp;
 [%@lib@member operator==[!join_view::[*iterator]]]
 [codeblock:declaration]
 friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
-  requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]Base>> &&
+  requires [[redoc("*>")]]ref-is-glvalue && [[redoc("`:c>")]]forward_range<[[redoc("*>")]]Base> &&
            [[redoc("`:c>")]]equality_comparable<iterator_t<range_reference_t<[[redoc("*>")]]Base>>>;
 [codeblock:end]
 

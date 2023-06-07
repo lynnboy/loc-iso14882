@@ -5,9 +5,10 @@
 
 [codeblock:synopsis]
 namespace std::ranges {
-  template<[[redoc("`:c>")]]move_constructible T, [[redoc("`:c>")]]semiregular Bound = unreachable_sentinel_t>
+  template<[[redoc("`:c>")]]move_constructible T, [[redoc("`:c>")]]semiregular Bound>
     requires (is_object_v<T> && [[redoc("`:c>")]]same_as<T, remove_cv_t<T>> &&
-              ([[redoc("*>")]]is-integer-like<Bound> || [[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>))
+              ([[redoc("*:c>")]]integer-like-with-usable-difference-type<Bound> ||
+               [[redoc("`:c>")]]same_as<Bound, unreachable_sentinel_t>))
   class repeat_view<T, Bound>::[[redoc("*>")]]iterator {
   private:
     using [[redoc("*>")]]index-type =                          // [=expos]
@@ -21,9 +22,7 @@ namespace std::ranges {
     using iterator_concept = random_access_iterator_tag;
     using iterator_category = random_access_iterator_tag;
     using value_type = T;
-    using difference_type = conditional_t<[[redoc("*>")]]is-signed-integer-like<[[redoc("*>")]]index-type>,
-        [[redoc("*>")]]index-type,
-        [[redoc("^>")]]IOTA-DIFF-T([[redoc("*>")]]index-type)>;
+    using difference_type = [[redoc("[=seebelow]")]];
 
     [[redoc("*>")]]iterator() = default;
 
@@ -50,6 +49,15 @@ namespace std::ranges {
   };
 }
 [codeblock:end]
+
+[para]
+[:en] If [`[*is-signed-integer-like]<[*index-type]>] is [`true], the member
+[~typedef-name] [`difference_type] denotes [*index-type].
+[:zh_CN] 如果 [`[*is-signed-integer-like]<[*index-type]>] 为 [`true]，则成员
+[~typedef-名] [`difference_type] 代表 [*index-type]。
+
+[:en] Otherwise, it denotes [`[^IOTA-DIFF-T]([*index-type])] ([#range.iota.view]).
+[:zh_CN] 否则，它代表 [`[^IOTA-DIFF-T]([*index-type])]（[#range.iota.view]）。
 
 [%@lib@ctor repeat_view::[*iterator]]
 [codeblock:declaration]

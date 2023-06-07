@@ -473,7 +473,7 @@ Original   |中文   |章节    |定义
 *if-section*                |*if-节*        | [cpp.pre]     | *if-组* *elif-组*__\*__ *else-组*__?__ *endif-行*
 *if-group*                  |*if-组*        | [cpp.pre]     | `#` `if` *常量表达式* *换行* *组*__?__ \|<br> `#` (`ifdef`\|`ifndef`) *标识符* *换行* *组*__?__
 *elif-groups*               |*elif-组序列*  | [cpp.pre]     | *elif-组*__\+__
-*elif-group*                |*elif-组*      | [cpp.pre]     | `#` (`elif`\|`elifdef`\|`elifndef`) *常量表达式* *换行* *组*__?__
+*elif-group*                |*elif-组*      | [cpp.pre]     | `#` `elif` *常量表达式* *换行* *组*__?__ \|<br> `#` (`elifdef`\|`elifndef`) *标识符* *换行* *组*__?__
 *else-group*                |*else-组*      | [cpp.pre]     | `#` `else` *换行* *组*__?__
 *endif-line*                |*endif-行*     | [cpp.pre]     | `#` `endif` *换行*
 *text-line*                 |*文本和*       | [cpp.pre]     | *预处理记号序列*__?__ *换行*

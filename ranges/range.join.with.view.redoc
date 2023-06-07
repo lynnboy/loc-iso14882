@@ -22,10 +22,14 @@ namespace std::ranges {
     using [[redoc("*>")]]InnerRng = range_reference_t<V>;                  // [=expos]
 
     V [[redoc("*>")]]base_ = V();                                          // [=expos]
+    [[redoc("*>")]]non-propagating-cache<iterator_t<V>> [[redoc("*>")]]outer_it_;         // [:en] [=expos], present only \
+                                                                                          [:zh_CN] [=expos]，
+                                                            // [:en@~] when [`![`:c forward_range]<V>] \
+                                                            [:zh_CN@~] 仅 [`![`:c forward_range]<V>] 时提供
     [[redoc("*>")]]non-propagating-cache<remove_cv_t<[[redoc("*>")]]InnerRng>> [[redoc("*>")]]inner_;   // [:en] [=expos], present only \
                                                                                                 [:zh_CN] [=expos]，
-                                                            // [:en@~] when [`!is_reference_v<[*InnerRng]>] \
-                                                            [:zh_CN@~] 仅 [`!is_reference_v<[*InnerRng]>] 时提供
+                                                            // [:en@~] if [`is_reference_v<[*InnerRng]>] is [`false] \
+                                                            [:zh_CN@~] 仅 [`is_reference_v<[*InnerRng]>] 为 [`false] 时提供
     Pattern [[redoc("*>")]]pattern_ = Pattern();                           // [=expos]
 
     // [:en] [#range.join.with.iterator], class template [`join_with_view::[*iterator]] \
@@ -40,25 +44,32 @@ namespace std::ranges {
     join_with_view()
       requires [[redoc("`:c>")]]default_initializable<V> && [[redoc("`:c>")]]default_initializable<Pattern> = default;
 
-    constexpr join_with_view(V base, Pattern pattern);
+    constexpr explicit join_with_view(V base, Pattern pattern);
 
     template<[[redoc("`:c>")]]input_range R>
       requires [[redoc("`:c>")]]constructible_from<V, views::all_t<R>> &&
                [[redoc("`:c>")]]constructible_from<Pattern, single_view<range_value_t<[[redoc("*>")]]InnerRng>>>
-    constexpr join_with_view(R&& r, range_value_t<@\exposid{InnerRng}@> e);
+    constexpr explicit join_with_view(R&& r, range_value_t<@\exposid{InnerRng}@> e);
 
     constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
     constexpr V base() && { return std::move([[redoc("*>")]]base_); }
 
     constexpr auto begin() {
-      constexpr bool use_const =
-        [[redoc("*:c>")]]simple-view<V> && is_reference_v<[[redoc("*>")]]InnerRng> && [[redoc("*:c>")]]simple-view<Pattern>;
-      return [[redoc("*>")]]iterator<use_const>{*this, ranges::begin([[redoc("*>")]]base_)};
+      if constexpr ([[redoc("`:c>")]]forward_range<V>) {
+        constexpr bool use_const =
+          [[redoc("*:c>")]]simple-view<V> && is_reference_v<[[redoc("*>")]]InnerRng> && [[redoc("*:c>")]]simple-view<Pattern>;
+        return [[redoc("*>")]]iterator<use_const>{*this, ranges::begin([[redoc("*>")]]base_)};
+      }
+      else {
+        [[redoc("*>")]]outer_it_ = ranges::begin([[redoc("*>")]]base_);
+        return [[redoc("*>")]]iterator<false>{*this};
+      }
     }
     constexpr auto begin() const
-      requires [[redoc("`:c>")]]input_range<const V> &&
+      requires [[redoc("`:c>")]]forward_range<const V> &&
                [[redoc("`:c>")]]forward_range<const Pattern> &&
-               is_reference_v<range_reference_t<const V>> {
+               is_reference_v<range_reference_t<const V>> &&
+               [[redoc("`:c>")]]input_range<range_reference_t<const V>> {
       return [[redoc("*>")]]iterator<true>{*this, ranges::begin([[redoc("*>")]]base_)};
     }
 
@@ -71,10 +82,11 @@ namespace std::ranges {
         return [[redoc("*>")]]sentinel<[[redoc("*:c>")]]simple-view<V> && [[redoc("*:c>")]]simple-view<Pattern>>{*this};
     }
     constexpr auto end() const
-      requires [[redoc("`:c>")]]input_range<const V> && [[redoc("`:c>")]]forward_range<const Pattern> &&
-               is_reference_v<range_reference_t<const V>> {
+      requires [[redoc("`:c>")]]forward_range<const V> && [[redoc("`:c>")]]forward_range<const Pattern> &&
+               is_reference_v<range_reference_t<const V>> &&
+               [[redoc("`:c>")]]input_range<range_reference_t<const V>> {
       using InnerConstRng = range_reference_t<const V>;
-      if constexpr ([[redoc("`:c>")]]forward_range<const V> && [[redoc("`:c>")]]forward_range<InnerConstRng> &&
+      if constexpr ([[redoc("`:c>")]]forward_range<InnerConstRng> &&
                     [[redoc("`:c>")]]common_range<const V> && [[redoc("`:c>")]]common_range<InnerConstRng>)
         return [[redoc("*>")]]iterator<true>{*this, ranges::end([[redoc("*>")]]base_)};
       else
@@ -92,7 +104,7 @@ namespace std::ranges {
 [codeblock:end]
 
 [codeblock:declaration]
-constexpr join_with_view(V base, Pattern pattern);
+constexpr explicit join_with_view(V base, Pattern pattern);
 [codeblock:end]
 
 [div:description]
@@ -107,7 +119,7 @@ constexpr join_with_view(V base, Pattern pattern);
 template<[[redoc("`:c>")]]input_range R>
   requires [[redoc("`:c>")]]constructible_from<V, views::all_t<R>> &&
            [[redoc("`:c>")]]constructible_from<Pattern, single_view<range_value_t<[[redoc("*>")]]InnerRng>>>
-constexpr join_with_view(R&& r, range_value_t<[[redoc("*>")]]InnerRng> e);
+constexpr explicit join_with_view(R&& r, range_value_t<[[redoc("*>")]]InnerRng> e);
 [codeblock:end]
 
 [div:description]

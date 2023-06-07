@@ -119,11 +119,22 @@ one of its (possibly recursive) subaggregates that would be initialized by [$x_i
 [list]
 [item]
 [:en]
-brace elision is not considered for any aggregate element that has a dependent
-non-array type or an array type with a value-dependent bound, and
+brace elision is not considered for any aggregate element that has
 [:zh_CN]
-对具有待决非数组类型或带有值待决边界的数组类型的任何聚合元素，不考虑花括号消除，
-并且
+对具有以下性质的任何聚合元素，不考虑花括号消除
+[list]
+[item]
+[:en@~] a dependent non-array type,
+[:zh_CN@~] 为待决非数组类型，
+[item]
+[:en@~] an array type with a value-dependent bound, and
+[:zh_CN@~] 带有值待决边界的数组类型，或
+[item]
+[:en@~] an array type with a dependent array element type and [$x_i] is a string
+literal; and
+[:zh_CN@~] 带有待决数组元素类型的数组类型且 [$x_i] 为字符串字面量；并且
+[list:end]
+
 [item]
 [:en]
 each non-trailing aggregate element that is a pack expansion is assumed to
@@ -155,12 +166,18 @@ constructor [$[`C]([`T]_1, \dotsc, [`T]_n)], where
 [list]
 [item]
 [:en]
-if [$e_i] is of array type and [$x_i] is a [~braced-init-list] or
-[~string-literal], [$[`T]_i] is an rvalue reference to the declared type of
-[$e_i], and
+if [$e_i] is of array type and [$x_i] is a [~braced-init-list], [$[`T]_i] is an
+rvalue reference to the declared type of [$e_i], and
 [:zh_CN]
-如果 [$e_i] 为数组类型且 [$x_i] 为[~花括号初始化列表]或[~字符串字面量]，则
-[$[`T]_i] 是到 [$e_i] 的声明类型的右值引用，
+如果 [$e_i] 为数组类型且 [$x_i] 为[~花括号初始化列表]，则 [$[`T]_i] 是到 [$e_i]
+的声明类型的右值引用，
+[item]
+[:en]
+if [$e_i] is of array type and [$x_i] is a [~string-literal], [$[`T]_i] is an
+lvalue reference to the const-qualified declared type of [$e_i], and
+[:zh_CN]
+如果 [$e_i] 为数组类型且 [$x_i] 为[~字符串字面量]，则 [$[`T]_i] 是到 [$e_i]
+的 const 限定的声明类型的左值引用，
 [item]
 [:en]
 otherwise, [$[`T]_i] is the declared type of [$e_i],
@@ -257,6 +274,26 @@ template <typename T, typename U> struct G : F<U, T, int> {
 
 G g(true, 'a', 1);  // [:en] OK, deduces [`G<char, bool>] \
                     [:zh_CN] OK，推断出 [`G<char, bool>]
+
+template<class T, std::size_t N>
+struct H {
+  T array[N];
+};
+template<class T, std::size_t N>
+struct I {
+  volatile T array[N];
+};
+template<std::size_t N>
+struct J {
+  unsigned char array[N];
+};
+
+H h = { "abc" };    // [:en] OK, deduces [`H<char, 4>] (not [`T = const char]) \
+                    [:zh_CN] OK，推断为 [`H<char, 4>]（而非 [`T = const char]）
+I i = { "def" };    // [:en] OK, deduces [`I<char, 4>] \
+                    [:zh_CN] OK，推断为 [`I<char, 4>]
+J j = { "ghi" };    // [:en] error: cannot bind reference to array of [`unsigned char] to array of [`char] in deduction \
+                    [:zh_CN] 错误：在推断中无法将指代 [`unsigned char] 的数组的引用绑定到 [`char] 的数组
 [codeblock:end]
 [end:example]
 
@@ -292,6 +329,12 @@ deduction does not fail if not all template arguments are deduced.
 对[~定义类型标识]的[~简单模板标识]所指名的模板的导引中的每个函数或函数模板 [`f]，
 根据 [#temp.deduct.type] 中的过程从 [`A] 的[~定义类型标识]来推断 [`f] 的返回类型
 的各个模板实参，但当并非所有模板实参都推断出来时并不导致推断失败。
+
+[:en]
+If deduction fails for another reason, proceed with an empty set of deduced
+template arguments.
+[:zh_CN]
+如果推断因其他原因而失败，则按空的已推断模板实参集合继续处理。
 
 [:en]
 Let [`g] denote the result of substituting these deductions into [`f].

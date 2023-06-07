@@ -92,23 +92,25 @@ set of candidate functions.
 
 [:en]
 Because of the rules for name lookup, the set of candidate functions consists
-(1) entirely of non-member functions or (2) entirely of member functions of some
+either entirely of non-member functions or entirely of member functions of some
 class [`T].
 [:zh_CN]
-根据名字查找的规则，候选函数的集合（1）完全由非成员函数构成，或者（2）完全由某个
-类 [`T] 的成员函数构成。
+根据名字查找的规则，候选函数的集合或者完全由非成员函数构成，或者完全由某个类 [`T]
+的成员函数构成。
 
 [:en]
-In case (1), the argument list is the same as the [~expression-list] in the call.
+In the former case or if the [~primary-expression] is the address of an overload
+set, the argument list is the same as the [~expression-list] in the call.
 [:zh_CN]
-在情况（1）中，实参列表与该调用中的[~表达式列表]相同。
+在前一种情况中或当[~初等表达式]是重载集合的地址时，实参列表与该调用中的
+[~表达式列表]相同。
 
 [:en]
-In case (2), the argument list is the [~expression-list] in the call augmented
+Otherwise, the argument list is the [~expression-list] in the call augmented
 by the addition of an implied object argument as in a qualified function call.
 [:zh_CN]
-在情况（2）中，实参列表是该调用中的[~表达式列表]，并添加了如同在有限定的函数调用
-中那样的隐含对象实参。
+否则，实参列表是该调用中的[~表达式列表]，并添加了如同在有限定的函数调用中那样的
+隐含对象实参。
 
 [:en]
 If the current class is, or is derived from, [`T], and the keyword [`:key this]
@@ -152,6 +154,25 @@ struct C {
   void b() {
     a();                // OK, [`(*this).a()]
   }
+
+void c(this const C&);      // #1
+void c()&;                  // #2
+static void c(int = 0);     // #3
+
+void d() {
+  c();                  // [:en] error: ambiguous between #2 and #3 \
+                        [:zh_CN] 错误：#2 和 #3 之间有歧义
+  (C::c)();             // [:en] error: as above \
+                        [:zh_CN] 错误：同上
+  (&(C::c))();          // [:en] error: cannot resolve address of overloaded [`this->C::c] ([#over.over]) \
+                        [:zh_CN] 错误：无法对重载的 [`this->C::c] 进行决议（[#over.over]）
+  (&C::c)(C{});         // [:en] selects #1 \
+                        [:zh_CN] 选中 #1
+  (&C::c)(*this);       // [:en] error: selects #2, and is ill-formed ([#over.match.call.general]) \
+                        [:zh_CN] 错误：选中 #2，且为非良构（[#over.match.call.general]）
+  (&C::c)();            // [:en] selects #3 \
+                        [:zh_CN] 选中 #3
+}
 
   void f(this const C&);
   void g() const {

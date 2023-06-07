@@ -1,0 +1,72 @@
+[section#range.enumerate.view
+    [:en] Class template [`enumerate_view]
+    [:zh_CN] 类模板 [`enumerate_view]
+]
+
+[%@lib@member begin[!enumerate_view]]
+[%@lib@member end[!enumerate_view]]
+[%@lib@member size[!enumerate_view]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]view V>
+    requires [[redoc("*:c>")]]range-with-movable-references<V>
+  class enumerate_view : public view_interface<enumerate_view<V>> {
+    V [[redoc("*>")]]base_ = V();                                    // [=expos]
+
+    // [:en] [#range.enumerate.iterator], class template [`enumerate_view::[*iterator]] \
+    [:zh_CN] [#range.enumerate.iterator]，类模板 [`enumerate_view::[*iterator]]
+    template<bool Const>
+      class [[redoc("*>")]]iterator;                                 // [=expos]
+
+    // [:en] [#range.enumerate.sentinel], class template [`enumerate_view::[*sentinel]] \
+    [:zh_CN] [#range.enumerate.sentinel]，类模板 [`enumerate_view::[*sentinel]]
+    template<bool Const>
+      class [[redoc("*>")]]sentinel;                                 // [=expos]
+
+  public:
+    constexpr enumerate_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit enumerate_view(V base);
+
+    constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>)
+    { return [[redoc("*>")]]iterator<false>(ranges::begin([[redoc("*>")]]base_), 0); }
+    constexpr auto begin() const requires [[redoc("*:c>")]]range-with-movable-references<const V>
+    { return [[redoc("*>")]]iterator<true>(ranges::begin([[redoc("*>")]]base_), 0); }
+
+    constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V>) {
+      if constexpr ([[redoc("`:c>")]]common_range<V> && [[redoc("`:c>")]]sized_range<V>)
+        return [[redoc("*>")]]iterator<false>(ranges::end([[redoc("*>")]]base_), ranges::distance([[redoc("*>")]]base_));
+      else
+        return [[redoc("*>")]]sentinel<false>(ranges::end([[redoc("*>")]]base_));
+    }
+    constexpr auto end() const requires [[redoc("*:c>")]]range-with-movable-references<const V> {
+      if constexpr ([[redoc("`:c>")]]common_range<const V> && [[redoc("`:c>")]]sized_range<const V>)
+        return [[redoc("*>")]]iterator<true>(ranges::end([[redoc("*>")]]base_), ranges::distance([[redoc("*>")]]base_));
+      else
+        return [[redoc("*>")]]sentinel<true>(ranges::end([[redoc("*>")]]base_));
+    }
+
+    constexpr auto size()
+      requires [[redoc("`:c>")]]sized_range<V>
+    { return ranges::size([[redoc("*>")]]base_); }
+    constexpr auto size() const
+      requires [[redoc("`:c>")]]sized_range<const V>
+    { return ranges::size([[redoc("*>")]]base_); }
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+  };
+
+  template<class R>
+    enumerate_view(R&&) -> enumerate_view<views::all_t<R>>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit enumerate_view(V base);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_]。
+[div:end]
