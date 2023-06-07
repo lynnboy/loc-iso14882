@@ -4,16 +4,16 @@
 ]
 
 [para]
-[:en] Each [`formatter] specializations described in [#format.formatter.spec]
+[:en] Each [`formatter] specialization described in [#format.formatter.spec]
 for fundamental and string types interprets [~@fmt format-spec] as a
 [~@fmt std-format-spec].
 [:zh_CN] [#format.formatter.spec] 中描述的所有针对基础和字符串类型的 [`formatter]
 的特化式，都将[~@fmt 格式说明]解释为[~@fmt 标准格式说明]。
 
 [begin:note]
-[:en] The format specification can be used to specify such details as field
-width, alignment, padding, and decimal precision.
-[:zh_CN] 格式说明可以用于指定一些细节，如字段宽度，对齐，填充，以及小数精度。
+[:en] The format specification can be used to specify such details as minimum
+field width, alignment, padding, and decimal precision.
+[:zh_CN] 格式说明可以用于指定一些细节，如最小字段宽度，对齐，填充，以及小数精度。
 
 [:en] Some of the formatting options are only supported for arithmetic types.
 [:zh_CN] 某些格式化选项仅支持算术类型。
@@ -61,24 +61,61 @@ width, alignment, padding, and decimal precision.
 [rule:end]
 [syntax:end]
 
+[para]
+[:en] Field widths are specified in [+:adj field width[!units]]; the number of
+column positions required to display a sequence of characters in a terminal.
+[:zh_CN] 字段宽度按[+:adj 字段宽度[!单位]]指定；它是在终端上显式一个字符序列所
+需要的列位置数量。
+
+[:en] The [+:adj minimum[!field width]] is the number of field width units a
+replacement field minimally requires of the formatted sequence of characters
+produced for a format argument.
+[:zh_CN] [+:adj 最小[!字段宽度]]是对一个格式实参所产生的已格式化字符序列的替代
+字段所最少需要的字段宽度单位的数量。
+
+[:en] The [+:adj estimated[!field width]] is the number of field width units
+that are required for the formatted sequence of characters produced for a format
+argument independent of the effects of the [~@fmt width] option.
+[:zh_CN] [+:adj 估计[!字段宽度]]是对一个格式实参所产生的已格式化字符序列所需的
+与[~@fmt 宽度]选项的效果无关的字段宽度单位数量。
+
+[:en] The [+:adj padding[!width]] is the greater of [`0] and the difference of
+the minimum field width and the estimated field width.
+[:zh_CN] [+:adj 填充[!宽度]]是 [`0] 与最小字段宽度和估计字段宽度的差之间的较大值。
+
 [begin:note]
-[:en] The [~@fmt fill] character can be any character other than [`{] or [`}].
-[:zh_CN] [~@fmt 填充]字符可以为除 [`{] 和 [`}] 之外的任何字符。
-
-[:en] The presence of a fill character is signaled by the character following it,
-which must be one of the alignment options.
-[:zh_CN] 是否出现填充字符是由跟在其后的字符标明的，它必须为对齐选项之一。
-
-[:en] If the second character of [~@fmt std-format-spec] is not a valid
-alignment option, then it is assumed that both the fill character and the
-alignment option are absent.
-[:zh_CN] 如果[~@fmt 标准格式说明]的第二个字符不是有效的对齐选项，则假定填充字符
-和对齐选项都不存在。
+[:en] The POSIX [`wcswidth] function is an example of a function that,
+given a string, returns the number of column positions required by
+a terminal to display the string.
+[:zh_CN] 以 POSIX 的 [`wcswidth] 函数为例，给定一个字符串，它返回终端显式这个
+字符串所需的列位置的数量。
 [end:note]
 
 [para]
-[:en] The [~@fmt align] specifier applies to all argument types.
-[:zh_CN] [~@fmt 对齐]说明符适用于所有实参类型。
+[:en] The [+:adj fill[!character]] is the character denoted by the [~@fmt fill]
+option or, if the [~@fmt fill] option is absent, the space character.
+[:zh_CN] [+:adj 填充[!字符]]为[~@fmt 填充]选项所代表的字符，或当缺少[~@fmt 填充]
+选项时为空格字符。
+
+[:en] For a format specification in UTF-8, UTF-16, or UTF-32,
+the fill character corresponds to a single Unicode scalar value.
+[:zh_CN] 对于 UTF-8，UTF-16 或 UTF-32 格式说明，填充字符对应于单个 Unicode 标量值。
+
+[begin:note]
+[:en] The presence of a [~@fmt fill] option is signaled by the character
+following it, which must be one of the alignment options.
+[:zh_CN] 是否出现[~@fmt 填充]选项是由跟在其后的字符标明的，它必然为对齐选项之一。
+
+[:en] If the second character of [~@fmt std-format-spec] is not a valid
+alignment option, then it is assumed that the [~@fmt fill] and [~@fmt align]
+options are both absent.
+[:zh_CN] 如果[~@fmt 标准格式说明]的第二个字符不是有效的对齐选项，则假定
+[~@fmt 填充]和[~@fmt 对齐]选项都不存在。
+[end:note]
+
+[para]
+[:en] The [~@fmt align] option applies to all argument types.
+[:zh_CN] [~@fmt 对齐]选项适用于所有实参类型。
 
 [:en] The meaning of the various alignment options is as specified in
 [#:tab#format.align].
@@ -87,27 +124,51 @@ alignment option are absent.
 [begin:example]
 [codeblock]
 char c = 120;
-string s0 = format("{:6}", 42);         // [:en] value of [`s0] is [`"    42"] \
-                                        [:zh_CN] [`s0] 的值为 [`"    42"]
-string s1 = format("{:6}", 'x');        // [:en] value of [`s1] is [`"x     "] \
-                                        [:zh_CN] [`s1] 的值为 [`"x     "]
-string s2 = format("{:*<6}", 'x');      // [:en] value of [`s2] is [`"x*****"] \
-                                        [:zh_CN] [`s2] 的值为 [`"x*****"]
-string s3 = format("{:*>6}", 'x');      // [:en] value of [`s3] is [`"*****x"] \
-                                        [:zh_CN] [`s3] 的值为 [`"*****x"]
-string s4 = format("{:*^6}", 'x');      // [:en] value of [`s4] is [`"**x***"] \
-                                        [:zh_CN] [`s4] 的值为 [`"**x***"]
-string s5 = format("{:6d}", c);         // [:en] value of [`s5] is [`"   120"] \
-                                        [:zh_CN] [`s5] 的值为 [`"   120"]
-string s6 = format("{:6}", true);       // [:en] value of [`s6] is [`"true  "] \
-                                        [:zh_CN] [`s6] 的值为 [`"true  "]
+string s0 = format("{:6}", 42);             // [:en] value of [`s0] is [`"    42"] \
+                                            [:zh_CN] [`s0] 的值为 [`"    42"]
+string s1 = format("{:6}", 'x');            // [:en] value of [`s1] is [`"x     "] \
+                                            [:zh_CN] [`s1] 的值为 [`"x     "]
+string s2 = format("{:*<6}", 'x');          // [:en] value of [`s2] is [`"x*****"] \
+                                            [:zh_CN] [`s2] 的值为 [`"x*****"]
+string s3 = format("{:*>6}", 'x');          // [:en] value of [`s3] is [`"*****x"] \
+                                            [:zh_CN] [`s3] 的值为 [`"*****x"]
+string s4 = format("{:*^6}", 'x');          // [:en] value of [`s4] is [`"**x***"] \
+                                            [:zh_CN] [`s4] 的值为 [`"**x***"]
+string s5 = format("{:6d}", c);             // [:en] value of [`s5] is [`"   120"] \
+                                            [:zh_CN] [`s5] 的值为 [`"   120"]
+string s6 = format("{:6}", true);           // [:en] value of [`s6] is [`"true  "] \
+                                            [:zh_CN] [`s6] 的值为 [`"true  "]
+string s7 = format("{:*<6.3}", "123456");   // [:en] value of [`s6] is [`"123***"] \
+                                            [:zh_CN] [`s6] 的值为 [`"123***"]
+string s8 = format("{:02}", 1234);          // [:en] value of [`s6] is [`"1234"] \
+                                            [:zh_CN] [`s6] 的值为 [`"1234"]
+string s9 = format("{:*<}", "12");          // [:en] value of [`s6] is [`"12"] \
+                                            [:zh_CN] [`s6] 的值为 [`"12"]
+string sA = format("{:*<6}", "12345678");   // [:en] value of [`s6] is [`"12345678"] \
+                                            [:zh_CN] [`s6] 的值为 [`"12345678"]
 [codeblock:end]
 [end:example]
 
 [begin:note]
-[:en] Unless a minimum field width is defined, the field width is determined by
-the size of the content and the alignment option has no effect.
-[:zh_CN] 除非定义了最小字段宽度，否则字段宽度由内容大小确定，且对齐选项没有效果。
+[:en] The [~@fmt fill], [~@fmt align], and [`0] options have no effect when the
+minimum field width is not greater than the estimated field width because
+padding width is [`0] in that case.
+[:zh_CN] 如果最小字段宽度不大于估计字段宽度，则选项[~@fmt 填充]，[~@fmt 对齐] 和
+[`0] 均没有效果，因为这种情况下填充宽度为 [`0]。
+
+[:en] Since fill characters are assumed to have a field width of [`1],
+use of a character with a different field width can produce misaligned output.
+[:zh_CN] 由于假定填充字符的字段宽度为 [`1]，使用具有不同字段宽度的字符将产生
+无法对齐的输出。
+
+[:en] The [=unicode(1f921,clown face)] character has a field width of [`2].
+[:zh_CN] 字符 [=unicode(1f921,clown face)] 的字段宽度为 [`2]。
+
+[:en] The examples above that include that character illustrate the effect of
+the field width when that character is used as a fill character as opposed to
+when it is used as a formatting argument.
+[:zh_CN] 以上包含该字符的例子演示了当将该字符用作填充字符时和当将它用作格式化
+实参时的效果的对比。
 [end:note]
 
 [table:grid#format.align
@@ -120,8 +181,11 @@ the size of the content and the alignment option has no effect.
 ]
 
 [|] [`<]
-[|] [:en] Forces the field to be aligned to the start of the available space.
-    [:zh_CN] 强制字段对齐到可用空间的开头。
+[|] [:en] Forces the formatted argument to be aligned to the start of the field
+    by inserting [$n] fill characters after the formatted argument where [$n] is
+    the padding width.
+    [:zh_CN] 通过在经格式化实参之后插入 [$n] 个填充字符，使经格式化实参强制对齐
+    到字段的开头，其中 [$n] 为填充宽度。
 
     [:en] This is the default for non-arithmetic non-pointer types, [`charT],
     and [`bool], unless an integer presentation type is specified.
@@ -130,8 +194,11 @@ the size of the content and the alignment option has no effect.
 [-]
 
 [|] [`>]
-[|] [:en] Forces the field to be aligned to the end of the available space.
-    [:zh_CN] 强制字段对齐到可用空间的末尾。
+[|] [:en] Forces the formatted argument to be aligned to the end of the field by
+    inserting [$n] fill characters before the formatted argument where [$n] is
+    the padding width.
+    [:zh_CN] 通过在经格式化实参之前插入 [$n] 个填充字符，使经格式化实参强制对齐
+    到字段的末尾，其中 [$n] 为填充宽度。
 
     [:en] This is the default for arithmetic types other than [`charT] and
     [`bool], pointer types, or when an integer presentation type is specified.
@@ -140,14 +207,13 @@ the size of the content and the alignment option has no effect.
 [-]
 
 [|] [`^]
-[|] [:en] Forces the field to be centered within the available space by
-    inserting [$\bigl\lfloor \frac{n}{2} \bigr\rfloor] characters before and
-    [$\bigl\lceil \frac{n}{2} \bigr\rceil] characters after the value, where
-    [$n] is the total number of fill characters to insert.
-    [:zh_CN] 强制字段在可用空间内居中，在值之前插入
-    [$\bigl\lfloor \frac{n}{2} \bigr\rfloor] 个字符，在之后插入
-    [$\bigl\lceil \frac{n}{2} \bigr\rceil] 个字符，其中 [$n] 为所要插入的填充
-    字符的总数。
+[|] [:en] Forces the formatted argument to be centered within the field by
+    inserting [$\bigl\lfloor \frac{n}{2} \bigr\rfloor] fill characters before
+    and [$\bigl\lceil \frac{n}{2} \bigr\rceil] fill characters after the
+    formatted argument, where [$n] is the padding width.
+    [:zh_CN] 通过在经格式化实参之前插入 [$\bigl\lfloor \frac{n}{2} \bigr\rfloor]
+    个填充字符，在其之后插入 [$\bigl\lceil \frac{n}{2} \bigr\rceil] 个填充字符，
+    使经格式化实参在字段内居中，其中 [$n] 为填充宽度。
 [-]
 [table:end]
 
@@ -251,20 +317,18 @@ from the result.
 [:zh_CN] 此外，对于 [`g] 和 [`G] 转换，不会从结果中移除末尾的零。
 
 [para]
-[:en] A zero ([`0]) character preceding the [~@fmt width] field pads the field
-with leading zeros (following any indication of sign or base) to the field width,
-except when applied to an infinity or NaN.
-[:zh_CN] [~@fmt 宽度]字段前的字符零（[`0]），指定（在任何正负号或基数之后）填充
-前导零直到字段宽度，但不适用于无穷或 NaN 值。
-
-[:en] This option is only valid for arithmetic types other than [`charT] and
+[:en] The [`0] option is valid for arithmetic types other than [`charT] and
 [`bool] or when an integer presentation type is specified.
-[:zh_CN] 这个选项仅对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
+[:zh_CN] 选项 [`0] 对于除 [`charT] 和 [`bool] 之外的算术类型，或当指定的是整数
 表现类型时有效。
 
-[:en] If the [`0] character and an [~@fmt align] option both appear, the [`0]
-character is ignored.
-[:zh_CN] 当同时出现 [`0] 字符和[~@fmt 对齐]选项时，[`0] 字符被忽略。
+[:en] For formatting arguments that have a value other than an infinity or a NaN,
+this option pads the formatted argument by inserting the [`0] character [$n]
+times following the sign or base prefix indicators (if any) where [$n] is [`0]
+if the [~@fmt align] option is present and is the padding width otherwise.
+[:zh_CN] 对于具有并非无穷或 NaN 值的格式化实参，该选项通过在正负号或基数前缀
+指示符（如果有）之后 [$n] 次插入字符 [`0] 来填充以格式化实参，其中 [$n] 当出现
+[~@fmt 对齐]选项时为 [`0]，否则为填充宽度。
 
 [begin:example]
 [codeblock]
@@ -273,45 +337,38 @@ string s1 = format("{:+06d}", c);       // [:en] value of [`s1] is [`"+00120"] \
                                         [:zh_CN] [`s1] 的值为 [`"+00120"]
 string s2 = format("{:#06x}", 0xa);     // [:en] value of [`s2] is [`"0x000a"] \
                                         [:zh_CN] [`s2] 的值为 [`"0x000a"]
-string s3 = format("{:<06}", -42);      // [:en] value of [`s3] is [`"-42   "] ([`0] is ignored because of [`<] alignment) \
-                                        [:zh_CN] [`s3] 的值为 [`"-42   "]（由于 [`<] 对齐而忽略 [`0]）
+string s3 = format("{:<06}", -42);      // [:en] value of [`s3] is [`"-42   "] ([`0] has no effect) \
+                                        [:zh_CN] [`s3] 的值为 [`"-42   "]（[`0] 没有效果）
+string s4 = format("{:06}", inf);       // [:en] value of [`s4] is [`"   inf"] ([`0] has no effect) \
+                                        [:zh_CN] [`s4] 的值为 [`"   inf"]（[`0] 没有效果）
 [codeblock:end]
 [end:example]
 
 [para]
+[:en] The [~@fmt width] option specifies the minimum field width.
+[:zh_CN] [~@fmt 宽度]选项指定了最小字段宽度。
+
+[:en] If the [~@fmt width] option is absent, the minimum field width is [`0].
+[:zh_CN] 如果缺少[~@fmt 宽度]选项，则最小字段宽度为 [`0]。
+
+[para]
 [:en] If [`{ [~:opt@fmt arg-id] }] is used in a [~@fmt width] or
-[~@fmt precision], the value of the corresponding formatting argument is used in
-its place.
+[~@fmt precision] option, the value of the corresponding formatting argument is
+used as the value of the option.
 [:zh_CN] 如果[~@fmt 宽度]或[~@fmt 精度]中使用了 [`{ [~:opt@fmt 实参标识] }]，则
-在其位置上使用对应的格式化实参的值。
+在对应的格式化实参的值被用作选项的值。
 
-[:en] If the corresponding formatting argument is not of integral type, or its
-value is negative, an exception of type [`format_error] is thrown.
-[:zh_CN] 如果其对应格式化实参不是整形类型，或者其值为负数，则抛出 [`format_error]
-类型的异常。
-
-[para]
-[:en] The [~@fmt positive-integer] in [~@fmt width] is a decimal integer
-defining the minimum field width.
-[:zh_CN] [~@fmt 宽度]中的[~@fmt 正整数]是定义最小字段宽度的十进制整数。
-
-[:en] If [~@fmt width] is not specified, there is no minimum field width, and
-the field width is determined based on the content of the field.
-[:zh_CN] 如果未指定[~@fmt 宽度]，则没有最小字段宽度，字段的宽度基于字段内容确定。
+[:en] If the corresponding formatting argument is not of standard signed or
+unsigned integer type, or its value is negative, an exception of type
+[`format_error] is thrown.
+[:zh_CN] 如果其对应格式化实参不是标准有符号或无符号整数类型，或者其值为负数，则
+抛出 [`format_error] 类型的异常。
 
 [para]
-[:en]
-[%string[!width]]
-The [+width] of a string is defined as the estimated number of column positions
-appropriate for displaying it in a terminal.
-[:zh_CN]
-[%字符串[!宽度]]
-字符串的[+宽度]定义为适用于将其在终端中显示时的列位置的估计数量。
-
-[begin:note]
-[:en] This is similar to the semantics of the POSIX [`wcswidth] function.
-[:zh_CN] 这类似于 POSIX 的 [`wcswidth] 函数的语义。
-[end:note]
+[:en] If [~@fmt positive-integer] is used in a [~@fmt width] option, the value
+of the decimal integer is used as the value of the option.
+[:zh_CN] 如果在[~@fmt 宽度]选项中使用了[~@fmt 正整数]，则使用该十进制整数的值
+作为该选项的值。
 
 [para]
 [:en] For the purposes of width computation, a string is assumed to be in
@@ -320,9 +377,10 @@ computation] encoding.
 [:zh_CN] 为进行宽度计算，假定字符串具有一种地域无关的，[?impldef 为进行 [`format]
 宽度计算假定的编码]编码。
 
-[:en] Implementations should use a Unicode encoding on platforms capable of
-displaying Unicode text in a terminal.
-[:zh_CN] 各实现在有能力在终端中显示 Unicode 文本的平台上应当使用 Unicode 编码。
+[:en] Implementations should use either UTF-8, UTF-16, or UTF-32, on platforms
+capable of displaying Unicode text in a terminal.
+[:zh_CN] 各实现在有能力在终端中显示 Unicode 文本的平台上应当使用 UTF-8，UTF-16，
+或者 UTF-32 之一。
 
 [begin:note]
 [:en] This is the case for Windows[#:fn]-based and many POSIX-based operating
@@ -344,62 +402,61 @@ does not constitute an endorsement by ISO or IEC of this product.
 [note:end]
 
 [para]
-[:en] For a string in a Unicode encoding, implementations should estimate the
-width of a string as the sum of estimated widths of the first code points in its
-extended grapheme clusters.
-[:zh_CN] 对于以 Unicode 编码的字符串，实现对字符串的宽度估计，应当为其扩展图形群
-中的第一个代码点的估计宽度的和。
+[:en] For a sequence of characters in UTF-8, UTF-16, or UTF-32, an
+implementation should use as its field width the sum of the field widths of the
+first code point of each extended grapheme cluster.
+[:zh_CN] 对于 UTF-8，UTF-16，或 UTF-32 编码的字符序列，实现应当将各个扩展图形群
+的第一个代码点的字段宽度的总和作为其字段宽度。
 
-[:en] The extended grapheme clusters of a string are defined by UAX #29.
-[:zh_CN] 字符串的扩展图形群在 UAX #29 中定义。
+[:en] Extended grapheme clusters are defined by UAX #29 of the Unicode Standard.
+[:zh_CN] 扩展图形群在 Unicode 标准的 UAX #29 中定义。
 
-[:en] The estimated width of the following code points is 2:
-[:zh_CN] 以下代码点的估计宽度为 2：
+[:en] The following code points have a field width of 2:
+[:zh_CN] 以下代码点的字段宽度为 2：
 [list]
-[item] [&:ucode 1100] [=-] [&:ucode 115F]
-[item] [&:ucode 2329] [=-] [&:ucode 232A]
-[item] [&:ucode 2E80] [=-] [&:ucode 303E]
-[item] [&:ucode 3040] [=-] [&:ucode A4CF]
-[item] [&:ucode AC00] [=-] [&:ucode D7A3]
-[item] [&:ucode F900] [=-] [&:ucode FAFF]
-[item] [&:ucode FE10] [=-] [&:ucode FE19]
-[item] [&:ucode FE30] [=-] [&:ucode FE6F]
-[item] [&:ucode FF00] [=-] [&:ucode FF60]
-[item] [&:ucode FFE0] [=-] [&:ucode FFE6]
-[item] [&:ucode 1F300] [=-] [&:ucode 1F64F]
-[item] [&:ucode 1F900] [=-] [&:ucode 1F9FF]
-[item] [&:ucode 20000] [=-] [&:ucode 2FFFD]
-[item] [&:ucode 30000] [=-] [&:ucode 3FFFD]
+[item]
+[:en@~] any code point with the [`East_Asian_Width="W"] or [`East_Asian_Width="F"]
+Derived Extracted Property as described by UAX #44 of the Unicode Standard
+[:zh_CN@~] 任何带有 Unicode 标准 UAX #44 中所述的 [`East_Asian_Width="W"] 或
+[`East_Asian_Width="F"] 衍生提取属性的代码点
+[item]
+[:en@~] [&:ucode 4dc0] [=-] [&:ucode 4dff] (Yijing Hexagram Symbols)
+[:zh_CN@~] [&:ucode 4dc0] [=-] [&:ucode 4dff]（易经卦象（Yijing Hexagram）符号）
+[item]
+[:en@~] [&:ucode 1F300] [=-] [&:ucode 1F64F] (Miscellaneous Symbols and Pictographs)
+[:zh_CN@~] [&:ucode 1F300] [=-] [&:ucode 1F64F]（杂项符号和图形文字）
+[item]
+[:en@~] [&:ucode 1F900] [=-] [&:ucode 1F9FF] (Supplemental Symbols and Pictographs)
+[:zh_CN@~] [&:ucode 1F900] [=-] [&:ucode 1F9FF]（增补符号和图形文字）
 [list:end]
 
-[:en] The estimated width of other code points is 1.
-[:zh_CN] 其他代码点的估计宽度为 1。
+[:en] The field width of all other code points is 1.
+[:zh_CN] 其他所有代码点的字段宽度均为 1。
 
 [para]
-[:en]
-For a string in a non-Unicode encoding, the width of a string is unspecified.
-[:zh_CN] 对于非 Unicode 编码的字符串，未指名字符串宽度。
+[:en] For a sequence of characters in neither UTF-8, UTF-16, nor UTF-32,
+the field width is unspecified.
+[:zh_CN] 对于非 UTF-8，UTF-16，或 UTF-32 编码的字符序列，未指明字段宽度。
 
 [para]
-[:en] The [~@fmt nonnegative-integer] in [~@fmt precision] is a decimal integer
-defining the precision or maximum field size.
-[:zh_CN] [~@fmt 精度]中的[~@fmt 非负整数]是定义精度或最大字段大小的十进制整数。
+[:en] The [~@fmt precision] option is valid for floating-point and string types.
+[:zh_CN] [~@fmt 精度]选项对于浮点和字符串类型有效。
 
-[:en] It can only be used with floating-point and string types.
-[:zh_CN] 它仅可用于浮点和字符串类型。
+[:en] For floating-point types, the value of this option specifies the precision
+to be used for the floating-point presentation type.
+[:zh_CN] 对于浮点类型，该选项的值指定用于浮点表示类型的精度。
 
-[:en] For floating-point types this field specifies the formatting precision.
-[:zh_CN] 对于浮点类型，该字段指定格式化精度。
+[:en] For string types, this option specifies the longest prefix of the
+formatted argument to be included in the replacement field such that
+the field width of the prefix is no greater than the value of this option.
+[:zh_CN] 对于字符串类型，该选项指定替换字段中所包含的已格式化实参的最长前缀，
+使得前缀的字段宽度不大于该选项的值。
 
-[:en] For string types, this field provides an upper bound for the estimated
-width of the prefix of the input string that is copied into the output.
-[:zh_CN] 对于字符串类型，该字段为复制到输出中的输入字符串前缀的估计宽度提供上限。
-
-[:en] For a string in a Unicode encoding, the formatter copies to the output
-the longest prefix of whole extended grapheme clusters whose estimated width is
-no greater than the precision.
-[:zh_CN] 对于以 Unicode 编码的字符串，格式化器把估计宽度不大于该精度的完整扩展
-图形群的最长前缀复制到输出中。
+[para]
+[:en] If [~@fmt nonnegative-integer] is used in a [~@fmt precision] option,
+the value of the decimal integer is used as the value of the option.
+[:zh_CN] 如果[~@fmt 精度]选项中使用了[~@fmt 非负整数]，则使用该十进制整数的值
+作为该选项的值。
 
 [para]
 [:en] When the [`L] option is used, the form used for the conversion is called

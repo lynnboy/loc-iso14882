@@ -1,0 +1,35 @@
+[section#refwrap.common.ref
+    [:en] [`common_reference] related specialization
+    [:zh_CN] [`common_reference] 相关特化式
+]
+
+[%@lib basic_common_reference]
+[codeblock:synopsis]
+namespace std {
+  template<class T>
+    constexpr bool [[redoc("*>")]]is-ref-wrapper = false;                              // \expos
+
+  template<class T>
+    constexpr bool [[redoc("*>")]]is-ref-wrapper<reference_wrapper<T>> = true;
+
+  template<class R, class T, class RQ, class TQ>
+    concept [[redoc("*:c@def>")]]ref-wrap-common-reference-exists-with =                     // \expos
+      [[redoc("*>")]]is-ref-wrapper<R> &&
+      requires { typename common_reference_t<typename R::type&, TQ>; } &&
+      [[redoc("`:c>")]]convertible_to<RQ, common_reference_t<typename R::type&, TQ>>;
+
+  template<class R, class T, template<class> class RQual, template<class> class TQual>
+    requires ([[redoc("*:c>")]]ref-wrap-common-reference-exists-with<R, T, RQual<R>, TQual<T>> &&
+              ![[redoc("*:c>")]]ref-wrap-common-reference-exists-with<T, R, TQual<T>, RQual<R>>)
+  struct basic_common_reference<R, T, RQual, TQual> {
+    using type = common_reference_t<typename R::type&, TQual<T>>;
+  };
+
+  template<class T, class R, template<class> class TQual, template<class> class RQual>
+    requires ([[redoc("*:c>")]]ref-wrap-common-reference-exists-with<R, T, RQual<R>, TQual<T>> &&
+              ![[redoc("*:c>")]]ref-wrap-common-reference-exists-with<T, R, TQual<T>, RQual<R>>)
+  struct basic_common_reference<T, R, TQual, RQual> {
+    using type = common_reference_t<typename R::type&, TQual<T>>;
+  };
+}
+[codeblock:end]

@@ -1042,6 +1042,7 @@ fault                                   |故障，错误
 feature                                 |功能特性，特性
 fence                                   |栅栏，内存栅栏 |无关内存位置的同步操作
 field                                   |字段
+field width unit                        |字段宽度单位   |格式化
 file                                    |文件           |可观察行为
 filesystem                              |文件系统
 `final`                                 |`final`虚说明符|标明类不可被继承，虚函数不可被覆盖
@@ -1355,6 +1356,7 @@ memory                                  |内存
 memory location                         |内存位置   |非位字段或最长连续非零宽位字段
 memory management                       |内存管理
 memory model                            |内存模型
+minimum field width                     |最小字段宽度   |格式化
 modification order                      |改动顺序   |对某原子性对象的所有改动，无竞争有顺序
 modifier function                       |改动函数
 model                                   |构成（概念）|符合概念`C`，并满足其规范中的语义规定

@@ -20,24 +20,7 @@ namespace std {
             const char_type*, basic_string_view<char_type>,
             const void*, handle> value;                                         // [=expos]
 
-    template<class T> explicit basic_format_arg(T&& v) noexcept;                // [=expos]
-    explicit basic_format_arg(float n) noexcept;                                // [=expos]
-    explicit basic_format_arg(double n) noexcept;                               // [=expos]
-    explicit basic_format_arg(long double n) noexcept;                          // [=expos]
-    explicit basic_format_arg(const char_type* s);                              // [=expos]
-
-    template<class traits>
-      explicit basic_format_arg(
-        basic_string_view<char_type, traits> s) noexcept;                       // [=expos]
-
-    template<class traits, class Allocator>
-      explicit basic_format_arg(
-        const basic_string<char_type, traits, Allocator>& s) noexcept;          // [=expos]
-
-    explicit basic_format_arg(nullptr_t) noexcept;                              // [=expos]
-
-    template<class T>
-      explicit basic_format_arg(T* p) noexcept;                                 // [=expos]
+    template<class T> explicit basic_format_arg(T& v) noexcept;                 // [=expos]
 
   public:
     basic_format_arg() noexcept;
@@ -71,145 +54,85 @@ basic_format_arg() noexcept;
 [div:end]
 
 [codeblock:declaration]
-template<class T> explicit basic_format_arg(T&& v) noexcept;
+template<class T> explicit basic_format_arg(T& v) noexcept;
 [codeblock:end]
 
 [div:description]
 [para:constraints]
-[:en] The template specialization
-[:zh_CN] 模板特化式
-[codeblock]
-typename Context::template formatter_type<remove_cvref_t<T>>
-[codeblock:end]
-[:en@~] meets the [^:newoc BasicFormatter] requirements ([#formatter.requirements]).
-[:zh_CN@~] 满足 [^:newoc BasicFormatter] 的规定（[#formatter.requirements]）。
+[:en] [`T] satisfies [`[*:c formattable-with]<Context>].
+[:zh_CN] [`T] 符合 [`[*:c formattable-with]<Context>]。
 
-[:en] The extent to which an implementation determines that the specialization
-meets the [^:newoc BasicFormatter] requirements is unspecified, except that as a
-minimum the expression
-[:zh_CN] 实现以何种程度确定一个特化满足 [^:newoc BasicFormatter] 的规定是
-未指明的，但至少表达式
-[codeblock]
-typename Context::template formatter_type<remove_cvref_t<T>>()
-  .format(declval<T&>(), declval<Context&>())
-[codeblock:end]
-[:en@~] shall be well-formed when treated as an unevaluated operand
-([#term.unevaluated.operand]).
-[:zh_CN@~] 在被当做免求值操作数（[#term.unevaluated.operand]）时应当是良构的。
+[para:expects]
+[:en] If [`decay_t<T>] is [`char_type*] or [`const char_type*],
+[`static_cast<const char_type*>(v)] points to a NTCTS ([#defns.ntcts]).
+[:zh_CN] 如果 [`decay_t<T>] 为 [`char_type*] 或 [`const char_type*]，则
+[`static_cast<const char_type*>(v)] 指向一个 NTCTS（[#defns.ntcts]）。
 
 [para:effects]
+[:en] Let [`TD] be [`remove_const_t<T>].
+[:zh_CN] 令 [`TD] 为 [`remove_const_t<T>]。
+
 [list]
 [item]
-[:en] if [`T] is [`bool] or [`char_type], initializes [`value] with [`v];
-[:zh_CN] 若 [`T] 为 [`bool] 或 [`char_type]，则以 [`v] 初始化 [`value]；
+[:en] If [`TD] is [`bool] or [`char_type], initializes [`value] with [`v];
+[:zh_CN] 若 [`TD] 为 [`bool] 或 [`char_type]，则以 [`v] 初始化 [`value]；
 [item]
-[:en] otherwise, if [`T] is [`char] and [`char_type] is [`:key wchar_t],
+[:en] otherwise, if [`TD] is [`char] and [`char_type] is [`:key wchar_t],
 initializes [`value] with [`static_cast<wchar_t>(v)];
-[:zh_CN] 否则，若 [`T] 为 [`char] 并且 [`char_type] 为 [`:key wchar_t]，则以
+[:zh_CN] 否则，若 [`TD] 为 [`char] 并且 [`char_type] 为 [`:key wchar_t]，则以
 [`static_cast<wchar_t>(v)] 初始化 [`value]；
 [item]
-[:en] otherwise, if [`T] is a signed integer type ([#basic.fundamental]) and
-[`sizeof(T) <= sizeof(int)], initializes [`value] with [`static_cast<int>(v)];
-[:zh_CN] 否则，若 [`T] 为有符号整数类型（[#basic.fundamental]）并且
-[`sizeof(T) <= sizeof(int)]，则以 [`static_cast<int>(v)] 初始化 [`value]；
+[:en] otherwise, if [`TD] is a signed integer type ([#basic.fundamental]) and
+[`sizeof(TD) <= sizeof(int)], initializes [`value] with [`static_cast<int>(v)];
+[:zh_CN] 否则，若 [`TD] 为有符号整数类型（[#basic.fundamental]）并且
+[`sizeof(TD) <= sizeof(int)]，则以 [`static_cast<int>(v)] 初始化 [`value]；
 [item]
-[:en] otherwise, if [`T] is an unsigned integer type and
-[`sizeof(T) <= sizeof(unsigned int)], initializes [`value] with
+[:en] otherwise, if [`TD] is an unsigned integer type and
+[`sizeof(TD) <= sizeof(unsigned int)], initializes [`value] with
 [`static_cast<unsigned int>(v)];
-[:zh_CN] 否则，若 [`T] 为无符号整数类型并且 [`sizeof(T) <= sizeof(unsigned int)]，
+[:zh_CN] 否则，若 [`TD] 为无符号整数类型并且 [`sizeof(TD) <= sizeof(unsigned int)]，
 则以 [`static_cast<unsigned int>(v)] 初始化 [`value]；
 [item]
-[:en] otherwise, if [`T] is a signed integer type and
-[`sizeof(T) <= sizeof(long long int)], initializes [`value] with
+[:en] otherwise, if [`TD] is a signed integer type and
+[`sizeof(TD) <= sizeof(long long int)], initializes [`value] with
 [`static_cast<long long int>(v)];
-[:zh_CN] 否则，若 [`T] 为有符号整数类型并且 [`sizeof(T) <= sizeof(long long int)]，
+[:zh_CN] 否则，若 [`TD] 为有符号整数类型并且 [`sizeof(TD) <= sizeof(long long int)]，
 则以 [`static_cast<long long int>(v)] 初始化 [`value]；
 [item]
-[:en] otherwise, if [`T] is an unsigned integer type and
-[`sizeof(T) <= sizeof(unsigned long long int)], initializes [`value] with
+[:en] otherwise, if [`TD] is an unsigned integer type and
+[`sizeof(TD) <= sizeof(unsigned long long int)], initializes [`value] with
 [`static_cast<unsigned long long int>(v)];
-[:zh_CN] 否则，若 [`T] 为无符号整数类型并且
-[`sizeof(T) <= sizeof(unsigned long long int)]，则以
+[:zh_CN] 否则，若 [`TD] 为无符号整数类型并且
+[`sizeof(TD) <= sizeof(unsigned long long int)]，则以
 [`static_cast<unsigned long long int>(v)] 初始化 [`value]；
+[item]
+[:en] otherwise, if [`TD] is a standard floating-point type, initializes [`value]
+with [`v];
+[:zh_CN] 否则，若 [`TD] 为标准浮点类型，则以 [`v] 初始化 [`value]；
+[item]
+[:en] otherwise, if [`TD] is a specialization of [`basic_string_view] or
+[`basic_string] and [`TD::value_type] is [`char_type], initializes [`value]
+with [`basic_string_view<char_type>(v.data(), v.size())];
+[:zh_CN] 否则，若 [`TD] 为 [`basic_string_view] 或 [`basic_string] 的特例且
+[`TD::value_type] 为 [`char_type]，则以
+[`basic_string_view<char_type>(v.data(), v.size())] 初始化 [`value]；
+[item]
+[:en] otherwise, if [`decay_t<TD>] is [`char_type*] or [`const char_type*],
+initializes [`value] with [`static_cast<const char_type*>(v)];
+[:zh_CN] 否则，若 [`decay_t<TD>] 为 [`char_type*] 或 [`const char_type*]，则以
+[`static_cast<const char_type*>(v)] 初始化 [`value]；
+[item]
+[:en] otherwise, if [`is_void_v<remove_pointer_t<TD>>] is [`true] or
+[`is_null_pointer_v<TD>] is [`true], initializes [`value] with
+[`static_cast<const void*>(v)];
+[:zh_CN] 否则，若 [`is_void_v<remove_pointer_t<TD>>] 为 [`true] 或
+[`is_null_pointer_v<TD>] 为 [`true]，则以 [`static_cast<const void*>(v)] 初始化
+[`value]；
 [item]
 [:en] otherwise, initializes [`value] with [`handle(v)].
 [:zh_CN] 否则，以 [`handle(v)] 初始化 [`value]。
 [list:end]
-[div:end]
 
-[codeblock:declaration]
-explicit basic_format_arg(float n) noexcept;
-explicit basic_format_arg(double n) noexcept;
-explicit basic_format_arg(long double n) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initializes [`value] with [`n].
-[:zh_CN] 以 [`n] 初始化 [`value]。
-[div:end]
-
-[codeblock:declaration]
-explicit basic_format_arg(const char_type* s);
-[codeblock:end]
-
-[div:description]
-[para:expects]
-[:en] [`s] points to a NTCTS ([#defns.ntcts]).
-[:zh_CN] [`s] 指向一个 NTCTS（[#defns.ntcts]）。
-
-[para:effects]
-[:en] Initializes [`value] with [`s].
-[:zh_CN] 以 [`s] 初始化 [`value]。
-[div:end]
-
-[codeblock:declaration]
-template<class traits>
-  explicit basic_format_arg(basic_string_view<char_type, traits> s) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initializes [`value] with [`basic_string_view<char_type>(s.data(), s.size())].
-[:zh_CN] 以 [`basic_string_view<char_type>(s.data(), s.size())] 初始化 [`value]。
-[div:end]
-
-[codeblock:declaration]
-template<class traits, class Allocator>
-  explicit basic_format_arg(
-    const basic_string<char_type, traits, Allocator>& s) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initializes [`value] with [`basic_string_view<char_type>(s.data(), s.size())].
-[:zh_CN] 以 [`basic_string_view<char_type>(s.data(), s.size())] 初始化 [`value]。
-[div:end]
-
-[codeblock:declaration]
-explicit basic_format_arg(nullptr_t) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initializes [`value] with [`static_cast<const void*>(nullptr)].
-[:zh_CN] 以 [`static_cast<const void*>(nullptr)] 初始化 [`value]。
-[div:end]
-
-[codeblock:declaration]
-template<class T> explicit basic_format_arg(T* p) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:constraints]
-[:en] [`is_void_v<T>] is [`true].
-[:zh_CN] [`is_void_v<T>] 为 [`true]。
-
-[para:effects]
-[:en] Initializes [`value] with [`p].
-[:zh_CN] 以 [`p] 初始化 [`value]。
-
-[para]
 [begin:note]
 [:en] Constructing [`basic_format_arg] from a pointer to a member is ill-formed
 unless the user provides an enabled specialization of [`formatter] for that
@@ -246,7 +169,7 @@ namespace std {
     void (*format_)(basic_format_parse_context<char_type>&,
                     Context&, const void*);                     // [=expos]
 
-    template<class T> explicit handle(T&& val) noexcept;        // [=expos]
+    template<class T> explicit handle(T& val) noexcept;         // [=expos]
 
     friend class basic_format_arg<Context>;                     // [=expos]
 
@@ -258,7 +181,7 @@ namespace std {
 
 [%@lib@ctor basic_format_arg::handle]
 [codeblock:declaration]
-template<class T> explicit handle(T&& val) noexcept;
+template<class T> explicit handle(T& val) noexcept;
 [codeblock:end]
 
 [div:description]
@@ -267,23 +190,18 @@ template<class T> explicit handle(T&& val) noexcept;
 [:zh_CN] 令
 [list]
 [item]
-[:en] [`TD] be [`remove_cvref_t<T>],
-[:zh_CN] [`TD] 为 [`remove_cvref_t<T>]，
+[:en] [`TD] be [`remove_const_t<T>],
+[:zh_CN] [`TD] 为 [`remove_const_t<T>]，
 [item]
-[:en] [*const-formattable] be [`true] if
-[`typename Context::template formatter_type<TD>().format(declval<const TD&>(), declval<Context&>())]
-is well-formed, otherwise [`false],
-[:zh_CN] 如果
-[`typename Context::template formatter_type<TD>().format(declval<const TD&>(), declval<Context&>())]
-良构则 [*const-formattable] 为 [`true]，否则为 [`false]，
-[item]
-[:en] [`TD] be [`const TD] if [*const-formattable] is [`true] and [`TD] otherwise.
-[:zh_CN@~] 如果 [*const-formattable] 为 [`true] 则 [`TD] 为 [`const TD]，否则为 [`TD]。
+[:en] [`TD] be [`const TD] if [`const TD] satisfies
+[`[*:c formattable-with]<Context>] and [`TD] otherwise.
+[:zh_CN@~] 如果 [`const TD] 符合 [`[*:c formattable-with]<Context>] 则 [`TD] 为
+[`const TD]，否则为 [`TD]。
 [list:end]
 
 [para:mandates]
-[:en] [`[*const-formattable] || !is_const_v<remove_reference_t<T>>] is [`true].
-[:zh_CN] [`[*const-formattable] || !is_const_v<remove_reference_t<T>>] 为 [`true]。
+[:en] [`TQ] satisfies [`[*:c formattable-with]<Context>].
+[:zh_CN] [`TQ] 符合 [`[*:c formattable-with]<Context>]。
 
 [para:effects]
 [:en] Initializes [`ptr_] with [`addressof(val)] and [`format_] with
