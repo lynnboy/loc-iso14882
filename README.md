@@ -164,6 +164,7 @@ Original   |中文   |章节    |定义
 *r-char*                    |*r-字符*       | [lex.string]  | **源字符集** - (`)` *d-字符序列*__?__ `"`)
 *d-char-sequence*           |*d-字符序列*   | [lex.string]  | *d-字符*__+__
 *d-char*                    |*d-字符*       | [lex.string]  | **源字符集** - ([` ()\`] \| **控制字符**)
+*unevaluated-string*        |*免求值字符串* | [lex.string.uneval] | *字符串字面量*
 *boolean-literal*           |*布尔字面量*   | [lex.bool]    | `false` \| `true`
 *pointer-literal*           |*指针字面量*   | [lex.nullptr] | `nullptr`
 *user-defined-literal*      |*用户定义字面量*| [lex.ext]    | *用户定义整数字面量* \|<br> *用户定义浮点字面量* \|<br> *用户定义字符串字面量* \|<br> *用户定义字符字面量*
@@ -278,7 +279,8 @@ Original   |中文   |章节    |定义
 *nodeclspec-function-declaration*|*无声明说明符函数声明式*| [dcl.pre] |*属性说明符序列*__?__ *声明符* `;`
 *alias-declaration*         |*别名声明式*   | [dcl.pre]     | `using` *标识符* *属性说明符序列*__?__ `=` *定义类型标识* `;`
 *simple-declaration*        |*简单声明式*   | [dcl.pre]     | *声明说明符序列* *带初始化声明符列表*__?__ `;` \|<br> *属性说明符序列* *声明说明符序列* *带初始化声明符列表* `;` \|<br> *属性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *标识符列表* `]` 初始化式 `;`
-*static_assert-declaration* |*static_assert-声明式*| [dcl.pre] | `static_assert` `(` *常量表达式* ( `,` *字符串字面量* ) `)` `;`
+*static_assert-message*     |*static_assert-消息*| [dcl.pre]| *免求值字符串* \| *条件表达式*
+*static_assert-declaration* |*static_assert-声明式*| [dcl.pre] | `static_assert` `(` *常量表达式* ( `,` *static_assert-消息* ) `)` `;`
 *empty-declaration*         |*空声明式*     | [dcl.pre]     | `;`
 *attribute-declaration*     |*属性声明式*   | [dcl.pre]     | *属性说明符序列* `;`
 *decl-specifier*            |*声明说明符*   | [dcl.spec.general] | *存储类说明符* \| *定义类型说明符* \| *函数声明符* \|<br> `friend` \| `typedef` \| `constexpr` \| `consteval` \| `constinit` \| `inline`
@@ -355,8 +357,8 @@ Original   |中文   |章节    |定义
 *using-declaration*         |*using-声明式* | [namespace.udecl] | `using` *using-声明符列表* `;`
 *using-declarator-list*     |*using-声明符列表*| [namespace.udecl] | *using-声明符* `...`__?__ ( `,` *using-声明符* `...`__?__ )__\*__
 *using-declarator*          |*using-声明符* | [namespace.udecl] | `typename`__?__ *嵌套名说明符* *无限定标识*
-*asm-declaration*           |*asm-声明式*   | [dcl.asm]     | *属性说明符序列*__?__ `asm` `(` *字符串字面量* `)` `;`
-*linkage-specification*     |*连接说明*     | [dcl.link]    | `extern` *字符串字面量* ( `{` *声明式序列*__?__ `}` \| *命名声明式* )
+*asm-declaration*           |*asm-声明式*   | [dcl.asm]     | *属性说明符序列*__?__ `asm` `(` *平衡记号序列* `)` `;`
+*linkage-specification*     |*连接说明*     | [dcl.link]    | `extern` *免求值字符串* ( `{` *声明式序列*__?__ `}` \| *命名声明式* )
 *attribute-specifier-seq*   |*属性说明符序列*| [dcl.attr.grammar] | *属性说明符*__\+__
 *attribute-specifier*       |*属性说明符*   | [dcl.attr.grammar] | `[` `[` *属性-using-前缀*__?__ *属性列表* `]` `]` \|<br> *对齐说明符*
 *alignment-specifier*       |*对齐说明符*   | [dcl.attr.grammar] | `alignas` `(` (*类型标识* \| *常量表达式*) `...`__?__ `)`
@@ -419,7 +421,7 @@ Original   |中文   |章节    |定义
 |-|-|-|-|
 *operator-function-id*      |*运算符函数标识*| [over.oper.general] | `operator` *运算符*
 *operator*                  |*运算符*       | [over.oper.general] | *运算符* ∈ **可重载运算符**
-*literal-operator-id*       |*字面量运算符标识*| [over.literal] | `operator` *字符串字面量* *标识符* \|<br> `operator` *用户定义字符串字面量*
+*literal-operator-id*       |*字面量运算符标识*| [over.literal] | `operator` *免求值字符串* *标识符* \|<br> `operator` *用户定义字符串字面量*
 
 ### Templates 模板
 
@@ -598,6 +600,7 @@ awaitable                               |可等待体
 
 |English|中文|说明|
 |-|-|-|
+backing array                           |后备数组   |`initializer_list`的存储
 backslash                               |反斜杠     |`\`，用于转义，行拼接等
 barrier                                 |关卡
 barrier phase                           |关卡阶段
@@ -606,10 +609,10 @@ base class subobject                    |基类子对象 |未指明布局。同�
 base-clause                             |基子句     |指定基类。可以为类型名，decltype，支持包组展开，模板。忽略cv
 base-2 representation                   |以 2 为基的表示    |整数的二进制值表示
 base N integer                          |以 N 为基的整数    |进制
-basic character set                     |基本字符集     |96个字符
-basic execution character set           |基本执行字符集(depr) |96基本源字符 + `\a`, `\b`, `\r`, `\0`
+basic character set                     |基本字符集     |99个字符
+basic execution character set           |基本执行字符集(depr) |99基本源字符 + `\a`, `\b`, `\r`, `\0`
 basic execution wide-character set      |基本执行宽字符集(depr)
-basic literal character set             |基本字面字符集 |96基本源字符 + `\a`, `\b`, `\r`, `\0`
+basic literal character set             |基本字面字符集 |99基本字符 + `\a`, `\b`, `\r`, `\0`
 basic source character set              |基本源字符集(depr)   |只有96个字符，至少兼容 ASCII 和 EBCDIC
 behavior                                |行为
 belong                                  |属于（作用域） |实体属于其声明式的目标作用域
@@ -799,6 +802,7 @@ conversion function                     |转换函数       |以转换函数标�
 conversion-function-id                  |转换函数标识   |`operator T`，T为转换类型标识，代表目标类型。不允许尾部返回类型或类型推断
 conversion-type-id                      |转换类型标识   |仅支持指针，不支持数组、引用、函数。不能为自身、基类或`void`
 conversion rank                         |转换等级
+converted bit-field                     |经转换位字段
 converted constant expression           |经转换的常量表达式
 converting constructor                  |转换构造函数   |非显式构造函数
 copy                                    |复制，副本
@@ -814,6 +818,7 @@ coroutine state                         |协程状态       |为实现协程分�
 corresponding declarations              |对应声明式     |引入相同名字的声明式，排除：其一为using，其一为类型，或二者为不同签名的函数（模板）
 corresponding instance                  |对应实例       |实现所对应的抽象机器
 corresponding object parameter          |对应对象形参
+corresponding overloads                 |对应重载
 corresponding signature                 |对应签名
 counted range                           |计数范围       |迭代器+计数
 counting semaphore                      |计数信号量
@@ -1069,6 +1074,7 @@ forward progress                        |向前进展，进展 |保证线程会�
 forwarding reference                    |转发引用       |类型模板形参的无cv右值引用
 fraction                                |小数，分数
 free store                              |自由存储       |new/delete 或 malloc() 等所管理的堆内存
+freestanding deleted function           |自立式弃置函数
 freestanding item                       |自立式项目
 freestanding implementation             |自立式实现     |无操作系统支持
 friend                                  |友元           |授予友元访问所有成员的能力。不传递，不继承
@@ -1140,12 +1146,15 @@ hard link                               |硬连接
 *has-attribute-expression*              |*属性查询表达式* |`__has_cpp_attribute(attr)`，是否支持属性及其版本。属性允许宏展开
 *has-include-expression*                |*包含查询表达式* |`__has_include(hdr)`，是否可包含文件。宏行为同`#include`
 hash function                           |散列函数
+hazard pointer                          |涉险指针
+hazard protectable                      |可涉险保护的
 header                                  |头文件
 header name                             |头文件名   |预处理记号，`<[~>]*>` 或 `"[~"]*"`，仅属于 `#include`，`import`，`__has_include`
 header unit                             |头文件单元 |模块导入，头文件经过1-7阶段翻译后的内容，附属全局模块<br>不能包含外部连接非内联函数/变量
 hidden friend                           |隐藏友元   |仅在类内部声明并直接定义的友元函数，它们仅能作为运算符或通过ADL可用
 high-order bit                          |高序位     |最高有效位
 hosted implementation                   |宿主式实现 |在操作系统下运行
+hosted library facilities               |宿主式程序库设施
 
 ### I
 
@@ -1403,6 +1412,7 @@ mutex                                   |互斥体
 |-|-|-|
 name                                    |名字<br>指名       |标识符、运算符函数标识、字面量运算符标识、转换函数标识<br>声明式包含：模板名、概念名、标识表达式、类型的说明符、闭包类型的lambda、重载集合时，指名相应实体
 name hiding                             |名字隐藏
+name-independent                        |名字独立   |名为`_`的自动变量的声明式
 name lookup                             |名字查找   |遇到名字时确定其含义
 name mangling                           |名字重整
 named                                   |具名的
@@ -1418,6 +1428,7 @@ NaN, not a number                       |非数字
 narrow character type                   |窄字符类型     |普通（三种`char`），`char8_t`
 narrow string literal                   |窄字符串字面量 |普通和UTF-8
 narrowing conversion                    |窄化转换   |隐式转换：F2I，I2F，丢失精度，除已知不会丢失精度，可转换回原值
+native handle                           |本地句柄
 native pathname format                  |本地路径名格式
 necessarily reachable                   |必定可达   |已经被导入的模块接口单元
 nest                                    |嵌套
@@ -1444,7 +1455,6 @@ noexcept function of () cv ref returning| T  T 为返回类型的 () cv ref 的 
 `noexcept` operator                     |`noexcept` 运算符  |免求值表达式，`noexcept(expr)`
 nominable declaration                   |可提名声明式       |类/命名空间某点之前的目标为该作用域（或其内联）的居于非块作用域的声明式，即引入了实体成员而不关心是否绑定名字
 non-allocating form                     |非分配形式
-non-encodable character literal         |不可编码字符字面量 |字面量关联的字符编码所不支持的字符
 non-initialization odr-use              |非初始化 ODR 式使用|非由静态/线程变量初始化导致的 ODR 式使用
 non-member candidates                   |非成员候选 |运算符重载中，除`=`,`[]`,`->`外允许非成员函数
 non-object parameter                    |非对象形参 |非静态成员函数的普通形参
@@ -1590,6 +1600,7 @@ polymorphic                             |多态的
 polymorphic class                       |多态类         |有虚函数的类
 pool                                    |内存池         |管理特定大小的区块
 pool resource                           |池化资源       |`synchronized_pool_resource`和`unsynchronized_pool_resource`。管理不同大小的内存池
+possibly-reclaimable                    |可能可回收     |涉险指针
 POSIX, Portable Operating System Interface  |POSIX，可移植操作系统接口
 postfix                                 |后缀
 postfix decrement expression            |后置减量表达式 |后缀表达式
@@ -1641,6 +1652,7 @@ promoted integral type                  |已提升整型类型 |排除`char`等�
 Promotion                               |提升 Prom  |重载决议中的标准转换类别，提升级，包括整型提升 IntP，浮点提升 FltP<br>重载决议中的标准转换等级
 prospective destructor                  |预期析构函数|若未显式声明则隐式声明预置的无约束预期析构函数
 protected                               |受保护     |允许类内部、友元及派生类访问
+protection epoch                        |保护纪元   |涉险指针
 prototype                               |原型
 prototype parameter                     |原型形参   |概念的首个模板形参
 provides storage                        |提供存储   |字节数组对象为放置构造对象提供存储
@@ -1679,11 +1691,14 @@ range-based for statement               |基于范围的 for 语句|等价于`in
 rank index                              |秩索引
 raw literal operator                    |原始字面量运算符   |`operator "" X(const char*)`，数值字面量的通配运算符之一
 raw string literal                      |原始字符串字面量   |避免转义等处理的字符串，分隔串用于识别边界`)`，如`R"xx()xx"`
+RCU, read-copy update                   |读-复制更新
+rcu-protectable                         |可 RCU 保护
 reachable                               |可达，可达的   |翻译单元：必定可达的UT，或其他有接口依赖的UT（实现决定）<br>声明式：从实例化语境处处可达的声明式
 reachable from P                        |从 P 点可达    |从 P 点可达的声明式：同 UT 之前的声明式，或可达 UT 中非私有分段未被弃用的声明式
 reaching scope                          |可达作用域
 read-read coherence                     |读-读协调性    |原子性 M 的 RA HapB RB，则两个值符合 M 的改动顺序
 read-write coherence                    |读-写协调性    |原子性 M 的 RA HapB WB，则两个值符合 M 的改动顺序
+reclaim                                 |回收，再生     |涉险指针对象最终删除对象
 recursive function call                 |递归函数调用
 reentrancy                              |可重入性       |可递归调用的算法
 ref-qualifier                           |引用限定符     |函数类型，成员函数的 & 或 &&
@@ -1697,6 +1712,9 @@ reference type                          |引用类型，T& 或 T&&
 referenceable type                      |可被引用的类型 |可以创建 T& 的类型 T，包括引用类型
 regex                                   |正则表达式
 region                                  |区，区域
+region of RCU protection                |RCU 保护区
+registered character encoding           |注册字符编码
+registered character encoding alias     |注册字符编码别名
 regular expression                      |正则表达式
 reified object                          |具象对象       |泛左值为原对象，纯右值为实质化后的对象
 reinterpret cast expression             |重解释转型表达式 |后缀表达式，`reinterpret_cast<T>(v)`<br>函数指针兼容，对象指针兼容，成员指针兼容，指针<=>整数（枚举），通过指针完成引用转换
@@ -1724,6 +1742,7 @@ restriction                             |限制，要求
 resumer                                 |恢复方     |调用协程句柄的恢复成员函数的函数
 resumption                              |恢复
 resumption member function              |恢复成员函数
+retire                                  |退役       |涉险指针调用`retire`
 return                                  |返回
 return statement                        |return 语句，返回语句|允许在void函数中返回void类型操作数<br>复制初始化，但允许复制消除。结果初始化 SeqB 临时对象销毁 SeqB 局部变量销毁
 return type                             |返回类型   |非数组对象类型、引用类型、`void`；摒弃volatile返回类型

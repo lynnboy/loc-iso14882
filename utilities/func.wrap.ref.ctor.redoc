@@ -1,0 +1,214 @@
+[section#func.wrap.ref.ctor
+    [:en] Constructors and assignment operators
+    [:zh_CN] 构造函数和赋值运算符
+]
+
+[%@lib@raw [`function_ref::[*is-invocable-using]][%function_ref::is-invocable-using]]
+[codeblock:declaration]
+template<class... T>
+  static constexpr bool [[redoc("*>")]]is-invocable-using = [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] If [^noex] is [`true], [`[*is-invocable-using]<T...>] is equal to:
+[:zh_CN] 若 [^noex] 为 [`true]，则 [`[*is-invocable-using]<T...>] 等于：
+[codeblock]
+is_nothrow_invocable_r_v<R, T..., ArgTypes...>
+[codeblock:end]
+[:en] Otherwise, [`[*is-invocable-using]<T...>] is equal to:
+[:zh_CN] 否则，[`[*is-invocable-using]<T...>] 等于：
+[codeblock]
+is_invocable_r_v<R, T..., ArgTypes...>
+[codeblock:end]
+[div:end]
+
+[%@lib@ctor function_ref]
+[codeblock:declaration]
+template<class F> function_ref(F* f) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_function_v<F>] is [`true], and
+[:zh_CN] [`is_function_v<F>] 为 [`true]，并且
+[item]
+[:en] [`[*is-invocable-using]<F>] is [`true].
+[:zh_CN] [`[*is-invocable-using]<F>] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`f] is not a null pointer.
+[:zh_CN] [`f] 不是空指针。
+
+[para:effects]
+[:en] Initializes [*bound-entity] with [`f], and [*thunk-ptr] with the address
+of a function [`[^thunk]] such that [`[^thunk]([*bound-entity], [^call-args]...)]
+is expression-equivalent ([#defns.expression.equivalent]) to
+[`invoke_r<R>(f, [^call-args]...)].
+[:zh_CN] 以 [`f] 初始化 [*bound-entity]，并以某个函数 [`[^thunk]] 的地址初始化
+[*thunk-ptr]，使得 [`[^thunk]([*bound-entity], [^call-args]...)] 按表达式等价于
+（[#defns.expression.equivalent]）[`invoke_r<R>(f, [^call-args]...)]。
+[div:end]
+
+[%@lib@ctor function_ref]
+[codeblock:declaration]
+template<class F> constexpr function_ref(F&& f) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`T] be [`remove_reference_t<F>].
+[:zh_CN] 令 [`T] 为 [`remove_reference_t<F>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`remove_cvref_t<F>] is not the same type as [`function_ref], and
+[:zh_CN] [`remove_cvref_t<F>] 与 [`function_ref] 为不同类型，并且
+[item]
+[:en] [`is_member_pointer_v<T>] is [`false], and
+[:zh_CN] [`is_member_pointer_v<T>] 为 [`false]，并且
+[item]
+[:en] [`[*is-invocable-using]<[=cv] T&>] is [`true].
+[:zh_CN] [`[*is-invocable-using]<[=cv] T&>] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] Initializes [*bound-entity] with [`addressof(f)], and [*thunk-ptr] with
+the address of a function [`[^thunk]] such that
+[`[^thunk]([*bound-entity], [^call-args]...)] is expression-equivalent
+([#defns.expression.equivalent]) to
+[`invoke_r<R>(static_cast<[=cv] T&>(f), [^call-args]...)].
+[:zh_CN] 以 [`addressof(f)] 初始化 [*bound-entity]，并以某个函数 [`[^thunk]] 的
+地址初始化 [*thunk-ptr]，使得 [`[^thunk]([*bound-entity], [^call-args]...)]
+按表达式等价于（[#defns.expression.equivalent]）
+[`invoke_r<R>(static_cast<[=cv] T&>(f), [^call-args]...)]。
+[div:end]
+
+[%@lib@ctor function_ref]
+[codeblock:declaration]
+template<auto f> constexpr function_ref(nontype_t<f>) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`F] be [`decltype(f)].
+[:zh_CN] 令 [`F] 为 [`decltype(f)]。
+
+[para:constraints]
+[:en] [`[*is-invocable-using]<F>] is [`true].
+[:zh_CN] [`[*is-invocable-using]<F>] 为 [`true]。
+
+[para:mandates]
+[:en] If [`is_pointer_v<F> || is_member_pointer_v<F>] is [`true],
+then [`f != nullptr] is [`true].
+[:zh_CN] 如果 [`is_pointer_v<F> || is_member_pointer_v<F>] 为 [`true]，则
+[`f != nullptr] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [*bound-entity] with a pointer to an unspecified object or
+null pointer value, and [*thunk-ptr] with the address of a function [`[^thunk]]
+such that [`[^thunk]([*bound-entity], [^call-args]...)] is expression-equivalent
+([#defns.expression.equivalent]) to [`invoke_r<R>(f, [^call-args]...)].
+[:zh_CN] 以指向某个未指明对象的指针或空指针值初始化 [*bound-entity]，并以某个
+函数 [`[^thunk]] 的地址初始化 [*thunk-ptr]，使得
+[`[^thunk]([*bound-entity], [^call-args]...)] 按表达式等价于
+（[#defns.expression.equivalent]）[`invoke_r<R>(f, [^call-args]...)]。
+[div:end]
+
+[%@lib@ctor function_ref]
+[codeblock:declaration]
+template<auto f, class U>
+  constexpr function_ref(nontype_t<f>, U&& obj) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`T] be [`remove_reference_t<U>] and [`F] be [`decltype(f)].
+[:zh_CN] 令 [`T] 为 [`remove_reference_t<T>] 并令 [`F] 为 [`decltype(f)]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`is_rvalue_reference_v<U&&>] is [`false], and
+[:zh_CN] [`is_rvalue_reference_v<U&&>] 为 [`false]，并且
+[item]
+[:en] [`[*is-invocable-using]<F, [=cv] T&>] is [`true].
+[:zh_CN] [`[*is-invocable-using]<F, [=cv] T&>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[:en] If [`is_pointer_v<F> || is_member_pointer_v<F>] is [`true],
+then [`f != nullptr] is [`true].
+[:zh_CN] 如果 [`is_pointer_v<F> || is_member_pointer_v<F>] 为 [`true]，则
+[`f != nullptr] 为 [`true]。
+
+[para:effects]
+[:en] Initializes [*bound-entity] with [`addressof(obj)], and [*thunk-ptr] with
+the address of a function [`[^thunk]] such that
+[`[^thunk]([*bound-entity], [^call-args]...)] is expression-equivalent
+([#defns.expression.equivalent]) to
+[`invoke_r<R>(f, static_cast<[=cv] T&>(obj), [^call-args]...)].
+[:zh_CN] 以 [`addressof(obj)] 初始化 [*bound-entity]，并以某个函数 [`[^thunk]]
+的地址初始化 [*thunk-ptr]，使得 [`[^thunk]([*bound-entity], [^call-args]...)]
+按表达式等价于（[#defns.expression.equivalent]）
+[`invoke_r<R>(f, static_cast<[=cv] T&>(obj), [^call-args]...)]。
+[div:end]
+
+[%@lib@ctor function_ref]
+[codeblock:declaration]
+template<auto f, class T>
+  constexpr function_ref(nontype_t<f>, [[redoc("[=cv]")]] T* obj) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`F] be [`decltype(f)].
+[:zh_CN] 令 [`F] 为 [`decltype(f)]。
+
+[para:constraints]
+[:en] [`[*is-invocable-using]<F, [=cv] T*>] is [`true].
+[:zh_CN] [`[*is-invocable-using]<F, [=cv] T*>] 为 [`true]。
+
+[para:mandates]
+[:en] If [`is_pointer_v<F> || is_member_pointer_v<F>] is [`true],
+then [`f != nullptr] is [`true].
+[:zh_CN] 如果 [`is_pointer_v<F> || is_member_pointer_v<F>] 为 [`true]，则
+[`f != nullptr] 为 [`true]。
+
+[para:expects]
+[:en] If [`is_member_pointer_v<F>] is [`true], [`obj] is not a null pointer.
+[:zh_CN] 如果 [`is_member_pointer_v<F>] 为 [`true]，则 [`obj] 不是空指针。
+
+[para:effects]
+[:en] Initializes [*bound-entity] with [`obj], and [*thunk-ptr] with the address
+of a function [`[^thunk]] such that [`[^thunk]([*bound-entity], [^call-args]...)]
+is expression-equivalent ([#defns.expression.equivalent]) to
+[`invoke_r<R>(f, obj, [^call-args]...)].
+[:zh_CN] 以 [`obj] 初始化 [*bound-entity]，并以某个函数 [`[^thunk]] 的地址初始化
+[*thunk-ptr]，使得 [`[^thunk]([*bound-entity], [^call-args]...)] 按表达式等价于
+（[#defns.expression.equivalent]）[`invoke_r<R>(f, obj, [^call-args]...)]。
+[div:end]
+
+[%@lib@member operator=[!function_ref]]
+[codeblock:declaration]
+template<class T> function_ref& operator=(T) = delete;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`T] is not the same type as [`function_ref],
+[:zh_CN] [`T] 与 [`function_ref] 不是相同类型，
+[item]
+[:en] [`is_pointer_v<T>] is [`false], and
+[:zh_CN] [`is_pointer_v<T>] 为 [`false]，并且
+[item]
+[:en] [`T] is not a specialization of [`nontype_t].
+[:zh_CN] [`T] 不是 [`nontype_t] 的特例。
+[list:end]
+[div:end]

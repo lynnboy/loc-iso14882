@@ -254,6 +254,26 @@ class scope, the program is ill-formed.
 [:zh_CN]
 如果居于相同类作用域的两个 [~using-声明符]指名了一个声明式，则程序非良构。
 
+[begin:example]
+[codeblock]
+struct C {
+  int i;
+};
+
+struct D1 : C { };
+struct D2 : C { };
+
+struct D3 : D1, D2 {
+  using D1::i;                  // [:en] OK, equivalent to [`using C::i] \
+                                [:zh_CN] OK，等价于 [`using C::i]
+  using D1::i;                  // [:en] error: duplicate \
+                                [:zh_CN] 错误：重复
+  using D2::i;                  // [:en] error: duplicate, also names [`C::i] \
+                                [:zh_CN] 错误：重复，同样指名 [`C::i]
+};
+[codeblock:end]
+[end:example]
+
 [para]
 [begin:note]
 [:en]
@@ -303,11 +323,25 @@ void bar() {
 [para]
 [:en]
 If a declaration named by a [~using-declaration] that inhabits the target scope
-of another declaration potentially conflicts with it ([#basic.scope.scope]), and
-either is reachable from the other, the program is ill-formed.
+of another declaration [$B] potentially conflicts with it ([#basic.scope.scope]),
+and either is reachable from the other, the program is ill-formed unless [$B] is
+name-independent and the [~using-declaration] precedes [$B].
 [:zh_CN]
-如果指名某个声明式的 [~using-声明式]居于另一个与该声明式潜在冲突的声明式的目标
-作用域（[#basic.scope.scope]），而两个声明式互相不可达，则程序非良构。
+如果指名某个声明式的 [~using-声明式]居于另一个与该声明式潜在冲突的声明式 [$B] 的
+目标作用域（[#basic.scope.scope]），而两个声明式互相不可达，则程序非良构，除非
+[$B] 名字独立并且该 [~using-声明式] 先于 [$B]。
+
+[begin:example]
+[codeblock]
+int _;
+void f() {
+  int _;                // [$B]
+  _ = 0;
+  using ::_;            // [:en] error: [~using-declaration] does not precede [$B] \
+                        [:zh_CN] 错误：[~using-声明式]并未先于 [$B]
+}
+[codeblock:end]
+[end:example]
 
 [:en]
 If two declarations named by [~using-declaration]s that inhabit the same scope
@@ -372,6 +406,8 @@ void func() {
   using B::x;
   using A::x;                           // [:en] OK, hides [`struct B::x] \
                                         [:zh_CN] OK，隐藏 [`struct B::x]
+  using A::x;                           // [:en] OK, does not conflict with previous [`using A::x] \
+                                        [:zh_CN] OK，与之前的 [`using A::x] 并不冲突
   x = 99;                               // [:en] assigns to [`A::x] \
                                         [:zh_CN] 对 [`A::x] 赋值
   struct x x1;                          // [:en] [`x1] has class type [`B::x] \

@@ -1,0 +1,75 @@
+[section#func.wrap.ref.class
+    [:en] Class template [`function_ref]
+    [:zh_CN] 类模板 [`function_ref]
+]
+
+[%@lib function_ref]
+[codeblock:synopsis]
+namespace std {
+  template<class R, class... ArgTypes>
+  class function_ref<R(ArgTypes...) [[redoc("[=cv]")]] noexcept([[redoc("^>")]]noex)> {
+  public:
+    // [:en] [#func.wrap.ref.ctor], constructors and assignment operators \
+    [:zh_CN] [#func.wrap.ref.ctor]，构造函数和赋值运算符
+    template<class F> function_ref(F*) noexcept;
+    template<class F> constexpr function_ref(F&&) noexcept;
+    template<auto f> constexpr function_ref(nontype_t<f>) noexcept;
+    template<auto f, class U> constexpr function_ref(nontype_t<f>, U&&) noexcept;
+    template<auto f, class T> constexpr function_ref(nontype_t<f>, [[redoc("[=cv]")]] T*) noexcept;
+
+    constexpr function_ref(const function_ref&) noexcept = default;
+    constexpr function_ref& operator=(const function_ref&) noexcept = default;
+    template<class T> function_ref& operator=(T) = delete;
+
+    // [:en] [#func.wrap.ref.inv], invocation \
+    [:zh_CN] [#func.wrap.ref.inv]，调用
+    R operator()(ArgTypes...) const noexcept([[redoc("^>")]]noex);
+
+  private:
+    template<class VT>
+      static constexpr bool [[redoc("*>")]]is-callable-from = [[redoc("[=seebelow]")]];       // [=expos]
+
+    R (*[[redoc("*>")]]thunk-ptr)([[redoc("*>")]]BoundEntityType, Args&&...) noexcept([[redoc("^>")]]noex);  // [=expos]
+    [[redoc("*>")]]BoundEntityType [[redoc("*>")]]bound-entity;                               // [=expos]
+  };
+
+  // [:en] [#func.wrap.ref.deduct], deduction guides \
+  [:zh_CN] [#func.wrap.ref.deduct]，推断导引
+  template<class F>
+    function_ref(F*) -> function_ref<F>;
+  template<auto f>
+    function_ref(nontype_t<f>) -> function_ref<[[redoc("[=seebelow]")]]>;
+  template<auto f, class T>
+    function_ref(nontype_t<f>, T&&) -> function_ref<[[redoc("[=seebelow]")]]>;
+}
+[codeblock:end]
+
+[para]
+[:en] An object of class [`function_ref<R(Args...) [=cv] noexcept([^noex])>]
+stores a pointer to function [*thunk-ptr] and an object [*bound-entity].
+[:zh_CN] 类 [`function_ref<R(Args...) [=cv] noexcept([^noex])>] 的对象存储一个
+函数指针 [*thunk-ptr] 和一个对象 [*bound-entity]。
+
+[:en] [*bound-entity] has an unspecified trivially copyable type
+[*BoundEntityType], that models [`:c copyable] and is capable of storing a
+pointer to object value or a pointer to function value.
+[:zh_CN] [*bound-entity] 具有某种未指明的可平凡复制类型 [*BoundEntityType]，它
+构成 [`:c copyable]，并有能力存储一个对象指针值或函数指针值。
+
+[:en] The type of [*thunk-ptr] is
+[`R(*)([*BoundEntityType], Args&&...) noexcept([^noex])].
+[:zh_CN] [*thunk-ptr] 的类型为
+[`R(*)([*BoundEntityType], Args&&...) noexcept([^noex])]。
+
+[para]
+[:en] Each specialization of [`function_ref] is a trivially copyable type
+([#term.trivially.copyable.type]) that models [`:c copyable].
+[:zh_CN] [`function_ref] 的每个特例均为构成了 [`:c copyable] 的可平凡复制类型
+（[#term.trivially.copyable.type]）。
+
+[para]
+[:en] Within subclause [#func.wrap.ref], [`[^call-args]] is an argument pack
+with elements such that [`decltype(([^call-args]))...] denote [`Args&&...]
+respectively.
+[:zh_CN] 在子条款 [#func.wrap.ref] 中，[`[^call-args]] 是实参包组，满足各
+[`decltype(([^call-args]))...] 分别代表各 [`Args&&...]。

@@ -148,10 +148,11 @@ List-initialization of an object or reference of type [`T] is defined as follows
 [list]
 [item]
 [:en]
-If the [~braced-init-list] contains a [~designated-initializer-list], [`T] shall
-be an aggregate class.
+If the [~braced-init-list] contains a [~designated-initializer-list] and [`T] is
+not a reference type, [`T] shall be an aggregate class.
 [:zh_CN]
-如果[~花括号初始化列表]包含一个[~定名初始化式列表]，则 [`T] 应当为一个聚合类。
+如果[~花括号初始化列表]包含一个[~定名初始化式列表]且 [`T] 并非引用类型，则 [`T]
+应当为一个聚合类。
 
 [:en]
 The ordered [~identifier]s in the [~designator]s of the
@@ -344,17 +345,18 @@ Handle h { 42 };                    // OK
 
 [item]
 [:en]
-Otherwise, if the initializer list has a single element of type [`E] and either
-[`T] is not a reference type or its referenced type is reference-related to [`E],
-the object or reference is initialized from that element (by copy-initialization
-for copy-list-initialization, or by direct-initialization for
+Otherwise, if the initializer list is not a [~designated-initializer-list] and
+has a single element of type [`E] and either [`T] is not a reference type or its
+referenced type is reference-related to [`E], the object or reference is
+initialized from that element (by copy-initialization for
+copy-list-initialization, or by direct-initialization for
 direct-list-initialization); if a narrowing conversion (see below) is required
 to convert the element to [`T], the program is ill-formed.
 [:zh_CN]
-否则，若初始化式列表具有单个 [`E] 类型的元素，且 [`T] 不是引用类型或者其所指代的
-类型与 [`E] 引用相关，则对象或引用被以该元素进行初始化（对于复制列表初始化则进行
-复制初始化，而对于直接列表初始化则进行直接初始化）；如果将该元素转换为 [`T] 时
-需要进行窄化转换（见下文），则程序非良构。
+否则，若初始化式列表并非[~定名初始化式列表]且具有单个 [`E] 类型的元素，且 [`T]
+不是引用类型或者其所指代的类型与 [`E] 引用相关，则对象或引用被以该元素进行初始化
+（对于复制列表初始化则进行复制初始化，而对于直接列表初始化则进行直接初始化）；
+如果将该元素转换为 [`T] 时需要进行窄化转换（见下文），则程序非良构。
 
 [para:~]
 [begin:example]
@@ -424,6 +426,9 @@ struct A { } a;
 struct B { explicit B(const A&); };
 const B& b2{a};                     // [:en] error: cannot copy-list-initialize [`B] temporary from [`A] \
                                     [:zh_CN] 错误：无法从 [`A] 对 [`B] 的临时变量进行复制列表初始化
+
+struct C { int x; };
+C&& c = { .x = 1 };                 // OK
 [codeblock:end]
 [end:example]
 
@@ -515,18 +520,19 @@ no sequencing constraints on the arguments of a call.
 An object of type [`std::initializer_list<E>] is constructed from an initializer
 list as if the implementation generated and materialized ([#conv.rval]) a
 prvalue of type [=lq]array of [$N] [`const E][=rq], where [$N] is the number of
-elements in the initializer list.
+elements in the initializer list; this is called the initializer list[=']s
+[+:adj backing[!array]].
 [:zh_CN]
 由初始化式列表所构造的类型 [`std::initializer_list<E>] 的对象，就如同由实现生成
 并实质化（[#conv.rval]）了一个“[`const E] 的 [$N] 元素数组”类型的纯右值一样，
-其中 [$N] 为初始化式列表中的元素的数量。
+其中 [$N] 为初始化式列表中的元素的数量；这被称为该初始化式列表的[+:adj 后备[!数组]]。
 
 [:en]
-Each element of that array is copy-initialized with the corresponding element of
-the initializer list, and the [`std::initializer_list<E>] object is constructed
-to refer to that array.
+Each element of the backing array is copy-initialized with the corresponding
+element of the initializer list, and the [`std::initializer_list<E>] object is
+constructed to refer to that array.
 [:zh_CN]
-该数组中的每个元素都由初始化式列表中的对应元素进行复制初始化，而此
+后备数组中的每个元素都由初始化式列表中的对应元素进行复制初始化，而此
 [`std::initializer_list<E>] 对象就被构造为代表这个数组。
 
 [begin:note]
@@ -544,12 +550,36 @@ program is ill-formed.
 [:zh_CN]
 如果对任何元素进行初始化时需要进行窄化转换，则程序非良构。
 
+[:en] Whether all backing arrays are distinct
+(that is, are stored in non-overlapping objects) is unspecified.
+[:zh_CN] 是否所有后备数组各自独立（即存储于不重叠对象中）是未指明的。
+
+[para]
+[:en] The backing array has the same lifetime as any other temporary object
+([#class.temporary]), except that initializing an [`initializer_list] object
+from the array extends the lifetime of the array exactly like binding
+a reference to a temporary.
+[:zh_CN] 后备数组与任何其他临时对象具有相同的生存期（[#class.tempoaray]），但
+从数组初始化的 [`initializer_list] 对象，则与将引用绑定到临时对象相似的方式扩展
+数组的生存期。
+
 [begin:example]
 [codeblock]
-struct X {
-  X(std::initializer_list<double> v);
+void f(std::initializer_list<double> il);
+void g(float x) {
+  f({1, x, 3});
+}
+void h() {
+  f({1, 2, 3});
+}
+
+struct A {
+  mutable int i;
 };
-X x{ 1,2,3 };
+void q(std::initializer_list<A>);
+void r() {
+  q({A{1}, A{2}, A{3}});
+}
 [codeblock:end]
 
 [:en]
@@ -558,26 +588,28 @@ The initialization will be implemented in a way roughly equivalent to this:
 这个初始化将被实现为大致与此等价：
 
 [codeblock]
-const double __a[3] = {double{1}, double{2}, double{3}};
-X x(std::initializer_list<double>(__a, __a+3));
+void g(float x) {
+  const double __a[3] = {double{1}, double{x}, double{3}};              // [:en] backing array [:zh_CN] 后备数组
+  f(std::initializer_list<double>(__a, __a+3));
+}
+void h() {
+  static constexpr double __b[3] = {double{1}, double{2}, double{3}};   // [:en] backing array [:zh_CN] 后备数组
+  f(std::initializer_list<double>(__b, __b+3));
+}
+void r() {
+  const A __c[3] = {A{1}, A{2}, A{3}};                                  // [:en] backing array [:zh_CN] 后备数组
+  q(std::initializer_list<A>(__c, __c+3));
+}
 [codeblock:end]
 
 [:en@~]
 assuming that the implementation can construct an [`initializer_list] object
-with a pair of pointers.
+with a pair of pointers, and with the understanding that [`__b] does not outlive
+the call to [`f].
 [:zh_CN@~]
-假设该实现可以用一对指针来构造 [`initializer_list] 对象。
+假设该实现可以用一对指针来构造 [`initializer_list] 对象，并且可知 [`__b] 并不会
+存活超过对 [`f] 的这次调用。
 [end:example]
-
-[para]
-[:en]
-The array has the same lifetime as any other temporary object ([#class.temporary]),
-except that initializing an [`initializer_list] object from the array extends
-the lifetime of the array exactly like binding a reference to a temporary.
-[:zh_CN]
-该数组的生存期与其他临时对象相同（[#class.temporary]），但从该数组对
-[`initializer_list] 对象进行初始化，将以绑定引用到临时对象完全相同的方式扩展数组
-的生存期。
 
 [begin:example]
 [codeblock]
@@ -617,15 +649,6 @@ the program is ill-formed ([#class.base.init]).
 对于 [`i4]，其 [`initializer_list] 对象在构造函数的[~构造函数初始化式]中初始化，
 如同通过将一个临时数组绑定到一个引用成员一样，因此程序非良构（[#class.base.init]）。
 [end:example]
-
-[begin:note]
-[:en]
-The implementation is free to allocate the array in read-only memory if an
-explicit array with the same initializer can be so allocated.
-[:zh_CN]
-实现可以自由地将数组分配到只读内存中，只要具有相同初始化式的明确使用的数组也能够
-采用这种分配。
-[end:note]
 
 [para]
 [:en]

@@ -222,9 +222,17 @@ enumerator, function, or function template, or
 （[#class.union.anon]）的非静态数据成员，枚举符，函数，或函数模板，或者
 [item]
 [:en@~]
-each declares a function or function template, except when
+each declares a function or function template and they do not declare
+corresponding overloads.
 [:zh_CN@~]
-均声明函数或函数模板，但并非
+均声明函数或函数模板，且它们并未声明对应重载。
+[list:end]
+
+[:en]
+Two function or function template declarations declare [+corresponding
+overloads] if:
+[:zh_CN]
+以下情况下，两个函数或函数模板声明式声明的是[+对应重载]：
 [list]
 [item]
 [:en@~]
@@ -249,7 +257,6 @@ both declare function templates with corresponding signatures and equivalent
 [~template-head]s, and trailing [~requires-clause]s (if any).
 [:zh_CN@~]
 均声明函数模板且具有对应签名和等价的[~模板头]，和尾部 [~requires-子句]（如果有）。
-[list:end]
 [list:end]
 
 [begin:note]
@@ -305,6 +312,24 @@ struct X {
 
 [para]
 [:en]
+A declaration is [+name-independent[%declaration[!name-independent]]] if its
+name is [`_] ([=unicode(005f,low line)]) and it declares a variable with
+automatic storage duration, a structured binding not inhabiting a namespace
+scope, the variable introduced by an [~init-capture], or a non-static data member.
+[:zh_CN]
+如果声明式的名字为 [`_]（[=unicode(005f,low line)]）且其声明的是具有自动存储期的
+变量，非居于命名空间作用域的结构化绑定，由[~带初始化俘获符]引入的变量，或者是
+非静态数据成员，则它是[+名字独立的[%声明式[!名字独立的]]]，
+
+[para:recommended:~]
+[:en]
+Implementations should not emit a warning
+that a name-independent declaration is used or unused.
+[:zh_CN]
+实现最好不针对名字独立的声明式被使用或未使用给出警告消息。
+
+[para]
+[:en]
 [%declaration[!potentially conflict]]
 Two declarations [+potentially conflict] if they correspond and cause their
 shared name to denote different entities ([#basic.link]).
@@ -315,10 +340,21 @@ shared name to denote different entities ([#basic.link]).
 
 [:en]
 The program is ill-formed if, in any scope, a name is bound to two declarations
-that potentially conflict and one precedes the other ([#basic.lookup]).
+[$A] and [$B] that potentially conflict and [$A] precedes [$B] ([#basic.lookup]),
+unless [$B] is name-independent.
 [:zh_CN]
-如果在任何作用域中，有名字绑定到潜在冲突的两个声明式而其中一个先于另一个
-（[#basic.lookup]），则程序非良构。
+如果在任何作用域中，有名字绑定到潜在冲突的两个声明式 [$A] 和 [$B]，而 [$A] 先于
+[$B]（[#basic.lookup]）且 [$B] 并非名字独立，则程序非良构。
+
+[begin:note]
+[:en]
+An [~id-expression] that names a unique name-independent declaration is usable
+until an additional declaration of the same name is introduced in the same scope
+([#basic.lookup.general]).
+[:zh_CN]
+指名某个唯一的名字独立声明式的[~标识表达式]，在相同作用域中引入相同名字的额外
+声明式之前均可用（[#basic.lookup.general]）。
+[end:note]
 
 [begin:note]
 [:en]
@@ -351,6 +387,21 @@ namespace A = B;        // [:en] OK, no effect \
                         [:zh_CN] OK，没有效果
 namespace B {}          // error: different entity for [`B] \
                         [:zh_CN] 错误：[`B] 的不同实体
+
+void g() {
+  int _;
+  _ = 0;                // OK
+  int _;                // [:en] OK, name-independent declaration \
+                        [:zh_CN] OK，名字独立的声明式
+  _ = 0;                // [:en] error: two non-function declarations in the lookup set \
+                        [:zh_CN] 错误：查找集合中有两个非函数声明式
+}
+void h () {
+  int _;                // #1
+  _ ++;                 // OK
+  static int _;         // [:en] error: conflicts with #1 because static variables are not name-independent \
+                        [:zh_CN] 错误：由于静态变量并非名字独立而与 #1 冲突
+}
 [codeblock:end]
 [end:example]
 

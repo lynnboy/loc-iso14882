@@ -1,0 +1,168 @@
+[section#saferecl.hp.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] [%hazard pointer]
+A hazard pointer is a single-writer multi-reader pointer
+that can be owned by at most one thread at any time.
+[:zh_CN] [%涉险指针]
+涉险指针是一种单写入方，多读取方的指针，任意时刻至多一个线程所有。
+
+[:en] Only the owner of the hazard pointer can set its value,
+while any number of threads may read its value.
+[:zh_CN] 只有涉险指针的所有者可以设置其值，而任何数量的线程都可以读取其值。
+
+[:en] The owner thread sets the value of a hazard pointer to point to an object
+in order to indicate to concurrent threads[=--]which may delete such an
+object[=--]that the object is not yet safe to delete.
+[:zh_CN] 所有者线程将涉险指针的值设置为指向某个对象，以向各并发线程（它们可能会
+删除这个对象）标明这个对象尚不能安全地删除。
+
+[para]
+[:en] A class type [`T] is [+hazard-protectable] if it has exactly one base
+class of type [`hazard_pointer_obj_base<T, D>] for some [`D], that base is
+public and non-virtual, and it has no base classes of type
+[`hazard_pointer_obj_base<T2, D2>] for any other combination [`T2], [`D2].
+[:zh_CN] 如果类类型 [`T] 具有恰好一个对于某个类 [`D] 的
+[`hazard_pointer_obj_base<T, D>] 类型的基类，该基类是公开且非虚的，并且对于任何
+其他组合 [`T2] 和 [`D2]，它都没有 [`hazard_pointer_obj_base<T2, D2>] 类型的基类，
+则它是 [+可涉险保护]的。
+
+[:en] An object is [+hazard-protectable] if it is of hazard-protectable type.
+[:zh_CN] 如果对象具有可涉险保护的类型，则它是[+可涉险保护]的。
+
+[para]
+[:en] The time span between creation and destruction of a hazard pointer [$h]
+is partitioned into a series of [+:adj protection[!epochs[%epoch]]]; in each
+protection epoch, [$h] either is [+associated with[%hazard pointer[!associated]]]
+a hazard-protectable object, or is [+unassociated[%hazard pointer[!unassociated]]].
+[:zh_CN] 涉险指针 [$h] 的创建和销毁之间的时间段被分为一系列[+:adj 保护[!纪元]]；
+在每个保护纪元中，[$h] 要么与某个可涉险保护对象[+相关联[%涉险指针[!关联]]]，要么
+为[+无关联[%涉险指针[!无关联]]]的。
+
+[:en] Upon creation, a hazard pointer is unassociated.
+[:zh_CN] 创建时，涉险指针是无关联的。
+
+[:en] Changing the association (possibly to the same object)
+initiates a new protection epoch and ends the preceding one.
+[:zh_CN] 改变关联（可能使其关联相同对象），启动一个新保护纪元并结束前一个保护纪元。
+
+[para]
+[:en] An object [`x] of hazard-protectable type [`T] is [+retired] with a
+deleter of type [`D] when the member function
+[`hazard_pointer_obj_base<T, D>::retire] is invoked on [`x].
+[:zh_CN] 对于可涉险保护类型 [`T] 的对象 [`x]，当在 [`x] 上调用了成员函数
+[`hazard_pointer_obj_base<T, D>::retire] 时，它以一个 [`D] 类型的删除器[+退役]。
+
+[:en] Any given object [`x] shall be retired at most once.
+[:zh_CN] 任意给定对象 [`x] 均应最多退役一次。
+
+[para]
+[:en] A retired object [`x] is [+reclaimed] by invoking its deleter with a
+pointer to [`x]; the behavior is undefined if that invocation exits via an
+exception.
+[:zh_CN] 已退役对象 [`x] 通过在指向 [`x] 的指针上调用其删除器进行[+回收]；如果
+该调用以异常退出，则其行为未定义。
+
+[para]
+[:en] A hazard-protectable object [`x] is [+possibly-reclaimable] with respect
+to an evaluation [$A] if:
+[:zh_CN] 可涉险保护对象 [`x]，满足以下条件时，为关于某个求值 [$A] [+可能可回收]：
+
+[list]
+[item]
+[:en] [`x] is not reclaimed; and
+[:zh_CN] [`x] 尚未回收；并且
+
+[item]
+[:en] [`x] is retired in an evaluation [$R] and [$A] does not happen before [$R];
+and
+[:zh_CN] [`x] 已在某次求值 [$R] 中退役，且 [$A] 并非发生早于 [$R]；并且
+
+[item]
+[:en] for all hazard pointers [$h] and for every protection epoch [$E] of [$h]
+during which [$h] is associated with [`x]:
+[:zh_CN] 对于所有涉险指针 [$h]，以及 [$h] 与 [`x] 发生关联的 [$h] 的每个纪元 [$E]：
+
+[list]
+[item]
+[:en] if the beginning of [$E] happens before [$R], the end of [$E] strongly
+happens before [$A]; and
+[:zh_CN] 如果 [$E] 的开始发生早于 [$R]，则 [$E] 的结束强发生早于 [$A]；并且
+
+[item]
+[:en] if [$E] began by an evaluation of [`try_protect] with argument [`src],
+label its atomic load operation [$L].
+[:zh_CN] 如果 [$E] 是由某次以实参 [`src] 调用 [`try_protect] 所开始的，标记其
+原子性加载操作 [$L]。
+
+[:en] If there exists an atomic modification [$B] on [`src] such that [$L]
+observes a modification that is modification-ordered before [$B], and [$B]
+happens before [`x] is retired, the end of [$E] strongly happens before [$A].
+[:zh_CN] 如果存在 [`src] 上的原子性操作 [$B]，使得 [$L] 观察到了改动顺序早于 [$B]
+的一次改动，并且 [$B] 发生早于 [`x] 的退役，则 [$E] 的结束强发生早于 [$A]。
+
+[begin:note]
+[:en] In typical use, a store to [`src] sequenced before retiring [`x]
+will be such an atomic operation [$B].
+[:zh_CN] 典型用法中，按顺序早于 [`x] 的退役的对 [`src] 的存储，会成为这样的
+原子性操作 [$B]。
+[end:note]
+[list:end]
+
+[begin:note]
+[:en] The latter two conditions convey the informal notion that a protection
+epoch that began before retiring [`x], as implied either by the happens-before
+relation or the coherence order of some source, delays the reclamation of [`x].
+[:zh_CN] 后两项条件非正式地表达了：[`x] 退役之前开始的保护纪元，按照发生早于关系
+或者由某个源头的一致性顺序所蕴含的那样，将会推迟 [`x] 的回收。
+[end:note]
+[list:end]
+
+[para]
+[:en] The number of possibly-reclaimable objects has an unspecified bound.
+[:zh_CN] 可能可回收对象的数量具有一个未指明的上限。
+
+[begin:note]
+[:en] The bound can be a function of the number of hazard pointers,
+the number of threads that retire objects, and
+the number of threads that use hazard pointers.
+[:zh_CN] 这个界限可以是涉险指针数量，退役对象的线程的数量，和使用涉险指针的线程
+的数量的函数。
+[end:note]
+
+[begin:example]
+[:en] The following example shows how hazard pointers allow updates to be
+carried out in the presence of concurrent readers.
+[:zh_CN] 以下例子展示了涉险指针如何在存在并发读取方时允许实施更新操作。
+
+[:en] The object of type [`hazard_pointer] in [`print_name] protects the object
+[`*ptr] from being reclaimed by [`ptr->retire] until the end of the protection
+epoch.
+[:zh_CN] [`print_name] 中的 [`hazard_pointer] 类型的对象，保护对象 [`*ptr] 直到
+保护纪元结束之前都不会被 [`ptr->retire] 所回收。
+
+[codeblock]
+struct Name : public hazard_pointer_obj_base<Name> { /* [:en] details [:zh_CN] 忽略细节 */ };
+atomic<Name*> name;
+// [:en] called often and in parallel! \
+[:zh_CN] 经常且被并行调用！
+void print_name() {
+  hazard_pointer h = make_hazard_pointer();
+  Name* ptr = h.protect(name);          // [:en] Protection epoch starts \
+                                        [:zh_CN] 保护纪元开始
+  // [:en] ... safe to access [`*ptr] \
+  [:zh_CN] ……可安全访问 [`*ptr]
+}                                       // [:en] Protection epoch ends. \
+                                        [:zh_CN] 保护纪元结束。
+
+// [:en] called rarely, but possibly concurrently with [`print_name] \
+[:zh_CN] 很少调用，但可能与 [`print_name] 并发调用
+void update_name(Name* new_name) {
+  Name* ptr = name.exchange(new_name);
+  ptr->retire();
+}
+[codeblock:end]
+[end:example]

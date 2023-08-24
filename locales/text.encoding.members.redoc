@@ -1,0 +1,260 @@
+[section#text.encoding.members
+    [:en] Members
+    [:zh_CN] 成员
+]
+
+[%@lib@ctor text_encoding]
+[codeblock:declaration]
+constexpr explicit text_encoding(string_view enc) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[list]
+[item]
+[:en] [`enc] represents a string in the ordinary literal encoding
+consisting only of elements of the basic character set ([#lex.charset]).
+[:zh_CN] [`enc] 代表一个仅由基本字符集（[#lex.charset]）的元素构成的普通字面量
+编码的字符串。
+[item]
+[:en] [`enc.size() <= max_name_length] is [`true].
+[:zh_CN] [`enc.size() <= max_name_length] 为 [`true]。
+[item]
+[:en] [`enc.contains('\0')] is [`false].
+[:zh_CN] [`enc.contains('\0')] 为 [`false]。
+[list:end]
+
+[para:ensures]
+[list]
+[item]
+[:en] If there exists a primary name or alias [`a] of a known registered
+character encoding such that [`[*comp-name](a, enc)] is [`true], [*mib_] has the
+value of the enumerator of [`id] associated with that registered character
+encoding.
+[:zh_CN] 如果存在某个已知注册字符编码的首选明或别名 [`a]，使得
+[`[*comp-name](a, enc)] 为 [`true]，则 [*mib_] 的值为与该注册字符编码关联的 [`id]
+枚举符。
+
+[:en] Otherwise, [`[*mib_] == id::other] is [`true].
+[:zh_CN] 否则，[`[*mib_] == id::other] 为 [`true]。
+
+[item]
+[:en] [`enc.compare([*name_]) == 0] is [`true].
+[:zh_CN] [`enc.compare([*name_]) == 0] 为 [`true]。
+[list:end]
+[div:end]
+
+[%@lib@ctor text_encoding]
+[codeblock:declaration]
+constexpr text_encoding(id i) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`i] has the value of one of the enumerators of [`id].
+[:zh_CN] [`i] 的值为 [`id] 的枚举符之一。
+
+[para:ensures]
+[list]
+[item]
+[:en] [`[*mib_] == i] is [`true].
+[:zh_CN] [`[*mib_] == i] 为 [`true]。
+
+[item]
+[:en] If [`([*mib_] == id::unknown || [*mib_] == id::other)] is [`true],
+[`strlen([*name_]) == 0] is [`true].
+[:zh_CN] 如果 [`([*mib_] == id::unknown || [*mib_] == id::other)] 为 [`true]，则
+[`strlen([*name_]) == 0] 为 [`true]。
+
+[:en] Otherwise, [`ranges::contains(aliases(), string_view([*name_]))] is [`true].
+[:zh_CN] 否则，[`ranges::contains(aliases(), string_view([*name_]))] 为 [`true]。
+[list:end]
+[div:end]
+
+[%@lib@member mib[!text_encoding]]
+[codeblock:declaration]
+constexpr id mib() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [*mib_].
+[:zh_CN] [*mib_]。
+[div:end]
+
+[%@lib@member name[!text_encoding]]
+[codeblock:declaration]
+constexpr const char* name() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [*name_] if [`([*name_]`[0`] != '\0')] is [`true], and [`:key nullptr]
+otherwise.
+[:zh_CN] 当 [`([*name_]`[0`] != '\0')] 为 [`true] 时返回 [*name_]，否则返回
+[`:key nullptr]。
+
+[para:remarks]
+[:en] If [`name() == nullptr] is [`false], [`name()] is an [=ntbs] and
+accessing elements of [*name_] outside of the range
+[=countedrange(name(),strlen(name()) + 1)] is undefined behavior.
+[:zh_CN] 当 [`name() == nullptr] 为 [`false] 时，[`name()] 是一个 [=ntbs]，而
+访问 [*name_] 处于范围 [=countedrange(name(),strlen(name()) + 1)] 之外的元素是
+未定义行为。
+[div:end]
+
+[%@lib@member aliases[!text_encoding]]
+[codeblock:declaration]
+constexpr aliases_view aliases() const noexcept;
+[codeblock:end]
+
+[div:description]
+[:en] Let [`r] denote an instance of [`aliases_view].
+[:zh_CN] 令 [`r] 代表一个 [`aliases_view] 示例。
+
+[:en] If [`*this] represents a known registered character encoding, then:
+[:zh_CN] 如果 [`*this] 表示一个已知注册字符编码，则有：
+[list]
+[item]
+[:en] [`r.front()] is the primary name of the registered character encoding,
+[:zh_CN] [`r.front()] 是该注册字符编码的首选名，
+[item]
+[:en] [`r] contains the aliases of the registered character encoding, and
+[:zh_CN] [`r] 包含该注册字符编码的各别名，且
+[item]
+[:en] [`r] does not contain duplicate values when compared with [`strcmp].
+[:zh_CN] [`r] 不包括按 [`strcmp] 比较的重复值。
+[list:end]
+
+[:en] Otherwise, [`r] is an empty range.
+[:zh_CN] 否则，[`r] 为空范围。
+
+[para]
+[:en] Each element in [`r] is a non-null, non-empty [=ntbs] encoded in the
+literal character encoding and comprising only characters from the basic
+character set.
+[:zh_CN] [`r] 中的每个元素均为非空值，且为仅由基本字符集的字符组成的以字面量字符
+编码的非空 [=ntbs]。
+
+[para:returns]
+[:en] [`r].
+[:zh_CN] [`r]。
+
+[para]
+[begin:note]
+[:en] The order of aliases in [`r] is unspecified.
+[:zh_CN] [`r] 中各别名的顺序是未指明的。
+[end:note]
+[div:end]
+
+[%@lib@member literal[!text_encoding]]
+[codeblock:declaration]
+static consteval text_encoding literal() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`CHAR_BIT == 8] is [`true].
+[:zh_CN] [`CHAR_BIT == 8] 为 [`true]。
+
+[para:returns]
+[:en] A [`text_encoding] object representing the ordinary character literal
+encoding ([#lex.charset]).
+[:zh_CN] 一个 [`text_encoding] 对象，代表普通字符字面量编码（[#lex.charset]）。
+[div:end]
+
+[%@lib@member environment[!text_encoding]]
+[codeblock:declaration]
+static text_encoding environment();
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`CHAR_BIT == 8] is [`true].
+[:zh_CN] [`CHAR_BIT == 8] 为 [`true]。
+
+[para:returns]
+[:en] A [`text_encoding] object representing the [?impldef character encoding
+scheme of the environment] character encoding scheme of the environment.
+[:zh_CN] 一个 [`text_encoding] 对象，代表[?impldef 环境的字符编码方案]的环境的
+字符编码方案。
+
+[:en] On a POSIX implementation, this is the encoding scheme associated with
+the POSIX locale denoted by the empty string [`""].
+[:zh_CN] 在 POSIX 实现中，这是由空字符串 [`""] 代表的 POSIX 地域所关联的编码方案。
+
+[para]
+[begin:note]
+[:en] This function is not affected by calls to [`setlocale].
+[:zh_CN] 此函数不受 [`setlocale] 调用的影响。
+[end:note]
+
+[para:recommended]
+[:en] Implementations should return a value that is not affected by calls to
+the POSIX function [`setenv] and other functions which can modify the
+environment ([#support.runtime]).
+[:zh_CN] 各实现最好返回不会受到 POSIX 函数 [`setenv] 和其他可以修改环境的函数的
+调用的影响的值（[#support.runtime]）。
+[div:end]
+
+[%@lib@member environment_is[!text_encoding]]
+[codeblock:declaration]
+template<id i>
+  static bool environment_is();
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`CHAR_BIT == 8] is [`true].
+[:zh_CN] [`CHAR_BIT == 8] 为 [`true]。
+
+[para:returns]
+[:en] [`environment() == i].
+[:zh_CN] [`environment() == i]。
+[div:end]
+
+[%@lib@member [*comp-name][!text_encoding]]
+[codeblock:declaration]
+static constexpr bool [[redoc("*>")]]comp-name(string_view a, string_view b);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if the two strings [`a] and [`b] encoded in the ordinary literal
+encoding are equal, ignoring, from left-to-right,
+[:zh_CN] 如果两个以普通字面量编码的字符串 [`a] 和 [`b]，从中向右比较，其中忽略
+[list]
+[item]
+[:en@~] all elements that are not digits or letters ([#character.seq.general]),
+[:zh_CN@~] 所有并非数字或字母的元素（[#character.seq.general]），
+[item]
+[:en@~] character case, and
+[:zh_CN@~] 字符大小写，以及
+[item]
+[:en@~] any sequence of one or more [`0] characters not immediately preceded by
+a numeric prefix, where a numeric prefix is a sequence consisting of a digit in
+the range [=crange(1,9)] optionally followed by one or more elements which are
+not digits or letters,
+[:zh_CN@~] 一个或更多 [`0] 字符组成的序列，其之前并未紧跟一个数值前缀，其中数值
+前缀为由范围 [=crange(1,9)] 中的数字所构成的序列，可选地跟着一个或更多并非数字
+或字母元素，
+[list:end]
+[:en@~] and [`false] otherwise.
+[:zh_CN@~] 二者相等，则返回 [`true]，否则返回 [`false]。
+
+[para:~]
+[begin:note]
+[:en] This comparison is identical to the [=lq]Charset Alias Matching[=rq]
+algorithm described in the Unicode Technical Standard 22.
+[:zh_CN] 这项比较与 Unicode 技术标准 22 中所述的“字符集别名匹配”算法相同。
+[end:note]
+
+[begin:example]
+[codeblock]
+static_assert(@\exposid{comp-name}@("UTF-8", "utf8") == true);
+static_assert(@\exposid{comp-name}@("u.t.f-008", "utf8") == true);
+static_assert(@\exposid{comp-name}@("ut8", "utf8") == false);
+static_assert(@\exposid{comp-name}@("utf-80", "utf8") == false);
+[codeblock:end]
+[end:example]
+[div:end]

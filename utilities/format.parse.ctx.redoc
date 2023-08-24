@@ -25,8 +25,7 @@ namespace std {
     size_t num_args_;                                   // [=expos]
 
   public:
-    constexpr explicit basic_format_parse_context(basic_string_view<charT> fmt,
-                                                  size_t num_args = 0) noexcept;
+    constexpr explicit basic_format_parse_context(basic_string_view<charT> fmt) noexcept;
     basic_format_parse_context(const basic_format_parse_context&) = delete;
     basic_format_parse_context& operator=(const basic_format_parse_context&) = delete;
 
@@ -36,6 +35,11 @@ namespace std {
 
     constexpr size_t next_arg_id();
     constexpr void check_arg_id(size_t id);
+
+    template<class... Ts>
+      constexpr void check_dynamic_spec(size_t id) noexcept;
+    constexpr void check_dynamic_spec_integral(size_t id) noexcept;
+    constexpr void check_dynamic_spec_string(size_t id) noexcept;
   };
 }
 [codeblock:end]
@@ -49,18 +53,26 @@ argument counter for automatic indexing.
 
 [%@lib@ctor basic_format_parse_context]
 [codeblock:declaration]
-constexpr explicit basic_format_parse_context(basic_string_view<charT> fmt,
-                                              size_t num_args = 0) noexcept;
+constexpr explicit basic_format_parse_context(basic_string_view<charT> fmt) noexcept;
 [codeblock:end]
 
 [div:description]
 [para:effects]
 [:en] Initializes [`begin_] with [`fmt.begin()], [`end_] with [`fmt.end()],
 [`indexing_] with [`unknown], [`next_arg_id_] with [`0], and [`num_args_] with
-[`num_args].
+[`0].
 [:zh_CN] 以 [`fmt.begin()] 初始化 [`begin_]，以 [`fmt.end()] 初始化 [`end_]，以
-[`unknown] 初始化 [`indexing_]，以 [`0] 初始化 [`next_arg_id_]，并以 [`num_args]
-初始化 [`num_args_]。
+[`unknown] 初始化 [`indexing_]，以 [`0] 初始化 [`next_arg_id_]，并以 [`0] 初始化
+[`num_args_]。
+
+[begin:note]
+[:en] Any call to [`next_arg_id], [`check_arg_id], or [`check_dynamic_spec] on
+an instance of [`basic_format_parse_context] initialized using this constructor
+is not a core constant expression.
+[:zh_CN] 在以这个构造函数所初始化的 [`basic_format_parse_context] 实例上对
+[`next_arg_id]，[`check_arg_id]，或 [`check_dynamic_spec] 的任何调用均不是核心
+常量表达式。
+[end:note]
 [div:end]
 
 [%@lib@member begin[!basic_format_parse_context]]
@@ -155,4 +167,63 @@ mixing of automatic and manual argument indexing.
 [:en] Call expressions where [`id >= num_args_] are not core constant
 expressions ([#expr.const]).
 [:zh_CN] [`id >= num_args_] 的调用表达式不是核心常量表达式（[#expr.const]）。
+[div:end]
+
+[%@lib@member check_dynamic_spec[!basic_format_parse_context]]
+[codeblock:declaration]
+template<class... Ts>
+  constexpr void check_dynamic_spec(size_t id) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] The types in [`Ts...] are unique.
+[:zh_CN] [`Ts...] 中的各类型均唯一。
+
+[:en] Each type in [`Ts...] is one of [`:key bool], [`char_type], [`:key int],
+[`[`:key unsigned] [`:key int]], [`[`:key long] [`:key long] [`:key int]],
+[`[`:key unsigned] [`:key long] [`:key long] [`:key int]], [`:key float],
+[`:key double], [`[`:key long] [`:key double]], [`[`:key const] char_type*],
+[`basic_string_view<char_type>], or [`[`:key const] [`:key void]*].
+[:zh_CN] [`Ts...] 中的各类型为以下之一：[`:key bool]，[`char_type]，[`:key int]，
+[`[`:key unsigned] [`:key int]]，[`[`:key long] [`:key long] [`:key int]]，
+[`[`:key unsigned] [`:key long] [`:key long] [`:key int]]，[`:key float]，
+[`:key double]，[`[`:key long] [`:key double]]，[`[`:key const] char_type*]，
+[`basic_string_view<char_type>]，以及 [`[`:key const] [`:key void]*]。
+
+[para:remarks]
+[:en] Call expressions where [`id >= num_args_] or the type of the corresponding
+format argument (after conversion to [`basic_format_arg<Context>]) is not one of
+the types in [`Ts...] are not core constant expressions ([#expr.const]).
+[:zh_CN] [`id >= num_args_]，或者对应格式化参数的类型（转换为
+[`basic_format_arg<Context>] 之后）并非 [`Ts...] 中的类型之一，则调用表达式不是
+核心常量表达式（[#expr.const]）。
+[div:end]
+
+[%@lib@member check_dynamic_spec_integral[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr void check_dynamic_spec_integral(size_t id) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+check_dynamic_spec<int, unsigned int, long long int, unsigned long long int>(id);
+[codeblock:end]
+[div:end]
+
+[%@lib@member check_dynamic_spec_string[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr void check_dynamic_spec_string(size_t id) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+check_dynamic_spec<const char_type*, basic_string_view<char_type>>(id);
+[codeblock:end]
 [div:end]

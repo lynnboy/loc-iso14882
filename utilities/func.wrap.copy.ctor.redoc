@@ -1,0 +1,319 @@
+[section#func.wrap.copy.ctor
+    [:en] Constructors, assignment, and destructor
+    [:zh_CN] 构造函数，赋值，和析构函数
+]
+
+[%@lib@raw [`copyable_function::[*is-callable-from]][%copyable_function::is-callable-from]]
+[codeblock:declaration]
+template<class VT>
+  static constexpr bool [[redoc("*>")]]is-callable-from = [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] If [^noex] is [`true], [`[*is-callable-from]<VT>] is equal to:
+[:zh_CN] 若 [^noex] 为 [`true]，则 [`[*is-callable-from]<VT>] 等于：
+[codeblock]
+is_nothrow_invocable_r_v<R, VT [[redoc("[=cv]")]] [[redoc("^>")]]ref, ArgTypes...> &&
+is_nothrow_invocable_r_v<R, VT [[redoc("^>")]]inv-quals, ArgTypes...>
+[codeblock:end]
+[:en] Otherwise, [`[*is-callable-from]<VT>] is equal to:
+[:zh_CN] 否则，[`[*is-callable-from]<VT>] 等于：
+[codeblock]
+is_invocable_r_v<R, VT [[redoc("[=cv]")]] [[redoc("^>")]]ref, ArgTypes...> &&
+is_invocable_r_v<R, VT [[redoc("^>")]]inv-quals, ArgTypes...>
+[codeblock:end]
+[div:end]
+
+[%@lib@ctor copyable_function]
+[codeblock:declaration]
+copyable_function() noexcept;
+copyable_function(nullptr_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`*this] has no target object.
+[:zh_CN] [`*this] 没有目标对象。
+[div:end]
+
+[%@lib@ctor copyable_function]
+[codeblock:declaration]
+copyable_function(const copyable_function& f);
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] [`*this] has no target object if [`f] had no target object.
+[:zh_CN] 如果 [`f] 没有目标对象则 [`*this] 没有目标对象。
+
+[:en] Otherwise, the target object of [`*this] is a copy of the target object of
+[`f].
+[:zh_CN] 否则，[`*this] 的目标对象为 [`f] 的目标对象的副本。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc].
+[:zh_CN] 可能抛出 [`bad_alloc]。
+[div:end]
+
+[%@lib@ctor copyable_function]
+[codeblock:declaration]
+copyable_function(copyable_function&& f) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:ensures]
+[:en] The target object of [`*this] is the target object [`f] had before
+construction, and [`f] is in a valid state with an unspecified value.
+[:zh_CN] [`*this] 的目标对象为 [`f] 在构造之前的目标对象，而 [`f] 处于某个具有
+未指明的值的有效状态。
+[div:end]
+
+[%@lib@ctor copyable_function]
+[codeblock:declaration]
+template<class F> copyable_function(F&& f);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`VT] be [`decay_t<F>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<F>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`remove_cvref_t<F>] is not the same type as [`copyable_function], and
+[:zh_CN] [`remove_cvref_t<F>] 与 [`copyable_function] 为不同类型，并且
+[item]
+[:en] [`remove_cvref_t<F>] is not a specialization of [`in_place_type_t], and
+[:zh_CN] [`remove_cvref_t<F>] 不是 [`in_place_type_t] 的特例，并且
+[item]
+[:en] [`[*is-callable-from]<VT>] is [`true].
+[:zh_CN] [`[*is-callable-from]<VT>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`is_constructible_v<VT, F>] is [`true], and
+[:zh_CN] [`is_constructible_v<VT, F>] 为 [`true]，并且
+[item]
+[:en] [`is_copy_constructible_v<VT>] is [`true].
+[:zh_CN] [`is_copy_constructible_v<VT>] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`VT] meets the [^:oc Destructible] and [^:oc CopyConstructible]
+requirements.
+[:zh_CN] [`VT] 满足 [^:oc Destructible] 和 [^:oc CopyConstructible] 的规定。
+
+[para:ensures]
+[:en] [`*this] has no target object if any of the following hold:
+[:zh_CN] 如果符合以下任何情况，则 [`*this] 没有目标对象：
+
+[list]
+[item]
+[:en] [`f] is a null function pointer value.
+[:zh_CN] [`f] 是空函数指针值。
+[item]
+[:en] [`f] is a null member pointer value.
+[:zh_CN] [`f] 是空成员指针值。
+[item]
+[:en] [`remove_cvref_t<F>] is a specialization of the [`copyable_function]
+class template, and [`f] has no target object.
+[:zh_CN] [`remove_cvref_t<F>] 是类模板 [`copyable_function] 的特例，且 [`f]
+没有目标对象。
+[list:end]
+
+[:en] Otherwise, [`*this] has a target object of type [`VT]
+direct-non-list-initialized with [`std::forward<F>(f)].
+[:zh_CN] 否则，[`*this] 具有以 [`std::forward<F>(f)] 直接非列表初始化的 [`VT]
+类型的目标对象。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc] unless [`VT] is a function pointer or a
+specialization of [`reference_wrapper].
+[:zh_CN] 除非 [`VT] 是函数指针或 [`reference_wrapper] 的特例，否则可能抛出
+[`bad_alloc]。
+[div:end]
+
+[%@lib@ctor copyable_function]
+[codeblock:declaration]
+template<class T, class... Args>
+  explicit copyable_function(in_place_type_t<T>, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`is_constructible_v<VT, Args...>] is [`true], and
+[:zh_CN] [`is_constructible_v<VT, Args...>] 为 [`true]，并且
+[item]
+[:en] [`[*is-callable-from]<VT>] is [`true].
+[:zh_CN] [`[*is-callable-from]<VT>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`VT] is the same type as [`T], and
+[:zh_CN] [`VT] 与 [`T] 为相同类型，并且
+[item]
+[:en] [`is_copy_constructible_v<VT>] is [`true].
+[:zh_CN] [`is_copy_constructible_v<VT>] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`VT] meets the [^:oc Destructible] and [^:oc CopyConstructible]
+requirements.
+[:zh_CN] [`VT] 满足 [^:oc Destructible] 和 [^:oc CopyConstructible] 的规定。
+
+[para:ensures]
+[:en] [`*this] has a target object of type [`VT] direct-non-list-initialized
+with [`std::forward<Args>(args)...].
+[:zh_CN] [`*this] 具有以 [`std::forward<Args>(args)...] 直接非列表初始化的
+[`VT] 类型的目标对象。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc] unless [`VT] is a function pointer or a
+specialization of [`reference_wrapper].
+[:zh_CN] 除非 [`VT] 是函数指针或 [`reference_wrapper] 的特例，否则可能抛出
+[`bad_alloc]。
+[div:end]
+
+[%@lib@ctor copyable_function]
+[codeblock:declaration]
+template<class T, class U, class... Args>
+  explicit copyable_function(in_place_type_t<T>, initializer_list<U> ilist, Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`VT] be [`decay_t<T>].
+[:zh_CN] 令 [`VT] 为 [`decay_t<T>]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`is_constructible_v<VT, initializer_list<U>&, Args...>] is [`true], and
+[:zh_CN] [`is_constructible_v<VT, initializer_list<U>&, Args...>] 为 [`true]，并且
+[item]
+[:en] [`[*is-callable-from]<VT>] is [`true].
+[:zh_CN] [`[*is-callable-from]<VT>] 为 [`true]。
+[list:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`VT] is the same type as [`T], and
+[:zh_CN] [`VT] 与 [`T] 为相同类型，并且
+[item]
+[:en] [`is_copy_constructible_v<VT>] is [`true].
+[:zh_CN] [`is_copy_constructible_v<VT>] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`VT] meets the [^:oc Destructible] and [^:oc CopyConstructible]
+requirements.
+[:zh_CN] [`VT] 满足 [^:oc Destructible] 和 [^:oc CopyConstructible] 的规定。
+
+[para:ensures]
+[:en] [`*this] has a target object of type [`VT] direct-non-list-initialized
+with [`ilist, std::forward<Args>(args)...].
+[:zh_CN] [`*this] 具有以 [`ilist, std::forward<Args>(args)...] 直接非列表初始化的
+[`VT] 类型的目标对象。
+
+[para:throws]
+[:en] Any exception thrown by the initialization of the target object.
+[:zh_CN] 由目标对象的初始化所抛出的任何异常。
+
+[:en] May throw [`bad_alloc] unless [`VT] is a function pointer or a
+specialization of [`reference_wrapper].
+[:zh_CN] 除非 [`VT] 是函数指针或 [`reference_wrapper] 的特例，否则可能抛出
+[`bad_alloc]。
+[div:end]
+
+[%@lib@member operator=[!copyable_function]]
+[codeblock:declaration]
+copyable_function& operator=(const copyable_function& f);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`copyable_function(f).swap(*this);]
+[:zh_CN] 等价于：[`copyable_function(f).swap(*this);]
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator=[!copyable_function]]
+[codeblock:declaration]
+copyable_function& operator=(copyable_function&& f);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`copyable_function(std::move(f)).swap(*this);]
+[:zh_CN] 等价于：[`copyable_function(std::move(f)).swap(*this);]
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator=[!copyable_function]]
+[codeblock:declaration]
+copyable_function& operator=(nullptr_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Destroys the target object of [`*this], if any.
+[:zh_CN] 如果有则销毁 [`*this] 的目标对象。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member operator=[!copyable_function]]
+[codeblock:declaration]
+template<class F> copyable_function& operator=(F&& f);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`copyable_function(std::forward<F>(f)).swap(*this);]
+[:zh_CN] 等价于：[`copyable_function(std::forward<F>(f)).swap(*this);]
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@dtor copyable_function]
+[codeblock:declaration]
+~copyable_function();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Destroys the target object of [`*this], if any.
+[:zh_CN] 如果有则销毁 [`*this] 的目标对象。
+[div:end]

@@ -1,0 +1,189 @@
+[section#mdspan.submdspan.mapping
+    [:en] Layout specializations of [`submdspan_mapping]
+    [:zh_CN] [`submdspan_mapping] 的布局特化式
+]
+
+[%@lib@member layout_stride::mapping[![*submdspan-mapping-impl]]]
+[%@lib@member layout_left::mapping[![*submdspan-mapping-impl]]]
+[%@lib@member layout_right::mapping[![*submdspan-mapping-impl]]]
+[codeblock:synopsis]
+template<class Extents>
+  template<class... SliceSpecifiers>
+    constexpr auto layout_left::mapping<Extents>::[[redoc("*>")]]submdspan-mapping-impl(   // [=expos]
+      SliceSpecifiers... slices) const -> [[redoc("[=seebelow]")]];
+
+template<class Extents>
+  template<class... SliceSpecifiers>
+    constexpr auto layout_right::mapping<Extents>::[[redoc("*>")]]submdspan-mapping-impl(  // [=expos]
+      SliceSpecifiers... slices) const -> [[redoc("[=seebelow]")]];
+
+template<class Extents>
+  template<class... SliceSpecifiers>
+    constexpr auto layout_stride::mapping<Extents>::[[redoc("*>")]]submdspan-mapping-impl( // [=expos]
+      SliceSpecifiers... slices) const -> [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`index_type] be [`typename Extents::index_type].
+[:zh_CN] 令 [`index_type] 为 [`typename Extents::index_type]。
+
+[para:constraints]
+[:en] [`sizeof...(slices)] equals [`Extents::rank()].
+[:zh_CN] [`sizeof...(slices)] 等于 [`Extents::rank()]。
+
+[para:mandates]
+[:en] For each rank index [$k] of [`extents()], exactly one of the following
+is true:
+[:zh_CN] 对于 [`extents()] 的每个秩索引，以下恰有一项为真：
+[list]
+[item]
+[:en] [$S_k] models [`[`:c convertible_to]<index_type>],
+[:zh_CN] [$S_k] 构成 [`[`:c convertible_to]<index_type>]，
+[item]
+[:en] [$S_k] models [`[*:c index-pair-like]<index_type>],
+[:zh_CN] [$S_k] 构成 [`[*:c index-pair-like]<index_type>]，
+[item]
+[:en] [`is_convertible_v<[$S_k], full_extent_t>] is [`true], or
+[:zh_CN] [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]，或者
+[item]
+[:en] [$S_k] is a specialization of [`strided_slice].
+[:zh_CN] [$S_k] 是 [`strided_slice] 的特例。
+[list:end]
+
+[para:expects]
+[:en] For each rank index [$k] of [`extents()], all of the following are [`true]:
+[:zh_CN] 对于 [`extents()] 的每个秩索引，以下各项均为 [`true]：
+[list]
+[item]
+[:en] if [$S_k] is a specialization of [`strided_slice]
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，
+[list]
+[item]
+[:en@~] [`[$s_k].extent = 0], or
+[:zh_CN@~] [`[$s_k].extent = 0]，或者
+[item]
+[:en@~] [`[$s_k].stride > 0]
+[:zh_CN@~] [`[$s_k].stride > 0]
+[list:end]
+[item]
+[$0 \le [`[*first_]<index_type, [$k]>(slices...)]] [br]
+[$0 \le [`[*last_]<[$k]>(extents(), slices...)]] [br]
+[$0 \le [`extents().extent([$k])]]
+[list:end]
+
+[para]
+[:en] Let [`sub_ext] be the result of [`submdspan_extents(extents(), slices...)]
+and let [`SubExtents] be [`decltype(sub_ext)].
+[:zh_CN] 令 [`sub_ext] 为 [`submdspan_extents(extents(), slices...)] 的结果，
+并令 [`SubExtents] 为 [`decltype(sub_ext)]。
+
+[:en] Let [`sub_strides] be an [`array<SubExtents::index_type, SubExtents::rank()>]
+such that for each rank index [$k] of [`extents()] for which [`[^map-rank]`[[$k]`]]
+is not [`dynamic_extent], [`sub_strides[[^map-rank]`[[$k]`]`]] equals:
+[:zh_CN] 令 [`sub_strides] 为某个
+[`array<SubExtents::index_type, SubExtents::rank()>]，使得对于 [`extents()] 中
+每个使 [`[^map-rank]`[[$k]`]] 不是 [`dynamic_extent] 的 [$k]，
+[`sub_strides[[^map-rank]`[[$k]`]`]]：
+
+[list]
+[item]
+[:en] [`stride([$k]) * [*de-ice]([$s_k].stride)] if [$S_k] is a specialization
+of [`strided_slice] and [`[$s_k].stride < [$s_k].extent];
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例且 [`[$s_k].stride < [$s_k].extent]
+时，等于 [`stride([$k]) * [*de-ice]([$s_k].stride)]；
+
+[item]
+[:en] otherwise, [`stride([$k])].
+[:zh_CN] 否则，等于 [`stride([$k])]。
+[list:end]
+
+[para]
+[:en] Let [`P] be a parameter pack such that
+[`is_same_v<make_index_sequence<rank()>, index_sequence<P...>>] is [`true].
+[:zh_CN] 令 [`P] 为使得
+[`is_same_v<make_index_sequence<rank()>, index_sequence<P...>>] 为 [`true] 的
+形参包组。
+
+[para]
+[:en] Let [`offset] be a value of type [`size_t] equal to
+[`(*this)([*first_]<index_type, P>(slices...)...)].
+[:zh_CN] 令 [`offset] 为等于 [`(*this)([*first_]<index_type, P>(slices...)...)]
+的 [`size_t] 类型的值。
+
+[para:returns]
+[list]
+[item]
+[:en] [`submdspan_mapping_result{*this, 0}], if [`Extents::rank() == 0] is [`true];
+[:zh_CN] 当 [`Extents::rank() == 0] 为 [`true] 时返回
+[`submdspan_mapping_result{*this, 0}]；
+
+[item]
+[:en] otherwise,
+[`submdspan_mapping_result{layout_left::mapping(sub_ext), offset}], if
+[:zh_CN] 否则，以下情况下，返回
+[`submdspan_mapping_result{layout_left::mapping(sub_ext), offset}]：
+[list]
+[item]
+[:en@~] [`layout_type] is [`layout_left]; and
+[:zh_CN@~] [`layout_type] 为 [`layout_left]；且
+[item]
+[:en@~] for each [$k] in the range [=range(0,SubExtents::rank() - 1)],
+[`is_convertible_v<[$S_k], full_extent_t>] is [`true]; and
+[:zh_CN@~] 对于范围 [=range(0,SubExtents::rank() - 1)] 中的每个 [$k]，
+[`is_convertible_v<[$S_k], full_extent_t>] 均为 [`true]；且
+[item]
+[:en@~] for [$k] equal to [`SubExtents::rank() - 1], [$S_k] models
+[`[*:c index-pair-like]<index_type>] or [`is_convertible_v<[$S_k], full_extent_t>]
+is [`true];
+[:zh_CN@~] 对于等于 [`SubExtents::rank() - 1] 的 [$k]，有 [$S_k] 构成
+[`[*:c index-pair-like]<index_type>] 或者
+[`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]；
+[list:end]
+
+[begin:note]
+[:en] If the above conditions are true, all [$S_k] with [$k] larger than
+[`SubExtents::rank() - 1] are convertible to [`index_type].
+[:zh_CN] 当以上条件均为真时，[$k] 大于 [`SubExtents::rank() - 1] 的所有 [$S_k]
+均可转换为 [`index_type]。
+[end:note]
+
+[item]
+[:en] otherwise,
+[`submdspan_mapping_result{layout_right::mapping(sub_ext), offset}], if
+[:zh_CN] 否则，以下情况下，返回
+[`submdspan_mapping_result{layout_right::mapping(sub_ext), offset}]：
+[list]
+[item]
+[:en@~] [`layout_type] is [`layout_right]; and
+[:zh_CN@~] [`layout_type] 为 [`layout_right]；且
+[item]
+[:en@~] for each [$k] in the range
+[=range(Extents::rank() - SubExtents::rank() + 1,Extents::rank())],
+[`is_convertible_v<[$S_k], full_extent_t>] is [`true]; and
+[:zh_CN@~] 对于范围
+[=range(Extents::rank() - SubExtents::rank() + 1,Extents::rank())] 中的每个 [$k]，
+[`is_convertible_v<[$S_k], full_extent_t>] 均为 [`true]；且
+[item]
+[:en@~] for [$k] equal to [`Extents::rank() - SubExtents::rank()], [$S_k] models
+[`[*:c index-pair-like]<index_type>] or [`is_convertible_v<[$S_k], full_extent_t>]
+is [`true];
+[:zh_CN@~] 对于等于 [`Extents::rank() - SubExtents::rank()] 的 [$k]，有 [$S_k]
+构成 [`[*:c index-pair-like]<index_type>] 或者
+[`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]；
+[list:end]
+
+[begin:note]
+[:en] If the above conditions are true, all [$S_k] with
+[$k < [`Extents::rank() - SubExtents::rank()]] are convertible to [`index_type].
+[:zh_CN] 当以上条件均为真时，[$k < [`Extents::rank() - SubExtents::rank()]] 的
+所有 [$S_k] 均可转换为 [`index_type]。
+[end:note]
+
+[item]
+[:en] otherwise,
+[`submdspan_mapping_result{layout_stride::mapping(sub_ext, sub_strides), offset}].
+[:zh_CN] 否则，返回
+[`submdspan_mapping_result{layout_stride::mapping(sub_ext, sub_strides), offset}]。
+[list:end]
+[div:end]

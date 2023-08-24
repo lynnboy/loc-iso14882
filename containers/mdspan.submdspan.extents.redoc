@@ -1,0 +1,140 @@
+[section#mdspan.submdspan.extents
+    [:en] [`submdspan_extents] function
+    [:zh_CN] [`submdspan_extents] 函数
+]
+
+[%@lib submdspan_extents]
+[codeblock:synopsis]
+template<class IndexType, class... Extents, class... SliceSpecifiers>
+  constexpr auto submdspan_extents(const extents<IndexType, Extents...>& src,
+                                   SliceSpecifiers... slices);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`sizeof...(slices)] equals [`Extents::rank()].
+[:zh_CN] [`sizeof...(slices)] 等于 [`Extents::rank()]。
+
+[para:mandates]
+[:en] For each rank index [$k] of [`src.extents()], exactly one of the following
+is true:
+[:zh_CN] 对于 [`src.extents()] 的每个秩索引，以下恰有一项为真：
+[list]
+[item]
+[:en] [$S_k] models [`[`:c convertible_to]<IndexType>],
+[:zh_CN] [$S_k] 构成 [`[`:c convertible_to]<IndexType>]，
+[item]
+[:en] [$S_k] models [`[*:c index-pair-like]<IndexType>],
+[:zh_CN] [$S_k] 构成 [`[*:c index-pair-like]<IndexType>]，
+[item]
+[:en] [`is_convertible_v<[$S_k], full_extent_t>] is [`true], or
+[:zh_CN] [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]，或者
+[item]
+[:en] [$S_k] is a specialization of [`strided_slice].
+[:zh_CN] [$S_k] 是 [`strided_slice] 的特例。
+[list:end]
+
+[para:expects]
+[:en] For each rank index [$k] of [`src.extents()], all of the following are
+[`true]:
+[:zh_CN] 对于 [`src.extents()] 的每个秩索引，以下各项均为 [`true]：
+[list]
+[item]
+[:en] if [$S_k] is a specialization of [`strided_slice]
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，
+[list]
+[item]
+[:en@~] [`[$s_k].extent = 0], or
+[:zh_CN@~] [`[$s_k].extent = 0]，或者
+[item]
+[:en@~] [`[$s_k].stride > 0]
+[:zh_CN@~] [`[$s_k].stride > 0]
+[list:end]
+[item]
+[$0 \le [`[*first_]<IndexType, [$k]>(slices...)]]
+[$\le [`[*last_]<[$k]>(src, slices...)]]
+[$\le [`src.extent([$k])]]
+[list:end]
+
+[para]
+[:en] Let [`SubExtents] be a specialization of [`extents] such that:
+[:zh_CN] 令 [`SubExtents] 为满足以下条件的 [`extents] 的特例：
+
+[list]
+[item]
+[:en] [`SubExtents::rank()] equals the number of [$k] such that [$S_k] does not
+model [`[`:c convertible_to]<IndexType>]; and
+[:zh_CN] [`SubExtents::rank()] 等于 [$S_k] 并不构成
+[`[`:c convertible_to]<IndexType>] 的 [$k] 的数量；以及
+
+[item]
+[:en] for each rank index [$k] of [`Extents] such that
+[`[^map-rank]`[[$k]`] != dynamic_extent] is [`true],
+[`SubExtents::static_extent([^map-rank]`[[$k]`])] equals:
+[:zh_CN] 对于 [`Extents] 中使得 [`[^map-rank]`[[$k]`] != dynamic_extent] 为
+[`true] 的每个秩索引 [$k]，[`SubExtents::static_extent([^map-rank]`[[$k]`])]：
+
+[list]
+[item]
+[:en] [`Extents::static_extent([$k])] if
+[`is_convertible_v<[$S_k], full_extent_t>] is [`true]; otherwise
+[:zh_CN] 当 [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true] 时，为
+[`Extents::static_extent([$k])]；否则
+
+[item]
+[:en]
+[`[*de-ice](tuple_element_t<1, [$S_k]>()) - [*de-ice](tuple_element_t<0, [$S_k]>())]
+if [$S_k] models [`[*:c index-pair-like]<IndexType>], and both
+[`tuple_element_t<0, [$S_k]>] and [`tuple_element_t<1, [$S_k]>] model
+[*:c integral-constant-like]; otherwise
+[:zh_CN] 当 [$S_k] 构成 [`[*:c index-pair-like]<IndexType>] 并且
+[`tuple_element_t<0, [$S_k]>] 和 [`tuple_element_t<1, [$S_k]>] 均构成
+[*:c integral-constant-like] 时，为
+[`[*de-ice](tuple_element_t<1, [$S_k]>()) - [*de-ice](tuple_element_t<0, [$S_k]>())]；
+否则
+
+[item]
+[:en] [`0], if [$S_k] is a specialization of [`strided_slice], whose
+[`extent_type] models [*:c integral-constant-like], for which [`extent_type()]
+equals zero; otherwise
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例，其 [`extent_type] 构成
+[*:c integral-constant-like]，且其 [`extent_type()] 等于零时，为 [`0]；否则
+
+[item]
+[:en]
+[`1 + ([*de-ice]([$S_k]::extent_type()) - 1) / [*de-ice]([$S_k]::stride_type())],
+if [$S_k] is a specialization of [`strided_slice] whose [`extent_type] and
+[`stride_type] model [*:c integral-constant-like];
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例，其 [`extent_type] 和
+[`stride_type] 构成 [*:c integral-constant-like]时，为
+[`1 + ([*de-ice]([$S_k]::extent_type()) - 1) / [*de-ice]([$S_k]::stride_type())]；
+
+[item]
+[:en] otherwise, [`dynamic_extent].
+[:zh_CN] 否则，为 [`dynamic_extent]。
+[list:end]
+[list:end]
+
+[para:returns]
+[:en] A value [`ext] of type [`SubExtents] such that for each [$k] for which
+[`[^map-rank]`[[$k]`] != dynamic_extent] is [`true],
+[`ext.extent([^map-rank]`[[$k]`])] equals:
+[:zh_CN] 一个 [`SubExtents] 类型的值 [`ext]，使得对于时
+[`[^map-rank]`[[$k]`] != dynamic_extent] 为 [`true] 的每个 [$k],
+[`ext.extent([^map-rank]`[[$k]`])]：
+
+[list]
+[item]
+[:en]
+[`[$s_k].extent == 0 ? 0 : 1 + ([*de-ice]([$s_k].extent) - 1) / [*de-ice]([$s_k].stride)]
+if [$S_k] is a specialization of [`strided_slice],
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，等于
+[`[$s_k].extent == 0 ? 0 : 1 + ([*de-ice]([$s_k].extent) - 1) / [*de-ice]([$s_k].stride)]，
+
+[item]
+[:en] otherwise,
+[`[*last_]<[$k]>(src, slices...) - [*first_]<IndexType, [$k]>(slices...)].
+[:zh_CN] 否则，等于
+[`[*last_]<[$k]>(src, slices...) - [*first_]<IndexType, [$k]>(slices...)]。
+[list:end]
+[div:end]

@@ -35,6 +35,12 @@ possibly be a declaration to be a declaration.
 正如 [#stmt.ambig] 中所提到的歧义那样，其解决办法是把可能是声明式的任何构造，
 比如潜在的形参声明式，都当作声明式看待。
 
+[:en] However, a construct that can syntactically be a [~declaration] whose
+outermost [~declarator] would match the grammar of a [~declarator] with a
+[~trailing-return-type] is a declaration only if it starts with [`:key auto].
+[:zh_CN] 不过，若语言构造语法上可当做[~声明式]，其最外围[~声明符]可以与带有
+[~尾部返回类型]的[~声明符]的文法相匹配，则仅当它以 [`:key auto] 开头时才是声明式。
+
 [begin:note]
 [:en]
 A declaration can be explicitly disambiguated by adding parentheses around the
@@ -55,18 +61,23 @@ list-initialization syntax, or by use of a non-function-style cast.
 struct S {
   S(int);
 };
+typedef struct BB { int C[2]; } *B, C;
 
 void foo(double a) {
-  S w(int(a));                  // [:en] function declaration \
+  S v(int(a));                  // [:en] function declaration \
                                 [:zh_CN] 函数声明式
-  S x(int());                   // [:en] function declaration \
+  S w(int());                   // [:en] function declaration \
                                 [:zh_CN] 函数声明式
-  S y((int(a)));                // [:en] object declaration \
+  S x((int(a)));                // [:en] object declaration \
                                 [:zh_CN] 对象声明式
   S y((int)a);                  // [:en] object declaration \
                                 [:zh_CN] 对象声明式
   S z = int(a);                 // [:en] object declaration \
                                 [:zh_CN] 对象声明式
+  S a(B()->C);                  // [:en] object declaration \
+                                [:zh_CN] 对象声明式
+  S b(auto()->C);               // [:en] function declaration \
+                                [:zh_CN] 函数声明式
 }
 [codeblock:end]
 [end:example]
@@ -83,6 +94,14 @@ The resolution is that any construct that could possibly be a [~type-id] in its
 syntactic context shall be considered a [~type-id].
 [:zh_CN]
 其解决办法是，在其语法语境中能够被当作[~类型标识]的任何构造都被当作[~类型标识]。
+
+[:en] However, a construct that can syntactically be a [~type-id] whose
+outermost [~abstract-declarator] would match the grammar of an
+[~abstract-declarator] with a [~trailing-return-type] is considered a [~type-id]
+only if it starts with [`:key auto].
+[:zh_CN] 不过，若语言构造语法上可当做[~类型标识]，其最外围[~抽象声明符]可以与
+带有[~尾部返回类型]的[~抽象声明符]的文法相匹配，则仅当它以 [`:key auto] 开头时才
+是[~类型标识]。
 
 [begin:example]
 [codeblock]
@@ -111,6 +130,13 @@ void foo(signed char a) {
                                 [:zh_CN] 表达式
   (int(unsigned(a)))+1;         // [:en] type-id (ill-formed) \
                                 [:zh_CN] 类型标识（非良构）
+}
+
+typedef struct BB { int C[2]; } *B, C;
+void g() {
+  sizeof(B()->C[1]);            // OK, [`[`:key sizeof](]expression[`)]
+  sizeof(auto()->C[1]);         // [:en] error: [`:key sizeof] of a function returning an array \
+                                [:zh_CN] 错误：对返回数组的函数的 [`:key sizeof]
 }
 [codeblock:end]
 [end:example]

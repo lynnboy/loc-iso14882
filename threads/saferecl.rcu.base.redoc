@@ -1,0 +1,99 @@
+[section#saferecl.rcu.base
+    [:en] Class template [`rcu_obj_base]
+    [:zh_CN] 类模板 [`rcu_obj_base]
+]
+
+[para]
+[:en] Objects of type [`T] to be protected by RCU inherit from a specialization
+[`rcu_obj_base<T, D>] for some [`D].
+[:zh_CN] [`T] 类型的对象对于某个 [`D] 继承于 [`rcu_obj_base<T, D>]，将被 RCU
+保护。
+
+[codeblock:synopsis]
+namespace std {
+  template<class T, class D = default_delete<T>>
+  class rcu_obj_base {
+  public:
+    void retire(D d = D(), rcu_domain& dom = rcu_default_domain()) noexcept;
+  protected:
+    rcu_obj_base() = default;
+    rcu_obj_base(const rcu_obj_base&) = default;
+    rcu_obj_base(rcu_obj_base&&) = default;
+    rcu_obj_base& operator=(const rcu_obj_base&) = default;
+    rcu_obj_base& operator=(rcu_obj_base&&) = default;
+    ~rcu_obj_base() = default;
+  private:
+    D [[redoc("*>")]]deleter;            // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The behavior of a program that adds specializations for [`rcu_obj_base]
+is undefined.
+[:zh_CN] 为 [`rcu_obj_base] 添加特化式的程序的行为是未定义的。
+
+[para]
+[:en] [`T] may be an incomplete type.
+[:zh_CN] [`T] 可以是不完整类型。
+
+[:en] It shall be complete before any member of the resulting specialization of
+[`rcu_obj_base] is referenced.
+[:zh_CN] 它应当在引用其所产生的 [`rcu_obj_base] 特例的任何成员之前变为完整。
+
+[para]
+[:en] [`D] shall be a function object type ([#function.objects]) for which,
+given a value [`d] of type [`D] and a value [`ptr] of type [`T*], the expression
+[`d(ptr)] is valid.
+[:zh_CN] [`D] 应当为函数对象类型（[#function.objects]），且给定 [`D] 类型的对象
+[`d] 和 [`T*] 类型的值 [`ptr]，表达式 [`d(ptr)] 有效。
+
+[para]
+[:en] [`D] shall meet the requirements for [^:oc DefaultConstructible] and
+[^:oc MoveAssignable].
+[:zh_CN] [`D] 应当满足 [^:oc DefaultConstructible] 和 [^:oc MoveAssignable] 的
+规定。
+
+[para]
+[:en] If [`D] is trivially copyable, all specializations of [`rcu_obj_base<T, D>]
+are trivially copyable.
+[:zh_CN] 如果 [`D] 可平凡复制，则 [`rcu_obj_base<T, D>] 的所有特例均可平凡复制。
+
+[codeblock:declaration]
+void retire(D d = D(), rcu_domain& dom = rcu_default_domain()) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is an rcu-protectable type.
+[:zh_CN] [`T] 为可 RCU 保护类型。
+
+[para:expects]
+[:en] [`*this] is a base class subobject of an object [`x] of type [`T].
+[:zh_CN] [`*this] 为 [`T] 类型的对象 [`x] 的基类子对象。
+
+[:en] The member function [`rcu_obj_base<T, D>::retire] was not invoked on [`x]
+before.
+[:zh_CN] 之前尚未在 [`x] 上调用成员函数 [`rcu_obj_base<T, D>::retire]。
+
+[:en] The assignment to [*deleter] does not exit via an exception.
+[:zh_CN] 向 [*deleter] 的赋值不会以异常退出。
+
+[para:effects]
+[:en] Evaluates [`[*deleter] = std::move(d)] and schedules the evaluation of
+the expression [`[*deleter](addressof(x))] in the domain [`dom]; the behavior is
+undefined if that evaluation exits via an exception.
+[:zh_CN] 执行 [`[*deleter] = std::move(d)]，并在领域 [`dom] 中规划对表达式
+[`[*deleter](addressof(x))] 的求值；如果该表达式以异常退出，则其行为未定义。
+
+[:en] May invoke scheduled evaluations in [`dom]
+[:zh_CN] 可能调用 [`dom] 中的已规划执行。
+
+[para:~]
+[begin:note]
+[:en] If such evaluations acquire resources held across any invocation of
+[`retire] on [`dom], deadlock can occur.
+[:zh_CN] 如果这种求值所获取的资源的持有期跨越在 [`dom] 上的任何 [`retire] 调用，
+则可能发生死锁。
+[end:note]
+[div:end]

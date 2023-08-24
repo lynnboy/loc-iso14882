@@ -14,6 +14,10 @@ namespace std {
     using pos_type    = typename traits::pos_type;
     using off_type    = typename traits::off_type;
     using traits_type = traits;
+    using native_handle_type = [[redoc("[?impdefx"
+          " [:en] type of [`native_handle_type]"
+        "[:zh_CN] [`native_handle_type] 的类型]")]];   // [:en] see [#file.native] \
+                                                       [:zh_CN] 参见 [#file.native]
 
     // [:en] [#filebuf.cons], constructors/destructor \
     [:zh_CN] [#filebuf.cons]，构造函数/析构函数
@@ -35,11 +39,10 @@ namespace std {
     basic_filebuf* open(const filesystem::path::value_type* s,
                         ios_base::openmode mode);   // [:en] wide systems only; see [#fstream.syn] \
                                                     [:zh_CN] 仅宽字符系统；参见 [#fstream.syn]
-    basic_filebuf* open(const string& s,
-                        ios_base::openmode mode);
-    basic_filebuf* open(const filesystem::path& s,
-                        ios_base::openmode mode);
+    basic_filebuf* open(const string& s, ios_base::openmode mode);
+    basic_filebuf* open(const filesystem::path& s, ios_base::openmode mode);
     basic_filebuf* close();
+    native_handle_type native_handle() const noexcept;
 
   protected:
     // [:en] [#filebuf.virtuals], overridden virtual functions \
@@ -50,16 +53,15 @@ namespace std {
     int_type pbackfail(int_type c = traits::eof()) override;
     int_type overflow (int_type c = traits::eof()) override;
 
-    basic_streambuf<charT, traits>* setbuf(char_type* s,
-                                           streamsize n) override;
+    basic_streambuf<charT, traits>* setbuf(char_type* s, streamsize n) override;
+
     pos_type seekoff(off_type off, ios_base::seekdir way,
-                     ios_base::openmode which
-                      = ios_base::in | ios_base::out) override;
+                     ios_base::openmode which = ios_base::in | ios_base::out) override;
     pos_type seekpos(pos_type sp,
-                     ios_base::openmode which
-                      = ios_base::in | ios_base::out) override;
-    int      sync() override;
-    void     imbue(const locale& loc) override;
+                     ios_base::openmode which = ios_base::in | ios_base::out) override;
+
+    int sync() override;
+    void imbue(const locale& loc) override;
   };
 }
 [codeblock:end]
@@ -102,6 +104,24 @@ provided [`traits::pos_type] is [`fpos<traits::state_type>].
 
 [:en] Otherwise the behavior is undefined.
 [:zh_CN] 否则其行为是未定义的。
+
+[para]
+[:en] The file associated with a [`basic_filebuf] has an associated value of
+type [`native_handle_type], called the native handle ([#file.native]) of that
+file.
+[:zh_CN] 与 [`basic_filebuf] 相关联的文件，具有一个 [`native_handle_type] 类型
+的关联值，称为该文件的本地句柄（[#file.native]）。
+
+[:en] This native handle can be obtained by calling the member function
+[`native_handle].
+[:zh_CN] 这个本地句柄可通过调用成员函数 [`native_handle] 获得。
+
+[para]
+[:en] For any opened [`basic_filebuf f], the native handle returned by
+[`f.native_handle()] is invalidated when [`f.close()] is called, or [`f] is
+destroyed.
+[:zh_CN] 对于任何已打开的 [`basic_filebuf f]，[`f.native_handle()] 所返回的本地
+句柄将于调用 [`f.close()] 时，或当 [`f] 被销毁时失效。
 
 [para]
 [:en] In order to support file I/O and multibyte/wide character conversion,

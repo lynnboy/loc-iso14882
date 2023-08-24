@@ -72,9 +72,14 @@ Declarations have the form
         [``[] identifier-list [``]] initializer [`;] ]
 [rule:end]
 
+[rule static_assert-message [:zh_CN] static_assert-消息 ]
+    [| unevaluated-string ]
+    [| conditional-expression ]
+[rule:end]
+
 [rule static_assert-declaration [:zh_CN] static_assert-声明式 ]
     [| [`:key static_assert] [`(] constant-expression [`)] [`;] ]
-    [| [`:key static_assert] [`(] constant-expression [`,] string-literal [`)] [`;] ]
+    [| [`:key static_assert] [`(] constant-expression [`,] static_assert-message [`)] [`;] ]
 [rule:end]
 
 [rule empty-declaration [:zh_CN] 空声明式 ]
@@ -386,31 +391,96 @@ a [~nodeclspec-function-declaration] can only be used in a
 [end:note]
 
 [para]
+[:en] If a [~static_assert-message] matches the syntactic requirements of
+[~unevaluated-string], it is an [~unevaluated-string] and the text of the
+[~static_assert-message] is the text of the [~unevaluated-string].
+[:zh_CN] 如果 [~static_assert-消息]与[~免求值字符串]的语法规定匹配，则它是个
+[~免求值字符串]，且该 [~static_assert-消息]的文本即为该[~免求值字符串]的文本。
+
+[:en] Otherwise, a [~static_assert-message] shall be an expression [$M] such
+that
+[:zh_CN] 否则，[~static_assert-消息]应当为满足以下条件的表达式 [$M]：
+[list]
+[item]
+[:en@~] the expression [`[$M].size()] is implicitly convertible to the type
+[`std::size_t], and
+[:zh_CN@~] 表达式 [`[$M].size()] 可以隐式转换为类型 [`std::size_t]，并且
+[item]
+[:en@~] the expression [`[$M].data()] is implicitly convertible to the type
+[=lq]pointer to [`[`:key const] [`:key char]][=rq].
+[:zh_CN@~] 表达式 [`[$M].data()] 可以隐式转换为类型
+“[`[`:key const] [`:key char]] 的指针”。
+[list:end]
+
+[para]
 [%[`static_assert]]
 [:en]
-In a [~static_assert-declaration], the [~constant-expression] is contextually
-converted to [`bool] and the converted expression shall be a constant expression
-([#expr.const]).
+In a [~static_assert-declaration], the [~constant-expression] [$E] is
+contextually converted to [`bool] and the converted expression shall be a
+constant expression ([#expr.const]).
 [:zh_CN]
-[~static_assert-声明式]中，[~常量表达式]应当可按语境转换为 [`bool] 且经转换的
-表达式应当为常量表达式（[#expr.const]）。
+[~static_assert-声明式]中，[~常量表达式] [$E] 应当可按语境转换为 [`bool] 且
+经转换的表达式应当为常量表达式（[#expr.const]）。
 
 [:en]
-If the value of the expression when so converted is [`true] or the expression is
-evaluated in the conetxt of a template definition, the declaration has no effect.
+If the value of the expression [$E] when so converted is [`true] or the
+expression is evaluated in the conetxt of a template definition, the declaration
+has no effect and the [~static_assert-message] is a unevaluated operand
+([#term.unevaluated.operand]).
 [:zh_CN]
-如果表达式经此转换后的值是 [`true] 或者该表达式是在模板定义式的语境中求值，则
-声明式没有效果。
+如果表达式 [$E] 经此转换后的值是 [`true] 或者该表达式是在模板定义式的语境中求值，
+则声明式没有效果，并且 [~static_assert-消息]是免求值操作数
+（[#term.unevaluated.operand]）。
 
 [:en]
-Otherwise, the [~static_assert-declaration] [+fails[%[`static_assert][!failed]]],
-the program is ill-formed, and the resulting diagnostic message
-([#intro.compliance]) should include the text of the [~string-literal], if one
-is supplied.
+Otherwise, the [~static_assert-declaration] [+fails[%[`static_assert][!failed]]]
+and
 [:zh_CN]
-否则，该 [~static_assert-声明式][+失败[%[`static_assert][!失败]]]，程序非良构，
-且如果提供了[~字符串字面量]，则所产生的诊断消息（[#intro.compliance]）最好包含
-其中的文本。
+否则，该 [~static_assert-声明式][+失败[%[`static_assert][!失败]]]，并且
+
+[list]
+[item]
+[:en] the program is ill-formed, and
+[:zh_CN] 程序非良构，并且
+
+[item]
+[:en] if the [~static_assert-message] is a [~conditional-expression] [$M],
+[:zh_CN] 当 [~static_assert-消息]是[~条件表达式] [$M] 时，
+
+[list]
+[item]
+[:en] [`[$M].size()] shall be a converted constant expression of type
+[`std::size_t] and let [$N] denote the value of that expression,
+[:zh_CN] [`[$M].size()] 应当为 [`std::size_t] 类型的经转换常量表达式，并令 [$N]
+代表该表达式的值，
+
+[item]
+[:en] [`[$M].data()], implicitly converted to the type [=lq]pointer to
+[`[`:key const] [`:key char]][=rq], shall be a core constant expression and let
+[$D] denote the converted expression,
+[:zh_CN] [`[$M].data()] 隐式转换为类型“[`[`:key const] [`:key char]]的指针”后，
+应当为核心常量表达式，并令 [$D] 代表经转换的表达式，
+
+[item]
+[:en] for each [$i] where [$0 \le i < N], [`[$D]`[[$i]`]] shall be an integral
+constant expression, and
+[:zh_CN] 对于 [$0 \le i < N] 的每个 [$i]，[`[$D]`[[$i]`]] 应当为整型常量表达式，
+并且
+
+[item]
+[:en] the text of the [~static_assert-message] is formed by the sequence of [$N]
+code units, starting at [$D], of the ordinary literal encoding ([#lex.charset]).
+[:zh_CN] [~static_assert-消息]的文本由从 [$D] 开始的 [$N] 个代码单元的序列，以
+普通字面量编码（[#lex.charset]）所构成。
+[list:end]
+[list:end]
+
+[para:recommended]
+[:en] When a [~static_assert-declaration] fails, the resulting diagnostic
+message should include the text of the [~static_assert-message], if one is
+supplied.
+[:zh_CN] 当 [~static_assert-声明式]失败时，且如果提供了 [~static_assert-消息]，
+则所产生的诊断消息最好包含其中的文本。
 
 [begin:example]
 [codeblock]

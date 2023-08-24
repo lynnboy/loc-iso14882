@@ -158,12 +158,13 @@ class member access expression ([#expr.ref]);
 
 [item]
 [:en]
-a control flow that passes through a declaration of a variable with static
-([#basic.stc.static]) or thread ([#basic.stc.thread]) storage duration, unless
-that variable is usable in constant expressions;
+a control flow that passes through a declaration of a block variable
+([#basic.scope.block]) with static ([#basic.stc.static]) or thread
+([#basic.stc.thread]) storage duration, unless that variable is usable in
+constant expressions;
 [:zh_CN]
 控制流通过具有静态（[#basic.stc.static]）或线程（[#basic.stc.thread]）存储期的
-变量的声明式，除非该变量可在常量表达式中使用；
+块变量（[#basic.scope.block]）的声明式，除非该变量可在常量表达式中使用；
 
 [begin:example]
 [codeblock]
@@ -331,9 +332,12 @@ static_assert(bind(monad(2))(monad)() == monad(2)());
 
 [item]
 [:en]
-a conversion from type [=cv] [`[`:key void]*] to a pointer-to-object type;
+a conversion from a prvalue [`P] of type [=lq]pointer to [=cv] [`:key void][=rq]
+to a pointer-to-object type [`T] unless [`P] points to an object whose type is
+similar to [`T];
 [:zh_CN]
-从类型 [=cv] [`[`:key void]*] 向对象指针类型的转换；
+从类型“[=cv] [`:key void] 的指针”的纯右值 [`P] 向对象指针类型 [`T] 的转换，但
+排除 [`P] 指向的对象的类型与 [`T] 相似的情况；
 
 [item]
 [:en]
@@ -452,6 +456,16 @@ a non-constant library call ([#defns.nonconst.libcall]); or
 a [`:key goto] statement ([#stmt.goto]).
 [:zh_CN]
 [`:key goto] 语句（[#stmt.goto]）。
+
+[begin:note]
+[:en] A [`:key goto] statement introduced by equivalence ([#stmt.stmt]) is not
+in scope.
+[:zh_CN] 以等价形式引入（[#stmt.stmt]）的 [`:key goto] 语句并不在作用域中。
+
+[:en] For example, a [`:key while] statement ([#stmt.while]) can be executed
+during constant evaluation.
+[:zh_CN] 例如，可以在常量求值中执行 [`:key while] 语句（[#stmt.while]）。
+[end:note]
 [list:end]
 
 [:en]
@@ -554,14 +568,14 @@ as defined in [#allocator.members], where [`T] is a literal type, is ignored.
 
 [:en]
 Similarly, the evaluation of the body of [`std::construct_at] or
-[`std::ranges::construct_at] is considered to include only the underlying
-constructor call if the first argument (of type [`T*]) points to storage
+[`std::ranges::construct_at] is considered to include only the initialization of
+the [`T] object if the first argument (of type [`T*]) points to storage
 allocated with [`std::allocator<T>] or to an object whose lifetime began within
 the evaluation of [$E].
 [:zh_CN]
 类似地，[`std::construct_at] 或 [`std::ranges::construct_at] 的函数体的求值，
 在其第一个实参（类型为 [`T*]）指向由 [`std::allocator<T>] 所分配的存储或某个
-生存期开始于 [$E] 的求值期间的对象时，被当作仅包括其底层构造函数调用。
+生存期开始于 [$E] 的求值期间的对象时，被当作仅包括该 [`T] 对象的初始化。
 
 [para]
 [:en]

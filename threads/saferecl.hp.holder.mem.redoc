@@ -1,0 +1,141 @@
+[section#saferecl.hp.holder.mem
+    [:en] Member functions
+    [:zh_CN] 成员函数
+]
+
+[%@lib@member empty[!hazard_pointer]]
+[codeblock:declaration]
+[[nodiscard]] bool empty() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if and only if [`*this] is empty.
+[:zh_CN] 当且仅当 [`*this] 为空时返回 [`true]。
+[div:end]
+
+[%@lib@member protect[!hazard_pointer]]
+[codeblock:declaration]
+template<class T> T* protect(const atomic<T*>& src) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+T* ptr = src.load(memory_order::relaxed);
+while (!try_protect(ptr, src)) {}
+return ptr;
+[codeblock:end]
+[div:end]
+
+[%@lib@member try_protect[!hazard_pointer]]
+[codeblock:declaration]
+template<class T> bool try_protect(T*& ptr, const atomic<T*>& src) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is a hazard-protectable type.
+[:zh_CN] [`T] 为可涉险保护类型。
+
+[para:expects]
+[:en] [`*this] is not empty.
+[:zh_CN] [`*this] 不为空。
+
+[para:effects]
+[:en] Performs the following steps in order:
+[:zh_CN] 依次实施以下步骤：
+[list]
+[item]
+[:en] Initializes a variable [`old] of type [`T*] with the value of [`ptr].
+[:zh_CN] 以 [`ptr] 的值初始化一个 [`T*] 类型的变量 [`old]。
+[item]
+[:en] Evaluates [`reset_protection(old)].
+[:zh_CN] 求值 [`reset_protection(old)]。
+[item]
+[:en] Assigns the value of [`src.load(memory_order::acquire)] to [`ptr].
+[:zh_CN] 将 [`src.load(memory_order::acquire)] 的值赋值给 [`ptr]。
+[item]
+[:en] If [`old == ptr] is [`false], evaluates [`reset_protection()].
+[:zh_CN] 如果 [`old == ptr] 为 [`false]，则求值 [`reset_protection()]。
+[list:end]
+
+[para:returns]
+[:en] [`old == ptr].
+[:zh_CN] [`old == ptr]。
+[div:end]
+
+[%@lib@member reset_protection[!hazard_pointer]]
+[codeblock:declaration]
+template<class T> void reset_protection(const T* ptr) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is a hazard-protectable type.
+[:zh_CN] [`T] 为可涉险保护类型。
+
+[para:expects]
+[:en] [`*this] is not empty.
+[:zh_CN] [`*this] 不为空。
+
+[para:effects]
+[:en] If [`ptr] is a null pointer value, invokes [`reset_protection()].
+[:zh_CN] 如果 [`ptr] 为空指针值，则调用 [`reset_protection()]。
+
+[:en] Otherwise, associates the hazard pointer owned by [`*this] with [`*ptr],
+thereby ending the current protection epoch.
+[:zh_CN] 否则，将 [`*this] 所拥有的涉险指针与 [`*ptr] 相关联，由此结束其当前
+保护纪元。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[%@lib@member reset_protection[!hazard_pointer]]
+[codeblock:declaration]
+void reset_protection(nullptr_t = nullptr) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`*this] is not empty.
+[:zh_CN] [`*this] 不为空。
+
+[para:ensures]
+[:en] The hazard pointer owned by [`*this] is unassociated.
+[:zh_CN] 由 [`*this] 所拥有的涉险指针无关联。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]
+
+[%@lib@member swap[!hazard_pointer]]
+[codeblock:declaration]
+void swap(hazard_pointer& other) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Swaps the hazard pointer ownership of this object with that of [`other].
+[:zh_CN] 将本对象和 [`other] 的涉险指针所有权进行交换。
+
+[begin:note]
+[:en] The owned hazard pointers, if any, remain unchanged during the swap and
+continue to be associated with the respective objects
+that they were protecting before the swap, if any.
+[:zh_CN] 所拥有的各涉险指针（如果有）在交换中不被改动，且继续与交换之前它们所
+保护的相应对象（如果有）相关联。
+
+[:en] No protection epochs are ended or initiated.
+[:zh_CN] 不会结束或启动任何保护纪元。
+[end:note]
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+[div:end]

@@ -1,0 +1,134 @@
+[section#mdspan.submdspan.helpers
+    [:en] Exposition-only helpers
+    [:zh_CN] 仅用于阐释的辅助函数
+]
+
+[%@lib [*de-ice]]
+[%@lib [*first_]]
+[codeblock:synopsis]
+template<class T>
+  constexpr T [[redoc("*>")]]de-ice(T val) { return val; }
+template<[[redoc("*:c>")]]integral-constant-like T>
+  constexpr auto [[redoc("*>")]]de-ice(T) { return T::value; }
+
+template<class IndexType, size_t k, class... SliceSpecifiers>
+  constexpr IndexType [[redoc("*>")]]first_(SliceSpecifiers... slices);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`IndexType] is a signed or unsigned integer type.
+[:zh_CN] [`IndexType] 为有符号或无符号整数类型。
+
+[para]
+[:en] Let [$\phi{}_k] denote the following value:
+[:zh_CN] 令 [$\phi{}_k] 代表以下值：
+[list]
+[item]
+[:en] [$s_k] if [$S_k] models [`[`:c convertible_to]<IndexType>];
+[:zh_CN] 当 [$S_k] 构成 [`[`:c convertible_to]<IndexType>] 时为 [$s_k]；
+[item]
+[:en] otherwise, [`get<0>([$s_k])] if [$S_k] models
+[`[*:c index-pair-like]<IndexType>];
+[:zh_CN] 否则，当 [$S_k] 构成 [`[*:c index-pair-like]<IndexType>] 时为
+[`get<0>([$s_k])]；
+[item]
+[:en] otherwise, [`[*de-ice]([$s_k].offset)] if [$S_k] is a specialization of
+[`strided_slice];
+[:zh_CN] 否则，当 [$S_k] 是 [`strided_slice] 的特例时为
+[`[*de-ice]([$s_k].offset)]；
+[item]
+[:en] otherwise, [`0].
+[:zh_CN] 否则为 [`0]。
+[list:end]
+
+[para:expects]
+[:en] [$\phi{}_k] is representable as a value of type [`IndexType].
+[:zh_CN] [$\phi{}_k] 为类型 [`IndexType] 的可表示值。
+
+[para:returns]
+[:en] [`extents<IndexType>::[*index-cast]([$\phi{}_k])].
+[:zh_CN] [`extents<IndexType>::[*index-cast]([$\phi{}_k])]。
+[div:end]
+
+[%@lib [*last_]]
+[codeblock:synopsis]
+template<size_t k, class Extents, class... SliceSpecifiers>
+  constexpr auto [[redoc("*>")]]last_(const Extents& src, SliceSpecifiers... slices);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`Extents] is a specialization of [`extents].
+[:zh_CN] [`Extents] 为 [`extents] 的特例。
+
+[para]
+[:en] Let [`index_type] be [`typename Extents::index_type].
+[:zh_CN] 令 [`index_type] 为 [`typename Extents::index_type]。
+
+[para]
+[:en] Let [$\lambda{}_k] denote the following value:
+[:zh_CN] 令 [$\lambda{}_k] 代表以下值：
+[list]
+[item]
+[:en] [`[*de-ice]([$s_k]) + 1] if [$S_k] models
+[`[`:c convertible_to]<index_type>]; otherwise
+[:zh_CN] 当 [$S_k] 构成 [`[`:c convertible_to]<index_type>] 时为
+[`[*de-ice]([$s_k]) + 1]；否则
+[item]
+[:en] [`get<1>([$s_k])] if [$S_k] models
+[`[*:c index-pair-like]<index_type>]; otherwise
+[:zh_CN] 当 [$S_k] 构成 [`[*:c index-pair-like]<index_type>] 时为
+[`get<0>([$s_k])]；否则
+[item]
+[:en] [`[*de-ice]([$s_k].offset)] [`+] [`[*de-ice]([$s_k].extend)] if [$S_k] is
+a specialization of [`strided_slice]; otherwise
+[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时为 [`[*de-ice]([$s_k].offset)]
+[`+] [`[*de-ice]([$s_k].extend)]；否则
+[item]
+[:en] [`src.extent(k)].
+[:zh_CN] [`src.extent(k)]。
+[list:end]
+
+[para:expects]
+[:en] [$\lambda{}_k] is representable as a value of type [`index_type].
+[:zh_CN] [$\lambda{}_k] 为类型 [`index_type] 的可表示值。
+
+[para:returns]
+[:en] [`Extents::[*index-cast]([$\lambda{}_k])].
+[:zh_CN] [`Extents::[*index-cast]([$\lambda{}_k])]。
+[div:end]
+
+[%@lib [*src-indices]]
+[codeblock:synopsis]
+template<class IndexType, size_t N, class... SliceSpecifiers>
+  constexpr array<IndexType, sizeof...(SliceSpecifiers)>
+    [[redoc("*>")]]src-indices(const array<IndexType, N>& indices, SliceSpecifiers... slices);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`IndexType] is a signed or unsigned integer type.
+[:zh_CN] [`IndexType] 为有符号或无符号整数类型。
+
+[para:returns]
+[:en] An [`array<IndexType, sizeof...(SliceSpecifiers)> src_idx] such that
+for each [$k] in the range [=range(0,sizeof...(SliceSpecifiers)],
+[`src_idx`[[$k]`]] equals
+[:zh_CN] 一个 [`array<IndexType, sizeof...(SliceSpecifiers)> src_idx]，使得对于
+范围 [=range(0,sizeof...(SliceSpecifiers)] 中的每个 [$k]，[`src_idx`[[$k]`]]
+
+[list]
+[item]
+[:en] [`[*first_]<IndexType, [$k]>(slices...)] for each [$k] where
+[`[^map-rank]`[[$k]`]] equals [`dynamic_extent],
+[:zh_CN] 对于每个使得 [`[^map-rank]`[[$k]`]] 等于 [`dynamic_extent] 的 [$k]，
+等于 [`[*first_]<IndexType, [$k]>(slices...)]，
+
+[item]
+[:en] otherwise, [`[*first_]<IndexType, [$k]>(slices...)] [`+]
+[`indices`[[^map-rank]`[[$k]`]`]].
+[:zh_CN] 否则，等于 [`[*first_]<IndexType, [$k]>(slices...)] [`+]
+[`indices`[[^map-rank]`[[$k]`]`]]。
+[list:end]
+[div:end]

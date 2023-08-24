@@ -1,0 +1,78 @@
+[section#func.wrap.copy.class
+    [:en] Class template [`copyable_function]
+    [:zh_CN] 类模板 [`copyable_function]
+]
+
+[%@lib copyable_function]
+[codeblock:synopsis]
+namespace std {
+  template<class R, class... ArgTypes>
+  class copyable_function<R(ArgTypes...) [[redoc("[=cv]")]] [[redoc("^>")]]ref noexcept([[redoc("^>")]]noex)> {
+  public:
+    using result_type = R;
+
+    // [:en] [#func.wrap.copy.ctor], constructors, assignment, and destructor \
+    [:zh_CN] [#func.wrap.copy.ctor]，构造函数，赋值，和析构函数
+    copyable_function() noexcept;
+    copyable_function(nullptr_t) noexcept;
+    copyable_function(const copyable_function&);
+    copyable_function(copyable_function&&) noexcept;
+    template<class F> copyable_function(F&&);
+    template<class T, class... Args>
+      explicit copyable_function(in_place_type_t<T>, Args&&...);
+    template<class T, class U, class... Args>
+      explicit copyable_function(in_place_type_t<T>, initializer_list<U>, Args&&...);
+
+    copyable_function& operator=(const copyable_function&);
+    copyable_function& operator=(copyable_function&&);
+    copyable_function& operator=(nullptr_t) noexcept;
+    template<class F> copyable_function& operator=(F&&);
+
+    ~copyable_function();
+
+    // [:en] [#func.wrap.copy.inv], invocation \
+    [:zh_CN] [#func.wrap.copy.inv]，调用
+    R operator()(ArgTypes...) [[redoc("[=cv]")]] [[redoc("^>")]]ref noexcept([[redoc("^>")]]noex);
+
+    // [:en] [#func.wrap.copy.util], utility \
+    [:zh_CN] [#func.wrap.copy.util]，工具函数
+    void swap(copyable_function&) noexcept;
+    friend void swap(copyable_function&, copyable_function&) noexcept;
+    friend bool operator==(const copyable_function&, nullptr_t) noexcept;
+
+  private:
+    template<class VT>
+      static constexpr bool [[redoc("*>")]]is-callable-from = [[redoc("[=seebelow]")]];       // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en]
+The [`copyable_function] class template provides polymorphic wrappers that
+generalize the notion of a callable object ([#func.def]).
+[:zh_CN]
+[`copyable_function] 类模板提供一种多态的包装器，将可调用对象（[#func.def]）
+概念一般化。
+
+[:en]
+These wrappers can store, move, and call arbitrary callable objects,
+given a call signature.
+[:zh_CN]
+给定一个调用签名，这些包装器可以存储、移动和调用任意可调用对象。
+
+[para:recommended]
+[:en]
+Implementations should avoid the use of dynamically allocated memory
+for a small contained value.
+[:zh_CN]
+各实现最好避免为小型的包含值使用动态分配内存。
+
+[begin:note]
+[:en]
+Such small-object optimization can only be applied to a type [`T]
+for which [`is_nothrow_move_constructible_v<T>] is [`true].
+[:zh_CN]
+这种小型对象优化只能应用于使得 [`is_nothrow_move_constructible_v<T>] 为 [`true]
+的类型 [`T]。
+[end:note]

@@ -1,0 +1,73 @@
+[section#saferecl.rcu.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] RCU is a synchronization mechanism that can be used for linked data
+structures that are frequently read, but seldom updated.
+[:zh_CN] RCU 是一种同步机制，可用于经常读取但极少更新的链接数据结构。
+
+[:en] RCU does not provide mutual exclusion, but instead allows the user to
+schedule specified actions such as deletion at some later time.
+[:zh_CN] RCU 并不提供互斥，而是允许用户规划于某个之后时间执行的动作，比如删除。
+
+[para]
+[:en] A class type [`T] is [+rcu-protectable] if it has exactly one base class
+of type [`rcu_obj_base<T, D>] for some [`D], and that base is public and
+non-virtual, and it has no base classes of type [`rcu_obj_base<X, Y>] for any
+other combination [`X], [`Y].
+[:zh_CN] 如果类类型 [`T] 具有恰好一个对于某个类 [`D] 的 [`rcu_obj_base<T, D>]
+类型的基类，且该基类是公开且非虚的，并且对于任何其他组合 [`X] 和 [`Y]，它都没有
+[`rcu_obj_base<X, Y>] 类型的基类，则它是 [+可 RCU 保护]的。
+
+[:en] An object is rcu-protectable if it is of rcu-protectable type.
+[:zh_CN] 如果对象具有可 RCU 保护的类型，则它是可 RCU 保护的。
+
+[para]
+[:en] An invocation of [`unlock] [$U] on an [`rcu_domain dom] corresponds to an
+invocation of [`lock] [$L] on [`dom] if [$L] is sequenced before [$U] and either
+[:zh_CN] 在一个 [`rcu_domain dom] 上对 [`unlock] 的一次调用 [$U]，和在 [`dom] 上
+对 [`lock] 的一次调用 [$L]，[$U] 对应于 [$L] 的条件是，[$L] 按顺序早于 [$U]，且
+[list]
+[item]
+[:en] no other invocation of [`lock] on [`dom] is sequenced after [$L] and
+before [$U], or
+[:zh_CN] 要么不存在按顺序晚于 [$L] 且早于 [$U] 的在 [`dom] 上的其他 [`lock] 调用，
+[item]
+[:en] every invocation of [`unlock] [$U2] on [`dom] such that [$L] is sequenced
+before [$U2] and [$U2] is sequenced before [$U] corresponds to an invocation of
+[`lock] [$L2] on [`dom] such that [$L] is sequenced before [$L2] and [$L2] is
+sequenced before [$U2].
+[:zh_CN] 要么，每个使 [$L] 按顺序早于 [$U2] 且 [$U2] 按顺序早于 [$U] 的 [`dom]
+上的 [`unlock] 调用 [$U2]，均对应于一个使 [$L] 按顺序早于 [$L2] 且 [$L2] 按顺序
+早于 [$U2] 的 [`dom] 上的 [`lock] 调用 [$L2]。
+[list:end]
+
+[begin:note]
+[:en] This pairs nested locks and unlocks on a given domain in each thread.
+[:zh_CN] 如此即在每个线程中的给定领域上进行了嵌套的加锁/解锁配对。
+[end:note]
+
+[para]
+[:en] A [+region of RCU protection] on a domain [`dom] starts with a [`lock] [$L]
+on [`dom] and ends with its corresponding [`unlock] [$U].
+[:zh_CN] 在领域 [`dom] 上的[+RCU 保护区]，开始于 [`dom] 上的一次 [`lock] [$L]，
+结束于其对应的 [`unlock] [$U]。
+
+[para]
+[:en] Given a region of RCU protection [$R] on a domain [`dom] and given an
+evaluation [$E] that scheduled another evaluation [$F] in [`dom], if [$E] does
+not strongly happen before the start of [$R], the end of [$R] strongly happens
+before evaluating [$F].
+[:zh_CN] 给定领域 [`dom] 上的一个 RCU 保护区 [$R]，并给定规划了 [`dom] 中的另一
+次求值 [$F] 的求值 [$E]，如果 [$E] 并非强发生早于 [$R] 的开始，则 [$R] 的结束
+强发生早于 [$F] 的求值。
+
+[para]
+[:en] The evaluation of a scheduled evaluation is potentially concurrent with
+any other scheduled evaluation.
+[:zh_CN] 对规划求值的求值与其他规划求值潜在并发。
+
+[:en] Each scheduled evaluation is evaluated at most once.
+[:zh_CN] 每次规划求值均最多被求值一次。

@@ -1,0 +1,79 @@
+[section#saferecl.hp.base
+    [:en] Class template [`hazard_pointer_obj_base]
+    [:zh_CN] 类模板 [`hazard_pointer_obj_base]
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class T, class D = default_delete<T>>
+  class hazard_pointer_obj_base {
+  public:
+    void retire(D d = D()) noexcept;
+  protected:
+    hazard_pointer_obj_base() = default;
+    hazard_pointer_obj_base(const hazard_pointer_obj_base&) = default;
+    hazard_pointer_obj_base(hazard_pointer_obj_base&&) = default;
+    hazard_pointer_obj_base& operator=(const hazard_pointer_obj_base&) = default;
+    hazard_pointer_obj_base& operator=(hazard_pointer_obj_base&&) = default;
+    ~hazard_pointer_obj_base() = default;
+  private:
+    D [[redoc("*>")]]deleter;            // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`D] shall be a function object type ([#func.require]) for which,
+given a value [`d] of type [`D] and a value [`ptr] of type [`T*], the expression
+[`d(ptr)] is valid.
+[:zh_CN] [`D] 应当为函数对象类型（[#func.require]），且给定 [`D] 类型的对象
+[`d] 和 [`T*] 类型的值 [`ptr]，表达式 [`d(ptr)] 有效。
+
+[para]
+[:en] The behavior of a program that adds specializations for
+[`hazard_pointer_obj_base] is undefined.
+[:zh_CN] 为 [`hazard_pointer_obj_base] 添加特化式的程序的行为是未定义的。
+
+[para]
+[:en] [`D] shall meet the requirements for [^:oc DefaultConstructible] and
+[^:oc MoveAssignable].
+[:zh_CN] [`D] 应当满足 [^:oc DefaultConstructible] 和 [^:oc MoveAssignable] 的
+规定。
+
+[para]
+[:en] [`T] may be an incomplete type.
+[:zh_CN] [`T] 可以是不完整类型。
+
+[:en] It shall be complete before any member of the resulting specialization of
+[`hazard_pointer_obj_base] is referenced.
+[:zh_CN] 它应当在引用其所产生的 [`hazard_pointer_obj_base] 特例的任何成员之前
+变为完整。
+
+[%@lib@member retire[!hazard_pointer_obj_base]]
+[codeblock:declaration]
+void retire(D d = D()) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is a hazard-protectable type.
+[:zh_CN] [`T] 为可涉险保护类型。
+
+[para:expects]
+[:en] [`*this] is a base class subobject of an object [`x] of type [`T].
+[:zh_CN] [`*this] 为 [`T] 类型的对象 [`x] 的基类子对象。
+
+[:en] [`x] is not retired.
+[:zh_CN] [`x] 尚未退役。
+
+[:en] Move-assigning [`d] to [`deleter] does not exit via an exception.
+[:zh_CN] 以 [`d] 向 [`deleter] 的移动赋值不会以异常退出。
+
+[para:effects]
+[:en] Move-assigns [`d] to [`deleter], thereby setting it as the deleter of [`x],
+then retires [`x].
+[:zh_CN] 将 [`d] 移动赋值给 [`deleter]，以此将之设为 [`x] 的删除器，然后退役 [`x]。
+
+[:en] May reclaim possibly-reclaimable objects.
+[:zh_CN] 可能回收某些可能可回收对象。
+[div:end]

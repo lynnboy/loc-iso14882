@@ -1,0 +1,120 @@
+[section#saferecl.rcu.domain.func
+    [:en] Non-member functions
+    [:zh_CN] 非成员函数
+]
+
+[%@lib rcu_default_domain]
+[codeblock:declaration]
+rcu_domain& rcu_default_domain() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A reference to a static-duration object of type [`rcu_domain].
+[:zh_CN] 到一个静态存储期的 [`rcu_domain] 类型的对象。
+
+[:en] A reference to the same object is returned every time this function is
+called.
+[:zh_CN] 每次调用这个函数都返回同一个对象的引用。
+[div:end]
+
+[%@lib rcu_synchronize]
+[codeblock:declaration]
+void rcu_synchronize(rcu_domain& dom = rcu_default_domain()) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If the call to [`rcu_synchronize] does not strongly happen before the
+[`lock] opening an RCU protection region [`R] on [`dom], blocks until the
+[`unlock] closing [`R] happens.
+[:zh_CN] 如果对 [`rcu_synchronize] 的调用并非强发生早于在 [`dom] 上打开 RCU
+保护区的 [`lock]，则阻塞直到关闭 [`R] 的 [`unlock] 调用发生。
+
+[para:sync]
+[:en] The [`unlock] closing [`R] strongly happens before the return from
+[`rcu_synchronize].
+[:zh_CN] 关闭 [`R] 的 [`unlock] 强发生早于从 [`rcu_synchronize] 返回。
+[div:end]
+
+[%@lib rcu_synchronize]
+[codeblock:declaration]
+void rcu_barrier(rcu_domain& dom = rcu_default_domain()) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] May evaluate any scheduled evaluations in [`dom].
+[:zh_CN] 可能执行 [`dom] 中的任何已规划执行。
+
+[:en] For any evaluation that happens before the call to [`rcu_barrier] and that
+schedules an evaluation [$E] in [`dom], blocks until [$E] has been evaluated.
+[:zh_CN] 对于发生早于对 [`rcu_barrier] 的调用的，在 [`dom] 中规划某个求值 [$E]
+的任何求值，阻塞直到 [$E] 已求值。
+
+[para:sync]
+[:en] The evaluation of any such [$E] strongly happens before the return from
+[`rcu_barrier].
+[:zh_CN] 对任何这种 [$E] 的求值均强发生早于从 [`rcu_barrier] 返回。
+
+[para:~]
+[begin:note]
+[:en] A call to [`rcu_barrier] does not imply a call to [`rcu_synchronize] and
+vice versa.
+[:zh_CN] 对 [`rcu_barrier] 的调用并不隐含对 [`rcu_synchronize] 的调用，反之亦然。
+[end:note]
+[div:end]
+
+[%@lib rcu_retire]
+[codeblock:declaration]
+template<class T, class D = default_delete<T>>
+void rcu_retire(T* p, D d = D(), rcu_domain& dom = rcu_default_domain());
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`is_move_constructible_v<D>] is [`true] and the expression [`d(p)] is
+well-formed.
+[:zh_CN] [`is_move_constructible_v<D>] 为 [`true]，且表达式 [`d(p)] 良构。
+
+[para:expects]
+[:en] [`D] meets the [^:oc MoveConstructible] and [^:oc Destructible]
+requirements.
+[:zh_CN] [`D] 满足 [^:oc MoveConstructible] 和 [^:oc Destructible] 的规定。
+
+[para:effects]
+[:en] May allocate memory.
+[:zh_CN] 可能分配内存。
+
+[:en] It is unspecified whether the memory allocation is performed by invoking
+[`[`:key operator] [`:key new]].
+[:zh_CN] 是否通过调用 [`[`:key operator] [`:key new]] 进行内存分配是未指明的。
+
+[:en] Initializes an object [`d1] of type [`D] from [`std::move(d)].
+[:zh_CN] 从 [`std::move(d)] 初始化 [`D] 类型的对象 [`d1]。
+
+[:en] Schedules the evaluation of [`d1(p)] in the domain [`dom];
+the behavior is undefined if that evaluation exits via an exception.
+[:zh_CN] 在领域 [`dom] 中规划 [`d1(p)] 的求值；如果该求值以异常退出，则其行为
+未定义。
+
+[:en] May invoke scheduled evaluations in [`dom].
+[:zh_CN] 可能调用 [`dom] 中的已规划执行。
+
+[begin:note]
+[:en] If [`rcu_retire] exits via an exception, no evaluation is scheduled.
+[:zh_CN] 如果 [`rcu_retire] 以异常退出，则不规划任何求值。
+[end:note]
+
+[para:throws]
+[:en] [`bad_alloc] or any exception thrown by the initialization of [`d1].
+[:zh_CN] [`bad_alloc] 或者由 [`d1] 的初始化所抛出的任何异常。
+
+[para]
+[begin:note]
+[:en] If scheduled evaluations acquire resources held across any invocation of
+[`rcu_retire] on [`dom], deadlock can occur.
+[:zh_CN] 如果所规划的求值所获取的资源的持有期跨越在 [`dom] 上的任何 [`rcu_retire]
+的调用，则可能发生死锁。
+[end:note]
+[div:end]

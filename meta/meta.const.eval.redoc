@@ -35,3 +35,65 @@ constexpr void f(unsigned char *p, int n) {
 [codeblock:end]
 [end:example]
 [div:end]
+
+[%@lib is_within_lifetime]
+[codeblock:declaration]
+consteval bool is_within_lifetime(const auto* p) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`p] is a pointer to an object that is within its lifetime
+([#basic.life]); otherwise, [`false].
+[:zh_CN] 当 [`p] 为指向处于生存期内（[#basic.life]）的对象的指针时返回 [`true]；
+否则，返回 [`false]。
+
+[para:remarks]
+[:en] During the evaluation of an expression [`E] as a core constant expression,
+a call to this function is ill-formed unless [`p] points to an object that is
+usable in constant expressions or whose complete object[=']s lifetime began
+within [`E].
+[:zh_CN] 在表达式 [`E] 作为核心常量表达式求值过程中，除非 [`p] 所指向的对象在
+常量表达式中可用，或者其完整对象的生存期开始于 [`E] 之内，否则对这个函数的调用
+非良构。
+
+[para]
+[begin:example]
+[codeblock]
+struct OptBool {
+  union { bool b; char c; };
+
+  // [:en] note: this assumes common implementation properties for [`bool] and [`char]: \
+  [:zh_CN] 注意：此处假定 [`bool] 和 [`char] 具有共同的实现性质：
+  // * [:en] [`sizeof(bool) == sizeof(char)], and \
+    [:zh_CN] [`sizeof(bool) == sizeof(char)]，并且
+  // * [:en] the value representations for [`true] and [`false] are distinct \
+    [:zh_CN] [`true] 和 [`false] 的值表示与
+  //   [:en@~] from the value representation for [`2] \
+    [:zh_CN@~] [`2] 的值表示都不相同
+  constexpr OptBool() : c(2) { }
+  constexpr OptBool(bool b) : b(b) { }
+
+  constexpr auto has_value() const -> bool {
+    if consteval {
+      return std::is_within_lifetime(&b);       // [:en] during constant evaluation, cannot read from [`c] \
+                                                [:zh_CN] 在常量求值中，不能读取 [`c]
+    } else {
+      return c != 2;                            // [:en] during runtime, must read from [`c] \
+                                                [:zh_CN] 在运行时，必定读取 [`c]
+    }
+  }
+
+  constexpr auto operator*() -> bool& {
+    return b;
+  }
+};
+
+constexpr OptBool disengaged;
+constexpr OptBool engaged(true);
+static_assert(!disengaged.has_value());
+static_assert(engaged.has_value());
+static_assert(*engaged);
+[codeblock:end]
+[end:example]
+[div:end]
