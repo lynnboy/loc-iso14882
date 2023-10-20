@@ -149,7 +149,7 @@ def indexlibraryctor(_1:str): return indexlibrarymisc(_1, text("constructor"))
 def indexlibraryctor(_1:str): return indexlibrarymisc(_1, text("destructor"))
 @applyTo(['%@lib@memberx'])
 def indexlibrarymemberx(_1:str, _2:str): return indexlibrary(idxcode(_1), sub=idxcode(_2))
-@applyTo(['%@lib@member'])
+@applyTo(['%@lib@member', '%@lib@spec'])
 def indexlibrarymember(_1:str, _2:str): return indexlibrarymemberx(_1, _2) + indexlibrarymemberx(_2, _1)
 @applyTo(['%@lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
@@ -158,6 +158,8 @@ def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zom
 def libglobal(_1:str): return indexlibraryglobal(_1) + _1
 @applyTo(['?libmember'], within=['codeblock'])
 def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
+@applyTo(['?libspec'], within=['codeblock'])
+def libspec(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
 
 # index for library headers
 @applyTo(['?libheader'])
@@ -218,6 +220,9 @@ def CppXI(): return Cpp() + ' 2011'
 def CppXIV(): return Cpp() + ' 2014'
 def CppXVII(): return Cpp() + ' 2017'
 def CppXX(): return Cpp() + ' 2020'
+def CppXXIII(): return Cpp() + ' 2023'
+def IsoCUndated(): return 'ISO/IEC 9899'
+def IsoC(): return IsoCUndated() + ':2018'
 def opt(_1:str): return _1 + ensuremath(fr"_\mathit{{_{text('opt')}}}")
 @applyTo(['?bigoh'])
 def bigoh(_1:str): return ensuremath(fr"\mathscr{{O}}({_1})")
@@ -268,7 +273,7 @@ def templalias(_1:str): return Fundesc(text('Alias template'))
 
 # Cross reference
 def xref(): return f"[.textsc {text('See also:')}] "
-def xrefc(_1:str): return xref() + "ISO C " + _1
+def xrefc(_1:str): return f'{xref()} {IsoC()}, {_1}'
 
 def iref(_1:str): return f'[=nbsp]({ref(_1)})'
 def tref(_1:str): return hyperref(tablerefname() + '[=nbsp]' + ref(f'tab:{_1}'), target = f'tab:{_1}')
