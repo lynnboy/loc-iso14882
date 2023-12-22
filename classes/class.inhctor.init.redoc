@@ -13,20 +13,27 @@ different type [`D] (that is, when the constructor was inherited
 ([#namespace.udecl])), initialization proceeds as if a defaulted default
 constructor were used to initialize the [`D] object and each base class
 subobject from which the constructor was inherited, except that the [`B]
-subobject is initialized by the invocation of the inherited constructor.
+subobject is initialized by the inherited constructor if the base class
+subobject were to be initialized as part of the [`D] object ([#class.base.init]).
 [:zh_CN]
 当使用类型 [`B] 的构造函数来初始化另一个类型 [`D] 的对象时（亦即当构造函数为继承
 的（[#namespace.udecl]）），所进行的初始化如同是以预置的默认构造函数来初始化这个
-[`D] 对象和该构造函数从之继承的每个基类子对象一样，但 [`B] 子对象则以调用所继承
-的构造函数进行初始化。
+[`D] 对象和该构造函数从之继承的类的每个基类子对象一样，但若基类子对象要作为 [`D]
+对象的一部分被初始化（[#basic.base.init]），则 [`B] 子对象则以所继承的构造函数
+进行初始化。
 
-[:en]
-The complete initialization is considered to be a single function call;
-in particular, the initialization of the inherited constructor[=']s parameters
-is sequenced before the initialization of any part of the [`D] object.
-[:zh_CN]
-完整的初始化被当作是单个的函数调用；特别是，对继承的构造函数的形参的初始化，
-按顺序早于 [`D] 对象的任何部分的初始化。
+[:en] The invocation of the inherited constructor, including the evaluation of
+any arguments, is omitted if the [`B] subobject is not to be initialized
+as part of the [`D] object.
+[:zh_CN] 如果 [`B] 子对象并不作为 [`D] 对象的一部分被初始化，则对继承的构造函数
+的调用，包括对任何实参的求值，均被省略。
+
+[:en] The complete initialization is considered to be a single function call;
+in particular, unless omitted, the initialization of the inherited
+constructor[=']s parameters is sequenced before the initialization of any part
+of the [`D] object.
+[:zh_CN] 完整的初始化被当作是单个的函数调用；特别是，除非被省略，对继承的
+构造函数的形参的初始化，按顺序早于 [`D] 对象的任何部分的初始化。
 
 [begin:example]
 [codeblock]
@@ -87,6 +94,25 @@ is destroyed.
 [:zh_CN]
 类模板 [`Log] 包装任意类型并转发其所有构造函数，而一旦有 [`Log] 类的对象销毁时，
 就会向标准日志写入一条消息。
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+struct V { V() = default; V(int); };
+struct Q { Q(); };
+struct A : virtual V, Q {
+  using V::V;
+  A() = delete;
+};
+int bar() { return 42; }
+struct B : A {
+  B() : A(bar()) {} // OK
+};
+struct C : B {};
+void foo() { C c; } // [:en] [`bar] is not invoked, because the [`V] subobject is not initialized as part of [`B] \
+                    [:zh_CN] 未调用 [`bar]，因为 [`V] 子对象并未作为 [`B] 的一部分初始化
+[codeblock:end]
 [end:example]
 
 [para]

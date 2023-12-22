@@ -1,0 +1,40 @@
+[section#diff.cpp23.containers
+    [:en] [#containers]: containers library
+    [:zh_CN] [#containers]：容器库
+]
+
+[para:diff] [#span.overview]
+[?change]
+[:en] [`span<const T>] is constructible from [`initializer_list<T>].
+[:zh_CN] [`span<const T>] 可以从 [`initializer_list<T>] 构造。
+
+[?rationale]
+[:en] Permit passing a braced initializer list to a function taking [`span].
+[:zh_CN] 允许把花括号初始化式列表传递给接受 [`span] 的函数。
+
+[?effect]
+[:en] Valid [=CppXXIII] code that relies on the lack of this constructor may
+refuse to compile, or change behavior in this revision of [=Cpp].
+[:zh_CN] 对缺乏此构造函数有依赖的有效 [=CppXXIII] 代码在 [=Cpp] 的这个版本中可能
+拒绝编译或发生行为改变。
+
+[:en] For example:
+[:zh_CN] 例如：
+
+[codeblock]
+void one(pair<int, int>);       // #1
+void one(span<const int>);      // #2
+void t1() { one({1, 2}); }      // [:en] ambiguous between #1 and #2; previously called #1 \
+                                [:zh_CN] 于 #1 和 #2 之间有歧义；之前调用 #1
+
+void two(span<const int, 2>);
+void t2() { two({{1, 2}}); }    // [:en] ill-formed; previously well-formed \
+                                [:zh_CN] 非良构；之前为良构
+
+void *a[10];
+int x = span<void* const>{a, 0}.size();     // [:en] [`x] is [`2]; previously [`0] \
+                                            [:zh_CN] [`x] 为 [`2]；之前为 [`0]
+any b[10];
+int y = span<const any>{b, b + 10}.size();  // [:en] [`y] is [`2]; previously [`10] \
+                                            [:zh_CN] [`y] 为 [`2]；之前为 [`10]
+[codeblock:end]

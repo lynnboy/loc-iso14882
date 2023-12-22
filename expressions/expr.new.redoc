@@ -89,13 +89,13 @@ cv 限定的类型。
 [syntax:end]
 
 [para]
-[:en]
-If a placeholder type ([#dcl.spec.auto]) appears in the [~type-specifier-seq] of
+[:en] If a placeholder type ([#dcl.spec.auto]) or a placeholder for a deduced
+class type ([#dcl.type.class.deduct]) appears in the [~type-specifier-seq] of
 a [~new-type-id] or [~type-id] of a [~new-expression], the allocated type is
 deduced as follows:
-[:zh_CN]
-若在 [~new-表达式]的 [~new-类型标识]或[~类型标识]中的[~类型说明符序列]中，出现了
-占位符类型（[#dcl.spec.auto]），则其被分配类型如下推断：
+[:zh_CN] 若在 [~new-表达式]的 [~new-类型标识]或[~类型标识]的[~类型说明符序列]中，
+出现了占位符类型（[#dcl.spec.auto]）或者针对被推断类类型的占位符
+（[#dcl.type.class.deduct]），则按如下推断其被分配类型：
 
 [:en]
 Let [^init] be the [~new-initializer], if any, and [`T] be the [~new-type-id] or
@@ -340,6 +340,24 @@ When the value of the [~expression] is zero, the allocation function is called
 to allocate an array with no elements.
 [:zh_CN]
 若该[~表达式]的值为零，则调用分配函数以分配一个没有元素的数组。
+
+[para]
+[:en] If the allocated type is an array, the [~new-initializer] is a
+[~braced-init-list], and the [~expression] is potentially-evaluated and not a
+core constant expression, the semantic constraints of copy-initializing
+a hypothetical element of the array from an empty initializer list are checked
+([#dcl.init.list]).
+[:zh_CN] 如果被分配类型为数组，[~new-初始化式]为[~花括号初始化列表]，且该
+[~表达式]潜在求值且并非核心常量表达式，则检查以空初始化式列表对虚构的数组元素
+进行复制初始化的语义约束。
+
+[begin:note]
+[:en] The array can contain more elements than there are elements in the
+[~braced-init-list], requiring initialization of the remainder of the array
+elements from an empty initializer list.
+[:zh_CN] 数组可以包含比[~花括号初始化列表]中的元素更多的元素，这要求剩余数组元素
+从空初始化式列表初始化。
+[end:note]
 
 [para]
 [:en]
@@ -856,21 +874,10 @@ Initialization of the allocated object is sequenced before the
 被分配的对象的初始化按顺序早于 [~new-表达式]的[%值计算]值计算。
 
 [para]
-[:en]
-If the [~new-expression] creates an object or an array of objects of class type,
-access and ambiguity control are done for the allocation function, the
-deallocation function ([#basic.stc.dynamic.deallocation]), and the constructor
-([#class.ctor]) selected for the initialization (if any).
-[:zh_CN]
-若 [~new-表达式]创建类类型的对象或对象数组，则对分配函数、回收函数
-（[#basic.stc.dynamic.deallocation]）和为该初始化所选择的构造函数（[#class.ctor]）
-（如果有）进行访问控制和歧义控制。
-
-[:en]
-If the [~new-expression] creates an array of objects of class type, the
+[:en] If the [~new-expression] creates an array of objects of class type, the
 destructor is potentially invoked ([#class.dtor]).
-[:zh_CN]
-若 [~new-表达式]创建类类型的数组，则潜在对其析构函数（[#class.dtor]）进行调用。
+[:zh_CN] 若 [~new-表达式]创建类类型的数组，则潜在对其析构函数（[#class.dtor]）
+进行调用。
 
 [para]
 [:en]
@@ -952,6 +959,11 @@ is used to find the matching deallocation function ([#expr.delete]).
 [:zh_CN]
 对于非放置式分配函数，使用普通的回收函数查找规则来查找其匹配的回收函数
 （[#expr.delete]）。
+
+[:en] In any case, the matching deallocation function (if any) shall be
+non-deleted and accessible from the point where the [~new-expression] appears.
+[:zh_CN] 任何情况下，匹配的回收函数（如果有）应当未被弃置，且应当可从
+[~new-表达式]出现之处访问。
 
 [begin:example]
 [codeblock]

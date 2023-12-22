@@ -1,0 +1,111 @@
+[section#alg.mismatch
+    [:en] Mismatch
+    [:zh_CN] 查找不匹配
+]
+
+[%@lib mismatch]
+[codeblock:declaration]
+template<class InputIterator1, class InputIterator2>
+  constexpr pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1,
+             InputIterator2 first2);
+template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
+  pair<ForwardIterator1, ForwardIterator2>
+    mismatch(ExecutionPolicy&& exec,
+             ForwardIterator1 first1, ForwardIterator1 last1,
+             ForwardIterator2 first2);
+
+template<class InputIterator1, class InputIterator2,
+         class BinaryPredicate>
+  constexpr pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1,
+             InputIterator2 first2, BinaryPredicate pred);
+template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
+         class BinaryPredicate>
+  pair<ForwardIterator1, ForwardIterator2>
+    mismatch(ExecutionPolicy&& exec,
+             ForwardIterator1 first1, ForwardIterator1 last1,
+             ForwardIterator2 first2, BinaryPredicate pred);
+
+template<class InputIterator1, class InputIterator2>
+  constexpr pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1,
+             InputIterator2 first2, InputIterator2 last2);
+template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
+  pair<ForwardIterator1, ForwardIterator2>
+    mismatch(ExecutionPolicy&& exec,
+             ForwardIterator1 first1, ForwardIterator1 last1,
+             ForwardIterator2 first2, ForwardIterator2 last2);
+
+template<class InputIterator1, class InputIterator2,
+         class BinaryPredicate>
+  constexpr pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1,
+             InputIterator2 first2, InputIterator2 last2,
+             BinaryPredicate pred);
+template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
+         class BinaryPredicate>
+  pair<ForwardIterator1, ForwardIterator2>
+    mismatch(ExecutionPolicy&& exec,
+             ForwardIterator1 first1, ForwardIterator1 last1,
+             ForwardIterator2 first2, ForwardIterator2 last2,
+             BinaryPredicate pred);
+
+template<[[redoc("`:c>")]]input_iterator I1, [[redoc("`:c>")]]sentinel_for<I1> S1, [[redoc("`:c>")]]input_iterator I2, [[redoc("`:c>")]]sentinel_for<I2> S2,
+         class Pred = ranges::equal_to, class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+  constexpr ranges::mismatch_result<I1, I2>
+    ranges::mismatch(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {},
+                     Proj1 proj1 = {}, Proj2 proj2 = {});
+template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2,
+         class Pred = ranges::equal_to, class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]indirectly_comparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+  constexpr ranges::mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
+    ranges::mismatch(R1&& r1, R2&& r2, Pred pred = {},
+                     Proj1 proj1 = {}, Proj2 proj2 = {});
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`last2] be [`first2 + (last1 - first1)] for the overloads with no
+parameter [`last2] or [`r2].
+[:zh_CN] 令 [`last2] 对于没有形参 [`last2] 或 [`r2] 的重载为
+[`first2 + (last1 - first1)]。
+
+[para]
+[:en] Let [$E] be:
+[:zh_CN] 令 [$E]：
+
+[list]
+[item]
+[:en@~] [`!(*(first1 + n) == *(first2 + n))] for the overloads with no parameter
+[`pred];
+[:zh_CN@~] 对于没有形参 [`pred] 的重载为 [`!(*(first1 + n) == *(first2 + n))]；
+[item]
+[:en@~] [`pred(*(first1 + n), *(first2 + n)) == false] for the overloads with
+a parameter [`pred] and no parameter [`proj1];
+[:zh_CN@~] 对于带有一个形参 [`pred] 且没有形参 [`proj1] 的重载为
+[`pred(*(first1 + n), *(first2 + n)) == false]；
+[item]
+[:en@~]
+[`!invoke(pred, invoke(proj1, *(first1 + n)), invoke(proj2, *(first2 + n)))]
+for the overloads with both parameters [`pred] and [`proj1].
+[:zh_CN@~] 对于同时带有形参 [`pred] 和 [`proj1] 的重载为
+[`!invoke(pred, invoke(proj1, *(first1 + n)), invoke(proj2, *(first2 + n)))]。
+[list:end]
+
+[para]
+[:en] Let [$N] be [$\min([`last1 - first1], \ [`last2 - first2])].
+[:zh_CN] 令 [$N] 为 [$\min([`last1 - first1], \ [`last2 - first2])]。
+
+[para:returns]
+[:en] [`{ first1 + n, first2 + n }], where [`n] is the smallest integer in
+[=range(0,`[$N`])] such that [$E] holds, or [$N] if no such integer exists.
+[:zh_CN] [`{ first1 + n, first2 + n }]，其中 [`n] 为 [=range(0,`[$N`])] 中能够
+使得 [$E] 成立的最小整数，或当不存在这种整数时为 [$N]。
+
+[para:complexity]
+[:en] At most [$N] applications of the corresponding predicate and any
+projections.
+[:zh_CN] 最多进行 [$N] 次相应谓词和任何投射的运用。
+[div:end]

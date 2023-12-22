@@ -321,6 +321,13 @@ shall occupy contiguous bytes of storage.
 可平凡复制的或标准布局类型（[#basic.types.general]）的对象应该占据连续字节的存储。
 
 [para]
+[:en] An object is a [+:adj potentially non-unique[!object]] if it is a string
+literal object ([#lex.string]), the backing array of an initializer list
+([#dcl.init.ref]), or a subobject thereof.
+[:zh_CN] 如果对象是字符串字面量对象（[#lex.string]），初始化式列表的后备数组
+（[#dcl.init.ref]），或其子对象，则该对象是[+:adj 潜在非独有[!对象]]。
+
+[para]
 [:en]
 [% most derived object [! bit-field]]
 [% most derived object [! zero size subobject]]
@@ -332,13 +339,23 @@ object is the address of the first byte it occupies.
 除非某个对象是位字段或者是零大小的子对象，否则该对象的地址就是它所占据的第一个
 字节的地址。
 
-[:en]
-Two objects with overlapping lifetimes that are not bit-fields may have the same
-address if one is nested within the other, or if at least one is a subobject of
-zero size and they are of different types;
-[:zh_CN]
-对于不是位字段的两个生存期重叠的对象，若其中之一嵌套于另一个之中，或者若其中至少
-有一个是大小为零的子对象而它们类型不同，则它们可以具有相同的地址；
+[:en] Two objects with overlapping lifetimes that are not bit-fields may have
+the same address if
+[:zh_CN] 对于不是位字段的两个生存期重叠的对象，若符合以下情况则它们可以具有相同
+的地址：
+[list]
+[item]
+[:en@~] one is nested within the other,
+[:zh_CN@~] 其中之一嵌套于另一个之中，
+[item]
+[:en@~] at least one is a subobject of zero size and they are not of similar
+types ([#conv.qual]), or
+[:zh_CN@~] 其中至少有一个是大小为零的子对象且它们并非为相似类型（[#conv.qual]），
+或者
+[item]
+[:en@~] they are both potentially non-unique objects;
+[:zh_CN@~] 它们均为潜在非独有对象；
+[list:end]
 
 [:en@~]
 otherwise, they have distinct addresses and occupy disjoint bytes of storage.
@@ -362,6 +379,14 @@ static const char test1 = 'x';
 static const char test2 = 'x';
 const bool b = &test1 != &test2;        // [:en] always [`true] \
                                         [:zh_CN] 永远为 [`true]
+
+static const char (&r) [] = "x";
+static const char *s = "x";
+static std::initializer_list<char> il = { 'x' };
+const bool b2 = r != il.begin();        // [:en] unspecified result [:zh_CN] 结果未指明
+const bool b3 = r != s;                 // [:en] unspecified result [:zh_CN] 结果未指明
+const bool b4 = il.begin() != &test1;   // [:en] always [`true] [:zh_CN] 总为 [`true]
+const bool b5 = r != &test1;            // [:en] always [`true] [:zh_CN] 总为 [`true]
 [codeblock:end]
 [end:example]
 
@@ -382,12 +407,12 @@ creation]]] within a specified region of storage.
 [:en]
 For each operation that is specified as implicitly creating objects, that
 operation implicitly creates and starts the lifetime of zero or more objects of
-implicit-lifetime types ([#basic.types.general]) in its specified region of
-storage if doing so would result in the program having defined behavior.
+implicit-lifetime types ([#term.implicit.lifetime.type]) in its specified region
+of storage if doing so would result in the program having defined behavior.
 [:zh_CN]
 对于每个被指定为隐式创建对象的操作，该操作会在其指定存储区域中隐式创建具有隐式
-生存期类型（[#basic.types.general]）的零个或更多对象并开始它们的生存期，但要求
-这样做会导致程序具有有定义的行为。
+生存期类型（[#term.implicit.lifetime.type]）的零个或更多对象并开始它们的生存期，
+但要求这样做会导致程序具有有定义的行为。
 
 [:en]
 If no such set of objects would give the program defined behavior,
