@@ -338,6 +338,51 @@ template int C<B>::g();         // [:en] OK, transformation to class member acce
 [end:example]
 
 [para]
+[:en] An initializer is dependent if any constituent expression
+([#intro.execution]) of the initializer is type-dependent.
+[:zh_CN] 如果初始化式的任何成分表达式（[#intro.execution]）类型待决，则该
+初始化式是待决的。
+
+[:en] A placeholder type ([#dcl.spec.auto.general]) is dependent if
+it designates a type deduced from a dependent initializer.
+[:zh_CN] 如果占位符类型（[#dcl.spec.auto.general]）代表从待决初始化式推断的类型，
+则该占位符是待决的。
+
+[para]
+[:en] A placeholder for a deduced class type ([#dcl.type.class.deduct])
+is dependent if
+[:zh_CN] 如下情况的对于推断类类型的占位符（[#dcl.type.class.deduct]）是待决的：
+[list]
+[item]
+[:en@~] it has a dependent initializer, or
+[:zh_CN@~] 它具有待决初始化式，或
+[item]
+[:en@~] it refers to an alias template that is a member of the current
+instantiation and whose [~defining-type-id] is dependent after class template
+argument deduction ([#over.match.class.deduct]) and substitution ([#temp.alias]).
+[:zh_CN@~] 它指代某个作为当前实例化成员的别名模板，且其[~定义类型标识]在经过
+类模板实参推断（[#over.match.class.deduct]）和代换（[#temp.alias]）之后仍待决。
+[list:end]
+
+[para]
+[begin:example]
+[codeblock]
+template<class T, class V>
+struct S { S(T); };
+
+template<class U>
+struct A {
+  template<class T> using X = S<T, U>;
+  template<class T> using Y = S<T, int>;
+  void f() {
+    new X(1);                   // [:en] dependent [:zh_CN] 待决
+    new Y(1);                   // [:en] not dependent [:zh_CN] 非待决
+  }
+};
+[codeblock:end]
+[end:example]
+
+[para]
 [:en]
 A type is dependent if it is
 [:zh_CN]
@@ -372,12 +417,17 @@ packs,
 [:en@~] a function type whose exception specification is value-dependent,
 [:zh_CN@~] 异常说明为值待决的函数类型，
 [item]
+[:en@~] denoted by a dependent placeholder type,
+[:zh_CN@~] 由待决的占位符类型所代表，
+[item]
+[:en@~] denoted by a dependent placeholder for a deduced class type,
+[:zh_CN@~] 由待决的推断类类型的占位符所代表，
+[item]
 [:en@~] denoted by a [~simple-template-id] in which either the template name is
 a template parameter or any of the template arguments is a dependent type or an
 expression that is type-dependent or value-dependent or is a pack expansion,[#:fn]
-or
 [:zh_CN@~] [~简单模板标识]所代表的类型，其中的模板名为一个模板形参，或者有任何
-模板实参为一个待决类型或者一个类型待决或值待决的表达式[#:fn]，或者
+模板实参为一个待决类型或者一个类型待决或值待决的表达式[#:fn]，
 
 [note:foot]
 [:en]
@@ -387,6 +437,9 @@ without a [~template-argument-list].
 其中包括不带有[~模板实参列表]使用的注入类名（[#class.pre]）。
 [note:end]
 
+[item]
+[:en@~] a [~pack-index-specifier], or
+[:zh_CN@~] [~包组索引声明符]，或者
 [item]
 [:en@~] denoted by [`decltype(][~expression][`)], where [~expression] is
 type-dependent ([#temp.dep.expr]).

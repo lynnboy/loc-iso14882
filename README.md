@@ -444,7 +444,7 @@ Original   |中文   |章节    |定义
 *template-id*               |*模板标识*     | [temp.names]  | *简单模板标识* \|<br> ( *运算符函数标识* \| *字面量运算符标识* ) `<` *模板实参列表*__?__ `>` 
 *template-name*             |*模板名*       | [temp.names]  | *标识符*
 *template-argument-list*    |*模板实参列表* | [temp.names]  | *模板实参* `...`__?__ ( `,` *模板实参* `...`__?__ )__\*__
-*template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式*
+*template-argument*         |*模板实参*     | [temp.names]  | *常量表达式* \| *类型标识* \| *标识表达式* \| *花括号初始化列表*
 *constraint-expression*     |*约束表达式*   | [temp.constr.decl] | *逻辑或表达式*
 *deduction-guide*           |*推断导引*     | [temp.deduct.guide] | *explicit-说明符*__?__ *模板名* `(` *形参声明子句* `)` `->` *简单模板标识* `;`
 *concept-definition*        |*概念定义式*   | [temp.concept] | `concept` *概念名* `=` *约束表达式* `;`

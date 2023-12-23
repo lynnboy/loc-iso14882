@@ -94,6 +94,10 @@ def customlabel(instruction, args, refid, content, context):
         ])
     return labelrow
 
+@applyTo(['#:cite@super'])
+def supercite(_1):
+    return '<sup>' + cite(_1) + '</sup>'
+
 # locations
 @applyTo(['%'])
 def indextext(_1, **kw) -> str:
@@ -274,6 +278,8 @@ def templalias(_1:str): return Fundesc(text('Alias template'))
 # Cross reference
 def xref(): return f"[.textsc {text('See also:')}] "
 def xrefc(_1:str): return f'{xref()} {IsoC()}, {_1}'
+@applyTo(['?termref# [!]'])
+def termref(_1:str, _2:str, _3:str): return f'[.textit {_2}]{_3} ({ref(_1)})'
 
 def iref(_1:str): return f'[=nbsp]({ref(_1)})'
 def tref(_1:str): return hyperref(tablerefname() + '[=nbsp]' + ref(f'tab:{_1}'), target = f'tab:{_1}')

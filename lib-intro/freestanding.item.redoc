@@ -17,47 +17,92 @@ implementation.
 [para]
 [:en] Unless otherwise specified, the requirements on freestanding items for
 a freestanding implementation are the same as the corresponding requirements for
-a hosted implementation, except that not all of the members of the namespaces
-are required to be present.
+a hosted implementation, except that not all of the members of those items are
+required to be present.
 [:zh_CN] 除非另有规定，对自立式项目在自立式实现中的规定与其在宿主式实现中的对应
-规定相同，但并不要求提供命名空间的所有成员。
+规定相同，但并不要求提供这些项目的所有成员。
 
-[begin:note]
-[:en] This implies that freestanding item enumerations have the same enumerators
-on freestanding implementations and hosted implementations.
-[:zh_CN] 这意味着自立式项目枚举在自立式实现和宿主式实现中具有相同的枚举符。
+[para]
+[:en] Function declarations and function template declarations followed by a
+comment that include [=freestanding-deleted] are [+:adj freestanding deleted
+[!functions[%function]]].
+[:zh_CN] 函数声明式和函数模板声明式，若其后面跟着包含 [=freestanding-deleted]，
+则为 [+:adj 自立式弃置[!函数]]。
 
-[:en] Furthermore, class types have the same members and class templates have
-the same deduction guides on freestanding implementations and hosted
-implementations.
-[:zh_CN] 此外，类类型在自立式实现和宿主式实现中具有相同的成员，类模板还具有相同
-的推断导引。
-[end:note]
+[:en] On freestanding implementations, it is [?impldef whether a freestanding
+deleted function is a deleted function] whether each entity introduced by a
+freestanding deleted function is a deleted function ([#dcl.fct.def.delete]) or
+whether the requirements are the same as the corresponding requirements for a
+hosted implementation.
+[:zh_CN] 在自立式实现中，由自立式弃置函数所引入的各个实体，是否是弃置函数
+（[#dcl.fct.def.delete]），以及其规定是否与对宿主式实现的对应规定相同，是
+[?impldef 自立式弃置函数是否是弃置函数]。
+
+[begin:example]
+[codeblock]
+double abs(double j);           // [=freestanding-deleted]
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] [%declaration[!freestanding item]]
-A declaration in a header synopsis is a freestanding item if
+A declaration in a synopsis is a freestanding item if
 [:zh_CN] [%声明式[!自立式项目]]
-如下标注的头文件纲要中的声明式是自立式项目：
+如下标注的纲要中的声明式是自立式项目：
 [list]
 [item]
-[:en@~] it is followed by a comment that includes [=freestanding], or
-[:zh_CN@~] 其后跟着包含“[=freestanding]”的注释，或
+[:en@~] it is followed by a comment that includes [=freestanding],
+[:zh_CN@~] 其后跟着包含“[=freestanding]”的注释，
+[item]
+[:en@~] it is followed by a comment that includes [=freestanding-deleted], or
+[:zh_CN@~] 其后跟着包含“[=freestanding-deleted]”的注释，或者
 [item]
 [:en@~] the header synopsis begins with a comment that includes
-[&:em all freestanding].
-[:zh_CN@~] 头文件纲要以包含“[&:em 全自立式]”的注释开头。
+[&:em freestanding] and the declaration is not followed by a comment that
+includes [&:em hosted].
+[:zh_CN@~] 头文件纲要以包含“[&:em 自立式]”的注释开头，且该声明式之后并未跟着包含
+“[&:em 宿主式]”的注释。
+
+[begin:note]
+[:en] Declarations followed by [&:em hosted] in freestanding headers are not
+freestanding items.
+[:zh_CN] 自立式头文件中，跟着“[&:em 宿主式]”的声明式不是自立式项目。
+
+[:en] As a result, looking up the name of such functions can vary between hosted
+and freestanding implementations.
+[:zh_CN] 其结果是，对这种函数的名字查找，在宿主式和自立式实现间可能有所不同。
+[end:note]
 [list:end]
 
+[begin:example]
+[codeblock]
+// [:en] all freestanding [:zh_CN] 全自立式
+namespace std {[[redoc("!>")]]}
+[codeblock:end]
+[end:example]
+
 [para]
-[:en] [%entity[!freestanding item]] [%[~typedef-name][!freestanding item]]
+[:en] [%entity[!freestanding item]]
+[%deduction guide[!freestanding item]]
+[%[~typedef-name][!freestanding item]]
 An entity or [~typedef-name] is a freestanding item if it is:
-[:zh_CN] [%实体[!自立式项目]] [%[~typedef-名][!自立式项目]]
+[:zh_CN] [%实体[!自立式项目]]
+[%推断导引[!自立式项目]]
+[%[~typedef-名][!自立式项目]]
 如下标注的头文件纲要中的实体或 [~typedef-名]是自立式项目：
 [list]
 [item]
 [:en@~] introduced by a declaration that is a freestanding item,
 [:zh_CN@~] 由自立式项目声明式所引入，
+[item]
+[:en@~] a member of a freestanding item other than a namespace,
+[:zh_CN@~] 除命名空间之外的自立式项目的成员，
+[item]
+[:en@~] an enumerator of a freestanding item,
+[:zh_CN@~] 自立式项目的枚举符，
+[item]
+[:en@~] a deduction guide of a freestanding item,
+[:zh_CN@~] 自立式项目的推断导引，
 [item]
 [:en@~] an enclosing namespace of a freestanding item,
 [:zh_CN@~] 自立式项目的外围命名空间，
@@ -83,8 +128,10 @@ A macro is a freestanding item if it is defined in a header synopsis and
 [:zh_CN@~] 其定义之后跟着包含“[=freestanding]”的注释，或
 [item]
 [:en@~] the header synopsis begins with a comment that includes
-[&:em all freestanding].
-[:zh_CN@~] 头文件纲要以包含“[&:em 全自立式]”的注释开头。
+[&:em freestanding] and the definition is not followed by a comment that
+includes [&:em hosted].
+[:zh_CN@~] 头文件纲要以包含“[&:em 自立式]”的注释开头，且该声明式之后并未跟着包含
+“[&:em 宿主式]”的注释。
 [list:end]
 
 [para]
@@ -94,30 +141,36 @@ A macro is a freestanding item if it is defined in a header synopsis and
 [codeblock:end]
 [end:example]
 
-[begin:example]
-[codeblock]
-// [:en] all freestanding [:zh_CN] 全自立式
-namespace std {[[redoc("!>")]]}
-[codeblock:end]
-[end:example]
-
 [para]
-[:en] Function declarations and function template declarations followed by a
-comment that include [=freestanding-deleted] are [+:adj freestanding deleted
-[!functions[%function]]].
-[:zh_CN] 其后跟着包含“[=freestanding-deleted]”的注释的函数声明式或函数模板声明式，
-是[+:adj 自立式弃置[!函数]]。
+[begin:note]
+[:en] Freestanding annotations follow some additional exposition conventions
+that do not impose any additional normative requirements.
+[:zh_CN] 自立式标注遵循某种额外的展示约定，其中并不蕴含任何其他规范要求。
 
-[:en] On freestanding implementations, it is [?impldef whether a freestanding
-deleted function is a freestanding item or a deleted function] whether each
-function definition introduced by a freestanding deleted function
-is a freestanding item or a deleted function ([#dcl.fct.def.delete]).
-[:zh_CN] 在自立式实现中，由自立式弃置函数所引入的各个函数定义，是自立式项目还是
-弃置函数（[#dcl.fct.def.delete]）是[?impldef 自立式弃置函数是自立式项目还是弃置
-函数]。
+[:en] Header synopses that begin with a comment containing "all freestanding"
+contain no hosted items and no freestanding deleted functions.
+[:zh_CN] 以包含“全自立式”的注释开始的纲要，不包含任何宿主式项目和自立式弃置函数。
+
+[:en] Header synopses that begin with a comment containing "mostly freestanding"
+contain at least one hosted item or freestanding deleted function.
+[:zh_CN] 以包含“大部分自立式”的注释开始的纲要，包含至少一条宿主式项目或自立式
+弃置函数。
+
+[:en] Classes and class templates followed by a comment containing "partially
+freestanding" contain at least one hosted item or freestanding deleted function.
+[:zh_CN] 其后跟着包含“部分自立式”的注释的类或类模板，包含至少一条宿主式项目或
+自立式弃置函数。
+[end:note]
 
 [begin:example]
 [codeblock]
-double abs(double j);           // [=freestanding-deleted]
+template<class T, size_t N> struct array;               // [=partially freestanding]
+template<class T, size_t N>
+struct array {
+  constexpr reference       operator[](size_type n);
+  constexpr const_reference operator[](size_type n) const;
+  constexpr reference       at(size_type n);            // [=freestanding-deleted]
+  constexpr const_reference at(size_type n) const;      // [=freestanding-deleted]
+};
 [codeblock:end]
 [end:example]

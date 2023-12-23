@@ -11,8 +11,8 @@ template<class F> constexpr auto and_then(F&& f) const &;
 
 [div:description]
 [para]
-[:en] Let [`U] be [`remove_cvref_t<invoke_result_t<F, decltype(**this)>>].
-[:zh_CN] 令 [`U] 为 [`remove_cvref_t<invoke_result_t<F, decltype(**this)>>]。
+[:en] Let [`U] be [`remove_cvref_t<invoke_result_t<F, decltype([*val])>>].
+[:zh_CN] 令 [`U] 为 [`remove_cvref_t<invoke_result_t<F, decltype([*val])>>]。
 
 [para:constraints]
 [:en] [`is_constructible_v<E, decltype(error())>] is [`true].
@@ -28,7 +28,7 @@ is [`true].
 [:zh_CN] 等价于：
 [codeblock]
 if (has_value())
-  return invoke(std::forward<F>(f), **this);
+  return invoke(std::forward<F>(f), [[redoc("*>")]]val);
 else
   return U(unexpect, error());
 [codeblock:end]
@@ -43,9 +43,9 @@ template<class F> constexpr auto and_then(F&& f) const &&;
 [div:description]
 [para]
 [:en] Let [`U] be
-[`remove_cvref_t<invoke_result_t<F, decltype(std::move(**this))>>].
+[`remove_cvref_t<invoke_result_t<F, decltype(std::move([*val]))>>].
 [:zh_CN] 令 [`U] 为
-[`remove_cvref_t<invoke_result_t<F, decltype(std::move(**this))>>]。
+[`remove_cvref_t<invoke_result_t<F, decltype(std::move([*val]))>>]。
 
 [para:constraints]
 [:en] [`is_constructible_v<E, decltype(std::move(error()))>] is [`true].
@@ -61,7 +61,7 @@ is [`true].
 [:zh_CN] 等价于：
 [codeblock]
 if (has_value())
-  return invoke(std::forward<F>(f), std::move(**this));
+  return invoke(std::forward<F>(f), std::move([[redoc("*>")]]val));
 else
   return U(unexpect, std::move(error()));
 [codeblock:end]
@@ -79,8 +79,8 @@ template<class F> constexpr auto or_else(F&& f) const &;
 [:zh_CN] 令 [`G] 为 [`remove_cvref_t<invoke_result_t<F, decltype(error())>>]。
 
 [para:constraints]
-[:en] [`is_constructible_v<T, decltype(**this)>] is [`true].
-[:zh_CN] [`is_constructible_v<T, decltype(**this)>] 为 [`true]。
+[:en] [`is_constructible_v<T, decltype([*val])>] is [`true].
+[:zh_CN] [`is_constructible_v<T, decltype([*val])>] 为 [`true]。
 
 [para:mandates]
 [:en] [`G] is a specialization of [`expected] and [`is_same_v<U::value_type, T>]
@@ -92,7 +92,7 @@ is [`true].
 [:zh_CN] 等价于：
 [codeblock]
 if (has_value())
-  return G(in_place, **this);
+  return G(in_place, [[redoc("*>")]]val);
 else
   return invoke(std::forward<F>(f), error());
 [codeblock:end]
@@ -112,8 +112,8 @@ template<class F> constexpr auto or_else(F&& f) const &&;
 [`remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>]。
 
 [para:constraints]
-[:en] [`is_constructible_v<T, decltype(std::move(**this))>] is [`true].
-[:zh_CN] [`is_constructible_v<T, decltype(std::move(**this))>] 为 [`true]。
+[:en] [`is_constructible_v<T, decltype(std::move([*val]))>] is [`true].
+[:zh_CN] [`is_constructible_v<T, decltype(std::move([*val]))>] 为 [`true]。
 
 [para:mandates]
 [:en] [`G] is a specialization of [`expected] and [`is_same_v<U::value_type, T>]
@@ -125,7 +125,7 @@ is [`true].
 [:zh_CN] 等价于：
 [codeblock]
 if (has_value())
-  return G(in_place, std::move(**this));
+  return G(in_place, std::move([[redoc("*>")]]val));
 else
   return invoke(std::forward<F>(f), std::move(error()));
 [codeblock:end]
@@ -139,8 +139,8 @@ template<class F> constexpr auto transform(F&& f) const &;
 
 [div:description]
 [para]
-[:en] Let [`U] be [`remove_cvref_t<invoke_result_t<F, decltype(**this)>>].
-[:zh_CN] 令 [`U] 为 [`remove_cvref_t<invoke_result_t<F, decltype(**this)>>]。
+[:en] Let [`U] be [`remove_cvref_t<invoke_result_t<F, decltype([*val])>>].
+[:zh_CN] 令 [`U] 为 [`remove_cvref_t<invoke_result_t<F, decltype([*val])>>]。
 
 [para:constraints]
 [:en] [`is_constructible_v<E, decltype(error())>] is [`true].
@@ -153,7 +153,7 @@ template<class F> constexpr auto transform(F&& f) const &;
 [:en] If [`is_void_v<U>] is [`false], the declaration
 [:zh_CN] 当 [`is_void_v<U>] 为 [`false] 时，声明式
 [codeblock]
-U u(invoke(std::forward<F>(f), **this));
+U u(invoke(std::forward<F>(f), [[redoc("*>")]]val));
 [codeblock:end]
 [:en@~] is well-formed.
 [:zh_CN@~] 良构。
@@ -166,14 +166,14 @@ U u(invoke(std::forward<F>(f), **this));
 [item]
 [:en] Otherwise, if [`is_void_v<U>] is [`false], returns an [`expected<U, E>]
 object whose [*has_val] member is [`true] and [*val] member is
-direct-non-list-initialized with [`invoke(std::forward<F>(f), **this)].
+direct-non-list-initialized with [`invoke(std::forward<F>(f), [*val])].
 [:zh_CN] 否则，若 [`is_void_v<U>] 为 [`false]，则返回一个 [`expected<U, E>] 对象，
 其 [*has_val] 成员为 [`true]，且其 [*val] 成员以
-[`invoke(std::forward<F>(f), **this)] 进行直接非列表初始化。
+[`invoke(std::forward<F>(f), [*val])] 进行直接非列表初始化。
 [item]
-[:en] Otherwise, evaluates [`invoke(std::forward<F>(f), **this)] and then
+[:en] Otherwise, evaluates [`invoke(std::forward<F>(f), [*val])] and then
 returns [`expected<U, E>()].
-[:zh_CN] 否则，求值 [`invoke(std::forward<F>(f), **this)] 然后返回
+[:zh_CN] 否则，求值 [`invoke(std::forward<F>(f), [*val])] 然后返回
 [`expected<U, E>()]。
 [list:end]
 [div:end]
@@ -187,9 +187,9 @@ template<class F> constexpr auto transform(F&& f) const &&;
 [div:description]
 [para]
 [:en] Let [`U] be
-[`remove_cvref_t<invoke_result_t<F, decltype(std::move(**this))>>].
+[`remove_cvref_t<invoke_result_t<F, decltype(std::move([*val]))>>].
 [:zh_CN] 令 [`U] 为
-[`remove_cvref_t<invoke_result_t<F, decltype(std::move(**this))>>]。
+[`remove_cvref_t<invoke_result_t<F, decltype(std::move([*val]))>>]。
 
 [para:constraints]
 [:en] [`is_constructible_v<E, decltype(std::move(error()))>] is [`true].
@@ -202,7 +202,7 @@ template<class F> constexpr auto transform(F&& f) const &&;
 [:en] If [`is_void_v<U>] is [`false], the declaration
 [:zh_CN] 当 [`is_void_v<U>] 为 [`false] 时，声明式
 [codeblock]
-U u(invoke(std::forward<F>(f), std::move(**this)));
+U u(invoke(std::forward<F>(f), std::move([[redoc("*>")]]val)));
 [codeblock:end]
 [:en@~] is well-formed.
 [:zh_CN@~] 良构。
@@ -217,14 +217,14 @@ U u(invoke(std::forward<F>(f), std::move(**this)));
 [item]
 [:en] Otherwise, if [`is_void_v<U>] is [`false], returns an [`expected<U, E>]
 object whose [*has_val] member is [`true] and [*val] member is
-direct-non-list-initialized with [`invoke(std::forward<F>(f), std::move(**this))].
+direct-non-list-initialized with [`invoke(std::forward<F>(f), std::move([*val]))].
 [:zh_CN] 否则，若 [`is_void_v<U>] 为 [`false]，则返回一个 [`expected<U, E>] 对象，
 其 [*has_val] 成员为 [`true]，且其 [*val] 成员以
-[`invoke(std::forward<F>(f), std::move(**this))] 进行直接非列表初始化。
+[`invoke(std::forward<F>(f), std::move([*val]))] 进行直接非列表初始化。
 [item]
-[:en] Otherwise, evaluates [`invoke(std::forward<F>(f), std::move(**this))] and
+[:en] Otherwise, evaluates [`invoke(std::forward<F>(f), std::move([*val]))] and
 then returns [`expected<U, E>()].
-[:zh_CN] 否则，求值 [`invoke(std::forward<F>(f), std::move(**this))] 然后返回
+[:zh_CN] 否则，求值 [`invoke(std::forward<F>(f), std::move([*val]))] 然后返回
 [`expected<U, E>()]。
 [list:end]
 [div:end]
@@ -241,8 +241,8 @@ template<class F> constexpr auto transform_error(F&& f) const &;
 [:zh_CN] 令 [`G] 为 [`remove_cvref_t<invoke_result_t<F, decltype(error())>>]。
 
 [para:constraints]
-[:en] [`is_constructible_v<T, decltype(**this)>] is [`true].
-[:zh_CN] [`is_constructible_v<T, decltype(**this)>] 为 [`true]。
+[:en] [`is_constructible_v<T, decltype([*val])>] is [`true].
+[:zh_CN] [`is_constructible_v<T, decltype([*val])>] 为 [`true]。
 
 [para:mandates]
 [:en] [`G] is a valid template argument for [`unexpected] ([#expected.un.general])
@@ -255,11 +255,11 @@ G g(invoke(std::forward<F>(f), error()));
 [:zh_CN@~] 良构。
 
 [para:returns]
-[:en] If [`has_value()] is [`true], [`expected<T, G>(in_place, **this)];
+[:en] If [`has_value()] is [`true], [`expected<T, G>(in_place, [*val])];
 otherwise, an [`expected<T, G>] object whose [*has_val] member is [`false] and
 [*unex] member is direct-non-list-initialized with
 [`invoke(std::forward<F>(f), error())].
-[:zh_CN] 若 [`has_value()] 为 [`true]，则返回 [`expected<T, G>(in_place, **this)]；
+[:zh_CN] 若 [`has_value()] 为 [`true]，则返回 [`expected<T, G>(in_place, [*val])]；
 否则，返回一个 [`expected<T, G>] 对象，其 [*has_val] 成员为 [`false]，且其
 [*unex] 成员以 [`invoke(std::forward<F>(f), error())] 进行直接非列表初始化。
 [div:end]
@@ -278,8 +278,8 @@ template<class F> constexpr auto transform_error(F&& f) const &&;
 [`remove_cvref_t<invoke_result_t<F, decltype(std::move(error()))>>]。
 
 [para:constraints]
-[:en] [`is_constructible_v<T, decltype(std::move(**this))>] is [`true].
-[:zh_CN] [`is_constructible_v<T, decltype(std::move(**this))>] 为 [`true]。
+[:en] [`is_constructible_v<T, decltype(std::move([*val]))>] is [`true].
+[:zh_CN] [`is_constructible_v<T, decltype(std::move([*val]))>] 为 [`true]。
 
 [para:mandates]
 [:en] [`G] is a valid template argument for [`unexpected] ([#expected.un.general])
@@ -292,12 +292,12 @@ G g(invoke(std::forward<F>(f), std::move(error())));
 [:zh_CN@~] 良构。
 
 [para:returns]
-[:en] If [`has_value()] is [`true], [`expected<T, G>(in_place, std::move(**this))];
+[:en] If [`has_value()] is [`true], [`expected<T, G>(in_place, std::move([*val]))];
 otherwise, an [`expected<T, G>] object whose [*has_val] member is [`false] and
 [*unex] member is direct-non-list-initialized with
 [`invoke(std::forward<F>(f), std::move(error()))].
 [:zh_CN] 若 [`has_value()] 为 [`true]，则返回
-[`expected<T, G>(in_place, std::move(**this))]；否则，返回一个 [`expected<T, G>]
+[`expected<T, G>(in_place, std::move([*val]))]；否则，返回一个 [`expected<T, G>]
 对象，其 [*has_val] 成员为 [`false]，且其 [*unex] 成员以
 [`invoke(std::forward<F>(f), std::move(error()))] 进行直接非列表初始化。
 [div:end]

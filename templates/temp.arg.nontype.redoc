@@ -4,44 +4,92 @@
 ]
 
 [para]
-[:en]
-If the type [`T] of a [~template-parameter] ([#temp.param]) contains a
+[:en] If the type [`T] of a [~template-parameter] ([#temp.param]) contains a
 placeholder type ([#dcl.spec.auto]) or a placeholder for a deduced class type
 ([#dcl.type.class.deduct]), the type of the parameter is the type deduced for
 the variable [`x] in the invented declaration
-[:zh_CN]
-如果[~模板形参]的类型 [`T]（[#temp.param]）中包含占位符类型（[#dcl.spec.auto]）
-或者推断类类型的占位符（[#dcl.type.class.deduct]），则该形参的类型是在以下虚构
-的声明式中对变量 [`x] 所推断的类型：
-
-[codeblock:notation]
-T x = [~template-argument];
+[:zh_CN] 如果[~模板形参]的类型 [`T]（[#temp.param]）中包含占位符类型
+（[#dcl.spec.auto]）或者推断类类型的占位符（[#dcl.type.class.deduct]），则该形参
+的类型是在以下虚构的声明式中对变量 [`x] 所推断的类型：
+[codeblock]
+T x = [[redoc("$>")]]E;
 [codeblock:end]
-
-[:en]
-If a deduced parameter type is not permitted for a [~template-parameter]
-declaration ([#temp.param]), the program is ill-formed.
-[:zh_CN]
-如果一个[~模板形参]的声明式（[#temp.param]）不允许出现推断的形参类型，则程序
-非良构
-
-[para]
-[:en]
-A [~template-argument] for a non-type [~template-parameter] shall be a converted
-constant expression ([#expr.const]) of the type of the [~template-parameter].
-[:zh_CN]
-非类型[~模板形参]的[~模板实参]应当是该[~模板形参]类型的经转换常量表达式
-（[#expr.const]）。
+[:en@~] where [$E] is the template argument provided for the parameter.
+[:zh_CN@~] 其中 [$E] 是为此形参提供的模板实参。
 
 [begin:note]
-[:en]
-If the [~template-argument] is an overload set (or the address of such,
-including forming a pointer-to-member), the matching function is selected from
-the set ([#over.over]).
-[:zh_CN]
-若[~模板实参]是重载集合（或其地址，也包括构成成员指针的那些），则从集合中选择
-其所匹配的函数（[#over.over]）。
+[:en] [$E] is a [~template-argument] or (for a default template argument) an
+[~initializer-clause].
+[:zh_CN] [$E] 是[~模板实参]或者（对于默认模板实参）是[~初始化式子句]。
 [end:note]
+
+[:en] If a deduced parameter type is not permitted for a [~template-parameter]
+declaration ([#temp.param]), the program is ill-formed.
+[:zh_CN] 如果一个[~模板形参]的声明式（[#temp.param]）不允许出现推断的形参类型，
+则程序非良构。
+
+[para]
+[:en] The value of a non-type [~template-parameter] [$P] of (possibly deduced)
+type [`T] is determined from its template argument [$A] as follows.
+[:zh_CN] （可能被推断的）[`T] 类型的非类型[~模板形参]的值，按如下从起模板实参
+[$A] 确定。
+
+[:en] If [`T] is not a class type and [$A] is not a [~braced-init-list], [$A]
+shall be a converted constant expression ([#expr.const]) of type [`T]; the value
+of [$P] is [$A] (as converted).
+[:zh_CN] 如果 [`T] 不是类类型且 [$A] 不是[~花括号初始化列表]，则 [$A] 应当为 [`T]
+类型的经转换常量表达式（[#expr.const]）；[$P] 的值为（转换后的）[$A]。
+
+[para]
+[:en] Otherwise, a temporary variable
+[:zh_CN] 否则，引入一个临时变量：
+[codeblock]
+constexpr T v = [[redoc("$>")]]A;
+[codeblock:end]
+[:en@~] is introduced.
+
+[:en] The lifetime of [`v] ends immediately after initializing it and
+any template parameter object (see below).
+[:zh_CN] [`v] 的生存期在它和任何模板形参对象（见下文）的初始化之后立即结束。
+
+[:en] For each such variable, the [~id-expression] [`v] is termed a
+[+candidate initializer].
+[:zh_CN] 对于每个这种变量，[~标识表达式] [`v] 被称为一个[+候选初始化式]。
+
+[para]
+[:en] If [`T] is a class type, a template parameter object ([#temp.param])
+exists that is constructed so as to be template-argument-equivalent to [`v];
+[$P] denotes that template parameter object.
+[:zh_CN] 如果 [`T] 为类类型，存在一个的模板形参对象（[#temp.param]）且被构造为
+按模板实参等价于 [`v]；[$P] 代表这个模板形参对象。
+
+[:en] [$P] is copy-initialized from an unspecified candidate initializer
+that is template-argument-equivalent to [`v].
+[:zh_CN] [$P] 从某个未指明的按模板实参等价于 [`v] 的候选初始化式进行复制初始化。
+
+[:en] If, for the initialization from any candidate initializer,
+[:zh_CN] 如果，对于从任何候选初始化式进行的初始化，
+[list]
+[item]
+[:en@~] the initialization would be ill-formed, or
+[:zh_CN@~] 该初始化非良构，或者
+[item]
+[:en@~] the full-expression of an invented [~init-declarator] for the
+initialization would not be a constant expression when interpreted as a
+[~constant-expression] ([#expr.const]), or
+[:zh_CN@~] 为该初始化虚构的[~带初始化声明符]的全表达式，在被解释为[~常量表达式]
+时并不是常量表达式（[#expr.const]），或者
+[item]
+[:en@~] the initialization would cause [$P] to not be
+template-argument-equivalent ([#temp.type]) to [`v],
+[:zh_CN@~] 该初始化会造成 [$P] 并非按模板实参等价于 [`v]（[#temp.type]），
+[list:end]
+[:en@~] the program is ill-formed.
+[:zh_CN@~] 则程序非良构。
+
+[para]
+[:en] Otherwise, the value of [$P] is that of [`v].
+[:zh_CN] 否则，[$P] 的值就是 [`v] 的值。
 
 [para]
 [:en]
@@ -88,16 +136,14 @@ Z<y> z;                         // [:en] no conversion, but note extra cv-qualif
 
 template<int (&pa)[5]> struct W { /* ... */ };
 int b[5];
-W<b> w;                         // [:en] no conversion \
-                                [:zh_CN] 无须转换
+W<b> w;                         // [:en] no conversion [:zh_CN] 无须转换
 
 void f(char);
 void f(int);
 
 template<void (*pf)(int)> struct A { /* ... */ };
 
-A<&f> a;                        // [:en] selects [`f(int)] \
-                                [:zh_CN] 选择了 [`f(int)]
+A<&f> a;                        // [:en] selects [`f(int)] [:zh_CN] 选择了 [`f(int)]
 
 template<auto n> struct B { /* ... */ };
 B<5> b1;                        // [:en] OK, template parameter type is [`int] \
@@ -108,6 +154,23 @@ B<2.5> b3;                      // [:en] OK, template parameter type is [`char] 
                                 [:zh_CN] OK，模板形参的类型为 [`char]
 B<void(0)> b4;                  // [:en] error: template parameter type cannot be [`:key void] \
                                 [:zh_CN] 错误：模板形参类型不能为 [`:key void]
+
+template<int i> struct C { /* ... */ };
+C<{ 42 }> c1;   // OK
+
+struct J1 {
+  J1 *self = this;
+};
+B<J1{}> j1;     // [:en] error: initialization of template parameter object is not a constant expression \
+                [:zh_CN] 错误：模板形参对象的初始化不是常量表达式
+
+struct J2 {
+  J2 *self = this;
+  constexpr J2() {}
+  constexpr J2(const J2&) {}
+};
+B<J2{}> j2;     // [:en] error: template parameter object not template-argument-equivalent to introduced temporary \
+                [:zh_CN] 错误：模板形参对象并非按模板实参等价于所引入的临时变量
 [codeblock:end]
 [end:example]
 
