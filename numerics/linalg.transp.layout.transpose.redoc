@@ -1,0 +1,135 @@
+[section#linalg.transp.layout.transpose
+    [:en] Class template [`layout_transpose]
+    [:zh_CN] 类模板 [`layout_transpose]
+]
+
+[para]
+[:en] [`layout_transpose] is an [`mdspan] layout mapping policy that swaps the
+two indices, extents, and strides of any [`mdspan] layout mapping policy.
+[:zh_CN] [`layout_transpose] 是一种 [`mdspan] 布局映射策略，它在任何 [`mdspan]
+布局映射策略的两个索引、尺度和跨步间进行交换。
+
+[codeblock:synopsis]
+namespace std::linalg {
+  template<class Layout>
+  class layout_transpose {
+  public:
+    using nested_layout_type = Layout;
+
+    template<class Extents>
+    struct mapping {
+    private:
+      using [[redoc("*>")]]nested-mapping-type =
+        typename Layout::template mapping<[[redoc("*>")]]transpose-extents-t<Extents>>;   // [=expos]
+
+    public:
+      using extents_type = Extents;
+      using index_type = typename extents_type::index_type;
+      using size_type = typename extents_type::size_type;
+      using rank_type = typename extents_type::rank_type;
+      using layout_type = layout_transpose;
+
+      constexpr explicit mapping(const [[redoc("*>")]]nested-mapping-type&);
+
+      constexpr const extents_type& extents() const noexcept { return [[redoc("*>")]]extents_; }
+
+      constexpr index_type required_span_size() const
+        { return [[redoc("*>")]]nested-mapping_.required_span_size(); }
+
+      template<class Index0, class Index1>
+        constexpr index_type operator()(Index0 ind0, Index1 ind1) const
+        { return [[redoc("*>")]]nested-mapping_(ind1, ind0); }
+
+      constexpr const [[redoc("*>")]]nested-mapping-type& nested_mapping() const noexcept
+        { return [[redoc("*>")]]nested-mapping_; }
+
+      static constexpr bool is_always_unique() noexcept
+        { return [[redoc("*>")]]nested-mapping-type::is_always_unique(); }
+      static constexpr bool is_always_exhaustive() noexcept
+        { return [[redoc("*>")]]nested-mapping-type::is_always_exhaustive(); }
+      static constexpr bool is_always_strided() noexcept
+        { return [[redoc("*>")]]nested-mapping-type::is_always_strided(); }
+
+      constexpr bool is_unique() const { return [[redoc("*>")]]nested-mapping_.is_unique(); }
+      constexpr bool is_exhaustive() const { return [[redoc("*>")]]nested-mapping_.is_exhaustive(); }
+      constexpr bool is_strided() const { return [[redoc("*>")]]nested-mapping_.is_strided(); }
+
+      constexpr index_type stride(size_t r) const;
+
+      template<class OtherExtents>
+        friend constexpr bool operator==(const mapping& x, const mapping<OtherExtents>& y);
+    };
+
+    private:
+      [[redoc("*>")]]nested-mapping-type [[redoc("*>")]]nested-mapping_;                       // [=expos]
+      extents_type [[redoc("*>")]]extents_;                                     // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`Layout] shall meet the layout mapping policy requirements
+([#mdspan.layout.policy.reqmts]).
+[:zh_CN] [`Layout] 应当满足布局映射策略的规定（[#mdspan.layout.policy.reqmts]）。
+
+[para:mandates]
+[list]
+[item]
+[:en@~] [`Extents] is a specialization of [`std::extents], and
+[:zh_CN@~] [`Extents] 是 [`std::extents] 的特例，并且
+[item]
+[:en@~] [`Extents::rank()] equals 2.
+[:zh_CN@~] [`Extents::rank()] 等于 2。
+[list:end]
+
+[codeblock:declaration]
+constexpr explicit mapping(const [[redoc("*>")]]nested-mapping-type& map);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en@~] Initializes [*nested-mapping_] with [`map], and
+[:zh_CN@~] 以 [`map] 初始化 [*nested-mapping_]，并
+[item]
+[:en@~] initializes [*extents_] with [`[*transpose-extents](map.extents())].
+[:zh_CN@~] 以 [`[*transpose-extents](map.extents())] 初始化 [*extents_]。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr index_type stride(size_t r) const;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[list]
+[item]
+[:en@~] [`is_strided()] is [`true], and
+[:zh_CN@~] [`is_strided()] 为 [`true]，并且
+[item]
+[:en@~] [`r < 2] is [`true].
+[:zh_CN@~] [`r < 2] 为 [`true]。
+[list:end]
+
+[para:returns]
+[`[*nested-mapping_].stride(r == 0 ? 1 : 0)]
+[div:end]
+
+[codeblock:declaration]
+template<class OtherExtents>
+  friend constexpr bool operator==(const mapping& x, const mapping<OtherExtents>& y);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] The expression [`x.[*nested-mapping_] == y.[*nested-mapping_]]
+is well-formed and its result is convertible to [`bool].
+[:zh_CN] 表达式 [`x.[*nested-mapping_] == y.[*nested-mapping_]] 良构且其结果可以
+转换为 [`bool]。
+
+[para:returns]
+[:en] [`x.[*nested-mapping_] == y.[*nested-mapping_]].
+[:zh_CN] [`x.[*nested-mapping_] == y.[*nested-mapping_]]。
+[div:end]

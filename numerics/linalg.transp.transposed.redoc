@@ -1,0 +1,152 @@
+[section#linalg.transp.transposed
+    [:en] Function template [`transposed]
+    [:zh_CN] 函数模板 [`transposed]
+]
+
+[para]
+[:en] The [`transposed] function takes a rank-2 [`mdspan] representing a matrix,
+and returns a new [`mdspan] representing the input matrix's transpose.
+[:zh_CN] [`transposed] 函数接受一个表示秩-2 矩阵的 [`mdspan]，并返回一个表示输入
+矩阵的转置的新的 [`mdspan]。
+
+[:en] The input matrix[=']s data are not modified, and the returned [`mdspan]
+accesses the input matrix[=']s data in place.
+[:zh_CN] 不改动输入矩阵的数据，且返回的 [`mdspan] 会原位访问输入矩阵的数据。
+
+[codeblock:declaration]
+  template<class ElementType, class Extents, class Layout, class Accessor>
+    constexpr auto transposed(mdspan<ElementType, Extents, Layout, Accessor> a);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`Extents::rank() == 2] is [`true].
+[:zh_CN] [`Extents::rank() == 2] 为 [`true]。
+
+[para]
+[:en] Let [`ReturnExtents] be [`[*transpose-extents-t]<Extents>].
+[:zh_CN] 令 [`ReturnExtents] 为 [`[*transpose-extents-t]<Extents>]。
+
+[:en] Let [`R] be [`mdspan<ElementType, ReturnExtents, ReturnLayout, Accessor>],
+where [`ReturnLayout] is:
+[:zh_CN] 令 [`R] 为 [`mdspan<ElementType, ReturnExtents, ReturnLayout, Accessor>]，
+其中 [`ReturnLayout] 为：
+
+[list]
+[item]
+[:en] [`layout_right] if [`Layout] is [`layout_left];
+[:zh_CN] 当 [`Layout] 为 [`layout_left] 时为 [`layout_right]；
+[item]
+[:en] otherwise, [`layout_left] if [`Layout] is [`layout_right];
+[:zh_CN] 否则，当 [`Layout] 为 [`layout_right] 时为 [`layout_left]；
+[item]
+[:en] otherwise, [`layout_stride] if [`Layout] is [`layout_stride];
+[:zh_CN] 否则，当 [`Layout] 为 [`layout_stride] 时为 [`layout_stride]；
+[item]
+[:en] otherwise, [`layout_blas_packed<OppositeTriangle, OppositeStorageOrder>],
+if [`Layout] is [`layout_blas_packed<Triangle, StorageOrder>]
+for some [`Triangle] and [`StorageOrder], where
+[:zh_CN] 否则，当 [`Layout] 为对于某个 [`Triangle] 和 [`StorageOrder] 的
+[`layout_blas_packed<Triangle, StorageOrder>]，则为
+[`layout_blas_packed<OppositeTriangle, OppositeStorageOrder>]，其中
+
+[list]
+[item]
+[:en@~] [`OppositeTriangle] is
+[:zh_CN@~] [`OppositeTriangle] 为
+[codeblock]
+conditional_t<is_same_v<Triangle, upper_triangle_t>,
+              lower_triangle_t, upper_triangle_t>
+[codeblock:end]
+[:en@~] and
+[:zh_CN@~] 而
+[item]
+[:en] [`OppositeStorageOrder] is
+[:zh_CN] [`OppositeStorageOrder] 为
+[codeblock]
+conditional_t<is_same_v<StorageOrder, column_major_t>, row_major_t, column_major_t>
+[codeblock:end]
+[list:end]
+
+[item]
+[:en] otherwise, [`NestedLayout] if [`Layout] is [`layout_transpose<NestedLayout>]
+for some [`NestedLayout];
+[:zh_CN] 否则，当 [`Layout] 对于某个 [`NestedLayout] 为
+[`layout_transpose<NestedLayout>] 时为 [`NestedLayout]；
+[item]
+[:en] otherwise, [`layout_transpose<Layout>].
+[:zh_CN] 否则，为 [`layout_transpose<Layout>]。
+[list:end]
+
+[para:returns]
+[:en] With [`ReturnMapping] being the type
+[`typename ReturnLayout::template mapping<ReturnExtents>]:
+[:zh_CN] 令 [`ReturnMapping] 为类型
+[`typename ReturnLayout::template mapping<ReturnExtents>]：
+
+[list]
+[item]
+[:en] if [`Layout] is [`layout_left], [`layout_right], or a specialization of
+[`layout_blas_packed],
+[:zh_CN] 当 [`Layout] 为 [`layout_left]，[`layout_right]，或者
+[`layout_blas_packed] 的特例时，返回
+[codeblock]
+R(a.data_handle(), ReturnMapping([[redoc("*>")]]transpose-extents(a.mapping().extents())),
+  a.accessor())
+[codeblock:end]
+[item]
+[:en] otherwise, if [`Layout] is [`layout_stride],
+[:zh_CN] 否则，当 [`Layout] 为 [`layout_stride] 时，返回
+[codeblock]
+R(a.data_handle(), ReturnMapping([[redoc("*>")]]transpose-extents(a.mapping().extents()),
+                                 array{a.mapping().stride(1), a.mapping().stride(0)}),
+  a.accessor())
+[codeblock:end]
+[item]
+[:en] otherwise, if [`Layout] is a specialization of [`layout_transpose],
+[:zh_CN] 否则，当 [`Layout] 为 [`layout_transpose] 的特例时，返回
+[codeblock]
+R(a.data_handle(), a.mapping().nested_mapping(), a.accessor())
+[codeblock:end]
+[item]
+[:en] otherwise,
+[:zh_CN] 否则，返回
+[codeblock]
+R(a.data_handle(), ReturnMapping(a.mapping()), a.accessor())
+[codeblock:end]
+[list:end]
+[div:end]
+
+[para]
+[begin:example]
+[codeblock]
+void test_transposed(mdspan<double, extents<size_t, 3, 4>> a) {
+  const auto num_rows = a.extent(0);
+  const auto num_cols = a.extent(1);
+
+  auto a_t = transposed(a);
+  assert(num_rows == a_t.extent(1));
+  assert(num_cols == a_t.extent(0));
+  assert(a.stride(0) == a_t.stride(1));
+  assert(a.stride(1) == a_t.stride(0));
+
+  for(size_t row = 0; row < num_rows; ++row) {
+    for(size_t col = 0; col < num_rows; ++col) {
+      assert(a[row, col] == a_t[col, row]);
+    }
+  }
+
+  auto a_t_t = transposed(a_t);
+  assert(num_rows == a_t_t.extent(0));
+  assert(num_cols == a_t_t.extent(1));
+  assert(a.stride(0) == a_t_t.stride(0));
+  assert(a.stride(1) == a_t_t.stride(1));
+
+  for(size_t row = 0; row < num_rows; ++row) {
+    for(size_t col = 0; col < num_rows; ++col) {
+      assert(a[row, col] == a_t_t[row, col]);
+    }
+  }
+}
+[codeblock:end]
+[end:example]

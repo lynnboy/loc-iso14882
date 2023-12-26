@@ -1,0 +1,58 @@
+[section#linalg.conjtransposed
+    [:en] Conjugate transpose in-place transform
+    [:zh_CN] 共轭转置原位变换
+]
+
+[para]
+[:en] The [`conjugate_transposed] function returns a conjugate transpose view of
+an object.
+[:zh_CN] [`conjugate_transposed] 函数返回对象视图的共轭转置。
+
+[:en] This combines the effects of [`transposed] and [`conjugated].
+[:zh_CN] 它合并了 [`transposed] 和 [`conjugated] 的效果。
+
+[codeblock:declaration]
+  template<class ElementType, class Extents, class Layout, class Accessor>
+    constexpr auto conjugate_transposed(mdspan<ElementType, Extents, Layout, Accessor> a);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return conjugated(transposed(a));]
+[:zh_CN] 等价于：[`return conjugated(transposed(a));]
+[div:end]
+
+[para]
+[begin:example]
+[codeblock]
+void test_conjugate_transposed(mdspan<complex<double>, extents<size_t, 3, 4>> a) {
+  const auto num_rows = a.extent(0);
+  const auto num_cols = a.extent(1);
+
+  auto a_ct = conjugate_transposed(a);
+  assert(num_rows == a_ct.extent(1));
+  assert(num_cols == a_ct.extent(0));
+  assert(a.stride(0) == a_ct.stride(1));
+  assert(a.stride(1) == a_ct.stride(0));
+
+  for(size_t row = 0; row < num_rows; ++row) {
+    for(size_t col = 0; col < num_rows; ++col) {
+      assert(a[row, col] == conj(a_ct[col, row]));
+    }
+  }
+
+  auto a_ct_ct = conjugate_transposed(a_ct);
+  assert(num_rows == a_ct_ct.extent(0));
+  assert(num_cols == a_ct_ct.extent(1));
+  assert(a.stride(0) == a_ct_ct.stride(0));
+  assert(a.stride(1) == a_ct_ct.stride(1));
+
+  for(size_t row = 0; row < num_rows; ++row) {
+    for(size_t col = 0; col < num_rows; ++col) {
+      assert(a[row, col] == a_ct_ct[row, col]);
+      assert(conj(a_ct[col, row]) == a_ct_ct[row, col]);
+    }
+  }
+}
+[codeblock:end]
+[end:example]

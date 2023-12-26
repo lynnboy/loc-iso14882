@@ -1,0 +1,222 @@
+[section#linalg.algs.blas3.trsm
+    [:en] Solve multiple triangular linear systems
+    [:zh_CN] 求解多重三角线性系统
+]
+
+[para]
+[begin:note]
+[:en] These functions correspond to the BLAS function [`xTRSM][#:cite@super#blas3].
+[:zh_CN] 这些函数对应于 BLAS 函数 [`xTRSM][#:cite@super#blas3]。
+[end:note]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat, class BinaryDivideOp>
+  void triangular_matrix_matrix_left_solve(InMat1 A, Triangle t, DiagonalStorage d,
+                                           InMat2 B, OutMat X, BinaryDivideOp divide);
+template<class ExecutionPolicy,
+         [[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat, class BinaryDivideOp>
+  void triangular_matrix_matrix_left_solve(ExecutionPolicy&& exec,
+                                           InMat1 A, Triangle t, DiagonalStorage d,
+                                           InMat2 B, OutMat X, BinaryDivideOp divide);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform multiple matrix solves, taking into account the
+[`Triangle] and [`DiagonalStorage] parameters that apply to the triangular
+matrix [`A] ([#linalg.general]).
+[:zh_CN] 这些函数实施多重矩阵求解，其中考虑在三角矩阵 [`A] 上应用的 [`Triangle]
+和 [`DiagonalStorage] 形参（[#linalg.general]）。
+
+[para:mandates]
+[list]
+[item]
+[:en] If [`InMat1] has [`layout_blas_packed] layout, then the layout[=']s
+[`Triangle] template argument has the same type as the function[=']s [`Triangle]
+template argument;
+[:zh_CN] 如果 [`InMat1] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
+模板实参与函数的 [`Triangle] 模板实参为相同类型。
+[item]
+[:en] [`[*possibly-multipliable]<InMat1, OutMat, InMat2>()] is [`true]; and
+[:zh_CN] [`[*possibly-multipliable]<InMat1, OutMat, InMat2>()] 为 [`true]；并且
+[item]
+[:en] [`[*compatible-static-extents]<InMat1, InMat1>(0, 1)] is [`true].
+[:zh_CN] [`[*compatible-static-extents]<InMat1, InMat1>(0, 1)] 为 [`true]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en@~] [`[*multipliable](A, X, B)] is [`true], and
+[:zh_CN@~] [`[*multipliable](A, X, B)] 等于 [`true]，并且
+[item]
+[:en@~] [`A.extent(0) == A.extent(1)] is [`true].
+[:zh_CN@~] [`A.extent(0) == A.extent(1)] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] Computes [$X'] such that [$AX' = B], and assigns each element of [$X'] to
+the corresponding element of [$X].
+[:zh_CN] 计算 [$X'] 使得 [$AX' = B]，并将 [$X'] 的各个元素赋值给 [$X] 的对应元素。
+
+[:en] If no such [$X'] exists, then the elements of [`X] are valid but
+unspecified.
+[:zh_CN] 若不存在这样的 [$X']，则 [`X] 的元素有效但未指明。
+
+[para:complexity]
+[:en] [?bigoh [`A.extent(0)] \times [`X.extent(1)] \times [`X.extent(1)]].
+[:zh_CN] [?bigoh [`A.extent(0)] \times [`X.extent(1)] \times [`X.extent(1)]]。
+[div:end]
+
+[para]
+[begin:note]
+[:en] Since the triangular matrix is on the left, the desired [`divide]
+implementation in the case of noncommutative multiplication is mathematically
+equivalent to [$y^{-1} x], where [$x] is the first argument and [$y] is the
+second argument, and [$y^{-1}] denotes the multiplicative inverse of [$y].
+[:zh_CN] 由于三角矩阵处于左侧，所以对于非交换乘法情况下所需要的 [`divide] 实现，
+在数学上等价于 [$y^{-1} x]，其中 [$x] 为第一实参而 [$y] 为第二实参，而 [$y^{-1}]
+代表 [$y] 的乘法逆元。
+[end:note]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat>
+  void triangular_matrix_matrix_left_solve(InMat1 A, Triangle t, DiagonalStorage d,
+                                           InMat2 B, OutMat X);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_matrix_left_solve(A, t, d, B, X, divides<void>{});
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat>
+  void triangular_matrix_matrix_left_solve(ExecutionPolicy&& exec,
+                                           InMat1 A, Triangle t, DiagonalStorage d,
+                                           InMat2 B, OutMat X);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_matrix_left_solve(std::forward<ExecutionPolicy>(exec),
+                                    A, t, d, B, X, divides<void>{});
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat, class BinaryDivideOp>
+  void triangular_matrix_matrix_right_solve(InMat1 A, Triangle t, DiagonalStorage d,
+                                            InMat2 B, OutMat X, BinaryDivideOp divide);
+template<class ExecutionPolicy,
+         [[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat, class BinaryDivideOp>
+  void triangular_matrix_matrix_right_solve(ExecutionPolicy&& exec,
+                                            InMat1 A, Triangle t, DiagonalStorage d,
+                                            InMat2 B, OutMat X, BinaryDivideOp divide);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform multiple matrix solves, taking into account the
+[`Triangle] and [`DiagonalStorage] parameters that apply to the triangular
+matrix [`A] ([#linalg.general]).
+[:zh_CN] 这些函数实施多重矩阵求解，其中考虑在三角矩阵 [`A] 上应用的 [`Triangle]
+和 [`DiagonalStorage] 形参（[#linalg.general]）。
+
+[para:mandates]
+[list]
+[item]
+[:en] If [`InMat1] has [`layout_blas_packed] layout, then the layout[=']s
+[`Triangle] template argument has the same type as the function[=']s [`Triangle]
+template argument;
+[:zh_CN] 如果 [`InMat1] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
+模板实参与函数的 [`Triangle] 模板实参为相同类型。
+[item]
+[:en] [`[*possibly-multipliable]<OutMat, InMat1, InMat2>()] is [`true]; and
+[:zh_CN] [`[*possibly-multipliable]<OutMat, InMat1, InMat2>()] 为 [`true]；并且
+[item]
+[:en] [`[*compatible-static-extents]<InMat1, InMat1>(0,1)] is [`true].
+[:zh_CN] [`[*compatible-static-extents]<InMat1, InMat1>(0,1)] 为 [`true]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en@~] [`[*multipliable](X, A, B)] is [`true], and
+[:zh_CN@~] [`[*multipliable](X, A, B)] 等于 [`true]，并且
+[item]
+[:en@~] [`A.extent(0) == A.extent(1)] is [`true].
+[:zh_CN@~] [`A.extent(0) == A.extent(1)] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] Computes [$X'] such that [$X'A = B], and assigns each element of [$X'] to
+the corresponding element of [$X].
+[:zh_CN] 计算 [$X'] 使得 [$X'A = B]，并将 [$X'] 的各个元素赋值给 [$X] 的对应元素。
+
+[:en] If no such [$X'] exists, then the elements of [`X] are valid but
+unspecified.
+[:zh_CN] 若不存在这样的 [$X']，则 [`X] 的元素有效但未指明。
+
+[para:complexity]
+[:en] [?bigoh [`B.extent(0)] \cdot [`B.extent(1)] \cdot [`A.extent(1)]].
+[:zh_CN] [?bigoh [`B.extent(0)] \cdot [`B.extent(1)] \cdot [`A.extent(1)]]。
+
+[para@~]
+[begin:note]
+[:en] Since the triangular matrix is on the right, the desired [`divide]
+implementation in the case of noncommutative multiplication is mathematically
+equivalent to [$x y^{-1}], where [$x] is the first argument and [$y] is the
+second argument, and [$y^{-1}] denotes the multiplicative inverse of [$y].
+[:zh_CN] 由于三角矩阵处于右侧，所以对于非交换乘法情况下所需要的 [`divide] 实现，
+在数学上等价于 [$x y^{-1}]，其中 [$x] 为第一实参而 [$y] 为第二实参，而 [$y^{-1}]
+代表 [$y] 的乘法逆元。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat>
+  void triangular_matrix_matrix_right_solve(InMat1 A, Triangle t, DiagonalStorage d,
+                                            InMat2 B, OutMat X);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_matrix_right_solve(A, t, d, B, X, divides<void>{});
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat1, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]out-matrix OutMat>
+  void triangular_matrix_matrix_right_solve(ExecutionPolicy&& exec,
+                                            InMat1 A, Triangle t, DiagonalStorage d,
+                                            InMat2 B, OutMat X);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_matrix_right_solve(std::forward<ExecutionPolicy>(exec),
+                                     A, t, d, B, X, divides<void>{});
+[codeblock:end]
+[div:end]

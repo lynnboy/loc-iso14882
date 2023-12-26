@@ -1,0 +1,154 @@
+[section#linalg.layout.packed.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] [`layout_blas_packed] is an [`mdspan] layout mapping policy that
+represents a square matrix that stores only the entries in one triangle,
+in a packed contiguous format.
+[:zh_CN] [`layout_blas_packed] 是一种 [`mdspan] 布局映射策略，它将以一种连续打包
+格式仅存储三角形部分中的项，来表示一个矩形矩阵。
+
+[:en] Its [`Triangle] template parameter determines whether an [`mdspan] with
+this layout stores the upper or lower triangle of the matrix.
+[:zh_CN] 其 [`Triangle] 模板形参确定具有这种布局的 [`mdspan] 存储的是矩阵的
+上三角还是下三角。
+
+[:en] Its [`StorageOrder] template parameter determines whether the layout packs
+the matrix[=']s elements in column-major or row-major order.
+[:zh_CN] 其 [`StorageOrder] 模板形参确定布局中对矩阵的元素是按列主序还是行主序
+打包。
+
+[para]
+[:en] A [`StorageOrder] of [`column_major_t] indicates column-major ordering.
+[:zh_CN] 采用 [`column_major_t] 的 [`StorageOrder] 指定列主序。
+
+[:en] This packs matrix elements starting with the leftmost (least column index)
+column, and proceeding column by column, from the top entry (least row index).
+[:zh_CN] 这种打包从最左列（最低列索引）开始逐列从顶元素（最低行索引）向下存储。
+
+[para]
+[:en] A [`StorageOrder] of [`row_major_t] indicates row-major ordering.
+[:zh_CN] 采用 [`row_major_t] 的 [`StorageOrder] 指定行主序。
+
+[:en] This packs matrix elements starting with the topmost (least row index) row,
+and proceeding row by row, from the leftmost (least column index) entry.
+[:zh_CN] 这种打包从顶行（最低行索引）开始逐行从最左元素（最低列索引）向右存储。
+
+[para]
+[begin:note]
+[:en] [`layout_blas_packed] describes the data layout used by the BLAS[=']
+Symmetric Packed (SP), Hermitian Packed (HP), and Triangular Packed (TP)
+matrix types.
+[:zh_CN] [`layout_blas_packed] 描述 BLAS 的“对称打包（SP）”，“厄米共轭打包（HP）”，
+和“三角打包（TP）”矩阵类型所用的数据布局。
+[end:note]
+
+[codeblock:synopsis]
+namespace std::linalg {
+  template<class Triangle, class StorageOrder>
+  class layout_blas_packed {
+  public:
+    using triangle_type = Triangle;
+    using storage_order_type = StorageOrder;
+
+    template<class Extents>
+    struct mapping {
+    public:
+      using extents_type = Extents;
+      using index_type = typename extents_type::index_type;
+      using size_type = typename extents_type::size_type;
+      using rank_type = typename extents_type::rank_type;
+      using layout_type = layout_blas_packed;
+
+      // [:en] [#linalg.layout.packed.cons], constructors \
+      [:zh_CN] [#linalg.layout.packed.cons]，构造函数
+      constexpr mapping() noexcept = default;
+      constexpr mapping(const mapping&) noexcept = default;
+      constexpr mapping(const extents_type&) noexcept;
+      template<class OtherExtents>
+        constexpr explicit(!is_convertible_v<OtherExtents, extents_type>)
+          mapping(const mapping<OtherExtents>& other) noexcept;
+
+      constexpr mapping& operator=(const mapping&) noexcept = default;
+
+      // [:en] [#linalg.layout.packed.obs], observers \
+      [:zh_CN] [#linalg.layout.packed.obs]，探察函数
+      constexpr const extents_type& extents() const noexcept { return [[redoc("*>")]]extents_; }
+
+      constexpr index_type required_span_size() const noexcept;
+
+      template<class Index0, class Index1>
+        constexpr index_type operator() (Index0 ind0, Index1 ind1) const noexcept;
+
+      static constexpr bool is_always_unique() noexcept {
+        return (extents_type::static_extent(0) != dynamic_extent &&
+                extents_type::static_extent(0) < 2) ||
+               (extents_type::static_extent(1) != dynamic_extent &&
+                extents_type::static_extent(1) < 2);
+      }
+      static constexpr bool is_always_exhaustive() noexcept { return true; }
+      static constexpr bool is_always_strided() noexcept
+        { return is_always_unique(); }
+
+      constexpr bool is_unique() const noexcept {
+        return [[redoc("*>")]]extents_.extent(0) < 2;
+      }
+      constexpr bool is_exhaustive() const noexcept { return true; }
+      constexpr bool is_strided() const noexcept {
+        return [[redoc("*>")]]extents_.extent(0) < 2;
+      }
+
+      constexpr index_type stride(rank_type) const noexcept;
+
+      template<class OtherExtents>
+        friend constexpr bool operator==(const mapping&, const mapping<OtherExtents>&) noexcept;
+
+    private:
+      extents_type [[redoc("*>")]]extents_{};     // [expos]
+    };
+  };
+}
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[list]
+[item]
+[:en@~] [`Triangle] is either [`upper_triangle_t] or [`lower_triangle_t],
+[:zh_CN@~] [`Triangle] 为 [`upper_triangle_t] 或 [`lower_triangle_t]，
+[item]
+[:en@~] [`StorageOrder] is either [`column_major_t] or [`row_major_t],
+[:zh_CN@~] [`StorageOrder] 为 [`column_major_t] 或 [`row_major_t]，
+[item]
+[:en@~] [`Extents] is a specialization of [`std::extents],
+[:zh_CN@~] [`Extents] 为 [`std::extents] 的特例，
+[item]
+[:en@~] [`Extents::rank()] equals 2,
+[:zh_CN@~] [`Extents::rank()] 等于 2，
+[item]
+[:en@~] one of
+[:zh_CN@~] 以下之一
+[codeblock]
+extents_type::static_extent(0) == dynamic_extent[[redoc("[:en],[:zh_CN]，")]]
+extents_type::static_extent(1) == dynamic_extent[[redoc("[:en], or[:zh_CN]，或")]]
+extents_type::static_extent(0) == extents_type::static_extent(1)
+[codeblock:end]
+[:en@~] is [`true], and
+[:zh_CN@~] 为 [`true]，并且
+[item]
+[:en@~] if [`Extents::rank_dynamic() == 0] is [`true], let [$N_s] be equal to
+[`Extents::static_extent(0)]; then, [$N_s \times (N_s + 1)] is representable as
+a value of type [`index_type].
+[:zh_CN@~] 若 [`Extents::rank_dynamic() == 0] 为 [`true]，令 [$N_s] 等于
+[`Extents::static_extent(0)]；则 [$N_s \times (N_s + 1)] 可表示为 [`index_type]
+类型的值。
+[list:end]
+
+[para]
+[:en] [`layout_blas_packed<T, SO>::mapping<E>] is a trivially copyable type
+that models [`:c regular] for each [`T], [`SO], and [`E].
+[:zh_CN] [`layout_blas_packed<T, SO>::mapping<E>] 是一种可平凡复制类型，它对每组
+[`T]、[`SO] 和 [`E] 都构成 [`:c regular]。
+[div:end]

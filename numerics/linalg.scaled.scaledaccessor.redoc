@@ -1,0 +1,123 @@
+[section#linalg.scaled.scaledaccessor
+    [:en] Class template [`scaled_accessor]
+    [:zh_CN] 类模板 [`scaled_accessor]
+]
+
+[para]
+[:en] The class template [`scaled_accessor] is an [`mdspan] accessor policy
+which upon access produces scaled elements.
+[:zh_CN] 类模板 [`scaled_accessor] 是一种 [`mdspan] 访问器策略，它在访问时产生
+缩放后的元素。
+
+[:en] It is part of the implementation of [`scaled] ([#linalg.scaled.scaled]).
+[:zh_CN] 它是 [`scaled]（[#linalg.scaled.scaled]）的实现的一部分。
+
+[codeblock:synopsis]
+namespace std::linalg {
+  template<class ScalingFactor, class NestedAccessor>
+  class scaled_accessor {
+  public:
+    using element_type =
+      add_const_t<decltype(declval<ScalingFactor>() * declval<NestedAccessor::element_type>())>;
+    using reference = remove_const_t<element_type>;
+    using data_handle_type = NestedAccessor::data_handle_type;
+    using offset_policy = scaled_accessor<ScalingFactor, NestedAccessor::offset_policy>;
+
+    constexpr scaled_accessor() = default;
+    template<class OtherNestedAccessor>
+      explicit(!is_convertible_v<OtherNestedAccessor, NestedAccessor>)
+        constexpr scaled_accessor(const scaled_accessor<ScalingFactor,
+                                                        OtherNestedAccessor>& other);
+    constexpr scaled_accessor(const ScalingFactor& s, const NestedAccessor& a);
+
+    constexpr reference access(data_handle_type p, size_t i) const;
+    constexpr offset_policy::data_handle_type offset(data_handle_type p, size_t i) const;
+
+    constexpr const ScalingFactor& scaling_factor() const noexcept { return [[redoc("*>")]]scaling-factor; }
+    constexpr const NestedAccessor& nested_accessor() const noexcept { return [[redoc("*>")]]nested-accessor; }
+
+  private:
+    ScalingFactor [[redoc("*>")]]scaling-factor{};                              // [=expos]
+    NestedAccessor [[redoc("*>")]]nested-accessor{};                            // [=expos]
+  };
+}
+[codeblock:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`element_type] is valid and denotes a type,
+[:zh_CN] [`element_type] 有效且代表类型，
+[item]
+[:en] [`is_copy_constructible_v<reference>] is [`true],
+[:zh_CN] [`is_copy_constructible_v<reference>] 为 [`true]，
+[item]
+[:en] [`is_reference_v<element_type>] is [`false],
+[:zh_CN] [`is_reference_v<element_type>] 为 [`false]，
+[item]
+[:en] [`ScalingFactor] models [`:c semiregular], and
+[:zh_CN] [`ScalingFactor] 构成 [`:c semiregular]，并且
+[item]
+[:en] [`NestedAccessor] meets the accessor policy requirements
+([#mdspan.accessor.reqmts]).
+[:zh_CN] [`NestedAccessor] 满足访问器策略的规定（[#mdspan.accessor.reqmts]）。
+[list:end]
+
+[codeblock:declaration]
+template<class OtherNestedAccessor>
+  explicit(!is_convertible_v<OtherNestedAccessor, NestedAccessor>)
+    constexpr scaled_accessor(const scaled_accessor<ScalingFactor, OtherNestedAccessor>& other);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<NestedAccessor, const OtherNestedAccessor&>] is [`true].
+[:zh_CN] [`is_constructible_v<NestedAccessor, const OtherNestedAccessor&>] 为
+[`true]。
+
+[para:effects]
+[list]
+[item]
+[:en] Direct-non-list-initializes [*scaling-factor] with [`other.scaling_factor()],
+and
+[:zh_CN] 以 [`other.scaling_factor()] 直接非列表初始化 [*scaling-factor]，并
+[item]
+[:en] direct-non-list-initializes [*nested-accessor] with [`other.nested_accessor()].
+[:zh_CN] 以 [`other.nested_accessor()] 直接非列表初始化 [*nested-accessor]。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr scaled_accessor(const ScalingFactor& s, const NestedAccessor& a);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] Direct-non-list-initializes [*scaling-factor] with [`s],and
+[:zh_CN] 以 [`s] 直接非列表初始化 [*scaling-factor]，并
+[item]
+[:en] direct-non-list-initializes [*nested-accessor] with [`a].
+[:zh_CN] 以 [`a] 直接非列表初始化 [*nested-accessor]。
+[list:end]
+
+[codeblock:declaration]
+constexpr reference access(data_handle_type p, size_t i) const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[codeblock]
+scaling_factor() * NestedAccessor::element_type([[redoc("*>")]]nested-accessor.access(p, i))
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr offset_policy::data_handle_type offset(data_handle_type p, size_t i) const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[`[*nested-accessor].offset(p, i)]
+[div:end]

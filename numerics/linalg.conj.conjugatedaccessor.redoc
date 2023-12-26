@@ -1,0 +1,105 @@
+[section#linalg.conj.conjugatedaccessor
+    [:en] Class template [`conjugated_accessor]
+    [:zh_CN] 类模板 [`conjugated_accessor]
+]
+
+[para]
+[:en] The class template [`conjugated_accessor] is an [`mdspan] accessor policy
+which upon access produces conjugate elements.
+[:zh_CN] 类模板 [`conjugated_accessor] 是一种 [`mdspan] 访问器策略，它在访问时产生
+共轭后的元素。
+
+[:en] It is part of the implementation of [`conjugated] ([#linalg.scaled.conjugated]).
+[:zh_CN] 它是 [`conjugated]（[#linalg.scaled.conjugated]）的实现的一部分。
+
+[codeblock:synopsis]
+namespace std::linalg {
+  template<class NestedAccessor>
+  class conjugated_accessor {
+  public:
+    using element_type =
+      add_const_t<decltype([[redoc("*>")]]conj-if-needed(declval<NestedAccessor::element_type>()))>;
+    using reference = remove_const_t<element_type>;
+    using data_handle_type = typename NestedAccessor::data_handle_type;
+    using offset_policy = conjugated_accessor<NestedAccessor::offset_policy>;
+
+    constexpr conjugated_accessor() = default;
+    template<class OtherNestedAccessor>
+      explicit(!is_convertible_v<OtherNestedAccessor, NestedAccessor>>)
+      constexpr conjugated_accessor(const conjugated_accessor<OtherNestedAccessor>& other);
+
+    constexpr reference access(data_handle_type p, size_t i) const;
+
+    constexpr typename offset_policy::data_handle_type
+      offset(data_handle_type p, size_t i) const;
+
+    constexpr const Accessor& nested_accessor() const noexcept { return [[redoc("*>")]]nested-accessor_; }
+
+  private:
+    NestedAccessor [[redoc("*>")]]nested-accessor_{};                           // [=expos]
+  };
+}
+[codeblock:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`element_type] is valid and denotes a type,
+[:zh_CN] [`element_type] 有效且代表类型，
+[item]
+[:en] [`is_copy_constructible_v<reference>] is [`true],
+[:zh_CN] [`is_copy_constructible_v<reference>] 为 [`true]，
+[item]
+[:en] [`is_reference_v<element_type>] is [`false], and
+[:zh_CN] [`is_reference_v<element_type>] 为 [`false]，并且
+[item]
+[:en] [`NestedAccessor] meets the accessor policy requirements
+([#mdspan.accessor.reqmts]).
+[:zh_CN] [`NestedAccessor] 满足访问器策略的规定（[#mdspan.accessor.reqmts]）。
+[list:end]
+
+[codeblock:declaration]
+constexpr conjugated_accessor(const NestedAccessor& acc);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Direct-non-list-initializes [*nested-accessor_] with [`acc].
+[:zh_CN] 以 [`acc] 直接非列表初始化 [*nested-accessor_]。
+[div:end]
+
+[codeblock:declaration]
+template<class OtherNestedAccessor>
+  explicit(!is_convertible_v<OtherNestedAccessor, NestedAccessor>>)
+    constexpr conjugated_accessor(const conjugated_accessor<OtherNestedAccessor>& other);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`is_constructible_v<NestedAccessor, const OtherNestedAccessor&>] is [`true].
+[:zh_CN] [`is_constructible_v<NestedAccessor, const OtherNestedAccessor&>] 为
+[`true]。
+
+[para:effects]
+[:en] Direct-non-list-initializes [*nested-accessor_] with
+[`other.nested_accessor()].
+[:zh_CN] 以 [`other.nested_accessor()] 直接非列表初始化 [*nested-accessor_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr reference access(data_handle_type p, size_t i) const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[`[*conj-if-needed](NestedAccessor::element_type([*nested-accessor_].access(p, i)))]
+[div:end]
+
+[codeblock:declaration]
+constexpr typename offset_policy::data_handle_type offset(data_handle_type p, size_t i) const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[`[*nested-accessor_].offset(p, i)]
+[div:end]

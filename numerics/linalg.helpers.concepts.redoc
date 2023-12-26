@@ -1,0 +1,88 @@
+[section#linalg.helpers.concepts
+    [:en] Argument concepts
+    [:zh_CN] 实参概念
+]
+
+[para]
+[:en] The exposition-only concepts defined in this section constrain the
+algorithms in [#linalg].
+[:zh_CN] 本小节中定义的各个仅用于阐释的概念，对 [#linalg] 中的算法进行约束。
+
+[codeblock:synopsis]
+template<class T>
+  constexpr bool [[redoc("*>")]]is-mdspan = false;
+
+template<class ElementType, class Extents, class Layout, class Accessor>
+  constexpr bool [[redoc("*>")]]is-mdspan<mdspan<ElementType, Extents, Layout, Accessor>> = true;
+
+template<class T>
+  concept [[redoc("*:c@def>")]]in-vector =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 1;
+
+template<class T>
+  concept [[redoc("*:c@def>")]]out-vector =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 1 &&
+    is_assignable_v<typename T::reference, typename T::element_type> && T::is_always_unique();
+
+template<class T>
+  concept [[redoc("*:c@def>")]]inout-vector =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 1 &&
+    is_assignable_v<typename T::reference, typename T::element_type> && T::is_always_unique();
+
+template<class T>
+  concept [[redoc("*:c@def>")]]in-matrix =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 2;
+
+template<class T>
+  concept [[redoc("*:c@def>")]]out-matrix =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 2 &&
+    is_assignable_v<typename T::reference, typename T::element_type> && T::is_always_unique();
+
+template<class T>
+  concept [[redoc("*:c@def>")]]inout-matrix =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 2 &&
+    is_assignable_v<typename T::reference, typename T::element_type> && T::is_always_unique();
+
+template<class T>
+  constexpr bool [[redoc("*>")]]is-layout-blas-packed = false;    // \expos
+
+template<class Triangle, class StorageOrder>
+  constexpr bool [[redoc("*>")]]is-layout-blas-packed<layout_blas_packed<Triangle, StorageOrder>> = true;
+
+template<class T>
+  concept [[redoc("*:c@def>")]]possibly-packed-inout-matrix =
+    [[redoc("*>")]]is-mdspan<T> && T::rank() == 2 &&
+    is_assignable_v<typename T::reference, typename T::element_type> &&
+    (T::is_always_unique() || [[redoc("*>")]]is-layout-blas-packed<typename T::layout_type>);
+
+template<class T>
+  concept [[redoc("*:c@def>")]]in-object =
+    [[redoc("*>")]]is-mdspan<T> && (T::rank() == 1 || T::rank() == 2);
+
+template<class T>
+  concept [[redoc("*:c@def>")]]out-object =
+    [[redoc("*>")]]is-mdspan<T> && (T::rank() == 1 || T::rank() == 2) &&
+    is_assignable_v<typename T::reference, typename T::element_type> && T::is_always_unique();
+
+template<class T>
+  concept [[redoc("*:c@def>")]]inout-object =
+    [[redoc("*>")]]is-mdspan<T> && (T::rank() == 1 || T::rank() == 2) &&
+    is_assignable_v<typename T::reference, typename T::element_type> && T::is_always_unique();
+[codeblock:end]
+
+[para]
+[:en] If a function in [#linalg] accesses the elements of a parameter
+constrained by [*:c in-vector], [*:c in-matrix], or [*:c in-object],
+those accesses will not modify the elements.
+[:zh_CN] 如果 [#linalg] 中的函数访问被 [*:c in-vector]、[*:c in-matrix] 或
+[*:c in-object] 约束的形参中的元素，则这些访问不会修改元素。
+
+[para]
+[:en] Unless explicitly permitted, any [*:c inout-vector], [*:c inout-matrix],
+[*:c inout-object], [*:c out-vector], [*:c out-matrix], [*:c out-object], or
+[*:c possibly-packed-inout-matrix] parameter of a function in [#linalg]
+shall not overlap any other [`mdspan] parameter of the function.
+[:zh_CN] 除非被明确允许，[#linalg] 中函数的任何 [*:c inout-vector]、
+[*:c inout-matrix]、[*:c inout-object]、[*:c out-vector]、[*:c out-matrix]、
+[*:c out-object] 或 [*:c possibly-packed-inout-matrix] 形参，不能与该函数的任何
+其他 [`mdspan] 形参重叠。

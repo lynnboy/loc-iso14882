@@ -1,0 +1,175 @@
+[section#linalg.algs.blas1.dot
+    [:en] Dot product of two vectors
+    [:zh_CN] 两个向量的点积
+]
+
+[para]
+[begin:note]
+[:en] The functions in this section correspond to the BLAS functions [`xDOT],
+[`xDOTU], and [`xDOTC][#:cite@super#blas1].
+[:zh_CN] 本小节中的函数对应于 BLAS 函数 [`xDOT], [`xDOTU], and [`xDOTC]
+[#:cite@super#blas1]。
+[end:note]
+
+[para]
+[:en] The following elements apply to all functions in [#linalg.algs.blas1.dot].
+[:zh_CN] 下列各要素适用于 [#linalg.algs.blas1.dot] 中的所有函数。
+
+[para:mandates]
+[:en] [`[*compatible-static-extents]<InVec1, InVec2>(0, 0)] is [`true].
+[:zh_CN] [`[*compatible-static-extents]<InVec1, InVec2>(0, 0)] 为 [`true]。
+
+[para:expects]
+[:en] [`v1.extent(0)] equals [`v2.extent(0)].
+[:zh_CN] [`v1.extent(0)] 等于 [`v2.extent(0)]。
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, class Scalar>
+  Scalar dot(InVec1 v1, InVec2 v2, Scalar init);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, class Scalar>
+  Scalar dot(ExecutionPolicy&& exec,
+             InVec1 v1, InVec2 v2, Scalar init);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions compute a non-conjugated dot product with an explicitly
+specified result type.
+[:zh_CN] 这些函数计算具有显式指定返回类型的非共轭点积。
+
+[para:returns]
+[:en] Let [`N] be [`v1.extent(0)].
+[:zh_CN] 令 [`N] 为 [`v1.extent(0)]。
+[list]
+[item]
+[:en@~] [`init] if [`N] is zero;
+[:zh_CN@~] 当 [`N] 为零时返回 [`init]；
+[item]
+[:en@~] otherwise,
+[`[^GENERALIZED_SUM](plus<>(), init, v1`[0`]*v2`[0`], \ldots, v1`[N-1`]*v2`[N-1`])].
+[:zh_CN@~] 否则，返回
+[`[^GENERALIZED_SUM](plus<>(), init, v1`[0`]*v2`[0`], \ldots, v1`[N-1`]*v2`[N-1`])]。
+[list:end]
+
+[para:remarks]
+[:en] If [`InVec1::value_type], [`InVec2::value_type], and [`Scalar] are all
+floating-point types or specializations of [`complex], and if [`Scalar] has
+higher precision than [`InVec1::value_type] or [`InVec2::value_type],
+then intermediate terms in the sum use [`Scalar][=']s precision or greater.
+[:zh_CN] 如果 [`InVec1::value_type]、[`InVec2::value_type] 和 [`Scalar] 均为
+浮点类型或 [`complex] 的特例，则当 [`Scalar] 具有比 [`InVec1::value_type] 或
+[`InVec2::value_type] 更高的精度时，求和的中间项采用 [`Scalar] 或更高的精度。
+[div:end]
+
+[codeblock:declaration]
+  template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2>
+    auto dot(InVec1 v1, InVec2 v2);
+  template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2>
+    auto dot(ExecutionPolicy&& exec,
+             InVec1 v1, InVec2 v2);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions compute a non-conjugated dot product with an default
+result type.
+[:zh_CN] 这些函数计算具有默认返回类型的非共轭点积。
+
+[para:effects]
+[:en] Let [`T] be
+[`decltype(declval<typename InVec1::value_type>() * declval<typename InVec2::value_type>())].
+[:zh_CN] 令 [`T] 为
+[`decltype(declval<typename InVec1::value_type>() * declval<typename InVec2::value_type>())]。
+
+[:en] Then,
+[:zh_CN] 则，
+[list]
+[item]
+[:en@~] the two-parameter overload is equivalent to:
+[:zh_CN@~] 两个形参的重载等价于：
+[codeblock]
+return dot(v1, v2, T{});
+[codeblock:end]
+[:en@~] and
+[:zh_CN@~] 而
+[item]
+[:en@~] the three-parameter overload is equivalent to:
+[:zh_CN@~] 三个形参的重载等价于：
+[codeblock]
+return dot(std::forward<ExecutionPolicy>(exec), v1, v2, T{});
+[codeblock:end]
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, class Scalar>
+  Scalar dotc(InVec1 v1, InVec2 v2, Scalar init);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, class Scalar>
+  Scalar dotc(ExecutionPolicy&& exec,
+              InVec1 v1, InVec2 v2, Scalar init);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions compute a conjugated dot product with an explicitly
+specified result type.
+[:zh_CN] 这些函数计算具有显式指定返回类型的共轭点积。
+
+[para:effects]
+[list]
+[item]
+[:en] The three-parameter overload is equivalent to:
+[:zh_CN@~] 三个形参的重载等价于：
+[codeblock]
+return dot(conjugated(v1), v2, init);
+[codeblock:end]
+[:en@~] and
+[:zh_CN@~] 而
+[item]
+[:en@~] the four-parameter overload is equivalent to:
+[:zh_CN@~] 四个形参的重载等价于：
+[codeblock]
+return dot(std::forward<ExecutionPolicy>(exec), conjugated(v1), v2, init);
+[codeblock:end]
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2>
+  auto dotc(InVec1 v1, InVec2 v2);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2>
+  auto dotc(ExecutionPolicy&& exec,
+            InVec1 v1, InVec2 v2);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions compute a conjugated dot product with an default
+result type.
+[:zh_CN] 这些函数计算具有默认返回类型的共轭点积。
+
+[para:effects]
+[:en] Let [`T] be
+[`decltype([*conj-if-needed](declval<typename InVec1::value_type>()) * declval<typename InVec2::value_type>())].
+[:zh_CN] 令 [`T] 为
+[`decltype([*conj-if-needed](declval<typename InVec1::value_type>()) * declval<typename InVec2::value_type>())]。
+
+[:en] Then,
+[:zh_CN] 则，
+[list]
+[item]
+[:en@~] the two-parameter overload is equivalent to:
+[:zh_CN@~] 两个形参的重载等价于：
+[codeblock]
+return dotc(v1, v2, T{});
+[codeblock:end]
+[:en@~] and
+[:zh_CN@~] 而
+[item]
+[:en] the three-parameter overload is equivalent to:
+[:zh_CN@~] 三个形参的重载等价于：
+[codeblock]
+return dotc(std::forward<ExecutionPolicy>(exec), v1, v2, T{});
+[codeblock:end]
+[list:end]
+[div:end]

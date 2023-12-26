@@ -1,0 +1,64 @@
+[section#linalg.conj.conjugated
+    [:en] Function template [`conjugated]
+    [:zh_CN] 函数模板 [`conjugated]
+]
+
+[codeblock:declaration]
+  template<class ElementType, class Extents, class Layout, class Accessor>
+    constexpr auto conjugated(mdspan<ElementType, Extents, Layout, Accessor> a);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`A] be [`remove_cvref_t<decltype(a.accessor().nested_accessor())>]
+if [`Accessor] is a specialization of [`conjugated_accessor], and otherwise
+[`conjugated_accessor<Accessor>].
+[:zh_CN] 令 [`A] 当 [`Accessor] 是 [`conjugated_accessor] 的特例时为
+[`remove_cvref_t<decltype(a.accessor().nested_accessor())>]，否则为
+[`conjugated_accessor<Accessor>]。
+
+[para:returns]
+[list]
+[item]
+[:en] If [`Accessor] is a specialization of [`conjugated_accessor],
+[:zh_CN] 若 [`Accessor] 是 [`conjugated_accessor] 的特例，则返回
+[codeblock:declaration]
+mdspan<typename A::element_type, Extents, Layout, A>(a.data_handle(), a.mapping(),
+                                                     a.accessor().nested_accessor())
+[codeblock:end]
+[item]
+[:en@~] otherwise,
+[:zh_CN@~] 否则返回
+[codeblock:declaration]
+mdspan<typename A::element_type, Extents, Layout, A>(a.data_handle(), a.mapping(),
+                                                     conjugated_accessor(a.accessor()))
+[codeblock:end]
+[list:end]
+[div:end]
+
+[para]
+[begin:example]
+[codeblock]
+void test_conjugated_complex(mdspan<complex<double>, extents<int, 10>> a) {
+  auto a_conj = conjugated(a);
+  for(int i = 0; i < a.extent(0); ++i) {
+    assert(a_conj[i] == conj(a[i]));
+  }
+  auto a_conj_conj = conjugated(a_conj);
+  for(int i = 0; i < a.extent(0); ++i) {
+    assert(a_conj_conj[i] == a[i]);
+  }
+}
+
+void test_conjugated_real(mdspan<double, extents<int, 10>> a) {
+  auto a_conj = conjugated(a);
+  for(int i = 0; i < a.extent(0); ++i) {
+    assert(a_conj[i] == a[i]);
+  }
+  auto a_conj_conj = conjugated(a_conj);
+  for(int i = 0; i < a.extent(0); ++i) {
+    assert(a_conj_conj[i] == a[i]);
+  }
+}
+[codeblock:end]
+[end:example]

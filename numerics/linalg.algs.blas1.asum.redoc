@@ -1,0 +1,95 @@
+[section#linalg.algs.blas1.asum
+    [:en] Sum of absolute values of vector elements
+    [:zh_CN] 向量元素的绝对值和
+]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec, class Scalar>
+  Scalar vector_abs_sum(InVec v, Scalar init);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec, class Scalar>
+  Scalar vector_abs_sum(ExecutionPolicy&& exec, InVec v, Scalar init);
+[codeblock:end]
+
+[div:description]
+[para]
+[begin:note]
+[:en] These functions correspond to the BLAS functions [`SASUM], [`DASUM],
+[`SCASUM], and [`DZASUM][#:cite@super#blas1].
+[:zh_CN] 这些函数对应于 BLAS 函数 [`SASUM]、[`DASUM]、[`SCASUM] 和 [`DZASUM]
+[#:cite@super#blas1]。
+[end:note]
+
+[para:mandates]
+[codeblock]
+decltype(init + [[redoc("*>")]]abs-if-needed([[redoc("*>")]]real-if-needed(declval<typename InVec::value_type>())) +
+                [[redoc("*>")]]abs-if-needed([[redoc("*>")]]imag-if-needed(declval<typename InVec::value_type>())))
+[codeblock:end]
+[:en@~] is convertible to [`Scalar].
+[:zh_CN@~] 可以转换为 [`Scalar]。
+
+[para:returns]
+[:en] Let [`N] be [`v.extent(0)].
+[:zh_CN] 令 [`N] 为 [`v.extent(0)]。
+
+[list]
+[item]
+[:en@~] [`init] if [`N] is zero;
+[:zh_CN@~] 当 [`N] 为零时，返回 [`init]；
+[item]
+[:en@~] otherwise, if [`InVec::value_type] is an arithmetic type,
+[:zh_CN@~] 否则，当 [`InVec::value_type] 为算术类型时，返回
+[codeblock]
+[[redoc("^>")]]GENERALIZED_SUM(plus<>(), init, [[redoc("*>")]]abs-if-needed(v[0]), [[redoc("$\ldots")]], [[redoc("*>")]]abs-if-needed(v[N-1]))
+[codeblock:end]
+[item]
+[:en@~] otherwise,
+[:zh_CN@~] 否则，返回
+[codeblock]
+[[redoc("^>")]]GENERALIZED_SUM(plus<>(), init,
+       [[redoc("*>")]]abs-if-needed([[redoc("*>")]]real-if-needed(v[0])) + [[redoc("*>")]]abs-if-needed([[redoc("*>")]]imag-if-needed(v[0])),
+       [[redoc("$\ldots")]],
+       [[redoc("*>")]]abs-if-needed([[redoc("*>")]]real-if-needed(v[N-1])) + [[redoc("*>")]]abs-if-needed([[redoc("*>")]]imag-if-needed(v[N-1])))
+[codeblock:end]
+[list:end]
+
+[para:remarks]
+[:en] If [`InVec::value_type] and [`Scalar] are all floating-point types or
+specializations of [`complex], and if [`Scalar] has higher precision than
+[`InVec::value_type], then intermediate terms in the sum use [`Scalar][=']s
+precision or greater.
+[:zh_CN] 如果 [`InVec::value_type] 和 [`Scalar] 均为浮点类型或 [`complex] 的特例，
+则当 [`Scalar] 具有比 [`InVec::value_type] 更高的精度时，求和中的中间项使用
+[`Scalar] 或更高的精度。
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec>
+  auto vector_abs_sum(InVec v);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec>
+  auto vector_abs_sum(ExecutionPolicy&& exec, InVec v);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [`T] be [`typename InVec::value_type].
+[:zh_CN] 令 [`T] 为 [`typename InVec::value_type]。
+
+[:en] Then,
+[:zh_CN] 则，
+[list]
+[item]
+[:en@~] the one-parameter overload is equivalent to:
+[:zh_CN@~] 一个形参的重载等价于：
+[codeblock]
+return vector_abs_sum(v, T{});
+[codeblock:end]
+[:en@~] and
+[:zh_CN@~] 而
+[item]
+[:en@~] the two-parameter overload is equivalent to:
+[:zh_CN@~] 两个形参的重载等价于：
+[codeblock]
+return vector_abs_sum(std::forward<ExecutionPolicy>(exec), v, T{});
+[codeblock:end]
+[list:end]
+[div:end]

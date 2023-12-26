@@ -1,0 +1,196 @@
+[section#linalg.algs.blas2.trsv
+    [:en] Solve a triangular linear system
+    [:zh_CN] 求解三角线性系统
+]
+
+[para]
+[begin:note]
+[:en] These functions correspond to the BLAS functions [`xTRSV] and [`xTPSV]
+[#:cite@super#blas2].
+[:zh_CN] 这些函数对应于 BLAS 函数 [`xTRSV] 和 [`xTPSV][#:cite@super#blas2]。
+[end:note]
+
+[para]
+[:en] The following elements apply to all functions in [#linalg.algs.blas2.trsv].
+[:zh_CN] 下列要素适用于 [#linalg.algs.blas2.trsv] 中的所有函数。
+
+[para:mandates]
+[list]
+[item]
+[:en] If [`InMat] has [`layout_blas_packed] layout, then the layout[=']s
+[`Triangle] template argument has the same type as the function[=']s [`Triangle]
+template argument;
+[:zh_CN] 如果 [`InMat] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
+模板实参与函数的 [`Triangle] 模板实参为相同类型。
+[item]
+[:en] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)]
+is [`true];
+[:zh_CN] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)]
+为 [`true]；
+[item]
+[:en] [`[*compatible-static-extents]<decltype(A), decltype(b)>(0, 0)]
+is [`true]; and
+[:zh_CN] [`[*compatible-static-extents]<decltype(A), decltype(b)>(0, 0)]
+为 [`true]；并且
+[item]
+[:en] [`[*compatible-static-extents]<decltype(A), decltype(x)>(0, 0)]
+is [`true] for those overloads that take an [`x] parameter.
+[:zh_CN] 对于接受 [`x] 的那些重载，
+[`[*compatible-static-extents]<decltype(A), decltype(x)>(0, 0)] 为 [`true]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en@~] [`A.extent(0)] equals [`A.extent(1)],
+[:zh_CN@~] [`A.extent(0)] 等于 [`A.extent(1)]，
+[item]
+[:en@~] [`A.extent(0)] equals [`b.extent(0)], and
+[:zh_CN@~] [`A.extent(0)] 等于 [`b.extent(0)]，并且
+[item]
+[:en@~] [`A.extent(0)] equals [`x.extent(0)] for those overloads that take an
+[`x] parameter.
+[:zh_CN@~] 对于接受 [`x] 形参的那些重载，[`A.extent(0)] 等于 [`x.extent(0)]。
+[list:end]
+
+[codeblock:declaration]
+  template<[[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage,
+           [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]out-vector OutVec, class BinaryDivideOp>
+    void triangular_matrix_vector_solve(InMat A, Triangle t, DiagonalStorage d,
+                                        InVec b, OutVec x, BinaryDivideOp divide);
+  template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage,
+           [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]out-vector OutVec, class BinaryDivideOp>
+    void triangular_matrix_vector_solve(ExecutionPolicy&& exec,
+                                        InMat A, Triangle t, DiagonalStorage d,
+                                        InVec b, OutVec x, BinaryDivideOp divide);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform a triangular solve, taking into account the
+[`Triangle] and [`DiagonalStorage] parameters that apply to the triangular
+matrix [`A] ([#linalg.general]).
+[:zh_CN] 这些函数实施三角求解，其中考虑在三角矩阵 [`A] 上应用的 [`Triangle] 和
+[`DiagonalStorage] 形参（[#linalg.general]）。
+
+[para:effects]
+[:en] Computes a vector [$x'] such that [$b = A x'], and assigns each element of
+[$x'] to the corresponding element of [$x].
+[:zh_CN] 计算向量 [$x'] 使得 [$b = A x']，并将 [$x'] 的各个元素赋值给 [$x] 的
+对应元素。
+
+[:en] If no such [$x'] exists, then the elements of [`x] are valid but
+unspecified.
+[:zh_CN] 若不存在这样的 [$x']，则 [`x] 的元素有效但未指明。
+
+[para:complexity]
+[:en] [?bigoh [`A.extent(1)] \times [`b.extent(0)]].
+[:zh_CN] [?bigoh [`A.extent(1)] \times [`b.extent(0)]]。
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]out-vector OutVec>
+  void triangular_matrix_vector_solve(InMat A, Triangle t, DiagonalStorage d, InVec b, OutVec x);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_vector_solve(A, t, d, b, x, divides<void>{});
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]out-vector OutVec>
+  void triangular_matrix_vector_solve(ExecutionPolicy&& exec,
+                                      InMat A, Triangle t, DiagonalStorage d, InVec b, OutVec x);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_vector_solve(std::forward<ExecutionPolicy>(exec),
+                               A, t, d, b, x, divides<void>{});
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]inout-vector InOutVec, class BinaryDivideOp>
+  void triangular_matrix_vector_solve(InMat A, Triangle t, DiagonalStorage d,
+                                      InOutVec b, BinaryDivideOp divide);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage,
+         [[redoc("*:c>")]]inout-vector InOutVec, class BinaryDivideOp>
+  void triangular_matrix_vector_solve(ExecutionPolicy&& exec,
+                                      InMat A, Triangle t, DiagonalStorage d,
+                                      InOutVec b, BinaryDivideOp divide);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform an in-place triangular solve, taking into account
+the [`Triangle] and [`DiagonalStorage] parameters that apply to the triangular
+matrix [`A] ([#linalg.general]).
+[:zh_CN] 这些函数实施原位的三角求解，其中考虑在三角矩阵 [`A] 上应用的 [`Triangle]
+和 [`DiagonalStorage] 形参（[#linalg.general]）。
+
+[begin:note]
+[:en] Performing triangular solve in place hinders parallelization.
+[:zh_CN] 原位实施三角求解会妨碍并行化。
+
+[:en] However, other [`ExecutionPolicy] specific optimizations,
+such as vectorization, are still possible.
+[:zh_CN] 然而，仍可能进行其他 [`ExecutionPolicy] 专有的优化，如向量化。
+[end:note]
+
+[para:effects]
+[:en] Computes a vector [$x'] such that [$b = A x'], and assigns each element of
+[$x'] to the corresponding element of [$b].
+[:zh_CN] 计算向量 [$x'] 使得 [$b = A x']，并将 [$x'] 的各个元素赋值给 [$b] 的
+对应元素。
+
+[:en] If no such [$x'] exists, then the elements of [`b] are valid but
+unspecified.
+[:zh_CN] 若不存在这样的 [$x']，则 [`b] 的元素有效但未指明。
+
+[para:complexity]
+[:en] [?bigoh [`A.extent(1)] \times [`b.extent(0)]].
+[:zh_CN] [?bigoh [`A.extent(1)] \times [`b.extent(0)]]。
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage, [[redoc("*:c>")]]inout-vector InOutVec>
+  void triangular_matrix_vector_solve(InMat A, Triangle t, DiagonalStorage d, InOutVec b);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_vector_solve(A, t, d, b, divides<void>{});
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class ExecutionPolicy,
+         [[redoc("*:c>")]]in-matrix InMat, class Triangle, class DiagonalStorage, [[redoc("*:c>")]]inout-vector InOutVec>
+  void triangular_matrix_vector_solve(ExecutionPolicy&& exec,
+                                      InMat A, Triangle t, DiagonalStorage d, InOutVec b);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+triangular_matrix_vector_solve(std::forward<ExecutionPolicy>(exec),
+                               A, t, d, b, divides<void>{});
+[codeblock:end]
+[div:end]

@@ -1,0 +1,62 @@
+[section#linalg.helpers.mandates
+    [:en] Mandates
+    [:zh_CN] 必要规定
+]
+
+[para]
+[begin:note]
+[:en] These exposition-only helper functions use the less constraining input
+concepts even for the output arguments, because the additional constraint for
+assignability of elements is not necessary, and they are sometimes used in a
+context where the third argument is an input type too.
+[:zh_CN] 这些仅用于阐释的辅助函数，（即便对输出实参）使用了更少约束的输入概念，
+因为对元素可赋值性的额外约束是非必须的，而且它们有时候也用于第三个实参也是输入
+类型的语境。
+[end:note]
+
+[codeblock:synopsis]
+template<class MDS1, class MDS2>
+  requires([[redoc("*>")]]is-mdspan<MDS1> && [[redoc("*>")]]is-mdspan<MDS2>)
+  constexpr
+  bool [[redoc("*>")]]compatible-static-extents(size_t r1, size_t r2) {         // [=expos]
+    return MDS1::static_extent(r1) == dynamic_extent ||
+           MDS2::static_extent(r2) == dynamic_extent ||
+           MDS1::static_extent(r1) == MDS2::static_extent(r2));
+  }
+
+template<[[redoc("*:c>")]]in-vector In1, [[redoc("*:c>")]]in-vector In2, [[redoc("*:c>")]]in-vector Out>
+  constexpr bool [[redoc("*>")]]possibly-addable() {                            // [=expos]
+    return [[redoc("*>")]]compatible-static-extents<Out, In1>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<Out, In2>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<In1, In2>(0, 0);
+  }
+
+template<[[redoc("*:c>")]]in-matrix In1, [[redoc("*:c>")]]in-matrix In2, [[redoc("*:c>")]]in-matrix Out>
+  constexpr bool [[redoc("*>")]]possibly-addable() {                            // [=expos]
+    return [[redoc("*>")]]compatible-static-extents<Out, In1>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<Out, In1>(1, 1) &&
+           [[redoc("*>")]]compatible-static-extents<Out, In2>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<Out, In2>(1, 1) &&
+           [[redoc("*>")]]compatible-static-extents<In1, In2>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<In1, In2>(1, 1);
+  }
+
+template<[[redoc("*:c>")]]in-matrix InMat, [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]in-vector OutVec>
+  constexpr bool [[redoc("*>")]]possibly-multipliable() {                       // [=expos]
+    return [[redoc("*>")]]compatible-static-extents<OutVec, InMat>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<InMat, InVec>(1, 0);
+  }
+
+template<[[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]in-matrix InMat, [[redoc("*:c>")]]in-vector OutVec>
+  constexpr bool [[redoc("*>")]]possibly-multipliable() {                       // [=expos]
+    return [[redoc("*>")]]compatible-static-extents<OutVec, InMat>(0, 1) &&
+           [[redoc("*>")]]compatible-static-extents<InMat, InVec>(0, 0);
+  }
+
+template<[[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]in-matrix OutMat>
+  constexpr bool [[redoc("*>")]]possibly-multipliable() {                       // [=expos]
+    return [[redoc("*>")]]compatible-static-extents<OutMat, InMat1>(0, 0) &&
+           [[redoc("*>")]]compatible-static-extents<OutMat, InMat2>(1, 1) &&
+           [[redoc("*>")]]compatible-static-extents<InMat1, InMat2>(1, 0);
+  }
+[codeblock:end]

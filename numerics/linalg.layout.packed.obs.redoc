@@ -1,0 +1,111 @@
+[section#linalg.layout.packed.obs
+    [:en] Observers
+    [:zh_CN] 探察函数
+]
+
+[codeblock:declaration]
+constexpr index_type required_span_size() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`[*extents_].extent(0) * ([*extents_].extent(0) + 1)/2].
+[:zh_CN] [`[*extents_].extent(0) * ([*extents_].extent(0) + 1)/2]。
+
+[begin:note]
+[:en] For example, a 5 x 5 packed matrix only stores 15 matrix elements.
+[:zh_CN] 例如，5 x 5 的打包矩阵仅存储 15 个矩阵元素。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+template<class Index0, class Index1>
+  constexpr index_type operator() (Index0 ind0, Index1 ind1) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_convertible_v<Index0, index_type>] is [`true],
+[:zh_CN] [`is_convertible_v<Index0, index_type>] 为 [`true]，
+[item]
+[:en] [`is_convertible_v<Index1, index_type>] is [`true],
+[:zh_CN] [`is_convertible_v<Index1, index_type>] 为 [`true]，
+[item]
+[:en] [`is_nothrow_constructible_v<index_type, Index0>] is [`true], and
+[:zh_CN] [`is_nothrow_constructible_v<index_type, Index0>] 为 [`true]，并且
+[item]
+[:en] [`is_nothrow_constructible_v<index_type, Index1>] is [`true].
+[:zh_CN] [`is_nothrow_constructible_v<index_type, Index1>] 为 [`true]。
+[list:end]
+
+[para]
+[:en] Let [`i] be [`extents_type::[*index-cast](ind0)], and let [`j] be
+[`extents_type::[*index-cast](ind1)].
+[:zh_CN] 令 [`i] 为 [`extents_type::[*index-cast](ind0)]，并令 [`j] 为
+[`extents_type::[*index-cast](ind1)]。
+
+[para:expects]
+[:en] [`i, j] is a multidimensional index in [*extents_] ([#mdspan.overview]).
+[:zh_CN] [`i, j] 是  [*extents_] 中的多维索引（[#mdspan.overview]）。
+
+[para:returns]
+[:en] Let [`N] be [`[*extents_].extent(0)].
+[:zh_CN] 令 [`N] 为 [`[*extents_].extent(0)]。
+
+[:en] Then
+[:zh_CN] 则
+[list]
+[item]
+[:en@~] [`(*this)(j, i)] if [`i > j] is [`true]; otherwise
+[:zh_CN@~] 如果 [`i > j] 为 [`true] 则返回 [`(*this)(j, i)]；否则
+[item]
+[:en@~] [`i + j * (j + 1)/2] if
+[:en@~] 如果
+[codeblock]
+is_same_v<StorageOrder, column_major_t> && is_same_v<Triangle, upper_triangle_t>
+[codeblock:end]
+[:en@~] is [`true] or
+[:zh_CN@~] 为 [`true] 或者
+[codeblock]
+is_same_v<StorageOrder, row_major_t> && is_same_v<Triangle, lower_triangle_t>
+[codeblock:end]
+[:en@~] is [`true]; otherwise
+[:zh_CN@~] 为 [`true]，则返回 [`i + j * (j + 1)/2]；否则
+[item]
+[:en@~] [`j + N * i - i * (i + 1)/2].
+[:zh_CN@~] 返回 [`j + N * i - i * (i + 1)/2]。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr index_type stride(rank_type r) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[list]
+[item]
+[:en@~] [`is_strided()] is [`true], and
+[:zh_CN@~] [`is_strided()] 为 [`true]，并且
+[item]
+[:en@~] [`r < extents_type::rank()] is [`true].
+[:zh_CN@~] [`r < extents_type::rank()] 为 [`true]。
+[list:end]
+
+[para:returns]
+[:en] [`1].
+[:zh_CN] [`1]。
+[div:end]
+
+[codeblock:declaration]
+template<class OtherExtents>
+  friend constexpr bool operator==(const mapping& x, const mapping<OtherExtents>& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return x.extents() == y.extents();]
+[:zh_CN] 等价于：[`return x.extents() == y.extents();]
+[div:end]

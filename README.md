@@ -915,6 +915,7 @@ detached thread                         |已分离线程
 device                                  |设备
 diagnosable rule                        |可诊断规则
 diagnostic message                      |诊断消息   |编译器报错
+diagonal                                |对角线     |矩阵 `A[i,i]`
 digraph                                 |二联符，合成符     |6个：`<%`,`%>`,`<:`,`:>`,`%:`,`%:%:`->`{`,`}`,`[`,`]`,`#`,`##`
 direct base class                       |直接基类   |基子句中指定
 direct-initialization                   |直接初始化 |new，类型转换，条件的花括号初始化
@@ -1301,6 +1302,7 @@ lifetime                                |生存期
 likelihood                              |似然性 |`likely`或`unlikely`属性，执行路径的执行概率较高或较低
 `likely`                                |`likely` 属性  |属性，无参数，用于标号或语句，标明执行路径似然性
 line                                    |行，文本行
+linear algebra value type               |线性代数值类型
 link                                    |连接   |将已翻译实体收集并组合成程序映像<br>文件系统对文件和文件名的关联
 linkage                                 |连接，连接性   |可被连接器认作同一：无连接、内部、外部、模块
 linkage-specification                   |连接说明   |指定语言连接`extern "xxx"`
@@ -1335,6 +1337,7 @@ lookup context                          |查找语境       |成员限定名：�
 lookup set                              |查找集合       |类成员名字查找的中间结果，包含声明式集合和所属子对象集合
 low-order bit                           |低序位         |最低有效位
 lower bound                             |下界
+lower triangle                          |下三角         |矩阵`A[i,j]`，`i`≥`j`，包含对角线
 lvalue                                  |左值           |并非临限值XValue的泛左值
 Lvalue-Callable                         |可左值调用的   |
 Lvalue Transformation                   |左值变换 LvTrn |重载决议中的标准转换类别，精确匹配级，包括左值向右值Lv2Rv，数组向指针A2Ptr，函数向指针F2Ptr
@@ -2040,6 +2043,7 @@ unsigned integer type                   |无符号整数类型 |标准、扩充�
 unspecified                             |未指明的
 unspecified behavior                    |未指明的行为   |多种允许可能行为中的某一种
 upper bound                             |上界
+upper triangle                          |上三角         |矩阵`A[i,j]`，`i`≤`j`，包含对角线
 usable candidate                        |可用候选函数   |重载决议成功，结果可访问、未弃置
 user provided function                  |用户提供的函数 |用户声明且未在首个声明式预置或弃置的函数，可在之后显式预置或弃置
 user-declared                           |用户声明的

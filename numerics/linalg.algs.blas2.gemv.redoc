@@ -1,0 +1,112 @@
+[section#linalg.algs.blas2.gemv
+    [:en] General matrix-vector product
+    [:zh_CN] 通用矩阵-向量相乘
+]
+
+[para]
+[begin:note]
+[:en] These functions correspond to the BLAS function [`xGEMV].
+[:zh_CN] 这些函数对应于 BLAS 函数 [`xGEMV]。
+[end:note]
+
+[para]
+[:en] The following elements apply to all functions in [#linalg.algs.blas2.gemv].
+[:zh_CN] 下列要素适用于 [#linalg.algs.blas2.gemv] 中的所有函数。
+
+[para:mandates]
+[list]
+[item]
+[:en@~] [`[*possibly-multipliable]<decltype(A), decltype(x), decltype(y)>()]
+is [`true], and
+[:zh_CN@~] [`[*possibly-multipliable]<decltype(A), decltype(x), decltype(y)>()]
+为 [`true]，并且
+[item]
+[:en@~] [`[*possibly-addable]<decltype(x), decltype(y), decltype(z)>()]
+is [`true] for those overloads that take a [`z] parameter.
+[:zh_CN@~] 对于接受 [`z] 形参的那些重载，
+[`[*possibly-addable]<decltype(x), decltype(y), decltype(z)>()] 为 [`true]。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en@~] [`[*multipliable](A,x,y)] is [`true], and
+[:zh_CN@~] [`[*multipliable](A,x,y)] 为 [`true]，并且
+[item]
+[:en@~] [`[*addable](x,y,z)] is [`true] for those overloads that take a [`z]
+parameter.
+[:zh_CN@~] 对于接受 [`z] 形参的那些重载，[`[*addable](x,y,z)] 为 [`true]。
+[list:end]
+
+[para:complexity]
+[:en] [?bigoh [`x.extent(0)] \times [`A.extent(1)]].
+[:zh_CN] [?bigoh [`x.extent(0)] \times [`A.extent(1)]]。
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat, [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]out-vector OutVec>
+  void matrix_vector_product(InMat A, InVec x, OutVec y);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat, [[redoc("*:c>")]]in-vector InVec, [[redoc("*:c>")]]out-vector OutVec>
+  void matrix_vector_product(ExecutionPolicy&& exec, InMat A, InVec x, OutVec y);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform an overwriting matrix-vector product.
+[:zh_CN] 这些函数实施覆写的矩阵-向量相乘。
+
+[para:effects]
+[:en] Computes [$y = A x].
+[:zh_CN] 计算 [$y = A x]。
+[div:end]
+
+[begin:example]
+[codeblock]
+constexpr size_t num_rows = 5;
+constexpr size_t num_cols = 6;
+
+// y = 3.0 * A * x
+void scaled_matvec_1(mdspan<double, extents<size_t, num_rows, num_cols>> A,
+  mdspan<double, extents<size_t, num_cols>> x, mdspan<double, extents<size_t, num_rows>> y) {
+  matrix_vector_product(scaled(3.0, A), x, y);
+}
+
+// z = 7.0 乘以 A 的转置再乘以 y
+void scaled_transposed_matvec(mdspan<double, extents<size_t, num_rows, num_cols>> A,
+  mdspan<double, extents<size_t, num_rows>> y, mdspan<double, extents<size_t, num_cols>> z) {
+  matrix_vector_product(scaled(7.0, transposed(A)), y, z);
+}
+[codeblock:end]
+[end:example]
+
+[codeblock:declaration]
+  template<[[redoc("*:c>")]]in-matrix InMat, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, [[redoc("*:c>")]]out-vector OutVec>
+    void matrix_vector_product(InMat A, InVec1 x, InVec2 y, OutVec z);
+  template<class ExecutionPolicy,
+           [[redoc("*:c>")]]in-matrix InMat, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, [[redoc("*:c>")]]out-vector OutVec>
+    void matrix_vector_product(ExecutionPolicy&& exec,
+                               InMat A, InVec1 x, InVec2 y, OutVec z);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions performs an updating matrix-vector product.
+[:zh_CN] 这些函数实施更新的矩阵-向量相乘。
+
+[para:effects]
+[:en] Computes [$z = y + A x].
+[:zh_CN] 计算 [$z = y + A x]。
+
+[para:remarks]
+[:en] [`z] may alias [`y].
+[:zh_CN] [`z] 可以为 [`y] 的别名。
+[div:end]
+
+[begin:example]
+[codeblock]
+// y = 3.0 * A * x + 2.0 * y
+void scaled_matvec_2(mdspan<double, extents<size_t, num_rows, num_cols>> A,
+  mdspan<double, extents<size_t, num_cols>> x, mdspan<double, extents<size_t, num_rows>> y) {
+  matrix_vector_product(scaled(3.0, A), x, scaled(2.0, y), y);
+}
+[codeblock:end]
+[end:example]
