@@ -13,6 +13,7 @@
     [| [~:opt attribute-specifier-seq] [~:opt decl-specifier-seq]
         [~:opt member-declarator-list] [`;] ]
     [| function-definition ]
+    [| friend-type-declaration ]
     [| using-declaration ]
     [| using-enum-declaration ]
     [| static_assert-declaration ]
@@ -32,7 +33,7 @@
 [rule member-declarator [:zh_CN] 成员声明符 ]
     [| declarator [~:opt virt-specifier-seq] [~:opt pure-specifier] ]
     [| declarator requires-clause ]
-    [| declarator [~:opt brace-or-equal-initializer] ]
+    [| declarator brace-or-equal-initializer ]
     [| [~:opt identifier] [~:opt attribute-specifier-seq]
         [`:] constant-expression [~:opt brace-or-equal-initializer] ]
 [rule:end]
@@ -50,7 +51,37 @@
 [rule pure-specifier [:zh_CN] 纯说明符 ]
     [| [`=] [`0] ]
 [rule:end]
+
+[rule friend-type-declaration [:zh_CN] 友元类型声明式 ]
+    [| [`:key friend] friend-type-specifier-list [`;] ]
+[rule:end]
+
+[rule friend-type-specifier-list [:zh_CN] 友元类型说明符列表 ]
+    [| friend-type-specifier [`:opt ...] ]
+    [| friend-type-specifier-list [`,] friend-type-specifier [`:opt ...] ]
+[rule:end]
+
+[rule friend-type-specifier [:zh_CN] 友元类型说明符 ]
+    [| simple-type-specifier ]
+    [| elaborated-type-specifier ]
+    [| typename-specifier ]
+[rule:end]
 [syntax:end]
+
+[para]
+[:en] In the absence of a [~virt-specifier-seq], the token sequence [`= 0] is
+treated as a [~pure-specifier] if the type of the [~declarator-id]
+([#dcl.meaning.general]) is a function type, and is otherwise treated as a
+[~brace-or-equal-initializer].
+[:zh_CN] 在没有[~虚说明符序列]时，当[~声明符标识]的类型（[#dcl.meaning.general]）
+是函数类型时，记号序列 [`= 0] 被当做[~纯说明符]，否则被当做[~花括号或等号初始化式]。
+
+[begin:note]
+[:en] If the member declaration acquires a function type through
+template instantiation, the program is ill-formed; see [#temp.spec.general].
+[:zh_CN] 如果成员声明式需要通过模板实例化获得某个函数类型，则程序非良构；参见
+[#temp.spec.general]。
+[end:note]
 
 [para]
 [:en]
@@ -274,6 +305,12 @@ of [`C].
 Otherwise, [`C] is incomplete at [$P].
 [:zh_CN]
 否则，[`C] 在 [$P] 处不完整。
+
+[para]
+[:en] If a [~member-declaration] matches the syntactic requirements of
+[~friend-type-declaration], it is a [~friend-type-declaration].
+[:zh_CN] 如果[~成员声明式]匹配对于[~友元类型声明式]的语法要求，则它就是
+[~友元类型声明式]。
 
 [para]
 [:en]
@@ -549,11 +586,9 @@ have a name different from [`T]:
 [:zh_CN] 类 [`T] 的每个成员函数；
 
 [begin:note]
-[:en]
-This restriction does not apply to constructors, which do not have names
-([#class.ctor])
-[:zh_CN]
-这条限制并不适用于构造函数，它们并没有名字（[#class.ctor]）
+[:en] This restriction does not apply to constructors, which do not have names
+([#class.ctor]).
+[:zh_CN] 这条限制并不适用于构造函数，它们并没有名字（[#class.ctor]）。
 [end:note]
 
 [item]

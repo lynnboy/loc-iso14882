@@ -399,12 +399,15 @@ Original   |中文   |章节    |定义
 *class-virt-specifier*      |*类虚说明符*   | [class.pre]   | `final`
 *class-key*                 |*类关键字*     | [class.pre]   | `class` \| `struct` \| `union`
 *member-specification*      |*成员说明*     | [class.mem.general] | ( *成员声明式* \| *访问说明符* `:` )__\+__
-*member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
+*member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *友元类型声明式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
 *member-declaration-list*   |*成员声明符列表*| [class.mem.general] | *成员声明符* ( `,` *成员声明符* )__\*__
-*member-declarator*         |*成员声明符*   | [class.mem.general] | *声明符* *虚说明符序列*__?__ *纯说明符*__?__ \|<br> *声明符* *requires-子句* \|<br> *声明符* *花括号或等号初始化式*__?__ \|<br> *标识符*__?__ *属性说明符序列*__?__ `:` *常量表达式* *花括号或等号初始化式*__?__
+*member-declarator*         |*成员声明符*   | [class.mem.general] | *声明符* *虚说明符序列*__?__ *纯说明符*__?__ \|<br> *声明符* *requires-子句* \|<br> *声明符* *花括号或等号初始化式* \|<br> *标识符*__?__ *属性说明符序列*__?__ `:` *常量表达式* *花括号或等号初始化式*__?__
 *virt-specifier-seq*        |*虚说明符序列* | [class.mem.general] | *虚说明符*__\+__
 *virt-specifier*            |*虚说明符*     | [class.mem.general] | `override` \| `final`
 *pure-specifier*            |*纯说明符*     | [class.mem.general] | `=` `0`
+*friend-type-declaration*   |*友元类型声明式*| [class.mem.general] | `friend` *友元类型说明符列表* `;`
+*friend-type-specifier-list*|*友元类型说明符列表*| [class.mem.general] | *友元类型说明符* `...`__?__ ( `,` *友元类型说明符* `...`__?__ )__\*__
+*friend-type-specifier*     |*友元类型说明符*| [class.mem.general] | *简单类型说明符* \| *详述类型说明符* \| *typename-说明符*
 *conversion-function-id*    |*转换函数标识* | [class.conv.fct] | `operator` *转换类型标识*
 *conversion-type-id*        |*转换类型标识* | [class.conv.fct] | *类型说明符序列* *转换声明符*__?__
 *conversion-declarator*     |*转换声明符*   | [class.conv.fct] | *指针运算符*__\+__
@@ -2098,7 +2101,7 @@ virtual function call                   |虚函数调用
 virtual specifier                       |virtual 说明符 |虚成员函数
 visible                                 |可见
 visible side effect                     |可见副作用 |非原子性ML的可见性由发生早于HapB关系决定
-visit                                   |视察，访问
+visit                                   |视察，探访
 void                                    |空
 volatile                                |易失的     |免除编译器优化，可观察行为
 volatile object                         |volatile 对象  |volatile T 的对象或其子对象

@@ -21,20 +21,12 @@ Temporary objects are created
 
 [list]
 [item]
-[:en] when a prvalue is converted to an xvalue ([#conv.rval]),
-[:zh_CN] 当纯右值转换为临限值时（[#conv.rval]），
+[:en] when a prvalue is converted to an xvalue ([#conv.rval]) and
+[:zh_CN] 当纯右值转换为临限值时（[#conv.rval]），以及
 [item]
 [:en] when needed by the implementation to pass or return an object of
-trivially copyable type (see below), and
-[:zh_CN] 当实现需要传递或返回可平凡复制的类型的对象时（见下文），以及
-[item]
-[:en] when throwing an exception ([#except.throw]).
-[:zh_CN] 当抛出异常时（[#except.throw]）。
-
-[begin:note]
-[:en] The lifetime of exception objects is described in [#except.throw].
-[:zh_CN] 异常对象的生存期在 [#except.throw] 中说明。
-[end:note]
+trivially copyable type (see below).
+[:zh_CN] 当实现需要传递或返回可平凡复制的类型的对象时（见下文）。
 [list:end]
 
 [:en]
@@ -82,9 +74,13 @@ Temporary objects are materialized:
 [:zh_CN] 当向引用绑定纯右值时（[#dcl.init.ref]，[#expr.type.conv]，
 [#expr.dynamic.cast]，[#expr.static.cast]，[#expr.const.cast]，[#expr.cast]），
 [item]
-[:en] when performing member access on a class prvalue ([#expr.ref],
+[:en] when performing certain member accesses on a class prvalue ([#expr.ref],
 [#expr.mptr.oper]),
-[:zh_CN] 当对类的纯右值实施成员访问时（[#expr.ref]，[#expr.mptr.oper]），
+[:zh_CN] 当对类的纯右值实施某些成员访问时（[#expr.ref]，[#expr.mptr.oper]），
+[item]
+[:en] when invoking an implicit object member function on a class prvalue
+([#expr.call]),
+[:zh_CN] 当对类的纯右值调用隐式对象成员函数时（[#expr.call]），
 [item]
 [:en] when performing an array-to-pointer conversion or subscripting on an array
 prvalue ([#conv.array], [#expr.sub]),
@@ -453,15 +449,6 @@ the completion of the full-expression containing the [~expression-list].
 
 [item]
 [:en]
-The lifetime of a temporary bound to the returned value in a function [`return]
-statement ([#stmt.return]) is not extended; the temporary is destroyed at the
-end of the full-expression in the [`return] statement.
-[:zh_CN]
-绑定到函数 [`return] 语句（[#stmt.return]）中的返回值的临时对象的生存期并不扩展，
-这个临时对象将在该 [`return] 语句中的全表达式结尾处被销毁。
-
-[item]
-[:en]
 A temporary bound to a reference in a [~new-initializer] ([#expr.new]) persists
 until the completion of the full-expression containing the [~new-initializer].
 [:zh_CN]
@@ -484,13 +471,10 @@ S* p = new S{ 1, {2,3} };       // [:en] Creates dangling reference \
 [list:end]
 
 [para]
-[:en]
-The fourth context is when a temporary object other than a function parameter
-object is created in the [~for-range-initializer] of a range-based [`:key for]
-statement.
-[:zh_CN]
-第四种语境是当在基于范围的 [`:key for] 语句的 [~for-范围初始化式]中创建除了函数
-形参对象之外的临时对象时。
+[:en] The fourth context is when a temporary object is created in the
+[~for-range-initializer] of a range-based [`:key for] statement.
+[:zh_CN] 第四种语境是当在基于范围的 [`:key for] 语句的 [~for-范围初始化式]中创建
+临时对象时。
 
 [:en]
 If such a temporary object would otherwise be destroyed at the end of the
@@ -501,13 +485,15 @@ of the reference initialized by the [~for-range-initializer].
 该 [~for-范围初始化式]所产生的引用的生存期。
 
 [para]
-[:en]
-The destruction of a temporary whose lifetime is not extended beyond the
-full-expression in which it was created is sequenced before the destruction of
-every temporary which is constructed earlier in the same full-expression.
-[:zh_CN]
-生存期没有被扩展超越创建它的全表达式的临时对象的销毁按顺序早于在相同的全表达式
-中更早被构造的所有临时对象的销毁。
+[:en] Let [`x] and [`y] each be either a temporary object whose lifetime is not
+extended, or a function parameter.
+[:zh_CN] 令 [`x] 和 [`y] 各自为未扩展生存期的临时对象或者函数形参。
+
+[:en] If the lifetimes of [`x] and [`y] end at the end of the same
+full-expression, and [`x] is initialized before [`y], then
+the destruction of [`y] is sequenced before that of [`x].
+[:zh_CN] 如果 [`x] 和 [`y] 的生存期结束于同一个全表达式的末尾，且 [`x] 在 [`y]
+之前初始化，则 [`y] 的析构按顺序早于 [`x] 的析构。
 
 [:en]
 If the lifetime of two or more temporaries with lifetimes extending beyond the

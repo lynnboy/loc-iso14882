@@ -108,17 +108,9 @@ class Z {
 [end:example]
 
 [para]
-[:en]
-A friend declaration that does not declare a function shall have one of the
-following forms:
-[:zh_CN]
-不声明函数的友元声明式应当具有如下形式之一：
-
-[syntax:explanation]
-[| [`:key friend] [~elaborated-type-specifier] [`;] ]
-[| [`:key friend] [~simple-type-specifier] [`;] ]
-[| [`:key friend] [~typename-specifier] [`;] ]
-[syntax:end]
+[:en] A friend declaration that does not declare a function shall be a
+[~friend-type-declaration].
+[:zh_CN] 不声明函数的友元声明式应当是[~友元类型声明式]。
 
 [begin:note]
 [:en]
@@ -128,16 +120,17 @@ A friend declaration can be the [~declaration] in a [~template-declaration]
 友元声明式可以是[~模板声明式]之中的[~声明式]（[#temp.pre]，[#temp.friend]）。
 [end:note]
 
-[:en] If the type specifier in a friend declaration designates a (possibly
-cv-qualified) class type, that class is declared as a friend; otherwise, the
-friend declaration is ignored.
-[:zh_CN] 若友元声明式中的类型说明符代表了某个（可能被 cv 限定的）类类型，则该类
-被声明为友元；否则，该友元声明式就被忽略。
+[:en] If a [~friend-type-specifier] in a friend declaration designates a
+(possibly cv-qualified) class type, that class is declared as a friend;
+otherwise, the [~friend-type-specifier] is ignored.
+[:zh_CN] 若友元声明式中的一个[~友元类型说明符]代表某个（可能被 cv 限定的）类类型，
+则该类被声明为友元；否则，忽略该[~友元类型说明符]。
 
 [begin:example]
 [codeblock]
 class C;
 typedef C Ct;
+class E;
 
 class X1 {
   friend C;                     // [:en] OK, [`class C] is a friend \
@@ -153,14 +146,26 @@ class X2 {
                                 [:zh_CN] OK，[~详述类型说明符]声明了新的类
 };
 
-template <typename T> class R {
-  friend T;
+template <typename ... Ts> class R {
+  friend Ts...;
+};
+
+template <class... Ts, class... Us>
+class R<R<Ts...>, R<Us...>> {
+  friend Ts::Nested..., Us...;
 };
 
 R<C> rc;                        // [:en] [`class C] is a friend of [`R<C>] \
                                 [:zh_CN] [`class C] 是 [`R<C>] 的友元
-R<int> Ri;                      // [:en] OK, [`"friend int;"] is ignored \
-                                [:zh_CN] OK，[`"friend int;"] 被忽略
+R<C, E> rce;                    // [:en] classes [`C] and [`E] are friends of [`R<C, E>] \
+                                [:zh_CN] 类 [`C] 和 [`E] 都是 [`R<C, E>] 的友元
+R<int> Ri;                      // [:en] OK, [=lq][`friend int;][=rq] is ignored \
+                                [:zh_CN] OK，“[`friend int;]”被忽略
+
+struct E { struct Nested; };
+
+R<R<E>, R<C, int>> rr;          // [:en] [`E::Nested] and [`C] are friends of [`R<R<E>, R<C, int>>] \
+                                [:zh_CN] [`E::Nested] 和 [`C] 都是 [`R<R<E>, R<C, int>>] 的友元
 [codeblock:end]
 [end:example]
 

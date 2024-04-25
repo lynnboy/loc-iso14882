@@ -1,0 +1,142 @@
+[section#alg.rand.generate
+    [:] [`generate_random]
+]
+
+[codeblock:declaration]
+template<class R, class G>
+  requires [[redoc("`:c>")]]output_range<R, invoke_result_t<G&>> && [[redoc("`:c>")]]uniform_random_bit_generator<remove_cvref_t<G>>
+constexpr borrowed_iterator_t<R> ranges::generate_random(R&& r, G&& g);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] Calls [`g.generate_random(std::forward<R>(r))] if this expression is
+well-formed.
+[:zh_CN] 调用 [`g.generate_random(std::forward<R>(r))]，如果该表示良构。
+
+[item]
+[:en] Otherwise, if [`R] models [`sized_range], fills [`r] with [`ranges::size(r)]
+values of type [`invoke_result_t<G&>] by performing an unspecified number of
+invocations of the form [`g()] or [`g.generate_random(s)], if such an expression
+is well-formed for a value [`N] and an object [`s] of type
+[`span<invoke_result_t<G&>, N>].
+[:zh_CN] 否则，如果 [`R] 构成 [`sized_range]，则通过进行未指明次数的对 [`g()] 或
+[`g.generate_random(s)] 形式（如果这种表达式对于某个值 [`N] 和某个
+[`span<invoke_result_t<G&>, N>] 类型的对象 [`s] 良构），以 [`ranges::size(r)] 个
+[`invoke_result_t<G&>] 类型的值填充 [`r]。
+
+[begin:note]
+[:en] Values of [`N] can differ between invocations.
+[:zh_CN] 每次调用之间可以有不同的 [`N] 值。
+[end:note]
+
+[item]
+[:en] Otherwise, calls [`ranges::generate(std::forward<R>(r), ref(g))].
+[:zh_CN] 否则，调用 [`ranges::generate(std::forward<R>(r), ref(g))]。
+[list:end]
+
+[para:returns]
+[:en] [`ranges::end(r)].
+[:zh_CN] [`ranges::end(r)]。
+
+[para:remarks]
+[:en] The effects of [`generate_random(r, g)] shall be equivalent to
+[`ranges::generate(std::forward<R>(r), ref(g))].
+[:zh_CN] [`generate_random(r, g)] 的效果应当等价于
+[`ranges::generate(std::forward<R>(r), ref(g))]。
+
+[begin:note]
+[:en] This implies that [`g.generate_random(a)] fills [`a] with the same values
+as produced by invocation of [`g()].
+[:zh_CN] 这点意味着 [`g.generate_random(a)] 以 [`g()] 的调用所产生的相同值来填充 [`a]。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+template<class G, [[redoc("`:c>")]]output_iterator<invoke_result_t<G&>> O, [[redoc("`:c>")]]sentinel_for<O> S>
+  requires [[redoc("`:c>")]]uniform_random_bit_generator<remove_cvref_t<G>>
+constexpr O ranges::generate_random(O first, S last, G&& g);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return generate_random(subrange<O, S>(std::move(first), last), g);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class R, class G, class D>
+  requires [[redoc("`:c>")]]output_range<R, invoke_result_t<D&, G&>> && [[redoc("`:c>")]]invocable<D&, G&> &&
+           [[redoc("`:c>")]]uniform_random_bit_generator<remove_cvref_t<G>>
+constexpr borrowed_iterator_t<R> ranges::generate_random(R&& r, G&& g, D&& d);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] Calls [`d.generate_random(std::forward<R>(r), g)] if this expression is
+well-formed.
+[:zh_CN] 调用 [`d.generate_random(std::forward<R>(r), g)]，如果该表示良构。
+
+[item]
+[:en] Otherwise, if [`R] models [`sized_range], fills [`r] with [`ranges::size(r)]
+values of type [`invoke_result_t<D&, G&>] by performing an unspecified number of
+invocations of the form [`invoke(d, g)] or [`d.generate_random(s, g)],
+if such an expression is well-formed for a value [`N] and an object [`s] of type
+[`span<invoke_result_t<D&, G&>, N>].
+[:zh_CN] 否则，如果 [`R] 构成 [`sized_range]，则通过进行未指明次数的对
+[`invoke(d, g)] 或 [`d.generate_random(s, g)] 形式（如果这种表达式对于某个值 [`N]
+和某个 [`span<invoke_result_t<D&, G&>, N>] 类型的对象 [`s] 良构），以
+[`ranges::size(r)] 个 [`invoke_result_t<D&, G&>] 类型的值填充 [`r]。
+
+[begin:note]
+[:en] Values of [`N] can differ between invocations.
+[:zh_CN] 每次调用之间可以有不同的 [`N] 值。
+[end:note]
+
+[item]
+[:en] Otherwise, calls
+[:zh_CN] 否则，调用
+[codeblock]
+ranges::generate(std::forward<R>(r), [&d, &g] { return invoke(d, g); });
+[codeblock:end]
+[list:end]
+
+[para:returns]
+[:] [`ranges::end(r)]
+
+[para:remarks]
+[:en] The effects of [`generate_random(r, g, d)] shall be equivalent to
+[:zh_CN] [`generate_random(r, g, d)] 的效果应当等价于
+[codeblock]
+ranges::generate(std::forward<R>(r), [&d, &g] { return invoke(d, g); });
+[codeblock:end]
+
+[begin:note]
+[:en] This implies that [`d.generate_random(a, g)] fills [`a] with the values
+with the same random distribution as produced by invocation of [`invoke(d, g)].
+[:zh_CN] 这点意味着 [`d.generate_random(a, g)] 以 [`invoke(d, g)] 的调用所产生的
+相同值来填充 [`a]。
+[end:note]
+[div:end]
+
+[codeblock:declaration]
+template<class G, class D, [[redoc("`:c>")]]output_iterator<invoke_result_t<D&, G&>> O, [[redoc("`:c>")]]sentinel_for<O> S>
+  requires [[redoc("`:c>")]]invocable<D&, G&> && [[redoc("`:c>")]]uniform_random_bit_generator<remove_cvref_t<G>>
+constexpr O ranges::generate_random(O first, S last, G&& g, D&& d);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return generate_random(subrange<O, S>(std::move(first), last), g, d);
+[codeblock:end]
+[div:end]

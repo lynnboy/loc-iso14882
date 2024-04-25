@@ -155,6 +155,8 @@ def indexlibraryctor(_1:str): return indexlibrarymisc(_1, text("destructor"))
 def indexlibrarymemberx(_1:str, _2:str): return indexlibrary(idxcode(_1), sub=idxcode(_2))
 @applyTo(['%@lib@member', '%@lib@spec'])
 def indexlibrarymember(_1:str, _2:str): return indexlibrarymemberx(_1, _2) + indexlibrarymemberx(_2, _1)
+@applyTo(['%@lib@member@expos'])
+def indexlibrarymemberexpos(_1:str, _2:str): return indexlibrarymember(_1, _2)
 @applyTo(['%@lib@zombie'])
 def indexlibraryzombie(_1:str): return indexlibrary(idxcode(_1), sub = text("zombie"))
 

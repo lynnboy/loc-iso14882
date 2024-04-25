@@ -272,11 +272,10 @@ expression.
 [para]
 [:en]
 [`*[`:key this]] is odr-used if [`:key this] appears as a potentially-evaluated
-expression (including as the result of the implicit transformation in the body
-of a non-static member function ([#class.mfct.non.static])).
-[:zh_CN]
-当 [`:key this] 用作潜在求值表达式（也包括在非静态成员函数体中所进行的隐式变换的
-结果（[#class.mfct.non.static]））时，ODR 式使用 [`*[`:key this]]。
+expression (including as the result of any implicit transformation to a class
+member access expression ([#expr.prim.id.general])).
+[:zh_CN] 当 [`:key this] 出现于潜在求值表达式（其中包括作为向类成员访问表达式的
+任意隐式变换的结果（[#expr.prim.id.general]））时，ODR 式使用 [`*[`:key this]]。
 
 [para]
 [:en]
@@ -402,6 +401,29 @@ void f(int n) {
                                 // [:en@~] outside the block scope of the [~lambda-expression] \
                                 [:zh_CN@~] 块作用域之外而不可被 ODR 式使用
   [&] { [n]{ return n; }; };    // OK
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:example]
+[codeblock]
+void g() {
+  constexpr int x = 1;
+  auto lambda = [] <typename T, int = ((T)x, 0)> {};    // OK
+  lambda.operator()<int, 1>();          // [:en] OK, does not consider [`x] at all [:zh_CN] OK，完全步考虑 [`x]
+  lambda.operator()<int>();             // [:en] OK, does not odr-use [`x] [:zh_CN] OK，不 ODR 式使用 [`x]
+  lambda.operator()<const int&>();      // [:en] error: odr-uses [`x] from a context where [`x] is not odr-usable \
+                                        [:zh_CN] 错误：在不可 ODR 式使用 [`x] 的语境中 ODR 式使用 [`x]
+}
+
+void h() {
+  constexpr int x = 1;
+  auto lambda = [] <typename T> { (T)x; };      // OK
+  lambda.operator()<int>();             // [:en] OK, does not odr-use [`x] [:zh_CN] OK，不 ODR 式使用 [`x]
+  lambda.operator()<void>();            // [:en] OK, does not odr-use [`x] [:zh_CN] OK，不 ODR 式使用 [`x]
+  lambda.operator()<const int&>();      // [:en] error: odr-uses [`x] from a context where [`x] is not odr-usable \
+                                        [:zh_CN] 错误：在不可 ODR 式使用 [`x] 的语境中 ODR 式使用 [`x]
 }
 [codeblock:end]
 [end:example]

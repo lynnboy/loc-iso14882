@@ -1,0 +1,185 @@
+[section#mdspan.layout.leftpad.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] [`layout_left_padded] provides a layout mapping that behaves like
+[`layout_left::mapping], except that the padding stride [`stride(1)] can be
+greater than or equal to [`extent(0)].
+[:zh_CN] [`layout_left_padded] 提供一种布局映射，其表现类似
+[`layout_left::mapping]，但填充步长 [`stride(1)] 可以大于或等于 [`extent(0)]。
+
+[codeblock:synopsis]
+namespace std {
+  template<size_t PaddingValue>
+  template<class Extents>
+  class layout_left_padded<PaddingValue>::mapping {
+  public:
+    static constexpr size_t padding_value = PaddingValue;
+
+    using extents_type = Extents;
+    using index_type = typename extents_type::index_type;
+    using size_type = typename extents_type::size_type;
+    using rank_type = typename extents_type::rank_type;
+    using layout_type = layout_left_padded<PaddingValue>;
+
+  private:
+    static constexpr size_t [[redoc("*>")]]rank_ = extents_type::rank();         // [=expos]
+    static constexpr size_t [[redoc("*>")]]first-static-extent =                 // [=expos]
+      extents_type::static_extent(0);
+
+    // [:en] [#mdspan.layout.leftpad.expo], exposition-only members \
+    [:zh_CN] [#mdspan.layout.leftpad.expo]，仅用于阐释的成员
+    static constexpr size_t [[redoc("*>")]]static-padding-stride = [[redoc("[=seebelow]")]];  // [=expos]
+
+  public:
+    // [:en] [#mdspan.layout.leftpad.cons], constructors \
+    [:zh_CN] [#mdspan.layout.leftpad.cons]，构造函数
+    constexpr mapping() noexcept : mapping(extents_type{}) {}
+    constexpr mapping(const mapping&) noexcept = default;
+    constexpr mapping(const extents_type&);
+    template<class OtherIndexType>
+      constexpr mapping(const extents_type&, OtherIndexType);
+    template<class OtherExtents>
+      constexpr explicit(!is_convertible_v<OtherExtents, extents_type>)
+        mapping(const layout_left::mapping<OtherExtents>&);
+    template<class OtherExtents>
+      constexpr explicit(extents_type::rank() > 0)
+        mapping(const layout_stride::mapping<OtherExtents>&);
+    template<class LayoutLeftPaddedMapping>
+      constexpr explicit( [[redoc("[=seebelow]")]] )
+        mapping(const LayoutLeftPaddedMapping&);
+    template<class LayoutRightPaddedMapping>
+      constexpr explicit( [[redoc("[=seebelow]")]] )
+        mapping(const LayoutRightPaddedMapping&) noexcept;
+
+    constexpr mapping& operator=(const mapping&) noexcept = default;
+
+    // [:en] [#mdspan.layout.leftpad.obs], observers \
+    [:zh_CN] [#mdspan.layout.leftpad.obs]，探察函数
+    constexpr const extents_type& extents() const noexcept { return [[redoc("*>")]]extents_; }
+    constexpr array<index_type, rank_> strides() const noexcept;
+
+    constexpr index_type required_span_size() const noexcept;
+    template<class... Indices>
+      constexpr index_type operator()(Indices...) const noexcept;
+
+    static constexpr bool is_always_unique() noexcept { return true; }
+    static constexpr bool is_always_exhaustive() noexcept;
+    static constexpr bool is_always_strided() noexcept { return true; }
+
+    static constexpr bool is_unique() noexcept { return true; }
+    constexpr bool is_exhaustive() const noexcept;
+    static constexpr bool is_strided() noexcept { return true; }
+
+    constexpr index_type stride(rank_type) const noexcept;
+
+    template<class LayoutLeftPaddedMapping>
+      friend constexpr bool operator==(const mapping&, const LayoutLeftPaddedMapping&) noexcept;
+
+  private:
+    // [:en] [#mdspan.layout.leftpad.expo], exposition-only members \
+    [:zh_CN] [#mdspan.layout.leftpad.expo]，仅用于阐释的成员
+    index_type [[redoc("*>")]]stride-1 = [[redoc("*>")]]static-padding-stride;                           // [=expos]
+    extents_type [[redoc("*>")]]extents_{};                                               // [=expos]
+    // [:en] [#mdspan.sub.map], [`submdspan] mapping specialization \
+    [:zh_CN] [#mdspan.sub.map]，[`submdspan] 映射的特化式
+    template<class... SliceSpecifiers>
+      constexpr auto [[redoc("*>")]]submdspan-mapping-impl(SliceSpecifiers... slices) const     // [=expos]
+        -> [[redoc("[=seebelow]")]];
+
+    template<class... SliceSpecifiers>
+      friend constexpr auto submdspan_mapping(const mapping& src, SliceSpecifiers... slices) {
+      return src.[[redoc("*>")]]submdspan-mapping-impl(slices...);
+    }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] If [`Extents] is not a specialization of [`extents], then the program is
+ill-formed.
+[:zh_CN] 如果 [`Extents] 不是 [`extents] 的特例，则程序非良构。
+
+[para]
+[:en] [`layout_left_padded::mapping<E>] is a trivially copyable type that models
+[`:c regular] for each [`E].
+[:zh_CN] 对于每个 [`E]，[`layout_left_padded::mapping<E>] 是可平凡复制类型且构成
+[`:c regular]。
+
+[para]
+[:en] Throughout [#mdspan.layout.leftpad], let [`P_rank] be the following size
+[*rank_] parameter pack of [`size_t] values:
+[:zh_CN] [#mdspan.layout.leftpad] 通篇中，令 [`P_rank] 为如下的大小为 [*rank_]
+的 [`size_t] 值的形参包组：
+[list]
+[item]
+[:en@~] the empty parameter pack, if [*rank_] equals zero;
+[:zh_CN@~] 当 [*rank_] 等于零时为空形参包组；
+[item]
+[:en@~] otherwise, [`0zu], if [*rank_] equals one;
+[:zh_CN@~] 否则当 [*rank_] 等于一时为 [`0zu]；
+[item]
+[:en@~] otherwise, the parameter pack [$[`0zu], [`1zu], \ldots, [`[*rank_]- 1]].
+[:zh_CN@~] 否则，为形参包组 [$[`0zu], [`1zu], \ldots, [`[*rank_]- 1]]。
+[list：end]
+
+[para:mandates]
+[list]
+[item]
+[:en] If [`rank_dynamic() == 0] is [`true], then the size of the
+multidimensional index space [`Extents()] is representable as a value of type
+[`index_type].
+[:zh_CN] 如果 [`rank_dynamic() == 0] 为 [`true]，则多维索引空间 [`Extents()] 的
+大小可以表示为 [`index_type] 类型的值。
+
+[item]
+[:en] [`padding_value] is representable as a value of type [`index_type].
+[:zh_CN] [`padding_value] 可以表示为 [`index_type] 类型的值。
+
+[item]
+[:en] If
+[:zh_CN] 如果
+[list]
+[item]
+[:en@~] [*rank_] is greater than one,
+[:zh_CN@~] [*rank_] 大于一，
+[item]
+[:en@~] [`padding_value] does not equal [`dynamic_extent], and
+[:zh_CN@~] [`padding_value] 不等于 [`dynamic_extent]，且
+[item]
+[:en@~] [*first-static-extent] does not equal [`dynamic_extent],
+[:zh_CN@~] [*first-static-extent] 不等于 [`dynamic_extent]，
+[list:end]
+[:en@~] then [`[*LEAST-MULTIPLE-AT-LEAST](padding_value, [*first-static-extent])]
+is representable as a value of type [`size_t], and
+is representable as a value of type [`index_type].
+[:zh_CN@~] 则 [`[*LEAST-MULTIPLE-AT-LEAST](padding_value, [*first-static-extent])]
+可以表示为 [`size_t] 类型的值，且可以表示为 [`index_type] 类型的值。
+
+[item]
+[:en] If
+[:zh_CN] 如果
+[list]
+[item]
+[:en] [*rank_] is greater than one,
+[:zh_CN@~] [*rank_] 大于一，
+[item]
+[:en@~] [`padding_value] does not equal [`dynamic_extent], and
+[:zh_CN@~] [`padding_value] 不等于 [`dynamic_extent]，且
+[item]
+[:en@~] [`extents_type::static_extent([$k])] does not equal [`dynamic_extent]
+for all [$k] in the range [=range(0,extents_type::rank())],
+[:zh_CN@~] 对于范围 [=range(0,extents_type::rank())] 中的所有 [$k]，
+[`extents_type::static_extent([$k])] 都不等于 [`dynamic_extent]，
+[list:end]
+[:en@~] then the product of
+[`[*LEAST-MULTIPLE-AT-LEAST](padding_value, ext.static_extent(0))] and
+all values [`ext.static_extent([$k])] with [$k] in the range of [=range(1,[*rank_])]
+is representable as a value of type [`size_t], and
+is representable as a value of type [`index_type].
+[:zh_CN@~] 则 [`[*LEAST-MULTIPLE-AT-LEAST](padding_value, ext.static_extent(0))]
+和范围 [=range(1,[*rank_])] 中的 [$k] 的所有 [`ext.static_extent([$k])] 值的乘积，
+可以表示为 [`size_t] 类型的值，且可以表示为 [`index_type] 类型的值。
+[list:end]

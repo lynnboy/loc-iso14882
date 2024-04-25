@@ -1,0 +1,110 @@
+[section#mdspan.sub.map.rightpad
+    [:en] [`layout_right_padded] specialization of [`submdspan_mapping]
+    [:zh_CN] [`layout_right_padded] 的 [`submdspan_mapping] 特化
+]
+
+[%@lib@member@expos layout_right_padded::mapping[!submdspan-mapping-impl]]
+[codeblock:declaration]
+template<class Extents>
+template<class... SliceSpecifiers>
+constexpr auto layout_right_padded::mapping<Extents>::[[redoc("*>")]]submdspan-mapping-impl(
+      SliceSpecifiers... slices) const -> [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] [`submdspan_mapping_result{*this, 0}], if [`[*rank_] == 0] is [`true];
+[:zh_CN] 当 [`[*rank_] == 0] 为 [`true] 时返回 [`submdspan_mapping_result{*this, 0}]；
+
+[item]
+[:en] otherwise,
+[`submdspan_mapping_result{layout_right::mapping(sub_ext), offset}], if
+[`[*rank_] == 1] is [`true] or [`SubExtents::rank() == 0] is [`true];
+[:zh_CN] 否则，若 [`[*rank_] == 1] 为 [`true] 或 [`SubExtents::rank() == 0] 为
+[`true]，则返回 [`submdspan_mapping_result{layout_right::mapping(sub_ext), offset}]；
+
+[item]
+[:en] otherwise,
+[`submdspan_mapping_result{layout_right::mapping(sub_ext), offset}], if
+[:zh_CN] 否则，以下情况下，返回
+[`submdspan_mapping_result{layout_right::mapping(sub_ext), offset}]：
+[list]
+[item]
+[:en@~] [`SubExtents::rank() == 1] is [`true] and
+[:zh_CN@~] [`SubExtents::rank() == 1] 为 [`true] 并且
+[item]
+[:en@~] for [$k] equal to [`[*rank_] - 1],
+[$S_k] models [`[*:c index-pair-like]<index_type>] or
+[`is_convertible_v<[$S_k] , full_extent_t>] is [`true];
+[:zh_CN@~] 对于等于 [`[*rank_] - 1] 的 [$k]，
+[$S_k] 构成 [`[*:c index-pair-like]<index_type>] 或
+[`is_convertible_v<[$S_k] , full_extent_t>] 为 [`true]；
+[list:end]
+
+[item]
+[:en] otherwise,
+[:zh_CN] 否则，对于值 [$u]，使得 [$[*rank_] - u - 2] 为最大的小于 [`[*rank_] - 1]
+的 [$p] 值，使得要么 [$S_p] 构成 [`[*:c index-pair-like]<index_type>] 要么
+[`is_convertible_v<[$S_p], full_extent_t>] 为 [`true]，如果满足以下条件，则返回
+[codeblock]
+submdspan_mapping_result{layout_right_padded<S_static>::mapping(sub_ext,
+                             stride([[redoc("*>")]]rank_ - [[redoc("$>")]]u - 2)), offset}
+[codeblock:end]
+[:en@~] if for a value [$u] for which [$[*rank_] - u - 2] is the largest value
+[$p] smaller than [`[*rank_] - 1] for which [$S_p] models
+[`[*:c index-pair-like]<index_type>] or [`is_convertible_v<[$S_p], full_extent_t>]
+is [`true], the following conditions are met:
+
+[list]
+[item]
+[:en@~] for [$k] equal to [`[*rank_] - 1],
+[$S_k] models [`[*:c index-pair-like]<index_type>] or
+[`is_convertible_v<[$S_k], full_extent_t>] is [`true]; and
+[:zh_CN@~] 对于等于 [`[*rank_] - 1] 的 [$k]，
+[$S_k] 构成 [`[*:c index-pair-like]<index_type>] 或者
+[`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]；且
+[item]
+[:en@~] for each [$k] in the range
+[=range([*rank_] - SubExtents::rank() - [$u] + 1,[*rank_] - [$u] - 1)],
+[`is_convertible_v<[$S_k], full_extent_t>] is [`true]; and
+[:zh_CN@~] 对于范围
+[=range([*rank_] - SubExtents::rank() - [$u] + 1,[*rank_] - [$u] - 1)] 中的每个
+[$k]，[`is_convertible_v<[$S_k], full_extent_t>] 均为 [`true]；且
+[item]
+[:en@~] for [$k] equal to [`[*rank_] - SubExtents::rank() - [$u]], [$S_k] models
+[`[*:c index-pair-like]<index_type>] or [`is_convertible_v<[$S_k], full_extent_t>]
+is [`true];
+[:zh_CN@~] 对于等于 [`[*rank_] - SubExtents::rank() - [$u]] 的 [$k]，[$S_k] 构成
+[`[*:c index-pair-like]<index_type>] 或者
+[`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]；
+[list:end]
+
+[:en@~] and where [`S_static] is:
+[:zh_CN@~] 其中 [`S_static]：
+[list]
+[item]
+[:en@~] [`dynamic_extent], if [*static-padding-stride] is [`dynamic_extent] or
+for any [$k] in the range [=range([*rank_] - [$u] - 1,[*rank_] - 1)]
+[`static_extent([$k])] is [`dynamic_extent],
+[:zh_CN@~] 如果 [*static-padding-stride] 是 [`dynamic_extent] 或者
+[`static_extent([$k])] 对于范围 [=range([*rank_] - [$u] - 1,[*rank_] - 1)] 中的
+每个 [$k] 都是 [`dynamic_extent]，则为 [`dynamic_extent]，
+[item]
+[:en@~] otherwise, the product of [*static-padding-stride] and all values
+[`static_extent([$k])] with [$k] in the range
+[=range([*rank_] - [$u] - 1,[*rank_] - 1)];
+[:zh_CN@~] 否则，为 [*static-padding-stride] 和对范围
+[=range([*rank_] - [$u] - 1,[*rank_] - 1)] 中的 [$k] 的所有
+[`static_extent([$k])] 值的乘积；
+[list:end]
+
+[item]
+[:en] otherwise,
+[:zh_CN] 否则，返回
+[codeblock]
+submdspan_mapping_result{layout_stride::mapping(sub_ext, sub_strides), offset}
+[codeblock:end]
+[list:end]
+[div:end]

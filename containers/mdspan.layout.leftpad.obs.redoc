@@ -1,0 +1,144 @@
+[section#mdspan.layout.leftpad.obs
+    [:en] Observers
+    [:zh_CN] 探察函数
+]
+
+[codeblock:declaration]
+constexpr array<index_type, [[redoc("*>")]]rank_> strides() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`array<index_type, [*rank_]>({stride(P_rank)...})].
+[:zh_CN] [`array<index_type, [*rank_]>({stride(P_rank)...})]。
+[div:end]
+
+[codeblock:declaration]
+constexpr index_type required_span_size() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] [`0] if the multidimensional index space [*extents_] is empty,
+[:zh_CN] 当多维索引空间 [*extents_] 为空时返回 [`0]，
+[item]
+[:en] otherwise, [`*this((([*extents_](P_rank) - index_type(1))...)) + 1].
+[:zh_CN] 否则，返回 [`*this((([*extents_](P_rank) - index_type(1))...)) + 1]。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class... Indices>
+constexpr size_t operator()(Indices... idxs) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`sizeof...(Indices) == [*rank_]] is [`true].
+[:zh_CN] [`sizeof...(Indices) == [*rank_]] 为 [`true]。
+[item]
+[:en] [`(is_convertible_v<Indices, index_type> && ...)] is [`true].
+[:zh_CN] [`(is_convertible_v<Indices, index_type> && ...)] 为 [`true]。
+[item]
+[:en] [`(is_nothrow_constructible_v<index_type, Indices> && ...)] is [`true].
+[:zh_CN] [`(is_nothrow_constructible_v<index_type, Indices> && ...)] 为 [`true]。
+[list:end]
+
+[para:expects]
+[:en] [`extents_type::[*index-cast](idxs)] is a multidimensional index in
+[*extents_] ([#mdspan.overview]).
+[:zh_CN] [`extents_type::[*index-cast](idxs)] 是 [*extents_] 中的多维索引
+（[#mdspan.overview]）。
+
+[para:returns]
+[:en] [`((static_cast<index_type>(idxs) * stride(P_rank)) + ... + 0)].
+[:zh_CN] [`((static_cast<index_type>(idxs) * stride(P_rank)) + ... + 0)]。
+[div:end]
+
+[codeblock:declaration]
+static constexpr bool is_always_exhaustive() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [*rank_] equals zero or one, then [`true];
+[:zh_CN] 如果 [*rank_] 等于零或一，则返回 [`true]；
+[item]
+[:en] otherwise, if neither [*static-padding-stride] nor [*first-static-extent]
+equal [`dynamic_extent], then [`[*static-padding-stride] == [*first-static-extent]];
+[:zh_CN] 否则，如果 [*static-padding-stride] 和 [*first-static-extent] 都不等于
+[`dynamic_extent]，则返回 [`[*static-padding-stride] == [*first-static-extent]]；
+[item]
+[:en] otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr bool is_exhaustive() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [*rank_] equals zero or one; otherwise,
+[`extents_.extent(0) == stride(1)].
+[:zh_CN] 如果 [*rank_] 等于零或一，则返回 [`true]，否则返回
+[`extents_.extent(0) == stride(1)]。
+[div:end]
+
+[codeblock:declaration]
+constexpr index_type stride(rank_type r) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`r] is smaller than [*rank_].
+[:zh_CN] [`r] 小于 [*rank_]。
+
+[para:returns]
+[list]
+[item]
+[:en] If [`r] equals zero: 1;
+[:zh_CN] 如果 [`r] 等于零，则返回 1；
+[item]
+[:en] otherwise, if [`r] equals one: [*stride-1];
+[:zh_CN] 否则，如果 [`r] 等于一，则返回 [*stride-1]；
+[item]
+[:en] otherwise, the product of [*stride-1] and all values [`extents_.extent([$k])]
+with [$k] in the range [=range(1,r)].
+[:zh_CN] 否则，返回 [*stride-1] 和范围 [=range(1,r)] 中的 [$k] 的所有
+[`extents_.extent([$k])] 值的乘积。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class LayoutLeftPaddedMapping>
+  friend constexpr bool operator==(const mapping& x, const LayoutLeftPaddedMapping& y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`[*is-layout-left-padded-mapping-of]<LayoutLeftPaddedMapping>] is [`true].
+[:zh_CN] [`[*is-layout-left-padded-mapping-of]<LayoutLeftPaddedMapping>] 为 [`true]。
+[item]
+[:en] [`LayoutLeftPaddedMapping::extents_type::rank() == [*rank_]] is [`true].
+[:zh_CN] [`LayoutLeftPaddedMapping::extents_type::rank() == [*rank_]] 为 [`true]。
+[list:end]
+
+[para:returns]
+[:en] [`true] if [`x.extents() == y.extents()] is [`true] and
+[`[*rank_] < 2 || x.stride(1) == y.stride(1)] is [`true].
+[:zh_CN] 如果 [`x.extents() == y.extents()] 为 [`true] 且
+[`[*rank_] < 2 || x.stride(1) == y.stride(1)] 为 [`true] 则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
