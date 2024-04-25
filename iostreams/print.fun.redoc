@@ -26,16 +26,25 @@ template<class... Args>
 
 [div:description]
 [para:effects]
+[:en] Let [`locksafe] be
+[`(enable_nonlocking_formatter_optimization<remove_cvref_t<Args>> && ...)].
+[:zh_CN] 令 [`locksafe] 为
+[`(enable_nonlocking_formatter_optimization<remove_cvref_t<Args>> && ...)]。
+
 [:en] If the ordinary literal encoding ([#lex.charset]) is UTF-8, equivalent to:
 [:zh_CN] 如果普通字面量编码（[#lex.charset]）是 UTF-8，则等价于：
 [codeblock]
-vprint_unicode(stream, fmt.[[redoc("*>")]]str, make_format_args(args...));
+locksafe
+  ? vprint_unicode_locking(stream, fmt.str, make_format_args(args...))
+  : vprint_unicode(stream, fmt.str, make_format_args(args...));
 [codeblock:end]
 
 [:en] Otherwise, equivalent to:
 [:zh_CN] 否则，等价于：
 [codeblock]
-vprint_nonunicode(stream, fmt.[[redoc("*>")]]str, make_format_args(args...));
+locksafe
+  ? vprint_nonunicode_locking(stream, fmt.str, make_format_args(args...))
+  : vprint_nonunicode(stream, fmt.str, make_format_args(args...));
 [codeblock:end]
 [div:end]
 
@@ -56,6 +65,20 @@ println(stdout, fmt, std::forward<Args>(args)...);
 
 [%@lib println]
 [codeblock:declaration]
+void println();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+println(stdout);
+[codeblock:end]
+[div:end]
+
+[%@lib println]
+[codeblock:declaration]
 template<class... Args>
   void println(FILE* stream, format_string<Args...> fmt, Args&&... args);
 [codeblock:end]
@@ -65,7 +88,21 @@ template<class... Args>
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-print(stream, "{}\n", format(fmt, std::forward<Args>(args)...));
+print(stream, runtime_format(string(fmt.get()) + '\n'), std::forward<Args>(args)...);
+[codeblock:end]
+[div:end]
+
+[%@lib println]
+[codeblock:declaration]
+void println(FILE* stream);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+print(stream, "\n");
 [codeblock:end]
 [div:end]
 
@@ -89,16 +126,33 @@ void vprint_unicode(FILE* stream, string_view fmt, format_args args);
 [codeblock:end]
 
 [div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+string out = vformat(fmt, args);
+vprint_unicode_locking(stream, "{}", make_format_args(out));
+[codeblock:end]
+[div:end]
+
+[%@lib vprint_unicode_locking]
+[codeblock:declaration]
+void vprint_unicode_locking(FILE* stream, string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
 [para:expects]
 [:en] [`stream] is a valid pointer to an output C stream.
 [:zh_CN] [`stream] 是指向 C 输出流的有效指针。
 
 [para:effects]
-[:en] The function initializes an automatic variable via
-[:zh_CN] 本函数以如下代码初始化一个自动对象
-[codeblock]
-string out = vformat(fmt, args);
-[codeblock:end]
+[:en] Locks [`stream].
+[:zh_CN] 锁定 [`stream]。
+
+[:en] Let [`out] denote the character representation of formatting arguments
+provided by [`args] formatted according to specifications given in [`fmt].
+[:zh_CN] 令 [`out] 代表由 [`args] 提供的格式化实参根据 [`fmt] 中给定的说明所格式化的
+字符表示。
 
 [:en] If [`stream] refers to a terminal capable of displaying Unicode, writes
 [`out] to the terminal using the native Unicode API; if [`out] contains invalid
@@ -114,6 +168,11 @@ encouraged to diagnose it.
 [:en] If the native Unicode API is used, the function flushes [`stream] before
 writing [`out].
 [:zh_CN] 如果使用了本地 Unicode API，则函数在写出 [`out] 之前冲洗 [`stream]。
+
+[:en] Unconditionally unlocks [`stream] on function exit.
+[:zh_CN] 于函数退出时无条件解锁 [`stream]。
+
+[para:xref@c] 7.21.2
 
 [begin:note]
 [:en] On POSIX and Windows, [`stream] referring to a terminal means that,
@@ -168,13 +227,31 @@ void vprint_nonunicode(FILE* stream, string_view fmt, format_args args);
 [codeblock:end]
 
 [div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+string out = vformat(fmt, args);
+vprint_nonunicode_locking("{}", make_format_args(out));
+[codeblock:end]
+[div:end]
+
+[%@lib vprint_nonunicode_locking]
+[codeblock:declaration]
+void vprint_nonunicode_locking(FILE* stream, string_view fmt, format_args args);
+[codeblock:end]
+
+[div:description]
 [para:expects]
 [:en] [`stream] is a valid pointer to an output C stream.
 [:zh_CN] [`stream] 是指向 C 输出流的有效指针。
 
 [para:effects]
-[:en] Writes the result of [`vformat(fmt, args)] to [`stream].
-[:zh_CN] 将 [`vformat(fmt, args)] 的结果写入到 [`stream]。
+[:en] While holding the lock on [`stream], writes the character representation
+of formatting arguments provided by [`args] formatted according to
+specifications given in [`fmt] to [`stream].
+[:zh_CN] 在持有 [`stream] 上的锁时，把由 [`args] 提供的格式化实参根据 [`fmt] 中给定的
+说明所格式化的字符表示写入到 [`stream]。
 
 [para:throws]
 [:en] Any exception thrown by the call to [`vformat] ([#format.err.report]).

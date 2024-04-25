@@ -992,6 +992,7 @@ equivalent keys                         |等价键 |关联容器multiset,multima
 equivalent *template-head*s             |等价*模板头* |各模板形参和它们的类型约束，requires子句均等价
 equivalent *template-parameter*         |等价*模板形参* |同种类，同为包组，非类型形参的类型等价，模板的各模板形参等价
 equivalently-valued pointer value       |具有等价值的指针 |分配器所操作的“指针”，转换为`const_pointer`后相等
+erroneous behavior                      |错误行为   |并非UB，建议编译器诊断。如使用未初始化的变量
 error                                   |错误，误差
 escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列

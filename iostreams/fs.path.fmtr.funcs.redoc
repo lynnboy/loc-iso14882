@@ -1,0 +1,96 @@
+[section#fs.path.fmtr.funcs
+    [:en] Formatting support functions
+    [:zh_CN] 格式化支持函数
+]
+
+[para]
+[:en] Formatting of paths uses formatting specifiers of the form
+[:zh_CN] 路径的格式化使用以下形式的格式化说明符
+
+[syntax]
+[rule@fmt path-format-spec [:zh_CN] 路径格式说明 ]
+    [| [~:opt fill-and-align] [~:opt width] [`:opt ?] [`:opt g] ]
+[rule:end]
+[syntax:end]
+
+[:en@~] where the productions [~@fmt fill-and-align] and [~@fmt width] are
+described in [#format.string].
+[:zh_CN@~] 其中的产生式[~@fmt 填充与对齐]和[~@fmt 宽度]在 [#format.string] 中描述。
+
+[:en] If the [`?] option is used then the path is formatted as an escaped string
+([#format.string.escaped]).
+[:zh_CN] 如果使用了 [`?] 选项，则路径被格式化为带转义字符串（[#format.string.escaped]）。
+
+[%@lib@member formatter[!set_debug_format]]
+[codeblock:declaration]
+constexpr void set_debug_format();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Modifies the state of the [`formatter] to be as if the
+[~@fmt path-format-spec] parsed by the last call to [`parse] contained the [`?]
+option.
+[:zh_CN] 修改 [`formatter] 的状态，使得如同其最后一次调用 [`parse] 所传递的
+[~@fmt 路径格式说明]包含 [`?] 选项。
+[div:end]
+
+[%@lib@member formatter[!basic_format_parse_context]]
+[codeblock:declaration]
+constexpr typename basic_format_parse_context<charT>::iterator
+  parse(basic_format_parse_context<charT>& ctx);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Parses the format specifier as a [~@fmt path-format-spec] and stores the
+parsed specifiers in [`*this].
+[:zh_CN] 按[~@fmt 路径格式说明]解析格式说明符，并将解析到的各说明符存储于 [`*this]。
+
+[para:returns]
+[:en] An iterator past the end of the [~@fmt path-format-spec].
+[:zh_CN] [~@fmt 路径格式说明]的越过末尾迭代器。
+[div:end]
+
+[%@lib@member formatter[!format]]
+[codeblock:declaration]
+template<class FormatContext>
+  typename FormatContext::iterator
+    format(const filesystem::path& p, FormatContext& ctx) const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [`s] be [`p.generic_string<filesystem::path::value_type>()] if the [`g]
+option is used, otherwise [`p.native()].
+[:zh_CN] 令 [`s] 在使用了 [`g] 选项时为
+[`p.generic_string<filesystem::path::value_type>()]，否则为 [`p.native()]。
+
+[:en] Writes [`s] into [`ctx.out()], adjusted according to the
+[~@fmt path-format-spec].
+[:zh_CN] 将 [`s] 写入 [`ctx.out()]，并根据[~@fmt 路径格式说明]进行调整。
+
+[:en] If [`charT] is [`:key char], [`path::value_type] is [`:key wchar_t], and
+the literal encoding is UTF-8, then the escaped path is transcoded from the
+native encoding for wide character strings to UTF-8 with maximal subparts of
+ill-formed subsequences substituted with
+[&:ucode fffd] [&:uname replacement character] per the Unicode Standard,
+Chapter 3.9 [&:ucode fffd] Substitution in Conversion.
+[:zh_CN] 如果 [`charT] 是 [`:key char]，[`path::value_type] 是 [`:key wchar_t]，
+且字面编码是 UTF-8，则带转义路径从对于宽字符串的本机编码转码为 UTF-8，并根据 Unicode
+标准的章节 3.9《转换中的 [&:ucode fffd] 替换》，将非良构子序列的最大子部分替换为
+[&:ucode fffd] [&:uname replacement character]。
+
+[:en] If [`charT] and [`path::value_type] are the same then no transcoding is
+performed.
+[:zh_CN] 如果 [`charT] 和 [`path::value_type] 相同，则不进行转码。
+
+[:en] Otherwise, transcoding is [?impldef transcoding of a formatted path when
+[`charT] and [`path::value_type] differ].
+[:zh_CN] 否则，转码是[?impldef 当 [`charT] 和 [`path::value_type] 不同时对格式化的
+路径的转码]。
+
+[para:returns]
+[:en] An iterator past the end of the output range.
+[:zh_CN] 输出范围的越过末尾迭代器。
+[div:end]
