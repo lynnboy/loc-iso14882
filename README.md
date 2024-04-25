@@ -274,12 +274,15 @@ Original   |中文   |章节    |定义
 |-|-|-|-|
 *declaration-seq*           |*声明式序列*   | [dcl.pre]     | *声明式*__\+__
 *declaration*               |*声明式*       | [dcl.pre]     | *命名声明式* \| *特殊声明式*
-*declaration*               |*命名声明式*   | [dcl.pre]     | *块声明式* \| *无声明说明符函数声明式* \| *函数定义式* \|<br> *模板声明式* \| *推断导引* \|<br> *连接说明* \| *命名空间定义式* \|<br> *空声明式* \| *属性声明式* \| *模块导入声明式*
-*declaration*               |*特殊声明式*   | [dcl.pre]     | *显式实例化式* \| *显式特化式* \| *导出声明式*
+*name-declaration*          |*命名声明式*   | [dcl.pre]     | *块声明式* \| *无声明说明符函数声明式* \| *函数定义式* \|<br> *友元类型声明式* \|<br> *模板声明式* \| *推断导引* \|<br> *连接说明* \| *命名空间定义式* \|<br> *空声明式* \| *属性声明式* \| *模块导入声明式*
+*special-declaration*       |*特殊声明式*   | [dcl.pre]     | *显式实例化式* \| *显式特化式* \| *导出声明式*
 *block-declaration*         |*块声明式*     | [dcl.pre]     | *简单声明式* \| *asm-声明式* \| *命名空间别名定义式* \|<br> *using-声明式* \| *using-枚举声明式* \| *using-指令* \|<br> *static_assert-声明式* \| *别名声明式* \| *笼统枚举声明式*
 *nodeclspec-function-declaration*|*无声明说明符函数声明式*| [dcl.pre] |*属性说明符序列*__?__ *声明符* `;`
 *alias-declaration*         |*别名声明式*   | [dcl.pre]     | `using` *标识符* *属性说明符序列*__?__ `=` *定义类型标识* `;`
-*simple-declaration*        |*简单声明式*   | [dcl.pre]     | *声明说明符序列* *带初始化声明符列表*__?__ `;` \|<br> *属性说明符序列* *声明说明符序列* *带初始化声明符列表* `;` \|<br> *属性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *标识符列表* `]` 初始化式 `;`
+*attributed-identifier*     |*带属性标识符* | [dcl.pre]     | *标识符* *属性说明符序列*__?__
+*attributed-identifier-list*|*带属性标识符列表*| [dcl.pre]  | *带属性标识符* (`,` *带属性标识符*)__\*__
+*structured-binding-declaration*|*结构化绑定声明式*| [dcl.pre] | *属性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *带属性标识符列表* `]`
+*simple-declaration*        |*简单声明式*   | [dcl.pre]     | *声明说明符序列* *带初始化声明符列表*__?__ `;` \|<br> *属性说明符序列* *声明说明符序列* *带初始化声明符列表* `;` \|<br> *结构化绑定声明式* *初始化式* `;`
 *static_assert-message*     |*static_assert-消息*| [dcl.pre]| *免求值字符串* \| *常量表达式*
 *static_assert-declaration* |*static_assert-声明式*| [dcl.pre] | `static_assert` `(` *常量表达式* ( `,` *static_assert-消息* ) `)` `;`
 *empty-declaration*         |*空声明式*     | [dcl.pre]     | `;`
@@ -333,7 +336,8 @@ Original   |中文   |章节    |定义
 *designator*                |*定名符*       | [dcl.init.general] | `.` *标识符*
 *expr-or-braced-init-list*  |*表达式或花括初始化列表*| [dcl.init.general] | *表达式* \| *花括号初始化列表*
 *function-definition*       |*函数定义式*   | [dcl.fct.def.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *声明符* ( *虚说明符序列*__?__ \| *requires-子句* ) *函数体*
-*function-body*             |*函数体*       | [dcl.fct.def.general] | *构造函数初始化式*__?__ *复合语句* \| *函数-try-块* \|<br> `=` `default` `;` \| `=` `delete` `;`
+*function-body*             |*函数体*       | [dcl.fct.def.general] | *构造函数初始化式*__?__ *复合语句* \| *函数-try-块* \|<br> `=` `default` `;` \| *弃置函数体*
+*deleted-function-body*     |*弃置函数体*   | [dcl.fct.def.general] | `=` `delete` (`(` *免求值字符串* `)`)__?__ `;`
 *enum-name*                 |*枚举名*       | [dcl.enum]    | *标识符*
 *enum-specifier*            |*枚举说明符*   | [dcl.enum]    | *枚举头* `{` ( ∅ \| *枚举符列表* `,`__?__ ) `}`
 *enum-head*                 |*枚举头*       | [dcl.enum]    | *枚举关键字* *属性说明符序列*__?__ *枚举头名*__?__ *枚举基*__?__

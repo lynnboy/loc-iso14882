@@ -228,45 +228,37 @@ Otherwise, if the initializer expression
 
 [list]
 [item]
-[:en@~]
-is an rvalue (but not a bit-field) or function lvalue and [=lq][=cv cv1] [`T1][=rq]
-is reference-compatible with [=lq][=cv cv2] [`T2][=rq], or
-[:zh_CN@~]
-是右值（但并非位字段）或函数左值，且“[=cv cv1] [`T1]”与“[=cv cv2] [`T2]”引用兼容，
-或者
+[:en@~] is an rvalue (but not a bit-field) or an lvalue of function type and
+[=lq][=cv cv1] [`T1][=rq] is reference-compatible with [=lq][=cv cv2] [`T2][=rq], or
+[:zh_CN@~] 是右值（但并非位字段）或函数类型的左值，且“[=cv cv1] [`T1]”与
+“[=cv cv2] [`T2]”引用兼容，或者
 
 [item]
-[:en@~]
-has a class type (i.e., [`T2] is a class type), where [`T1] is not
-reference-related to [`T2], and can be converted to an rvalue or function lvalue
-of type [=lq][=cv cv3] [`T3][=rq], where [=lq][=cv cv1] [`T1][=rq] is
-reference-compatible with [=lq][=cv cv3] [`T3][=rq] (see [#over.match.ref]),
-[:zh_CN@~]
-具有类类型（就是说，[`T2] 为类类型）（其中 [`T1] 并非与 [`T2] 引用相关），且可被
-隐式转换为类型“[=cv cv3] [`T3]”的右值或函数左值，其中“[=cv cv1] [`T1]”与
-“[=cv cv3] [`T3]”引用兼容（参见 [#over.match.ref]），
+[:en@~] has a class type (i.e., [`T2] is a class type), where [`T1] is not
+reference-related to [`T2], and can be converted to an rvalue of type
+[=lq][=cv cv3] [`T3][=rq] or an lvalue of function type [=lq][=cv cv3] [`T3][=rq],
+where [=lq][=cv cv1] [`T1][=rq] is reference-compatible with
+[=lq][=cv cv3] [`T3][=rq] (see [#over.match.ref]),
+[:zh_CN@~] 具有类类型（亦即 [`T2] 为类类型）（其中 [`T1] 并非与 [`T2] 引用相关），
+且可被隐式转换为类型“[=cv cv3] [`T3]”的右值或函数类型“[=cv cv3] [`T3]”的左值，
+其中“[=cv cv1] [`T1]”与“[=cv cv3] [`T3]”引用兼容（参见 [#over.match.ref]），
 [list:end]
 
-[:en@~]
-then the initializer expression in the first case and the converted expression
-in the second case is called the converted initializer.
-[:zh_CN@~]
-第一种情况中的初始化式表达式，以及第二种情况中的经转换的表达式被称为经转换的
-初始化式。
+[:en@~] then the initializer expression in the first case and the converted
+expression in the second case is called the converted initializer.
+[:zh_CN@~] 第一种情况中的初始化式表达式，以及第二种情况中的经转换的表达式被称为
+经转换的初始化式。
 
-[:en]
-If the converted initializer is a prvalue, its type [`T4] is adjusted to type
-[=lq][=cv cv1] [`T4][=rq] ([#conv.qual]) and the temporary materialization
-conversion ([#conv.rval]) is applied.
-[:zh_CN]
-如果经转换的初始化式是纯右值，则其类型 [`T4] 被调整为类型“[=cv cv1] [`T4]”
-（[#conv.qual]），并实施临时对象实质化转换（[#conv.rval]）。
+[:en] If the converted initializer is a prvalue, let its type be denoted by [`T4];
+the temporary materialization conversion ([#conv.rval]) is applied, considering
+the type of the prvalue to be [=lq][=cv cv1] [`T4][=rq] ([#conv.qual]).
+[:zh_CN] 如果经转换的初始化式是纯右值，令 [`T4] 代表其类型；则实施临时对象实质化
+转换（[#conv.rval]），其中将纯右值的类型当作“[=cv cv1] [`T4]”（[#conv.qual]）。
 
-[:en]
-In any case, the reference binds to the resulting glvalue (or to an appropriate
-base class subobject).
-[:zh_CN]
-无论哪种情况，该引用都绑定到所产生的泛左值上（或者绑定到适当的基类子对象上）。
+[:en] In any case, the reference binds to the resulting glvalue (or to an
+appropriate base class subobject).
+[:zh_CN] 无论哪种情况，该引用都绑定到所产生的泛左值上（或者绑定到适当的基类
+子对象上）。
 
 [para:~]
 [begin:example]
@@ -276,8 +268,7 @@ struct B : A { } b;
 extern B f();
 const A& rca2 = f();                // [:en] binds to the [`A] subobject of the [`B] rvalue. \
                                     [:zh_CN] 绑定到 [`B] 右值的 [`A] 子对象上。
-A&& rra = f();                      // [:en] same as above \
-                                    [:zh_CN] 同上
+A&& rra = f();                      // [:en] same as above [:zh_CN] 同上
 struct X {
   operator B();
   operator int&();
@@ -285,10 +276,16 @@ struct X {
 const A& r = x;                     // [:en] binds to the [`A] subobject of the result of the conversion \
                                     [:zh_CN] 绑定到转换结果的 [`A] 子对象上
 int i2 = 42;
-int&& rri = static_cast<int&&>(i2); // [:en] binds directly to [`i2] \
-                                    [:zh_CN] 直接绑定到 [`i2]
+int&& rri = static_cast<int&&>(i2); // [:en] binds directly to [`i2] [:zh_CN] 直接绑定到 [`i2]
 B&& rrb = x;                        // [:en] binds directly to the result of [`operator B] \
                                     [:zh_CN] 直接绑定到 [`operator B] 的结果上
+
+constexpr int f() {
+  const int &x = 42;
+  const_cast<int &>(x) = 1;         // [:en] undefined behavior [:zh_CN] 未定义行为
+  return x;
+}
+constexpr int z = f();              // [:en] error: not a constant expression [:zh_CN] 错误：不是常量表达式
 [codeblock:end]
 [end:example]
 
@@ -307,32 +304,25 @@ would be ill-formed.
 类型的对象使用用户定义转换进行复制初始化的规则（[#dcl.init]，[#over.match.copy]，
 [#over.match.conv]）；如果其对应的非引用的复制初始化非良构，则程序非良构。
 
-[:en]
-The result of the call to the conversion function, as described for the
+[:en] The result of the call to the conversion function, as described for the
 non-reference copy-initialization, is then used to direct-initialize the
 reference.
-[:zh_CN]
-调用转换函数的结果（根据非引用复制初始化的描述），随即被用于直接初始化该引用。
+[:zh_CN] 调用转换函数的结果（根据非引用复制初始化的描述），随即被用于直接初始化
+该引用。
 
-[:en]
-For this direct-initialization, user-defined conversions are not considered.
-[:zh_CN]
-这个直接初始化中不考虑用户定义转换。
+[:en] For this direct-initialization, user-defined conversions are not considered.
+[:zh_CN] 这个直接初始化中不考虑用户定义转换。
 
 [item]
-[:en]
-Otherwise, the initializer expression is implicitly converted to a prvalue
+[:en] Otherwise, the initializer expression is implicitly converted to a prvalue
 of type [=lq][`T1][=rq].
-[:zh_CN]
-否则，初始化式表达式被隐式转换为类型“[`T1]”的纯右值。
+[:zh_CN] 否则，初始化式表达式被隐式转换为类型“[`T1]”的纯右值。
 
-[:en]
-The temporary materialization conversion is applied, considering the type of the
-prvalue to be [=lq][=cv cv1] [`T1][=rq], and the reference is bound to the
-result.
-[:zh_CN]
-实施临时对象实质化转换，将该纯右值的类型当做“[=cv cv1] [`T1]”，并将引用绑定到其
-结果上。
+[:en] The temporary materialization conversion is applied, considering the type
+of the prvalue to be [=lq][=cv cv1] [`T1][=rq], and the reference is bound to
+the result.
+[:zh_CN] 实施临时对象实质化转换，将该纯右值的类型当做“[=cv cv1] [`T1]”，并将引用
+绑定到其结果上。
 [list:end]
 
 [begin:example]
@@ -342,21 +332,17 @@ struct Enigma { operator const Banana(); };
 struct Alaska { operator Banana&(); };
 void enigmatic() {
   typedef const Banana ConstBanana;
-  Banana &&banana1 = ConstBanana(); // [:en] error \
-                                    [:zh_CN] 错误
-  Banana &&banana2 = Enigma();      // [:en] error \
-                                    [:zh_CN] 错误
-  Banana &&banana3 = Alaska();      // [:en] error \
-                                    [:zh_CN] 错误
+  Banana &&banana1 = ConstBanana(); // [:en] error [:zh_CN] 错误
+  Banana &&banana2 = Enigma();      // [:en] error [:zh_CN] 错误
+  Banana &&banana3 = Alaska();      // [:en] error [:zh_CN] 错误
 }
 
-const double& rcd2 = 2;             // [:en] [`rcd2] refers to temporary with value [`2.0] \
-                                    [:zh_CN] [`rcd2] 指代值为 [`2.0] 的临时对象
+const double& rcd2 = 2;             // [:en] [`rcd2] refers to temporary with type [`const double] and value [`2.0] \
+                                    [:zh_CN] [`rcd2] 指代类型为 [`const double] 且值为 [`2.0] 的临时对象
 double&& rrd = 2;                   // [:en] [`rrd] refers to temporary with value [`2.0] \
                                     [:zh_CN] [`rrd] 指代值为 [`2.0] 的临时对象
 const volatile int cvi = 1;
-const int& r2 = cvi;                // [:en] error: cv-qualifiers dropped \
-                                    [:zh_CN] 错误：cv 限定符被丢弃
+const int& r2 = cvi;                // [:en] error: cv-qualifiers dropped [:zh_CN] 错误：cv 限定符被丢弃
 struct A { operator volatile int&(); } a;
 const int& r3 = a;                  // [:en] error: cv-qualifiers dropped \
                                     [:zh_CN] 错误：cv 限定符被从
@@ -378,18 +364,14 @@ double&& rrd3 = i3;                 // [:en] [`rrd3] refers to temporary with va
 
 [list:end]
 
-[:en]
-In all cases except the last (i.e., implicitly converting the initializer
+[:en] In all cases except the last (i.e., implicitly converting the initializer
 expression to the referenced type), the reference is said to [+bind directly] to
 the initializer expression.
-[:zh_CN]
-除了最后一种（即将初始化式表达式隐式转换为被引用类型）之外的所有情况中，称该引用
-被[+直接绑定]到初始化式表达式上。
+[:zh_CN] 除了最后一种（即将初始化式表达式隐式转换为被引用类型）之外的所有情况中，
+称该引用被[+直接绑定]到初始化式表达式上。
 
 [para]
 [begin:note]
-[:en]
-[#class.temporary] describes the lifetime of temporaries bound to references.
-[:zh_CN]
-[#class.temporary] 说明绑定到引用上的临时对象的生存期。
+[:en] [#class.temporary] describes the lifetime of temporaries bound to references.
+[:zh_CN] [#class.temporary] 说明绑定到引用上的临时对象的生存期。
 [end:note]

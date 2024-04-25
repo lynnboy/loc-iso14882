@@ -116,25 +116,28 @@ expression of the class member access ([#expr.ref], [#basic.life]).
 （[#expr.ref]，[#basic.life]）。
 
 [para]
-[:en]
-Calling a function through an expression whose function type [`E] is different
-from the function type [`F] of the called function[=']s definition results in
-undefined behavior unless the type [=lq]pointer to [`F][=rq] can be converted
-to the type [=lq]pointer to [`E][=rq] via a function pointer conversion
+[:en] A type [$[`T]_\text{call}] is [+call-compatible] with a function type
+[$[`T]_\text{func}] if [$[`T]_\text{call}] is the same type as [$[`T]_\text{func}]
+or if the type [=lq]pointer to [$[`T]_\text{func}][=rq] can be converted to type
+[=lq]pointer to [$[`T]_\text{call}][=rq] via a function pointer conversion
 ([#conv.fctptr]).
-[:zh_CN]
-若表达式的函数类型 [`E] 与被调用函数的定义式的函数类型 [`F] 不同，除非类型
-“[`F] 的指针”可以经由函数指针转换（[#conv.fct.ptr]）转换为类型“[`E] 的指针”，
-否则，通过它调用函数将导致未定义的行为。
+[:zh_CN] 如果类型 [$[`T]_\text{call}] 与函数类型 [$[`T]_\text{func}] 是同一类型，
+或者如果类型“[$[`T]_\text{func}] 的指针”可以通过函数指针转换（[#conv.fctptr]）
+转换为类型“[$[`T]_\text{call}] 的指针”，则类型 [$[`T]_\text{call}] 与函数类型
+[$[`T]_\text{func}] [+调用兼容]。
+
+[:en] Calling a function through an expression whose function type is not
+call-compatible with the type of the called function[=']s definition results in
+undefined behavior.
+[:zh_CN] 通过具有与被调用函数的定义式的类型并非调用兼容的类型的表达式调用函数，
+将导致未定义行为。
 
 [begin:note]
-[:en]
-The exception applies when the expression has the type of a potentially-throwing
-function, but the called function has a non-throwing exception specification,
-and the function types are otherwise the same.
-[:zh_CN]
-当表达式具有潜在抛出函数的类型，但被调用函数具有无抛出异常说明，而函数类型中其余
-均相同的情况下，适用这种例外情况。
+[:en] This requirement allows the case when the expression has the type of a
+potentially-throwing function, but the called function has a non-throwing
+exception specification, and the function types are otherwise the same.
+[:zh_CN] 这项规定允许当表达式具有潜在抛出函数的类型，但被调用函数具有无抛出
+异常说明，而函数类型中其余均相同的情况。
 [end:note]
 
 [para]
@@ -173,56 +176,46 @@ int x = f<int>();               // [:en] error: no argument for second function 
 [codeblock:end]
 [end:example]
 
-[:en]
-If the function is an implicit object member function, the [`:key this] parameter
-of the function ([#expr.prim.this]) is initialized with a pointer to the object
-of the call, converted as if by an explicit type conversion ([#expr.cast]).
-[:zh_CN]
-如果该函数是隐式对象成员函数，则函数的 [`:key this] 形参（[#expr.prim.this]）由
-指向此调用中的对象的指针来初始化，并如同进行了显式类型转换（[#expr.cast]）。
+[:en] If the function is an implicit object member function, the object
+expression of the class member access shall be a glvalue and the [`:key this]
+parameter of the function ([#expr.prim.this]) is initialized with a pointer to
+the object of the call, converted as if by an explicit type conversion ([#expr.cast]).
+[:zh_CN] 如果该函数是隐式对象成员函数，则类成员访问的对象表达式应当是泛左值，且
+函数的 [`:key this] 形参（[#expr.prim.this]）由指向此调用中的对象的指针来初始化，
+并如同进行了显式类型转换（[#expr.cast]）。
 
 [begin:note]
-[:en]
-There is no access or ambiguity checking on this conversion; the access checking
-and disambiguation are done as part of the (possibly implicit) class member
-access operator.
-[:zh_CN]
-此转换并不进行访问或歧义检查；访问检查和歧义消解是作为（可能隐式的）类成员访问
-运算符的一部分完成的。
+[:en] There is no access or ambiguity checking on this conversion; the access
+checking and disambiguation are done as part of the (possibly implicit) class
+member access operator.
+[:zh_CN] 此转换并不进行访问或歧义检查；访问检查和歧义消解是作为（可能隐式的）
+类成员访问运算符的一部分完成的。
 
-[:en]
-See [#class.member.lookup], [#class.access.base], and [#expr.ref].
-[:zh_CN]
-参见 [#class.member.lookup]，[#class.access.base] 和 [#expr.ref]。
+[:en] See [#class.member.lookup], [#class.access.base], and [#expr.ref].
+[:zh_CN] 参见 [#class.member.lookup]，[#class.access.base] 和 [#expr.ref]。
 [end:note]
 
-[:en]
-When a function is called, the type of any parameter shall not be a class type
-that is either incomplete or abstract.
-[:zh_CN]
-当调用函数时，任何形参的类型都不能是不完整或抽象的类类型。
+[:en] When a function is called, the type of any parameter shall not be a class
+type that is either incomplete or abstract.
+[:zh_CN] 当调用函数时，任何形参的类型都不能是不完整或抽象的类类型。
 
 [begin:note]
-[:en]
-This still allows a parameter to be a pointer or reference to such a type.
-[:zh_CN]
-仍然允许形参是指向这样的类型的指针或引用。
+[:en] This still allows a parameter to be a pointer or reference to such a type.
+[:zh_CN] 仍然允许形参是指向这样的类型的指针或引用。
 
-[:en]
-However, it prevents a passed-by-value parameter to have an incomplete or
+[:en] However, it prevents a passed-by-value parameter to have an incomplete or
 abstract class type.
-[:zh_CN]
-不过，这防止了按值传递的形参具有不完整或抽象的类类型。
+[:zh_CN] 不过，这防止了按值传递的形参具有不完整或抽象的类类型。
 [end:note]
 
-[:en]
-It is [?impldef whether the lifetime of a parameter ends when the callee returns
-or at the end of the enclosing full-expression] whether the lifetime of a
-parameter ends when the function in which it is defined returns or at the end of
-the enclosing full-expression.
-[:zh_CN]
-形参的生存期结束于定义了它的函数返回之时还是其外围全表达式结束之时，是[?impldef
-形参的生存期结束于被调用函数返回之时还是其外围全表达式结束之时]。
+[:en] It is [?impldef whether a parameter is destroyed when the function exits
+or at the end of the enclosing full-expression] whether a parameter is destroyed
+when the function in which it is defined exits ([#stmt.return], [#except.ctor])
+or at the end of the enclosing full-expression; parameters are always destroyed
+in the reverse order of their construction.
+[:zh_CN] 形参销毁于定义它的函数退出（[#stmt.return]，[#except.ctor]）之时还是其
+外围全表达式结束之时，是[?impldef 形参销毁于函数退出之时还是其外围全表达式结束之时]；
+总是以形参构造的相反顺序销毁它们。
 
 [:en]
 The initialization and destruction of each parameter occurs within the context
@@ -337,7 +330,7 @@ return type of the statically chosen function.
 A function can change the values of its non-const parameters, but these changes
 cannot affect the values of the arguments except where a parameter is of a
 reference type ([#dcl.ref]); if the reference is to a const-qualified type,
-[`:key const_cast] is required to be used to cast away the constness in order to
+[`:key const_cast] needs to be used to cast away the constness in order to
 modify the argument[=']s value.
 [:zh_CN]
 [%类型检查[!实参]] [%函数调用] [%实参传递]

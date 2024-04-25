@@ -135,12 +135,11 @@ resulting from that interpretation is ill-formed.
 若某个转换可以用上述列出的方式中的多于一种来进行解释，则即使从首先出现于列表中的
 解释方式所造成的转型是非良构的，也要使用这个解释方式。
 
-[:en]
-If a conversion can be interpreted in more than one way as a [`:key static_cast]
-followed by a [`:key const_cast], the conversion is ill-formed.
-[:zh_CN]
-若某个转换可用多于一种 [`:key static_cast] 跟着 [`:key const_cast] 的方式进行
-解释，则该转换是非良构的。
+[:en] If a [`:key static_cast] followed by a [`:key const_cast] is used and the
+conversion can be interpreted in more than one way as such, the conversion is
+ill-formed.
+[:zh_CN] 若使用一次 [`:key static_cast] 跟着一次 [`:key const_cast]，且该转换
+可以用多于一种这样的方式进行解释，则该转换非良构。
 
 [begin:example]
 [codeblock]
@@ -152,6 +151,17 @@ A* foo( D* p ) {
   return (A*)( p );             // [:en] ill-formed [`:key static_cast] interpretation \
                                 [:zh_CN] 非良构的 [`:key static_cast] 解释
 }
+
+int*** ptr = 0;
+auto t = (int const*const*const*)ptr;   // [:en] OK, [`:key const_cast] interpretation \
+                                        [:zh_CN] OK，[`:key const_cast] 解释
+
+struct S {
+  operator const int*();
+  operator volatile int*();
+};
+int *p = (int*)S();     // [:en] error: two possible interpretations using [`:key static_cast] followed by [`:key const_cast] \
+                        [:zh_CN] 错误：存在使用 [`:key static_cast] 跟着 [`:key const_cast] 的两种可能的解释
 [codeblock:end]
 [end:example]
 
@@ -181,13 +191,12 @@ relationship between the two classes.
 两个类之间存在继承关系也是如此。
 
 [begin:note]
-[:en]
-For example, if the classes were defined later in the translation unit, a
-multi-pass compiler would be permitted to interpret a cast between pointers to
+[:en] For example, if the classes were defined later in the translation unit, a
+multi-pass compiler could validly interpret a cast between pointers to
 the classes as if the class types were complete at the point of the cast.
-[:zh_CN]
-例如，若这些类是在翻译单元的后面被定义的，就允许多遍编译器按照如同这些类类型在进
-行转型之处已经被定义那样，来对在指向这些类的指针之间进行的转型进行解释。
+[:zh_CN] 例如，若这些类是在翻译单元的后面被定义的，多遍编译器就可以合法地按照
+如同这些类类型在进行转型之处已经被定义那样，来对在指向这些类的指针之间进行的转型
+进行解释。
 [end:note]
 
 [%:end#expression.cast]

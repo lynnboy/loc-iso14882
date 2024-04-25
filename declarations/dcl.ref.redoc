@@ -188,28 +188,62 @@ see [#basic.def].
 [`:key extern] 声明符（[#dcl.stc]），是处于类定义式之中的类成员（[#class.mem]）
 声明式，或者是形参或返回类型的声明式（[#dcl.fct]）；参见 [#basic.def]。
 
-[:en]
-A reference shall be initialized to refer to a valid object or function.
-[:zh_CN]
-引用应当被初始化为指代某个有效的对象或函数。
+[para]
+[:en] Attempting to bind a reference to a function where the converted
+initializer is a glvalue whose type is not call-compatible ([#expr.call])
+with the type of the function[=']s definition results in undefined behavior.
+[:zh_CN] 试图将引用绑定到函数，但其转换后的初始化式是泛左值，且其类型与
+函数定义式的类型并非调用兼容（[#expr.call]），将造成未定义行为。
+
+[:en] Attempting to bind a reference to an object where the converted
+initializer is a glvalue through which the object is not type-accessible
+([#basic.lval]) results in undefined behavior.
+[:zh_CN] 试图将引用绑定到对象，但其转换后的初始化式是泛左值，且通过它对该对象
+并非可类型访问（[#basic.lval]），将造成未定义行为。
 
 [begin:note]
 [:en]
 [%reference[!null]]
-In particular, a null reference cannot exist in a well-defined program, because
-the only way to create such a reference would be to bind it to the [=lq]object[=rq]
-obtained by indirection through a null pointer, which causes undefined behavior.
+The object designated by such a glvalue can be outside its lifetime ([#basic.life]).
 [:zh_CN]
 [%引用[!空～]]
-特别地，在良构的程序中不能存在空引用，这是由于创建这种引用的唯一方式，是将其绑定
-到对空指针进行间接所获得的“对象”上，而这会引起未定义的行为。
+由这样的泛左值表示的对象可能超出其生存期（[#basic.life]）。
 
-[:en]
-As described in [#class.bit], a reference cannot be bound directly to a
+[:en] Because a null pointer value or a pointer past the end of an object
+does not point to an object, a reference in a well-defined program cannot refer
+to such things; see [#expr.unary.op].
+[:zh_CN] 因为空指针值或对象的尾后指针并不指向对象，所以良构程序中的引用不能指代
+这样的东西；见 [#expr.unary.op]。
+
+[:en] As described in [#class.bit], a reference cannot be bound directly to a
 bit-field.
-[:zh_CN]
-如 [#class.bit] 中所述，引用不能直接绑定到位字段上。
+[:zh_CN] 如 [#class.bit] 中所述，引用不能直接绑定到位字段上。
 [end:note]
+
+[:en] The behavior of an evaluation of a reference ([#expr.prim.id], [#expr.ref])
+that does not happen after ([#intro.races]) the initialization of the reference
+is undefined.
+[:zh_CN] 引用的求值（[#expr.prim.id]，[#expr.ref]）如果并非发生晚于（[#intro.races]）
+引用的初始化，则其行为未定义。
+
+[begin:example]
+[codeblock]
+int &f(int&);
+int &g();
+extern int &ir3;
+int *ip = 0;
+int &ir1 = *ip;                 // [:en] undefined behavior: null pointer [:zh_CN] 未定义行为：空指针
+int &ir2 = f(ir3);              // [:en] undefined behavior: [`ir3] not yet initialized \
+                                [:zh_CN] 未定义行为：[`ir3] 尚未初始化
+int &ir3 = g();
+int &ir4 = f(ir4);              // [:en] undefined behavior: [`ir4] used in its own initializer \
+                                [:zh_CN] 未定义行为：[`ir4] 被用在其自身的初始化式中
+
+char x alignas(int);
+int &ir5 = *reinterpret_cast<int *>(&x);    // [:en] undefined behavior: initializer refers to char object \
+                                            [:zh_CN] 未定义行为：初始化式指代 char 对象
+[codeblock:end]
+[end:example]
 
 [para]
 [:en]
