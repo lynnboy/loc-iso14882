@@ -50,6 +50,10 @@ namespace std {
     T* fetch_add(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
     T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) volatile noexcept;
     T* fetch_sub(ptrdiff_t, memory_order = memory_order::seq_cst) noexcept;
+    T* fetch_max(T*, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* fetch_max(T*, memory_order = memory_order::seq_cst) noexcept;
+    T* fetch_min(T*, memory_order = memory_order::seq_cst) volatile noexcept;
+    T* fetch_min(T*, memory_order = memory_order::seq_cst) noexcept;
 
     T* operator++(int) volatile noexcept;
     T* operator++(int) noexcept;
@@ -103,25 +107,26 @@ primary template.
     [:en] Atomic pointer computations
     [:zh_CN] 原子性指针运算
     [|@code [`[^key]] ]
-    [|@code
-        [:en] Op
-        [:zh_CN] op ]
-    [|  [:en] Computation
-        [:zh_CN] 运算 ]
+    [|@code [:en] Op [:zh_CN] op ]
+    [| [:en] Computation [:zh_CN] 运算 ]
 ]
-[|] add [|] +
-[|] [:en] addition
-    [:zh_CN] 加
-[|] sub [|] -
-[|] [:en] subtraction
-    [:zh_CN] 减
+[|] add [|] + [|] [:en] addition [:zh_CN] 加
+[|] sub [|] - [|] [:en] subtraction [:zh_CN] 减
+[|] max [|]   [|] [:en] maximum [:zh_CN] 最大值
+[|] min [|]   [|] [:en] minimum [:zh_CN] 最小值
 [table:end]
 
 [%@lib atomic_fetch_add]
+[%@lib atomic_fetch_max]
+[%@lib atomic_fetch_min]
 [%@lib atomic_fetch_sub]
 [%@lib atomic_fetch_add_explicit]
+[%@lib atomic_fetch_max_explicit]
+[%@lib atomic_fetch_min_explicit]
 [%@lib atomic_fetch_sub_explicit]
 [%@lib@member fetch_add[!atomic<T*>]]
+[%@lib@member fetch_max[!atomic<T*>]]
+[%@lib@member fetch_min[!atomic<T*>]]
 [%@lib@member fetch_sub[!atomic<T*>]]
 [codeblock:declaration]
 T* fetch_key[[redoc("^<3c")]](ptrdiff_t operand, memory_order order = memory_order::seq_cst) volatile noexcept;
@@ -166,6 +171,21 @@ effects.
 [:en] The result may be an undefined address, but the operations otherwise have
 no undefined behavior.
 [:zh_CN] 结果可能是未定义的地址，但除此之外该操作没有未定义的行为。
+
+[para]
+[:en] For [`fetch_max] and [`fetch_min], the maximum and minimum computation is
+performed as if by [`max] and [`min] algorithms ([#alg.min.max]), respectively,
+with the object value and the first parameter as the arguments.
+[:zh_CN] [`fetch_max] 和 [`fetch_min] 分别如同以对象的值和第一个形参作为实参，
+通过 [`max] 和 [`min] 算法（[#alg.min.max]）实施最大值和最小值运算。
+
+[begin:note]
+[:en] If the pointers point to different complete objects (or subobjects thereof),
+the [`<] operator does not establish a strict weak ordering
+([#:tab#cpp17.lessthancomparable], [#expr.rel]).
+[:zh_CN] 当指针指向不同的完整对象（或其子对象）时，[`<] 运算符并不设立严格弱序
+（[#:tab#cpp17.lessthancomparable]，[#expr.rel]）。
+[end:note]
 [div:end]
 
 [%@lib@member operator+=[!atomic<T*>]]

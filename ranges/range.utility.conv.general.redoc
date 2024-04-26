@@ -43,28 +43,36 @@ constexpr bool [[redoc("*>")]]reservable-container =          // [=expos]
 [codeblock:end]
 
 [para]
-[:en] Let [*container-container] be defined as follows:
-[:zh_CN] 令 [*container-container] 定义如下：
+[:en] Let [*container-appendable] be defined as follows:
+[:zh_CN] 令 [*container-appendable] 定义如下：
 
 [codeblock:synopsis]
 template<class Container, class Ref>
-constexpr bool [[redoc("*>")]]container-insertable =          // [=expos]
+constexpr bool [[redoc("*>")]]container-appendable =          // [=expos]
   requires(Container& c, Ref&& ref) {
-    requires (requires { c.push_back(std::forward<Ref>(ref)); } ||
+    requires (requires { c.emplace_back(std::forward<Ref>(ref)); } ||
+              requires { c.push_back(std::forward<Ref>(ref)); } ||
+              requires { c.emplace(c.end(), std::forward<Ref>(ref)); } ||
               requires { c.insert(c.end(), std::forward<Ref>(ref)); });
   };
 [codeblock:end]
 
 [para]
-[:en] Let [*container-inserter] be defined as follows:
-[:zh_CN] 令 [*container-inserter] 定义如下：
+[:en] Let [*container-appendable] be defined as follows:
+[:zh_CN] 令 [*container-appendable] 定义如下：
 
 [codeblock:synopsis]
 template<class Ref, class Container>
-constexpr auto [[redoc("*>")]]container-inserter(Container& c) {                // [=expos]
-  if constexpr (requires { c.push_back(declval<Ref>()); })
-    return back_inserter(c);
-  else
-    return inserter(c, c.end());
+constexpr auto [[redoc("*>")]]container-appendable(Container& c) {                // [=expos]
+  return [&c]<class Ref>(Ref&& ref) {
+    if constexpr (requires { c.emplace_back(declval<Ref>()); })
+      c.emplace_back(std::forward<Ref>(ref));
+    else if constexpr (requires { c.push_back(declval<Ref>()); })
+      c.push_back(std::forward<Ref>(ref));
+    else if constexpr (requires { c.emplace(c.end(), declval<Ref>()); })
+      c.emplace(c.end(), std::forward<Ref>(ref));
+    else
+      c.insert(c.end(), std::forward<Ref>(ref));
+  };
 }
 [codeblock:end]

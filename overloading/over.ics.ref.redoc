@@ -4,16 +4,40 @@
 ]
 
 [para]
-[:en]
-When a parameter of reference type binds directly ([#dcl.init.ref]) to an
-argument expression, the implicit conversion sequence is the identity
-conversion, unless the argument expression has a type that is a derived class of
-the parameter type, in which case the implicit conversion sequence is a
-derived-to-base conversion ([#over.best.ics]).
-[:zh_CN]
-当将引用类型的形参直接绑定（[#dcl.init.ref]）到实参表达式时，其隐式转换序列是
-恒等转换，除非该实参表达式的类型是该形参类型的派生类，这种情况下其隐式转换序列为
+[:en] When a parameter of type [=lq]reference to [=cv] [`T][=rq] binds directly
+([#dcl.init.ref]) to an argument expression:
+[:zh_CN] 当将“[=cv] [`T] 的引用”类型的形参直接绑定（[#dcl.init.ref]）到
+实参表达式时：
+
+[list]
+[item]
+[:en] If the argument expression has a type that is a derived class of the
+parameter type, the implicit conversion sequence is a derived-to-base conversion
+([#over.best.ics]).
+[:zh_CN] 若该实参表达式的类型是该形参类型的派生类，则其隐式转换序列为
 派生类向基类转换（[#over.best.ics]）。
+
+[item]
+[:en] Otherwise, if [`T] is a function type, or if the type of the argument is
+possibly cv-qualified [`T], or if [`T] is an array type of unknown bound with
+element type [`U] and the argument has an array type of known bound whose
+element type is possibly cv-qualified [`U], the implicit conversion sequence is
+the identity conversion.
+[:zh_CN] 否则，若 [`T] 是函数类型，或若实参的类型是可能被 cv 限定的 [`T]，或若
+[`T] 是具有元素类型 [`U] 的未知边界的数组类型而实参具有已知边界的数组类型且其
+元素类型是可能被 cv 限定的 [`U]，则其隐式转换序列为恒等转换。
+
+[begin:note]
+[:en] When [`T] is a function type, the type of the argument can differ only by
+the presence of [`:key noexcept].
+[:zh_CN] 当 [`T] 为函数类型时，实参的类型可以仅在是否有 [`:key noexcept] 方面
+有所不同。
+[end:note]
+
+[item]
+[:en] Otherwise, the implicit conversion sequence is a qualification conversion.
+[:zh_CN] 否则，其隐式转换序列为限定转换。
+[list:end]
 
 [begin:example]
 [codeblock]
@@ -26,17 +50,12 @@ int i = f(b);       // [:en] calls [`f(B&)], an exact match, rather than [`f(A&)
 [codeblock:end]
 [end:example]
 
-[:en]
-If the parameter binds directly to the result of applying a conversion function
-to the argument expression, the implicit conversion sequence is a user-defined
-conversion sequence ([#over.ics.user]) whose second standard conversion
-sequence is either an identity conversion or, if the conversion function returns
-an entity of a type that is a derived class of the parameter type, a
-derived-to-base conversion.
-[:zh_CN]
-当形参直接绑定到转换函数应用于实参表达式的结果上时，其隐式转换序列是用户定义的
-转换序列（[#over.ics.user]），其第二个标准转换序列要么是恒等转换，要么当该转换
-函数返回类型为形参类型的派生类的实体时，是派生类到基类的转换。
+[:en] If the parameter binds directly to the result of applying a conversion
+function to the argument expression, the implicit conversion sequence is a
+user-defined conversion sequence ([#over.ics.user]) whose second standard
+conversion sequence is determined by the above rules.
+[:zh_CN] 当形参直接绑定到转换函数应用于实参表达式的结果上时，其隐式转换序列是
+用户定义的转换序列（[#over.ics.user]），其第二个标准转换序列由上述规则决定。
 
 [para]
 [:en]
@@ -60,26 +79,22 @@ itself and does not constitute a conversion.
 顶层的 cv 限定中的任何区别均被该初始化自身所涵盖且并不构成一个转换。
 
 [para]
-[:en]
-Except for an implicit object parameter, for which see [#over.match.funcs], an
-implicit conversion sequence cannot be formed if it requires binding an lvalue
-reference other than a reference to a non-volatile [`:key const] type to an
-rvalue or binding an rvalue reference to an lvalue other than a function lvalue.
-[:zh_CN]
-除了隐含对象形参的情况（参见 [#over.match.funcs]），若需要将并非指代非 volatile
-[`:key const] 类型的引用的左值引用绑定到右值，或者需要将右值引用绑定到除函数左值
-外的左值，则不能构成隐式转换序列。
+[:en] Except for an implicit object parameter, for which see [#over.match.funcs],
+an implicit conversion sequence cannot be formed if it requires binding an
+lvalue reference other than a reference to a non-volatile [`:key const] type to
+an rvalue or binding an rvalue reference to an lvalue of object type.
+[:zh_CN] 除了隐含对象形参的情况（参见 [#over.match.funcs]），若需要将并非指代非
+volatile [`:key const] 类型的引用的左值引用绑定到右值，或者需要将右值引用绑定到
+对象类型的左值，则不能构成隐式转换序列。
 
 [begin:note]
-[:en]
-This means, for example, that a candidate function cannot be a viable function
-if it has a non-[`:key const] lvalue reference parameter (other than the
-implicit object parameter) and the corresponding argument would require a
+[:en] This means, for example, that a candidate function cannot be a viable
+function if it has a non-[`:key const] lvalue reference parameter (other than
+the implicit object parameter) and the corresponding argument would require a
 temporary to be created to initialize the lvalue reference (see [#dcl.init.ref]).
-[:zh_CN]
-这意味着，例如说，当候选函数带有（除隐含对象形参之外的）非 [`:key const] 左值
-引用形参且其对应实参需要创建临时对象以初始化该左值引用（参见 [#dcl.init.ref]）时，
-它不能作为可行函数。
+[:zh_CN] 这意味着，例如说，当候选函数带有（除隐含对象形参之外的）非 [`:key const]
+左值引用形参且其对应实参需要创建临时对象以初始化该左值引用（参见 [#dcl.init.ref]）
+时，它不能作为可行函数。
 [end:note]
 
 [para]

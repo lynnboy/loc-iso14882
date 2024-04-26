@@ -1,0 +1,799 @@
+[section#range.concat.iterator
+    [:en] Class [`concat_view::[*iterator]]
+    [:zh_CN] 类 [`concat_view::[*iterator]]
+]
+
+[%@lib@member concat_view[!iterator]]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range... Views>
+    requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0) &&
+              [[redoc("*:c>")]]concatable<Views...>
+  template<bool Const>
+  class concat_view<Views...>::[[redoc("*>")]]iterator {
+
+  public:
+    using iterator_category = [[redoc("[=seebelow]")]];                                // [:en] not always present. [:zh_CN] 不总是提供
+    using iterator_concept = [[redoc("[=seebelow]")]];
+    using value_type = [[redoc("*>")]]concat-value-t<[[redoc("*>")]]maybe-const<Const, Views>...>;
+    using difference_type = common_type_t<range_difference_t<[[redoc("*>")]]maybe-const<Const, Views>>...>;
+
+  private:
+    using [[redoc("*>")]]base-iter =                                                       // [=expos]
+      variant<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>...>;
+
+    [[redoc("*>")]]maybe-const<Const, concat_view>* [[redoc("*>")]]parent_ = nullptr;                     // [=expos]
+    [[redoc("*>")]]base-iter [[redoc("*>")]]it_;                                                          // [=expos]
+
+    template<size_t N>
+      constexpr void [[redoc("*>")]]satisfy();                                             // [=expos]
+    template<size_t N>
+      constexpr void [[redoc("*>")]]prev();                                                // [=expos]
+
+    template<size_t N>
+      constexpr void [[redoc("*>")]]advance-fwd(difference_type offset,                    // [=expos]
+                                 difference_type steps);
+    template<size_t N>
+      constexpr void [[redoc("*>")]]advance-bwd(difference_type offset,                    // [=expos]
+                                 difference_type steps);
+
+    template<class... Args>
+      constexpr explicit [[redoc("*>")]]iterator([[redoc("*>")]]maybe-const<Const, concat_view>* parent,  // [=expos]
+                                  Args&&... args)
+        requires [[redoc("`:c>")]]constructible_from<[[redoc("*>")]]base-iter, Args&&...>;
+
+  public:
+    [[redoc("*>")]]iterator() = default;
+
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
+      requires Const && ([[redoc("`:c>")]]convertible_to<iterator_t<Views>, iterator_t<const Views>> && ...);
+
+    constexpr decltype(auto) operator*() const;
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr void operator++(int);
+    constexpr [[redoc("*>")]]iterator operator++(int)
+      requires [[redoc("*:c>")]]all-forward<Const, Views...>;
+    constexpr [[redoc("*>")]]iterator& operator--()
+      requires [[redoc("*:c>")]]concat-is-bidirectional<Const, Views...>;
+    constexpr [[redoc("*>")]]iterator operator--(int)
+      requires [[redoc("*:c>")]]concat-is-bidirectional<Const, Views...>;
+    constexpr [[redoc("*>")]]iterator& operator+=(difference_type n)
+      requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+    constexpr [[redoc("*>")]]iterator& operator-=(difference_type n)
+      requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires([[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>>&&...);
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& it, default_sentinel_t);
+    friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+    friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+    friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+    friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+    friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires ([[redoc("*:c>")]]all-random-access<Const, Views...> &&
+                ([[redoc("`:c>")]]three_way_comparable<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>> && ...));
+    friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& it, difference_type n)
+        requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+    friend constexpr [[redoc("*>")]]iterator operator+(difference_type n, const [[redoc("*>")]]iterator& it)
+      requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+    friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& it, difference_type n)
+      requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, default_sentinel_t)
+      requires [[redoc("[=seebelow]")]];
+    friend constexpr difference_type operator-(default_sentinel_t, const [[redoc("*>")]]iterator& x)
+      requires [[redoc("[=seebelow]")]];
+    friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& it) noexcept([[redoc("[=seebelow]")]]);
+    friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y) noexcept([[redoc("[=seebelow]")]])
+      requires [[redoc("[=seebelow]")]];
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`[*iterator]::iterator_concept] is defined as follows:
+[:zh_CN] [`[*iterator]::iterator_concept] 的定义如下：
+
+[list]
+[item]
+[:en] If [`[*:c concat-is-random-access]<Const, Views...>] is modeled, then
+[`iterator_concept] denotes [`random_access_iterator_tag].
+[:zh_CN] 若构成了 [`[*:c concat-is-random-access]<Const, Views...>]，
+则 [`iterator_concept] 代表 [`random_access_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`[*:c concat-is-bidirectional]<Const, Views...>] is modeled,
+then [`iterator_concept] denotes [`bidirectional_iterator_tag].
+[:zh_CN] 否则，若构成了 [`[*:c concat-is-bidirectional]<Const, Views...>]，
+则 [`iterator_concept] 代表 [`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`[*all-forward]<Const, Views...>] is modeled,
+then [`iterator_concept] denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若构成了 [`[*all-forward]<Const, Views...>]，
+则 [`iterator_concept] 代表 [`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_concept] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_concept] 代表 [`input_iterator_tag]。
+[list:end]
+
+[para]
+[:en] The member [~typedef-name] [`iterator_category] is defined if and only if
+[`[*:c all-forward]<Const, Views...>] is modeled.
+[:zh_CN] 当且仅当构成了 [`[*:c all-forward]<Const, Views...>] 时，成员
+[~typedef-名] [`iterator_category] 有定义。
+
+[:en] In that case, [`[*iterator]::iterator_category] is defined as follows:
+[:zh_CN] 这种情况下，[`[*iterator]::iterator_category] 的定义如下：
+
+[list]
+[item]
+[:en] If [`is_reference_v<[*concat-reference-t]<[*maybe-const]<Const, Views>...>>]
+is [`false], then [`iterator_category] denotes [`input_iterator_tag].
+[:zh_CN] 如果 [`is_reference_v<[*concat-reference-t]<[*maybe-const]<Const, Views>...>>]
+为 [`false]，则 [`iterator_category] 代表 [`input_iterator_tag]。
+
+[item]
+[:en] Otherwise, let [`Cs] denote the pack of types
+[`iterator_traits<iterator_t<[*maybe-const]<Const, Views>>>::iterator_category...].
+[:zh_CN] 否则，令 [`Cs] 代表类型包组
+[`iterator_traits<iterator_t<[*maybe-const]<Const, Views>>>::iterator_category...]。
+
+[list]
+[item]
+[:en] If
+[`([`:c derived_from]<Cs, random_access_iterator_tag> && ...) && [*:c concat-is-random-access]<Const, Views...>]
+is [`true], [`iterator_category] denotes [`random_access_iterator_tag].
+[:zh_CN] 若
+[`([`:c derived_from]<Cs, random_access_iterator_tag> && ...) && [*:c concat-is-random-access]<Const, Views...>]
+为 [`true]，则 [`iterator_category] 代表 [`random_access_iterator_tag]。
+
+[item]
+[:en] Otherwise, if
+[`([`:c derived_from]<Cs, bidirectional_iterator_tag> && ...) && [*:c concat-is-bidirectional]<Const, Views...>]
+is [`true], [`iterator_category] denotes [`bidirectional_iterator_tag].
+[:zh_CN] 否则，若
+[`([`:c derived_from]<Cs, bidirectional_iterator_tag> && ...) && [*:c concat-is-bidirectional]<Const, Views...>]
+为 [`true]，则 [`iterator_category] 代表 [`bidirectional_iterator_tag]。
+
+[item]
+[:en] Otherwise, if [`([`:c derived_from]<Cs, forward_iterator_tag> && ...)]
+is [`true], [`iterator_category] denotes [`forward_iterator_tag].
+[:zh_CN] 否则，若 [`([`:c derived_from]<Cs, forward_iterator_tag> && ...)]
+为 [`true]，则 [`iterator_category] 代表 [`forward_iterator_tag]。
+
+[item]
+[:en] Otherwise, [`iterator_category] denotes [`input_iterator_tag].
+[:zh_CN] 否则，[`iterator_category] 代表 [`input_iterator_tag]。
+[list:end]
+[list:end]
+
+[%@lib@member concat_view::[*iterator][![*satisfy]]]
+[codeblock:declaration]
+template<size_t N>
+  constexpr void [[redoc("*>")]]satisfy();                                 // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr (N < (sizeof...(Views) - 1)) {
+  if (std::get<N>([[redoc("*>")]]it_) == ranges::end(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]views_))) {
+    [[redoc("*>")]]it_.template emplace<N + 1>(ranges::begin(std::get<N + 1>([[redoc("*>")]]parent_->[[redoc("*>")]]views_)));
+    [[redoc("*>")]]satisfy<N + 1>();
+  }
+}
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][![*prev]]]
+[codeblock:declaration]
+template<size_t N>
+  constexpr void [[redoc("*>")]]prev();                                    // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr (N == 0) {
+  --std::get<0>([[redoc("*>")]]it_);
+} else {
+  if (std::get<N>([[redoc("*>")]]it_) == ranges::begin(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]views_))) {
+    [[redoc("*>")]]it_.template emplace<N - 1>(ranges::end(std::get<N - 1>([[redoc("*>")]]parent_->[[redoc("*>")]]views_)));
+    [[redoc("*>")]]prev<N - 1>();
+  } else {
+    --std::get<N>([[redoc("*>")]]it_);
+  }
+}
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][![*advance-fwd]]]
+[codeblock:declaration]
+template<size_t N>
+  constexpr void [[redoc("*>")]]advance-fwd(difference_type offset, difference_type steps);        // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using underlying_diff_type = iter_difference_t<variant_alternative_t<N, [[redoc("*>")]]base-iter>>;
+if constexpr (N == sizeof...(Views) - 1) {
+  std::get<N>([[redoc("*>")]]it_) += static_cast<underlying_diff_type>(steps);
+} else {
+  auto n_size = ranges::distance(std::get<N>([[redoc("*>")]]parent_->[[redoc("*>")]]views_));
+  if (offset + steps < n_size) {
+    std::get<N>([[redoc("*>")]]it_) += static_cast<underlying_diff_type>(steps);
+  } else {
+    [[redoc("*>")]]it_.template emplace<N + 1>(ranges::begin(std::get<N + 1>([[redoc("*>")]]parent_->[[redoc("*>")]]views_)));
+    [[redoc("*>")]]advance-fwd<N + 1>(0, offset + steps - n_size);
+  }
+}
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][![*advance-bwd]]]
+[codeblock:declaration]
+template<size_t N>
+  constexpr void [[redoc("*>")]]advance-bwd(difference_type offset, difference_type steps);        // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using underlying_diff_type = iter_difference_t<variant_alternative_t<N, [[redoc("*>")]]base-iter>>;
+if constexpr (N == 0) {
+  std::get<N>([[redoc("*>")]]it_) -= static_cast<underlying_diff_type>(steps);
+} else {
+  if (offset >= steps) {
+    std::get<N>([[redoc("*>")]]it_) -= static_cast<underlying_diff_type>(steps);
+  } else {
+    auto prev_size = ranges::distance(std::get<N - 1>([[redoc("*>")]]parent_->[[redoc("*>")]]views_));
+    [[redoc("*>")]]it_.template emplace<N - 1>(ranges::end(std::get<N - 1>([[redoc("*>")]]parent_->[[redoc("*>")]]views_)));
+    [[redoc("*>")]]advance-bwd<N - 1>(prev_size, steps - offset);
+  }
+}
+[codeblock:end]
+[div:end]
+
+[%@lib@ctor concat_view::[*iterator]]
+[codeblock:declaration]
+template<class... Args>
+  constexpr explicit [[redoc("*>")]]iterator([[redoc("*>")]]maybe-const<Const, concat_view>* parent,          // [=expos]
+                              Args&&... args)
+    requires [[redoc("`:c>")]]constructible_from<[[redoc("*>")]]base-iter, Args&&...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`parent], and initializes [*it_] with
+[`std::forward<Args>(args)...].
+[:zh_CN] 以 [`parent] 初始化 [*parent_]，并以 [`std::forward<Args>(args)...]
+初始化 [*it_]。
+[div:end]
+
+[%@lib@ctor concat_view::[*iterator]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> it)
+  requires Const &&
+           ([[redoc("`:c>")]]convertible_to<iterator_t<Views>, iterator_t<const Views>> && ...);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*parent_] with [`it.[*parent_]], and let [`[$i]] be
+[`it.[*it_].index()], initializes [*it_] with
+[`[*base-iter](in_place_index<[$i]>, std::get<[$i]>(std::move(it.[*it_])))].
+[:zh_CN] 以 [`it.[*parent_]] 初始化 [*parent_]，并令 [`[$i]] 为 [`it.[*it_].index()]，
+以 [`[*base-iter](in_place_index<[$i]>, std::get<[$i]>(std::move(it.[*it_])))]
+初始化 [*it_]。
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator*]]
+[codeblock:declaration]
+constexpr decltype(auto) operator*() const;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using reference = [[redoc("*>")]]concat-reference-t<[[redoc("*>")]]maybe-const<Const, Views>...>;
+return std::visit([](auto&& it) -> reference { return *it; },
+                  [[redoc("*>")]]it_);
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator++]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+++std::get<[[redoc("$>")]]i>([[redoc("*>")]]it_);
+[[redoc("*>")]]satisfy<[[redoc("$>")]]i>();
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator++]]
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+++*this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator++]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator++(int)
+  requires [[redoc("*:c>")]]all-forward<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+++*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator--]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator--()
+  requires [[redoc("*:c>")]]concat-is-bidirectional<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]prev([[redoc("$>")]]i);
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator--]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator operator--(int)
+  requires [[redoc("*:c>")]]concat-is-bidirectional<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto tmp = *this;
+--*this;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator+=]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator+=(difference_type n)
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Let [`[$i]] be [`[*it_].index()].
+[:zh_CN] 令 [`[$]] 为 [`[*it_].index()]。
+
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (n > 0) {
+  [[redoc("*>")]]advance-fwd<[[redoc("$>")]]i>(std::get<[[redoc("$>")]]i>([[redoc("*>")]]it_) - ranges::begin(std::get<[[redoc("$>")]]i>([[redoc("*>")]]parent_->[[redoc("*>")]]views_)), n);
+} else if (n < 0) {
+  [[redoc("*>")]]advance-bwd<[[redoc("$>")]]i>(std::get<[[redoc("$>")]]i>([[redoc("*>")]]it_) - ranges::begin(std::get<[[redoc("$>")]]i>([[redoc("*>")]]parent_->[[redoc("*>")]]views_)), -n);
+}
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator-=]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator-=(difference_type n)
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+*this += -n;
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator`[`]]]
+[codeblock:declaration]
+constexpr decltype(auto) operator[](difference_type n) const
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return *((*this) + n);
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator==]]
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires([[redoc("`:c>")]]equality_comparable<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>>&&...);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`x.[*it_].valueless_by_exception()] and
+[`y.[*it_].valueless_by_exception()] are each [`false].
+[:zh_CN] [`x.[*it_].valueless_by_exception()] 和
+[`y.[*it_].valueless_by_exception()] 都为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return x.[[redoc("*>")]]it_ == y.[[redoc("*>")]]it_;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator==]]
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator@& it, default_sentinel_t);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`it.[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`it.[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+constexpr auto last_idx = sizeof...(Views) - 1;
+return it.[[redoc("*>")]]it_.index() == last_idx &&
+       std::get<last_idx>(it.[[redoc("*>")]]it_) == ranges::end(std::get<last_idx>(it.[[redoc("*>")]]parent_->[[redoc("*>")]]views_));
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator<]]
+[codeblock:declaration]
+friend constexpr bool operator<(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+friend constexpr bool operator>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+friend constexpr bool operator<=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+friend constexpr bool operator>=(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]all-random-access<Const, Views...>;
+friend constexpr auto operator<=>(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires ([[redoc("*:c>")]]all-random-access<Const, Views...> &&
+            ([[redoc("`:c>")]]three_way_comparable<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>> && ...));
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`x.[*it_].valueless_by_exception()] and
+[`y.[*it_].valueless_by_exception()] are each [`false].
+[:zh_CN] [`x.[*it_].valueless_by_exception()] 和
+[`y.[*it_].valueless_by_exception()] 都为 [`false]。
+
+[para]
+[:en] Let [`[$$op]] be the operator.
+[:zh_CN] 令 [`[$$op]] 为运算符。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return x.[[redoc("*>")]]it_ [[redoc("$>")]]op y.[[redoc("*>")]]it_;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator+]]
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator+(const [[redoc("*>")]]iterator& it, difference_type n)
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto temp = it;
+temp += n;
+return temp;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator+]]
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator+(difference_type n, const [[redoc("*>")]]iterator& it)
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return it + n;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator-]]
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]iterator operator-(const [[redoc("*>")]]iterator& it, difference_type n)
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto temp = it;
+temp -= n;
+return temp;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator-]]
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  requires [[redoc("*:c>")]]concat-is-random-access<Const, Views...>;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`x.[*it_].valueless_by_exception()] and
+[`y.[*it_].valueless_by_exception()] are each [`false].
+[:zh_CN] [`x.[*it_].valueless_by_exception()] 和
+[`y.[*it_].valueless_by_exception()] 都为 [`false]。
+
+[para:effects]
+[:en] Let [$i_[`x]] denotes [`x.[*it_].index()] and [$i_[`y]] denote
+[`y.[*it_].index()].
+[:zh_CN] 令 [$i_[`x]] 代表 [`x.[*it_].index()] 并令 [$i_[`y]] 代表
+[`y.[*it_].index()]。
+
+[list]
+[item]
+[:en] If [`[$i_[`x]] > [$i_[`y]]], let [$d_[`y]] be
+[`ranges::distance(std::get<[$i_[`y]]>(y.[*it_]), ranges::end(std::get<[$i_[`y]]>(y.[*parent_]->[*views_])))],
+[$d_[`x]] be
+[`ranges::distance(ranges::begin(std::get<[$i_[`x]]>(x.[*parent_]->[*views_])), std::get<[$i_[`x]]>(x.[*it_]))].
+[:zh_CN] 若 [`[$i_[`x]] > [$i_[`y]]]，则令 [$d_[`y]] 为
+[`ranges::distance(std::get<[$i_[`y]]>(y.[*it_]), ranges::end(std::get<[$i_[`y]]>(y.[*parent_]->[*views_])))]，
+[$d_[`x]] 为
+[`ranges::distance(ranges::begin(std::get<[$i_[`x]]>(x.[*parent_]->[*views_])), std::get<[$i_[`x]]>(x.[*it_]))]。
+
+[:en] Let [$s] denote the sum of the sizes of all the ranges
+[`std::get<[$i]>(x.[*parent_]->[*views_])] for every integer [$i] in the range
+[=range([$i_[`y]] + 1,[$i_[`x]])] if there is any, and [`0] otherwise, of type
+[`difference_type], equivalent to:
+[:zh_CN] 令 [$s] 代表对于范围 [=range([$i_[`y]] + 1,[$i_[`x]])] 中的每个整数 [$i]
+的所有范围 [`std::get<[$i]>(x.[*parent_]->[*views_])] 的大小（如果有）的和，否则
+为 [`0]，类型为 [`difference_type]，等价于：
+[codeblock]
+return [[redoc("[$d_[`y]]")]] + [[redoc("$>")]]s + [[redoc("[$d_[`x]]")]];
+[codeblock:end]
+
+[item]
+[:en] otherwise, if [`[$i_[`x]] < [$i_[`y]]] is [`true], equivalent to:
+[:zh_CN] 否则，若 [`[$i_[`x]] < [$i_[`y]]] 为 [`true]，则等价于：
+[codeblock]
+return -(y - x);
+[codeblock:end]
+
+[item]
+[:en] otherwise, equivalent to:
+[:zh_CN] 否则，等价于：
+[codeblock]
+return std::get<[[redoc("[$i_[`x]]")]]>(x.[[redoc("*>")]]it_) - std::get<[[redoc("[$i_[`y]]")]]>(y.[[redoc("*>")]]it_);
+[codeblock:end]
+[list:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator-]]
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, default_sentinel_t)
+  requires [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`x.[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`x.[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Let [$i_[`x]] denote [`x.[*it_].index()], [$d_[`x]] be
+[`ranges::distance(std::get<[$i_[`x]]>(x.[*it_]), ranges::end(std::get<[$i_[`x]]>(x.[*parent_]->[*views_])))].
+[:zh_CN] 令 [$i_[`x]] 代表 [`x.[*it_].index()]，[$d_[`x]] 代表
+[`ranges::distance(std::get<[$i_[`x]]>(x.[*it_]), ranges::end(std::get<[$i_[`x]]>(x.[*parent_]->[*views_])))]。
+
+[:en] Let [$s] denote the sum of the sizes of all the ranges
+[`std::get<[$i]>(x.[*parent_]->[*views_])] for every integer [$i] in the range
+[=range([$i_[`x]] + 1,sizeof...(Views))] if there is any, and [`0] otherwise, of
+type [`difference_type], equivalent to:
+[:zh_CN] 令 [$s] 代表对于范围 [=range([$i_[`x]] + 1,sizeof...(Views))] 中的每个
+整数 [$i] 的所有范围 [`std::get<[$i]>(x.[*parent_]->[*views_])] 的大小（如果有）
+的和，否则为 [`0]，类型为 [`difference_type]，等价于：
+[codeblock]
+return -([[redoc("[$d_[`x]]")]] + [[redoc("$>")]]s);
+[codeblock:end]
+
+[para:remarks]
+[:en] Let [`Fs] be the pack that consists of all elements of [`Views] except the
+first element, the expression in the [~requires-clause] is equivalent to:
+[:zh_CN] 令 [`Fs] 为 [`Views] 中除了第一个元素之外的所有元素组成的包组，
+[~requires-子句]中的表达式等价于：
+[codeblock]
+([[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                    iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>> && ...) &&
+([[redoc("`:c>")]]sized_range<[[redoc("*>")]]maybe-const<Const, Fs>> && ...)
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!operator-]]
+[codeblock:declaration]
+friend constexpr difference_type operator-(default_sentinel_t s, const [[redoc("*>")]]iterator& x)
+  requires [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return -(x - default_sentinel);
+[codeblock:end]
+
+[para:remarks]
+[:en] Let [`Fs] be the pack that consists of all elements of [`Views] except the
+first element, the expression in the [~requires-clause] is equivalent to:
+[:zh_CN] 令 [`Fs] 为 [`Views] 中除了第一个元素之外的所有元素组成的包组，
+[~requires-子句]中的表达式等价于：
+[codeblock]
+([[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                    iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>> && ...) &&
+([[redoc("`:c>")]]sized_range<[[redoc("*>")]]maybe-const<Const, Fs>> && ...)
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!iter_move]]
+[codeblock:declaration]
+friend constexpr decltype(auto) iter_move(const [[redoc("*>")]]iterator& it) noexcept([[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`it.[*it_].valueless_by_exception()] is [`false].
+[:zh_CN] [`it.[*it_].valueless_by_exception()] 为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return std::visit([](const auto& i)
+                  -> [[redoc("*>")]]concat-rvalue-reference-t<[[redoc("*>")]]maybe-const<Const, Views>...> {
+                    return ranges::iter_move(i);
+                  },
+                  it.[[redoc("*>")]]it_);
+[codeblock:end]
+
+[para:remarks]
+[:en] The exception specification is equivalent to:
+[:zh_CN] 异常说明等价于：
+[codeblock]
+((is_nothrow_invocable_v<decltype(ranges::iter_move),
+                         const iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>&> &&
+  is_nothrow_convertible_v<range_rvalue_reference_t<[[redoc("*>")]]maybe-const<Const, Views>>,
+                           [[redoc("*>")]]concat-rvalue-reference-t<[[redoc("*>")]]maybe-const<Const, Views>...>>) &&
+ ...)
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat_view::[*iterator][!iter_swap]]
+[codeblock:declaration]
+friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y) noexcept([[redoc("[=seebelow]")]])
+  requires [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`x.[*it_].valueless_by_exception()] and
+[`y.[*it_].valueless_by_exception()] are each [`false].
+[:zh_CN] [`x.[*it_].valueless_by_exception()] 和
+[`y.[*it_].valueless_by_exception()] 都为 [`false]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+std::visit([&](const auto& it1, const auto& it2) {
+             if constexpr (is_same_v<decltype(it1), decltype(it2)>) {
+               ranges::iter_swap(it1, it2);
+             } else {
+               ranges::swap(*x, *y);
+             }
+           },
+           x.[[redoc("*>")]]it_, y.[[redoc("*>")]]it_);
+[codeblock:end]
+
+[para:remarks]
+[:en] The exception specification is equivalent to
+[:zh_CN] 其异常说明等价于：
+[codeblock]
+(noexcept(ranges::swap(*x, *y)) && ... && noexcept(ranges::iter_swap(its, its)))
+[codeblock:end]
+[:en@~] where [`its] is a pack of lvalues of type
+[`const iterator_t<[*maybe-const]<Const, Views>>] respectively.
+[:zh_CN@~] 其中 [`its] 为 [`const iterator_t<[*maybe-const]<Const, Views>>]
+类型的左值的包组。
+
+[para:~]
+[:en] The expression in the [~requires-clause] is equivalent to
+[:zh_CN] [~requires-子句]中的表达式等价于：
+[codeblock]
+swappable_with<iter_reference_t<iterator>, iter_reference_t<iterator>> &&
+(... && indirectly_swappable<iterator_t<[[redoc("*>")]]maybe-const<Const, Views>>>)
+[codeblock:end]
+[div:end]

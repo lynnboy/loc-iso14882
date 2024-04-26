@@ -4,10 +4,8 @@
 ]
 
 [para]
-[:en]
-Iteration statements specify looping.
-[:zh_CN]
-循环语句指定循环。
+[:en] Iteration statements specify looping.
+[:zh_CN] 循环语句指定循环。
 
 [:en]
 [%statement[![`while]]]
@@ -28,8 +26,7 @@ Iteration statements specify looping.
 
 [rule for-range-declaration [:zh_CN] for-范围声明式 ]
     [| [~:opt attribute-specifier-seq] decl-specifier-seq declarator ]
-    [| [~:opt attribute-specifier-seq] decl-specifier-seq [~:opt ref-qualifier]
-        [``[] identifier-list [``]] ]
+    [| structured-binding-declaration ]
 [rule:end]
 
 [rule for-range-initializer [:zh_CN] for-范围初始化式 ]
@@ -37,17 +34,13 @@ Iteration statements specify looping.
 [rule:end]
 [syntax:end]
 
-[:en]
-See [#dcl.meaning] for the optional [~attribute-specifier-seq] in a
+[:en] See [#dcl.meaning] for the optional [~attribute-specifier-seq] in a
 [~for-range-declaration].
-[:zh_CN]
-关于[~for-范围声明式]中的[~属性说明符序列]，参见 [#dcl.meaning]。
+[:zh_CN] 关于[~for-范围声明式]中的[~属性说明符序列]，参见 [#dcl.meaning]。
 
 [begin:note]
-[:en]
-A [~init-statement] ends with a semicolon.
-[:zh_CN]
-[~初始化语句]以分号结尾。
+[:en] A [~init-statement] ends with a semicolon.
+[:zh_CN] [~初始化语句]以分号结尾。
 [end:note]
 
 [para]
@@ -60,33 +53,79 @@ The substatement in an [~iteration-statement] implicitly defines a block scope
 [~循环语句]中的子语句隐式定义了一个块作用域（[#basic.scope]），循环每次经过时都
 进入和退出该作用域。
 
-[:en]
-If the substatement in an [~iteration-statement] is a single statement and not a
-[~compound-statement], it is as if it was rewritten to be a
+[:en] If the substatement in an [~iteration-statement] is a single statement and
+not a [~compound-statement], it is as if it was rewritten to be a
 [~compound-statement] containing the original statement.
-[:zh_CN]
-若[~循环语句]中的子语句是单个语句而不是[~复合语句]，则如同把它重写为包含该原语句
-的[~复合语句]一样。
+[:zh_CN] 若[~循环语句]中的子语句是单个语句而不是[~复合语句]，则如同把它重写为
+包含该原语句的[~复合语句]一样。
 
 [begin:example]
 [codeblock]
 while (--x >= 0)
   int i;
 [codeblock:end]
-
-[:en]
-can be equivalently rewritten as
-[:zh_CN]
-可被等价地重写为
-
+[:en] can be equivalently rewritten as
+[:zh_CN] 可被等价地重写为
 [codeblock]
 while (--x >= 0) {
   int i;
 }
 [codeblock:end]
 
-[:en]
-Thus after the [`:key while] statement, [`i] is no longer in scope.
-[:zh_CN]
-故在 [`:key while] 语句之后，[`i] 不再处于作用域中。
+[:en] Thus after the [`:key while] statement, [`i] is no longer in scope.
+[:zh_CN] 故在 [`:key while] 语句之后，[`i] 不再处于作用域中。
 [end:example]
+
+[para]
+[:en] A [+:adj trivially empty[!iteration statement]] is an iteration statement
+matching one of the following forms:
+[:zh_CN] [+:adj 平凡的空[!循环语句]]是匹配以下形式之一的循环语句：
+[list]
+[item]
+[:en@~] [`while (] [~expression] [`) ;]
+[:zh_CN@~] [`while (] [~表达式] [`) ;]
+[item]
+[:en@~] [`while (] [~expression] [) { }]
+[:zh_CN@~] [`while (] [~表达式] [) { }]
+[item]
+[:en@~] [`do ; while (] [~expression] [`) ;]
+[:zh_CN@~] [`do ; while (] [~表达式] [`) ;]
+[item]
+[:en@~] [`do { } while (] [~expression] [`) ;]
+[:zh_CN@~] [`do { } while (] [~表达式] [`) ;]
+[item]
+[:en@~] [`for (] [~init-statement] [~:opt expression] [`; ) ;]
+[:zh_CN@~] [`for (] [~初始化语句] [~:opt 表达式] [`; ) ;]
+[item]
+[:en@~] [`for (] [~init-statement] [~:opt expression] [`; ) { }]
+[:zh_CN@~] [`for (] [~初始化语句] [~:opt 表达式] [`; ) { }]
+[list:end]
+
+[:en] The [+:adj controlling[!expression]] of a trivially empty iteration
+statement is the [~expression] of a [`while], [`do], or [`for] statement
+(or [`true], if the [`for] statement has no [~expression]).
+[:zh_CN] 平凡的空循环语句的[+:adj 控制[!表达式]]，是 [`while]、[`do] 或 [`for]
+语句的 [~表达式]（或当 [`for] 语句没有[~表达式]时为 [`true]）。
+
+[:en] A [+:adj trivial infinite[!loop]] is a trivially empty iteration statement
+for which the converted controlling expression is a constant expression, when
+interpreted as a [~constant-expression] ([#expr.const]), and evaluates to [`true].
+[:zh_CN] [+:adj 平凡的无限[!循环]]是平凡的空循环语句，其转换后的控制表达式当判读
+为[~常量表达式]时是常量表达式（[#expr.const]），且求值为 [`true]。
+
+[:en] The [~statement] of a trivial infinite loop is replaced with a call to the
+function [`std::this_thread::yield] ([#thread.thread.this]);
+it is implementation-defined whether this replacement occurs
+on freestanding implementations.
+[:zh_CN] 平凡的无限循环的[~语句]，被替换为对函数 [`std::this_thread::yield]
+（[#thread.thread.this]）的调用；在自立式实现上是否发生这项替换是由实现定义的。
+
+[begin:note]
+[:en] In a freestanding environment, concurrent forward progress is not
+guaranteed; such systems therefore require explicit cooperation.
+[:zh_CN] 在自立式实现中并不保证并发向前进展；因此这样的系统需要明确的协作。
+
+[:en] A call to [`yield] can add implicit cooperation where none is otherwise
+intended.
+[:zh_CN] 对 [`yield] 的调用可以在本无意协作的地方添加隐式的协作。
+[end:note]

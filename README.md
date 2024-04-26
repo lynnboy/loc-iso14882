@@ -262,7 +262,7 @@ Original   |中文   |章节    |定义
 *label-seq*                 |*标号序列*     | [stmt.block]  | *标号*__\+__
 *selection-statement*       |*选择语句*     | [stmt.select.general] | `if` `constexpr`__?__ `(` *初始化语句*__?__ *条件* `)` *语句* (`else` *语句*)__?__ \|<br>`if` `!`__?__ `consteval` *复合语句* (`else` *语句*)__?__ \|<br> `switch` `(` *初始化语句*__?__ *条件* `)` *语句*
 *iteration-statement*       |*循环语句*     | [stmt.iter.general] | `while` `(` *条件* `)` *语句* \|<br> `do` *语句* `while` `(` *表达式* `)` `;` \|<br> `for` `(` *初始化语句* *条件*__?__ `;` *表达式*__?__ `)` *语句* \|<br> `for` `(` *初始化语句*__?__ *for-范围声明式* `:` *for-范围初始化式* `)` *语句*
-*for-range-declaration*     |*for-范围声明式*| [stmt.iter.general] | *属性说明符序列*__?__ *声明说明符序列* *声明符* \|<br> *属性说明符序列*__?__ *声明说明符序列* *引用限定符*__?__ `[` *标识符列表* `]`
+*for-range-declaration*     |*for-范围声明式*| [stmt.iter.general] | *属性说明符序列*__?__ *声明说明符序列* *声明符* \|<br> *结构化绑定声明式*
 *for-range-initializer*     |*for-范围初始化式*| [stmt.iter.general] | *表达式或花括号初始化列表*
 *jump-statement*            |*跳转语句*     | [stmt.jump.general] | `break` `;` \| `continue` `;` \|<br> `return` *表达式或花括号初始化列表*__?__ `;` \| *协程返回语句* \|<br> `goto` *标识符* `;`
 *coroutine-return-statement*|*协程返回语句* | [stmt.return.coroutine] | `co_return` *表达式或花括号初始化列表*__?__ `;`
@@ -1977,10 +1977,12 @@ trivial class                           |平凡类     |可平凡复制类且有
 trivial copy constructor                |平凡复制构造函数
 trivial default constructor             |平凡默认构造函数   |隐式声明的，非多态类，没有默认成员初始化式，子对象均可平凡默认构造
 trivial destructor                      |平凡析构函数
+trivial infinite loop                   |平凡的无限循环 |控制语句是常量`true`的平凡的空循环语句
 trivial move constructor                |平凡移动构造函数
 trivial type                            |平凡类型       |标量、平凡类，数组
 trivially copyable class                |可平凡复制类   |至少有一个合格四个复制成员之一且全为平凡，析构函数平凡且非弃置。非多态
 trivially copyable type                 |可平凡复制类型 |可用`memcpy`复制：标量、可平凡复制类，数组
+trivially empty iteration statement     |平凡的空循环语句   |空循环体的`while`和`do-while`，空循环体和增量表达式的`for`
 truncation                              |截断
 tuple                                   |元组
 TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型

@@ -1,0 +1,224 @@
+[section#range.concat.view
+    [:en] Class template [`concat_view]
+    [:zh_CN] 类模板 [`concat_view]
+]
+
+[%@lib concat_view]
+[codeblock:synopsis]
+namespace std::ranges {
+  template<class... Rs>
+  using [[redoc("*>")]]concat-reference-t = common_reference_t<range_reference_t<Rs>...>;      // [=expos]
+  template<class... Rs>
+  using [[redoc("*>")]]concat-value-t = common_type_t<range_value_t<Rs>...>;                   // [=expos]
+  template<class... Rs>
+  using [[redoc("*>")]]concat-rvalue-reference-t =                                             // [=expos]
+    common_reference_t<range_rvalue_reference_t<Rs>...>;
+
+  template<class... Rs>
+    concept [[redoc("*:c>")]]concat-indirectly-readable = [[redoc("[=seebelow]")]];     // [=expos]
+  template<class... Rs>
+    concept [[redoc("*:c>")]]concatable = [[redoc("[=seebelow]")]];                     // [=expos]
+  template<bool Const, class... Rs>
+    concept [[redoc("*:c>")]]concat-is-random-access = [[redoc("[=seebelow]")]];        // [=expos]
+  template<bool Const, class... Rs>
+    concept [[redoc("*:c>")]]concat-is-bidirectional = [[redoc("[=seebelow]")]];        // [=expos]
+
+  template<[[redoc("`:c>")]]input_range... Views>
+    requires ([[redoc("`:c>")]]view<Views> && ...) && (sizeof...(Views) > 0) &&
+              [[redoc("*:c>")]]concatable<Views...>
+  class concat_view : public view_interface<concat_view<Views...>> {
+
+    tuple<Views...> [[redoc("*>")]]views_;                                             // [=expos]
+
+    // [:en] [#range.concat.iterator], class template [`concat_view::[*iterator]] \
+    [:zh_CN] [#range.concat.iterator]，类模板 [`concat_view::[*iterator]]
+    template<bool> class [[redoc("*>")]]iterator;                                      // [=expos]
+
+  public:
+    constexpr concat_view() = default;
+    constexpr explicit concat_view(Views... views);
+
+    constexpr [[redoc("*>")]]iterator<false> begin() requires(!([[redoc("*:c>")]]simple-view<Views> && ...));
+    constexpr [[redoc("*>")]]iterator<true> begin() const
+      requires(([[redoc("`:c>")]]range<const Views> && ...) && [[redoc("*:c>")]]concatable<const Views...>);
+
+    constexpr auto end() requires(!([[redoc("*:c>")]]simple-view<Views> && ...));
+    constexpr auto end() const
+      requires(([[redoc("`:c>")]]range<const Views> && ...) && [[redoc("*:c>")]]concatable<const Views...>);
+
+    constexpr auto size() requires([[redoc("`:c>")]]sized_range<Views>&&...);
+    constexpr auto size() const requires([[redoc("`:c>")]]sized_range<const Views>&&...);
+  };
+
+  template<class... R>
+    concat_view(R&&...) -> concat_view<views::all_t<R>...>;
+}
+[codeblock:end]
+
+[codeblock:declaration]
+template<class... Rs>
+  concept [[redoc("*:c@def>")]]concat-indirectly-readable = [[redoc("[=seebelow]")]];                           // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The exposition-only [*:c concat-indirectly-readable] concept is equivalent
+to:
+[:zh_CN] 仅用于阐释的概念 [*:c concat-indirectly-readable] 等价于：
+[codeblock]
+template<class Ref, class RRef, class It>
+  concept [[redoc("*:c@def>")]]concat-indirectly-readable-impl =                         // [=expos]
+    requires (const It it) {
+      { *it } -> [[redoc("`:c>")]]convertible_to<Ref>;
+      { ranges::iter_move(it) } -> [[redoc("`:c>")]]convertible_to<RRef>;
+    };
+
+template<class... Rs>
+  concept [[redoc("*:c>")]]concat-indirectly-readable =                              // [=expos]
+    [[redoc("`:c>")]]common_reference_with<[[redoc("*>")]]concat-reference-t<Rs...>&&,
+                          [[redoc("*>")]]concat-value-t<Rs...>&> &&
+    [[redoc("`:c>")]]common_reference_with<[[redoc("*>")]]concat-reference-t<Rs...>&&,
+                          [[redoc("*>")]]concat-rvalue-reference-t<Rs...>&&> &&
+    [[redoc("`:c>")]]common_reference_with<[[redoc("*>")]]concat-rvalue-reference-t<Rs...>&&,
+                          [[redoc("*>")]]concat-value-t<Rs...> const&> &&
+    ([[redoc("*:c>")]]concat-indirectly-readable-impl<[[redoc("*>")]]concat-reference-t<Rs...>,
+                                     [[redoc("*>")]]concat-rvalue-reference-t<Rs...>,
+                                     iterator_t<Rs>> && ...);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class... Rs>
+  concept [[redoc("*:c@def>")]]concatable = [[redoc("[=seebelow]")]];                                           // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] The exposition-only [*:c concatable] concept is equivalent to:
+[:zh_CN] 仅用于阐释的概念 [*:c concatable] 等价于：
+[codeblock]
+template<class... Rs>
+  concept [[redoc("*:c@def>")]]concatable = requires {                                   // [=expos]
+    typename [[redoc("*:c>")]]concat-reference-t<Rs...>;
+    typename [[redoc("*:c>")]]concat-value-t<Rs...>;
+    typename [[redoc("*:c>")]]concat-rvalue-reference-t<Rs...>;
+  } && [[redoc("*:c>")]]concat-indirectly-readable<Rs...>;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<bool Const, class... Rs>
+  concept [[redoc("*:c@def>")]]concat-is-random-access = [[redoc("[=seebelow]")]];                              // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`Fs] be the pack that consists of all elements of [`Rs] except the
+last element, then [*:c concat-is-random-access] is equivalent to:
+[:zh_CN] 令 [`Fs] 为 [`Rs] 除了最后元素之外的所有元素组成的包组，则
+[*:c concat-is-random-access] 等价于：
+[codeblock]
+template<bool Const, class... Rs>
+  concept [[redoc("*:c@def>")]]concat-is-random-access =                                 // [=expos]
+    [[redoc("*:c>")]]all-random-access<Const, Rs...> &&
+    ([[redoc("`:c>")]]common_range<[[redoc("*>")]]maybe-const<Const, Fs>> && ...);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<bool Const, class... Rs>
+  concept [[redoc("*:c@def>")]]concat-is-bidirectional = [[redoc("[=seebelow]")]];                              // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`Fs] be the pack that consists of all elements of [`Rs] except the
+last element, then [*:c concat-is-bidirectional] is equivalent to:
+[:zh_CN] 令 [`Fs] 为 [`Rs] 除了最后元素之外的所有元素组成的包组，则
+[*:c concat-is-bidirectional] 等价于：
+[codeblock]
+template<bool Const, class... Rs>
+  concept [[redoc("*:c@def>")]]concat-is-bidirectional =                                 // [=expos]
+    [[redoc("*:c>")]]all-bidirectional<Const, Rs...> &&
+    ([[redoc("`:c>")]]common_range<[[redoc("*>")]]maybe-const<Const, Fs>> && ...);
+[codeblock:end]
+[div:end]
+
+[%@lib@ctor concat_view]
+[codeblock:declaration]
+constexpr explicit concat_view(Views... views);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*views_] with [`std::move(views)...].
+[:zh_CN] 以 [`std::move(views)...] 初始化 [*views_]。
+[div:end]
+
+[%@lib@member concat[!begin]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator<false> begin() requires(!([[redoc("*:c>")]]simple-view<Views> && ...));
+constexpr [[redoc("*>")]]iterator<true> begin() const
+  requires(([[redoc("`:c>")]]range<const Views> && ...) && [[redoc("*:c>")]]concatable<const Views...>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [`is-const] be [`true] for the const-qualified overload, and [`false]
+otherwise.
+[:zh_CN] 令 [`is-const] 对于 const 限定的重载为 [`true]，否则为 [`false]。
+
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]iterator<is-const> it(this, in_place_index<0>, ranges::begin(std::get<0>([[redoc("*>")]]views_)));
+it.template [[redoc("*>")]]satisfy<0>();
+return it;
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat[!end]]
+[codeblock:declaration]
+constexpr auto end() requires(!([[redoc("*:c>")]]simple-view<Views> && ...));
+constexpr auto end() const
+  requires(([[redoc("`:c>")]]range<const Views> && ...) && [[redoc("*:c>")]]concatable<const Views...>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [`is-const] be [`true] for the const-qualified overload, and [`false]
+otherwise.
+[:zh_CN] 令 [`is-const] 对于 const 限定的重载为 [`true]，否则为 [`false]。
+
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+constexpr auto N = sizeof...(Views);
+if constexpr ([[redoc("`:c>")]]common_range<[[redoc("*>")]]maybe-const<is-const, Views...[N - 1][[redoc()]]>>) {
+  return [[redoc("*>")]]iterator<is-const>(this, in_place_index<N - 1>,
+                            ranges::end(std::get<N - 1>([[redoc("*>")]]views_)));
+} else {
+  return default_sentinel;
+}
+[codeblock:end]
+[div:end]
+
+[%@lib@member concat[!size]]
+[codeblock:declaration]
+constexpr auto size() requires([[redoc("`:c>")]]sized_range<Views>&&...);
+constexpr auto size() const requires([[redoc("`:c>")]]sized_range<const Views>&&...);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return apply(
+  [](auto... sizes) {
+    using CT = make-unsigned-like-t<common_type_t<decltype(sizes)...>>;
+    return (CT(sizes) + ...);
+  },
+  tuple-transform(ranges::size, [[redoc("*>")]]views_));
+[codeblock:end]
+[div:end]
