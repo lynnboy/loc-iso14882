@@ -14,6 +14,9 @@ namespace std {
     basic_format_args<basic_format_context> args_;      // [=expos]
     Out out_;                                           // [=expos]
 
+    basic_format_context(const basic_format_context&) = delete;
+    basic_format_context& operator=(const basic_format_context&) = delete;
+
   public:
     using iterator = Out;
     using char_type = charT;
@@ -129,12 +132,13 @@ template<> struct std::formatter<S> {
   [:zh_CN] 解析格式为 [`{] [~@fmt 数字] [`}] 的宽度实参标识
   constexpr auto parse(format_parse_context& ctx) {
     auto iter = ctx.begin();
+    auto is_digit = [](auto c) { return c >= '0' && c <= '9'; };
     auto get_char = [&]() { return iter != ctx.end() ? *iter : 0; };
     if (get_char() != '{')
       return iter;
     ++iter;
     char c = get_char();
-    if (!isdigit(c) || (++iter, get_char()) != '}')
+    if (!is_digit(c) || (++iter, get_char()) != '}')
       throw format_error("invalid format");
     width_arg_id = c - '0';
     ctx.check_arg_id(width_arg_id);
@@ -152,7 +156,7 @@ template<> struct std::formatter<S> {
       else
         return value;
       });
-    return format_to(ctx.out(), "{0:x<{1}}", s.value, width);
+    return format_to(ctx.out(), "{0:x>{1}}", s.value, width);
   }
 };
 

@@ -227,8 +227,11 @@ def CppXIV(): return Cpp() + ' 2014'
 def CppXVII(): return Cpp() + ' 2017'
 def CppXX(): return Cpp() + ' 2020'
 def CppXXIII(): return Cpp() + ' 2023'
+def CppXXVI(): return Cpp() + ' 2026'
 def IsoCUndated(): return 'ISO/IEC 9899'
 def IsoC(): return IsoCUndated() + ':2018'
+def IsoFloatUndated(): return 'ISO/IEC 60559'
+def IsoPosixUndated(): return 'ISO/IEC/IEEE 9945'
 def opt(_1:str): return _1 + ensuremath(fr"_\mathit{{_{text('opt')}}}")
 @applyTo(['?bigoh'])
 def bigoh(_1:str): return ensuremath(fr"\mathscr{{O}}({_1})")
@@ -278,8 +281,8 @@ def ctemplate(_1:str): return Fundesc(text('Class template'))
 def templalias(_1:str): return Fundesc(text('Alias template'))
 
 # Cross reference
-def xref(): return f"[.textsc {text('See also:')}] "
-def xrefc(_1:str): return f'{xref()} {IsoC()}, {_1}'
+def xref(_1:str): return f"[.textsc {text('See also:')} {_1}]"
+def xrefc(_1:str): return xref(f'{IsoC()}, {_1}')
 @applyTo(['?termref# [!]'])
 def termref(_1:str, _2:str, _3:str): return f'[.textit {_2}]{_3} ({ref(_1)})'
 
@@ -422,6 +425,7 @@ def table_row(): pass
 def table(): pass
 def syntax(): pass
 def rule(): pass
+def formula(): pass
 
 inline = {
     ':': langtag,

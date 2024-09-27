@@ -17,9 +17,7 @@
 this revision of [=Cpp].
 [:zh_CN] 有效的 [=CppIII] 代码可能在 [=Cpp] 的此版本中无法编译或产生不同的结果。
 
-[:en] For example:
-[:zh_CN] 例如：
-
+[begin:example]
 [codeblock]
 void f(void *);     // #1
 void f(...);        // #2
@@ -28,6 +26,37 @@ template<int N> void g() {
                     [:zh_CN] 调用 #2；以前调用的是 #1
 }
 [codeblock:end]
+[end:example]
+
+[para:diff] [#conv.typeid]
+[?change]
+[:en] Evaluation of operands in [`:key typeid].
+[:zh_CN] [`:key typeid] 中操作数的求值。
+
+[?rationale]
+[:en] Introduce additional expression value categories.
+[:zh_CN] 引入额外的表达式值类别。
+
+[?effect]
+[:en] Valid [=CppIII] code that uses xvalues as operands for [`:key typeid]
+may change behavior in this revision of [=Cpp].
+[:zh_CN] 把临限值用作 [`:key typeid] 的操作数的有效的 [=CppIII] 代码可能在 [=Cpp] 的
+此版本中改变行为。
+
+[begin:example]
+[codeblock]
+void f() {
+  struct B {
+    B() {}
+    virtual ~B() { }
+  };
+
+  struct C { B b; };
+  typeid(C().b);    // [:en] unevaluated in [=CppIII], evaluated in [=CppXI] \
+                    [:zh_CN] [=CppIII] 中免求值，[=CppXI] 中求值
+}
+[codeblock:end]
+[end:example]
 
 [para:diff] [#expr.mul]
 [?change]
@@ -59,9 +88,7 @@ result toward 0.
 this revision of [=Cpp].
 [:zh_CN] 有效的 [=CppIII] 代码可能在 [=Cpp] 的此版本中无法编译或产生不同的结果。
 
-[:en] For example:
-[:zh_CN] 例如：
-
+[begin:example]
 [codeblock]
 bool b1 = new int && false;             // [:en] previously [`false], now ill-formed \
                                         [:zh_CN] 之前为 [`false]，现在非良构
@@ -69,3 +96,37 @@ struct S { operator int(); };
 bool b2 = &S::operator int && false;    // [:en] previously [`false], now ill-formed \
                                         [:zh_CN] 之前为 [`false]，现在非良构
 [codeblock:end]
+[end:example]
+
+[para:diff] [#expr.cond]
+[?change]
+[:en] Fewer copies in the conditional operator.
+[:zh_CN] 条件运算符中发生更少的复制。
+
+[?rationale]
+[:en] Introduce additional expression value categories.
+[:zh_CN] 引入额外的表达式值类别。
+
+[?effect]
+[:en] Valid [=CppIII] code that uses xvalues as operands for the conditional
+operator may change behavior in this revision of [=Cpp].
+[:zh_CN] 把临限值用作条件运算符的操作数的有效的 [=CppIII] 代码可能在 [=Cpp] 的此版本中
+改变行为。
+
+[begin:example]
+[codeblock]
+void f() {
+  struct B {
+    B() {}
+    B(const B&) { }
+  };
+  struct D : B {};
+
+  struct BB { B b; };
+  struct DD { D d; };
+
+  true ? BB().b : DD().d;       // [:en] additional copy in [=CppIII], no copy or move in [=CppXI] \
+                                [:zh_CN] [=CppIII] 中进行额外的复制，[=CppXI] 中没有复制或移动
+}
+[codeblock:end]
+[end:example]

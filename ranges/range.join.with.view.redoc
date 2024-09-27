@@ -5,19 +5,13 @@
 
 [codeblock:synopsis]
 namespace std::ranges {
-  template<class R, class P>
-  concept [[redoc("*:c@def>")]]compatible-joinable-ranges =            // [=expos]
-      [[redoc("`:c>")]]common_with<range_value_t<R>, range_value_t<P>> &&
-      [[redoc("`:c>")]]common_reference_with<range_reference_t<R>, range_reference_t<P>> &&
-      [[redoc("`:c>")]]common_reference_with<range_rvalue_reference_t<R>, range_rvalue_reference_t<P>>;
-
   template<class R>
   concept [[redoc("*:c@def>")]]bidirectional-common = [[redoc("`:c>")]]bidirectional_range<R> && [[redoc("`:c>")]]common_range<R>;    // \expos
 
   template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]forward_range Pattern>
     requires [[redoc("`:c>")]]view<V> && [[redoc("`:c>")]]input_range<range_reference_t<V>>
           && [[redoc("`:c>")]]view<Pattern>
-          && [[redoc("*:c>")]]compatible-joinable-ranges<range_reference_t<V>, Pattern>
+          && [[redoc("*:c>")]]compatible<range_reference_t<V>, Pattern>
   class join_with_view : public view_interface<join_with_view<V, Pattern>> {
     using [[redoc("*>")]]InnerRng = range_reference_t<V>;                  // [=expos]
 
@@ -69,7 +63,8 @@ namespace std::ranges {
       requires [[redoc("`:c>")]]forward_range<const V> &&
                [[redoc("`:c>")]]forward_range<const Pattern> &&
                is_reference_v<range_reference_t<const V>> &&
-               [[redoc("`:c>")]]input_range<range_reference_t<const V>> {
+               [[redoc("`:c>")]]input_range<range_reference_t<const V>> &&
+               [[redoc("*:c>")]]concatable<range_reference_t<const V>, const Pattern> {
       return [[redoc("*>")]]iterator<true>{*this, ranges::begin([[redoc("*>")]]base_)};
     }
 
@@ -84,7 +79,8 @@ namespace std::ranges {
     constexpr auto end() const
       requires [[redoc("`:c>")]]forward_range<const V> && [[redoc("`:c>")]]forward_range<const Pattern> &&
                is_reference_v<range_reference_t<const V>> &&
-               [[redoc("`:c>")]]input_range<range_reference_t<const V>> {
+               [[redoc("`:c>")]]input_range<range_reference_t<const V>> &&
+               [[redoc("*:c>")]]concatable<range_reference_t<const V>, const Pattern> {
       using InnerConstRng = range_reference_t<const V>;
       if constexpr ([[redoc("`:c>")]]forward_range<InnerConstRng> &&
                     [[redoc("`:c>")]]common_range<const V> && [[redoc("`:c>")]]common_range<InnerConstRng>)

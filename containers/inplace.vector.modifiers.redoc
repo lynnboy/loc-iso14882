@@ -1,0 +1,265 @@
+[section#inplace.vector.modifiers
+    [:en] Modifiers
+    [:zh_CN] 改动函数
+]
+
+[%@lib@member insert[!inplace_vector]]
+[%@lib@member insert_range[!inplace_vector]]
+[%@lib@member emplace[!inplace_vector]]
+[%@lib@member append_range[!inplace_vector]]
+[codeblock:declaration]
+constexpr iterator insert(const_iterator position, const T& x);
+constexpr iterator insert(const_iterator position, T&& x);
+constexpr iterator insert(const_iterator position, size_type n, const T& x);
+template<class InputIterator>
+  constexpr iterator insert(const_iterator position, InputIterator first, InputIterator last);
+template<[[redoc("*:c>")]]container-compatible-range<T> R>
+  constexpr iterator insert_range(const_iterator position, R&& rg);
+constexpr iterator insert(const_iterator position, initializer_list<T> il);
+
+template<class... Args>
+  constexpr iterator emplace(const_iterator position, Args&&... args);
+template<[[redoc("*:c>")]]container-compatible-range<T> R>
+  constexpr void append_range(R&& rg);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$n] be value of [`size()] before this call for the [`append_range]
+overload, and [`distance(begin, position)] otherwise.
+[:zh_CN] 令 [$n] 对于 [`append_range] 重载为此调用前 [`size()] 的值，否则为调用前
+[`distance(begin, position)] 的值。
+
+[para:complexity]
+[:en] Linear in the number of elements inserted plus the distance to the end of
+the vector.
+[:zh_CN] 对于所插入的元素数量加上到向量末尾的距离是线性的。
+
+[para:remarks]
+[:en] If an exception is thrown other than by the copy constructor, move
+constructor, assignment operator, or move assignment operator of [`T] or by any
+[`InputIterator] operation, there are no effects.
+[:zh_CN] 如果除了 [`T] 的复制构造函数、移动构造函数、赋值运算符或复制赋值运算符，
+或者由 [`InputIterator] 的任何操作之外抛出了异常，则没有效果。
+
+[:en] Otherwise, if an exception is thrown, then [$[`size()] \ge n] and elements
+in the range [`begin() + [=range(0,[$n])]] are not modified.
+[:zh_CN] 否则，如果抛出了异常，则有 [$[`size()] \ge n]，且不会改动范围 
+[`begin() + [=range(0,[$n])]] 中的元素。
+[div:end]
+
+[%@lib@member push_back[!inplace_vector]]
+[%@lib@member emplace_back[!inplace_vector]]
+[codeblock:declaration]
+constexpr reference push_back(const T& x);
+constexpr reference push_back(T&& x);
+template<class... Args>
+  constexpr reference emplace_back(Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`back()].
+[:zh_CN] [`back()]。
+
+[para:throws]
+[:en] [`bad_alloc] or any exception thrown by initialization of inserted element.
+[:zh_CN] [`bad_alloc] 或者所插入元素的初始化抛出的任何异常。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+
+[para:remarks]
+[:en] If an exception is thrown there are no effects on [`*this].
+[:zh_CN] 如果抛出了异常，则对 [`*this] 没有效果。
+[div:end]
+
+[%@lib@member try_emplace_back[!inplace_vector]]
+[%@lib@member try_push_back[!inplace_vector]]
+[codeblock:declaration]
+template<class... Args>
+  constexpr pointer try_emplace_back(Args&&... args);
+constexpr pointer try_push_back(const T& x);
+constexpr pointer try_push_back(T&& x);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`vals] denote a pack:
+[:zh_CN] 令 [`vals] 代表包组：
+[list]
+[item]
+[:en@~] [`std::forward<Args>(args)...] for the first overload,
+[:zh_CN@~] 对于第一个重载为 [`std::forward<Args>(args)...]，
+[item]
+[:en@~] [`x] for the second overload,
+[:zh_CN@~] 对于第二个重载为 [`x]，
+[item]
+[:en@~] [`set::move(x)] for the third overload.
+[:zh_CN@~] 对于第三个重载为 [`set::move(x)]。
+[list:end]
+
+[para:expects]
+[:en] [`value_type] is [^:oc EmplaceConstructible] into [`inplace_vector] from
+[`vals...].
+[:zh_CN] [`value_type] 为从 [`vals...] 向 [`inplace_vector] 中
+[^:oc EmplaceConstructible]。
+
+[para:effects]
+[:en] If [`size() < capacity()] is [`true], appends an object of type [`T]
+direct-non-list-initialized with [`vals...].
+[:zh_CN] 如果 [`size() < capacity()] 为 [`true]，则追加一个以 [`vals...] 直接非列表
+初始化的 [`T] 类型的对象。
+
+[:en] Otherwise, there are no effects.
+[:zh_CN] 否则，没有效果。
+
+[para:returns]
+[:en] [`:key nullptr] if [`size() == capacity()] is [`true], otherwise
+[`addressof(back())].
+[:zh_CN] 若 [`size() == capacity()] 为 [`true] 则返回 [`:key nullptr]，否则返回
+[`addressof(back())]。
+
+[para:throws]
+[:en] Nothing unless an exception is thrown by initialization of inserted element.
+[:zh_CN] 除非所插入元素的初始化抛出了异常，否则不抛出。
+
+[para:complexity]
+[:en] Constant.
+[:zh_CN] 常量。
+
+[para:remarks]
+[:en] If an exception is thrown there are no effects on [`*this].
+[:zh_CN] 如果抛出了异常，则对 [`*this] 没有效果。
+[div:end]
+
+[%@lib@member try_append_range[!inplace_vector]]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]container-compatible-range<T> R>
+  constexpr ranges::borrowed_iterator_t<R> try_append_range(R&& rg);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`value_type] is [^:oc EmplaceConstructible] into [`inplace_vector] from
+[`*ranges::begin(rg)].
+[:zh_CN] [`value_type] 为从 [`*ranges::begin(rg)] 向 [`inplace_vector] 中
+[^:oc EmplaceConstructible]。
+
+[para:effects]
+[:en] Appends copies of initial elements in [`rg] before [`end()],
+until all elements are inserted or [`size() == capacity()] is [`true].
+[:zh_CN] 在 [`end()] 前追加 [`rg] 中开头各元素的副本，直至插入了所有元素或者
+[`size() == capacity()] 为 [`true]。
+
+[:en] Each iterator in the range [`rg] is dereferenced at most once.
+[:zh_CN] 范围 [`rg] 中的每个迭代器最多被解引用一次。
+
+[para:returns]
+[:en] An iterator pointing to the first element of [`rg] that was not inserted
+into [`*this], or [`ranged::end(rg)] if no such element exists.
+[:zh_CN] 指向 [`rg] 中未被插入到 [`*this] 的第一个元素的迭代器，或当不存在这种元素时
+返回 [`ranged::end(rg)]。
+
+[para:complexity]
+[:en] Linear in the number of elements inserted.
+[:zh_CN] 对于所插入的元素数量为线性。
+
+[para:remarks]
+[:en] Let [$n] be the value of [`size()] prior to this call.
+[:zh_CN] 令 [$n] 为 [`size()] 在此调用前的值。
+
+[:en] If an exception is thrown after the insertion of [$k] elements, then
+[`size()] equals [$n + k], elements in the range [`begin() + [=range(0,[$n])]]
+are not modified, and elements in the range [`begin() + [=range([$n],[$n + k])]]
+correspond to the inserted elements.
+[:zh_CN] 如果插入了 [$k] 个元素后抛出了异常，则 [`size()] 等于 [$n + k]，不修改范围
+[`begin() + [=range(0,[$n])]] 中的元素，并且范围 [`begin() + [=range([$n],[$n + k])]]
+中的各元素对应于所插入的各元素。
+[div:end]
+
+[%@lib@member unchecked_emplace_back[!inplace_vector]]
+[codeblock:declaration]
+template<class... Args>
+  constexpr reference unchecked_emplace_back(Args&&... args);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`size() < capacity()] is [`true].
+[:zh_CN] [`size() < capacity()] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return *try_emplace_back(std::forward<Args>(args)...);]
+[:zh_CN] 等价于：[`return *try_emplace_back(std::forward<Args>(args)...);]
+[div:end]
+
+[%@lib@member unchecked_push_back[!inplace_vector]]
+[codeblock:declaration]
+constexpr reference unchecked_push_back(const T& x);
+constexpr reference unchecked_push_back(T&& x);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`size() < capacity()] is [`true].
+[:zh_CN] [`size() < capacity()] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return *try_push_back(std::forward<decltype(x)>(x));]
+[:zh_CN] 等价于：[`return *try_push_back(std::forward<decltype(x)>(x));]
+[div:end]
+
+[%@lib@member reserve[!inplace_vector]]
+[codeblock:declaration]
+static constexpr void reserve(size_type n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] None.
+[:zh_CN] 无。
+
+[para:throws]
+[:en] [`bad_alloc] if [`n > capacity()] is [`true].
+[:zh_CN] 当 [`n > capacity()] 为 [`true] 时抛出 [`bad_alloc]。
+[div:end]
+
+[%@lib@member shrink_to_fit[!inplace_vector]]
+[codeblock:declaration]
+static constexpr void shrink_to_fit() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] None.
+[:zh_CN] 无。
+[div:end]
+
+[%@lib@member erase[!inplace_vector]]
+[%@lib@member pop_back[!inplace_vector]]
+[codeblock:declaration]
+constexpr iterator erase(const_iterator position);
+constexpr iterator erase(const_iterator first, const_iterator last);
+constexpr void pop_back();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Invalidates iterators and references at or after the point of the erase.
+[:zh_CN] 使处于清除点或处于其后的迭代器或引用失效。
+
+[para:throws]
+[:en] Nothing unless an exception is thrown by the assignment operator or move
+assignment operator of [`T].
+[:zh_CN] 除非 [`T] 的赋值运算符或移动赋值运算符抛出了异常，否则不抛出异常。
+
+[para:complexity]
+[:en] The destructor of [`T] is called the number of times equal to the number
+of the elements erased, but the move assignment operator of [`T] is called the
+number of times equal to the number of elements in the vector after the erased
+elements.
+[:zh_CN] 对 [`T] 的析构函数的调用次数等于所清除的元素的数量，但对 [`T] 的移动
+赋值运算符的调用次数等于 [`vector] 中所清除的元素后面的元素数量。
+[div:end]
