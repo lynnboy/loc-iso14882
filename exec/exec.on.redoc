@@ -1,0 +1,276 @@
+[section#exec.on
+    [`execution::on]
+]
+
+[para]
+[:en] The [`on] sender adaptor has two forms:
+[:zh_CN] 发送器适配器 [`on] 有两种形式：
+
+[list]
+[item]
+[:en] [`on(sch, sndr)], which starts a sender [`sndr] on an execution agent
+belonging to a scheduler [`sch][=']s associated execution resource and that,
+upon [`sndr][=']s completion, transfers execution back to the execution resource
+on which the [`on] sender was started.
+[:zh_CN] [`on(sch, sndr)]，它在属于调度器 [`sch] 的关联执行资源的某个执行代理上启动
+[`sndr]，并在 [`sndr] 完成时，将执行转移回启动 [`on] 发送器的执行资源。
+
+[item]
+[:en] [`on(sndr, sch, closure)], which upon completion of a sender [`sndr],
+transfers execution to an execution agent belonging to a scheduler [`sch][=']s
+associated execution resource, then executes a sender adaptor closure [`closure]
+with the async results of the sender, and that then transfers execution back to
+the execution resource on which [`sndr] completed.
+[:zh_CN] [`on(sndr, sch, closure)]，它在发送器 [`sndr] 完成时，将执行转移到属于
+[`sch] 的关联执行资源的某个执行代理，然后以该发送器的异步结果执行一个发送器适配器闭包
+[`closure]，然后将执行转移回 [`sndr] 完成于其上的执行资源。
+[list:end]
+
+[para]
+[:en] The name [`on] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`on] 代表一个可连管道的发送器适配器对象。
+
+[:en] For subexpressions [`sch] and [`sndr], [`on(sch, sndr)] is ill-formed if
+any of the following is true:
+[:zh_CN] 对于子表达式 [`sch] 和 [`sndr]，以下任何一项为 [`true] 时，[`on(sch, sndr)]
+非良构：
+[list]
+[item]
+[:en@~] [`decltype((sch))] does not satisfy [`:c scheduler], or
+[:zh_CN@~] [`decltype((sch))] 不满足 [`:c scheduler]，或者
+[item]
+[:en@~] [`decltype((sndr))] does not satisfy [`:c sender] and [`sndr] is not a
+pipeable sender adaptor closure object ([#exec.adapt.obj]), or
+[:zh_CN@~] [`decltype((sndr))] 不满足 [`:c sender]，且 [`sndr] 不是
+可连管道的发送器适配器闭包对象（[#exec.adapt.obj]），或者
+[item]
+[:en@~] [`decltype((sndr))] satisfies [`:c sender] and [`sndr] is also a
+pipeable sender adaptor closure object.
+[:zh_CN@~] [`decltype((sch))] 满足 [`:c scheduler]，且 [`sndr] 同时是
+可连管道的发送器适配器闭包对象。
+[list:end]
+
+[para]
+[:en] Otherwise, if [`decltype((sndr))] satisfies [`:c sender], the expression
+[`on(sndr, sch)] is expression-equivalent to:
+[:zh_CN] 否则，如果 [`decltype((sndr))] 满足 [`:c sender]，表达式 [`on(sndr, sch)]
+按表达式等价于：
+[codeblock]
+transform_sender(
+  [[redoc("*>")]]query-or-default(get_domain, sch, default_domain()),
+  [[redoc("*>")]]make-sender(on, sch, sndr))
+[codeblock:end]
+[:en@~] except that [`sch] is evaluated only once.
+[:zh_CN@~] 但 [`sch] 仅被求值一次。
+
+[para]
+[:en] For subexpressions [`sndr], [`sch], and [`closure], if
+[:zh_CN] 对于子表达式 [`sndr]，[`sch] 和 [`closure]，如果
+[list]
+[item]
+[:en@~] [`decltype((sch))] does not satisfy [`:c scheduler], or
+[:zh_CN] [`decltype((sch))] 不满足 [`:c scheduler]，或者
+[item]
+[:en@~] [`decltype((sndr))] does not satisfy [`:c sender], or
+[:zh_CN] [`decltype((sndr))] 不满足 [`:c sender]，或者
+[item]
+[:en@~] [`closure] is not a pipeable sender adaptor closure object ([#exec.adapt.obj]),
+[:zh_CN] [`closure] 不是可连管道的发送器适配器闭包对象（[#exec.adapt.obj]），
+[list:end]
+[:en@~] the expression [`on(sndr, sch, closure)] is ill-formed;
+otherwise, it is expression-equivalent to:
+[:zh_CN@~] 表达式 [`on(sndr, sch, closure)] 非良构；否则它等价于：
+[codeblock]
+transform_sender(
+  [[redoc("*>")]]get-domain-early(sndr),
+  [[redoc("*>")]]make-sender(on, [[redoc("*>")]]product-type{sch, closure}, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is evaluated only once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] Let [`out_sndr] and [`env] be subexpressions, let [`OutSndr] be
+[`decltype((out_sndr))], and let [`Env] be [`decltype((env))].
+[:zh_CN] 令 [`out_sndr] 和 [`env] 为子表达式，令 [`OutSndr] 为
+[`decltype((out_sndr))]，并令 [`Env] 为 [`decltype((env))]。
+
+[:en] If [`[*:c sender-for]<OutSndr, on_t>] is [`false], then the expressions
+[`on.transform_env(out_sndr, env)] and [`on.transform_sender(out_sndr, env)] are
+ill-formed.
+[:zh_CN] 如果 [`[*:c sender-for]<OutSndr, on_t>] 为 [`false]，则表达式
+[`on.transform_env(out_sndr, env)] 和 [`on.transform_sender(out_sndr, env)]
+都非良构。
+
+[para]
+[:en] Otherwise:
+[:zh_CN] 否则：
+
+[:en] Let [*not-a-scheduler] be an unspecified empty class type, and
+let [*not-a-sender] be the exposition-only type:
+[:zh_CN] 令 [*not-a-scheduler] 为某个未指明的空类类型，并令 [*not-a-sender]
+为以下仅用于阐释的类型：
+[codeblock]
+struct [[redoc("*>")]]not-a-sender {
+  using sender_concept = sender_t;
+
+  auto get_completion_signatures(auto&&) const {
+    return [[redoc("[=seebelow]")]];
+  }
+};
+[codeblock:end]
+[:en@~] where the member function [`get_completion_signatures] returns
+an object of a type that is not a specialization of the [`completion_signatures]
+class template.
+[:zh_CN@~] 其中成员函数 [`get_completion_signatures] 返回一个类型并非类模板
+[`completion_signatures] 的特例的对象。
+
+[para]
+[:en] The expression [`on.transform_env(out_sndr, env)] has effects equivalent to:
+[:zh_CN] 表达式 [`on.transform_env(out_sndr, env)] 的效果等价于：
+[codeblock]
+auto&& [_, data, _] = out_sndr;
+if constexpr ([[redoc("`:c>")]]scheduler<decltype(data)>) {
+  return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ENV(std::forward_like<OutSndr>(data)), [[redoc("*>")]]FWD-ENV(std::forward<Env>(env)));
+} else {
+  return std::forward<Env>(env);
+}
+[codeblock:end]
+
+[para]
+[:en] The expression [`on.transform_sender(out_sndr, env)] has effects equivalent to:
+[:zh_CN] 表达式 [`on.transform_sender(out_sndr, env)] 的效果等价于：
+[codeblock]
+auto&& [_, data, child] = out_sndr;
+if constexpr ([[redoc("`:c>")]]scheduler<decltype(data)>) {
+  auto orig_sch =
+    [[redoc("*>")]]query-with-default(get_scheduler, env, [[redoc("*>")]]not-a-scheduler());
+
+  if constexpr ([[redoc("`:c>")]]same_as<decltype(orig_sch), [[redoc("*>")]]not-a-scheduler>) {
+    return [[redoc("*>")]]not-a-sender{};
+  } else {
+    return continues_on(
+      starts_on(std::forward_like<OutSndr>(data), std::forward_like<OutSndr>(child)),
+      std::move(orig_sch));
+  }
+} else {
+  auto& [sch, closure] = data;
+  auto orig_sch = [[redoc("*>")]]query-with-default(
+    get_completion_scheduler<set_value_t>,
+    get_env(child),
+    [[redoc("*>")]]query-with-default(get_scheduler, env, [[redoc("*>")]]not-a-scheduler()));
+
+  if constexpr ([[redoc("`:c>")]]same_as<decltype(orig_sch), [[redoc("*>")]]not-a-scheduler>) {
+    return [[redoc("*>")]]not-a-sender{};
+  } else {
+    return [[redoc("*>")]]write-env(
+      continues_on(
+        std::forward_like<OutSndr>(closure)(
+          continues_on(
+            [[redoc("*>")]]write-env(std::forward_like<OutSndr>(child), [[redoc("*>")]]SCHED-ENV(orig_sch)),
+            sch)),
+        orig_sch),
+      [[redoc("*>")]]SCHED-ENV(sch));
+  }
+}
+[codeblock:end]
+
+[para:recommended]
+[:en] Implementations should use the return type of
+[`[*not-a-sender]::get_completion_signatures] to inform users that their usage
+of [`on] is incorrect because there is no available scheduler onto which to
+restore execution.
+[:zh_CN] 各实现最好使用 [`[*not-a-sender]::get_completion_signatures] 的返回类型
+来告知用户它们对 [`on] 的用法，由于没有可用的可以恢复执行的调度器而是不正确的。
+
+[para]
+[:en] Let [`out_sndr] be a subexpression denoting a sender returned from
+[`on(sch, sndr)] or one equal to such, and let [`OutSndr] be the type
+[`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`on(sch, sndr)] 返回的发送器
+或等于它的发送器，并令 [`OutSndr] 为类型 [`decltype((out_sndr))]。
+
+[:en] Let [`out_rcvr] be a subexpression denoting a receiver that has an
+environment of type [`Env] such that [`[`:c sender_in]<OutSndr, Env>] is [`true].
+[:zh_CN] 令 [`out_rcvr] 为子表达式，代表具有 [`Env] 类型环境的接收器，使得
+[`[`:c sender_in]<OutSndr, Env>] 为 [`true]。
+
+[:en] Let [`op] be an lvalue referring to the operation state that results from
+connecting [`out_sndr] with [`out_rcvr].
+[:zh_CN] 令 [`op] 为指代由 [`out_sndr] 与 [`out_rcvr] 的连接所得的操作状态。
+
+[:en] Calling [`start(op)] shall
+[:zh_CN] 调用 [`start(op)] 应当
+[list]
+[item]
+[:en] remember the current scheduler, [`get_scheduler(get_env(rcvr))];
+[:zh_CN] 记录当前调度器，[`get_scheduler(get_env(rcvr))]；
+[item]
+[:en] start [`sndr] on an execution agent belonging to
+[`sch][=']s associated execution resource;
+[:zh_CN] 在 [`sch] 的关联执行资源的某个执行代理上启动 [`sndr]；
+[item]
+[:en] upon [`sndr][=']s completion, transfer execution back to the execution
+resource associated with the scheduler remembered in step 1; and
+[:zh_CN] 当 [`sndr] 完成时，将执行转移回第一步中记录的调度器所关联的执行资源；以及
+[item]
+[:en] forward [`sndr][=']s async result to [`out_rcvr].
+[:zh_CN] 将 [`sndr] 的异步结果转发给 [`out_rcvr]。
+[list:end]
+
+[:en] If any scheduling operation fails, an error completion on [`out_rcvr]
+shall be executed on an unspecified execution agent.
+[:zh_CN] 如果由任何调度操作失败，那么应当在某个未指明的执行代理上执行 [`out_rcvr]
+上的一次错误完成。
+
+[para]
+[:en] Let [`out_sndr] be a subexpression denoting a sender returned from
+[`on(sndr, sch, closure)] or one equal to such, and let [`OutSndr] be the type
+[`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`on(sndr, sch, closure)] 返回的发送器
+或等于它的发送器，并令 [`OutSndr] 为类型 [`decltype((out_sndr))]。
+
+[:en] Let [`out_rcvr] be a subexpression denoting a receiver that has an
+environment of type [`Env] such that [`[`:c sender_in]<OutSndr, Env>] is [`true].
+[:zh_CN] 令 [`out_rcvr] 为子表达式，代表具有 [`Env] 类型环境的接收器，使得
+[`[`:c sender_in]<OutSndr, Env>] 为 [`true]。
+
+[:en] Let [`op] be an lvalue referring to the operation state that results from
+connecting [`out_sndr] with [`out_rcvr].
+[:zh_CN] 令 [`op] 为指代由 [`out_sndr] 与 [`out_rcvr] 的连接所得的操作状态。
+
+[:en] Calling [`start(op)] shall
+[:zh_CN] 调用 [`start(op)] 应当
+[list]
+[item]
+[:en@~] remember the current scheduler, which is the first of the following
+expressions that is well-formed:
+[:zh_CN@~] 记录当前调度器，它是下列中第一个良构的表达式：
+[list]
+[item] [`get_completion_scheduler<set_value_t>(get_env(sndr))]
+[item] [`get_scheduler(get_env(rcvr))];
+[list:end]
+[item]
+[:en] start [`sndr] on the current execution agent;
+[:zh_CN] 在当前执行代理上启动 [`sndr]；
+[item]
+[:en] upon [`sndr][=']s completion, transfer execution to an agent owned by
+[`sch][=']s associated execution resource;
+[:zh_CN] 当 [`sndr] 完成时，将执行转移到 [`sch] 的关联执行资源拥有的某个代理；
+[item]
+[:en] forward [`sndr][=']s async result as if by connecting and starting a
+sender [`closure(S)], where [`S] is a sender that completes synchronously with
+[`sndr][=']s async result; and
+[:zh_CN] 转发 [`sndr] 的异步结果，如同连接并启动一个发送器 [`closure(S)]，其中
+[`S] 是以 [`sndr] 的异步结果同步地完成的发送器；以及
+[item]
+[:en] upon completion of the operation started in the previous step,
+transfer execution back to the execution resource associated with the scheduler
+remembered in step 1 and forward the operation[=']s async result to [`out_rcvr].
+[:zh_CN] 当前一步启动的操作完成时，将执行转移回到第一步中记录的调度器关联的执行资源，
+并将该操作的异步结果转发给 [`out_rcvr]。
+[list:end]
+
+[:en] If any scheduling operation fails, an error completion on [`out_rcvr]
+shall be executed on an unspecified execution agent.
+[:zh_CN] 如果由任何调度操作失败，那么应当在某个未指明的执行代理上执行 [`out_rcvr]
+上的一次错误完成。

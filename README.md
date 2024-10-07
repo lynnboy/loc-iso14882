@@ -593,6 +593,9 @@ associated constraints                  |关联约束       |声明式受到的�
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
 assumption                              |假设
+async lifetime                          |异步生存期
+async result                            |异步结果       |异步操作的安置态和结果数据集合
+asynchronous operation                  |异步操作
 asynchronous provider                   |异步提供者     |`future`对应的`promise`或`task`，向共享状态提供结果
 asynchronous return object              |异步返回对象   |存于`future`的共享状态中
 atomic                                  |原子性
@@ -601,6 +604,7 @@ atomic notifying operation              |原子性通知操作
 atomic waiting operation                |原子性等待操作
 attach to module                        |附属于模块     |可替换全局`new`/`delete`函数、命名空间、带语言连接说明的声明式等附属全局模块；一些指定目标的友元声明式归属目标所在模块；否则归属当前视野的模块
 attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键字标识符
+attribute                               |属性          |查询发送器和异步操作的特征数据
 attribute-declaration                   |属性声明式     |仅有属性的空声明，不是块声明式
 automatic storage duration              |自动存储期
 await-expression                        |等待表达式     |一元表达式。暂停协程等待操作数计算完成<br>不能在`catch`中等待<br>对显式`co_await`：尝试调用承诺的`await_transform`，尝试调用`operator await`，获得可等待对象<br>`await_ready`查询是否需暂停，`await_suspend`实施暂停（支持串联），`await_resume`获得结果
@@ -697,6 +701,7 @@ character literal                       |字符字面量     |预处理记号，
 character sequence                      |字符序列       |三种`char`的数组
 character set                           |字符集
 character string literal                |字符字符串字面量 |无前缀的*字符串字面量*
+child operations                        |子操作         |异步操作启动的异步操作
 class                                   |类
 class declaration                       |类声明式
 class definition                        |类定义式   |类说明符，包含类头和成员说明
@@ -738,6 +743,10 @@ compile                                 |编译
 complete-class context                  |完整类语境 |在类成员说明之内需要将类当做完整类型的语境：函数体、默认实参、默认模板实参、noexcept、默认成员初始化式、嵌套类定义式
 complete object                         |完整对象   |不是子对象的对象
 complete type                           |完整类型
+completion function                     |完成函数   |定制化点对象，调用异步操作接收器中的处理器，对应三个安置态之一
+completion operation                    |完成操作   |调用完成函数
+completion signature                    |完成签名   |完成操作的函数类型
+completion tag                          |完成标签   |完成函数的类型
 compliance                              |遵从性
 component                               |组件
 component name                          |成分名     |无限定标识：名字、类型名、模板标识部分<br>限定标识：各嵌套名和无限定标识的成分名
@@ -763,6 +772,7 @@ conditionally-supported                 |有条件支持的   |编译器实现�
 conflict                                |冲突           |两个求值至少一个改动
 conformance requirements                |一致性规定
 conjunction                             |合取           |二元约束运算，`&&`，短路
+connect                                 |连接           |发送器+接收器=>异步操作
 const_cast                              |const 转型
 const cast expression                   |const 转型表达式 |后缀表达式，`const_cast<T>(v)`<br>Ptr=>T*，Lv=>T&，GLv=>T&&，类PRv=>T&&（临时对象）
 const-default-constructible             |可 const 默认构造|构造函数或默认成员初始化式覆盖
@@ -862,6 +872,7 @@ data type                               |数据类型
 deallocate                              |回收
 deallocation function                   |回收函数   |`operator delete`, `operator delete[]`
 decay                                   |退化
+decay-copied from                       |退化复制于
 decimal                                 |十进制
 decimal-point character                 |小数点字符 |`.`，通过`setlocale`可以改为其他字符
 decision variable                       |判断变量   |条件中生效的变量
@@ -937,7 +948,9 @@ directory                               |目录
 disambiguation                          |歧义消解
 discarded statement                     |弃用语句       |`constexpr if` 排除的语句
 discarded-value expression              |弃值表达式     |仅保留副作用，一些 volatile 访问表达式进行L2R转换（保留读内存副作用）
+disengaged                              |脱离的         |无关联停止状态的停止令牌
 disjunction                             |析取           |二元约束运算，`||`，短路
+disposition                             |安置态         |一步操作结果分类：成功（值）、失败（错误）、取消（停止）
 division operator                       |除法运算符
 do statement                            |do 语句
 dot operator                            |点运算符
@@ -981,6 +994,7 @@ enumeration scope                       |枚举作用域 |作用域的一种，�
 enumeration type                        |枚举类型
 enumerator                              |枚举符     |一种实体，类型化具名常量值
 enum-specifier                          |枚举说明符 |枚举的定义体
+environment                             |环境       |用于查询异步操作调用方的属性
 epoch                                   |纪元       |时钟的`time_point`的原点
 equality                                |相等
 equality expression                     |相等性表达式   |`rel_expr == rel_expr`等。内建：算术类型一般算术转换，指针和成员指针进行合成指针类型比较<br>成员指针比较，虚函数和无继承关系时未指明顺序
@@ -996,6 +1010,7 @@ equivalent *template-parameter*         |等价*模板形参* |同种类，同�
 equivalently-valued pointer value       |具有等价值的指针 |分配器所操作的“指针”，转换为`const_pointer`后相等
 erroneous behavior                      |错误行为   |并非UB，建议编译器诊断。如使用未初始化的变量
 error                                   |错误，误差
+error completion                        |错误完成   |异步操作安置态之一
 escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
 evaluation                              |求值       |表达式的求值包括值计算和副作用
@@ -1011,6 +1026,7 @@ execute                                 |执行，运行
 execution agent                         |执行代理
 execution character set                 |执行字符集     |LC_CTYPE
 execution policy                        |执行策略       |程序库算法：顺序、并行、向量化
+execution resource                      |执行资源
 execution step                          |执行步骤       |线程的可观察行为：终止，volatile访问，完成I/O、同步或原子性操作
 execution wide-character set            |执行宽字符集   |LC_CTYPE
 exhaustive layout                       |穷尽布局
@@ -1196,6 +1212,7 @@ implementation-defined                  |由实现定义的   |编译器实现�
 implicit                                |隐式，暗中，隐含
 implicit conversion                     |隐式转换       |iff可声明`T t=e;`，e可隐式转换为 T
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
+implicit expression variations          |隐式表达式变体
 implicit-lifetime class                 |隐式生存期类   |聚合，或至少一个平凡合格构造函数和平凡非弃置析构
 implicit-lifetime type                  |隐式生存期类型 |标量、隐式生存期类，数组
 implicit object member function         |隐式对象成员函数 |非静态成员函数，没有显式对象形参
@@ -1528,6 +1545,7 @@ odr-used                                |ODR 式使用 |- 变量：潜在求值�
 one-definition rule                     |单一定义规则，ODR  |各翻译单元中的类型定义应当严格等价，生成的程序映像中的实体定义应当唯一
 opaque-enum-declaration                 |笼统枚举声明式 |不声明枚举符，但指定底层类型，完整的前向声明，完整类型
 operand                                 |操作数
+operation state                         |操作状态       |异步操作的状态
 operator                                |运算符
 operator function                       |运算符函数     |声明符标识是运算符函数标识（`operator @`）的函数<br>非静态成员函数或非成员函数
 operator function template              |运算符函数模板 |声明符标识是运算符函数标识（`operator @`）的函数模板
@@ -1569,6 +1587,7 @@ parameter-declaration-clause            |形参声明子句   |可调用体的�
 parameter pack                          |形参包组
 parameter-type-list                     |形参类型列表   |函数类型的内容：每个形参的类型，数组->指针，免除顶层cv；尾部省略号或函数形参包组
 parent directory                        |父目录
+parent operation                        |父操作         |创建子操作的异步操作
 parent scope                            |父作用域       |作用域的直接作用域（模板形参作用域单算）
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
@@ -1582,6 +1601,7 @@ pathname                                |路径名
 pathname resolution                     |路径名解析
 past-the-end                            |越过末尾       |数组最后一个之后，或特殊标记迭代器值
 perfect forwarding call wrapper         |完美转发调用包装器 |实参转发调用包装器，同时转发绑定实参
+permissible completion                  |受允许完成     |完成签名有列出在 `completion_sigatures_of_t<S,E>` 的完成操作
 permissible types                       |允许类型       |类对象或引用初始化中所允许的转换目标类型，用以选取转换函数
 phase completion step                   |阶段完成步骤   |`barrier`当`arrive`、`arrive_and_drop`次数为`expected`时，调用`complete`并唤醒所有线程
 phase synchronization point             |阶段同步点     |`barrier.wait`，等待`expected`达到`0`并完成阶段
@@ -1589,6 +1609,8 @@ phases of translation                   |翻译阶段       |1. 物理字符->�
 physical source file character          |物理源文件字符 |根据文件编码获得的字符
 physical source line                    |物理源文本行
 piecewise construction                  |逐段构造       |`ctor(piecewise_construct_t, tuple<A1...> a1, tuple<A2...> a2)`，用于`pair`
+pipeable sender adaptor closure object  |可连管道的发送器适配器闭包对象
+pipeable sender adaptor object          |可连管道的发送器适配器对象
 placeholder                             |占位符
 placeholder-type-specifier              |占位符类型说明符|`auto`或`decltype(auto)`。泛型形参类型占位符。引入尾部返回类型。推断返回类型。推断变量类型，new类型，模板形参
 placeholder type deduction              |占位符类型推断 |`auto`：函数调用的模板实参推断规则，`decltype(auto)`：`decltype`规则
@@ -1693,6 +1715,9 @@ qualification decomposition             |限定分解       |多级指针/成员
 qualified name                          |限定名         |限定标识，using-声明符，typename-说明符，和具有`A::B`结构的各种说明符等中的终端名，以及成员限定名
 qualified name lookup                   |限定名查找     |一般在查找语境中查找，命名空间还考虑内联命名空间，找不到则进一步查找 uing-指令引入的命名空间
 qualifier                               |限定符
+query                                   |查询
+query object                            |查询对象       |可查询对象的键，定制化点对象
+queryable object                        |可查询对象
 quiet NaN                               |静默非数字     |对其运算产生NaN但不引发故障信号
 
 ### R
@@ -1716,6 +1741,7 @@ reachable from P                        |从 P 点可达    |从 P 点可达的�
 reaching scope                          |可达作用域
 read-read coherence                     |读-读协调性    |原子性 M 的 RA HapB RB，则两个值符合 M 的改动顺序
 read-write coherence                    |读-写协调性    |原子性 M 的 RA HapB WB，则两个值符合 M 的改动顺序
+receiver                                |接收器
 reclaim                                 |回收，再生     |涉险指针对象最终删除对象
 recursive function call                 |递归函数调用
 reentrancy                              |可重入性       |可递归调用的算法
@@ -1785,6 +1811,9 @@ safely-derived pointer                  |安全衍生指针
 satisfy                                 |满足       |符合约束提出的要求
 scalar                                  |标量
 scalar type                             |标量类型   |算术、枚举、指针、成员指针、`nullptr_t`
+schedule-expression                     |调度表达式 |从调度器获取调度发送器
+schedule sender                         |调度发送器 |来自调度器的发送器
+scheduler                               |调度器
 scope                                   |作用域，范围
 scope resolution operator               |作用域解析运算符   |`::`
 scoped enumeration                      |有作用域枚举   |`enum class`或`enum struct`
@@ -1795,6 +1824,10 @@ selected destructor                     |选中的析构函数 |重载决议在�
 selection statement                     |选择语句       |if, switch
 semantics                               |语义
 semaphore                               |信号量
+sender                                  |发送器 |异步操作的工厂
+sender adaptor                          |发送器适配器
+sender consumer                         |发送器消耗方
+sender factory                          |发送器工厂
 sequence                                |序列   |容器的一种
 sequenced after                         |按顺序晚于 SeqA
 sequenced before                        |按顺序早于 SeqB    |线程内顺序性：全表达式，运算符结果值早于操作数值，函数实参和函数后缀表达式早于函数体，等待表达式处的切换
@@ -1866,7 +1899,11 @@ static specifier                        |static 说明符  |成员：共享，�
 static storage duration                 |静态存储期
 static type                             |静态类型   |表达式的可声明类型
 static_assert declaration               |static_assert 声明式|常量表达式，Ctx2Bool
+stop request operation                  |停止请求操作
 stop token                              |停止令牌
+stoppable callback deregistration       |可停止回调注销
+stoppable callback registration         |可停止回调注册
+stopped completion                      |停止完成   |异步操作安置态之一
 storage                                 |存储
 storage class specifier                 |存储类说明符   |`static`, `thread_local`, `extern`, `mutable`
 storage duration                        |存储期     |静态、线程、自动、动态
@@ -2089,6 +2126,7 @@ valid range                             |有效范围   |`[i,s)`，从`i`可达`
 valid *template-id*                     |有效的*模板标识*   |合适的模板实参列表，形参列表的实参代换成功，非待决时满足约束<br>非函数模板的模板标识必须有效
 value                                   |值         |一种实体，对象的状态
 value category                          |值类别     |glvalue: lvalue, xvalue; rvalue: xvalue, prvalue
+value completion                        |值完成     |异步操作安置态之一
 value computation                       |值计算
 value-dependent                         |值待决     |模板中待决名参与的表达式，常量求值依存于模板形参
 value representation                    |值表示     |构成对象状态的位的值，排除填充位

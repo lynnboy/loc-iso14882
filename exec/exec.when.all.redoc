@@ -1,0 +1,332 @@
+[section#exec.when.all
+    [`execution::when_all]
+]
+
+[para]
+[:en] [`when_all] and [`when_all_with_variant] both adapt multiple input senders
+into a sender that completes when all input senders have completed.
+[:zh_CN] [`when_all] 和 [`when_all_with_variant] 都将多个输入发送器适配为一个
+将于全部输入发送器都完成时完成的发送器。
+
+[:en] [`when_all] only accepts senders with a single value completion signature
+and on success concatenates all the input senders[='] value result datums
+into its own value completion operation.
+[:zh_CN] [`when_all] 只接受具有单个值完成签名的发送器，并在成功时把所有输入发送器的
+值结果数据拼合成其自己的值完成操作。
+
+[:en] [`when_all_with_variant(sndrs...)] is semantically equivalent to
+[`when_all(into_variant(sndrs)...)], where [`sndrs] is a pack of subexpressions
+whose types model [`:c sender].
+[:zh_CN] [`when_all_with_variant(sndrs...)] 语义上等价于
+[`when_all(into_variant(sndrs)...)]，其中 [`sndrs] 是构成 [`:c sender] 的类型的
+子表达式的包组。
+
+[para]
+[:en] The names [`when_all] and [`when_all_with_variant] denote customization
+point objects.
+[:zh_CN] 名字 [`when_all] 和 [`when_all_with_variant] 都代表定制化点对象。
+
+[:en] Let [`sndrs] be a pack of subexpressions, let [`Sndrs] be a pack of the
+types [`decltype((sndrs))...], and let [`CD] be
+the type [`common_type_t<decltype([*get-domain-early](sndrs))...>].
+[:zh_CN] 令 [`sndrs] 为子表达式的包组，令 [`Sndrs] 为类型包组 [`decltype((sndrs))...]，
+并令 [`CD] 为类型 [`common_type_t<decltype([*get-domain-early](sndrs))...>]。
+
+[:en] The expressions [`when_all(sndrs...)] and [`when_all_with_variant(sndrs...)]
+are ill-formed if any of the following is [`true]:
+[:zh_CN] 如果以下任意一项为 [`true]，则表达式 [`when_all(sndrs...)] 和
+[`when_all_with_variant(sndrs...)] 都非良构：
+[list]
+[item]
+[:en@~] [`sizeof...(sndrs)] is [`0], or
+[:zh_CN@~] [`sizeof...(sndrs)] 为 [`0]，或者
+[item]
+[:en@~] [`(sender<Sndrs> && ...)] is [`false], or
+[:zh_CN@~] [`(sender<Sndrs> && ...)] 为 [`false]，或者
+[item]
+[:en@~] [`CD] is ill-formed.
+[:zh_CN@~] [`CD] 非良构。
+[list:end]
+
+[para]
+[:en] The expression [`when_all(sndrs...)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`when_all(sndrs...)] 按表达式等价于：
+[codeblock]
+transform_sender(CD(), [[redoc("*>")]]make-sender(when_all, {}, sndrs...))
+[codeblock:end]
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [`when_all_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [`when_all_t]
+进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<when_all_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]get-attrs = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]get-env = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<when_all_t>::[*get-attrs]] is initialized with
+a callable object equivalent to the following lambda expression:
+[:zh_CN] 成员 [`[*impls-for]<when_all_t>::[*get-attrs]] 以等价于如下 lambda 表达式
+的可调用对象初始化：
+[codeblock]
+[](auto&&, auto&&... child) noexcept {
+  if constexpr ([[redoc("`:c>")]]same_as<CD, default_domain>) {
+    return empty_env();
+  } else {
+    return [[redoc("*>")]]MAKE-ENV(get_domain, CD());
+  }
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<when_all_t>::[*get-env]] is initialized with
+a callable object equivalent to the following lambda expression:
+[:zh_CN] 成员 [`[*impls-for]<when_all_t>::[*get-env]] 以等价于如下 lambda 表达式
+的可调用对象初始化：
+[codeblock]
+[]<class State, class Rcvr>(auto&&, State& state, const Receiver& rcvr) noexcept {
+  return [[redoc("*>")]]JOIN-ENV(
+    [[redoc("*>")]]MAKE-ENV(get_stop_token, state.[[redoc("*>")]]stop_src.get_token()), get_env(rcvr));
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<when_all_t>::[*get-state]] is initialized with
+a callable object equivalent to the following lambda expression:
+[:zh_CN] 成员 [`[*impls-for]<when_all_t>::[*get-state]] 以等价于如下 lambda 表达式
+的可调用对象初始化：
+[codeblock]
+[]<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept([[redoc("$>")]]e) -> decltype(e) {
+  return [[redoc("$>")]]e;
+}
+[codeblock:end]
+[:en@~] where [$e] is the expression
+[:zh_CN@~] 其中 [$e] 为表达式
+[codeblock]
+std::forward<Sndr>(sndr).apply([[redoc("*>")]]make-state<Rcvr>())
+[codeblock:end]
+[:en@~] and where [$make-state] is the following exposition-only class template:
+[:zh_CN@~] 且 [$make-state] 为以下仅用于阐释的类模板：
+[codeblock:synopsis]
+template<class Sndr, class Env>
+concept [[redoc("*:c@def>")]]max-1-sender-in = [[redoc("`:c>")]]sender_in<Sndr, Env> &&                // [=expos]
+  (tuple_size_v<value_types_of_t<Sndr, Env, tuple, tuple>> <= 1);
+
+enum class [[redoc("*>")]]disposition { [[redoc("*>")]]started, [[redoc("*>")]]error, [[redoc("*>")]]stopped };             // [=expos]
+
+template<class Rcvr>
+struct [[redoc("*>")]]make-state {
+  template<[[redoc("*:c>")]]max-1-sender-in<env_of_t<Rcvr>>... Sndrs>
+  auto operator()(auto, auto, Sndrs&&... sndrs) const {
+    using values_tuple = [[redoc("[=seebelow]")]];
+    using errors_variant = [[redoc("[=seebelow]")]];
+    using stop_callback = stop_callback_of_t<stop_token_of_t<env_of_t<Rcvr>>, [[redoc("*>")]]on-stop-request>;
+
+    struct [[redoc("*>")]]state-type {
+      void [[redoc("*>")]]arrive(Rcvr& rcvr) noexcept {                        // [=expos]
+        if (0 == --count) {
+          [[redoc("*>")]]complete(rcvr);
+        }
+      }
+
+      void [[redoc("*>")]]complete(Rcvr& rcvr) noexcept;                       // [=expos]
+
+      atomic<size_t> [[redoc("*>")]]count{sizeof...(sndrs)};                   // [=expos]
+      inplace_stop_source [[redoc("*>")]]stop_src{};                           // [=expos]
+      atomic<[[redoc("*>")]]disposition> disp{[[redoc("*>")]]disposition::[[redoc("*>")]]started};           // [=expos]
+      errors_variant [[redoc("*>")]]errors{};                                  // [=expos]
+      values_tuple [[redoc("*>")]]values{};                                    // [=expos]
+      optional<stop_callback> [[redoc("*>")]]on_stop{nullopt};                 // [=expos]
+    };
+
+    return [[redoc("*>")]]state-type{};
+  }
+};
+[codeblock:end]
+
+[para]
+[:en] Let [*copy-fail] be [`exception_ptr] if decay-copying any of the child
+senders[='] result datums can potentially throw; otherwise, [*none-such],
+where [*none-such] is an unspecified empty class type.
+[:zh_CN] 令 [*copy-fail] 当对任何子发送器的结果数据进行衰退复制时会潜在抛出异常时为
+[`exception_ptr]；否则为 [*none-such]，其中 [*none-such] 为某个未指明的空类类型。
+
+[para]
+[:en] The alias [`values_tuple] denotes the type
+[:zh_CN] 别名 [`values_tuple] 代表类型
+[codeblock]
+tuple<value_types_of_t<Sndrs, env_of_t<Rcvr>, [[redoc("*>")]]decayed-tuple, optional>...>
+[codeblock:end]
+[:en@~] if that type is well-formed; otherwise, [`tuple<>].
+[:zh_CN@~] 若该类型良构；否则代表 [`tuple<>]。
+
+[para]
+[:en] The alias [`errors_variant] denotes the type
+[`variant<[*none-such], [*copy-fail], Es...>] with duplicate types removed,
+where [`Es] is the pack of the decayed types
+of all the child senders[='] possible error result datums.
+[:zh_CN] 别名 [`errors_variant] 代表移除了重复类型的类型
+[`variant<[*none-such], [*copy-fail], Es...>]，其中 [`Es] 为所有子发送器的可能
+错误结果数据的衰退类型的包组。
+
+[para]
+[:en] The member [`void [*state-type]::[*complete](Rcvr& rcvr) noexcept]
+behaves as follows:
+[:zh_CN] 成员 [`void [*state-type]::[*complete](Rcvr& rcvr) noexcept] 具有如下行为：
+
+[list]
+[item]
+[:en] If [`disp] is equal to [`[*disposition]::[*started]], evaluates:
+[:zh_CN] 如果 [`disp] 等于 [`[*disposition]::[*started]]，则求值：
+[codeblock]
+auto tie = []<class... T>(tuple<T...>& t) noexcept { return tuple<T&...>(t); };
+auto set = [&](auto&... t) noexcept { set_value(std::move(rcvr), std::move(t)...); };
+
+[[redoc("*>")]]on_stop.reset();
+apply(
+  [&](auto&... opts) noexcept {
+    apply(set, tuple_cat(tie(*opts)...));
+  },
+  values);
+[codeblock:end]
+
+[item]
+[:en] Otherwise, if [`disp] is equal to [`[*disposition]::[`error]], evaluates:
+[:zh_CN] 否则，如果 [`disp] 等于 [`[*disposition]::[`error]]，则求值：
+[codeblock]
+[[redoc("*>")]]on_stop.reset();
+visit(
+  [&]<class Error>(Error& error) noexcept {
+    if constexpr (!@\libconcept{same_as}@<Error, [[redoc("*>")]]none-such>) {
+      set_error(std::move(rcvr), std::move(error));
+    }
+  },
+  errors);
+[codeblock:end]
+
+[item]
+[:en] Otherwise, evaluates:
+[:zh_CN] 否则，求值：
+[codeblock]
+[[redoc("*>")]]on_stop.reset();
+set_stopped(std::move(rcvr));
+[codeblock:end]
+[list:end]
+
+[para]
+[:en] The member [`[*impls-for]<when_all_t>::[*start]] is initialized with
+a callable object equivalent to the following lambda expression:
+[:zh_CN] 成员 [`[*impls-for]<when_all_t>::[*start]] 以等价于如下 lambda 表达式
+的可调用对象初始化：
+[codeblock]
+[]<class State, class Rcvr, class... Ops>(
+    State& state, Rcvr& rcvr, Ops&... ops) noexcept -> void {
+  state.[[redoc("*>")]]on_stop.emplace(
+    get_stop_token(get_env(rcvr)),
+    [[redoc("*>")]]on-stop-request{state.[[redoc("*>")]]stop_src});
+  if (state.[[redoc("*>")]]stop_src.stop_requested()) {
+    state.[[redoc("*>")]]on_stop.reset();
+    set_stopped(std::move(rcvr));
+  } else {
+    (start(ops), ...);
+  }
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<when_all_t>::[*complete]] is initialized with
+a callable object equivalent to the following lambda expression:
+[:zh_CN] 成员 [`[*impls-for]<when_all_t>::[*complete]] 以等价于如下 lambda 表达式
+的可调用对象初始化：
+[codeblock]
+[]<class Index, class State, class Rcvr, class Set, class... Args>(
+    this auto& complete, Index, State& state, Rcvr& rcvr, Set, Args&&... args) noexcept -> void {
+  if constexpr ([[redoc("`:c>")]]same_as<Set, set_error_t>) {
+    if ([[redoc("*>")]]disposition::[[redoc("*>")]]error != state.disp.exchange([[redoc("*>")]]disposition::[[redoc("*>")]]error)) {
+      state.[[redoc("*>")]]stop_src.request_stop();
+      [[redoc("*>")]]TRY-EMPLACE-ERROR(state.errors, std::forward<Args>(args)...);
+    }
+  } else if constexpr ([[redoc("`:c>")]]same_as<Set, set_stopped_t>) {
+    auto expected = [[redoc("*>")]]disposition::[[redoc("*>")]]started;
+    if (state.disp.compare_exchange_strong(expected, [[redoc("*>")]]disposition::[[redoc("*>")]]stopped)) {
+      state.[[redoc("*>")]]stop_src.request_stop();
+    }
+  } else if constexpr (![[redoc("`:c>")]]same_as<decltype(State::values), tuple<>>) {
+    if (state.disp == [[redoc("*>")]]disposition::[[redoc("*>")]]started) {
+      auto& opt = get<Index::value>(state.values);
+      [[redoc("*>")]]TRY-EMPLACE-VALUE(complete, opt, std::forward<Args>(args)...);
+    }
+  }
+  state.[[redoc("*>")]]arrive(rcvr);
+}
+[codeblock:end]
+[:en@~] where [`[*TRY-EMPLACE-ERROR](v, e)], for subexpressions [`v] and [`e],
+is equivalent to:
+[:zh_CN@~] 其中 [`[*TRY-EMPLACE-ERROR](v, e)] 对于子表达式 [`v] 和 [`e]，
+如果 [`decltype(auto(e))(e)] 潜在抛出，则等价于：
+[codeblock]
+try {
+  v.template emplace<decltype(auto(e))>(e);
+} catch (...) {
+  v.template emplace<exception_ptr>(current_exception());
+}
+[codeblock:end]
+[:en@~] if the expression [`decltype(auto(e))(e)] is potentially throwing;
+otherwise, [`v.template emplace<decltype(auto(e))>(e)];
+[:zh_CN@~] 否则，等价于 [`v.template emplace<decltype(auto(e))>(e)]；
+
+[:en@~] and where [`[*TRY-EMPLACE-VALUE](c, o, as...)], for subexpressions [`c],
+[`o], and pack of subexpressions [`as], is equivalent to:
+[:zh_CN@~] 以及，[`[*TRY-EMPLACE-VALUE](c, o, as...)] 对于子表达式 [`e]，[`o]
+和子表达式的包组 [`as]，如果表达式 [`[*decayed-tuple]<decltype(as)...>{as...}]
+潜在抛出，则等价于：
+[codeblock]
+try {
+  o.emplace(as...);
+} catch (...) {
+  c(Index(), state, rcvr, set_error, current_exception());
+  return;
+}
+[codeblock:end]
+[:en@~] if the expression [`[*decayed-tuple]<decltype(as)...>{as...}]
+is potentially throwing; otherwise, [`o.emplace(as...)].
+[:zh_CN@~] 否则，等价于 [`o.emplace(as...)]。
+
+[para]
+[:en] The expression [`when_all_with_variant(sndrs...)]
+is expression-equivalent to:
+[:zh_CN] 表达式 [`when_all_with_variant(sndrs...)] 按表达式等价于：
+[codeblock]
+transform_sender(CD(), [[redoc("*>")]]make-sender(when_all_with_variant, {}, sndrs...));
+[codeblock:end]
+
+[para]
+[:en] Given subexpressions [`sndr] and [`env], if
+[`[*:c sender-for]<decltype((sndr)), when_all_with_variant_t>] is [`false],
+then the expression [`when_all_with_variant.transform_sender(sndr, env)]
+is ill-formed; otherwise, it is equivalent to:
+[:zh_CN] 给定子表达式 [`sndr] 和 [`env]，如果
+[`[*:c sender-for]<decltype((sndr)), when_all_with_variant_t>] 为 [`false]，
+那么表达式 [`when_all_with_variant.transform_sender(sndr, env)] 非良构；否则它等价于：
+[codeblock]
+auto&& [_, _, ...child] = sndr;
+return when_all(into_variant(std::forward_like<decltype((sndr))>(child))...);
+[codeblock:end]
+
+[begin:note]
+[:en] This causes the [`when_all_with_variant(sndrs...)] sender
+to become [`when_all(into_variant(sndrs)...)] when it is connected with
+a receiver whose execution domain does not customize [`when_all_with_variant].
+[:zh_CN] 这会造成 [`when_all_with_variant(sndrs...)] 发送器，当与执行域并未定制化
+[`when_all_with_variant] 的接收器连接后，将变为 [`when_all(into_variant(sndrs)...)]。
+[end:note]

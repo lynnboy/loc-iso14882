@@ -1,0 +1,149 @@
+[section#exec.connect
+    [`execution::connect]
+]
+
+[para]
+[:en] [`connect] connects ([#exec.async.ops]) a sender with a receiver.
+[:zh_CN] [`connect] 连接（[#exec.async.ops]）发送器和接收器。
+
+[para]
+[:en] The name [`connect] denotes a customization point object.
+[:zh_CN] 名字 [`connect] 代表一个定制化点对象。
+
+[:en] For subexpressions [`sndr] and [`rcvr], let [`Sndr] be [`decltype((sndr))]
+and [`Rcvr] be [`decltype((rcvr))], let [`new_sndr] be the expression
+[:zh_CN] 对于子表达式 [`sndr] 和 [`rcvr]，令 [`Sndr] 为 [`decltype((sndr))]，
+[`Rcvr] 为 [`decltype((rcvr))]，令 [`new_sndr] 为表达式
+[codeblock]
+transform_sender(decltype([[redoc("*>")]]get-domain-late(sndr, get_env(rcvr))){}, sndr, get_env(rcvr))
+[codeblock:end]
+
+[:en@~] and let [`DS] and [`DR] be [`decay_t<decltype((new_sndr))>] and
+[`decay_t<Rcvr>], respectively.
+[:zh_CN] 并令 [`DS] 和 [`DR] 分别为 [`decay_t<decltype((new_sndr))>] 和
+[`decay_t<Rcvr>]。
+
+[para]
+[:en] Let [*connect-awaitable-promise] be the following exposition-only class:
+[:zh_CN] 令 [*connect-awaitable-promise] 为以下仅用于阐释的类：
+
+[codeblock:synopsis]
+namespace std::execution {
+  struct [[redoc("*>")]]connect-awaitable-promise : [[redoc("*>")]]with-await-transform<[[redoc("*>")]]connect-awaitable-promise> {
+
+    [[redoc("*>")]]connect-awaitable-promise(DS&, DR& rcvr) noexcept : [[redoc("*>")]]rcvr(rcvr) {}
+
+    suspend_always initial_suspend() noexcept { return {}; }
+    [[noreturn]] suspend_always final_suspend() noexcept { terminate(); }
+    [[noreturn]] void unhandled_exception() noexcept { terminate(); }
+    [[noreturn]] void return_void() noexcept { terminate(); }
+
+    coroutine_handle<> unhandled_stopped() noexcept {
+      set_stopped(std::move([[redoc("*>")]]rcvr));
+      return noop_coroutine();
+    }
+
+    [[redoc("*>")]]operation-state-task get_return_object() noexcept {
+      return [[redoc("*>")]]operation-state-task{
+        coroutine_handle<[[redoc("*>")]]connect-awaitable-promise>::from_promise(*this)};
+    }
+
+    env_of_t<DR> get_env() const noexcept {
+      return execution::get_env([[redoc("*>")]]rcvr);
+    }
+
+  private:
+    DR& [[redoc("*>")]]rcvr;                           // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [*operation-state-task] be the following exposition-only class:
+[:zh_CN] 令 [*operation-state-task] 为以下仅用于阐释的类：
+
+[codeblock:synopsis]
+namespace std::execution {
+  struct [[redoc("*>")]]operation-state-task {
+    using operation_state_concept = operation_state_t;
+    using promise_type = [[redoc("*>")]]connect-awaitable-promise;
+
+    explicit [[redoc("*>")]]operation-state-task(coroutine_handle<> h) noexcept : coro(h) {}
+    [[redoc("*>")]]operation-state-task([[redoc("*>")]]operation-state-task&& o) noexcept
+      : [[redoc("*>")]]coro(exchange(o.[[redoc("*>")]]coro, {})) {}
+    ~[[redoc("*>")]]operation-state-task() { if ([[redoc("*>")]]coro) [[redoc("*>")]]coro.destroy(); }
+
+    void start() & noexcept {
+      [[redoc("*>")]]coro.resume();
+    }
+
+  private:
+    coroutine_handle<> [[redoc("*>")]]coro;                                    // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`V] name the type [`[*await-result-type]<DS, [*connect-awaitable-promise]>],
+let [`Sigs] name the type
+[:zh_CN] 令 [`V] 指名类型 [`[*await-result-type]<DS, [*connect-awaitable-promise]>]，
+令 [`Sigs] 指名类型
+[codeblock]
+completion_signatures<
+  [[redoc("*>")]]SET-VALUE-SIG(V),         // [:en] see [#exec.snd.concepts] [:zh_CN] 见 [#exec.snd.concepts]
+  set_error_t(exception_ptr),
+  set_stopped_t()>
+[codeblock:end]
+[:en] and let [*connect-awaitable] be an exposition-only coroutine
+defined as follows:
+[:zh_CN] 并令 [*connect-awaitable] 为如下定义的仅用于阐释的协程：
+[codeblock]
+namespace std::execution {
+  template<class Fun, class... Ts>
+  auto [[redoc("*>")]]suspend-complete(Fun fun, Ts&&... as) noexcept {    // [=expos]
+    auto fn = [&, fun]() noexcept { fun(std::forward<Ts>(as)...); };
+
+    struct awaiter {
+      decltype([[redoc("*>")]]fn) [[redoc("*>")]]fn;                                     // [=expos]
+
+      static constexpr bool await_ready() noexcept { return false; }
+      void await_suspend(coroutine_handle<>) noexcept { [[redoc("*>")]]fn(); }
+      [[noreturn]] void await_resume() noexcept { unreachable(); }
+    };
+    return awaiter{[[redoc("*>")]]fn};
+  }
+
+  [[redoc("*>")]]operation-state-task [[redoc("*>")]]connect-awaitable[[redoc("*>")]](DS sndr, DR rcvr) requires [[redoc("`:c>")]]receiver_of<DR, Sigs> {
+    exception_ptr ep;
+    try {
+      if constexpr ([[redoc("`:c>")]]same_as<V, void>) {
+        co_await std::move(sndr);
+        co_await [[redoc("*>")]]suspend-complete(set_value, std::move(rcvr));
+      } else {
+        co_await [[redoc("*>")]]suspend-complete(set_value, std::move(rcvr), co_await std::move(sndr));
+      }
+    } catch(...) {
+      ep = current_exception();
+    }
+    co_await [[redoc("*>")]]suspend-complete(set_error, std::move(rcvr), std::move(ep));
+  }
+}
+[codeblock:end]
+
+[para]
+[:en] The expression [`connect(sndr, rcvr)] is expression-equivalent to:
+[:zh_CN] 表达式 [`connect(sndr, rcvr)] 按表达式等价于：
+[list]
+[item]
+[:en] [`new_sndr.connect(rcvr)] if that expression is well-formed.
+[:zh_CN] [`new_sndr.connect(rcvr)] 若该表达式良构。
+[para:mandates@~]
+[:en] The type of the expression above satisfies [`:c operation_state].
+[:zh_CN] 以上表达式的类型满足 [`:c operation_state]。
+[item]
+[:en] Otherwise, [`[*connect-awaitable](new_sndr, rcvr)].
+[:zh_CN@~] 否则为 [`[*connect-awaitable](new_sndr, rcvr)]。
+[para:mandates@~]
+[:en] [`[`:c sender]<Sndr> && [`:c receiver]<Rcvr>] is [`true].
+[:zh_CN] [`[`:c sender]<Sndr> && [`:c receiver]<Rcvr>] 为 [`true]。
+[list:end]

@@ -1,0 +1,56 @@
+[section#exec.stopped.opt
+    [`execution::stopped_as_optional]
+]
+
+[para]
+[:en] [`stopped_as_optional] maps a sender[=']s stopped completion operation
+into a value completion operation as a disengaged [`optional].
+[:zh_CN] [`stopped_as_optional] 将一个发送器的停止完成操作作为脱离的 [`optional]
+映射为一个值完成操作。
+
+[:en] The sender[=']s value completion operation is also converted into an
+[`optional].
+[:zh_CN] 该发送器的值完成操作也被转换为一个 [`optional]。
+
+[:en] The result is a sender that never completes with stopped,
+reporting cancellation by completing with a disengaged [`optional].
+[:zh_CN] 其结果为一个永不按停止完成的发送器，它用脱离的 [`optional] 的完成来报告取消。
+
+[para]
+[:en] The name [`stopped_as_optional] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`stopped_as_optional] 代表一个可连管道的发送器适配器对象。
+
+[:en] For a subexpression [`sndr], let [`Sndr] be [`decltype((sndr))].
+[:zh_CN] 对于子表达式 [`sndr]，令 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] The expression [`stopped_as_optional(sndr)] is expression-equivalent to:
+[:zh_CN] 表达式 [`stopped_as_optional(sndr)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(stopped_as_optional, {}, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is only evaluated once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] Let [`sndr] and [`env] be subexpressions such that [`Sndr] is
+[`decltype((sndr))] and [`Env] is [`decltype((env))].
+[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]，
+[`Env] 为 [`decltype((env))]。
+
+[:en] If [`[*:c sender-for]<Sndr, stopped_as_optional_t>] is [`false], or
+if the type [`[*single-sender-value-type]<Sndr, Env>] is ill-formed or [`void],
+then the expression [`stopped_as_optional.transform_sender(sndr, env)]
+is ill-formed; otherwise, it is equivalent to:
+[:zh_CN] 如果 [`[*:c sender-for]<Sndr, stopped_as_optional_t>] 为 [`false]，或者
+类型 [`[*single-sender-value-type]<Sndr, Env>] 非良构或为 [`void]，则表达式
+[`stopped_as_optional.transform_sender(sndr, env)] 非良构，否则，它等价于：
+[codeblock]
+auto&& [_, _, child] = sndr;
+using V = [[redoc("*>")]]single-sender-value-type<Sndr, Env>;
+return let_stopped(
+    then(std::forward_like<Sndr>(child),
+         []<class... Ts>(Ts&&... ts) noexcept(is_nothrow_constructible_v<V, Ts...>) {
+           return optional<V>(in_place, std::forward<Ts>(ts)...);
+         }),
+    []() noexcept { return just(optional<V>()); });
+[codeblock:end]

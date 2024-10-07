@@ -1,0 +1,218 @@
+[section#exec.schedule.from
+    [`execution::schedule_from]
+]
+
+[para]
+[:en] [`schedule_from] schedules work dependent on the completion of a sender
+onto a scheduler[=']s associated execution resource.
+[:zh_CN] [`schedule_from] 把依赖于某个发送器之完成的工作调度到某个调度器的关联执行资源之上。
+
+[begin:note]
+[:en] [`schedule_from] is not meant to be used in user code;
+it is used in the implementation of [`continues_on].
+[:zh_CN] [`schedule_from] 并非为在用户代码中使用；它由 [`continues_on] 的实现所用。
+[end:note]
+
+[para]
+[:en] The name [`schedule_from] denotes a customization point object.
+[:zh_CN] 名字 [`schedule_from] 代表一个定制化点对象。
+
+[:en] For subexpressions [`sch] and [`sndr], let [`Sch] be [`decltype((sch))]
+and [`Sndr] be [`decltype((sndr))].
+[`starts_on(sch, sndr)] is ill-formed.
+[:zh_CN] 对于子表达式 [`sch] 和 [`sndr]，令 [`Sch] 为 [`decltype((sch))]，并令
+[`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`Sch] does not satisfy [`:c scheduler], or [`Sndr] does not satisfy
+[`:c sender], [`schedule_from(sch, sndr)] is ill-formed.
+[:zh_CN] 如果 [`Sch] 不满足 [`:c scheduler]，或者 [`Sndr] 不满足 [`:c sender]，
+那么 [`schedule_from(sch, sndr)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`schedule_from(sch, sndr)] is
+expression-equivalent to:
+[:zh_CN] 否则，表达式 [`schedule_from(sch, sndr)] 按表达式等价于：
+[codeblock]
+transform_sender(
+  [[redoc("*>")]]query-or-default(get_domain, sch, default_domain()),
+  [[redoc("*>")]]make-sender(schedule_from, sch, sndr))
+[codeblock:end]
+[:en@~] except that [`sch] is evaluated only once.
+[:zh_CN@~] 但 [`sch] 仅被求值一次。
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [`schedule_from_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
+[`schedule_from_t] 进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<schedule_from_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]get-attrs = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<schedule_from_t>::[*get-attrs]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<schedule_from_t>::[*get-attrs]] 以等价于如下 lambda
+的可调用对象初始化：
+[codeblock]
+[](const auto& data, const auto& child) noexcept -> decltype(auto) {
+  return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ATTRS(data), [[redoc("*>")]]FWD-ENV(get_env(child)));
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<schedule_from_t>::[*get-state]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<schedule_from_t>::[*get-state]] 以等价于如下 lambda
+的可调用对象初始化：
+[codeblock]
+[]<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept(see below)
+    requires [[redoc("`:c>"")]]sender_in<[[redoc("*>")]]child-type<Sndr>, env_of_t<Rcvr>> {
+
+  auto& [_, sch, child] = sndr;
+
+  using sched_t = decltype(auto(sch));
+  using variant_t = [[redoc("[=seebelow]")]];
+  using receiver_t = [[redoc("[=seebelow]")]];
+  using operation_t = connect_result_t<schedule_result_t<sched_t>, receiver_t>;
+  constexpr bool nothrow = noexcept(connect(schedule(sch), receiver_t{nullptr}));
+
+  struct [[redoc("*>")]]state-type {
+    Rcvr& [[redoc("*>")]]rcvr;                 // [=expos]
+    variant_t [[redoc("*>")]]async-result;     // [=expos]
+    operation_t [[redoc("*>")]]op-state;       // [=expos]
+
+    explicit [[redoc("*>")]]state-type(sched_t sch, Rcvr& rcvr) noexcept(nothrow)
+      : [[redoc("*>")]]rcvr(rcvr), [[redoc("*>")]]op-state(connect(schedule(sch), receiver_t{this})) {}
+  };
+
+  return [[redoc("*>")]]state-type{sch, rcvr};
+}
+[codeblock:end]
+
+[para]
+[:en] Objects of the local class [*state-type] can be used
+to initialize a structured binding.
+[:zh_CN] 局部类 [*state-type] 的对象可用于初始化结构化绑定。
+
+[para]
+[:en] Let [`Sigs] be a pack of the arguments to the [`completion_signatures]
+specialization named by
+[`completion_signatures_of_t<child-type<Sndr>, env_of_t<Rcvr>>].
+[:zh_CN] 令 [`Sigs] 为
+[`completion_signatures_of_t<child-type<Sndr>, env_of_t<Rcvr>>] 所指名的
+[`completion_signatures] 的特例的实参包组。
+
+[:en] Let [*as-tuple] be an alias template that transforms a completion
+signature [`Tag(Args...)] into the tuple specialization
+[`[*decayed-tuple]<Tag, Args...>].
+[:zh_CN] 令 [*as-tuple] 为将完成签名 [`Tag(Args...)] 变换为元组特例
+[`[*decayed-tuple]<Tag, Args...>] 的别名模板。
+
+[:en] Then [`variant_t] denotes the type
+[`variant<monostate, [*as-tuple]<Sigs>...>], except with duplicate types removed.
+[:zh_CN] 然后，[`variant_t] 代表类型 [`variant<monostate, [*as-tuple]<Sigs>...>]，
+但从中移除重复类型。
+
+[para]
+[:en] [`receiver_t] is an alias for the following exposition-only class:
+[:zh_CN] [`receiver_t] 是如下仅用于阐释的类的别名：
+
+[codeblock]
+namespace std::execution {
+  struct [[redoc("*>")]]receiver-type {
+    using receiver_concept = receiver_t;
+    [[redoc("*>")]]state-type* [[redoc("*>")]]state;          // [=expos]
+
+    void set_value() && noexcept {
+      visit(
+        [this]<class Tuple>(Tuple& result) noexcept -> void {
+          if constexpr (![[redoc("`:c>")]]same_as<monostate, Tuple>) {
+            auto& [tag, ...args] = result;
+            tag(std::move([[redoc("*>")]]state->[[redoc("*>")]]rcvr), std::move(args)...);
+          }
+        },
+        [[redoc("*>")]]state->[[redoc("*>")]]async-result);
+    }
+
+    template<class Error>
+    void set_error(Error&& err) && noexcept {
+      execution::set_error(std::move([[redoc("*>")]]state->[[redoc("*>")]]rcvr), std::forward<Error>(err));
+    }
+
+    void set_stopped() && noexcept {
+      execution::set_stopped(std::move([[redoc("*>")]]state->[[redoc("*>")]]rcvr));
+    }
+
+    decltype(auto) get_env() const noexcept {
+      return [[redoc("*>")]]FWD-ENV(execution::get_env([[redoc("*>")]]state->[[redoc("*>")]]rcvr));
+    }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The expression in the [`noexcept] clause of the lambda is [`true]
+if the construction of the returned [*state-type] object is not potentially
+throwing; otherwise, [`false].
+[:zh_CN] lambda 的 [`noexcept] 子句中的表达式，当所返回的 [*state-type] 对象的构造
+并非潜在抛出时为 [`true]；否则为 [`false]。
+
+[para]
+[:en] The member [`[*impls-for]<schedule_from_t>::[*complete]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<schedule_from_t>::[*complete]] 以等价于如下 lambda
+的可调用对象初始化：
+
+[codeblock]
+[]<class Tag, class... Args>(auto, auto& state, auto& rcvr, Tag, Args&&... args) noexcept
+    -> void {
+  using result_t = [[redoc("*>")]]decayed-tuple<Tag, Args...>;
+  constexpr bool nothrow = is_nothrow_constructible_v<result_t, Tag, Args...>;
+
+  [[redoc("*>")]]TRY-EVAL(rcvr, [&]() noexcept(nothrow) {
+    state.[[redoc("*>")]]async-result.template emplace<result_t>(Tag(), std::forward<Args>(args)...);
+  }());
+
+  if (state.[[redoc("*>")]]async-result.valueless_by_exception())
+    return;
+  if (state.[[redoc("*>")]]async-result.index() == 0)
+    return;
+
+  start(state.[[redoc("*>")]]op-state);
+};
+[codeblock:end]
+
+[para]
+[:en] Let [`out_sndr] be a subexpression denoting a sender returned from
+[`schedule_from(sch, sndr)] or one equal to such, and let [`OutSndr] be the type
+[`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`schedule_from(sch, sndr)] 返回的发送器
+或等于它的发送器，并令 [`OutSndr] 为类型 [`decltype((out_sndr))]。
+
+[:en] Let [`out_rcvr] be a subexpression denoting a receiver that has an
+environment of type [`Env] such that [`[`:c sender_in]<OutSndr, Env>] is [`true].
+[:zh_CN] 令 [`out_rcvr] 为子表达式，代表具有 [`Env] 类型环境的接收器，使得
+[`[`:c sender_in]<OutSndr, Env>] 为 [`true]。
+
+[:en] Let [`op] be an lvalue referring to the operation state that results from
+connecting [`out_sndr] with [`out_rcvr].
+[:zh_CN] 令 [`op] 为指代由 [`out_sndr] 与 [`out_rcvr] 的连接所得的操作状态。
+
+[:en] Calling [`start(op)] shall start [`sndr] on the current execution agent
+and execute completion operations on [`out_rcvr] on an execution agent of the
+execution resource associated with [`sch].
+[:zh_CN] 调用 [`start(op)] 应当在当前执行代理上启动 [`sndr]，并在 [`sch] 关联的
+执行资源的某个执行代理上执行完成操作。
+
+[:en] If scheduling onto [`sch] fails, an error completion on [`out_rcvr] shall
+be executed on an unspecified execution agent.
+[:zh_CN] 如果向 [`sch] 上调度时失败，那么应当在某个未指明的执行代理上执行 [`out_rcvr]
+上的一次错误完成。

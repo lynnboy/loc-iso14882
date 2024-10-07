@@ -1,0 +1,58 @@
+[section#exec.stopped.err
+    [`execution::stopped_as_error]
+]
+
+[para]
+[:en] [`stopped_as_error] maps an input sender[=']s stopped completion operation
+into an error completion operation as a custom error type.
+[:zh_CN] [`stopped_as_error] 将一个输入发送器的停止完成操作作为自定义错误类型
+映射为一个错误完成操作。
+
+[:en] The result is a sender that never completes with stopped,
+reporting cancellation by completing with an error.
+[:zh_CN] 其结果为一个永不按停止完成的发送器，它用一种错误的完成来报告取消。
+
+[para]
+[:en] The name [`stopped_as_error] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`stopped_as_error] 代表一个可连管道的发送器适配器对象。
+
+[:en] For some subexpressions [`sndr] and [`err], let [`Sndr] be
+[`decltype((sndr))] and let [`Err] be [`decltype((err))].
+[:zh_CN] 对于子表达式 [`sndr] 和 [`err]，令 [`Sndr] 为 [`decltype((sndr))]，
+并令 [`Err] 为 [`decltype((err))]。
+
+[:en] If the type [`Sndr] does not satisfy [`:c sender] or
+if the type [`Err] does not satisfy [*:c movable-value],
+[`stopped_as_error(sndr, err)] is ill-formed.
+[:zh_CN] 如果类型 [`Sndr] 不满足 [`:c sender] 或如果类型 [`Err] 不满足
+[*:c movable-value]，则 [`stopped_as_error(sndr, err)] 非良构。
+
+[:en] Otherwise, the expression [`stopped_as_error(sndr, err)] is
+expression-equivalent to:
+[:zh_CN] 否则，表达式 [`stopped_as_error(sndr, err)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(stopped_as_error, err, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is only evaluated once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] Let [`sndr] and [`env] be subexpressions such that [`Sndr] is
+[`decltype((sndr))] and [`Env] is [`decltype((env))].
+[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]，
+[`Env] 为 [`decltype((env))]。
+
+[:en] If [`[*:c sender-for]<Sndr, stopped_as_error_t>] is [`false],
+then the expression [`stopped_as_error.transform_sender(sndr, env)]
+is ill-formed; otherwise, it is equivalent to:
+[:zh_CN] 如果 [`[*:c sender-for]<Sndr, stopped_as_error_t>] 为 [`false]，则表达式
+[`stopped_as_error.transform_sender(sndr, env)] 非良构，否则，它等价于：
+[codeblock]
+auto&& [_, err, child] = sndr;
+using E = decltype(auto(err));
+return let_stopped(
+    std::forward_like<Sndr>(child),
+    [err = std::forward_like<Sndr>(err)]() mutable noexcept(is_nothrow_move_constructible_v<E>) {
+      return just_error(std::move(err));
+    });
+[codeblock:end]

@@ -1,0 +1,173 @@
+[section#exec.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] This Clause describes components supporting execution of function objects
+([#function.objects]).
+[:zh_CN] 本章中描述的组件支持函数对象的执行（[#function.objects]）。
+
+[para]
+[:en] The following subclauses describe the requirements, concepts, and
+components for execution control primitives as summarized in [#:tab#exec.summary].
+[:zh_CN] 以下各子条款描述了用于执行控制原语的要求、概念和组件，总结于 [#:tab#exec.summary]。
+
+[table:grid#exec.summary
+    [:en] Execution control library summary
+    [:zh_CN] 执行控制程序库概要
+    [|@headerspan=2
+        [:en] Subclause
+        [:zh_CN] 子条款 ]
+    [|]
+    [|@code
+        [:en] Header(s)
+        [:zh_CN] 头文件 ]
+]
+[|] [#exec.sched]
+[|] [:en] Schedulers
+    [:zh_CN] 调度器
+[|@rowspan=4] [`<execution>]
+[-]
+
+[|] [#exec.recv]
+[|] [:en] Receivers
+    [:zh_CN] 接收器
+[-]
+
+[|] [#exec.opstate]
+[|] [:en] Operation states
+    [:zh_CN] 操作状态
+[-]
+
+[|] [#exec.snd]
+[|] [:en] Senders
+    [:zh_CN] 发送器
+[-]
+[table:end]
+
+[para]
+[:en] [#:tab#exec.pos] shows the types of customization point objects
+([#customization.point.object]) used in the execution control library.
+[:zh_CN] [#:tab#exec.pos] 展示执行控制库中使用的定制化点对象的类型
+（[#customization.point.object]）。
+
+[table:grid#exec.pos
+    [:en] Types of customization point objects in the execution control library
+    [:zh_CN] 执行控制库中的定制化点对象的类型
+    [|  [:en] Customization point object type
+        [:zh_CN] 定制化点对象类型 ]
+    [|  [:en] Purpose
+        [:zh_CN] 目的 ]
+    [|  [:en] Example
+        [:zh_CN] 示例 ]
+]
+[-]
+[|] [:en] core
+    [:zh_CN] 核心
+[|] [:en] provide core execution functionality, and connection between core
+    components
+    [:zh_CN] 提供核心的执行功能，并将核心组件连接起来
+[|] [:en] e.g., [`connect], [`start]
+    [:zh_CN] 例如，[`connect]，[`start]
+[-]
+[|] [:en] completion functions
+    [:zh_CN] 完成函数
+[|] [:en] called by senders to announce the completion of the work (success,
+    error, or cancellation)
+    [:zh_CN] 由发送器调用以公告其工作完成（成功、错误或取消）
+[|] [`set_value], [`set_error], [`set_stopped]
+[-]
+[|] [:en] senders
+    [:zh_CN] 发送器
+[|] [:en] allow the specialization of the provided sender algorithms
+    [:zh_CN] 允许特化所提供的发送器算法
+[|] [list]
+    [item]
+    [:en] sender factories (e.g., [`schedule], [`just], [`read_env])
+    [:zh_CN] 发送器工厂（例如 [`schedule]，[`just]，[`read_env]）
+    [item]
+    [:en] sender adaptors (e.g., [`continues_on], [`then], [`let_value])
+    [:zh_CN] 发送器适配器（例如 [`continues_on]，[`then]，[`let_value]）
+    [item]
+    [:en] sender consumers (e.g., [`sync_wait])
+    [:zh_CN] 发送器消耗方（例如 [`sync_wait]）
+    [list:end]
+[-]
+[|] [:en] queries
+    [:zh_CN] 查询
+[|] [:en] allow querying different properties of objects
+    [:zh_CN] 允许查询对象的不同属性
+[|] [list]
+    [item]
+    [:en] general queries (e.g., [`get_allocator], [`get_stop_token])
+    [:zh_CN] 一般查询（例如 [`get_allocator]，[`get_stop_token]）
+    [item]
+    [:en] environment queries (e.g., [`get_scheduler], [`get_delegation_scheduler])
+    [:zh_CN] 环境查询（例如 [`get_scheduler]，[`get_delegation_scheduler]）
+    [item]
+    [:en] scheduler queries (e.g., [`get_forward_progress_guarantee])
+    [:zh_CN] 调度器查询（例如 [`get_forward_progress_guarantee]）
+    [item]
+    [:en] sender attribute queries (e.g., [`get_completion_scheduler])
+    [:zh_CN] 发送器属性查询（例如 [`get_completion_scheduler]）
+    [list:end]
+[table:end]
+
+[para]
+[:en] This clause makes use of the following exposition-only entities.
+[:zh_CN] 本章使用了下列仅用于阐释的实体。
+
+[para]
+[:en] For a subexpression [`expr], let [`[*MANDATE-NOTHROW](expr)] be
+expression-equivalent to [`expr].
+[:zh_CN] 对于子表达式 [`expr]，令 [`[*MANDATE-NOTHROW](expr)] 表达式等价于 [`expr]。
+
+[para:mandates:~]
+[:en] [`noexcept(expr)] is [`true].
+[:zh_CN] [`noexcept(expr)] 为 [`true]。
+
+[para]
+[codeblock]
+namespace std {
+  template<class T>
+    concept [[redoc("*:c@def>")]]movable-value =                                     // [=expos]
+      [[redoc("`:c>")]]move_constructible<decay_t<T>> &&
+      [[redoc("`:c>")]]constructible_from<decay_t<T>, T> &&
+      (!is_array_v<remove_reference_t<T>>);
+}
+[codeblock:end]
+
+[para]
+[:en] For function types [`F1] and [`F2] denoting [`R1(Args1...)] and
+[`R2(Args2...)], respectively, [`MATCHING-SIG(F1, F2)] is [`true] if and only if
+[`[`:c same_as]<R1(Args1&&...), R2(Args2&&...)>] is [`true].
+[:zh_CN] 对于分别代表 [`R1(Args1...)] 和 [`R2(Args2...)] 的函数类型 [`F1] 和 [`F2]，
+当且仅当 [`[`:c same_as]<R1(Args1&&...), R2(Args2&&...)>] 为 [`true] 时
+[`MATCHING-SIG(F1, F2)] 为 [`true]。
+
+[para]
+[:en] For a subexpression [`err], let [`Err] be [`decltype((err))] and
+let [`[*AS-EXCEPT-PTR](err)] be:
+[:zh_CN] 对于子表达式 [`err]，令 [`Err] 为 [`decltype((err))]，
+并令 [`[*AS-EXCEPT-PTR](err)]：
+
+[list]
+[item]
+[:en] [`err] if [`decay_t<Err>] denotes the type [`exception_ptr].
+[:zh_CN] 若 [`decay_t<Err>] 代表类型 [`exception_ptr]，则为 [`err]。
+
+[para:mandates:~]
+[:en] [`err != exception_ptr()] is [`true].
+[:zh_CN] [`err != exception_ptr()] 为 [`true]。
+
+[item]
+[:en] Otherwise, [`make_exception_ptr(system_error(err))]
+if [`decay_t<Err>] denotes the type [`error_code].
+[:zh_CN] 否则，若 [`decay_t<Err>] 代表类型 [`error_code]，则为
+[`make_exception_ptr(system_error(err))]。
+
+[item]
+[:en] Otherwise, [`make_exception_ptr(err)].
+[:zh_CN] 否则，为 [`make_exception_ptr(err)]。
+[list:end]

@@ -1,0 +1,73 @@
+[section#exec.into.variant
+    [`execution::into_variant]
+]
+
+[para]
+[:en] [`into_variant] adapts a sender with multiple value completion signatures
+into a sender with just one value completion signature
+consisting of a [`variant] of [`tuple]s.
+[:zh_CN] [`into_variant] 将一个具有多个值完成签名的发送器适配为只有一个以 [`tuple]
+的 [`variant] 构成的值完成签名的发送器。
+
+[para]
+[:en] The name [`into_variant] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`into_variant] 代表一个可连管道的发送器适配器对象。
+
+[:en] For subexpressions [`sndr], let [`Sndr] be [`decltype((sndr))].
+[:zh_CN] 对于子表达式 [`sndr]，令 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`Sndr] does not satisfy [`:c sender], [`into_variant(sndr)] is ill-formed.
+[:zh_CN] 如果 [`Sndr] 不满足 [`:c sender]，那么 [`into_variant(sndr)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`into_variant(sndr)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`into_variant(sndr)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(into_variant, {}, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is only evaluated once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [`into_variant] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [`into_variant]
+进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<into_variant_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<into_variant_t>::[*get-state]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<into_variant_t>::[*get-state]] 以等价于如下 lambda 的
+可调用对象初始化：
+[codeblock]
+[]<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept
+  -> type_identity<value_types_of_t<[[redoc("*>")]]child-type<Sndr>, env_of_t<Rcvr>>> {
+  return {};
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<into_variant_t>::[*complete]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<into_variant_t>::[*complete]] 以等价于如下 lambda 的
+可调用对象初始化：
+[codeblock]
+[]<class State, class Rcvr, class Tag, class... Args>(
+    auto, State, Rcvr& rcvr, Tag, Args&&... args) noexcept -> void {
+  if constexpr ([[redoc("`:c>")]]same_as<Tag, set_value_t>) {
+    using variant_type = typename State::type;
+    [[redoc("*>")]]TRY-SET-VALUE(rcvr, variant_type([[redoc("*>")]]decayed-tuple<Args...>{std::forward<Args>(args)...}));
+  } else {
+    Tag()(std::move(rcvr), std::forward<Args>(args)...);
+  }
+}
+[codeblock:end]

@@ -1,0 +1,312 @@
+[/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% philox_engine engine:
+/]
+
+[section#rand.eng.philox
+    [:en] Class template [`philox_engine]
+    [:zh_CN] 类模板 [`philox_engine]
+]
+
+[%@lib philox_engine]
+
+[para]
+[:en] A [`philox_engine] random number engine produces unsigned integer random
+numbers in the closed interval [=crange(0,[$m])], where [$m = 2^w - 1] and
+the template parameter [$w] defines the range of the produced numbers.
+[:zh_CN] [`philox_engine] 随机数引擎产生闭区间 [=crange(0,[$m])] 之中的无符号整数
+的随机数，其中 [$m = 2^w - 1]，而模板形参 [$w] 定义所产生数值的范围。
+
+[:en] The state of a [`philox_engine] object consists of a sequence [$X] of [$n]
+unsigned integer values of width [$w], a sequence [$K] of [$n/2] values of
+[`result_type], a sequence [$Y] of [$n] values of [`result_type], and a scalar [$i],
+where
+[:zh_CN] [`philox_engine] 对象的状态由一个具有 [$n] 个宽度为 [$w] 的无符号整数值
+的序列 [$X]，一个具有 [$n/2] 个 [`result_type] 值的序列 [$K]，一个具有 [$n] 个
+[`result_type] 值的序列 [$Y]，和一个标量 [$i] 构成，其中
+
+[list]
+[item]
+[:en@~] [$X] is the interpretation of the unsigned integer [+:% counter] value
+[$Z [=cedef] \sum_{j = 0}^{n - 1} X_j \cdot 2^{wj}] of [$n \cdot w] bits,
+[:zh_CN@~] [$X] 判读为宽度为 [$n \cdot w] 位的无符号整数[+:% 计数器]值
+[$Z [=cedef] \sum_{j = 0}^{n - 1} X_j \cdot 2^{wj}]，
+[item]
+[:en@~] [$K] are keys, which are generated once from the seed (see constructors
+below) and remain constant unless the [`seed] function ([#rand.req.eng]) is invoked,
+[:zh_CN@~] [$K] 是一组键，它们是从种子（见下文的构造函数）一次生成的，只要不调用 [`seed]
+函数（[#rand.req.eng]）就保持为常数，
+[item]
+[:en@~] [$Y] stores a batch of output values, and
+[:zh_CN@~] [$Y] 存储一组输出值，而
+[item]
+[:en@~] [$i] is an index for an element of the sequence [$Y].
+[:zh_CN@~] [$i] 是序列 [$Y] 中的一个元素索引。
+[list:end]
+
+[para]
+[:en] The generation algorithm returns [$Y_i], the value stored in the [$i^{th}]
+element of [$Y] after applying the transition algorithm.
+[:zh_CN] 生成算法返回 [$Y_i]，其为运用转移算法后存储于 [$Y] 的第 [$i] 个元素中的值。
+
+[para]
+[:en] The state transition is performed as if by the following algorithm:
+[:zh_CN] 如同按如下算法进行状态转移：
+
+[codeblock]
+[[redoc("$>")]]i = [[redoc("$>")]]i + 1
+if ([[redoc("$>")]]i == [[redoc("$>")]]n) {
+  [[redoc("$>")]]Y = Philox([[redoc("$>")]]K, [[redoc("$>")]]X) // [=seebelow]
+  [[redoc("$>")]]Z = [[redoc("$>")]]Z + 1
+  [[redoc("$>")]]i = 0
+}
+[codeblock:end]
+
+[para]
+[:en] The [`Philox] function maps the length-[$n/2] sequence [$K] and
+the length-[$n] sequence [$X] into a length-[$n] output sequence [$Y].
+[:zh_CN] [`Philox] 函数将长度为 [$n/2] 的序列 [$K] 和长度为 [$n] 的序列 [$X]
+映射为长度为 [$n] 的输出序列 [$Y]。
+
+[:en] Philox applies an [$r]-round substitution-permutation network to the
+values in [$X].
+[:zh_CN] [`Philox] 向 [$X] 中的值运用一个 [$r] 轮替换-排列网络。
+
+[:en] A single round of the generation algorithm performs the following steps:
+[:zh_CN] 生成算法的单个轮次进行以下步骤：
+
+[list]
+[item]
+[:en] The output sequence [$X'] of the previous round ([$X] in case of the first
+round) is permuted to obtain the intermediate state [$V]:
+[:zh_CN] 对前一轮次的输出序列 [$X']（第一轮时为 [$X]）进行排列以获得中间状态 [$V]：
+
+[codeblock]
+[[redoc("[$V_j = X'_{f_n(j)}]")]]
+[codeblock:end]
+
+[:en@~] where [$j = 0, \dotsc, n - 1] and [$f_n(j)] is defined in [#:tab#rand.eng.philox.f].
+[:zh_CN@~] 其中 [$j = 0, \dotsc, n - 1]，而 [$f_n(j)] 定义于 [#:tab#rand.eng.philox.f]。
+
+[table:grid#rand.eng.philox.f
+  [:en] Values for the word permutation [$bm{f}_{\bm{n}}\bm{(j)}]
+  [:zh_CN] 字排列 [$bm{f}_{\bm{n}}\bm{(j)}] 值表
+]
+[|@colspan=2@rowspan=2] [$\bm{f}_{\bm{n}}\bm{(j)}]
+          [|@colspan=16] [$\bm{j}]
+          [-]
+          [|] 0 [|] 1 [|] 2 [|] 3 [|] 4 [|] 5 [|] 6 [|] 7 [|] 8 [|] 9 [|] 10 [|] 11 [|] 12 [|] 13 [|] 14 [|] 15
+[-]
+[|@rowspan=4] [$\bm{n}]
+  [|] 2   [|] 0 [|] 1
+  [-]
+  [|] 4   [|] 0 [|] 3 [|] 2 [|] 1
+  [-]
+  [|] 8   [|] 2 [|] 1 [|] 4 [|] 7 [|] 6 [|] 5 [|] 0 [|] 3
+  [-]
+  [|] 16  [|] 0 [|] 9 [|] 2 [|] 13 [|] 6 [|] 11 [|] 4 [|] 15 [|] 10 [|] 7 [|] 12 [|] 3 [|] 14 [|] 5 [|] 8 [|] 1
+[table:end]
+
+[begin:note]
+[:en] For [$n = 2] the sequence is not permuted.
+[:zh_CN] 对于 [$n = 2]，不做序列排列。
+[end:note]
+
+[item]
+[:en] The following computations are applied to the elements of the [$V] sequence:
+[:zh_CN] 对 [$V] 序列的各元素进行以下计算：
+[codeblock]
+[[redoc("[$X_{2k + 0} = [=mullo](V_{2k + 1}, M_{k}, w)]")]]
+[[redoc("[$X_{2k + 1} = [=mulhi](V_{2k + 1}, M_{k}, w) \xor \mathit{key}^q_k \xor V_{2k}]")]]
+[codeblock:end]
+[:en@~] where:
+[:zh_CN@~] 其中：
+
+[list]
+[item]
+[:en@~] [$[=mullo]([`a], [`b], [`w])] is the low half of the
+modular multiplication of [`a] and [`b]: [$([`a] \cdot [`b]) \mod 2^w],
+[:zh_CN@~] [$[=mullo]([`a], [`b], [`w])] 是 [`a] 和 [`b] 模乘的下半部分：
+[$([`a] \cdot [`b]) \mod 2^w],
+[item]
+[:en@~] [$[=mulhi]([`a], [`b], [`w])] is the high half of the
+modular multiplication of [`a] and [`b]:
+[$(\left\lfloor ([`a] \cdot [`b]) / 2^w \right\rfloor)],
+[:zh_CN@~] [$[=mulhi]([`a], [`b], [`w])] 是 [`a] 和 [`b] 模乘的上半部分：
+[$(\left\lfloor ([`a] \cdot [`b]) / 2^w \right\rfloor)]，
+[item]
+[:en@~] [$k = 0, \dotsc, n/2 - 1] is the index in the sequences,
+[:zh_CN@~] [$k = 0, \dotsc, n/2 - 1] 为序列索引，
+[item]
+[:en@~] [$q = 0, \dotsc, r - 1] is the index of the round,
+[:zh_CN@~] [$q = 0, \dotsc, r - 1] 为轮次索引，
+[item]
+[:en@~] [$\mathit{key}^q_k] is the [$k^\text{th}] round key for round [$q],
+[$\mathit{key}^q_k [=cedef] (K_k + q \cdot C_k) \mod 2^w],
+[:zh_CN@~] [$\mathit{key}^q_k] 为轮次 [$q] 的第 [$k] 个轮次键，
+[$\mathit{key}^q_k [=cedef] (K_k + q \cdot C_k) \mod 2^w]，
+[item]
+[:en@~] [$K_k] are the elements of the key sequence [$K],
+[:zh_CN@~] [$K_k] 为键序列 [$K] 的元素，
+[item]
+[:en@~] [$M_k] is [`multipliers`[[$k]`]], and
+[:zh_CN@~] [$M_k] 为 [`multipliers`[[$k]`]]，以及
+[item]
+[:en@~] [$C_k] is [`round_consts`[[$k]`]].
+[:zh_CN@~] [$C_k] 为 [`round_consts`[[$k]`]]。
+[list:end]
+
+[list:end]
+
+[para]
+[:en] After [$r] applications of the single-round function,
+[`Philox] returns the sequence [$Y = X'].
+[:zh_CN] 经过 [$r] 次运用单轮函数后，[`Philox] 返回序列 [$Y = X']。
+
+[%@lib philox_engine]
+[%@lib@member result_type[!philox_engine]]
+[codeblock:synopsis]
+namespace std {
+  template<class UIntType, size_t w, size_t n, size_t r, UIntType... consts>
+  class philox_engine {
+    static constexpr size_t [[redoc("*>")]]array-size = n / 2;   // [=expos]
+  public:
+    // [:en] types \
+    [:zh_CN] 类型
+    using result_type = UIntType;
+
+    // [:en] engine characteristics \
+    [:zh_CN] 引擎的特性
+    static constexpr size_t word_size = w;
+    static constexpr size_t word_count = n;
+    static constexpr size_t round_count = r;
+    static constexpr array<result_type, [[redoc("*>")]]array-size> multipliers;
+    static constexpr array<result_type, [[redoc("*>")]]array-size> round_consts;
+    static constexpr result_type min() { return 0; }
+    static constexpr result_type max() { return m - 1; }
+    static constexpr result_type default_seed = 20111115u;
+
+    // [:en] constructors and seeding functions \
+    [:zh_CN] 构造函数和播种函数
+    philox_engine() : philox_engine(default_seed) {}
+    explicit philox_engine(result_type value);
+    template<class Sseq> explicit philox_engine(Sseq& q);
+    void seed(result_type value = default_seed);
+    template<class Sseq> void seed(Sseq& q);
+
+    void set_counter(const array<result_type, n>& counter);
+
+    // [:en] equality operators \
+    [:zh_CN] 相等性运算符
+    friend bool operator==(const philox_engine& x, const philox_engine& y);
+
+    // [:en] generating functions \
+    [:zh_CN] 生成函数
+    result_type operator()();
+    void discard(unsigned long long z);
+
+    // [:en] inserters and extractors \
+    [:zh_CN] 插入符和提取符
+    template<class charT, class traits>
+      friend basic_ostream<charT, traits>&
+        operator<<(basic_ostream<charT, traits>& os, const philox_engine& x);
+    template<class charT, class traits>
+      friend basic_istream<charT, traits>&
+        operator>>(basic_istream<charT, traits>& is, philox_engine& x);
+  };
+}
+[codeblock:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`sizeof...(consts) == n] is [`true], and
+[:zh_CN] [`sizeof...(consts) == n] 为 [`true]，且
+[item]
+[:en@~] [`n == 2 || n == 4 || n == 8 || n == 16] is [`true], and
+[:zh_CN@~] [`n == 2 || n == 4 || n == 8 || n == 16] 为 [`true]，且
+[item]
+[:en@~] [`0 < r] is [`true], and
+[:zh_CN@~] [`0 < r] 为 [`true]，且
+[item]
+[:en@~] [`0 < w && w <= numeric_limits<UIntType>::digits] is [`true].
+[:zh_CN@~] [`0 < w && w <= numeric_limits<UIntType>::digits] 为 [`true]。
+[list:end]
+
+[para]
+[:en] The template parameter pack [`consts] represents the [$M_k] and [$C_k]
+constants which are grouped as follows:
+[$`[ M_0, C_0, M_1, C_1, M_2, C_2, \dotsc, M_{n/2 - 1}, C_{n/2 - 1} `]].
+[:zh_CN] 模板形参包组 [`consts] 表示 [$M_k] 和 [$C_k] 常量，分组方式如下：
+[$`[ M_0, C_0, M_1, C_1, M_2, C_2, \dotsc, M_{n/2 - 1}, C_{n/2 - 1} `]]。
+
+[para]
+[:en] The textual representation consists of the values of
+[$K_0, \dotsc, K_{n/2 - 1}, X_{0}, \dotsc, X_{n - 1}, i], in that order.
+[:zh_CN] 文本表示由 [$K_0, \dotsc, K_{n/2 - 1}, X_{0}, \dotsc, X_{n - 1}, i]
+各值依序构成。
+
+[begin:note]
+[:en] The stream extraction operator can reconstruct [$Y] from [$K] and [$X],
+as needed.
+[:zh_CN] 如果需要，可以用流提取运算符从 [$K] 和 [$X] 重新构造 [$Y]。
+[end:note]
+
+[%@lib@ctor philox_engine]
+[codeblock:declaration]
+explicit philox_engine(result_type value);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Sets the [$K_0] element of sequence [$K] to [$[`value] \mod 2^w].
+[:zh_CN] 将序列 [$K] 的意思 [$K_0] 设值为 [$[`value] \mod 2^w]。
+
+[:en] All elements of sequences [$X] and [$K] (except [$K_0]) are set to [`0].
+[:zh_CN] 序列 [$X] 和 [$K] 的全部元素（除了 [$K_0]）都被设值为 [`0]。
+
+[:en] The value of [$i] is set to [$n - 1].
+[:zh_CN] [$i] 的值被设为 [$n - 1]。
+[div:end]
+
+[%@lib@ctor philox_engine]
+[codeblock:declaration]
+template<class Sseq> explicit philox_engine(Sseq& q);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] With [$p = \left\lceil w / 32 \right\rceil] and an array (or equivalent)
+[`a] of length [$(n/2) \cdot p], invokes [`q.generate(a + 0, a + n / 2 * [$p])]
+and then iteratively for [$k = 0, \dotsc, n/2 - 1], sets [$K_k] to
+[$\left(\sum_{j = 0}^{p - 1} a_{k p + j} \cdot 2^{32j} \right) \mod 2^w].
+[:zh_CN] 设 [$p = \left\lceil w / 32 \right\rceil] 且 [$a] 为长度为 [$(n/2) \cdot p]
+的数组（或等价物），其将调用 [`q.generate(a + 0, a + n / 2 * [$p])]，并随后对每个
+[$k = 0, \dotsc, n/2 - 1]，将 [$K_k] 设值为
+[$\left(\sum_{j = 0}^{p - 1} a_{k p + j} \cdot 2^{32j} \right) \mod 2^w]。
+
+[:en] All elements of sequence [$X] are set to [`0].
+[:zh_CN] 序列 [$X] 的全部元素都被设值为 [`0]。
+
+[:en] The value of [$i] is set to [$n - 1].
+[:zh_CN] [$i] 的值被设为 [$n - 1]。
+[div:end]
+
+[%@lib@member set_counter[!philox_engine]]
+[codeblock:declaration]
+void set_counter(const array<result_type, n>& c);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] For [$j = 0, \dotsc, n - 1] sets [$X_j] to [$C_{n - 1 - j} \mod 2^w].
+[:zh_CN] 对每个 [$j = 0, \dotsc, n - 1]，将 [$X_j] 设值为 [$C_{n - 1 - j} \mod 2^w]。
+
+[:en] The value of [$i] is set to [$n - 1].
+[:zh_CN] [$i] 的值被设为 [$n - 1]。
+
+[begin:note]
+[:en] The counter is the value [$Z] introduced at the beginning of this subclause.
+[:zh_CN] 计数器是本小节开头引入的 [$Z] 值。
+[end:note]
+[div:end]

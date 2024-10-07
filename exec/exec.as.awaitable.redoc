@@ -1,0 +1,197 @@
+[section#exec.as.awaitable
+    [`execution::as_awaitable]
+]
+
+[para]
+[:en] [`as_awaitable] transforms an object into one
+that is awaitable within a particular coroutine.
+[:zh_CN] [`as_awaitable] 将一个对象变换为一个可以在特定协程之内等待的对象。
+
+[:en] Subclause [#exec.coro.util] makes use of the following exposition-only
+entities:
+[:zh_CN] 子条款 [#exec.coro.util] 利用了下列仅用于阐释的实体：
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Sndr, class Promise>
+    concept [[redoc("*:c@def>")]]awaitable-sender =
+      [[redoc("*:c>")]]single-sender<Sndr, env_of_t<Promise>> &&
+      [[redoc("`:c>")]]sender_to<Sndr, [[redoc("*>")]]awaitable-receiver> &&    // [=seebelow]
+      requires (Promise& p) {
+        { p.unhandled_stopped() } -> [[redoc("`:c>")]]convertible_to<coroutine_handle<>>;
+      };
+
+  template<class Sndr, class Promise>
+    class [[redoc("*>")]]sender-awaitable;                                     // [=expos]
+}
+[codeblock:end]
+
+[para]
+[:en] The type [`[*sender-awaitable]<Sndr, Promise>] is equivalent to:
+[:zh_CN] 类型 [`[*sender-awaitable]<Sndr, Promise>] 等价于：
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Sndr, class Promise>
+  class [[redoc("*>")]]sender-awaitable {
+    struct [[redoc("*>")]]unit {};                                             // [=expos]
+    using [[redoc("*>")]]value-type =                                          // [=expos]
+      [[redoc("*>")]]single-sender-value-type<Sndr, env_of_t<Promise>>;
+    using [[redoc("*>")]]result-type =                                         // [=expos]
+      conditional_t<is_void_v<[[redoc("*>")]]value-type>, unit, [[redoc("*>")]]value-type>;
+    struct [[redoc("*>")]]awaitable-receiver;                                  // [=expos]
+
+    variant<monostate, [[redoc("*>")]]result-type, exception_ptr> [[redoc("*>")]]result{};    // [=expos]
+    connect_result_t<Sndr, [[redoc("*>")]]awaitable-receiver> [[redoc("*>")]]state;           // [=expos]
+
+  public:
+    [[redoc("*>")]]sender-awaitable(Sndr&& sndr, Promise& p);
+    static constexpr bool await_ready() noexcept { return false; }
+    void await_suspend(coroutine_handle<Promise>) noexcept { start([[redoc("*>")]]state); }
+    [[redoc("*>")]]value-type await_resume();
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [*awaitable-receiver] is equivalent to:
+[:zh_CN] [*awaitable-receiver] 等价于：
+[codeblock:synopsis]
+struct [[redoc("*>")]]awaitable-receiver {
+  using receiver_concept = receiver_t;
+  variant<monostate, [[redoc("*>")]]result-type, exception_ptr>* [[redoc("*>")]]result-ptr;   // [=expos]
+  coroutine_handle<Promise> [[redoc("*>")]]continuation;                       // [=expos]
+  // [=seebelow]
+};
+[codeblock:end]
+
+[para]
+[:en] Let [`rcvr] be an rvalue expression of type [*awaitable-receiver],
+let [`crcvr] be a const lvalue that refers to [`rcvr], let [`vs] be a pack of
+subexpressions, and let [`err] be an expression of type [`Err].
+[:zh_CN] 令 [`rcvr] 为 [*awaitable-receiver] 类型的右值表达式，令 [`crcvr] 为
+指代 [`rcvr] 的常量左值，令 [`vs] 为子表达式包组，并令 [`err] 为 [`Err] 类型的表达式。
+
+[:en] Then:
+[:zh_CN] 然后：
+[list]
+[item]
+[:en] If [`[`:c constructible_from]<[*result-type], decltype((vs))...>]
+is satisfied, the expression [`set_value(rcvr, vs...)] is equivalent to:
+[:zh_CN] 如果满足 [`[`:c constructible_from]<[*result-type], decltype((vs))...>]，
+则表达式 [`set_value(rcvr, vs...)] 等价于：
+[codeblock]
+try {
+  rcvr.[[redoc("*>")]]result-ptr->template emplace<1>(vs...);
+} catch(...) {
+  rcvr.[[redoc("*>")]]result-ptr->template emplace<2>(current_exception());
+}
+rcvr.[[redoc("*>")]]continuation.resume();
+[codeblock:end]
+
+[:en] Otherwise, [`set_value(rcvr, vs...)] is ill-formed.
+[:zh_CN] 否则，[`set_value(rcvr, vs...)] 非良构。
+
+[item]
+[:en] The expression [`set_error(rcvr, err)] is equivalent to:
+[:zh_CN] 表达式 [`set_error(rcvr, err)] 等价于：
+[codeblock]
+rcvr.[[redoc("*>")]]result-ptr->template emplace<2>([[redoc("*>")]]AS-EXCEPT-PTR(err));    // [:en] see [#exec.general] [:zh_CN] 参见 [#exec.general]
+rcvr.[[redoc("*>")]]continuation.resume();
+[codeblock:end]
+
+[item]
+[:en] The expression [`set_stopped(rcvr)] is equivalent to:
+[:zh_CN] 表达式 [`set_stopped(rcvr)] 等价于：
+[codeblock]
+static_cast<coroutine_handle<>>(rcvr.[[redoc("*>")]]continuation.promise().unhandled_stopped()).resume();
+[codeblock:end]
+
+[item]
+[:en] For any expression [`tag] whose type satisfies [*:c forwarding-query] and
+for any pack of subexpressions [`as], [`get_env(crcvr).query(tag, as...)] is
+expression-equivalent to:
+[:zh_CN] 对于满足 [*:c forwarding-query] 的类型的任意表达式 [`tag]，并对于任意
+子表达式包组 [`as]，[`get_env(crcvr).query(tag, as...)] 按表达式等价于：
+[codeblock]
+tag(get_env(as_const(crcvr.[[redoc("*>")]]continuation.promise())), as...)
+[codeblock:end]
+[list:end]
+
+[codeblock:declaration]
+[[redoc("*>")]]sender-awaitable(Sndr&& sndr, Promise& p);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*state] with
+[:zh_CN] 以
+[codeblock]
+connect(std::forward<Sndr>(sndr),
+        [[redoc("*>")]]awaitable-receiver{addressof(result), coroutine_handle<Promise>::from_promise(p)})
+[codeblock:end]
+[:zh_CN@~] 初始化 [*state]。
+[div:end]
+
+[codeblock:declaration]
+[[redoc("*>")]]value-type await_resume();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if ([[redoc("*>")]]result.index() == 2)
+  rethrow_exception(get<2>([[redoc("*>")]]result));
+if constexpr (!is_void_v<[[redoc("*>")]]value-type>)
+  return std::forward<[[redoc("*>")]]value-type>(get<1>([[redoc("*>")]]result));
+[codeblock:end]
+[div:end]
+
+[para]
+[:en] [`as_awaitable] is a customization point object.
+[:zh_CN] [`as_awaitable] 是一个定制化点对象。
+
+[:en] For subexpressions [`expr] and [`p] where [`p] is an lvalue,
+[`Expr] names the type [`decltype((expr))] and [`Promise] names the type
+[`decay_t<decltype((p))>], [`as_awaitable(expr, p)] is expression-equivalent to,
+except that the evaluations of [`expr] and [`p] are indeterminately sequenced:
+[:zh_CN] 对于子表达式 [`expr] 和 [`p]，其中 [`p] 为左值，[`Expr] 指名类型
+[`decltype((expr))] 且 [`Promise] 指名 [`decay_t<decltype((p))>]，
+则除了 [`expr] 和 [`p] 顺序不确定之外， [`as_awaitable(expr, p)] 按表达式等价于：
+
+[list]
+[item]
+[:en] [`expr.as_awaitable(p)] if that expression is well-formed.
+[:zh_CN] 若 [`expr.as_awaitable(p)] 良构则为该表达式。
+
+[para:mandates@~]
+[:en] [`[*:c is-awaitable]<A, Promise>] is [`true], where [`A] is the type of
+the expression above.
+[:zh_CN] [`[*:c is-awaitable]<A, Promise>] 为 [`true]，其中 [`A] 为上述表达式的类型。
+
+[item]
+[:en] Otherwise, [`(void(p), expr)] if [`[*:c is-awaitable]<Expr, U>] is [`true],
+where [`U] is an unspecified class type that is not [`Promise] and
+that lacks a member named [`await_transform].
+[:zh_CN] 否则，若 [`[*:c is-awaitable]<Expr, U>] 为 [`true] 则为 [`(void(p), expr)]，
+其中 [`U] 为某个不是 [`Promise] 且没有名为 [`await_transform] 的成员的未指明的类类型。
+
+[para:expects@~]
+[:en] [`[*:c is-awaitable]<Expr, Promise>] is [`true] and the expression
+[`co_await expr] in a coroutine with promise type [`U] is expression-equivalent
+to the same expression in a coroutine with promise type [`Promise].
+[:zh_CN] [`[*:c is-awaitable]<Expr, Promise>] 为 [`true]，且表达式 [`co_await expr]
+在承诺类型为 [`U] 的协程中时按表达式等价于在承诺类型为 [`Promise] 的协程中的相同表达式。
+
+[item]
+[:en] Otherwise, [`[*sender-awaitable]{expr, p}] if
+[`[*:c awaitable-sender]<Expr, Promise>] is [`true].
+[:zh_CN] 否则，若 [`[*:c awaitable-sender]<Expr, Promise>] 为 [`true]，则为
+[`[*sender-awaitable]{expr, p}]。
+
+[item]
+[:en] Otherwise, [`(void(p), expr)].
+[:zh_CN] 否则，为 [`(void(p), expr)]。
+[list:end]

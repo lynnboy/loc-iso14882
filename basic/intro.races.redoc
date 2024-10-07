@@ -4,200 +4,146 @@
 ]
 
 [para]
-[:en]
-The value of an object visible to a thread [$T] at a particular point is the
+[:en] The value of an object visible to a thread [$T] at a particular point is the
 initial value of the object, a value assigned to the object by [$T], or a value
 assigned to the object by another thread, according to the rules below.
-[:zh_CN]
-根据如下规则，某个对象对某个线程 [$T] 在某特定点可见的值，是该对象的初始值，由
-[$T] 赋给该对象的值，或者由其他线程赋给该对象的值。
+[:zh_CN] 根据如下规则，某个对象对某个线程 [$T] 在某特定点可见的值，是该对象的初始值，
+由 [$T] 赋给该对象的值，或者由其他线程赋给该对象的值。
 
 [begin:note]
-[:en]
-In some cases, there might instead be undefined behavior.
-[:zh_CN]
-某些情况下，也可能造成未定义的行为。
+[:en] In some cases, there might instead be undefined behavior.
+[:zh_CN] 某些情况下，也可能造成未定义的行为。
 
-[:en]
-Much of this subclause is motivated by the desire to support atomic operations
-with explicit and detailed visibility constraints.
-[:zh_CN]
-本子条款中的许多内容的动机，是希望通过明确并详细的可见性约束来支持原子性操作。
+[:en] Much of this subclause is motivated by the desire to support atomic
+operations with explicit and detailed visibility constraints.
+[:zh_CN] 本子条款中的许多内容的动机，是希望通过明确并详细的可见性约束来支持原子性操作。
 
-[:en]
-However, it also implicitly supports a simpler view for more restricted programs.
-[:zh_CN]
-然而，这也隐含地为更受限制的程序提供了一种简化的视角。
+[:en] However, it also implicitly supports a simpler view for more restricted
+programs.
+[:zh_CN] 然而，这也隐含地为更受限制的程序提供了一种简化的视角。
 [end:note]
 
 [para]
-[:en]
-Two expression evaluations [+conflict] if one of them modifies a memory location
- ([#intro.memory]) and the other one reads or modifies the same memory location.
-[:zh_CN]
-两个表达式求值，如果其中之一改动了某个内存位置（[#intro.memory]），而另一个读取
-或改动了同一个内存位置，则它们发生[+冲突]。
+[:en] Two expression evaluations [+conflict] if one of them modifies a memory
+location ([#intro.memory]) and the other one reads or modifies the same memory
+location.
+[:zh_CN] 两个表达式求值，如果其中之一改动了某个内存位置（[#intro.memory]），而另一个
+读取或改动了同一个内存位置，则它们发生[+冲突]。
 
 [para]
-[:en]
-The library defines a number of atomic operations ([#atomics]) and operations on
-mutexes ([#thread]) that are specially identified as synchronization operations.
-[:zh_CN]
-程序库中定义了许多原子性操作（[#atomics]）和在互斥体上的操作（[#thread]），它们
-被特别当作同步操作。
+[:en] The library defines a number of atomic operations ([#atomics]) and
+operations on mutexes ([#thread]) that are specially identified as
+synchronization operations.
+[:zh_CN] 程序库中定义了许多原子性操作（[#atomics]）和在互斥体上的操作（[#thread]），
+它们被特别当作同步操作。
 
-[:en]
-These operations play a special role in making assignments in one thread visible
-to another.
-[:zh_CN]
-这些操作在使一个线程中的赋值对另一个线程可见时起到特殊的作用。
+[:en] These operations play a special role in making assignments in one thread
+visible to another.
+[:zh_CN] 这些操作在使一个线程中的赋值对另一个线程可见时起到特殊的作用。
 
-[:en]
-A synchronization operation on one or more memory locations is either a consume
-operation, an acquire operation, a release operation, or both an acquire and
-release operation.
-[:zh_CN]
-对一个或多个内存位置的同步操作，可以是消费操作，获取操作，释放操作，或者获取并
-释放操作。
+[:en] A synchronization operation on one or more memory locations is either a
+consume operation, an acquire operation, a release operation, or both an acquire
+and release operation.
+[:zh_CN] 对一个或多个内存位置的同步操作，可以是消费操作，获取操作，释放操作，或者
+获取并释放操作。
 
-[:en]
-A synchronization operation without an associated memory location is a fence and
-can be either an acquire fence, a release fence, or both an acquire and release
-fence.
-[:zh_CN]
-不与内存位置相关联的同步操作是内存栅栏，可以是获取栅栏，释放栅栏，或者获取并释放
-栅栏。
+[:en] A synchronization operation without an associated memory location is a
+fence and can be either an acquire fence, a release fence, or both an acquire
+and release fence.
+[:zh_CN] 不与内存位置相关联的同步操作是内存栅栏，可以是获取栅栏，释放栅栏，或者
+获取并释放栅栏。
 
-[:en]
-In addition, there are relaxed atomic operations, which are not synchronization
-operations, and atomic read-modify-write operations, which have special
-characteristics.
-[:zh_CN]
-此外，还有并非同步操作的宽松原子性操作，以及具有特殊性质的原子性读-改-写操作。
+[:en] In addition, there are relaxed atomic operations, which are not
+synchronization operations, and atomic read-modify-write operations, which have
+special characteristics.
+[:zh_CN] 此外，还有并非同步操作的宽松原子性操作，以及具有特殊性质的原子性读-改-写操作。
 
 [begin:note]
-[:en]
-For example, a call that acquires a mutex will perform an acquire operation on
-the locations comprising the mutex.
-[:zh_CN]
-例如，获取一个互斥体的函数调用，对构成该互斥体的内存位置施以获取操作。
+[:en] For example, a call that acquires a mutex will perform an acquire
+operation on the locations comprising the mutex.
+[:zh_CN] 例如，获取一个互斥体的函数调用，对构成该互斥体的内存位置施以获取操作。
 
-[:en]
-Correspondingly, a call that releases the same mutex will perform a release
-operation on those same locations.
-[:zh_CN]
-相应地，释放同一个互斥体的函数调用对这些内存位置施以释放操作。
+[:en] Correspondingly, a call that releases the same mutex will perform a
+release operation on those same locations.
+[:zh_CN] 相应地，释放同一个互斥体的函数调用对这些内存位置施以释放操作。
 
-[:en]
-Informally, performing a release operation on [$A] forces prior [%side effects]
+[:en] Informally, performing a release operation on [$A] forces prior [%side effects]
 side effects on other memory locations to become visible to other threads that
 later perform a consume or an acquire operation on [$A].
-[:zh_CN]
-非正式地说，对 [$A] 施以释放操作，将促使此前在其他内存位置上的[%副作用]副作用，
+[:zh_CN] 非正式地说，对 [$A] 施以释放操作，将促使此前在其他内存位置上的[%副作用]副作用，
 对于此后对 [$A] 施以消费或获取操作的其他线程变为可见。
 
-[:en]
-[=lq]Relaxed[=rq] atomic operations are not synchronization operations even
+[:en] [=lq]Relaxed[=rq] atomic operations are not synchronization operations even
 though, like synchronization operations, they cannot contribute to data races.
-[:zh_CN]
-尽管“宽松”原子性操作与同步操作一样不会参与数据竞争，但它们仍不是同步操作。
+[:zh_CN] 尽管“宽松”原子性操作与同步操作一样不会参与数据竞争，但它们仍不是同步操作。
 [end:note]
 
 [para]
-[:en]
-All modifications to a particular atomic object [$M] occur in some particular
-total order, called the [+modification order] of [$M].
-[:zh_CN]
-对某个特定原子性对象 [$M] 的所有改动，都是以某个特定的整体顺序发生的，这称为
+[:en] All modifications to a particular atomic object [$M] occur in some
+particular total order, called the [+modification order] of [$M].
+[:zh_CN] 对某个特定原子性对象 [$M] 的所有改动，都是以某个特定的整体顺序发生的，这称为
 [$M] 的[+改动顺序]。
 
 [begin:note]
-[:en]
-There is a separate order for each atomic object.
-[:zh_CN]
-每个原子性对象都有各自的顺序。
+[:en] There is a separate order for each atomic object.
+[:zh_CN] 每个原子性对象都有各自的顺序。
 
-[:en]
-There is no requirement that these can be combined into a single total order for
-all objects.
-[:zh_CN]
-并不存在这种规定：这些顺序是否可以合并为针对所有对象的单一的整体顺序。
+[:en] There is no requirement that these can be combined into a single total
+order for all objects.
+[:zh_CN] 并不存在这种规定：这些顺序是否可以合并为针对所有对象的单一的整体顺序。
 
-[:en]
-In general this will be impossible since different threads can observe
+[:en] In general this will be impossible since different threads can observe
 modifications to different objects in inconsistent orders.
-[:zh_CN]
-一般来说这其实是不可能的，因为不同的线程所观察到的不同对象上的改动，其顺序可以
+[:zh_CN] 一般来说这其实是不可能的，因为不同的线程所观察到的不同对象上的改动，其顺序可以
 是不一致的。
 [end:note]
 
 [para]
-[:en]
-A [+release sequence] headed by a release operation [$A] on an atomic object
-[$M] is a maximal contiguous sub-sequence of [%side effects] side effects in the
-modification order of [$M], where the first operation is [$A], and every
+[:en] A [+release sequence] headed by a release operation [$A] on an atomic
+object [$M] is a maximal contiguous sub-sequence of [%side effects] side effects
+in the modification order of [$M], where the first operation is [$A], and every
 subsequent operation is an atomic read-modify-write operation.
-[:zh_CN]
-某原子性对象 [$M] 上以释放操作 [$A] 起始的[+释放序列]，是 [$M] 的改动顺序中，
+[:zh_CN] 某原子性对象 [$M] 上以释放操作 [$A] 起始的[+释放序列]，是 [$M] 的改动顺序中，
 [%副作用]副作用的最大连续子序列，其第一个操作是 [$A]，并且其后续的每个操作均为
 原子性读-改-写操作。
 
 [para]
-[:en]
-Certain library calls [+synchronize with] other library calls performed by
+[:en] Certain library calls [+synchronize with] other library calls performed by
 another thread.
-[:zh_CN]
-某些特定的库函数调用[+同步于]其他线程中所进行的其他库函数调用。
+[:zh_CN] 某些特定的库函数调用[+同步于]其他线程中所进行的其他库函数调用。
 
-[:en]
-For example, an atomic store-release synchronizes with a load-acquire that takes
-its value from the store ([#atomics.order]).
-[:zh_CN]
-例如，一个原子性存储-释放操作同步于一个获得该次存储中的值的加载-获取操作
-（[#atomics.order]）。
+[:en] For example, an atomic store-release synchronizes with a load-acquire that
+takes its value from the store ([#atomics.order]).
+[:zh_CN] 例如，一个原子性存储-释放操作同步于一个获得该次存储中的值的加载-获取操作（[#atomics.order]）。
 
 [begin:note]
-[:en]
-Except in the specified cases, reading a later value does not necessarily ensure
-visibility as described below.
-[:zh_CN]
-除了所指明的情况以外，读取到晚些的值，并不一定确保体现出如下所述的可见性。
+[:en] Except in the specified cases, reading a later value does not necessarily
+ensure visibility as described below.
+[:zh_CN] 除了所指明的情况以外，读取到晚些的值，并不一定确保体现出如下所述的可见性。
 
-[:en]
-Such a requirement would sometimes interfere with efficient implementation.
-[:zh_CN]
-因为有时这种规定将会对产生高效的实现有所妨碍。
+[:en] Such a requirement would sometimes interfere with efficient implementation.
+[:zh_CN] 因为有时这种规定将会对产生高效的实现有所妨碍。
 [end:note]
 
 [begin:note]
-[:en]
-The specifications of the synchronization operations define when one reads the
-value written by another.
-[:zh_CN]
-针对同步操作的规范，定义了一个操作何时会读取到另一个操作所写入的值。
+[:en] The specifications of the synchronization operations define when one reads
+the value written by another.
+[:zh_CN] 针对同步操作的规范，定义了一个操作何时会读取到另一个操作所写入的值。
 
-[:en]
-For atomic objects, the definition is clear.
-[:zh_CN]
-对于原子性对象来说，这项定义是清晰的。
+[:en] For atomic objects, the definition is clear.
+[:zh_CN] 对于原子性对象来说，这项定义是清晰的。
 
-[:en]
-All operations on a given mutex occur in a single total order.
-[:zh_CN]
-在一个给定互斥体上进行的所有操作，都遵循某个单一的整体顺序。
+[:en] All operations on a given mutex occur in a single total order.
+[:zh_CN] 在一个给定互斥体上进行的所有操作，都遵循某个单一的整体顺序。
 
-[:en]
-Each mutex acquisition [=lq]reads the value written[=rq] by the last mutex
+[:en] Each mutex acquisition [=lq]reads the value written[=rq] by the last mutex
 release.
-[:zh_CN]
-每个互斥体获取操作均“读取到最后一次互斥体释放时所写入的值”。
+[:zh_CN] 每个互斥体获取操作均“读取到最后一次互斥体释放时所写入的值”。
 [end:note]
 
 [para]
-[:en]
-An evaluation [$A] [+carries a dependency] to an evaluation [$B] if
-[:zh_CN]
-符合如下条件时，求值 [$A] [+传递依赖]给求值 [$B]：
+[:en] An evaluation [$A] [+carries a dependency] to an evaluation [$B] if
+[:zh_CN] 符合如下条件时，求值 [$A] [+传递依赖]给求值 [$B]：
 
 [list]
 [item]
@@ -208,8 +154,7 @@ An evaluation [$A] [+carries a dependency] to an evaluation [$B] if
 [item]
 [:en] [$B] is an invocation of any specialization of [`std::kill_dependency]
 ([#atomics.order]), or
-[:zh_CN] [$B] 是对 [`std::kill_dependency]（[#atomics.order]）的任何特例的调用，
-或者
+[:zh_CN] [$B] 是对 [`std::kill_dependency]（[#atomics.order]）的任何特例的调用，或者
 [item]
 [:en] [$A] is the left operand of a built-in logical [=logop and] ([`&&], see
 [#expr.log.and]) or logical [=logop or] ([`||], see [#expr.log.or]) operator, or
@@ -220,8 +165,7 @@ An evaluation [$A] [+carries a dependency] to an evaluation [$B] if
 operator, or
 [:zh_CN] [$A] 是条件（[`?:]，参见 [#expr.cond]）运算符的左操作数，或者
 [item]
-[:en] [$A] is the left operand of the built-in comma ([`,]) operator
-([#expr.comma]);
+[:en] [$A] is the left operand of the built-in comma ([`,]) operator ([#expr.comma]);
 [:zh_CN] [$A] 是内建逗号（[`,]）运算符（[#expr.comma]）的左操作数；
 [list:end]
 
@@ -241,52 +185,39 @@ written by [$A] from [$M], and [$A] is sequenced before [$B], or
 [list:end]
 
 [begin:note]
-[:en]
-[=lq]Carries a dependency to[=rq] is a subset of [=lq]is sequenced before[=rq],
+[:en] [=lq]Carries a dependency to[=rq] is a subset of [=lq]is sequenced before[=rq],
 and is similarly strictly intra-thread.
-[:zh_CN]
-“传递依赖给”关系是“按顺序早于”关系的子集，并且同样也是严格的线程内关系。
+[:zh_CN] “传递依赖给”关系是“按顺序早于”关系的子集，并且同样也是严格的线程内关系。
 [end:note]
 
 [para]
-[:en]
-An evaluation [$A] is [+dependency-ordered before] an evaluation [$B] if
-[:zh_CN]
-符合如下条件时，求值 [$A] [+按依赖序早于]求值 [$B]：
+[:en] An evaluation [$A] is [+dependency-ordered before] an evaluation [$B] if
+[:zh_CN] 符合如下条件时，求值 [$A] [+按依赖序早于]求值 [$B]：
 
 [list]
 [item]
-[:en]
-[$A] performs a release operation on an atomic object [$M], and, in another
+[:en] [$A] performs a release operation on an atomic object [$M], and, in another
 thread, [$B] performs a consume operation on [$M] and reads the value written by
 [$A], or
-[:zh_CN]
-[$A] 对某个原子性对象 [$M] 施以释放操作，而在另一线程中 [$B] 对 [$M] 施以消费
-操作，并读取到了 [$A] 所写入的值，或者
+[:zh_CN] [$A] 对某个原子性对象 [$M] 施以释放操作，而在另一线程中 [$B] 对 [$M] 施以
+消费操作，并读取到了 [$A] 所写入的值，或者
 
 [item]
-[:en]
-for some evaluation [$X], [$A] is dependency-ordered before [$X] and [$X]
+[:en] for some evaluation [$X], [$A] is dependency-ordered before [$X] and [$X]
 carries a dependency to [$B].
-[:zh_CN]
-对于某个求值 [$X]，[$A] 按依赖序早于 [$X]，且 [$X] 传递依赖给 [$B]。
+[:zh_CN] 对于某个求值 [$X]，[$A] 按依赖序早于 [$X]，且 [$X] 传递依赖给 [$B]。
 [list:end]
 
 [begin:note]
-[:en]
-The relation [=lq]is dependency-ordered before[=rq] is analogous to
-[=lq]synchronizes with[=rq], but uses release/consume in place of
-release/acquire.
-[:zh_CN]
-“按依赖序早于”关系和“同步于”关系相似，但并不根据释放/获取操作，而是根据释放/消费
-操作。
+[:en] The relation [=lq]is dependency-ordered before[=rq] is analogous to
+[=lq]synchronizes with[=rq], but uses release/consume in place of release/acquire.
+[:zh_CN] “按依赖序早于”关系和“同步于”关系相似，但并不根据释放/获取操作，而是根据
+释放/消费操作。
 [end:note]
 
 [para]
-[:en]
-An evaluation [$A] [+inter-thread happens before] an evaluation [$B] if
-[:zh_CN]
-符合如下条件时，求值 [$A] [+线程间发生早于]求值 [$B]：
+[:en] An evaluation [$A] [+inter-thread happens before] an evaluation [$B] if
+[:zh_CN] 符合如下条件时，求值 [$A] [+线程间发生早于]求值 [$B]：
 
 [list]
 [item]
@@ -307,8 +238,7 @@ An evaluation [$A] [+inter-thread happens before] an evaluation [$B] if
 [:en] [$A] is sequenced before [$X] and [$X] inter-thread happens before [$B], or
 [:zh_CN] [$A] 按顺序早于 [$X]，且 [$X] 线程间发生早于 [$B]，或者
 [item]
-[:en] [$A] inter-thread happens before [$X] and [$X] inter-thread happens before
-[$B].
+[:en] [$A] inter-thread happens before [$X] and [$X] inter-thread happens before [$B].
 [:zh_CN] [$A] 线程间发生早于 [$X]，且 [$X] 线程间发生早于 [$B]。
 [list:end]
 [list:end]
@@ -380,10 +310,8 @@ operations.
 [end:note]
 
 [para]
-[:en]
-An evaluation [$A] [+simply happens before] an evaluation [$B] if either
-[:zh_CN]
-符合如下任何条件时，[$A] 的求值[+简单发生早于]求值 [$B]：
+[:en] An evaluation [$A] [+simply happens before] an evaluation [$B] if either
+[:zh_CN] 符合如下任何条件时，[$A] 的求值[+简单发生早于]求值 [$B]：
 
 [list]
 [item]
@@ -398,18 +326,14 @@ An evaluation [$A] [+simply happens before] an evaluation [$B] if either
 [list:end]
 
 [begin:note]
-[:en]
-In the absence of consume operations, the happens before and simply happens
-before relations are identical.
-[:zh_CN]
-不涉及消费操作时，发生早于和简单发生早于关系等价。
+[:en] In the absence of consume operations, the happens before and simply
+happens before relations are identical.
+[:zh_CN] 不涉及消费操作时，发生早于和简单发生早于关系等价。
 [end:note]
 
 [para]
-[:en]
-An evaluation [$A] [+strongly happens before] an evaluation [$D] if, either
-[:zh_CN]
-符合如下任何条件时，[$A] 的求值[+强发生早于]求值 [$D]：
+[:en] An evaluation [$A] [+strongly happens before] an evaluation [$D] if, either
+[:zh_CN] 符合如下任何条件时，[$A] 的求值[+强发生早于]求值 [$D]：
 
 [list]
 [item]
@@ -432,26 +356,20 @@ and [$B] strongly happens before [$D].
 [list:end]
 
 [begin:note]
-[:en]
-Informally, if [$A] strongly happens before [$B], then [$A] appears to be
+[:en] Informally, if [$A] strongly happens before [$B], then [$A] appears to be
 evaluated before [$B] in all contexts.
-[:zh_CN]
-不正式地说，如果 [$A] 强发生早于 [$A]，那么 [$A] 就会在所有的语境中都表现为在
-[$B] 之前求值。
+[:zh_CN] 不正式地说，如果 [$A] 强发生早于 [$A]，那么 [$A] 就会在所有的语境中都
+表现为在 [$B] 之前求值。
 
-[:en]
-Strongly happens before excludes consume operations.
-[:zh_CN]
-强发生早于关系排除了消费操作。
+[:en] Strongly happens before excludes consume operations.
+[:zh_CN] 强发生早于关系排除了消费操作。
 [end:note]
 
 [para]
-[:en]
-A [+:adj visible[!side effect[%side effects]]] [$A] on a scalar object
+[:en] A [+:adj visible[!side effect[%side effects]]] [$A] on a scalar object
 or bit-field [$M] with respect to a value computation [$B] of [$M] satisfies the
 conditions:
-[:zh_CN]
-对于标量对象或位字段 [$M] 上的值计算 [$B]，[$M] 的[+:adj 可见[!副作用]] [$A]
+[:zh_CN] 对于标量对象或位字段 [$M] 上的值计算 [$B]，[$M] 的[+:adj 可见[!副作用]] [$A]
 满足如下条件：
 
 [list]
@@ -465,21 +383,17 @@ happens before [$X] and [$X] happens before [$B].
 发生早于 [$B]。
 [list:end]
 
-[:en]
-The value of a non-atomic scalar object or bit-field [$M], as determined by
-evaluation [$B], is the value stored by the [%side effects[!visible]]
+[:en] The value of a non-atomic scalar object or bit-field [$M], as determined
+by evaluation [$B], is the value stored by the [%side effects[!visible]]
 visible side effect [$A].
-[:zh_CN]
-由求值 [$B] 所确定的非原子性标量对象或位字段 [$M] 的值，为由
+[:zh_CN] 由求值 [$B] 所确定的非原子性标量对象或位字段 [$M] 的值，为由
 [%副作用[!可见～]]可见副作用 [$A] 所存储的值。
 
 [begin:note]
-[:en]
-If there is ambiguity about which side effect to a non-atomic object or
+[:en] If there is ambiguity about which side effect to a non-atomic object or
 bit-field is visible, then the behavior is either unspecified or undefined.
-[:zh_CN]
-当对非原子性对象或位字段上的哪一个副作用可见有歧义时，其行为要么是未指明，要么是
-未定义的。
+[:zh_CN] 当对非原子性对象或位字段上的哪一个副作用可见有歧义时，其行为要么是未指明，
+要么是未定义的。
 [end:note]
 
 [begin:note]
@@ -496,144 +410,112 @@ consistent) execution.
 [end:note]
 
 [para]
-[:en]
-The value of an atomic object [$M], as determined by evaluation [$B], is the
-value stored by some unspecified side effect [$A] that modifies [$M], where [$B]
-does not happen before [$A].
-[:zh_CN]
-由求值 [$B] 所确定的原子性对象 [$M] 的值，为某个改动了 [$M] 的未指明副作用 [$A]
-所存储的值，其中 [$B] 不发生早于 [$A]。
+[:en] The value of an atomic object [$M], as determined by evaluation [$B], is
+the value stored by some unspecified side effect [$A] that modifies [$M], where
+[$B] does not happen before [$A].
+[:zh_CN] 由求值 [$B] 所确定的原子性对象 [$M] 的值，为某个改动了 [$M] 的未指明
+副作用 [$A] 所存储的值，其中 [$B] 不发生早于 [$A]。
 
 [begin:note]
-[:en]
-The set of such side effects is also restricted by the rest of the rules
+[:en] The set of such side effects is also restricted by the rest of the rules
 described here, and in particular, by the coherence requirements below.
-[:zh_CN]
-这种副作用的集合同样受这里所描述的其他规则的限制，尤其是下文各协调性规定。
+[:zh_CN] 这种副作用的集合同样受这里所描述的其他规则的限制，尤其是下文各协调性规定。
 [end:note]
 
 [para]
-[:en]
-[%coherence[!write-write]]
+[:en] [%coherence[!write-write]]
 If an operation [$A] that modifies an atomic object [$M] happens before an
 operation [$B] that modifies [$M], then [$A] is earlier than [$B] in the
 modification order of [$M].
-[:zh_CN]
-[%协调性[!写-写]]
+[:zh_CN] [%协调性[!写-写]]
 如果改动原子性对象 [$M] 的操作 [$A] 发生早于改动 [$M] 的操作 [$B]，则在 [$M] 的
 改动顺序中 [$A] 早于 [$B]。
 
 [begin:note]
-[:en]
-This requirement is known as write-write coherence.
-[:zh_CN]
-这条规定称为写-写协调性。
+[:en] This requirement is known as write-write coherence.
+[:zh_CN] 这条规定称为写-写协调性。
 [end:note]
 
 [para]
-[:en]
-[%coherence[!read-read]]
+[:en] [%coherence[!read-read]]
 If a [%value computation] value computation [$A] of an atomic object [$M]
 happens before a value computation [$B] of [$M], and [$A] takes its value from a
 side effect [$X] on [$M], then the value computed by [$B] is either the
 value stored by [$X] or the value stored by a [%side effects] side effect [$Y]
 on [$M], where [$Y] follows [$X] in the modification order of [$M].
-[:zh_CN]
-[%协调性[!读-读]]
+[:zh_CN] [%协调性[!读-读]]
 如果原子性对象 [$M] 上的[%值计算]值计算 [$A] 发生早于 [$M] 上的值计算 [$B]，并且
 [$A] 通过 [$M] 上的副作用 [$X] 来获得其值，则由 [$B] 所计算的值要么等于由
 [$X] 所存储的值，要么为 [$M] 上的[%副作用]副作用 [$Y] 所存储的值，其中在 [$M]
 的改动顺序中 [$Y] 处于 [$X] 之后。
 
 [begin:note]
-[:en]
-This requirement is known as read-read coherence.
-[:zh_CN]
-这条规定称为读-读协调性。
+[:en] This requirement is known as read-read coherence.
+[:zh_CN] 这条规定称为读-读协调性。
 [end:note]
 
 [para]
-[%coherence[!read-write]]
-[:en]
+[:en] [%coherence[!read-write]]
 If a [%value computation] value computation [$A] of an atomic object [$M]
 happens before an operation [$B] that modifies [$M], then [$A] takes its
 value from a side effect [$X] on [$M], where [$X] precedes [$B] in the
 modification order of [$M].
-[:zh_CN]
-[%协调性[!读-写]]
+[:zh_CN] [%协调性[!读-写]]
 如果原子性对象 [$M] 上的[%值计算]值计算 [$A] 发生早于改动 [$M] 的操作 [$B]，则
-[$A] 从 [$M] 上的副作用 [$X] 中获得其值，其中在 [$M] 的改动顺序中 [$X] 处于
-[$B] 之前。
+[$A] 从 [$M] 上的副作用 [$X] 中获得其值，其中在 [$M] 的改动顺序中 [$X] 处于 [$B] 之前。
 
 [begin:note]
-[:en]
-This requirement is known as read-write coherence.
-[:zh_CN]
-这条规定称为读-写协调性。
+[:en] This requirement is known as read-write coherence.
+[:zh_CN] 这条规定称为读-写协调性。
 [end:note]
 
 [para]
-[%coherence[!write-read]]
-[:en]
+[:en] [%coherence[!write-read]]
 If a [%side effects] side effect [$X] on an atomic object [$M] happens before a
 value computation [$B] of [$M], then the evaluation [$B] takes its value
 from [$X] or from a [%side effects] side effect [$Y] that follows [$X] in the
 modification order of [$M].
-[:zh_CN]
-[%协调性[!写-读]]
+[:zh_CN] [%协调性[!写-读]]
 如果原子性对象 [$M] 上的[%副作用]副作用 [$X] 发生早于 [$M] 上的值计算 [$B]，则
-[$B] 的求值从 [$X] 或者在 [$M] 的改动顺序中晚于 [$X] 的[%副作用]副作用 [$Y]
-中获得其值。
+[$B] 的求值从 [$X] 或者在 [$M] 的改动顺序中晚于 [$X] 的[%副作用]副作用 [$Y] 中获得其值。
 
 [begin:note]
-[:en]
-This requirement is known as write-read coherence.
-[:zh_CN]
-这条规定称为写-读协调性。
+[:en] This requirement is known as write-read coherence.
+[:zh_CN] 这条规定称为写-读协调性。
 [end:note]
 
 [para]
 [begin:note]
-[:en]
-The four preceding coherence requirements effectively disallow compiler
+[:en] The four preceding coherence requirements effectively disallow compiler
 reordering of atomic operations to a single object, even if both operations are
 relaxed loads.
-[:zh_CN]
-上述四条协调性规定实际上禁止了编译器对单个对象的原子性操作进行重新排序，而无论所
-排序的操作是否均为宽松的加载操作。
+[:zh_CN] 上述四条协调性规定实际上禁止了编译器对单个对象的原子性操作进行重新排序，而
+无论所排序的操作是否均为宽松的加载操作。
 
-[:en]
-This effectively makes the cache coherence guarantee provided by most hardware
-available to [=Cpp] atomic operations.
-[:zh_CN]
-这使得在多数硬件上所提供的高速缓存一致性保证可以被用于 [=Cpp] 的原子性操作。
+[:en] This effectively makes the cache coherence guarantee provided by most
+hardware available to [=Cpp] atomic operations.
+[:zh_CN] 这使得在多数硬件上所提供的高速缓存一致性保证可以被用于 [=Cpp] 的原子性操作。
 [end:note]
 
 [para]
 [begin:note]
-[:en]
-The value observed by a load of an atomic depends on the [=lq]happens before[=rq]
+[:en] The value observed by a load of an atomic depends on the [=lq]happens before[=rq]
 relation, which depends on the values observed by loads of atomics.
-[:zh_CN]
-某个原子性对象的加载操作所观察到的值依赖于“发生早于”关系，而它又依赖于原子性对象
-的加载操作所观察到的值。
+[:zh_CN] 某个原子性对象的加载操作所观察到的值依赖于“发生早于”关系，而它又依赖于
+原子性对象的加载操作所观察到的值。
 
-[:en]
-The intended reading is that there must exist an association of atomic loads
+[:en] The intended reading is that there must exist an association of atomic loads
 with modifications they observe that, together with suitably chosen modification
 orders and the [=lq]happens before[=rq] relation derived as described above,
 satisfy the resulting constraints as imposed here.
-[:zh_CN]
-所要解释的意图在于，原子性加载操作与其所观察到的改动之间必然存在某种关联，而这与
-经过适当选择的改动顺序，以及根据上文推导出的“发生早于”关系一起，符合此处最终给出
-的各种约束。
+[:zh_CN] 所要解释的意图在于，原子性加载操作与其所观察到的改动之间必然存在某种关联，
+而这与经过适当选择的改动顺序，以及根据上文推导出的“发生早于”关系一起，符合此处最终
+给出的各种约束。
 [end:note]
 
 [para]
-[:en]
-Two actions are [+potentially concurrent] if
-[:zh_CN]
-符合如下条件时，两个操作[+潜在并发]：
+[:en] Two actions are [+potentially concurrent] if
+[:zh_CN] 符合如下条件时，两个操作[+潜在并发]：
 
 [list]
 [item]
@@ -646,47 +528,37 @@ and they are not both performed by the same signal handler invocation.
 同一次信号处理函数调用中所实施。
 [list:end]
 
-[:en]
-The execution of a program contains a [+data race] if it contains two
+[:en] The execution of a program contains a [+data race] if it contains two
 potentially concurrent conflicting actions, at least one of which is not atomic,
 and neither happens before the other, except for the special case for signal
 handlers described below.
-[:zh_CN]
-除了下文所述的信号处理函数的特殊情况之外，当程序的执行中包含两个潜在并发的冲突的
-动作，其中至少有一个不是原子性的，并且任何一个都不发生早于另一个时，它就含有
+[:zh_CN] 除了下文所述的信号处理函数的特殊情况之外，当程序的执行中包含两个潜在并发的
+冲突的动作，其中至少有一个不是原子性的，并且任何一个都不发生早于另一个时，它就含有
 [+数据竞争]。
 
-[:en]
-Any such data race results in undefined behavior.
-[:zh_CN]
-任何这种数据竞争都导致未定义的行为。
+[:en] Any such data race results in undefined behavior.
+[:zh_CN] 任何这种数据竞争都导致未定义的行为。
 
 [begin:note]
-[:en]
-It can be shown that programs that correctly use mutexes and
+[:en] It can be shown that programs that correctly use mutexes and
 [`memory_order::seq_cst] operations to prevent all data races and use no other
 synchronization operations behave as if the operations executed by their
 constituent threads were simply interleaved, with each [%value computation]
 value computation of an object being taken from the last [%side effects] side
 effect on that object in that interleaving.
-[:zh_CN]
-可以看到，通过正确使用互斥体和 [`memory_order::seq_cst] 操作，而不使用其他任何
-同步操作，以避免全部数据竞争的程序，其行为如同构成它的线程所执行的操作之间单纯地
-交错执行，其中某个对象上进行的[%值计算]值计算，从该对象在这种交错执行中的最后
+[:zh_CN] 可以看到，通过正确使用互斥体和 [`memory_order::seq_cst] 操作，而不使用
+其他任何同步操作，以避免全部数据竞争的程序，其行为如同构成它的线程所执行的操作之间
+单纯地交错执行，其中某个对象上进行的[%值计算]值计算，从该对象在这种交错执行中的最后
 一次[%副作用]副作用中获得值。
 
-[:en]
-This is normally referred to as [=lq]sequential consistency[=rq].
-[:zh_CN]
-这通常被称为“顺序一致性”。
+[:en] This is normally referred to as [=lq]sequential consistency[=rq].
+[:zh_CN] 这通常被称为“顺序一致性”。
 
-[:en]
-However, this applies only to data-race-free programs, and data-race-free
+[:en] However, this applies only to data-race-free programs, and data-race-free
 programs cannot observe most program transformations that do not change
 single-threaded program semantics.
-[:zh_CN]
-然而，这只对无数据竞争的程序有效，而且无数据竞争的程序无法观察到多数不改变单线程
-程序语义的程序变换。
+[:zh_CN] 然而，这只对无数据竞争的程序有效，而且无数据竞争的程序无法观察到多数不改变
+单线程程序语义的程序变换。
 
 [:en] In fact, most single-threaded program transformations remain possible,
 since any program that behaves differently as a result has undefined behavior.
@@ -695,74 +567,58 @@ since any program that behaves differently as a result has undefined behavior.
 [end:note]
 
 [para]
-[:en]
-Two accesses to the same object of type [`[`:key volatile] std::sig_atomic_t] do
-not result in a data race if both occur in the same thread, even if one or more
-occurs in a signal handler.
-[:zh_CN]
-对同一个 [`[`:key volatile] std::sig_atomic_t] 类型的对象的两次访问，如果发生于
-同一个线程内，则即使其中之一或两者均发生于信号处理函数中，也不会导致数据竞争。
+[:en] Two accesses to the same object of type [`[`:key volatile] std::sig_atomic_t]
+do not result in a data race if both occur in the same thread, even if one or
+more occurs in a signal handler.
+[:zh_CN] 对同一个 [`[`:key volatile] std::sig_atomic_t] 类型的对象的两次访问，
+如果发生于同一个线程内，则即使其中之一或两者均发生于信号处理函数中，也不会导致数据竞争。
 
-[:en]
-For each signal handler invocation, evaluations performed by the thread invoking
-a signal handler can be divided into two groups [$A] and [$B], such that no
-evaluations in [$B] happen before evaluations in [$A], and the evaluations of
-such [`[`:key volatile] std::sig_atomic_t] objects take values as though all
-evaluations in [$A] happened before the execution of the signal handler and the
-execution of the signal handler happened before all evaluations in [$B].
-[:zh_CN]
-对于每次信号处理函数的调用，由调用信号处理函数的线程所实施的求值，可以分为两个组
-[$A] 和 [$B]，使得 [$B] 中的任何求值均不发生早于 [$A] 中的求值，并且对这种
+[:en] For each signal handler invocation, evaluations performed by the thread
+invoking a signal handler can be divided into two groups [$A] and [$B], such
+that no evaluations in [$B] happen before evaluations in [$A], and the
+evaluations of such [`[`:key volatile] std::sig_atomic_t] objects take values as
+though all evaluations in [$A] happened before the execution of the signal handler
+and the execution of the signal handler happened before all evaluations in [$B].
+[:zh_CN] 对于每次信号处理函数的调用，由调用信号处理函数的线程所实施的求值，可以分为
+两个组 [$A] 和 [$B]，使得 [$B] 中的任何求值均不发生早于 [$A] 中的求值，并且对这种
 [`[`:key volatile] std::sig_atomic_t] 对象的求值如同 [$A] 中的所有求值均发生早于
 该信号处理函数的执行，且信号处理函数的执行发生早于 [$B] 中的所有求值。
 
 [para]
 [begin:note]
-[:en]
-Compiler transformations that introduce assignments to a potentially shared
+[:en] Compiler transformations that introduce assignments to a potentially shared
 memory location that would not be modified by the abstract machine are generally
 precluded by this document, since such an assignment might overwrite another
 assignment by a different thread in cases in which an abstract machine execution
 would not have encountered a data race.
-[:zh_CN]
-本文档一般排除了某些编译器程序变换，它们引入向抽象机器并不会改动的潜在共享的
+[:zh_CN] 本文档一般排除了某些编译器程序变换，它们引入向抽象机器并不会改动的潜在共享的
 内存位置的赋值，这是由于这种赋值可能会覆写某个不同的线程中进行的其他赋值，而这种
 情况下抽象机器的执行本不会产生数据竞争。
 
-[:en]
-This includes implementations of data member assignment that overwrite adjacent
-members in separate memory locations.
-[:zh_CN]
-这包括对数据成员赋值的某些实现方式，它们会覆写处于独立内存位置中的相邻成员。
+[:en] This includes implementations of data member assignment that overwrite
+adjacent members in separate memory locations.
+[:zh_CN] 这包括对数据成员赋值的某些实现方式，它们会覆写处于独立内存位置中的相邻成员。
 
-[:en]
-Reordering of atomic loads in cases in which the atomics in question might alias
-is also generally precluded, since this could violate the coherence rules.
-[:zh_CN]
-在所涉及的原子性对象可能互为别名时，对原子性加载操作所进行的重新排序，一般也被
-排除，这是因为这可能会违反协调性规则。
+[:en] Reordering of atomic loads in cases in which the atomics in question might
+alias is also generally precluded, since this could violate the coherence rules.
+[:zh_CN] 在所涉及的原子性对象可能互为别名时，对原子性加载操作所进行的重新排序，一般
+也被排除，这是因为这可能会违反协调性规则。
 [end:note]
 
 [para]
 [begin:note]
-[:en]
-Transformations that introduce a speculative read of a potentially shared memory
-location might not preserve the semantics of the [=Cpp] program as defined in
-this document, since they potentially introduce a data race.
-[:zh_CN]
-引入对潜在共享的内存位置进行推测性读取操作的程序变换，可能不能保持本文档中定义的
-[=Cpp] 程序的语义。
+[:en] It is possible that transformations that introduce a speculative read of a
+potentially shared memory location do not preserve the semantics of the [=Cpp]
+program as defined in this document, since they potentially introduce a data race.
+[:zh_CN] 引入对潜在共享的内存位置进行推测性读取操作的程序变换，有可能不能保持本文档中
+定义的 [=Cpp] 程序的语义。
 
-[:en]
-However, they are typically valid in the context of an optimizing compiler that
-targets a specific machine with well-defined semantics for data races.
-[:zh_CN]
-然而，在目标为具有良好定义的数据竞争语义的特定机器的优化编译器的条件下，它们通常
-是有效的。
+[:en] However, they are typically valid in the context of an optimizing compiler
+that targets a specific machine with well-defined semantics for data races.
+[:zh_CN] 然而，在目标为具有良好定义的数据竞争语义的特定机器的优化编译器的条件下，
+它们通常是有效的。
 
-[:en]
-They would be invalid for a hypothetical machine that is not tolerant of races
-or provides hardware race detection.
-[:zh_CN]
-而对于假想的不能容忍竞争的或者提供硬件竞争检测的机器，它们就是无效的。
+[:en] They would be invalid for a hypothetical machine that is not tolerant of
+races or provides hardware race detection.
+[:zh_CN] s而对于假想的不能容忍竞争的或者提供硬件竞争检测的机器，它们就是无效的。
 [end:note]

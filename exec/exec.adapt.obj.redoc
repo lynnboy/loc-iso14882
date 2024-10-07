@@ -1,0 +1,128 @@
+[section#exec.adapt.obj
+    [:en] Closure objects
+    [:zh_CN] 闭包对象
+]
+
+[para]
+[:en] A [+:adj pipeable[!sender adaptor closure object]] is a function object
+that accepts one or more [`sender] arguments and returns a [`sender].
+[:zh_CN] [+:adj 可连管道的[!发送器适配器闭包对象]]是接受一个或多个 [`sender] 实参
+并返回一个 [`sender] 的函数对象。
+
+[:en] For a pipeable sender adaptor closure object [`c] and an expression [`sndr]
+such that [`decltype((sndr))] models [`sender],
+the following expressions are equivalent and yield a [`sender]:
+[:zh_CN] 对于可连管道的发送器适配器闭包对象 [`c] 和使得 [`decltype((sndr))] 构成
+[`sender] 的表达式 [`sndr]，下列表达式等价于产出一个 [`sender]：
+[codeblock]
+c(sndr)
+sndr | c
+[codeblock:end]
+
+[:en] Given an additional pipeable sender adaptor closure object [`d], the
+expression [`c | d] produces another pipeable sender adaptor closure object [`e]:
+[:zh_CN] 给定额外的可连管道的发送器适配器闭包对象 [`d]，表达式 [`c | d] 产生另一个
+可连管道的发送器适配器闭包对象 [`e]:
+
+[para:~]
+[:en] [`e] is a perfect forwarding call wrapper ([#func.require])
+with the following properties:
+[:zh_CN] [`e] 是具有下列性质的完美转发调用包装器（[#func.require]）：
+
+[list]
+[item]
+[:en] Its target object is an object [`d2] of type [`decltype(auto(d))]
+direct-non-list-initialized with [`d].
+[:zh_CN] 其目标对象为以 [`d] 直接非列表初始化的 [`decltype(auto(d))] 类型的对象 [`d2]。
+[item]
+[:en] It has one bound argument entity, an object [`c2] of type [`decltype(auto(c))]
+direct-non-list-initialized with [`c].
+[:zh_CN] 它具有一个绑定实参实体，为以 [`c] 直接非列表初始化的 [`decltype(auto(c))]
+类型的对象 [`c2]。
+[item]
+[:en] Its call pattern is [`d2(c2(arg))], where [`arg] is the argument used in
+a function call expression of [`e].
+[:zh_CN] 其调用模式为 [`d2(c2(arg))]，其中 [`arg] 为 [`e] 的函数调用表达式中使用的实参。
+[list:end]
+
+[:en] The expression [`c | d] is well-formed if and only if the initializations
+of the state entities ([#func.def]) of [`e] are all well-formed.
+[:zh_CN] 当且仅当 [`e] 的各状态实体（[#func.def]）的初始化都良构时，表达式 [`c | d] 良构。
+
+[para]
+[:en] An object [`t] of type [`T] is a pipeable sender adaptor closure object
+if [`T] models [`[`:c derived_from]<sender_adaptor_closure<T>>],
+[`T] has no other base classes of type [`sender_adaptor_closure<U>] for any
+other type [`U], and [`T] does not satisfy [`sender].
+[:zh_CN] 如果 [`T] 构成 [`[`:c derived_from]<sender_adaptor_closure<T>>]，
+[`T] 对于任何其他类型 [`U] 都没有 [`sender_adaptor_closure<U>] 类型的其他基类，并且
+[`T] 不满足 [`sender]，那么 [`T] 类型的对象 [`t] 是可连管道的发送器适配器闭包对象。
+
+[para]
+[:en] The template parameter [`D] for [`sender_adaptor_closure] can be
+an incomplete type.
+[:zh_CN] [`sender_adaptor_closure] 的模板形参 [`D] 可以是不完整类型。
+
+[:en] Before any expression of type [=cv] [`D] appears as an operand to the
+[`|] operator, [`D] shall be complete and model
+[`[`:c derived_from]<sender_adaptor_closure<D>>].
+[:zh_CN] 在 [=cv] [`D] 类型的任何表达式作为 [`|] 运算符的操作数出现之前，[`D] 应当
+完整并构成 [`[`:c derived_from]<sender_adaptor_closure<D>>]。
+
+[:en] The behavior of an expression involving an object of type [=cv] [`D]
+as an operand to the [`|] operator is undefined
+if overload resolution selects a program-defined [`operator|] function.
+[:zh_CN] 涉及以 [=cv] [`D] 类型的对象作为 [`|] 运算符的操作数的表达式，如果
+重载决议选择了程序定义的 [`operator|] 函数，那么其行为未定义。
+
+[para]
+[:en] A [+:adj pipeable[!sender adaptor object]] is a customization point object
+that accepts a [`sender] as its first argument and
+returns a [`sender].
+[:zh_CN] [+:adj 可连管道的[!发送器适配器对象]]是一种定制化点对象，接受 [`sender] 为
+其第一个实参并返回一个 [`sender]。
+
+[:en] If a pipeable sender adaptor object accepts only one argument,
+then it is a pipeable sender adaptor closure object.
+[:zh_CN] 如果可连管道的发送器适配器对象只接受一个实参则它是可连管道的发送器适配器闭包对象。
+
+[para]
+[:en] If a pipeable sender adaptor object adaptor accepts more than one argument,
+then let [`sndr] be an expression such that [`decltype((sndr))] models [`:c sender],
+let [`args...] be arguments such that [`adaptor(sndr, args...)] is a well-formed
+expression as specified below, and
+let [`BoundArgs] be a pack that denotes [`decltype(auto(args))...].
+[:zh_CN] 如果可连管道的发送器适配器对象接受多于一个实参，那么令 [`sndr] 为使得
+[`decltype((sndr))] 构成 [`:c sender] 的表达式，令 [`args...] 为使得
+[`adaptor(sndr, args...)] 按下文规定是良构表达式的一组实参，并令 [`BoundArgs] 为
+代表 [`decltype(auto(args))...] 的包组。
+
+[:en] The expression [`adaptor(args...)] produces
+a pipeable sender adaptor closure object [`f] that is
+a perfect forwarding call wrapper with the following properties:
+[:zh_CN] 表达式 [`adaptor(args...)] 产生一个可连管道的发送器适配器闭包对象 [`f]，
+它是具有下列性质的完美转发调用包装器：
+
+[list]
+[item]
+[:en] Its target object is a copy of [`adaptor].
+[:zh_CN] 其目标对象为 [`adaptor] 的副本。
+[item]
+[:en] Its bound argument entities [`bound_args] consist of objects of types
+[`BoundArgs...] direct-non-list-initialized with
+[`std::forward<decltype((args))>(args)...], respectively.
+[:zh_CN] 它的绑定实参实体 [`bound_args] 由分别以
+[`std::forward<decltype((args))>(args)...] 直接非列表初始化的 [`BoundArgs...] 类型
+的对象组成。
+[item]
+[:en] Its call pattern is [`adaptor(rcvr, bound_args...)], where [`rcvr] is the
+argument used in a function call expression of [`f].
+[:zh_CN] 其调用模式为 [`adaptor(rcvr, bound_args...)]，其中 [`rcvr] 为 [`f] 的
+函数调用表达式中使用的实参。
+[list:end]
+
+[:en] The expression [`adaptor(args...)] is well-formed if and only if
+the initializations of the bound argument entities of the result,
+as specified above, are all well-formed.
+[:zh_CN] 当且仅当如上指定的结果的各绑定实参实体的初始化都良构时，表达式
+[`adaptor(args...)] 良构。

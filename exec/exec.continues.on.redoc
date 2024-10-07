@@ -1,0 +1,94 @@
+[section#exec.continues.on
+    [`execution::continues_on]
+]
+
+[para]
+[:en] [`continues_on] adapts a sender into one that completes on the specified
+scheduler.
+[:zh_CN] [`continues_on] 将一个发送器适配为一个在指定调度器上完成的发送器。
+
+[para]
+[:en] The name [`continues_on] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`continues_on] 代表一个可连管道的发送器适配器对象。
+
+[:en] For subexpressions [`sch] and [`sndr], if [`decltype((sch))] does not
+satisfy [`:c scheduler], or [`decltype((sndr))] does not satisfy [`:c sender],
+[`continues_on(sndr, sch)] is ill-formed.
+[:zh_CN] 对于子表达式 [`sch] 和 [`sndr]，如果 [`decltype((sch))] 不满足
+[`:c scheduler] 或者 [`decltype((sndr))] 不满足 [`:c sender]，那么
+[`continues_on(sndr, sch)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`continues_on(sndr, sch)] is
+expression-equivalent to:
+[:zh_CN] 否则，表达式 [`continues_on(sndr, sch)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(continues_on, sch, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is evaluated only once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] The exposition-only class template [*impls-for] is specialized for
+[`continues_on_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for] 针对 [`continues_on_t] 进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<continues_on_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]get-attrs =
+      [](const auto& data, const auto& child) noexcept -> decltype(auto) {
+        return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ATTRS(data), [[redoc("*>")]]FWD-ENV(get_env(child)));
+      };
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`sndr] and [`env] be subexpressions such that [`Sndr] is [`decltype((sndr))].
+[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`[*:c sender-for]<Sndr, continues_on_t>] is [`false],
+then the expression [`continues_on.transform_sender(sndr, env)] is ill-formed;
+otherwise, it is equal to:
+[:zh_CN] 如果 [`[*:c sender-for]<Sndr, continues_on_t>] 为 [`false]，那么表达式
+[`continues_on.transform_sender(sndr, env)] 非良构；否则，它等于：
+[codeblock]
+auto [_, data, child] = sndr;
+return schedule_from(std::move(data), std::move(child));
+[codeblock:end]
+
+[begin:note]
+[:en] This causes the [`continues_on(sndr, sch)] sender to become
+[`schedule_from(sch, sndr)] when it is connected with a receiver
+whose execution domain does not customize [`continues_on].
+[:zh_CN] 这会造成 [`continues_on(sndr, sch)] 发送器，当与执行域并未定制化
+[`continues_on] 的接收器连接后，将变为 [`schedule_from(sch, sndr)]。
+[end:note]
+
+[para]
+[:en] Let [`out_sndr] be a subexpression denoting a sender returned from
+[`continues_on(sndr, sch)] or one equal to such, and let [`OutSndr] be the type
+[`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`continues_on(sndr, sch)] 返回的发送器
+或等于它的发送器，并令 [`OutSndr] 为类型 [`decltype((out_sndr))]。
+
+[:en] Let [`out_rcvr] be a subexpression denoting a receiver that has an
+environment of type [`Env] such that [`[`:c sender_in]<OutSndr, Env>] is [`true].
+[:zh_CN] 令 [`out_rcvr] 为子表达式，代表具有 [`Env] 类型环境的接收器，使得
+[`[`:c sender_in]<OutSndr, Env>] 为 [`true]。
+
+[:en] Let [`op] be an lvalue referring to the operation state that results from
+connecting [`out_sndr] with [`out_rcvr].
+[:zh_CN] 令 [`op] 为指代由 [`out_sndr] 与 [`out_rcvr] 的连接所得的操作状态。
+
+[:en] Calling [`start(op)] shall start [`sndr] on the current execution agent
+and execute completion operations on [`out_rcvr] on an execution agent of the
+execution resource associated with [`sch].
+[:zh_CN] 调用 [`start(op)] 应当在当前执行代理上启动 [`sndr]，并在 [`sch] 关联的
+执行资源的某个执行代理上执行完成操作。
+
+[:en] If scheduling onto [`sch] fails, an error completion on [`out_rcvr] shall
+be executed on an unspecified execution agent.
+[:zh_CN] 如果向 [`sch] 上调度时失败，那么应当在某个未指明的执行代理上执行 [`out_rcvr]
+上的一次错误完成。

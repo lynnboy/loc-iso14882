@@ -14,64 +14,75 @@ typically because the result is no longer required.
 [:zh_CN] 这种请求被称为[+停止请求]。
 
 [para]
-[:en] [`stop_source], [`stop_token], and [`stop_callback] implement semantics of
-shared ownership of a [+stop state].
-[:zh_CN] [`stop_source]，[`stop_token] 和 [`stop_callback] 实现对一个[+停止状态]
-的共享所有权语义。
+[:en] The concepts [*:c stoppable-source], [`:c stoppable_token], and
+[*:c stoppable-callback-for] specify the required syntax and semantics of
+shared access to a [+stop state].
+[:zh_CN] 概念 [*:c stoppable-source]、[`:c stoppable_token] 和
+[*:c stoppable-callback-for] 规定对[+停止状态]的共享访问的语法和语义。
 
-[:en] Any [`stop_source], [`stop_token], or [`stop_callback] that shares
-ownership of the same stop state is an [+associated] [`stop_source],
-[`stop_token], or [`stop_callback], respectively.
-[:zh_CN] 共享相同停止状态的所有权的 [`stop_source]，[`stop_token]，和
-[`stop_callback]，分别是[+关联的] [`stop_source]，[`stop_token]，和
-[`stop_callback]。
-
-[:en] The last remaining owner of the stop state automatically releases the
-resources associated with the stop state.
-[:zh_CN] 停止状态的最后一个留存的所有者将自动释放与停止状态关联的资源。
+[:en] Any object modeling [*:c stoppable-source], [`:c stoppable_token], or
+[*:c stoppable-callback-for] that refers to the same stop state is an
+[+associated] [*:c stoppable-source], [`:c stoppable_token], or
+[*:c stoppable-callback-for], respectively.
+[:zh_CN] 指代同一停止状态的，构成了 [*:c stoppable-source]、[`:c stoppable_token]
+和 [*:c stoppable-callback-for] 的对象，分别是[+关联的] [*:c stoppable-source]、
+[`:c stoppable_token] 和 [*:c stoppable-callback-for]。
 
 [para]
-[:en] A [`stop_token] can be passed to an operation which can either
-[:zh_CN] 可以将 [`stop_token] 传递给某个操作，它可以
+[:en] An object of a type that models [`:c stoppable_token] can be passed to an
+operation that can either
+[:zh_CN] 可以将构成了 [`:c stoppable_token] 的类型的对象传递给某个操作，它可以
 
 [list]
 [item]
 [:en@~] actively poll the token to check if there has been a stop request, or
 [:zh_CN@~] 积极地轮询令牌以检查是否已出现一个停止请求，或
 [item]
-[:en@~] register a callback using the [`stop_callback] class template which will
-be called in the event that a stop request is made.
-[:zh_CN@~] 使用 [`stop_callback] 类模板来注册一个回调，它将于发生做出停止请求的
-事件时被调用。
+[:en@~] register a callback that will be called in the event that a stop request
+is made.
+[:zh_CN@~] 注册一个回调，它将于发生做出停止请求的事件时被调用。
 [list:end]
 
-[:en] A stop request made via a [`stop_source] will be visible to all associated
-[`stop_token] and [`stop_source] objects.
-[:zh_CN] 通过某个 [`stop_source] 做出的停止请求，将在所有关联的 [`stop_token] 和
-[`stop_source] 对象上可见。
+[:en] A stop request made via an object whose type models [*:c stoppable-source]
+will be visible to all associated [`:c stoppable_token] and
+[*:c stoppable-source] objects.
+[:zh_CN] 通过类型构成了 [*:c stoppable-source] 的对象做出的停止请求，将在所有关联的
+[`:c stoppable_token] 和 [*:c stoppable-source] 对象上可见。
 
 [:en] Once a stop request has been made it cannot be withdrawn (a subsequent
 stop request has no effect).
 [:zh_CN] 停止请求一旦做出就无法被撤销（后续的停止请求没有效果）。
 
 [para]
-[:en] Callbacks registered via a [`stop_callback] object are called when a stop
-request is first made by any associated [`stop_source] object.
-[:zh_CN] 通过某个 [`stop_callback] 对象注册的各个回调，都将于任何关联的
-[`stop_source] 对象上做出停止请求时被调用。
+[:en] Callbacks registered via an object whose type models
+[*:c stoppable-callback-for] are called when a stop request is first made by any
+associated [*:c stoppable-source] object.
+[:zh_CN] 通过类型构成了 [*:c stoppable-callback-for] 对象注册的各个回调，都将于
+任何关联的 [*:c stoppable-source] 对象上做出停止请求时被调用。
 
 [para]
-[:en] Calls to the functions [`request_stop], [`stop_requested], and
-[`stop_possible] do not introduce data races.
-[:zh_CN] 对函数 [`request_stop]，[`stop_requested] 和 [`stop_possible] 的调用
-不会引入数据竞争。
+[:en] The types [`stop_source] and [`stop_token] and the class template
+[`stop_callback] implement the semantics of shared ownership of a stop state.
+[:zh_CN] 类型 [`stop_source] 和 [`stop_token] 以及类模板 [`stop_callback] 实现了
+停止状态共享所有权语义。
 
-[:en] A call to [`request_stop] that returns [`true] synchronizes with a call to
-[`stop_requested] on an associated [`stop_token] or [`stop_source] object that
-returns [`true].
-[:zh_CN] 对返回 [`true] 的 [`request_stop] 的调用，同步于在关联的 [`stop_token]
-或 [`stop_source] 对象上对返回 [`true] 的 [`stop_requested] 的调用。
+[:en] The last remaining owner of the stop state automatically releases
+the resources associated with the stop state.
+[:zh_CN] 最后剩下的共享状态拥有者会自动释放于停止状态关联的资源。
 
-[:en] Registration of a callback synchronizes with the invocation of that
-callback.
-[:zh_CN] 回调的注册同步于该回调的调用。
+[para]
+[:en] An object of type [`inplace_stop_source] is the sole owner of its stop state.
+[:zh_CN] [`inplace_stop_source] 类型的对象是其停止状态的唯一拥有者。
+
+[:en] An object of type [`inplace_stop_token] or of a specialization of the
+class template [`inplace_stop_callback] does not participate in ownership of its
+associated stop state.
+[:zh_CN] [`inplace_stop_token] 类型或类模板 [`inplace_stop_callback] 的特例类型的
+对象并不参与其关联停止状态的所有权。
+
+[begin:note]
+[:en] They are for use when all uses of the associated token and callback objects
+are known to nest within the lifetime of the [`inplace_stop_source] object.
+[:zh_CN] 它们用于已知所有的关联令牌和回调对象的使用都内嵌于 [`inplace_stop_source]
+对象的生存期的情形。
+[end:note]

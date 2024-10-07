@@ -1,0 +1,132 @@
+[section#exec.awaitable
+    [:en] Awaitable helpers
+    [:zh_CN] 可等待体辅助项
+]
+
+[para]
+[:en] The sender concepts recognize awaitables as senders.
+[:zh_CN] 发送器各概念将可等待体识别为发送器。
+
+[:en] For [#exec], an [+awaitable] is an expression that would be well-formed as
+the operand of a [`co_await] expression within a given context.
+[:zh_CN] 在 [#exec] 中，[+可等待体]是作为给定语境中的 [`co_await] 表达式的操作数
+良构的表达式。
+
+[para]
+[:en] For a subexpression [`c], let [`[*GET-AWAITER](c, p)] be
+expression-equivalent to the series of transformations and conversions applied
+to [`c] as the operand of an [~await-expression] in a coroutine,
+resulting in lvalue [`e] as described by [#expr.await], where [`p] is an lvalue
+referring to the coroutine[=']s promise, which has type [`Promise].
+[:zh_CN] 对于子表达式 [`c]，令 [`[*GET-AWAITER](c, p)] 按表达式等价于当 [`c] 作为
+某协程中的 [~await-表达式]的操作数时对其应用的一系列变换和转换，并如 [#expr.await]
+所述产生一个左值 [`e]，其中 [`p] 时指代该协程的类型为 [`Promise] 的承诺对象的左值。
+
+[begin:note]
+[:en] This includes the invocation of the promise type[=']s [`await_transform]
+member if any, the invocation of the [`operator co_await] picked by overload
+resolution if any, and any necessary implicit conversions and materializations.
+[:zh_CN] 其中包括调用承诺类型的 [`await_transform] 成员（如果有），调用由重载决议
+选中的 [`operator co_await]（如果有），以及任何必要的隐式转换和实质化。
+[end:note]
+
+[para]
+[:en] Let [*:c is-awaitable] be the following exposition-only concept:
+[:zh_CN] 令 [*:c is-awaitable] 为以下仅用于阐释的概念：
+
+[codeblock:synopsis]
+namespace std {
+  template<class T>
+  concept [[redoc("*:c>")]]await-suspend-result = [[redoc("[=seebelow]")]];                     // [=expos]
+
+  template<class A, class Promise>
+  concept [[redoc("*:c@def>")]]is-awaiter =                                          // [=expos]
+    requires (A& a, coroutine_handle<Promise> h) {
+      a.await_ready() ? 1 : 0;
+      { a.await_suspend(h) } -> [[redoc("*:c>")]]await-suspend-result;
+      a.await_resume();
+    };
+
+  template<class C, class Promise>
+  concept [[redoc("*:c@def>")]]is-awaitable =                                        // [=expos]
+    requires (C (*fc)() noexcept, Promise& p) {
+      { [[redoc("*>")]]GET-AWAITER(fc(), p) } -> [[redoc("*:c>")]]is-awaiter<Promise>;
+    };
+}
+[codeblock:end]
+
+[:en] [`[*:c@def await-suspend-result]<T>] is [`true]
+if and only if one of the following is [`true]:
+[:zh_CN] 当且仅当以下之一为 [`true] 时，[`[*:c@def await-suspend-result]<T>]
+为 [`true]：
+[list]
+[item]
+[:en@~] [`T] is [`void], or
+[:zh_CN@~] [`T] 为 [`void]，或
+[item]
+[:en@~] [`T] is [`bool], or
+[:zh_CN@~] [`T] 为 [`bool]，或
+[item]
+[:en@~] [`T] is a specialization of [`coroutine_handle].
+[:zh_CN@~] [`T] 为 [`coroutine_handle] 的特例。
+[list:end]
+
+[para]
+[:en] For a subexpression [`c] such that [`decltype((c))] is type [`C], and
+an lvalue [`p] of type [`Promise], [`[*await-result-type]<C, Promise>] denotes
+the type [`decltype([*GET-AWAITER](c, p).await_resume())].
+[:zh_CN] 对于子表达式 [`c] 并使得 [`decltype((c))] 为类型 [`C]，以及 [`Promise]
+类型的左值 [`p]，[`[*await-result-type]<C, Promise>] 代表类型
+[`decltype([*GET-AWAITER](c, p).await_resume())]。
+
+[para]
+[:en] Let [*with-await-transform] be the exposition-only class template:
+[:zh_CN] 令 [*with-await-transform] 为仅用于阐释的类模板：
+[codeblock:synopsis]
+namespace std::execution {
+  template<class T, class Promise>
+    concept [[redoc("*:c@def>")]]has-as-awaitable =                                  // [=expos]
+      requires (T&& t, Promise& p) {
+        { std::forward<T>(t).as_awaitable(p) } -> [[redoc("*:c>")]]is-awaitable<Promise&>;
+      };
+
+  template<class Derived>
+    struct [[redoc("*>")]]with-await-transform {                               // [=expos]
+      template<class T>
+        T&& await_transform(T&& value) noexcept {
+          return std::forward<T>(value);
+        }
+
+      template<[[redoc("*:c>")]]has-as-awaitable<Derived> T>
+        decltype(auto) await_transform(T&& value)
+          noexcept(noexcept(std::forward<T>(value).as_awaitable(declval<Derived&>()))) {
+          return std::forward<T>(value).as_awaitable(static_cast<Derived&>(*this));
+        }
+    };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [*env-promise] be the exposition-only class template:
+[:zh_CN] 令 [*env-promise] 为仅用于阐释的类模板：
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Env>
+  struct [[redoc("*>")]]env-promise : [[redoc("*>")]]with-await-transform<[[redoc("*>")]]env-promise<Env>> { // [=expos]
+    [[redoc("[=unspec]")]] get_return_object() noexcept;
+    [[redoc("[=unspec]")]] initial_suspend() noexcept;
+    [[redoc("[=unspec]")]] final_suspend() noexcept;
+    void unhandled_exception() noexcept;
+    void return_void() noexcept;
+    coroutine_handle<> unhandled_stopped() noexcept;
+
+    const Env& get_env() const noexcept;
+  };
+}
+[codeblock:end]
+
+[begin:note]
+[:en] of [*env-promise] are used only for the purpose of type computation;
+its members need not be defined.
+[:zh_CN] 因为 [*env-promise] 仅用于类型计算，所以不需要为其定义成员。
+[end:note]

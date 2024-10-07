@@ -1,0 +1,82 @@
+[section#exec.then
+    [`execution::then], [`execution::upon_error], [`execution::upon_stopped]
+]
+
+[para]
+[:en] [`then] attaches an invocable as a continuation
+for an input sender[=']s value completion operation.
+[:zh_CN] [`then] 将一个可调用体附加为一个输入发送器的值完成操作的继续。
+
+[:en] [`upon_error] and [`upon_stopped] do the same
+for the error and stopped completion operations, respectively,
+sending the result of the invocable as a value completion.
+[:zh_CN] [`upon_error] 和 [`upon_stopped] 分别对错误和停止完成操作做同样的事，
+将可调用体的结果以值完成来发送。
+
+[para]
+[:en] The names [`then], [`upon_error], and [`upon_stopped] denote pipeable
+sender adaptor objects.
+[:zh_CN] 名字 [`then]，[`upon_error] 和 [`upon_stopped] 都代表可连管道的发送器适配器对象。
+
+[:en] Let the expression [*then-cpo] be one of
+[`then], [`upon_error], or [`upon_stopped].
+[:zh_CN] 令表达式 [*then-cpo] 为 [`then]，[`upon_error] 或 [`upon_stopped] 之一。
+
+[:en] For subexpressions [`sndr] and [`f], if [`decltype((sndr))] does not
+satisfy [`:c sender], or [`decltype((f))] does not satisfy [*:c movable-value],
+[`[*then-cpo](sndr, f)] is ill-formed.
+[:zh_CN] 对于子表达式 [`sndr] 和 [`f]，如果 [`decltype((sndr))] 不满足 [`:c sender]，
+或者 [`decltype((f))] 不满足 [*:c movable-value]，那么 [`[*then-cpo](sndr, f)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`[*then-cpo](sndr, f)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`[*then-cpo](sndr, f)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender([[redoc("*>")]]then-cpo, f, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is evaluated only once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] For [`then], [`upon_error], and [`upon_stopped], let [*set-cpo] be
+[`set_value], [`set_error], and [`set_stopped], respectively.
+[:zh_CN] 对于 [`then]，[`upon_error] 和 [`upon_stopped]，令 [*set-cpo] 分别为
+[`set_value]，[`set_error] 和 [`set_stopped]。
+
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [*then-cpo] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*then-cpo]
+进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<[[redoc("*>")]]decayed-typeof<[[redoc("*>")]]then-cpo>> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]complete =
+      []<class Tag, class... Args>
+        (auto, auto& fn, auto& rcvr, Tag, Args&&... args) noexcept -> void {
+          if constexpr ([[redoc("`:c>")]]same_as<Tag, [[redoc("*>")]]decayed-typeof<set-cpo>>) {
+            [[redoc("*>")]]TRY-SET-VALUE(rcvr,
+                          invoke(std::move(fn), std::forward<Args>(args)...));
+          } else {
+            Tag()(std::move(rcvr), std::forward<Args>(args)...);
+          }
+        };
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The expression [`[*then-cpo](sndr, f)] has undefined behavior unless it
+returns a sender [`out_sndr] that
+[:zh_CN] 表达式 [`[*then-cpo](sndr, f)] 若非返回一个发送器 [`out_sndr]，它
+[list]
+[item]
+[:en] invokes [`f] or a copy of such with the value, error, or stopped result
+datums of [`sndr] for [`then], [`upon_error], and [`upon_stopped], respectively,
+using the result value of [`f] as [`out_sndr][=']s value completion, and
+[:zh_CN] 对于 [`then]，[`upon_error] 和 [`upon_stopped]，分别以 [`sndr] 的值，错误
+或停止结果数据调用 [`f] 或其副本，使用 [`f] 的结果值为 [`out_sndr] 的值完成，并且
+[item]
+[:en] forwards all other completion operations unchanged.
+[:zh_CN] 不修改地转发所有其他完成操作。
+[list:end]

@@ -1,0 +1,111 @@
+[section#exec.bulk
+    [`execution::bulk]
+]
+
+[para]
+[:en] [`bulk] runs a task repeatedly for every index in an index space.
+[:zh_CN] [`bulk] 对索引空间中的每个索引重复执行一项任务。
+
+[para]
+[:en] The name [`bulk] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`bulk] 代表一个可连管道的发送器适配器对象。
+
+[:en] For subexpressions [`sndr], [`shape], and [`f], let [`Shape] be
+[`decltype(auto(shape))].
+[:zh_CN] 对于子表达式 [`sndr]，[`shape] 和 [`f]，令 [`Shape] 为
+[`decltype(auto(shape))]。
+
+[:en] If
+[:zh_CN] 如果
+[list]
+[item]
+[:en@~] [`decltype((sndr))] does not satisfy [`:c sender], or
+[:zh_CN@~] [`decltype((sndr))] 不满足 [`:c sender]，或者
+[item]
+[:en@~] [`Shape] does not satisfy [`:c integral], or
+[:zh_CN@~] [`Shape] 不满足 [`:c integral]，或者
+[item]
+[:en@~] [`decltype((f))] does not satisfy [*:c movable-value],
+[:zh_CN@~] [`decltype((f))] 不满足 [*:c movable-value]，
+[list:end]
+[:en@~] [`bulk(sndr, shape, f)] is ill-formed.
+[:zh_CN@~] 那么 [`bulk(sndr, shape, f)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`bulk(sndr, shape, f)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`bulk(sndr, shape, f)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(bulk, [[redoc("*>")]]product-type{shape, f}, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is evaluated only once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [`continues_on_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
+[`continues_on_t] 进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<bulk_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<bulk_t>::[*complete]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<bulk_t>::[*complete]] 以等价于如下 lambda 的
+可调用对象初始化：
+[codeblock]
+[]<class Index, class State, class Rcvr, class Tag, class... Args>
+  (Index, State& state, Rcvr& rcvr, Tag, Args&&... args) noexcept -> void requires [[redoc("[=seebelow]")]] {
+    if constexpr ([[redoc("`:c>")]]same_as<Tag, set_value_t>) {
+      auto& [shape, f] = state;
+      constexpr bool nothrow = noexcept(f(auto(shape), args...));
+      [[redoc("*>")]]TRY-EVAL(rcvr, [&]() noexcept(nothrow) {
+        for (decltype(auto(shape)) i = 0; i < shape; ++i) {
+          f(auto(i), args...);
+        }
+        Tag()(std::move(rcvr), std::forward<Args>(args)...);
+      }());
+    } else {
+      Tag()(std::move(rcvr), std::forward<Args>(args)...);
+    }
+  }
+[codeblock:end]
+
+[para]
+[:en] The expression in the [~requires-clause] of the lambda above is [`true]
+if and only if [`Tag] denotes a type other than [`set_value_t] or
+if the expression [`f(auto(shape), args...)] is well-formed.
+[:zh_CN] 以上 lambda 的 [~requires-子句]中的表达式，当且仅当 [`Tag] 代表不是
+[`set_value_t] 的类型，或当表达式 [`f(auto(shape), args...)] 良构时，为 [`true]。
+
+[para]
+[:en] Let the subexpression [`out_sndr] denote the result of the invocation
+[`bulk(sndr, shape, f)] or an object equal to such, and let the subexpression
+[`rcvr] denote a receiver such that the expression [`connect(out_sndr, rcvr)]
+is well-formed.
+[:zh_CN] 令子表达式 [`out_sndr] 代表调用 [`bulk(sndr, shape, f)] 的结果或等于它的对象，
+并令子表达式 [`rcvr] 代表一个接收器，使得表达式 [`connect(out_sndr, rcvr)] 良构。
+
+[:en] The expression [`connect(out_sndr, rcvr)] has undefined behavior
+unless it creates an asynchronous operation ([#exec.async.ops]) that, when started:
+[:zh_CN] 表达式 [`connect(out_sndr, rcvr)] 若非其创建了异步操作（[#exec.async.ops]），
+当其启动时：
+[list]
+[item]
+[:en@~] on a value completion operation, invokes [`f(i, args...)] for every [`i]
+of type [`Shape] from [`0] to [`shape], where [`args] is a pack of lvalue
+subexpressions referring to the value completion result datums of the input
+sender, and
+[:zh_CN@~] 在值完成操作中，对 [`Shape] 类型从 [`0] 到 [`shape] 中的每个 [`i]，调用
+[`f(i, args...)]，其中 [`args] 是指代输入发送器的值完成结果数据的左值表达式的包组，并且
+[item]
+[:en@~] propagates all completion operations sent by [`sndr].
+[:zh_CN@~] 传播 [`sndr] 所发送的所有完成操作，
+[list:end]
+[:zh_CN@~] 否则其行为未定义。

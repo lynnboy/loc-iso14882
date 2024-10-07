@@ -1,0 +1,88 @@
+[section#exec.with.awaitable.senders
+    [`execution::with_awaitable_senders]
+]
+
+[para]
+[:en] [`with_awaitable_senders], when used as the base class of a coroutine
+promise type, makes senders awaitable in that coroutine type.
+[:zh_CN] 将 [`with_awaitable_senders] 用作协程承诺类型的基类，使发送器在这种
+协程类型中可以等待。
+
+[para:~]
+[:en] In addition, it provides a default implementation of [`unhandled_stopped]
+such that if a sender completes by calling [`set_stopped], it is treated as if
+an uncatchable [=lq]stopped[=rq] exception were thrown from the [~await-expression].
+[:zh_CN] 此外，它提供了 [`unhandled_stopped] 的缺省实现，使得当发送器通过调用
+[`set_stopped] 完成时，被当作如同从[~等待表达式]抛出了不可捕获的“停止”异常一样对待。
+
+[begin:note]
+[:en] The coroutine is never resumed, and
+the [`unhandled_stopped] of the coroutine caller[=']s promise type is called.
+[:zh_CN] 此协程永不会恢复，且将调用协程调用方的承诺类型的 [`unhandled_stopped]。
+[end:note]
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<[[redoc("*:c>")]]class-type Promise>
+    struct with_awaitable_senders {
+      template<class OtherPromise>
+        requires (![[redoc("`:c>")]]same_as<OtherPromise, void>)
+      void set_continuation(coroutine_handle<OtherPromise> h) noexcept;
+
+      coroutine_handle<> continuation() const noexcept { return [[redoc("*>")]]continuation; }
+
+      coroutine_handle<> unhandled_stopped() noexcept {
+        return [[redoc("*>")]]stopped-handler([[redoc("*>")]]continuation.address());
+      }
+
+      template<class Value>
+      [[redoc("[=seebelow]")]] await_transform(Value&& value);
+
+    private:
+      [[noreturn]] static coroutine_handle<>
+        [[redoc("*>")]]default-unhandled-stopped(void*) noexcept {             // [=expos]
+        terminate();
+      }
+      coroutine_handle<> [[redoc("*>")]]continuation{};                        // [=expos]
+      coroutine_handle<> (*[[redoc("*>")]]stopped-handler)(void*) noexcept =   // [=expos]
+        &[[redoc("*>")]]default-unhandled-stopped;
+    };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+template<class OtherPromise>
+  requires (![[redoc("`:c>")]]same_as<OtherPromise, void>)
+void set_continuation(coroutine_handle<OtherPromise> h) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]continuation = h;
+if constexpr ( requires(OtherPromise& other) { other.unhandled_stopped(); } ) {
+  [[redoc("*>")]]stopped-handler = [](void* p) noexcept -> coroutine_handle<> {
+    return coroutine_handle<OtherPromise>::from_address(p)
+      .promise().unhandled_stopped();
+  };
+} else {
+  [[redoc("*>")]]stopped-handler = &[[redoc("*>")]]default-unhandled-stopped;
+}
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class Value>
+[[redoc("*>")]]call-result-t<as_awaitable_t, Value, Promise&> await_transform(Value&& value);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return as_awaitable(std::forward<Value>(value), static_cast<Promise&>(*this));
+[codeblock:end]
+[div:end]

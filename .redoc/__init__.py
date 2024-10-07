@@ -26,7 +26,7 @@ xrefindex = 'xrefindex'
 xrefdelta = 'xrefdelta'
 
 firstlibchapter = 'support'
-lastlibchapter = 'thread'
+lastlibchapter = 'exec'
 
 class Index:
     refid = 0
@@ -232,6 +232,7 @@ def IsoCUndated(): return 'ISO/IEC 9899'
 def IsoC(): return IsoCUndated() + ':2018'
 def IsoFloatUndated(): return 'ISO/IEC 60559'
 def IsoPosixUndated(): return 'ISO/IEC/IEEE 9945'
+def IsoPosix(): return f'{IsoPosixUndated()}:2009'
 def opt(_1:str): return _1 + ensuremath(fr"_\mathit{{_{text('opt')}}}")
 @applyTo(['?bigoh'])
 def bigoh(_1:str): return ensuremath(fr"\mathscr{{O}}({_1})")
@@ -380,6 +381,9 @@ def cvqual(_1:str): return f"[.textit {_1}]"
 def cv(): return "\mathit{cv}" if mathmode() else cvqual('cv')
 def numconst(_1:str): return f"[.textsl {_1}]"
 def logop(_1:str): return f"[.footnotesize {_1}]"
+def mullo(): return '[.math mullo]'
+def mulhi(): return '[.math mulhi]'
+def cedef(): return '[.mathrel [.mathop :]=]'
 
 class Context: pass
 class ParserBase: pass

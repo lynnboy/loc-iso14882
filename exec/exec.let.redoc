@@ -1,0 +1,248 @@
+[section#exec.let
+    [`execution::let_value], [`execution::let_error], [`execution::let_stopped]
+]
+
+[para]
+[:en] [`let_value], [`let_error], and [`let_stopped] transform a sender[=']s
+value, error, and stopped completions, respectively, into a new child
+asynchronous operation by passing the sender[=']s result datums to a
+user-specified callable, which returns a new sender that is connected and started.
+[:zh_CN] [`let_value]，[`let_error] 和 [`let_stopped] 分别将一个发送器的值，错误和
+停止完成，通过把发送器的结果数据传递给用户指定的可调用体，变换为一个新的子异步操作，它
+返回一个被连接并启动的新发送器。
+
+[para]
+[:en] For [`let_value], [`let_error], and [`let_stopped], let [*set-cpo] be
+[`set_value], [`set_error], and [`set_stopped], respectively.
+[:zh_CN] 对于 [`let_value]，[`let_error] 和 [`let_stopped]，令 [*set-cpo] 分别为
+[`set_value]，[`set_error] 和 [`set_stopped]。
+
+[:en] Let the expression [*let-cpo] be one of [`let_value], [`let_error], or
+[`let_stopped].
+[:zh_CN] 令表达式 [*let-cpo] 为 [`let_value]，[`let_error] 或 [`let_stopped] 之一。
+
+[:en] For a subexpression [`sndr], let [`[*let-env](sndr)] be
+expression-equivalent to the first well-formed expression below:
+[:zh_CN] 对于子表达式 [`sndr]，令 [`[*let-env](sndr)] 按表达式等价于下列中第一个
+良构表达式：
+[list]
+[item]
+[`SCHED-ENV(get_completion_scheduler<[*decayed-typeof]<[*set-cpo]>>(get_env(sndr)))]
+[item] [`[*MAKE-ENV](get_domain, get_domain(get_env(sndr)))]
+[item] [`(void(sndr), empty_env{})]
+[list:end]
+
+[para]
+[:en] The names [`let_value], [`let_error], and [`let_stopped] denote pipeable
+sender adaptor objects.
+[:zh_CN] 名字 [`let_value]，[`let_error] 和 [`let_stopped] 都代表
+可连管道的发送器适配器对象。
+
+[:en] For subexpressions [`sndr] and [`f], let [`F] be the decayed type of [`f].
+[:zh_CN] 对于子表达式 [`sndr] 和 [`f]，令 [`F] 为 [`f] 的衰退类型。
+
+[:en] If [`decltype((sndr))] does not satisfy [`:c sender] or if [`decltype((f))]
+does not satisfy [*:c movable-value], the expression [`[*let-cpo](sndr, f)] is
+ill-formed.
+[:zh_CN] 如果 [`decltype((sndr))] 不满足 [`:c sender] 或者 [`decltype((f))]
+不满足 [*:c movable-value]，那么 [`[*let-cpo](sndr, f)] 非良构。
+
+[:en] If [`F] does not satisfy [`:c invocable], the expression
+[`let_stopped(sndr, f)] is ill-formed.
+[:zh_CN] 如果 [`F] 不满足 [`:c invocable]，那么表达式 [`let_stopped(sndr, f)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`[*let-cpo](sndr, f)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`[*let-cpo](sndr, f)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender([[redoc("*>")]]let-cpo, f, sndr))
+[codeblock:end]
+[:en@~] except that [`sndr] is evaluated only once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [*let-cpo] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*let-cpo]
+进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<class State, class Rcvr, class... Args>
+  void [[redoc("*>")]]let-bind(State& state, Rcvr& rcvr, Args&&... args);      // [=expos]
+
+  template<>
+  struct [[redoc("*>")]]impls-for<[[redoc("*>")]]decayed-typeof<[[redoc("*>")]]let-cpo>> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`receiver2] denote the following exposition-only class template:
+[:zh_CN] 令 [`receiver2] 代表以下仅用于阐释的类模板：
+[codeblock]
+namespace std::execution {
+  template<class Rcvr, class Env>
+  struct [[redoc("*>")]]receiver2 {
+    using receiver_concept = receiver_t;
+
+    template<class... Args>
+    void set_value(Args&&... args) && noexcept {
+      execution::set_value(std::move([[redoc("*>")]]rcvr), std::forward<Args>(args)...);
+    }
+
+    template<class Error>
+    void set_error(Error&& err) && noexcept {
+      execution::set_error(std::move([[redoc("*>")]]rcvr), std::forward<Error>(err));
+    }
+
+    void set_stopped() && noexcept {
+      execution::set_stopped(std::move([[redoc("*>")]]rcvr));
+    }
+
+    decltype(auto) get_env() const noexcept {
+      return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]env, [[redoc("*>")]]FWD-ENV(execution::get_env([[redoc("*>")]]rcvr)));
+    }
+
+    Rcvr& [[redoc("*>")]]rcvr;                 // [=expos]
+    Env [[redoc("*>")]]env;                    // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`[*impls-for]<[*decayed-typeof]<[*let-cpo]>>::[*get-state]]
+is initialized with a callable object equivalent to the following:
+[:zh_CN] [`[*impls-for]<[*decayed-typeof]<[*let-cpo]>>::[*get-state]] 以等价于
+以下 lambda 的可调用对象初始化：
+[codeblock]
+[]<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) requires [[redoc("[=seebelow]"")]] {
+  auto& [_, fn, child] = sndr;
+  using fn_t = decay_t<decltype(fn)>;
+  using env_t = decltype([[redoc("*>")]]let-env(child));
+  using args_variant_t = [[redoc("[=seebelow]")]];
+  using ops2_variant_t = [[redoc("[=seebelow]")]];
+
+  struct [[redoc("*>")]]state-type {
+    fn_t [[redoc("*>")]]fn;                    // [=expos]
+    env_t [[redoc("*>")]]env;                  // [=expos]
+    args_variant_t [[redoc("*>")]]args;        // [=expos]
+    ops2_variant_t [[redoc("*>")]]ops2;        // [=expos]
+  };
+  return [[redoc("*>")]]state-type{std::forward_like<Sndr>(fn), [[redoc("*>")]]let-env(child), {}, {}};
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`Sigs] be a pack of the arguments to the [`completion_signatures]
+specialization named by
+[`completion_signatures_of_t<[*child-type]<Sndr>, env_of_t<Rcvr>>].
+[:zh_CN] 令 [`Sigs] 为由
+[`completion_signatures_of_t<[*child-type]<Sndr>, env_of_t<Rcvr>>] 指名的
+[`completion_signatures] 的特例的实参包组。
+
+[:en] Let [`LetSigs] be a pack of those types in [`Sigs] with a return type of
+[`[*decayed-typeof]<[*set-cpo]>].
+[:zh_CN] 令 [`LetSigs] 为 [`Sigs] 中的类型换以 [`[*decayed-typeof]<[*set-cpo]>]
+为返回类型的包组。
+
+[:en] Let [*as-tuple] be an alias template such that [`[*as-tuple]<Tag(Args...)>]
+denotes the type [`[*decayed-tuple]<Args...>].
+[:zh_CN] 令 [*as-tuple] 为一个别名模板，使得 [`[*as-tuple]<Tag(Args...)>] 代表类型
+[`[*decayed-tuple]<Args...>]。
+
+[:en] Then [`args_variant_t] denotes the type
+[`variant<monostate, [*as-tuple]<LetSigs>...>] except with duplicate types removed.
+[:zh_CN] 然后，令 [`args_variant_t] 代表类型
+[`variant<monostate, [*as-tuple]<LetSigs>...>] 但移除其中的重复类型。
+
+[para]
+[:en] Given a type [`Tag] and a pack [`Args], let [*as-sndr2] be an alias
+template such that [`[*as-sndr2]<Tag(Args...)>] denotes
+the type [`[*call-result-t]<Fn, decay_t<Args>&...>].
+[:zh_CN] 给定类型 [`Tag] 和包组 [`Args]，令 [*as-sndr2] 为一个别名模板，使得
+[`[*as-sndr2]<Tag(Args...)>] 代表类型 [`[*call-result-t]<Fn, decay_t<Args>&...>]。
+
+[:en] Then [`ops2_variant_t] denotes the type
+[:zh_CN] 然后令 [`ops2_variant_t] 代表类型
+[codeblock]
+variant<monostate, connect_result_t<[[redoc("*>")]]as-sndr2<LetSigs>, [[redoc("*>")]]receiver2<Rcvr, Env>>...>
+[codeblock:end]
+[:en@~] except with duplicate types removed.
+[:zh_CN@~] 但移除其中的重复类型。
+
+[para]
+[:en] The [~requires-clause] constraining the above lambda is satisfied
+if and only if the types [`args_variant_t] and [`ops2_variant_t] are well-formed.
+[:zh_CN] 约束以上 lambda 的 [~requires-子句]，当且仅当类型 [`args_variant_t] 和
+[`ops2_variant_t] 良构时得以满足。
+
+[para]
+[:en] The exposition-only function template [*let-bind] has effects equivalent to:
+[:zh_CN] 仅用于阐释的函数模板 [*let-bind] 的效果等价于：
+[codeblock]
+using args_t = [[redoc("*>")]]decayed-tuple<Args...>;
+auto mkop2 = [&] {
+  return connect(
+    apply(std::move(state.fn),
+          state.args.template emplace<args_t>(std::forward<Args>(args)...)),
+    [[redoc("*>")]]receiver2{rcvr, std::move(state.env)});
+};
+start(state.ops2.template emplace<decltype(mkop2())>([[redoc("*>")]]emplace-from{mkop2}));
+[codeblock:end]
+
+[para]
+[:en] [`[*impls-for]<[*decayed-typeof]<let-cpo>>::[*complete]]
+is initialized with a callable object equivalent to the following:
+[:zh_CN] [`[*impls-for]<[*decayed-typeof]<let-cpo>>::[*complete]] 以等价于以下
+lambda 的可调用对象初始化：
+[codeblock]
+[]<class Tag, class... Args>
+  (auto, auto& state, auto& rcvr, Tag, Args&&... args) noexcept -> void {
+    if constexpr ([[redoc("`:c>")]]same_as<Tag, [[redoc("*>")]]decayed-typeof<[[redoc("*>")]]set-cpo>>) {
+      [[redoc("*>")]]TRY-EVAL(rcvr, [[redoc("*>")]]let-bind(state, rcvr, std::forward<Args>(args)...));
+    } else {
+      Tag()(std::move(rcvr), std::forward<Args>(args)...);
+    }
+  }
+[codeblock:end]
+
+[para]
+[:en] Let [`sndr] and [`env] be subexpressions, and let [`Sndr] be
+[`decltype((sndr))].
+[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，并令 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`[*:c sender-for]<Sndr, [*decayed-typeof]<[*let-cpo]>>] is [`false],
+then the expression [`[*let-cpo].transform_env(sndr, env)] is ill-formed.
+[:zh_CN] 如果 [`[*:c sender-for]<Sndr, [*decayed-typeof]<[*let-cpo]>>] 为 [`false]，
+则表达式 [`[*let-cpo].transform_env(sndr, env)] 非良构。
+
+[:en] Otherwise, it is equal to [`[*JOIN-ENV]([*let-env](sndr), [*FWD-ENV](env))].
+[:zh_CN] 否则，它等于 [`[*JOIN-ENV]([*let-env](sndr), [*FWD-ENV](env))]。
+
+[para]
+[:en] Let the subexpression [`out_sndr] denote the result of the invocation
+[`[*let-cpo](sndr, f)] or an object equal to such, and let the subexpression
+[`rcvr] denote a receiver such that the expression [`connect(out_sndr, rcvr)]
+is well-formed.
+[:zh_CN] 令子表达式 [`out_sndr] 代表调用 [`[*let-cpo](sndr, f)] 的结果或等于它的对象，
+并令子表达式 [`rcvr] 代表一个接收器，使得表达式 [`connect(out_sndr, rcvr)] 良构。
+
+[:en] The expression [`connect(out_sndr, rcvr)] has undefined behavior
+unless it creates an asynchronous operation ([#exec.async.ops]) that, when started:
+[:zh_CN] 表达式 [`connect(out_sndr, rcvr)] 若非其创建了异步操作（[#exec.async.ops]），
+当其启动时：
+[list]
+[item]
+[:en@~] invokes [`f] when [*set-cpo] is called with [`sndr][=']s result datums,
+[:zh_CN@~] 当以 [`sndr] 的结果数据调用 [*set-cpo] 时将调用 [`f]，
+[item]
+[:en@~] makes its completion dependent on the completion of a sender returned by
+[`f], and
+[:zh_CN@~] 使其完成依赖于 [`f] 所返回的发送器的完成，并且
+[item]
+[:en@~] propagates the other completion operations sent by [`sndr].
+[:zh_CN@~] 传播 [`sndr] 所发送的其他完成操作，
+[list:end]
+[:zh_CN@~] 否则其行为未定义。

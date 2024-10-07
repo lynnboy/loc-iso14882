@@ -1,0 +1,92 @@
+[section#exec.run.loop.members
+    [:en] Member functions
+    [:zh_CN] 成员函数
+]
+
+[codeblock:declaration]
+[[redoc("*>")]]run-loop-opstate-base* [[redoc("*>")]]pop-front();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Blocks ([#defns.block]) until one of the following conditions is [`true]:
+[:zh_CN] 阻塞（[#defns.block]）直至以下条件之一为 [`true]：
+[list]
+[item]
+[:en] [*count] is [`0] and [*state] is [*finishing], in which case [*pop-front]
+returns [`nullptr]; or
+[:zh_CN] [*count] 为 [`0] 且 [*state] 为 [*finishing]，这种情况下 [*pop-front]
+返回 [`nullptr]；或者
+[item]
+[:en] [*count] is greater than [`0], in which case an item is removed from the
+front of the queue, [*count] is decremented by [`1], and the removed item is returned.
+[:zh_CN] [*count] 大于 [`0]，这种情况下从队列前端移除一项，[*count] 减少 [`1]，并
+返回所移除项。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+void [[redoc("*>")]]push-back([[redoc("*>")]]run-loop-opstate-base* item);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Adds [`item] to the back of the queue and increments [*count] by [`1].
+[:zh_CN] 向队列后端添加 [`item] 并使 [*count] 增加 [`1]。
+
+[para:sync]
+[:en] This operation synchronizes with the [*pop-front] operation that obtains
+[`item].
+[:zh_CN] 此操作同步于获取了 [`item] 的 [*pop-front] 操作。
+[div:end]
+
+[codeblock:declaration]
+[[redoc("*>")]]run-loop-scheduler get_scheduler();
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An instance of [*run-loop-scheduler]
+that can be used to schedule work onto this [`run_loop] instance.
+[:zh_CN] 一个 [*run-loop-scheduler] 实例，可用于向此 [`run_loop] 实例调度工作。
+[div:end]
+
+[codeblock:declaration]
+void run();
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [*state] is [*starting].
+[:zh_CN] [*state] 为 [*starting]。
+
+[para:effects]
+[:en] Sets the [*state] to [*running].
+[:zh_CN] 将 [*state] 设值为 [*running]。
+
+[:en] Then, equivalent to:
+[:zh_CN] 然后，等价于：
+[codeblock]
+while (auto* op = [[redoc("*>")]]pop-front()) {
+  op->[[redoc("*>")]]execute();
+}
+[codeblock:end]
+
+[para:remarks]
+[:en] When [*state] changes, it does so without introducing data races.
+[:zh_CN] 当 [*state] 改变时，此改变不会引入数据竞争。
+[div:end]
+
+[codeblock:declaration]
+void finish();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Changes [*state] to [*finishing].
+[:zh_CN] 将 [*state] 改为 [*finishing]。
+
+[para:sync]
+[:en] [`finish] synchronizes with the [*pop-front] operation that returns [`nullptr].
+[:zh_CN] [`finish] 同步于返回 [`nullptr] 的 [*pop-front] 操作。
+[div:end]

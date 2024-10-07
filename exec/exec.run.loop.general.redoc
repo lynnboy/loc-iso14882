@@ -1,0 +1,75 @@
+[section#exec.run.loop.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] A [`run_loop] is an execution resource on which work can be scheduled.
+[:zh_CN] [`run_loop] 是一种可以在其上调度工作的执行资源。
+
+[:en] It maintains a thread-safe first-in-first-out queue of work.
+[:zh_CN] 它维护一个线程安全的先入先出的工作队列。
+
+[:en] Its [`run] member function removes elements from the queue and
+executes them in a loop on the thread of execution that calls [`run].
+[:zh_CN] 其 [`run] 成员函数在调用 [`run] 的执行线程上的一个循环中，从队列中移除各元素
+并执行它们。
+
+[para]
+[:en] A [`run_loop] instance has an associated [+count] that corresponds to the
+number of work items that are in its queue.
+[:zh_CN] 一个 [`run_loop] 实例具有一个关联的[+计数]，对应于队列中的工作项的数量。
+
+[:en] Additionally, a [`run_loop] instance has an associated state
+that can be one of [+starting], [+running], or [+finishing].
+[:zh_CN] 此外，[`run_loop] 实例也具有一个关联的状态，可为[+启动]，[+运行]或[+结束]之一。
+
+[para]
+[:en] Concurrent invocations of the member functions of [`run_loop]
+other than [`run] and its destructor do not introduce data races.
+[:zh_CN] 并发地调用 [`run_loop] 的除 [`run] 之外的成员函数和其析构函数不会引入数据竞争。
+
+[:en] The member functions [*pop-front], [*push-back], and [`finish]
+execute atomically.
+[:zh_CN] 成员函数 [*pop-front]，[*push-back] 和 [`finish] 原子地执行。
+
+[para:recommended]
+[:en] Implementations should use an intrusive queue of operation states
+to hold the work units to make scheduling allocation-free.
+[:zh_CN] 各实现最好使用操作状态的一个侵入式队列来持有工作项单元，以使调度免于分配内存。
+
+[codeblock:synopsis]
+namespace std::execution {
+  class run_loop {
+    // [:en] [#exec.run.loop.types], associated types \
+    [:zh_CN] [#exec.run.loop.types]，关联类型
+    class [[redoc("*>")]]run-loop-scheduler;                                   // [=expos]
+    class [[redoc("*>")]]run-loop-sender;                                      // [=expos]
+    struct [[redoc("*>")]]run-loop-opstate-base {                              // [=expos]
+      virtual void [[redoc("*>")]]execute() = 0;                               // [=expos]
+      run_loop* [[redoc("*>")]]loop;                                           // [=expos]
+      run-loop-opstate-base* [[redoc("*>")]]next;                              // [=expos]
+    };
+    template<class Rcvr>
+      using [[redoc("*>")]]run-loop-opstate = [[redoc("[=unspec]")]];                     // [=expos]
+
+    // [:en] [#exec.run.loop.members], member functions \
+    [:zh_CN] [#exec.run.loop.members]，成员函数
+    [[redoc("*>")]]run-loop-opstate-base* [[redoc("*>")]]pop-front();                         // [=expos]
+    void [[redoc("*>")]]push-back([[redoc("*>")]]run-loop-opstate-base*);                     // [=expos]
+
+  public:
+    // [:en] [#exec.run.loop.ctor], constructor and destructor \
+    [:zh_CN] [#exec.run.loop.ctor]，构造函数与析构函数
+    run_loop() noexcept;
+    run_loop(run_loop&&) = delete;
+    ~run_loop();
+
+    // [:en] [#exec.run.loop.members], member functions \
+    [:zh_CN] [#exec.run.loop.members]，成员函数
+    [[redoc("*>")]]run-loop-scheduler get_scheduler();
+    void run();
+    void finish();
+  };
+}
+[codeblock:end]

@@ -1,0 +1,84 @@
+[section#exec.recv.concepts
+    [:en] Receiver concepts
+    [:zh_CN] 接收器概念
+]
+
+[para]
+[:en] A receiver represents the continuation of an asynchronous operation.
+[:zh_CN] 接收器表示异步操作的继续。
+
+[:en] The [`:c receiver] concept defines the requirements for a receiver type
+([#exec.async.ops]).
+[:zh_CN] [`:c receiver] 概念定义针对接收器类型的要求（[#exec.async.ops]）。
+
+[:en] The [`:c receiver_of] concept defines the requirements for a receiver type
+that is usable as the first argument of a set of completion operations
+corresponding to a set of completion signatures.
+[:zh_CN] [`:c receiver_of] 概念定义对可用作对应于某完成签名集合的完成操作集合的
+第一个实参的接收器类型的要求。
+
+[:en] The [`get_env] customization point object is used to access
+a receiver[=']s associated environment.
+[:zh_CN] [`get_env] 定制化点对象用于访问接收器的关联环境。
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Rcvr>
+    concept [[redoc("`:c@def>")]]receiver =
+      [[redoc("`:c>")]]derived_from<typename remove_cvref_t<Rcvr>::receiver_concept, receiver_t> &&
+      requires(const remove_cvref_t<Rcvr>& rcvr) {
+        { get_env(rcvr) } -> [[redoc("*:c>")]]queryable;
+      } &&
+      [[redoc("`:c>")]]move_constructible<remove_cvref_t<Rcvr>> &&       // [:en] rvalues are movable, and [:zh_CN] 右值是可移动的
+      [[redoc("`:c>")]]constructible_from<remove_cvref_t<Rcvr>, Rcvr>;   // [:en@~] lvalues are copyable [:zh_CN@~] 左值是可复制的
+
+  template<class Signature, class Rcvr>
+    concept [[redoc("*:c@def>")]]valid-completion-for =
+      requires (Signature* sig) {
+        []<class Tag, class... Args>(Tag(*)(Args...))
+            requires [[redoc("*:c>"")]]callable<Tag, remove_cvref_t<Rcvr>, Args...>
+        {}(sig);
+      };
+
+  template<class Rcvr, class Completions>
+    concept [[redoc("*:c@def>")]]has-completions =
+      requires (Completions* completions) {
+        []<[[redoc("*:c>"")]]valid-completion-for<Rcvr>...Sigs>(completion_signatures<Sigs...>*)
+        {}(completions);
+      };
+
+  template<class Rcvr, class Completions>
+    concept [[redoc("`:c@def>")]]receiver_of =
+      [[redoc("`:c>")]]receiver<Rcvr> && [[redoc("*:c>")]]has-completions<Rcvr, Completions>;
+}
+[codeblock:end]
+
+[para]
+[:en] Class types that are marked [`final] do not model the receiver concept.
+[:zh_CN] 标有 [`final] 的类类型不构成接收器概念。
+
+[para]
+[:en] Let [`rcvr] be a receiver and let [`op_state] be an
+operation state associated with an asynchronous operation created by
+connecting [`rcvr] with a sender.
+[:zh_CN] 令 [`rcvr] 为接收器，并令 [`op_state] 为与 [`rcvr] 连接到某个发送器所
+创建的异步操作相关联的操作状态。
+
+[:en] Let [`token] be a stop token equal to [`get_stop_token(get_env(rcvr))].
+[:zh_CN] 令 [`token] 为等于 [`get_stop_token(get_env(rcvr))] 的停止令牌。
+
+[:en] [`token] shall remain valid for the duration of the
+asynchronous operation[=']s lifetime ([#exec.async.ops]).
+[:zh_CN] [`token] 在该异步操作的生存期（[#exec.async.ops]）持续期间应当一直有效。
+
+[begin:note]
+[:en] This means that, unless it knows about further guarantees
+provided by the type of [`rcvr], the implementation of [`op_state] cannot use
+[`token] after it executes a completion operation.
+[:zh_CN] 这意味着，除非 [`op_state] 的实现已知 [`rcvr] 的类型提供的进一步保证，否则
+它不能在执行完成操作之后使用 [`token]。
+
+[:en] This also implies that any stop callbacks registered on [`token]
+must be destroyed before the invocation of the completion operation.
+[:zh_CN] 这也意味着，[`token] 上注册的任何停止回调，都必须在完成操作的调用之前销毁。
+[end:note]

@@ -1,0 +1,63 @@
+[section#exec.just
+    [`execution::just], [`execution::just_error], [`execution::just_stopped]
+]
+
+[para]
+[:en] [`just], [`just_error], and [`just_stopped] are sender factories
+whose asynchronous operations complete synchronously in their start operation
+with a value completion operation, an error completion operation, or
+a stopped completion operation, respectively.
+[:zh_CN] [`just]，[`just_error] 和 [`just_stopped] 都是发送器工厂，它们的异步操作
+在启动操作中分别以一个值完成操作，错误完成操作或停止完成操作同步地完成。
+
+[para]
+[:en] The names [`just], [`just_error], and [`just_stopped] denote
+customization point objects.
+[:zh_CN] 名字 [`just]，[`just_error] 和 [`just_stopped] 都代表定制化点对象。
+
+[:en] Let [*just-cpo] be one of [`just], [`just_error], or [`just_stopped].
+[:zh_CN] 令 [*just-cpo] 为 [`just]，[`just_error] 或 [`just_stopped] 之一。
+
+[:en] For a pack of subexpressions [`ts], let [`Ts] be the pack of types
+[`decltype((ts))].
+[:zh_CN] 对于子表达式包组 [`ts]，令 [`Ts] 为类型的包组 [`decltype((ts))]。
+
+[:en] The expression [`[*just-cpo](ts...)] is ill-formed if
+[:zh_CN] 以下情况下，表达式 [`[*just-cpo](ts...)] 非良构：
+[list]
+[item]
+[:en@~] [`([*:c movable-value]<Ts> &&...)] is [`false], or
+[:zh_CN@~] [`([*:c movable-value]<Ts> &&...)] 为 [`false]，或者
+[item]
+[:en@~] [*just-cpo] is [`just_error] and [`sizeof...(ts) == 1] is [`false], or
+[:zh_CN@~] [*just-cpo] 为 [`just_error] 且 [`sizeof...(ts) == 1] 为 [`false]，或者
+[item]
+[:en@~] [*just-cpo] is [`just_stopped] and [`sizeof...(ts) == 0] is [`false].
+[:zh_CN@~] [*just-cpo] 为 [`just_stopped] 且 [`sizeof...(ts) == 0] 为 [`false]。
+[list:end]
+
+[:en] Otherwise, it is expression-equivalent to
+[`[*make-sender]([*just-cpo], [*product-type]{ts...})].
+[:zh_CN] 否则，它按表达式等价于 [`[*make-sender]([*just-cpo], [*product-type]{ts...})]。
+
+[:en] For [`just], [`just_error], and [`just_stopped], let [*set-cpo] be
+[`set_value], [`set_error], and [`set_stopped], respectively.
+[:zh_CN] 对于 [`just]，[`just_error] 和 [`just_stopped]，令 [*set-cpo] 分别为
+[`set_value]，[`set_error] 和 [`set_stopped]。
+
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+is specialized for [*just-cpo] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*just-cpo]
+进行如下特化：
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<[[redoc("*>")]]decayed-typeof<[[redoc("*>")]]just-cpo>> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]start =
+      [](auto& state, auto& rcvr) noexcept -> void {
+        auto& [...ts] = state;
+        [[redoc("*>")]]set-cpo(std::move(rcvr), std::move(ts)...);
+      };
+  };
+}
+[codeblock:end]

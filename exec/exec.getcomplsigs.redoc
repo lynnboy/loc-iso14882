@@ -1,0 +1,75 @@
+[section#exec.getcomplsigs
+    [`execution::get_completion_signatures]
+]
+
+[para]
+[:en] [`get_completion_signatures] is a customization point object.
+[:zh_CN] [`get_completion_signatures] 是一个定制化点对象。
+
+[:en] Let [`sndr] be an expression such that [`decltype((sndr))] is [`Sndr], and
+let [`env] be an expression such that [`decltype((env))] is [`Env].
+[:zh_CN] 令 [`sndr] 为表达式并使得 [`decltype((sndr))] 为 [`Sndr]，并令 [`env]
+为表达式并使得 [`decltype((env))] 为 [`Env]。
+
+[:en] Let [`new_sndr] be the expression
+[`transform_sender(decltype([*get-domain-late](sndr, env)){}, sndr, env)], and
+let [`NewSndr] be [`decltype((new_sndr))].
+[:zh_CN] 令 [`new_sndr] 为表达式
+[`transform_sender(decltype([*get-domain-late](sndr, env)){}, sndr, env)]，
+并令 [`NewSndr] 为 [`decltype((new_sndr))]。
+
+[:en] Then [`get_completion_signatures(sndr, env)] is expression-equivalent to
+[`(void(sndr), void(env), CS())] except that [`void(sndr)] and [`void(env)] are
+indeterminately sequenced, where [`CS] is:
+[:zh_CN] 由此，[`get_completion_signatures(sndr, env)] 按表达式等价于
+[`(void(sndr), void(env), CS())]，但 [`void(sndr)] 和 [`void(env)] 是顺序不确定的，
+其中 [`CS] 为：
+[list]
+[item]
+[:en] [`decltype(new_sndr.get_completion_signatures(env))]
+if that type is well-formed,
+[:zh_CN] [`decltype(new_sndr.get_completion_signatures(env))] 若该类型良构，
+[item]
+[:en] Otherwise, [`remove_cvref_t<NewSndr>::completion_signatures]
+if that type is well-formed,
+[:zh_CN] 否则，为 [`remove_cvref_t<NewSndr>::completion_signatures] 若该类型良构，
+[item]
+[:en] Otherwise, if [`[*is-awaitable]<NewSndr, [*env-promise]<Env>>] is [`true],
+then:
+[:zh_CN] 否则，若 [`[*is-awaitable]<NewSndr, [*env-promise]<Env>>] 为 [`true]，则为
+[codeblock]
+completion_signatures<
+  [[redoc("*>")]]SET-VALUE-SIG([[redoc("*>")]]await-result-type<NewSndr, [[redoc("*>")]]env-promise<Env>>),        // ([#exec.snd.concepts])
+  set_error_t(exception_ptr),
+  set_stopped_t()>
+[codeblock:end]
+[item]
+[:en] Otherwise, [`CS] is ill-formed.
+[:zh_CN] 否则，[`CS] 非良构。
+[list:end]
+
+[para]
+[:en] Let [`rcvr] be an rvalue whose type [`Rcvr] models [`:c receiver], and
+let [`Sndr] be the type of a sender such that
+[`[`:c sender_in]<Sndr, env_of_t<Rcvr>>] is [`true].
+[:zh_CN] 令 [`rcvr] 为右值且其类型 [`Rcvr] 构成 [`:c receiver]，并令 [`Sndr] 为
+某种发送器的类型，使得 [`[`:c sender_in]<Sndr, env_of_t<Rcvr>>] 为 [`true]。
+
+[:en] Let [`Sigs...] be the template arguments of the [`completion_signatures]
+specialization named by [`completion_signatures_of_t<Sndr, env_of_t<Rcvr>>].
+[:zh_CN] 令 [`Sigs...] 为 [`completion_signatures_of_t<Sndr, env_of_t<Rcvr>>]
+所指名的 [`completion_signatures] 特例的各模板实参。
+
+[:en] Let [`CSO] be a completion function.
+[:zh_CN] 令 [`CSO] 为完成函数。
+
+[:en] If sender [`Sndr] or its operation state cause the expression
+[`CSO(rcvr, args...)] to be potentially evaluated ([#basic.def.odr])
+then there shall be a signature [`Sig] in [`Sigs...] such that
+[:zh_CN] 如果发送器 [`Sndr] 或者其操作状态会导致表达式 [`CSO(rcvr, args...)]
+被潜在求值（[#basic.def.odr]），那么 [`Sigs...] 中应当有一个签名 [`Sig] 使得
+[codeblock]
+[[redoc("*>")]]MATCHING-SIG([[redoc("*>")]]decayed-typeof<CSO>(decltype(args)...), Sig)
+[codeblock:end]
+[:en@~] is [`true] ([#exec.general]).
+[:zh_CN@~] 为 [`true]（[#exec.general]）。

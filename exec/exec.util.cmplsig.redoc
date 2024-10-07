@@ -1,0 +1,144 @@
+[section#exec.util.cmplsig
+    [`execution::completion_signatures]
+]
+
+[para]
+[:en] [`completion_signatures] is a type that encodes a set of
+completion signatures ([#exec.async.ops]).
+[:zh_CN] [`completion_signatures] 是一个用于解码一组完成签名（[#exec.async.ops]）的类型。
+
+[para]
+[begin:example]
+[codeblock]
+struct my_sender {
+  using sender_concept = sender_t;
+  using completion_signatures =
+    execution::completion_signatures<
+      set_value_t(),
+      set_value_t(int, float),
+      set_error_t(exception_ptr),
+      set_error_t(error_code),
+      set_stopped_t()>;
+};
+[codeblock:end]
+
+[:en] Declares [`my_sender] to be a sender that can complete by calling one of
+the following for a receiver expression [`rcvr]:
+[:zh_CN] 将 [`my_sender] 声明为一个发送器，它可以通过对接收器表达式 [`rcvr] 调用
+以下各项之一而完成：
+[list]
+[item] [`set_value(rcvr)]
+[item] [`set_value(rcvr, int{...}, float{...})]
+[item] [`set_error(rcvr, exception_ptr{...})]
+[item] [`set_error(rcvr, error_code{...})]
+[item] [`set_stopped(rcvr)]
+[list:end]
+[end:example]
+
+[para]
+[:en] This subclause makes use of the following exposition-only entities:
+[:zh_CN] 本子条款利用了下列仅用于阐释的实体：
+
+[codeblock]
+template<class Fn>
+  concept [[redoc("*:c@def>")]]completion-signature = [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[para]
+[:en] A type [`Fn] satisfies [*:c completion-signature]
+if and only if it is a function type with one of the following forms:
+[:zh_CN] 当且仅当类型 [`Fn] 时具有下列形式之一的函数类型时，它满足
+[*:c completion-signature]：
+[list]
+[item]
+[:en] [`set_value_t(Vs...)], where [`Vs] is a pack of object or reference types.
+[:zh_CN] [`set_value_t(Vs...)]，其中 [`Vs] 为对象或引用类型的包组。
+[item]
+[:en] [`set_error_t(Err)], where [`Err] is an object or reference type.
+[:zh_CN] [`set_error_t(Err)]，其中 [`Err] 为一个对象或引用类型。
+[item]
+[:] [`set_stopped_t()]
+[list:end]
+
+[para]
+[codeblock]
+template<bool>
+  struct [[redoc("*>")]]indirect-meta-apply {
+    template<template<class...> class T, class... As>
+      using [[redoc("*>")]]meta-apply = T<As...>;                              // [=expos]
+  };
+
+template<class...>
+  concept [[redoc("*:c@def>")]]always-true = true;                                   // [=expos]
+
+template<class Tag,
+         [[redoc("*:c>")]]valid-completion-signatures Completions,
+         template<class...> class Tuple,
+         template<class...> class Variant>
+  using [[redoc("*>")]]gather-signatures = [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[para]
+[:en] Let [`Fns] be a pack of the arguments of the [`completion_signatures]
+specialization named by [`Completions], let [`TagFns] be a pack of the function
+types in [`Fns] whose return types are [`Tag], and let [$[`Ts]_n] be a pack of
+the function argument types in the [$n]-th type in [`TagFns].
+[:zh_CN] 令 [`Fns] 为 [`Completions] 所指名的 [`completion_signatures] 特例的
+实参包组，令 [`TagFns] 为 [`Fns] 中返回类型为 [`Tag] 的函数类型的包组，并令 [$[`Ts]_n]
+为 [`TagFns] 中第 [$n] 个类型的函数实参类型的包组。
+
+[:en] Then, given two variadic templates [`Tuple] and [`Variant], the type
+[`[*gather-signatures]<Tag, Completions, Tuple, Variant>] names the type
+[:zh_CN] 然后，给定两个变参模板 [`Tuple] 和 [`Variant]，类型
+[`[*gather-signatures]<Tag, Completions, Tuple, Variant>] 指名类型
+[codeblock]
+[[redoc("*>")]]META-APPLY(Variant, [[redoc("*>")]]META-APPLY(Tuple, Ts[[redoc("$>")]]_0...),
+                    [[redoc("*>")]]META-APPLY(Tuple, Ts[[redoc("$>")]]_1...),
+                    ...,
+                    [[redoc("*>")]]META-APPLY(Tuple, Ts[[redoc("[$m-1]")]]...))
+[codeblock:end]
+[:en@~] where [$m] is the size of the pack [`TagFns] and [`META-APPLY(T, As...)]
+is equivalent to:
+[:zh_CN@~] 其中 [$m] 为包组 [`TagFns] 的大小，而 [`META-APPLY(T, As...)] 等价于：
+[codeblock]
+typename [[redoc("*>")]]indirect-meta-apply<[[redoc("*>")]]always-true<As...>>::template [[redoc("*>")]]meta-apply<T, As...>
+[codeblock:end]
+
+[para]
+[begin:note]
+[:en] The purpose of [*META-APPLY] is to make it valid to use non-variadic
+templates as [`Variant] and [`Tuple] arguments to [*gather-signatures].
+[:zh_CN] [*META-APPLY] 的目的是使以非变参模板用作 [*gather-signatures] 的
+[`Variant] 和 [`Tuple] 实参成为有效做法。
+[end:note]
+
+[para]
+[codeblock:synopsis]
+namespace std::execution {
+  template<[[redoc("*:c>")]]completion-signature... Fns>
+    struct completion_signatures {};
+
+  template<class Sndr,
+           class Env = empty_env,
+           template<class...> class Tuple = [[redoc("*>")]]decayed-tuple,
+           template<class...> class Variant = [[redoc("*>")]]variant-or-empty>
+      requires [[redoc("`:c>")]]sender_in<Sndr, Env>
+    using value_types_of_t =
+      [[redoc("*>")]]gather-signatures<set_value_t, completion_signatures_of_t<Sndr, Env>, Tuple, Variant>;
+
+  template<class Sndr,
+           class Env = empty_env,
+           template<class...> class Variant = [[redoc("*>")]]variant-or-empty>
+      requires [[redoc("`:c>")]]sender_in<Sndr, Env>
+    using error_types_of_t =
+      [[redoc("*>")]]gather-signatures<set_error_t, completion_signatures_of_t<Sndr, Env>,
+                        type_identity_t, Variant>;
+
+  template<class Sndr, class Env = empty_env>
+      requires [[redoc("`:c>")]]sender_in<Sndr, Env>
+    inline constexpr bool sends_stopped =
+      ![[redoc("`:c>")]]same_as<[[redoc("*>")]]type-list<>,
+               [[redoc("*>")]]gather-signatures<set_stopped_t, completion_signatures_of_t<Sndr, Env>,
+                                 [[redoc("*>")]]type-list, [[redoc("*>")]]type-list>>;
+}
+[codeblock:end]

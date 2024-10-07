@@ -1,0 +1,371 @@
+[section#exec.async.ops
+    [:en] Asynchronous operations
+    [:zh_CN] 异步操作
+]
+
+[para]
+[:en] An [+:adj execution[!resource]] is a program entity that manages
+a (possibly dynamic) set of execution agents ([#thread.req.lockable.general]),
+which it uses to execute parallel work on behalf of callers.
+[:zh_CN] [+:adj 执行[!资源]]是一种程序实体，它管理（可能动态的）一组执行代理
+（[#thread.req.lockable.general]），并使用它们代表调用方执行并行工作。
+
+[begin:example]
+[:en] The currently active thread, a system-provided thread pool, and
+uses of an API associated with an external hardware accelerator
+are all examples of execution resources.
+[:zh_CN] 当前活跃线程，系统提供的线程池，以及使用与某种外部硬件加速器关联的 API，
+都是执行资源的例子。
+[end:example]
+
+[:en] Execution resources execute asynchronous operations.
+[:zh_CN] 执行资源可执行异步操作。
+
+[:en] An execution resource is either valid or invalid.
+[:zh_CN] 执行资源或为有效或为无效。
+
+[para]
+[:en] An [+:adj asynchronous[!operation]] is
+a distinct unit of program execution that
+[:zh_CN] [+:adj 异步[!操作]]是程序执行的独立单位，
+
+[list]
+[item]
+[:en@~] is explicitly created;
+[:zh_CN@~] 显式创建；
+
+[item]
+[:en@~] can be explicitly started once at most;
+[:zh_CN@~] 最多可显式启动一次；
+
+[item]
+[:en@~] once started, eventually completes exactly once with a (possibly empty)
+set of result datums and in exactly one of three [+dispositions[%disposition]]:
+success, failure, or cancellation;
+[:zh_CN@~] 一旦启动，就最终完成恰好一次，具有（可能为空的）结果数据集合，并恰好处于
+三种[+安置态]之一：成功、失败或取消；
+
+[list]
+[item]
+[:en] A successful completion, also known as a [+:adj value[!completion]],
+can have an arbitrary number of result datums.
+[:zh_CN] 成功完成，也称为[+:adj 值[!完成]]，可以带有任意数量的结果数据。
+[item]
+[:en] A failure completion, also known as an [+:adj error[!completion]],
+has a single result datum.
+[:zh_CN] 失败完成，也称为[+:adj 错误[!完成]]，带有单个结果数据。
+[item]
+[:en] A cancellation completion, also known as a [+:adj stopped[!completion]],
+has no result datum.
+[:zh_CN] 取消完成，也称为[+:adj 停止[!完成]]，没有结果数据。
+[list:end]
+
+[:en] An asynchronous operation[=']s [+:adj async[!result]]
+is its disposition and its (possibly empty) set of result datums.
+[:zh_CN] 异步操作的[+:adj 异步[!结果]]是其安置态和其（可能为空）的结果数据集合。
+
+[item]
+[:en] can complete on a different execution resource
+than the execution resource on which it started; and
+[:zh_CN] 可以在与它启动所在执行资源不同的执行资源上完成；并且
+
+[item]
+[:en] can create and start other asynchronous operations
+called [+:adj child[!operations]].
+[:zh_CN] 可以创建并启动其他异步操作，称为其[+:adj 子[!操作]]。
+
+[:en] A child operation is an asynchronous operation
+that is created by the parent operation and,
+if started, completes before the parent operation completes.
+[:zh_CN] 子操作是由副操作创建的异步操作，且若启动，则完成于父操作完成之前。
+
+[:en] A [+:adj parent[!operation]] is the asynchronous operation
+that created a particular child operation.
+[:zh_CN] [+:adj 父[!操作]]是创建了特定子操作的异步操作。
+[list:end]
+
+[begin:note]
+[:en] An asynchronous operation can execute synchronously;
+that is, it can complete during the execution of its start operation
+on the thread of execution that started it.
+[:zh_CN] 异步操作可以同步执行；就是说，它可以在它的启动操作在启动它的执行线程上
+执行过程中完成。
+[end:note]
+
+[para]
+[:en] An asynchronous operation has associated state known as its
+[+:adj operation[!state]].
+[:zh_CN] 异步操作具有一个被称为其[+:adj 操作[!状态]]的关联状态。
+
+[para]
+[:en] An asynchronous operation has an associated environment.
+[:zh_CN] 异步操作具有一个关联环境。
+
+[:en] An [+environment] is a queryable object ([#exec.queryable])
+representing the execution-time properties of the operation[=']s caller.
+[:zh_CN] [+环境]是用于表示操作调用方的执行时属性的可查询对象（[#exec.queryable]）。
+
+[:en] The caller of an asynchronous operation is
+its parent operation or the function that created it.
+[:zh_CN] 异步操作的调用方是其父操作或者创建它的函数。
+
+[:en] An asynchronous operation[=']s operation state owns the operation[=']s
+environment.
+[:zh_CN] 异步操作的操作状态拥有该操作的环境。
+
+[para]
+[:en] An asynchronous operation has an associated receiver.
+[:zh_CN] 异步操作具有一个关联接收器。
+
+[:en] A [+receiver] is an aggregation of three handlers
+for the three asynchronous completion dispositions:
+[:zh_CN] [+接收器]是用于处理三种异步完成安置态的三个处理器的聚合体：
+[list]
+[item]
+[:en@~] a value completion handler for a value completion,
+[:zh_CN@~] 一个用于值完成的值完成处理器，
+[item]
+[:en@~] an error completion handler for an error completion, and
+[:zh_CN@~] 一个用于错误完成的错误完成处理器，和
+[item]
+[:en@~] a stopped completion handler for a stopped completion.
+[:zh_CN@~] 一个用于停止完成的停止完成处理器。
+[list:end]
+
+[:en] A receiver has an associated environment.
+[:zh_CN] 接收器具有一个关联环境。
+
+[:en] An asynchronous operation[=']s operation state owns the operation[=']s
+receiver.
+[:zh_CN] 异步操作的操作状态拥有该操作的接收器。
+
+[:en] The environment of an asynchronous operation is equal to its receiver[=']s
+environment.
+[:zh_CN] 异步操作的环境等于其接收器的环境。
+
+[para]
+[:en] For each completion disposition, there is a [+:adj completion[!function]].
+[:zh_CN] 对于每个完成安置态，都有一个[+:adj 完成[!函数]]。
+
+[:en] A completion function is a customization point object ([#customization.point.object])
+that accepts an asynchronous operation[=']s receiver as the first argument and
+the result datums of the asynchronous operation as additional arguments.
+[:zh_CN] 完成函数是一种定制化点对象（[#customization.point.object]），它接收
+异步操作的接收器为第一个实参，异步操作的结果数据为各额外实参。
+
+[:en] The value completion function invokes the receiver[=']s value completion
+handler with the value result datums;
+likewise for the error completion function and the stopped completion function.
+[:zh_CN] 值完成函数以值完成数据调用接收器的值完成处理器；错误完成函数和停止完成函数
+与此类似。
+
+[:en] A completion function has an associated type known as its
+[+:adj completion[!tag]] that is the unqualified type of the completion function.
+[:zh_CN] 完成函数具有一个称为其[+:adj 完成[!标签]]的关联类型，它是完成函数的无限定类型。
+
+[:en] A valid invocation of a completion function is called
+a [+:adj completion[!operation]].
+[:zh_CN] 完成函数的有效调用称为[+:adj 完成[!操作]]。
+
+[para]
+[:en] The [+lifetime of an asynchronous operation], also known as the operation[=']s
+[+async lifetime], begins when its start operation begins executing and
+ends when its completion operation begins executing.
+[:zh_CN] [+异步操作的生存期]，亦称为操作的[+异步生存期]，开始于其启动操作开始执行，
+结束于其完成操作开始执行。
+
+[:en] If the lifetime of an asynchronous operation[=']s associated operation
+state ends before the lifetime of the asynchronous operation,
+the behavior is undefined.
+[:zh_CN] 如果异步操作的关联操作状态的生存期在异步操作的生存期之前结束，则行为未定义。
+
+[:en] After an asynchronous operation executes a completion operation,
+its associated operation state is invalid.
+[:zh_CN] 异步操作执行完成操作之后，其关联操作状态无效。
+
+[:en] Accessing any part of an invalid operation state is undefined behavior.
+[:zh_CN] 访问无效操作状态的任何部分都是未定义行为。
+
+[para]
+[:en] An asynchronous operation shall not execute a completion operation
+before its start operation has begun executing.
+[:zh_CN] 异步操作不应在其启动操作开始执行之前执行完成操作。
+
+[:en] After its start operation has begun executing,
+exactly one completion operation shall execute.
+[:zh_CN] 在已开始执行启动操作之后，应当恰好执行一次完成操作。
+
+[:en] The lifetime of an asynchronous operation[=']s operation state can end
+during the execution of the completion operation.
+[:zh_CN] 异步操作的异步状态的生存期可以在完成操作的执行期间结束。
+
+[para]
+[:en] A [+sender] is a factory for one or more asynchronous operations.
+[:zh_CN] [+发送器]是一个或多个异步操作的工厂。
+
+[+Connecting[%connect]] a sender and a receiver creates an asynchronous operation.
+[:zh_CN] [+连接]一个发送器和一个接收器就创建一个异步操作。
+
+[:en] The asynchronous operation[=']s associated receiver is equal to
+the receiver used to create it, and its associated environment is equal to
+the environment associated with the receiver used to create it.
+[:zh_CN] 异步操作的关联接收器等于用于创建它的接收器，且其关联环境等于与用于创建它的
+接收器关联的环境。
+
+[:en] The lifetime of an asynchronous operation[=']s associated operation state
+does not depend on the lifetimes of either the sender or the receiver
+from which it was created.
+[:zh_CN] 异步操作的关联操作状态的生存期不依赖于创建它的发送器或接收器的生存期。
+
+[:en] A sender is started when it is connected to a receiver and
+the resulting asynchronous operation is started.
+[:zh_CN] 当发送器连接到接收器，且产生的异步操作启动时，它被启动。
+
+[:en] A sender[=']s async result is the async result of the asynchronous
+operation created by connecting it to a receiver.
+[:zh_CN] 发送器的异步结果是将它连接到接收器时创建的异步操作的异步结果。
+
+[:en] A sender sends its results by way of the asynchronous operation(s) it
+produces, and a receiver receives those results.
+[:zh_CN] 发送器经由它所生成的异步操作来发送其结果，而接收器接收这些结果。
+
+[:en] A sender is either valid or invalid;
+it becomes invalid when its parent sender (see below) becomes invalid.
+[:zh_CN] 发送器或为有效或为无效；当其父发送器（见下文）变为无效时，它变为无效。
+
+[para]
+[:en] A [+scheduler] is an abstraction of an execution resource
+with a uniform, generic interface for scheduling work onto that resource.
+[:zh_CN] [+调度器]是对执行资源的一种抽象，具有统一的，用于在这种资源上调度工作的通用接口。
+
+[:en] It is a factory for senders whose asynchronous operations execute value
+completion operations on an execution agent belonging to
+the scheduler[=']s associated execution resource.
+[:zh_CN] 它是发送器的工厂，其异步操作的值完成操作在属于该调度器的关联执行资源的
+执行代理中执行。
+
+[:en] A [+schedule-expression] obtains such a sender from a scheduler.
+[:zh_CN] [+调度表达式]从调度器获取这种发送器。
+
+[:en] A [+schedule sender] is the result of a schedule expression.
+[:zh_CN] [+调度发送器]是调度表达式的结果。
+
+[:en] On success, an asynchronous operation produced by a schedule sender
+executes a value completion operation with an empty set of result datums.
+[:zh_CN] 成功时，由调度发送器产生的异步操作将以一个结果数据的空集执行一次值完成操作。
+
+[:en] Multiple schedulers can refer to the same execution resource.
+[:zh_CN] 多个调度器可以涉指相同的执行资源。
+
+[:en] A scheduler can be valid or invalid.
+[:zh_CN] 调度器或为有效或为无效。
+
+[:en] A scheduler becomes invalid when the execution resource to which it refers
+becomes invalid, as do any schedule senders obtained from the scheduler, and
+any operation states obtained from those senders.
+[:zh_CN] 当调度器所涉指的执行资源变为无效时，调度器变为无效，从该调度器获得的任何
+调度发送器，以及从这些发送器获得的任何操作状态也都如此。
+
+[para]
+[:en] An asynchronous operation has one or more associated completion schedulers
+for each of its possible dispositions.
+[:zh_CN] 异步操作对其每个可能的安置态都具有一个或多个关联完成调度器。
+
+[:en] A [+completion scheduler] is a scheduler whose associated execution
+resource is used to execute a completion operation for an asynchronous operation.
+[:zh_CN] [+完成调度器]是其关联执行资源被用于执行异步操作的完成操作的调度器。
+
+[:en] A value completion scheduler is a scheduler
+on which an asynchronous operation[=']s value completion operation can execute.
+[:zh_CN] 值完成调度器是可在其上执行异步操作的值完成操作的调度器。
+
+[:en] Likewise for error completion schedulers and stopped completion schedulers.
+[:zh_CN] 错误完成调度器和停止完成调度器于此类似。
+
+[para]
+[:en] A sender has an associated queryable object ([#exec.queryable])
+known as its [+attributes[%attribute]] that describes various characteristics of
+the sender and of the asynchronous operation(s) it produces.
+[:zh_CN] 发送器具有一个称之为其[+属性]的关联可查询对象（[#exec.queryable]），它描述
+该发送器和其所产生的异步操作的各种特征。
+
+[:en] For each disposition, there is a query object for reading the associated
+completion scheduler from a sender's attributes; i.e., a value completion
+scheduler query object for reading a sender[=']s value completion scheduler, etc.
+[:zh_CN] 对于每种安置态，都有一个用于从发送器属性中读取其关联完成调度器的查询对象；
+即，有一个用于读取发送器的值完成调度器的值完成调度器查询对象，等等。
+
+[:en] If a completion scheduler query is well-formed,
+the returned completion scheduler is unique
+for that disposition for any asynchronous operation the sender creates.
+[:zh_CN] 如果完成调度器查询良构，那么所返回的完成调度器，对该安置态，对于该发送器
+创建的任何异步操作都是唯一的。
+
+[:en] A schedule sender is required to have a value completion scheduler
+attribute whose value is equal to the scheduler that produced the schedule sender.
+[:zh_CN] 要求调度发送器具有值完成调度器属性，其值等于产生该调度发送器的调度器。
+
+[para]
+[:en] A [+completion signature] is a function type that describes a completion
+operation.
+[:zh_CN] [+完成签名]是描述完成操作的函数类型。
+
+[:en] An asynchronous operation has a finite set of possible completion
+signatures corresponding to the completion operations
+that the asynchronous operation potentially evaluates ([#basic.def.odr]).
+[:zh_CN] 异步操作具有一个可能的完成签名的有限集合，对应于该异步操作可潜在求值
+（[#basic.def.odr]）的完成操作。
+
+[:en] For a completion function [`set], receiver [`rcvr], and pack of arguments
+[`args], let [`c] be the completion operation [`set(rcvr, args...)], and
+let [`F] be the function type [`decltype(auto(set))(decltype((args))...)].
+[:zh_CN] 对于完成函数 [`set]，接收器 [`rcvr]，和实参包组 [`args]，令 [`c] 为
+完成操作 [`set(rcvr, args...)]，并令 [`F] 为函数类型
+[`decltype(auto(set))(decltype((args))...)]。
+
+[:en] A completion signature [`Sig] is associated with [`c] if and only if
+[`[*MATCHING-SIG](Sig, F)] is true ([#exec.general]).
+[:zh_CN] 当且仅当 [`[*MATCHING-SIG](Sig, F)] 为 [`true]（[#exec.general]）时，
+完成签名 [`Sig] 与 [`c] 关联。
+
+[:en] Together, a sender type and an environment type [`Env] determine the set
+of completion signatures of an asynchronous operation that results from
+connecting the sender with a receiver that has an environment of type [`Env].
+[:zh_CN] 发送器类型和环境类型 [`Env] 一同确定了将发送器和带有 [`Env] 类型环境
+的接收器连接起来所得的异步操作的完成签名的集合。
+
+[:en] The type of the receiver does not affect an asynchronous operation[=']s
+completion signatures, only the type of the receiver[=']s environment.
+[:zh_CN] 接收器的类型不会影响异步操作的完成签名，只有接收器的环境类型会。
+
+[para]
+[:en] A sender algorithm is a function that takes and/or returns a sender.
+[:zh_CN] 发送器算法是接受和/或返回发送器的函数。
+
+[:en] There are three categories of sender algorithms:
+[:zh_CN] 有三类发送器算法：
+
+[list]
+[item]
+[:en] A [+sender factory] is a function
+that takes non-senders as arguments and that returns a sender.
+[:zh_CN] [+发送器工厂]是接受非发送器的实参并返回一个发送器的函数。
+
+[item]
+[:en] A [+sender adaptor] is a function that constructs and returns
+a parent sender from a set of one or more child senders and
+a (possibly empty) set of additional arguments.
+[:zh_CN] [+发送器适配器]是从一个或多个子发送器的集合和（可能为空的）额外实参集合
+构造并返回一个父发送器的函数。
+
+[:en] An asynchronous operation created by a parent sender is
+a parent operation to the child operations created by the child senders.
+[:zh_CN] 父发送器创建的异步操作是子发送器创建的子操作的父操作。
+
+[item]
+[:en] A [+sender consumer] is a function that takes one or more senders and
+a (possibly empty) set of additional arguments, and
+whose return type is not the type of a sender.
+[:zh_CN] [+发送器消耗方]是接受一个或多个发送器和（可能为空的）额外实参集合，
+且返回类型不是发送器类型的函数。
+[list:end]

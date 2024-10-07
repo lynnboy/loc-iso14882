@@ -1,0 +1,136 @@
+[section#exec.run.loop.types
+    [:en] Associated types
+    [:zh_CN] 关联类型
+]
+
+[codeblock:declaration]
+class [[redoc("*>")]]run-loop-scheduler;
+[codeblock:end]
+
+[para]
+[:en] [*run-loop-scheduler] is an unspecified type that models [`scheduler].
+[:zh_CN] [*run-loop-scheduler] 是一个构成了 [`scheduler] 的未指明类型。
+
+[para]
+[:en] Instances of [*run-loop-scheduler] remain valid until the end of the
+lifetime of the [`run_loop] instance from which they were obtained.
+[:zh_CN] [*run-loop-scheduler] 的实例直到从中获得它们的 [`run_loop] 实例的生存期
+结束之前持续有效。
+
+[para]
+[:en] Two instances of [*run-loop-scheduler] compare equal
+if and only if they were obtained from the same [`run_loop] instance.
+[:zh_CN] 当且仅当两个 [*run-loop-scheduler] 实例都是从相同的 [`run_loop] 实例
+获得时，它们比较为相等。
+
+[para]
+[:en] Let [*sch] be an expression of type [*run-loop-scheduler].
+[:zh_CN] 令 [*sch] 为 [*run-loop-scheduler] 类型的表达式。
+
+[:en] The expression [`schedule([*sch])] has type [*run-loop-sender] and
+is not potentially-throwing if [*sch] is not potentially-throwing.
+[:zh_CN] 表达式 [`schedule([*sch])] 的类型为 [*run-loop-sender]，且当 [*sch]
+并非潜在抛出时也非潜在抛出的。
+
+[codeblock:declaration]
+class [[redoc("*>")]]run-loop-sender;
+[codeblock:end]
+
+[para]
+[:en] [*run-loop-sender] is an exposition-only type that satisfies [`sender].
+[:zh_CN] [*run-loop-sender] 是一种满足 [`sender] 的仅用于阐释的类型。
+
+[:en] For any type [`Env], [`completion_signatures_of_t<[*run-loop-sender], Env>] is
+[:zh_CN] 对于任意类型 [`Env]，[`completion_signatures_of_t<[*run-loop-sender], Env>] 为
+[codeblock]
+completion_signatures<set_value_t(), set_error_t(exception_ptr), set_stopped_t()>
+[codeblock:end]
+
+[para]
+[:en] An instance of [*run-loop-sender] remains valid
+until the end of the lifetime of its associated [`run_loop] instance.
+[:zh_CN] [*run-loop-sender] 的实例直到它的关联 [`run_loop] 实例的生存期结束之前持续有效。
+
+[para]
+[:en] Let [*sndr] be an expression of type [*run-loop-sender], let [*rcvr] be an
+expression such that [`[`:c receiver_of]<decltype(([*rcvr])), CS>] is [`true]
+where [`CS] is the [`completion_signatures] specialization above.
+[:zh_CN] 令 [*sndr] 为 [*run-loop-sender] 类型的表达式，令 [`rcvr] 为使得
+[`[`:c receiver_of]<decltype(([*rcvr])), CS>] 为 [`true] 的表达式，其中 [`CS]
+为上述的 [`completion_signatures] 特例。
+
+[:en] Let [`C] be either [`set_value_t] or [`set_stopped_t].
+[:zh_CN] 令 [`C] 为 [`set_value_t] 或 [`set_stopped_t]。
+
+[:en] Then:
+[:zh_CN] 然后：
+[list]
+[item]
+[:en] The expression [`connect([*sndr], [*rcvr])] has type
+[`[*run-loop-opstate]<decay_t<decltype(([*rcvr]))>>] and is potentially-throwing
+if and only if [`(void([*sndr]), auto([*rcvr]))] is potentially-throwing.
+[:zh_CN] 表达式 [`connect([*sndr], [*rcvr])] 的类型为
+[`[*run-loop-opstate]<decay_t<decltype(([*rcvr]))>>]，且当且仅当
+[`(void([*sndr]), auto([*rcvr]))] 潜在抛出时为潜在抛出的。
+
+[item]
+[:en] The expression [`get_completion_scheduler<C>(get_env([*sndr]))]
+is potentially-throwing if and only if [*sndr] is potentially-throwing,
+has type [*run-loop-scheduler], and compares equal to the [*run-loop-scheduler]
+instance from which [*sndr] was obtained.
+[:zh_CN] 表达式 [`get_completion_scheduler<C>(get_env([*sndr]))]，当且仅当 [*sndr]
+潜在抛出时为潜在抛出的，其类型为 [*run-loop-scheduler]，且与从中获得 [*sndr] 的
+[*run-loop-scheduler] 实例比较为相等。
+[list:end]
+
+[codeblock:declaration]
+class [[redoc("*>")]]run-loop-opstate;
+[codeblock:end]
+
+[para]
+[:en] [`[*run-loop-opstate]<Rcvr>] inherits privately and unambiguously from
+[*run-loop-opstate-base].
+[:zh_CN] [`[*run-loop-opstate]<Rcvr>] 私有且无歧义继承 [*run-loop-opstate-base]。
+
+[para]
+[:en] Let [$o] be a non-const lvalue of type [`[*run-loop-opstate]<Rcvr>],
+and let [`REC([$o])] be a non-const lvalue reference to an instance of type
+[`Rcvr] that was initialized with the expression [`rcvr]
+passed to the invocation of [`connect] that returned [$o].
+[:zh_CN] 令 [$o] 为 [`[*run-loop-opstate]<Rcvr>] 类型的非常量左值，并令
+[`REC([$o])] 为指代 [`Rcvr] 类型实例的非常量左值引用，并以向返回了 [$o] 的
+[`connect] 调用所传递的表达式 [`rcvr] 初始化。
+
+[:en] Then:
+[:zh_CN] 然后：
+[list]
+[item]
+[:en] The object to which [`[*REC]([$o])] refers remains valid for the lifetime
+of the object to which [$o] refers.
+[:zh_CN] [`[*REC]([$o])] 所指代的对象，在 [$o] 所指代的对象生存期内持续有效。
+
+[item]
+[:en] The type [`[*run-loop-opstate]<Rcvr>] overrides
+[`[*run-loop-opstate-base]::[*execute]()] such that [`[$o].[*execute]()]
+is equivalent to:
+[:zh_CN] [`[*run-loop-opstate]<Rcvr>] 覆盖了
+[`[*run-loop-opstate-base]::[*execute]()]，使得 [`[$o].[*execute]()] 等价于：
+[codeblock]
+if (get_stop_token([[redoc("*>")]]REC([[redoc("$>")]]o)).stop_requested()) {
+  set_stopped(std::move([[redoc("*>")]]REC([[redoc("$>")]]o)));
+} else {
+  set_value(std::move([[redoc("*>")]]REC([[redoc("$>")]]o)));
+}
+[codeblock:end]
+
+[item]
+[:en] The expression [`start([$o])] is equivalent to:
+[:zh_CN] 表达式 [`start([$o])] 等价于：
+[codeblock]
+try {
+  [[redoc("$>")]]o.[[redoc("*>")]]loop->[[redoc("*>")]]push-back(addressof([[redoc("$>")]]o));
+} catch(...) {
+  set_error(std::move([[redoc("*>")]]REC([[redoc("$>")]]o)), current_exception());
+}
+[codeblock:end]
+[list:end]

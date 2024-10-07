@@ -1,0 +1,90 @@
+[section#exec.sync.wait.var
+    [`this_thread::sync_wait_with_variant]
+]
+
+[para]
+[:en] The name [`this_thread::sync_wait_with_variant] denotes a
+customization point object.
+[:zh_CN] 名字 [`this_thread::sync_wait_with_variant] 代表一个定制化点对象。
+
+[:en] For a subexpression [`sndr], let [`Sndr] be [`decltype(into_variant(sndr))].
+[:zh_CN] 对于子表达式 [`sndr]，令 [`Sndr] 为 [`decltype(into_variant(sndr))]。
+
+[:en] If [`[`:c sender_in]<Sndr, [*sync-wait-env]>] is [`false],
+[`this_thread::sync_wait_with_variant(sndr)] is ill-formed.
+[:zh_CN] 如果 [`[`:c sender_in]<Sndr, [*sync-wait-env]>] 为 [`false]，则
+[`this_thread::sync_wait_with_variant(sndr)] 非良构。
+
+[:en] Otherwise, it is expression-equivalent to the following,
+except that [`sndr] is evaluated only once:
+[:zh_CN] 否则，它按表达式等价于以下代码，但 [`sndr] 仅被求值一次：
+[codeblock]
+apply_sender([[redoc("*>")]]get-domain-early(sndr), sync_wait_with_variant, sndr)
+[codeblock:end]
+
+[para:mandates@~]
+[list]
+[item]
+[:en] The type [`[*sync-wait-with-variant-result-type]<Sndr>] is well-formed.
+[:zh_CN] 类型 [`[*sync-wait-with-variant-result-type]<Sndr>] 良构。
+[item]
+[:en] [`[`:c same_as]<decltype([$e]), [*sync-wait-with-variant-result-type]<Sndr>>]
+is [`true], where [$e] is the [`apply_sender] expression above.
+[:zh_CN] [`[`:c same_as]<decltype([$e]), [*sync-wait-with-variant-result-type]<Sndr>>]
+为 [`true]，其中 [$e] 为上述 [`apply_sender] 表达式。
+[list:end]
+
+[para]
+[:en] If [`[*:c callable]<sync_wait_t, Sndr>] is [`false], the expression
+[`sync_wait_with_variant.apply_sender(sndr)] is ill-formed.
+[:zh_CN] 如果 [`[*:c callable]<sync_wait_t, Sndr>] 为 [`false]，
+则表达式 [`sync_wait_with_variant.apply_sender(sndr)] 非良构。
+
+[:en] Otherwise, it is equivalent to:
+[:zh_CN] 否则，它等价于：
+[codeblock]
+using result_type = [[redoc("*>")]]sync-wait-with-variant-result-type<Sndr>;
+if (auto opt_value = sync_wait(into_variant(sndr))) {
+  return result_type(std::move(get<0>(*opt_value)));
+}
+return result_type(nullopt);
+[codeblock:end]
+
+[para]
+[:en] The behavior of [`this_thread::sync_wait_with_variant(sndr)] is undefined
+unless:
+[:zh_CN] 除非以下情况，否则 [`this_thread::sync_wait_with_variant(sndr)] 的行为未定义：
+
+[list]
+[item]
+[:en] It blocks the current thread of execution ([#defns.block])
+with forward progress guarantee delegation ([#intro.progress])
+until the specified sender completes.
+[:zh_CN] 它以向前进展保证委托（[#intro.progress]）阻塞当前执行线程（[#defns.block]）
+直至指定发送器完成。
+
+[begin:note]
+[:en] The default implementation of [`sync_wait_with_variant] achieves forward
+progress guarantee delegation by relying on the forward progress guarantee
+delegation provided by [`sync_wait].
+[:zh_CN] [`sync_wait_with_variant] 的缺省实现，通过依赖于 [`sync_wait] 所提供的
+向前进展保证委托，达成向前进展保证委托。
+[end:note]
+
+[item]
+[:en] It returns the specified sender[=']s async results as follows:
+[:zh_CN] 它按如下返回指定发送器的异步结果：
+[list]
+[item]
+[:en] For a value completion, the result datums are returned in
+an engaged [`optional] object that contains a [`variant] of [`tuple]s.
+[:zh_CN] 对于值完成，结果数据以一个包含 [`tuple] 的 [`variant] 的含值 [`optional]
+对象的方式返回。
+[item]
+[:en] For an error completion, an exception is thrown.
+[:zh_CN] 对于错误完成，抛出一个异常。
+[item]
+[:en] For a stopped completion, a disengaged [`optional] object is returned.
+[:zh_CN] 对于停止完成，返回一个脱离的 [`optional] 对象。
+[list:end]
+[list:end]

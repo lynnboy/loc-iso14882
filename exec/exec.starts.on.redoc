@@ -1,0 +1,90 @@
+[section#exec.starts.on
+    [`execution::starts_on]
+]
+
+[para]
+[:en] [`starts_on] adapts an input sender into a sender
+that will start on an execution agent belonging to
+a particular scheduler[=']s associated execution resource.
+[:zh_CN] [`starts_on] 将一个输入发送器适配为一个将在属于特定调度器的关联执行资源
+的某个执行代理商启动的发送器。
+
+[para]
+[:en] The name [`starts_on] denotes a customization point object.
+[:zh_CN] 名字 [`starts_on] 代表一个定制化点对象。
+
+[:en] For subexpressions [`sch] and [`sndr], if [`decltype((sch))] does not
+satisfy [`:c scheduler], or [`decltype((sndr))] does not satisfy [`:c sender],
+[`starts_on(sch, sndr)] is ill-formed.
+[:zh_CN] 对于子表达式 [`sch] 和 [`sndr]，如果 [`decltype((sch))] 不满足
+[`:c scheduler] 或者 [`decltype((sndr))] 不满足 [`:c sender]，那么
+[`starts_on(sch, sndr)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`starts_on(sch, sndr)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`starts_on(sch, sndr)] 按表达式等价于：
+[codeblock]
+transform_sender(
+  [[redoc("*>")]]query-or-default(get_domain, sch, default_domain()),
+  [[redoc("*>")]]make-sender(starts_on, sch, sndr))
+[codeblock:end]
+[:en@~] except that [`sch] is evaluated only once.
+[:zh_CN@~] 但 [`sch] 仅被求值一次。
+
+[para]
+[:en] Let [`out_sndr] and [`env] be subexpressions such that [`OutSndr] is
+[`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 和 [`env] 为子表达式，使得 [`OutSndr] 为 [`decltype((out_sndr))]。
+
+[:en] If [`[*:c sender-for]<OutSndr, starts_on_t>] is [`false],
+then the expressions [`starts_on.transform_env(out_sndr, env)] and
+[`starts_on.transform_sender(out_sndr, env)] are ill-formed; otherwise
+[:zh_CN] 如果 [`[*:c sender-for]<OutSndr, starts_on_t>] 为 [`false]，那么表达式
+[`starts_on.transform_env(out_sndr, env)] 和
+[`starts_on.transform_sender(out_sndr, env)] 都非良构；否则
+[list]
+[item]
+[:en@~] [`starts_on.transform_env(out_sndr, env)] is equivalent to:
+[:zh_CN@~] [`starts_on.transform_env(out_sndr, env)] 等价于：
+[codeblock]
+auto&& [_, sch, _] = out_sndr;
+return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ENV(sch), [[redoc("*>")]]FWD-ENV(env));
+[codeblock:end]
+[item]
+[:en@~] [`starts_on.transform_sender(out_sndr, env)] is equivalent to:
+[:zh_CN@~] [`starts_on.transform_sender(out_sndr, env)] 等价于：
+[codeblock]
+auto&& [_, sch, sndr] = out_sndr;
+return let_value(
+  schedule(sch),
+  [sndr = std::forward_like<OutSndr>(sndr)]() mutable
+    noexcept(is_nothrow_move_constructible_v<decay_t<OutSndr>>) {
+    return std::move(sndr);
+  });
+[codeblock:end]
+[list:end]
+
+[para]
+[:en] Let [`out_sndr] be a subexpression denoting a sender returned from
+[`starts_on(sch, sndr)] or one equal to such, and let [`OutSndr] be the type
+[`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`starts_on(sch, sndr)] 返回的发送器
+或等于它的发送器，并令 [`OutSndr] 为类型 [`decltype((out_sndr))]。
+
+[:en] Let [`out_rcvr] be a subexpression denoting a receiver that has an
+environment of type [`Env] such that [`[`:c sender_in]<OutSndr, Env>] is [`true].
+[:zh_CN] 令 [`out_rcvr] 为子表达式，代表具有 [`Env] 类型环境的接收器，使得
+[`[`:c sender_in]<OutSndr, Env>] 为 [`true]。
+
+[:en] Let [`op] be an lvalue referring to the operation state that results from
+connecting [`out_sndr] with [`out_rcvr].
+[:zh_CN] 令 [`op] 为指代由 [`out_sndr] 与 [`out_rcvr] 的连接所得的操作状态。
+
+[:en] Calling [`start(op)] shall start [`sndr] on an execution agent of the
+associated execution resource of [`sch].
+[:zh_CN] 调用 [`start(op)] 应当在 [`sch] 的关联执行资源的某个执行代理上启动 [`sndr]。
+
+[:en] If scheduling onto [`sch] fails, an error completion on [`out_rcvr] shall
+be executed on an unspecified execution agent.
+[:zh_CN] 如果向 [`sch] 上调度时失败，那么应当在某个未指明的执行代理上执行 [`out_rcvr]
+上的一次错误完成。

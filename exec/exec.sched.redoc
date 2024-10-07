@@ -1,0 +1,86 @@
+[section#exec.sched
+    [:en] Schedulers
+    [:zh_CN] 调度器
+]
+
+[para]
+[:en] The [`:c scheduler] concept defines the requirements of a scheduler type
+([#exec.async.ops]).
+[:zh_CN] [`:c scheduler] 概念定义对于调度器类型的要求（[#exec.async.ops]）。
+
+[:en] [`schedule] is a customization point object that accepts a scheduler.
+[:zh_CN] [`schedule] 是接受一个调度器的定制化点对象。
+
+[:en] A valid invocation of [`schedule] is a schedule-expression.
+[:zh_CN] [`schedule] 的有效调用是调度表达式。
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Sch>
+    concept [[redoc("`:c@def>")]]scheduler =
+      [[redoc("`:c>")]]derived_from<typename remove_cvref_t<Sch>::scheduler_concept, scheduler_t> &&
+      [[redoc("*:c>")]]queryable<Sch> &&
+      requires(Sch&& sch) {
+        { schedule(std::forward<Sch>(sch)) } -> [[redoc("`:c>")]]sender;
+        { auto(get_completion_scheduler<set_value_t>(
+            get_env(schedule(std::forward<Sch>(sch))))) }
+              -> [[redoc("`:c>")]]same_as<remove_cvref_t<Sch>>;
+      } &&
+      [[redoc("`:c>")]]equality_comparable<remove_cvref_t<Sch>> &&
+      [[redoc("`:c>")]]copy_constructible<remove_cvref_t<Sch>>;
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`Sch] be the type of a scheduler and let [`Env] be the type of an
+execution environment for which [`[`:c sender_in]<schedule_result_t<Sch>, Env>]
+is satisfied.
+[:zh_CN] 令 [`Sch] 为调度器的类型，并令 [`Env] 为执行环境的类型，满足
+[`[`:c sender_in]<schedule_result_t<Sch>, Env>]。
+
+[:en] Then [`[*:c sender-in-of]<schedule_result_t<Sch>, Env>] shall be modeled.
+[:zh_CN] [`[*:c sender-in-of]<schedule_result_t<Sch>, Env>] 应当得以构成。
+
+[para]
+[:en] None of a scheduler[=']s copy constructor, destructor, equality comparison,
+or [`swap] member functions shall exit via an exception.
+[:zh_CN] 调度器的复制构造函数，析构函数，相等性比较，或 [`swap] 成员函数都不能以异常退出。
+
+[:en] None of these member functions, nor a scheduler type[=']s [`schedule]
+function, shall introduce data races as a result of potentially concurrent ([#intro.races])
+invocations of those functions from different threads.
+[:zh_CN] 这些成员函数，以及调度器类型的 [`schedule] 函数，都不能因从不同线程对
+这些函数进行潜在并发调用（[#intro.races]）而引入数据竞争。
+
+[para]
+[:en] For any two values [`sch1] and [`sch2] of some scheduler type [`Sch],
+[`sch1 == sch2] shall return [`true] only if both [`sch1] and [`sch2] share
+the same associated execution resource.
+[:zh_CN] 对于某个调度器类型 [`Sch] 的任意两个值 [`sch1] 和 [`sch2]，仅当 [`sch1]
+和 [`sch2] 共享相同的关联执行资源时，[`sch1 == sch2] 应当返回 [`true]。
+
+[para]
+[:en] For a given scheduler expression [`sch], the expression
+[`get_completion_scheduler<set_value_t>(get_env(schedule(sch)))]
+shall compare equal to [`sch].
+[:zh_CN] 对于给定调度器表达式 [`sch]，表达式
+[`get_completion_scheduler<set_value_t>(get_env(schedule(sch)))] 应当等于 [`sch]。
+
+[para]
+[:en] For a given scheduler expression [`sch], if the expression
+[`get_domain(sch)] is well-formed, then the expression
+[`get_domain(get_env(schedule(sch)))] is also well-formed and has the same type.
+[:zh_CN] 对于给定调度器表达式 [`sch]，如果表达式 [`get_domain(sch)] 良构，那么
+[`get_domain(get_env(schedule(sch)))] 也良构并具有相同类型。
+
+[para]
+[:en] A scheduler type[=']s destructor shall not block pending completion of
+any receivers connected to the sender objects returned from [`schedule].
+[:zh_CN] 调度器类型的析构函数不能阻塞待处理的与 [`schedule] 返回的发送器对象相连接的
+任何接收器的完成。
+
+[begin:note]
+[:en] The ability to wait for completion of submitted function objects
+can be provided by the associated execution resource of the scheduler.
+[:zh_CN] 可以由调度器的关联执行资源提供对已提交函数对象的完成的等待能力。
+[end:note]

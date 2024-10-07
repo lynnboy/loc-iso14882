@@ -1,0 +1,364 @@
+[section#stoptoken.concepts
+    [:en] Stop token concepts
+    [:zh_CN] 停止令牌的概念
+]
+
+[para]
+[:en] The exposition-only [*:c stoppable-callback-for] concept checks for a
+callback compatible with a given [`Token] type.
+[:zh_CN] 仅用于阐释的概念 [*:c stoppable-callback-for] 检查回调与给定 [`Token]
+类型的兼容情况。
+
+[codeblock:declaration]
+template<class CallbackFn, class Token, class Initializer = CallbackFn>
+  concept [[redoc("*:c@def>")]]stoppable-callback-for =                          // [=expos]
+    [[redoc("`:c>")]]invocable<CallbackFn> &&
+    [[redoc("`:c>")]]constructible_from<CallbackFn, Initializer> &&
+    requires { typename stop_callback_for_t<Token, CallbackFn>; } &&
+    [[redoc("`:c>")]]constructible_from<stop_callback_for_t<Token, CallbackFn>, const Token&, Initializer>;
+[codeblock:end]
+
+[para]
+[:en] Let [`t] and [`u] be distinct, valid objects of type [`Token] that
+reference the same logical stop state; let [`init] be an expression such that
+[`[`:c same_as]<decltype(init), Initializer>] is [`true]; and let [`SCB] denote
+the type [`stop_callback_for_t<Token, CallbackFn>].
+[:zh_CN] 令 [`t] 和 [`u] 为 [`Token] 类型的引用相同逻辑停止状态的不同有效对象；
+令 [`init] 为使得 [`[`:c same_as]<decltype(init), Initializer>] 为 [`true] 的表达式；
+并令 [`SCB] 代表类型 [`stop_callback_for_t<Token, CallbackFn>]。
+
+[para]
+[:en] The concept [`[*:c stoppable-callback-for]<CallbackFn, Token, Initializer>]
+is modeled only if:
+[:zh_CN] 仅当满足以下条件时，概念
+[`[*:c stoppable-callback-for]<CallbackFn, Token, Initializer>] 得以构成：
+
+[list]
+[item]
+[:en] The following concepts are modeled:
+[:zh_CN] 构成了以下概念：
+[list]
+[item] [`[`:c constructible_from]<SCB, Token, Initializer>]
+[item] [`[`:c constructible_from]<SCB, Token\&, Initializer>]
+[item] [`[`:c constructible_from]<SCB, const Token, Initializer>]
+[list:end]
+
+[item]
+[:en] An object of type [`SCB] has an associated callback function of type
+[`CallbackFn].
+[:zh_CN] [`SCB] 类型的对象具有一个关联的 [`CallbackFn] 类型的回调函数。
+
+[:en] Let [`scb] be an object of type [`SCB] and let [`callback_fn] denote
+[`scb][=']s associated callback function.
+[:zh_CN] 令 [`scb] 为 [`SCB] 类型的对象，并令 [`callback_fn] 代表 [`scb]
+的关联回调函数。
+
+[:en] Direct-non-list-initializing [`scb] from arguments [`t] and [`init]
+shall execute a [+:adj stoppable callback[!registration]] as follows:
+[:zh_CN] 从实参 [`t] 和 [`init] 直接非列表初始化 [`scb] 应当如下施行一次
+[+:adj 可停止回调[!注册]]：
+
+[list]
+[item]
+[:en] If [`t.stop_possible()] is [`true]:
+[:zh_CN] 如果 [`t.stop_possible()] 为 [`true]：
+
+[list]
+[item]
+[:en] [`callback_fn] shall be direct-initialized with [`init].
+[:zh_CN] [`callback_fn] 应当以 [`init] 直接初始化。
+
+[item]
+[:en] Construction of [`scb] shall only throw exceptions thrown by the
+initialization of [`callback_fn] from [`init].
+[:zh_CN] [`scb] 的构造应当仅抛出从 [`init] 初始化 [`callback_fn] 时抛出的异常。
+
+[item]
+[:en] The callback invocation [`std::forward<CallbackFn>(callback_fn)()]
+shall be registered with [`t][=']s associated stop state as follows:
+[:zh_CN] 回调的调用 [`std::forward<CallbackFn>(callback_fn)()] 应当按如下与 [`t]
+的关联停止状态一起注册：
+
+[list]
+[item]
+[:en] If [`t.stop_requested()] evaluates to [`false] at the time of registration,
+the callback invocation is added to the stop state[=']s list of callbacks
+such that [`std::forward<CallbackFn>(callback_fn)()] is evaluated
+if a stop request is made on the stop state.
+[:zh_CN] 如果注册的时间点 [`t.stop_requested()] 求值为 [`false]，则将回调调用添加到
+停止状态的回调列表中，使得当该停止状态上做出停止请求时将求值
+[`std::forward<CallbackFn>(callback_fn)()]。
+
+[item]
+[:en] Otherwise, [`std::forward<CallbackFn>(callback_fn)()] shall be immediately
+evaluated on the thread executing [`scb][=']s constructor, and
+the callback invocation shall not be added to the list of callback invocations.
+[:zh_CN] 否则，应当立即在执行 [`scb] 的构造函数的线程中求值
+[`std::forward<CallbackFn>(callback_fn)()]，且不应将此次回调调用加入回调调用列表。
+[list:end]
+
+[:en] If the callback invocation was added to stop state[=']s list of callbacks,
+[`scb] shall be associated with the stop state.
+[:zh_CN] 如果回调调用被加入停止状态的回调列表，那么 [`scb] 应当与该停止状态关联。
+[list:end]
+
+[item]
+[begin:note]
+[:en] If [`t.stop_possible()] is [`false], there is no requirement that the
+initialization of [`scb] causes the initialization of [`callback_fn].
+[:zh_CN] 如果 [`t.stop_possible()] 为 [`false]，则不要求 [`scb] 的初始化导致
+[`callback_fn] 的初始化。
+[end:note]
+[list:end]
+
+[item]
+[:en] Destruction of [`scb] shall execute a
+[+:adj stoppable[!callback deregistration]] as follows (in order):
+[:zh_CN] [`scb] 的析构应当按如下施行一次[+:adj 可停止[!回调注销]]：
+
+[list]
+[item]
+[:en] If the constructor of [`scb] did not register a callback invocation with
+[`t][=']s stop state, then the stoppable callback deregistration shall have no
+effect other than destroying [`callback_fn] if it was constructed.
+[:zh_CN] 如果 [`scb] 的构造函数并未对 [`t] 的停止状态注册回调调用，那么这次可停止回调
+注销应当没有除了销毁已经构造的 [`callback_fn] 之外的其他效果。
+
+[item]
+[:en] Otherwise, the invocation of [`callback_fn] shall be removed
+from the associated stop state.
+[:zh_CN] 否则，应当从关联停止状态移除 [`callback_fn] 的调用。
+
+[item]
+[:en] If [`callback_fn] is concurrently executing on another thread, then the
+stoppable callback deregistration shall block ([#defns.block]) until the
+invocation of [`callback_fn] returns such that the return from the invocation of
+[`callback_fn] strongly happens before ([#intro.races]) the destruction of
+[`callback_fn].
+[:zh_CN] 如果在另一线程中并发执行了 [`callback_fn]，那么可停止回调注销应当阻塞（[#defns.block]）
+直至 [`callback_fn] 的调用返回，使得从 [`callback_fn] 的调用中返回强发生早于（[#intro.races]）
+[`callback_fn] 的析构。
+
+[item]
+[:en] If [`callback_fn] is executing on the current thread, then the destructor
+shall not block waiting for the return from the invocation of [`callback_fn].
+[:zh_CN] 如果在当前线程中执行 [`callback_fn]，那么析构函数不应阻塞于等待从
+[`callback_fn] 的调用中返回。
+
+[item]
+[:en] A stoppable callback deregistration shall not block on the completion of
+the invocation of some other callback registered with the same logical stop state.
+[:zh_CN] 可停止回调注销不能阻塞于对注册于相同逻辑停止状态的其他回调的调用完成。
+
+[item]
+[:en] The stoppable callback deregistration shall destroy [`callback_fn].
+[:zh_CN] 可停止回调注销应当销毁 [`callback_fn]。
+[list:end]
+[list:end]
+
+[para]
+[:en] The [`:c stoppable_token] concept checks for the basic interface of a
+stop token that is copyable and allows polling to see if stop has been requested
+and also whether a stop request is possible.
+[:zh_CN] [`:c stoppable_token] 概念检查停止令牌的基本接口，是否可复制，允许轮询是否
+已请求停止，以及是否有可能进行停止请求。
+
+[:en] The [`:c unstoppable_token] concept checks for a [`:c stoppable_token]
+type that does not allow stopping.
+[:zh_CN] [`:c unstoppable_token] 概念检查 [`:c stoppable_token] 类型是否不允许停止。
+
+[codeblock:declaration]
+template<template<class> class>
+  struct [[redoc("*>")]]check-type-alias-exists;                               // [=expos]
+
+template<class Token>
+  concept [[redoc("`:c@def>")]]stoppable_token] =
+    requires (const Token tok) {
+      typename [[redoc("*>")]]check-type-alias-exists<Token::template callback_type>;
+      { tok.stop_requested() } noexcept -> [[redoc("`:c>")]]same_as<bool>;
+      { tok.stop_possible() } noexcept -> [[redoc("`:c>")]]same_as<bool>;
+      { Token(tok) } noexcept;                  // [:en] see implicit expression variations ([#concepts.equality]) \
+                                                [:zh_CN] 参见隐式表达式变体（[#concepts.equality]）
+    } &&
+    [[redoc("`:c>")]]copyable<Token> &&
+    [[redoc("`:c>")]]equality_comparable<Token> &&
+    [[redoc("`:c>")]]swappable<Token>;
+
+template<class Token>
+  concept [[redoc("`:c@def>")]]unstoppable_token =
+    [[redoc("`:c>")]]stoppable_token<Token> &&
+    requires (const Token tok) {
+      requires bool_constant<(!tok.stop_possible())>::value;
+    };
+[codeblock:end]
+
+[para]
+[:en] An object whose type models [`:c stoppable_token] has at most one
+associated logical stop state.
+[:zh_CN] 构成 [`:c stoppable_token] 的类型的对象具有最多一个关联的逻辑停止状态。
+
+[:en] A [`:c stoppable_token] object with no associated stop state
+is said to be [+disengaged].
+[:zh_CN] 没有关联停止状态的 [`:c stoppable_token] 对象被称为[+脱离的]。
+
+[para]
+[:en] Let [`SP] be an evaluation of [`t.stop_possible()] that is [`false], and
+let [`SR] be an evaluation of [`t.stop_requested()] that is [`true].
+[:zh_CN] 令 [`SP] 为求值为 [`false] 的一次 [`t.stop_possible()] 求值，并
+令 [`SR] 为求值为 [`true] 的一次 [`t.stop_requested()] 求值。
+
+[para]
+[:en] The type [`Token] models [`:c stoppable_token] only if:
+[:zh_CN] 仅当满足以下条件时，类型 [`Token] 构成 [`:c stoppable_token]：
+
+[list]
+[item]
+[:en] Any evaluation of [`u.stop_possible()] or [`u.stop_requested()]
+that happens after ([#intro.races]) [`SP] is [`false].
+[:zh_CN] 任何发生晚于（[#intro.races]）[`SP] 的对 [`u.stop_possible()] 或
+[`u.stop_requested()] 的求值都为 [`false]。
+
+[item]
+[:en] Any evaluation of [`u.stop_possible()] or [`u.stop_requested()]
+that happens after [`SR] is [`true].
+[:zh_CN] 任何发生晚于 [`SR] 的对 [`u.stop_possible()] 或
+[`u.stop_requested()] 的求值都为 [`true]。
+
+[item]
+[:en] For any types [`CallbackFn] and [`Initializer] such that
+[`[*:c stoppable-callback-for]<CallbackFn, Token, Initializer>] is satisfied,
+[`[*:c stoppable-callback-for]<CallbackFn, Token, Initializer>] is modeled.
+[:zh_CN] 对于满足 [`[*:c stoppable-callback-for]<CallbackFn, Token, Initializer>]
+的任何类型 [`CallbackFn] 和 [`Initializer]，都构成
+[`[*:c stoppable-callback-for]<CallbackFn, Token, Initializer>]。
+
+[item]
+[:en] If [`t] is disengaged, evaluations of [`t.stop_possible()] and
+[`t.stop_requested()] are [`false].
+[:zh_CN] 如果 [`t] 是脱离的，那么 [`t.stop_possible()] 和 [`t.stop_requested()]
+的求值都为 [`false]。
+
+[item]
+[:en] If [`t] and [`u] reference the same stop state, or if both [`t] and [`u]
+are disengaged, [`t == u] is [`true]; otherwise, it is [`false].
+[:zh_CN] 如果 [`t] 和 [`u] 引用同一停止状态，或如果 [`t] 和 [`u] 都是脱离的，那么
+[`t == u] 为 [`true]；否则为 [`false]。
+[list:end]
+
+[para]
+[:en] An object whose type models the exposition-only [*:c stoppable-source]
+concept can be queried whether stop has been requested ([`stop_requested]) and
+whether stop is possible ([`stop_possible]).
+[:zh_CN] 构成了仅用于阐释的概念 [*:c stoppable-source] 的类型的对象，可以查询是否
+已请求停止（[`stop_requested]）及是否可能停止（[`stop_possible]）。
+
+[:en] It is a factory for associated stop tokens ([`get_token]), and
+a stop request can be made on it ([`request_stop]).
+[:zh_CN] 它是关联停止令牌的工厂（[`get_token]），且可以在其上进行停止请求
+（[`request_stop]）。
+
+[:en] It maintains a list of registered stop callback invocations
+that it executes when a stop request is first made.
+[:zh_CN] 它维护一个注册的停止回调调用的列表，当首次进行停止请求时执行。
+
+[codeblock:declaration]
+template<class Source>
+  concept [[redoc("*:c@def>")]]stoppable-source =                                    // [=expos]
+    requires (Source& src, const Source csrc) {         // [:en] see implicit expression variations ([#concepts.equality]) \
+                                                        [:zh_CN] 参见隐式表达式变体（[#concepts.equality]）
+      { csrc.get_token() } -> stoppable_token;
+      { csrc.stop_possible() } noexcept -> [[redoc("`:c>")]]same_as<bool>;
+      { csrc.stop_requested() } noexcept -> [[redoc("`:c>")]]same_as<bool>;
+      { src.request_stop() } -> [[redoc("`:c>")]]same_as<bool>;
+    };
+[codeblock:end]
+
+[para]
+[:en] An object whose type models [*:c stoppable-source] has at most one
+associated logical stop state.
+[:zh_CN] 构成 [*:c stoppable-source] 的类型的对象具有最多一个关联的逻辑停止状态。
+
+[:en] If it has no associated stop state, it is said to be disengaged.
+[:zh_CN] 如果它没有关联停止状态，那么称其为脱离的。
+
+[:en] Let [`s] be an object whose type models [*:c stoppable-source] and
+that is disengaged.
+[:zh_CN] 令 [`s] 为类型构成 [*:c stoppable-source] 且为脱离的对象。
+
+[:en] [`s.stop_possible()] and [`s.stop_requested()] shall be [`false].
+[:zh_CN] [`s.stop_possible()] 和 [`s.stop_requested()] 都应当为 [`false]。
+
+[para]
+[:en] Let [`t] be an object whose type models [*:c stoppable-source].
+[:zh_CN] 令 [`t] 为类型构成了 [*:c stoppable-source] 的对象。
+
+[:en] If [`t] is disengaged, [`t.get_token()] shall return a disengaged
+stop token; otherwise, it shall return a stop token that is associated with the
+stop state of [`t].
+[:zh_CN] 如果 [`t] 是脱离的，那么 [`t.get_token()] 应当返回脱离的停止令牌；否则，
+它应当返回与 [`t] 的停止状态关联的停止令牌。
+
+[para]
+[:en] Calls to the member functions [`request_stop], [`stop_requested], and
+[`stop_possible] and similarly named member functions on associated
+[`:c stoppable_token] objects do not introduce data races.
+[:zh_CN] 对成员函数 [`request_stop]、[`stop_requested] 和 [`stop_possible]，
+以及关联 [`:c stoppable_token] 对象上类似命名的成员函数的调用，不会引入数据竞争。
+
+[:en] A call to [`request_stop] that returns [`true] synchronizes with
+a call to [`stop_requested] on an associated [`:c stoppable_token] or
+[*:c stoppable-source] object that returns [`true].
+[:zh_CN] 返回 [`true] 的对 [`request_stop] 的调用，同步于返回 [`true] 的在关联的
+[`:c stoppable_token] 或 [*:c stoppable-source] 对象上对 [`stop_requested] 的调用。
+
+[:en] Registration of a callback synchronizes with the invocation of that callback.
+[:zh_CN] 回调的注册同步于该回调的调用。
+
+[para]
+[:en] If the [*:c stoppable-source] is disengaged, [`request_stop] shall have no
+effect and return [`false].
+[:zh_CN] 如果 [*:c stoppable-source] 是脱离的，那么 [`request_stop] 应当没有效果
+并返回 [`false]。
+
+[:en] Otherwise, it shall execute a [+:adj stop request[!operation]]
+on the associated stop state.
+[:zh_CN] 否则，它应当在关联停止状态上执行一次[+:adj 停止请求[!操作]]。
+
+[:en] A stop request operation determines whether the stop state has received
+a stop request, and if not, makes a stop request.
+[:zh_CN] 停止请求操作确定停止状态是否已收到过停止请求，且若未收到则做出停止请求。
+
+[:en] The determination and making of the stop request shall happen atomically,
+as-if by a read-modify-write operation ([#intro.races]).
+[:zh_CN] 确定并做出停止请求，应当如同通过一次读-改-写操作原子地进行（[#intro.races]）。
+
+[:en] If the request was made, the stop state[=']s registered callback
+invocations shall be synchronously executed.
+[:zh_CN] 如果做出了请求，应当同步地执行停止状态已注册的回调调用。
+
+[:en] If an invocation of a callback exits via an exception then terminate shall
+be invoked ([#except.terminate]).
+[:zh_CN] 如果某次回调调用以异常退出，则应当调用 [`terminate]（[#except.terminate]）。
+
+[begin:note]
+[:en] No constraint is placed on the order in which the callback invocations are
+executed.
+[:zh_CN] 对回调调用的执行次序没有任何约束。
+[end:note]
+
+[:en] [`request_stop] shall return [`true] if a stop request was made, and
+[`false] otherwise.
+[:zh_CN] 如果已做出停止请求，则 [`request_stop] 应当返回 [`true]，否则返回 [`false]。
+
+[:en] After a call to [`request_stop] either a call to [`stop_possible] shall
+return [`false] or a call to [`stop_requested] shall return [`true].
+[:zh_CN] 调用 [`request_stop] 之后，要么对 [`stop_possible] 的调用应当返回 [`false]，
+要么对 [`stop_requested] 的调用应当返回 [`true]。
+
+[begin:note]
+[:en] A stop request includes notifying all condition variables of type
+[`condition_variable_any] temporarily registered during an interruptible wait
+([#thread.condvarany.intwait]).
+[:zh_CN] 一次停止请求中，包括通知在可中断等待中临时注册的所有 [`condition_variable_any]
+类型的条件变量（[#thread.condvarany.intwait]）。
+[end:note]

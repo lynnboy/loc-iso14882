@@ -1,43 +1,57 @@
 [section#stopsource.mem
-    [:en] Members
-    [:zh_CN] 成员
+    [:en] Member functions
+    [:zh_CN] 成员函数
 ]
+
+[%@lib@member swap[!stop_source]]
+[codeblock:declaration]
+void swap(stop_source& rhs) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]stop-state.swap(rhs.[[redoc("*>")]]stop-state);
+[codeblock:end]
+[div:end]
 
 [%@lib@member get_token[!stop_source]]
 [codeblock:declaration]
-[[nodiscard]] stop_token get_token() const noexcept;
+stop_token get_token() const noexcept;
 [codeblock:end]
 
 [div:description]
 [para:returns]
 [:en] [`stop_token()] if [`stop_possible()] is [`false]; otherwise a new
-associated [`stop_token] object.
+associated [`stop_token] object; i.e., its [*stop-state] member is equal to
+the [*stop-state] member of [`*this].
 [:zh_CN] 若 [`stop_possible()] 为 [`false] 则返回 [`stop_token()]；否则返回一个
-新的关联 [`stop_token] 对象。
+新的关联 [`stop_token] 对象；即其 [*stop-state] 成员等于 [`*this] 的 [*stop-state] 成员。
 [div:end]
 
 [%@lib@member stop_possible[!stop_source]]
 [codeblock:declaration]
-[[nodiscard]] bool stop_possible() const noexcept;
+bool stop_possible() const noexcept;
 [codeblock:end]
 
 [div:description]
 [para:returns]
-[:en] [`true] if [`*this] has ownership of a stop state; otherwise, [`false].
-[:zh_CN] 若 [`*this] 拥有某个停止状态的所有权则返回 [`true]，否则返回 [`false]。
+[:en] [`[*stop-state] != nullptr].
+[:zh_CN] [`[*stop-state] != nullptr]。
 [div:end]
 
 [%@lib@member stop_requested[!stop_source]]
 [codeblock:declaration]
-[[nodiscard]] bool stop_requested() const noexcept;
+bool stop_requested() const noexcept;
 [codeblock:end]
 
 [div:description]
 [para:returns]
-[:en] [`true] if [`*this] has ownership of a stop state that has received a stop
+[:en] [`true] if [*stop-state] refers to a stop state that has received a stop
 request; otherwise, [`false].
-[:zh_CN] 若 [`*this] 所拥有的停止状态已经接收到停止请求则返回 [`true]，否则返回
-[`false]。
+[:zh_CN] 若 [*stop-state] 指代的停止状态已经接收到停止请求则返回 [`true]，否则返回 [`false]。
 [div:end]
 
 [%@lib@member request_stop[!stop_source]]
@@ -47,40 +61,7 @@ bool request_stop() noexcept;
 
 [div:description]
 [para:effects]
-[:en] If [`*this] does not have ownership of a stop state, returns [`false].
-[:zh_CN] 若 [`*this] 并未拥有任何停止状态则返回 [`false]。
-
-[:en] Otherwise, atomically determines whether the owned stop state has received
-a stop request, and if not, makes a stop request.
-[:zh_CN] 否则，原子性地确定所拥有的停止状态是否已经接收到停止请求，并当为否时
-做出停止请求。
-
-[:en] The determination and making of the stop request are an atomic
-read-modify-write operation ([#intro.races]).
-[:zh_CN] 确定并做出停止请求是一次原子性读-改-写操作（[#intro.races]）。
-
-[:en] If the request was made, the callbacks registered by associated
-[`stop_callback] objects are synchronously called.
-[:zh_CN] 若做出了请求，则将同步地调用通过关联的 [`stop_callback] 对象所注册的
-各回调。
-
-[:en] If an invocation of a callback exits via an exception then [`terminate] is
-invoked ([#except.terminate]).
-[:zh_CN] 若某个回调的调用通过异常而退出，则调用 [`terminate]（[#except.terminate]）。
-
-[begin:note]
-[:en] A stop request includes notifying all condition variables of type
-[`condition_variable_any] temporarily registered during an interruptible wait
-([#thread.condvarany.intwait]).
-[:zh_CN] 一次停止请求中包含对在一次可中断等待（[#thread.condvarany.intwait]）中
-临时注册的所有 [`condition_variable_any] 类型的条件变量发出通知。
-[end:note]
-
-[para:ensures]
-[:en] [`stop_possible()] is [`false] or [`stop_requested()] is [`true].
-[:zh_CN] [`stop_possible()] 为 [`false] 或 [`stop_requested()] 为 [`true]。
-
-[para:returns]
-[:en] [`true] if this call made a stop request; otherwise [`false].
-[:zh_CN] 当本次调用做出了停止请求时返回 [`true]；否则，返回 [`false]。
+[:en] Executes a stop request operation ([#stoptoken.concepts]) on the
+associated stop state, if any.
+[:zh_CN] 在关联的停止状态（如果有）上执行一次停止请求操作（[#stoptoken.concepts]）。
 [div:end]

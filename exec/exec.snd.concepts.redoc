@@ -1,0 +1,177 @@
+[section#exec.snd.concepts
+    [:en] Sender concepts
+    [:zh_CN] 发送器概念
+]
+
+[para]
+[:en] The [`:c sender] concept defines
+the requirements for a sender type ([#exec.async.ops]).
+[:zh_CN] [`:c sender] 概念定义了针对发送器类型（[#exec.async.ops]）的要求。
+
+[:en] The [`:c sender_in] concept defines the requirements for a sender type
+that can create asynchronous operations given an associated environment type.
+[:zh_CN] [`:c sender_in] 概念定义了针对给定关联环境类型可以创建异步操作的发送器类型的要求。
+
+[:en] The [`:c sender_to] concept defines the requirements for a sender type
+that can connect with a specific receiver type.
+[:zh_CN] [`:c sender_to] 概念定义了针对可以与特定接收器类型连接的发送器类型的要求。
+
+[:en] The [`get_env] customization point object is used to access
+a sender[=']s associated attributes.
+[:zh_CN] [`get_env] 定制化点对象用于访问发送器的关联属性。
+
+[:en] The [`connect] customization point object is used to connect ([#exec.async.ops])
+a sender and a receiver to produce an operation state.
+[:zh_CN] [`connect] 定制化点对象用于连接（[#exec.async.ops]）一个发送器和一个接收器
+以产生一个操作状态。
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Sigs>
+    concept [[redoc("*:c>")]]valid-completion-signatures = [[redoc("[=seebelow]")]];            // [=expos]
+
+  template<class Sndr>
+    concept [[redoc("*:c@def>")]]is-sender =                                         // [=expos]
+      derived_from<typename Sndr::sender_concept, sender_t>;
+
+  template<class Sndr>
+    concept [[redoc("*:c@def>")]]enable-sender =                                     // [=expos]
+      [[redoc("*:c>")]]is-sender<Sndr> ||
+      [[redoc("*:c>")]]is-awaitable<Sndr, [[redoc("*>")]]env-promise<empty_env>>;               // [#exec.awaitable]
+
+  template<class Sndr>
+    concept [[redoc("`:c@def>")]]sender =
+      bool([[redoc("*:c>")]]enable-sender<remove_cvref_t<Sndr>>) &&
+      requires (const remove_cvref_t<Sndr>& sndr) {
+        { get_env(sndr) } -> [[redoc("*:c>")]]queryable;
+      } &&
+      [[redoc("`:c>")]]move_constructible<remove_cvref_t<Sndr>> &&
+      [[redoc("`:c>")]]constructible_from<remove_cvref_t<Sndr>, Sndr>;
+
+  template<class Sndr, class Env = empty_env>
+    concept [[redoc("`:c@def>")]]sender_in =
+      [[redoc("`:c>")]]sender<Sndr> &&
+      [[redoc("*:c>")]]queryable<Env> &&
+      requires (Sndr&& sndr, Env&& env) {
+        { get_completion_signatures(std::forward<Sndr>(sndr), std::forward<Env>(env)) }
+          -> [[redoc("*:c>")]]valid-completion-signatures;
+      };
+
+  template<class Sndr, class Rcvr>
+    concept [[redoc("`:c@def>")]]sender_to =
+      [[redoc("`:c>")]]sender_in<Sndr, env_of_t<Rcvr>> &&
+      [[redoc("`:c>")]]receiver_of<Rcvr, completion_signatures_of_t<Sndr, env_of_t<Rcvr>>> &&
+      requires (Sndr&& sndr, Rcvr&& rcvr) {
+        connect(std::forward<Sndr>(sndr), std::forward<Rcvr>(rcvr));
+      };
+}
+[codeblock:end]
+
+[para]
+[:en] Given a subexpression [`sndr], let [`Sndr] be [`decltype((sndr))] and
+let [`rcvr] be a receiver with an associated environment whose type is [`Env].
+[:zh_CN] 给定子表达式 [`sndr]，令 [`Sndr] 为 [`decltype((sndr))]，并令 [`rcvr] 为
+带有类型为 [`Env] 的关联环境的接收器。
+
+[:en] A completion operation is a [+:adj permissible[!completion]]
+for [`Sndr] and [`Env] if its completion signature appears in the argument list
+of the specialization of [`completion_signatures] denoted by
+[`completion_signatures_of_t<Sndr, Env>].
+[:zh_CN] 如果完成操作的完成签名出现在 [`completion_signatures_of_t<Sndr, Env>]
+所代表的 [`completion_signatures] 特例的实参列表中，则它对于 [`Sndr] 和 [`Env]
+是一个[+:adj 受允许[!完成]]。
+
+[:en] [`Sndr] and [`Env] model [`[`:c sender_in]<Sndr, Env>]
+if all the completion operations that are potentially evaluated by connecting
+[`sndr] to [`rcvr] and starting the resulting operation state
+are permissible completions for [`Sndr] and [`Env].
+[:zh_CN] 如果将 [`sndr] 与 [`rcvr] 连接并启动所得操作状态所潜在求值的所有完成操作，
+对于 [`Sndr] 和 [`Env] 都是受允许完成，那么 [`Sndr] 和 [`Env] 构成
+[`[`:c sender_in]<Sndr, Env>]。
+
+[para]
+[:en] A type models the exposition-only concept
+[*:c@def valid-completion-signatures] if it denotes a specialization of
+the [`completion_signatures] class template.
+[:zh_CN] 如果某个类型代表类模板 [`completion_signatures] 的某个特例，那么它构成
+仅用于阐释的概念 [*:c@def valid-completion-signatures]。
+
+[para]
+[:en] The exposition-only concepts [*:c sender-of] and [*:c sender-in-of]
+define the requirements for a sender type
+that completes with a given unique set of value result types.
+[:zh_CN] 仅用于阐释的概念 [*:c sender-of] 和 [*:c sender-in-of] 定义了针对
+以给定的值结果类型的唯一集合完成的发送器类型的要求。
+
+[codeblock:declaration]
+namespace std::execution {
+  template<class... As>
+    using [[redoc("*>")]]value-signature = set_value_t(As...);             // [=expos]
+
+  template<class Sndr, class Env, class... Values>
+    concept [[redoc("*:c@def>")]]sender-in-of =
+      [[redoc("`:c>")]]sender_in<Sndr, Env> &&
+      [[redoc("*>")]]MATCHING-SIG(                     // [:en] see [#exec.general] [:zh_CN] 参见 [#exec.general]
+        set_value_t(Values...),
+        value_types_of_t<Sndr, Env, [[redoc("*>")]]value-signature, type_identity_t>);
+
+  template<class Sndr, class... Values>
+    concept [[redoc("*:c@def>")]]sender-of = [[redoc("*:c>")]]sender-in-of<Sndr, empty_env, Values...>;
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`sndr] be an expression such that [`decltype((sndr))] is [`Sndr].
+[:zh_CN] 令 [`sndr] 为使得 [`decltype((sndr))] 为 [`Sndr] 的表达式。
+
+[:en] The type [`tag_of_t<Sndr>] is as follows:
+[:zh_CN] 类型 [`tag_of_t<Sndr>] 如下：
+
+[list]
+[item]
+[:en] If the declaration
+[:zh_CN] 如果声明式
+[codeblock]
+auto&& [tag, data, ...children] = sndr;
+[codeblock:end]
+[:en@~] would be well-formed, [`tag_of_t<Sndr>] is
+an alias for [`decltype(auto(tag))].
+[:zh_CN@~] 良构，那么 [`tag_of_t<Sndr>] 为 [`decltype(auto(tag))] 的别名。
+
+[item]
+[:en] Otherwise, [`tag_of_t<Sndr>] is ill-formed.
+[:zh_CN] 否则，[`tag_of_t<Sndr>] 非良构。
+[list:end]
+
+[para]
+[:en] Let [*:c sender-for] be an exposition-only concept defined as follows:
+[:zh_CN] 令 [*:c sender-for] 为如下定义的仅用于阐释的概念：
+[codeblock]
+namespace std::execution {
+  template<class Sndr, class Tag>
+  concept [[redoc("*:c@def>")]]sender-for =
+    [[redoc("`:c>")]]sender<Sndr> &&
+    [[redoc("`:c>")]]same_as<tag_of_t<Sndr>, Tag>;
+}
+[codeblock:end]
+
+[para]
+[:en] For a type [`T], [`[*SET-VALUE-SIG](T)] denotes the type [`set_value_t()]
+if [`T] is [=cv] [`void]; otherwise, it denotes the type [`set_value_t(T)].
+[:zh_CN] 对于类型 [`T]，当 [`T] 为 [=cv] [`void] 时，[`[*SET-VALUE-SIG](T)] 代表
+类型 [`set_value_t()]；否则，它代表类型 [`set_value_t(T)]。
+
+[para]
+[:en] Library-provided sender types
+[:zh_CN] 程序库提供的发送器类型
+[list]
+[item]
+[:en@~] always expose an overload of a member [`connect]
+that accepts an rvalue sender and
+[:zh_CN@~] 总是暴露一个接受右值发送器的 [`connect] 成员重载，且
+[item]
+[:en@~] only expose an overload of a member [`connect]
+that accepts an lvalue sender if they model [`copy_constructible].
+[:zh_CN@~] 仅当其构成 [`copy_constructible] 时彩暴露一个接受左值发送器的
+[`connect] 成员重载。
+[list:end]

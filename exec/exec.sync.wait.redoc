@@ -1,0 +1,218 @@
+[section#exec.sync.wait
+    [`this_thread::sync_wait]
+]
+
+[para]
+[:en] [`this_thread::sync_wait] and [`this_thread::sync_wait_with_variant] are
+used to block the current thread of execution until the specified sender
+completes and to return its async result.
+[:zh_CN] [`this_thread::sync_wait] 和 [`this_thread::sync_wait_with_variant]
+用于阻塞当前执行线程直至指定的发送器完成并返回其异步结果。
+
+[:en] [`sync_wait] mandates that the input sender has exactly one value
+completion signature.
+[:zh_CN] [`sync_wait] 要求输入发送器必须恰好有一个值完成签名。
+
+[para]
+[:en] Let [*sync-wait-env] be the following exposition-only class type:
+[:zh_CN] 令 [*sync-wait-env] 为以下仅用于阐释的类类型：
+[codeblock:synopsis]
+namespace std::this_thread {
+  struct [[redoc("*>")]]sync-wait-env {
+    execution::run_loop* [[redoc("*>")]]loop;                                  // [=expos]
+
+    auto query(execution::get_scheduler_t) const noexcept {
+      return [[redoc("*>")]]loop->get_scheduler();
+    }
+
+    auto query(execution::get_delegation_scheduler_t) const noexcept {
+      return [[redoc("*>")]]loop->get_scheduler();
+    }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [*sync-wait-result-type] and [*sync-wait-with-variant-result-type]
+be exposition-only alias templates defined as follows:
+[:zh_CN] 令 [*sync-wait-result-type] 和 [*sync-wait-with-variant-result-type]
+为如下定义的仅用于阐释的别名模板：
+[codeblock:synopsis]
+namespace std::this_thread {
+  template<execution::[[redoc("`:c>")]]sender_in<[[redoc("*>")]]sync-wait-env> Sndr>
+    using sync-wait-result-type =
+      optional<execution::value_types_of_t<Sndr, [[redoc("*>")]]sync-wait-env, [[redoc("*>")]]decayed-tuple,
+               type_identity_t>>;
+
+  template<execution::sender_in<sync-wait-env> Sndr>
+    using [[redoc("*>")]]sync-wait-with-variant-result-type =
+      optional<execution::value_types_of_t<Sndr, [[redoc("*>")]]sync-wait-env>>;
+}
+[codeblock:end]
+
+[para]
+[:en] The name [`this_thread::sync_wait] denotes a customization point object.
+[:zh_CN] 名字 [`this_thread::sync_wait] 代表一个定制化点对象。
+
+[:en] For a subexpression [`sndr], let [`Sndr] be [`decltype((sndr))].
+[:zh_CN] 对于子表达式 [`sndr]，令 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`[`:c sender_in]<Sndr, [*sync-wait-env]>] is [`false],
+the expression [`this_thread::sync_wait(sndr)] is ill-formed.
+[:zh_CN] 如果 [`[`:c sender_in]<Sndr, [*sync-wait-env]>] 为 [`false]，则表达式
+[`this_thread::sync_wait(sndr)] 非良构。
+
+[:en] Otherwise, it is expression-equivalent to the following,
+except that [`sndr] is evaluated only once:
+[:zh_CN] 否则，它按表达式等价于以下代码，但 [`sndr] 仅被求值一次：
+[codeblock]
+apply_sender([[redoc("*>")]]get-domain-early(sndr), sync_wait, sndr)
+[codeblock:end]
+
+[para:mandates@~]
+[list]
+[item]
+[:en] The type [`[*sync-wait-result-type]<Sndr>] is well-formed.
+[:zh_CN] 类型 [`[*sync-wait-result-type]<Sndr>] 良构。
+[item]
+[:en] [`[`:c same_as]<decltype([$e]), [*sync-wait-result-type]<Sndr>>] is [`true],
+where [$e] is the [`apply_sender] expression above.
+[:zh_CN] [`[`:c same_as]<decltype([$e]), [*sync-wait-result-type]<Sndr>>] 为 [`true]，
+其中 [$e] 为上述 [`apply_sender] 表达式。
+[list:end]
+
+[para]
+[:en] Let [*sync-wait-state] and [*sync-wait-receiver] be the following
+exposition-only class templates:
+[:zh_CN] 令 [*sync-wait-state] 和 [*sync-wait-receiver] 为以下仅用于阐释的类模板：
+[codeblock:synopsis]
+namespace std::this_thread {
+  template<class Sndr>
+  struct [[redoc("*>")]]sync-wait-state {                                      // [=expos]
+    execution::run_loop [[redoc("*>")]]loop;                                   // [=expos]
+    exception_ptr [[redoc("*>")]]error;                                        // [=expos]
+    [[redoc("*>")]]sync-wait-result-type<Sndr> [[redoc("*>")]]result;                         // [=expos]
+  };
+
+  template<class Sndr>
+  struct [[redoc("*>")]]sync-wait-receiver {                                   // [=expos]
+    using receiver_concept = execution::receiver_t;
+    [[redoc("*>")]]sync-wait-state<Sndr>* [[redoc("*>")]]state;                               // [=expos]
+
+    template<class... Args>
+    void set_value(Args&&... args) && noexcept;
+
+    template<class Error>
+    void set_error(Error&& err) && noexcept;
+
+    void set_stopped() && noexcept;
+
+    [[redoc("*>")]]sync-wait-env get_env() const noexcept { return {&[[redoc("*>")]]state->[[redoc("*>")]]loop}; }
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+template<class... Args>
+void set_value(Args&&... args) && noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+try {
+  [[redoc("*>")]]state->[[redoc("*>")]]result.emplace(std::forward<Args>(args)...);
+} catch (...) {
+  [[redoc("*>")]]state->[[redoc("*>")]]error = current_exception();
+}
+[[redoc("*>")]]state->[[redoc("*>")]]loop.finish();
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class Error>
+void set_error(Error&& err) && noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]state->[[redoc("*>")]]error = [[redoc("*>")]]AS-EXCEPT-PTR(std::forward<Error>(err));    // [:en] see [#exec.general] [:zh_CN] 参见 [#exec.general]
+[[redoc("*>")]]state->[[redoc("*>")]]loop.finish();
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+void set_stopped() && noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`[*state]->[*loop].finish()].
+[:zh_CN] 等价于 [`[*state]->[*loop].finish()]。
+[div:end]
+
+[para]
+[:en] For a subexpression [`sndr], let [`Sndr] be [`decltype((sndr))].
+[:zh_CN] 对于子表达式 [`sndr]，令 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`[`:c sender_to]<Sndr, [*sync-wait-receiver]<Sndr>>] is [`false],
+the expression [`sync_wait.apply_sender(sndr)] is ill-formed;
+otherwise, it is equivalent to:
+[:zh_CN] 如果 [`[`:c sender_to]<Sndr, [*sync-wait-receiver]<Sndr>>] 为 [`false]，
+则表达式 [`sync_wait.apply_sender(sndr)] 非良构；否则，它等价于：
+[codeblock]
+[[redoc("*>")]]sync-wait-state<Sndr> state;
+auto op = connect(sndr, [[redoc("*>")]]sync-wait-receiver<Sndr>{&state});
+start(op);
+
+state.[[redoc("*>")]]loop.run();
+if (state.[[redoc("*>")]]error) {
+  rethrow_exception(std::move(state.error));
+}
+return std::move(state.[[redoc("*>")]]result);
+[codeblock:end]
+
+[para]
+[:en] The behavior of [`this_thread::sync_wait(sndr)] is undefined unless:
+[:zh_CN] 除非以下情况，否则 [`this_thread::sync_wait(sndr)] 的行为未定义：
+
+[list]
+[item]
+[:en] It blocks the current thread of execution ([#defns.block])
+with forward progress guarantee delegation ([#intro.progress])
+until the specified sender completes.
+[:zh_CN] 它以向前进展保证委托（[#intro.progress]）阻塞当前执行线程（[#defns.block]）
+直至指定发送器完成。
+
+[begin:note]
+[:en] The default implementation of [`sync_wait] achieves forward progress
+guarantee delegation by providing a [`run_loop] scheduler via the
+[`get_delegation_scheduler] query on the [*sync-wait-receiver][=']s environment.
+[:zh_CN] [`sync_wait] 的缺省实现，通过以 [*sync-wait-receiver] 的环境上的
+[`get_delegation_scheduler] 查询提供一个 [`run_loop] 调度器，达成向前进展保证委托。
+
+[:en] The [`run_loop] is driven by the current thread of execution.
+[:zh_CN] [`run_loop] 由当前执行线程驱动。
+[end:note]
+
+[item]
+[:en] It returns the specified sender[=']s async results as follows:
+[:zh_CN] 它按如下返回指定发送器的异步结果：
+[list]
+[item]
+[:en] For a value completion, the result datums are returned in
+a [`tuple] in an engaged [`optional] object.
+[:zh_CN] 对于值完成，结果数据以一个含值 [`optional] 对象中的 [`tuple] 的方式返回。
+[item]
+[:en] For an error completion, an exception is thrown.
+[:zh_CN] 对于错误完成，抛出一个异常。
+[item]
+[:en] For a stopped completion, a disengaged [`optional] object is returned.
+[:zh_CN] 对于停止完成，返回一个脱离的 [`optional] 对象。
+[list:end]
+[list:end]
