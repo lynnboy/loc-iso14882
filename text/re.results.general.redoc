@@ -1,0 +1,164 @@
+[section#re.results.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[%@lib match_results]
+[:en] Class template [`match_results] denotes a collection of character
+sequences representing the result of a regular expression match.
+[:zh_CN] 类模板 [`match_results] 代表一个字符序列的集合来表示一次正则表达式匹配的结果。
+
+[:en] Storage for the collection is allocated and freed as necessary by the
+member functions of class template [`match_results].
+[:zh_CN] 类 [`match_results] 的各成员函数根据需要为这个集合进行存储的分配和释放。
+
+[para]
+[:en] [%requirements[!container]] [%requirements[!sequence]]
+The class template [`match_results] meets the requirements of an allocator-aware
+container ([#container.alloc.reqmts]) and of a sequence container
+([#container.requirements.general], [#sequence.reqmts]) except that only copy
+assignment, move assignment, and operations defined for const-qualified sequence
+containers are supported and that the semantics of the comparison operator
+functions are different from those required for a container.
+[:zh_CN] [%规定[!容器]] [%规定[!序列]]
+类模板 [`match_results] 满足对分配器感知容器（[#container.alloc.reqmts]）和对
+序列容器（[#container.requirements.general]，[#sequence.reqmts]）的规定，但它仅
+提供赋值赋值，移动赋值，以及为 [`const] 限定的序列容器所定义的各项操作，并且其
+比较运算符函数的语义与容器所规定的有所不同。
+
+[para]
+[:en] A default-constructed [`match_results] object has no fully established
+result state.
+[:zh_CN] 默认构造的 [`match_results] 对象并没有完整建立的结果状态。
+
+[:en] A match result is [+ready] when, as a consequence of a completed regular
+expression match modifying such an object, its result state becomes fully
+established.
+[:zh_CN] 一旦某次修改这种对象的正则表达式匹配完成，由此造成其结果状态完全建立，
+此时称该匹配结果[+就绪]。
+
+[:en] The effects of calling most member functions from a [`match_results]
+object that is not ready are undefined.
+[:zh_CN] 对未就绪的 [`match_results] 对象调用其大多数成员函数的效果都是未定义的。
+
+[para]
+[%@lib@member match_results[!matched]]
+[:en] The [`sub_match] object stored at index 0 represents sub-expression 0,
+i.e., the whole match.
+[:zh_CN] 存储在 0 号索引的 [`sub_match] 对象表示 0 号子表达式，亦即整个匹配。
+
+[:en] In this case the [`sub_match] member [`matched] is always [`true].
+[:zh_CN] 这种情况中的 [`sub_match] 成员 [`matched] 总为 [`true]。
+
+[:en] The [`sub_match] object stored at index [`n] denotes what matched the
+marked sub-expression [`n] within the matched expression.
+[:zh_CN] 存储在 [`n] 号索引的 [`sub_match] 对象代表所匹配的表达式中的 [`n] 号
+标记子表达式所匹配的内容。
+
+[:en] If the sub-expression [`n] participated in a regular expression match then
+the [`sub_match] member [`matched] evaluates to [`true], and members [`first]
+and [`second] denote the range of characters [=range(first,second)] which formed
+that match.
+[:zh_CN] 如果 [`n] 号子表达式参与了正则表达式匹配，则其 [`sub_match] 成员
+[`matched] 求值为 [`true]，且其成员 [`first] 和 [`second] 代表构成其匹配的字符
+范围 [=range(first,second)]。
+
+[:en] Otherwise [`matched] is [`false], and members [`first] and [`second] point
+to the end of the sequence that was searched.
+[:zh_CN] 否则，其 [`matched] 为 [`false]，且成员 [`first] 和 [`second] 指向所
+搜索的序列的末尾。
+
+[begin:note]
+[:en] The [`sub_match] objects representing different sub-expressions that did
+not participate in a regular expression match need not be distinct.
+[:zh_CN] 表示并未参与正则表达式匹配中的不同子表达式的 [`sub_match] 之间并不需要有所区别。
+[end:note]
+
+[codeblock:synopsis]
+namespace std {
+  template<class BidirectionalIterator,
+           class Allocator = allocator<sub_match<BidirectionalIterator>>>
+    class match_results {
+    public:
+      using value_type      = sub_match<BidirectionalIterator>;
+      using const_reference = const value_type&;
+      using reference       = value_type&;
+      using const_iterator  = [[redoc("[?impdefx"
+          " [:en] type of [`match_results::const_iterator]"
+        "[:zh_CN] [`match_results::const_iterator] 的类型]")]];
+      using iterator        = const_iterator;
+      using difference_type =
+              typename iterator_traits<BidirectionalIterator>::difference_type;
+      using size_type       = typename allocator_traits<Allocator>::size_type;
+      using allocator_type  = Allocator;
+      using char_type       =
+              typename iterator_traits<BidirectionalIterator>::value_type;
+      using string_type     = basic_string<char_type>;
+
+      // [:en] [#re.results.const], construct/copy/destroy \
+      [:zh_CN] [#re.results.const]，构造/复制/销毁
+      match_results() : match_results(Allocator()) {}
+      explicit match_results(const Allocator& a);
+      match_results(const match_results& m);
+      match_results(const match_results& m, const Allocator& a);
+      match_results(match_results&& m) noexcept;
+      match_results(match_results&& m, const Allocator& a);
+      match_results& operator=(const match_results& m);
+      match_results& operator=(match_results&& m);
+      ~match_results();
+
+      // [:en] [#re.results.state], state \
+      [:zh_CN] [#re.results.state]，状态
+      bool ready() const;
+
+      // [:en] [#re.results.size], size \
+      [:zh_CN] [#re.results.size]，大小
+      size_type size() const;
+      size_type max_size() const;
+      bool empty() const;
+
+      // [:en] [`re.results.acc], element access \
+      [:zh_CN] [`re.results.acc]，成员访问
+      difference_type length(size_type sub = 0) const;
+      difference_type position(size_type sub = 0) const;
+      string_type str(size_type sub = 0) const;
+      const_reference operator[](size_type n) const;
+
+      const_reference prefix() const;
+      const_reference suffix() const;
+      const_iterator begin() const;
+      const_iterator end() const;
+      const_iterator cbegin() const;
+      const_iterator cend() const;
+
+      // [:en] [#re.results.form], format \
+      [:zh_CN] [#re.results.form]，格式化
+      template<class OutputIter>
+        OutputIter
+          format(OutputIter out,
+                 const char_type* fmt_first, const char_type* fmt_last,
+                 regex_constants::match_flag_type flags = regex_constants::format_default) const;
+      template<class OutputIter, class ST, class SA>
+        OutputIter
+          format(OutputIter out,
+                 const basic_string<char_type, ST, SA>& fmt,
+                 regex_constants::match_flag_type flags = regex_constants::format_default) const;
+      template<class ST, class SA>
+        basic_string<char_type, ST, SA>
+          format(const basic_string<char_type, ST, SA>& fmt,
+                 regex_constants::match_flag_type flags = regex_constants::format_default) const;
+      string_type
+        format(const char_type* fmt,
+               regex_constants::match_flag_type flags = regex_constants::format_default) const;
+
+      // [:en] [#re.results.all], allocator \
+      [:zh_CN] [#re.results.all]，分配器
+      allocator_type get_allocator() const;
+
+      // [:en] [#re.results.swap], swap \
+      [:zh_CN] [#re.results.swap]，交换
+      void swap(match_results& that);
+    };
+}
+[codeblock:end]

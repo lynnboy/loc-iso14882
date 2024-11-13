@@ -91,12 +91,12 @@ Redoc is a markup language, all special things are in `[]`.
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
-*n-char*                    |*n-字符*       | [lex.charset] | **翻译字符集** - [`}\n`]
-*n-char-sequence*           |*n-字符序列*   | [lex.charset] | *n-字符*__+__
-*named-universal-character* |*具名通用字符* | [lex.charset] | `\N{` *n-字符序列* `}`
-*hex-quad*                  |*hex-四位*     | [lex.charset] | *十六进制数字* **{4}**
-*simple-hexadecimal-digit-sequence*|*简单十六进制数字序列*| [lex.charset] | *十六进制数字*__+__
-*universal-character-name*  |*通用字符名*   | [lex.charset] | `\u` *hex-四位* \| `\U` *hex-四位* *hex-四位* \| `\u{` *简单十六进制数字序列* `}` \| *具名通用字符*
+*n-char*                    |*n-字符*       | [lex.universal.char] | **翻译字符集** - [`}\n`]
+*n-char-sequence*           |*n-字符序列*   | [lex.universal.char] | *n-字符*__+__
+*named-universal-character* |*具名通用字符* | [lex.universal.char] | `\N{` *n-字符序列* `}`
+*hex-quad*                  |*hex-四位*     | [lex.universal.char] | *十六进制数字* **{4}**
+*simple-hexadecimal-digit-sequence*|*简单十六进制数字序列*| [lex.universal.char] | *十六进制数字*__+__
+*universal-character-name*  |*通用字符名*   | [lex.universal.char] | `\u` *hex-四位* \| `\U` *hex-四位* *hex-四位* \| `\u{` *简单十六进制数字序列* `}` \| *具名通用字符*
 *preprocessing-token*       |*预处理记号*   | [lex.pptoken] | *头文件名* \|<br> *import-关键字* \|<br> *module-关键字* \|<br> *export-关键字* \|<br> *标识符* \|<br> *预处理数字* \|<br>*字符字面量* \|<br> *用户定义字符字面量* \| <br>*字符串字面量* \|<br> *用户定义字符串字面量* \|<br>其他所有 *通用字符名*
 *token*                     |*记号*         | [lex.token]   | *标识符* \| *关键字* \| *字面量* \| *运算符或标点*
 *header-name*               |*头文件名*     | [lex.header]  | `<` *h-字符序列* `>` \| `"` *q-字符序列* `"`

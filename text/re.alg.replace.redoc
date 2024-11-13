@@ -1,0 +1,150 @@
+[section#re.alg.replace
+    [`regex_replace]
+]
+
+[%@lib regex_replace]
+[codeblock:declaration]
+template<class OutputIterator, class BidirectionalIterator,
+          class traits, class charT, class ST, class SA>
+  OutputIterator
+    regex_replace(OutputIterator out,
+                  BidirectionalIterator first, BidirectionalIterator last,
+                  const basic_regex<charT, traits>& e,
+                  const basic_string<charT, ST, SA>& fmt,
+                  regex_constants::match_flag_type flags = regex_constants::match_default);
+template<class OutputIterator, class BidirectionalIterator, class traits, class charT>
+  OutputIterator
+    regex_replace(OutputIterator out,
+                  BidirectionalIterator first, BidirectionalIterator last,
+                  const basic_regex<charT, traits>& e,
+                  const charT* fmt,
+                  regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[%@lib format_no_copy]
+[%@lib format_first_only]
+[:en] Constructs a [`regex_iterator] object [`i] as if by
+[:zh_CN] 如同以如下方式构造一个 [`regex_iterator] 对象 [`i]：
+[codeblock]
+regex_iterator<BidirectionalIterator, charT, traits> i(first, last, e, flags)[[redoc("!>")]];
+[codeblock:end]
+
+[:en@~] and uses [`i] to enumerate through all of the matches [`m] of type
+[`match_results<BidirectionalIterator>] that occur within the sequence
+[=range(first,last)].
+[:zh_CN@~] 然后用 [`i] 来对序列 [=range(first,last)] 中出现的所有
+[`match_results<BidirectionalIterator>] 类型的匹配结果 [`m] 进行列举。
+
+[:en] If no such matches are found and
+[`!(flags & regex_constants::format_no_copy)], then calls
+[:zh_CN] 如果未找到这样的匹配，且 [`!(flags & regex_constants::format_no_copy)]，则调用
+[codeblock]
+out = copy(first, last, out)
+[codeblock:end]
+
+[:en] If any matches are found then, for each such match:
+[:zh_CN] 如果找到了任何匹配，则对每个匹配结果：
+
+[list]
+[item]
+[:en] If [`!(flags & regex_constants::format_no_copy)], calls
+[:zh_CN] 如果 [`!(flags & regex_constants::format_no_copy)]，则调用
+[codeblock]
+out = copy(m.prefix().first, m.prefix().second, out)
+[codeblock:end]
+
+[item]
+[:en] Then calls
+[:zh_CN] 然后对于函数的第一种形式，调用
+[codeblock]
+out = m.format(out, fmt, flags)
+[codeblock:end]
+[:en@~] for the first form of the function and
+[:zh_CN@~] 对于第二种则调用
+[codeblock]
+out = m.format(out, fmt, fmt + char_traits<charT>::length(fmt), flags)
+[codeblock:end]
+[:en@~] for the second.
+[:zh_CN@~]。
+[list:end]
+
+[:en] Finally, if such a match is found and
+[`!(flags & regex_constants::format_no_copy)], calls
+[:zh_CN] 最后，如果找到了这种匹配且
+[`!(flags & regex_constants::format_no_copy)]，则调用
+[codeblock]
+out = copy(last_m.suffix().first, last_m.suffix().second, out)
+[codeblock:end]
+[:en@~] where [`last_m] is a copy of the last match found.
+[:zh_CN@~] 其中 [`last_m] 为所找到的最后一个匹配的副本。
+
+[:en] If [`flags & regex_constants::format_first_only] is nonzero, then only the
+first match found is replaced.
+[:zh_CN] 如果 [`flags & regex_constants::format_first_only] 非零，则仅对第一个
+找到的匹配进行替换。
+
+[para:returns]
+[:en] [`out].
+[:zh_CN] [`out]。
+[div:end]
+
+[%@lib regex_replace]
+[codeblock:declaration]
+template<class traits, class charT, class ST, class SA, class FST, class FSA>
+  basic_string<charT, ST, SA>
+    regex_replace(const basic_string<charT, ST, SA>& s,
+                  const basic_regex<charT, traits>& e,
+                  const basic_string<charT, FST, FSA>& fmt,
+                  regex_constants::match_flag_type flags = regex_constants::match_default);
+template<class traits, class charT, class ST, class SA>
+  basic_string<charT, ST, SA>
+    regex_replace(const basic_string<charT, ST, SA>& s,
+                  const basic_regex<charT, traits>& e,
+                  const charT* fmt,
+                  regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Constructs an empty string [`result] of type [`basic_string<charT, ST, SA>]
+and calls:
+[:zh_CN] 构造 [`basic_string<charT, ST, SA>] 类型的一个空字符串 [`result]，然后调用：
+[codeblock]
+regex_replace(back_inserter(result), s.begin(), s.end(), e, fmt, flags);
+[codeblock:end]
+
+[para:returns]
+[:en] [`result].
+[:zh_CN] [`result]。
+[div:end]
+
+[%@lib regex_replace]
+[codeblock:declaration]
+template<class traits, class charT, class ST, class SA>
+  basic_string<charT>
+    regex_replace(const charT* s,
+                  const basic_regex<charT, traits>& e,
+                  const basic_string<charT, ST, SA>& fmt,
+                  regex_constants::match_flag_type flags = regex_constants::match_default);
+template<class traits, class charT>
+  basic_string<charT>
+    regex_replace(const charT* s,
+                  const basic_regex<charT, traits>& e,
+                  const charT* fmt,
+                  regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Constructs an empty string [`result] of type [`basic_string<charT>] and calls:
+[:zh_CN] 构造 [`basic_string<charT>] 类型的一个空字符串 [`result]，然后调用：
+[codeblock]
+regex_replace(back_inserter(result), s, s + char_traits<charT>::length(s), e, fmt, flags);
+[codeblock:end]
+
+[para:returns]
+[:en] [`result].
+[:zh_CN] [`result]。
+[div:end]

@@ -1,0 +1,309 @@
+[section#locale.codecvt.virtuals
+    [:en] Virtual functions
+    [:zh_CN] 虚函数
+]
+
+[%@lib@member codecvt[!do_out]]
+[%@lib@member codecvt[!do_in]]
+[codeblock:declaration]
+result do_out(
+  stateT& state,
+  const internT* from, const internT* from_end, const internT*& from_next,
+  externT* to, externT* to_end, externT*& to_next) const;
+
+result do_in(
+  stateT& state,
+  const externT* from, const externT* from_end, const externT*& from_next,
+  internT* to, internT* to_end, internT*& to_next) const;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`(from <= from_end && to <= to_end)] is well-defined and [`true]; [`state]
+is initialized, if at the beginning of a sequence, or else is equal to the
+result of converting the preceding characters in the sequence.
+[:zh_CN] [`(from <= from_end && to <= to_end)] 良构且为 [`true]；当处于序列起始
+时，[`state] 已被初始化，否则它等于对该序列中千面的字符进行转换后的结果。
+
+[para:effects]
+[:en] Translates characters in the source range [=range(from,from_end)], placing
+the results in sequential positions starting at destination [`to].
+[:zh_CN] 对源范围 [=range(from,from_end)] 中的字符进行转换，将其结果依次置于
+开始于目标 [`to] 的连续位置中。
+
+[:en] Converts no more than [`(from_end - from)] source elements, and stores no
+more than [`(to_end - to)] destination elements.
+[:zh_CN] 转换不超过 [`(from_end - from)] 个源元素，并保持不超过 [`(to_end - to)]
+个目标元素。
+
+[para]
+[:en] Stops if it encounters a character it cannot convert.
+[:zh_CN] 当出现无法转换的字符时就停止。
+
+[:en] It always leaves the [`from_next] and [`to_next] pointers pointing one
+beyond the last element successfully converted.
+[:zh_CN] [`from_next] 和 [`to_next] 指针总是指向最后一个成功转换的元素之后一个位置。
+
+[:en] If returns [`noconv], [`internT] and [`externT] are the same type and the
+converted sequence is identical to the input sequence [=range(from,from_next)].
+[:zh_CN] 当返回 [`noconv] 时，[`internT] 和 [`externT] 为相同类型，并且转换后的
+序列与输入序列 [=range(from,from_next)] 相同。
+
+[:en] [`to_next] is set equal to [`to], the value of [`state] is unchanged, and
+there are no changes to the values in [=range(to,to_end)].
+[:zh_CN] [`to_next] 被设为等于 [`to]，[`state] 的值未被改动，且
+[=range(to,to_end)] 中的各个值未被改动。
+
+[para]
+[:en] A [`codecvt] facet that is used by [`basic_filebuf] ([#file.streams])
+shall have the property that if
+[:zh_CN] 由 [`basic_filebuf]（[#file.streams]）所使用的 [`codecvt] 刻面，应当
+具有如下性质：如果
+[codeblock]
+do_out(state, from, from_end, from_next, to, to_end, to_next)
+[codeblock:end]
+[:en@~]
+would return [`ok], where [`from != from_end], then
+[:zh_CN@~]
+将会返回 [`ok]，其中 [`from != from_end]，则
+[codeblock]
+do_out(state, from, from + 1, from_next, to, to_end, to_next)
+[codeblock:end]
+[:en@~] shall also return [`ok], and that if
+[:zh_CN@~] 也应当返回 [`ok]，而如果
+[codeblock]
+do_in(state, from, from_end, from_next, to, to_end, to_next)
+[codeblock:end]
+[:en@~] would return [`ok], where [`to != to_end], then
+[:zh_CN@~] 将会返回 [`ok]，其中 [`to != to_end]，则
+[codeblock]
+do_in(state, from, from_end, from_next, to, to + 1, to_next)
+[codeblock:end]
+[:en@~] shall also return [`ok].[#:fn]
+[:zh_CN@~] 也应当返回 [`ok][#:fn]。
+
+[note:foot]
+[:en] Informally, this means that [`basic_filebuf] assumes that the mappings
+from internal to external characters is 1 to N: that a [`codecvt] facet that is
+used by [`basic_filebuf] can translate characters one internal character at a time.
+[:zh_CN] 非正式的说，这意味着 [`basic_filebuf] 假定从内部字符到外部字符之间的映射为
+一对多的：由 [`basic_filebuf] 所使用的 [`codecvt] 刻面能够进行一次一个内部字符的转换。
+[note:end]
+
+[begin:note]
+[:en] As a result of operations on [`state], it can return [`ok] or [`partial]
+and set [`from_next == from] and [`to_next != to].
+[:zh_CN] 作为对 [`state] 的操作的结果，它可能返回 [`ok] 或 [`partial]，并设置为
+[`from_next == from] 并且 [`to_next != to]。
+[end:note]
+
+[para:returns]
+[:en] An enumeration value, as summarized in [#:tab#locale.codecvt.inout].
+[:zh_CN] 枚举值，总结于 [#:tab#locale.codecvt.inout] 中。
+
+[table:listing@fill=column@shape=?x1#locale.codecvt.inout
+    [:en] [`do_in/do_out] result values
+    [:zh_CN] [`do_in/do_out] 的结果值
+
+    [|@code
+        [:en] Value
+        [:zh_CN] 值 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] ok
+[|] [:en] completed the conversion
+    [:zh_CN] 转换已完成
+
+[|] partial
+[|] [:en] not all source characters converted
+    [:zh_CN] 并未转换所有源字符
+
+[|] error
+[|] [:en] encountered a character in [=range(from,from_end)] that cannot be
+    converted
+    [:zh_CN] 在 [=range(from,from_end)] 中遇到了无法转换的字符
+
+[|] noconv
+[|] [:en] [`internT] and [`externT] are the same type, and input sequence is
+    identical to converted sequence
+    [:zh_CN] [`internT] 和 [`externT] 为相同类型，且输入序列与转换后的序列相同
+
+[table:end]
+
+[:en] A return value of [`partial], if [`(from_next == from_end)], indicates
+that either the destination sequence has not absorbed all the available
+destination elements, or that additional source elements are needed before
+another destination element can be produced.
+[:zh_CN] 返回值 [`partial]，当 [`(from_next == from_end)] 时，代表或者目标序列
+并未收到所有可用的目标元素，或者能够产生另一个目标元素之前需要更多的源元素。
+
+[para:remarks]
+[:en] Its operations on [`state] are unspecified.
+[:zh_CN] 其中对 [`state] 的操作是未指明的。
+
+[begin:note]
+[:en] This argument can be used, for example, to maintain shift state, to specify
+conversion options (such as count only), or to identify a cache of seek offsets.
+[:zh_CN] 这个实参可以用于，例如，维护迁移状态，指定转换的选项（比如仅进行计数），
+或者给出定位偏移量的缓存。
+[end:note]
+[div:end]
+
+[%@lib@member codecvt[!do_unshift]]
+[codeblock:declaration]
+result do_unshift(stateT& state, externT* to, externT* to_end, externT*& to_next) const;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`(to <= to_end)] is well-defined and [`true]; [`state] is initialized, if
+at the beginning of a sequence, or else is equal to the result of converting the
+preceding characters in the sequence.
+[:zh_CN] [`(to <= to_end)] 良构且为 [`true]；当处于序列起始时，[`state] 已被
+初始化，否则它等于对该序列中前面的字符进行转换后的结果。
+
+[para:effects]
+[:en] Places characters starting at [`to] that should be appended to terminate
+a sequence when the current [`stateT] is given by [`state].[#:fn]
+[:zh_CN] 将字符置于以 [`to] 开始的位置，根据当前为 [`state] 的 [`stateT]，追加
+字符直到序列终止[#:fn]。
+
+[note:foot]
+[:en] Typically these will be characters to return the state to [`stateT()].
+[:zh_CN] 通常这些字符为使得状态返回 [`stateT()] 的字符。
+[note:end]
+
+[:en] Stores no more than [`(to_end - to)] destination elements, and leaves the
+[`to_next] pointer pointing one beyond the last element successfully stored.
+[:zh_CN] 存储不超过 [`(to_end - to)] 个目标元素，余留 [`to_next] 指针指向最后
+一个成功转换的元素之后一个位置。
+
+[para:returns]
+[:en] An enumeration value, as summarized in [#:tab#locale.codecvt.unshift].
+[:zh_CN] 枚举值，总结于 [#:tab#locale.codecvt.unshift] 中。
+
+[table:listing@fill=column@shape=?x1#locale.codecvt.unshift
+    [:en] [`do_unshift] result values
+    [:zh_CN] [`do_unshift] 的结果值
+
+    [|@code
+        [:en] Value
+        [:zh_CN] 值 ]
+    [|  [:en] Meaning
+        [:zh_CN] 含义 ]
+]
+
+[|] ok
+[|] [:en] completed the sequence
+    [:zh_CN] 序列已完成
+
+[|] partial
+[|] [:en] space for more than [`to_end - to] destination elements was needed to
+    terminate a sequence given the value of [`state]
+    [:zh_CN] 需要多于 [`to_end - to] 个目标元素的空间，以便根据给定 [`state] 的
+    值来终止序列
+
+[|] error
+[|] [:en] an unspecified error has occurred
+    [:zh_CN] 出现了未指明的错误
+
+[|] noconv
+[|] [:en] no termination is needed for this [`state_type]
+    [:zh_CN] 对于这个 [`state_type] 不需要进行终止
+
+[table:end]
+
+[div:end]
+
+[%@lib@member codecvt[!do_encoding]]
+[codeblock:declaration]
+int do_encoding() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`-1] if the encoding of the [`externT] sequence is state-dependent; else
+the constant number of [`externT] characters needed to produce an internal
+character; or [`0] if this number is not a constant.[#:fn]
+[:zh_CN] 如果 [`externT] 序列是状态相关的，则返回 [`-1]；否则为用于产生一个内部
+字符所需的 [`externT] 字符的常量个数；或者当这个数量不是常量时返回 [`0][#:fn]。
+
+[note:foot]
+[:en] If [`encoding()] yields [`-1], then more than [`max_length()] [`externT]
+elements can be consumed when producing a single [`internT] character, and
+additional [`externT] elements can appear at the end of a sequence after those
+that yield the final [`internT] character.
+[:zh_CN] 如果 [`encoding()] 返回 [`-1]，则当产生一个 [`internT] 字符时可以消耗
+超过 [`max_length()] 个 [`externT] 元素，而额外的 [`externT] 元素可以出现于用以
+产生最终的 [`internT] 字符的序列末尾之后。
+[note:end]
+[div:end]
+
+[%@lib@member codecvt[!do_always_noconv]]
+[codeblock:declaration]
+bool do_always_noconv() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`do_in()] and [`do_out()] return [`noconv] for all valid
+argument values.
+[:zh_CN] 如果 [`do_in()] 和 [`do_out()] 为所有有效实参均返回 [`noconv] 则为 [`true]。
+
+[:en] [`codecvt<char, char, mbstate_t>] returns [`true].
+[:zh_CN] [`codecvt<char, char, mbstate_t>] 返回 [`true]。
+[div:end]
+
+[%@lib@member codecvt[!do_length]]
+[codeblock:declaration]
+int do_length(stateT& state, const externT* from, const externT* from_end, size_t max) const;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`(from <= from_end)] is well-defined and [`true]; [`state] is initialized,
+if at the beginning of a sequence, or else is equal to the result of converting
+the preceding characters in the sequence.
+[:zh_CN] [`(from <= from_end)] 良构且为 [`true]；当处于序列起始时，[`state] 已被
+初始化，否则它等于对该序列中千面的字符进行转换后的结果。
+
+[para:effects]
+[:en] The effect on the [`state] argument is as if it called
+[`do_in(state, from, from_end, from, to, to+max, to)] for [`to] pointing to a
+buffer of at least [`max] elements.
+[:zh_CN] 对 [`state] 实参的效果是如同为某个指向至少 [`max] 个元素的缓冲区的 [`to]
+进行了调用 [`do_in(state, from, from_end, from, to, to+max, to)]。
+
+[para:returns]
+[:en] [`(from_next-from)] where [`from_next] is the largest value in the range
+[=crange(from,from_end)] such that the sequence of values in the range
+[=range(from,from_next)] represents [`max] or fewer valid complete characters of
+type [`internT].
+[:zh_CN] [`(from_next-from)]，其中 [`from_next] 为范围 [=crange(from,from_end)]
+中的最大值，并能够使得范围 [=range(from,from_next)] 中的值序列表示 [`max] 或更少
+的 [`internT] 类型的完整字符。
+
+[:en] The specialization [`codecvt<char, char, mbstate_t>], returns the lesser
+of [`max] and [`(from_end-from)].
+[:zh_CN] 特例 [`codecvt<char, char, mbstate_t>] 返回 [`max] 和
+[`(from_end-from)] 之中的较小值。
+[div:end]
+
+[%@lib@member codecvt[!do_max_length]]
+[codeblock:declaration]
+int do_max_length() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The maximum value that [`do_length(state, from, from_end, 1)] can return
+for any valid range [=range(from,from_end)] and [`stateT] value [`state].
+[:zh_CN] 对于任意有效范围 [=range(from,from_end)] 和 [`stateT] 值 [`state]，
+[`do_length(state, from, from_end, 1)] 所能够返回的最大值。
+
+[:en] The specialization [`codecvt<char, char, mbstate_t>::do_max_length()]
+returns 1.
+[:zh_CN] 特例 [`codecvt<char, char, mbstate_t>::do_max_length()] 返回 1。
+[div:end]

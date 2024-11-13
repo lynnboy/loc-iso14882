@@ -1,0 +1,119 @@
+[section#re.regiter.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[%@lib regex_iterator]
+[%@lib match_results]
+[:en] The class template [`regex_iterator] is an iterator adaptor.
+[:zh_CN] 类模板 [`regex_iterator] 是一种迭代器适配器。
+
+[:en] It represents a new view of an existing iterator sequence, by enumerating
+all the occurrences of a regular expression within that sequence.
+[:zh_CN] 它用来表示某个现存迭代器序列的一个新视图，列举该序列中某个正则表达式
+所有出现的匹配。
+
+[:en] A [`regex_iterator] uses [`regex_search] to find successive regular
+expression matches within the sequence from which it was constructed.
+[:zh_CN] [`regex_iterator] 使用 [`regex_search] 在其所构造的序列中查找相继出现的
+正则表达式匹配。
+
+[:en] After the iterator is constructed, and every time [`operator++] is used,
+the iterator finds and stores a value of [`match_results<BidirectionalIterator>].
+[:zh_CN] 迭代器被构造之后，以及每次使用 [`operator++] 之后，迭代器查找并存储一个
+[`match_results<BidirectionalIterator>] 的值。
+
+[:en] If the end of the sequence is reached ([`regex_search] returns [`false]),
+the iterator becomes equal to the end-of-sequence iterator value.
+[:zh_CN] 如果到达了序列末尾（[`regex_search] 返回了 [`false]），则迭代器变为与
+序列末尾迭代器值相等。
+
+[:en] The default constructor constructs an end-of-sequence iterator object,
+which is the only legitimate iterator to be used for the end condition.
+[:zh_CN] 默认构造函数所构造的是序列末尾迭代器对象，它是用于结束条件的唯一正当的迭代器。
+
+[:en] The result of [`operator*] on an end-of-sequence iterator is not defined.
+[:zh_CN] 对序列末尾迭代器进行 [`operator*] 的结果是未定义的。
+
+[:en] For any other iterator value a const
+[`match_results<BidirectionalIterator>&] is returned.
+[:zh_CN] 对于任何其他迭代器值，都返回一个
+[`const match_results<BidirectionalIterator>&]。
+
+[:en] The result of [`operator->] on an end-of-sequence iterator is not defined.
+[:zh_CN] 对序列末尾迭代器进行 [`operator->] 的结果是未定义的。
+
+[:en] For any other iterator value a
+[`const match_results<BidirectionalIterator>*] is returned.
+[:zh_CN] 对于任何其他迭代器值，都返回一个
+[`const match_results<BidirectionalIterator>*]。
+
+[:en] It is impossible to store things into [`regex_iterator]s.
+[:zh_CN] 不可能向 [`regex_iterator] 中存储东西。
+
+[:en] Two end-of-sequence iterators are always equal.
+[:zh_CN] 两个序列末尾迭代器总是相等。
+
+[:en] An end-of-sequence iterator is not equal to a non-end-of-sequence iterator.
+[:zh_CN] 序列末尾迭代器与非序列末尾迭代器不相等。
+
+[:en] Two non-end-of-sequence iterators are equal when they are constructed from
+the same arguments.
+[:zh_CN] 两个非序列末尾迭代器，当它们从相同的实参构造时，它们相等。
+
+[codeblock:synopsis]
+namespace std {
+  template<class BidirectionalIterator,
+            class charT = typename iterator_traits<BidirectionalIterator>::value_type,
+            class traits = regex_traits<charT>>
+    class regex_iterator {
+    public:
+      using regex_type        = basic_regex<charT, traits>;
+      using iterator_category = forward_iterator_tag;
+      using iterator_concept  = input_iterator_tag;
+      using value_type        = match_results<BidirectionalIterator>;
+      using difference_type   = ptrdiff_t;
+      using pointer           = const value_type*;
+      using reference         = const value_type&;
+
+      regex_iterator();
+      regex_iterator(BidirectionalIterator a, BidirectionalIterator b,
+                     const regex_type& re,
+                     regex_constants::match_flag_type m = regex_constants::match_default);
+      regex_iterator(BidirectionalIterator, BidirectionalIterator,
+                     const regex_type&&,
+                     regex_constants::match_flag_type = regex_constants::match_default) = delete;
+      regex_iterator(const regex_iterator&);
+      regex_iterator& operator=(const regex_iterator&);
+      bool operator==(const regex_iterator&) const;
+      bool operator==(default_sentinel_t) const { return *this == regex_iterator(); }
+      const value_type& operator*() const;
+      const value_type* operator->() const;
+      regex_iterator& operator++();
+      regex_iterator operator++(int);
+
+    private:
+      BidirectionalIterator                begin;               // [=expos]
+      BidirectionalIterator                end;                 // [=expos]
+      const regex_type*                    pregex;              // [=expos]
+      regex_constants::match_flag_type     flags;               // [=expos]
+      match_results<BidirectionalIterator> match;               // [=expos]
+    };
+}
+[codeblock:end]
+
+[para]
+[:en] An object of type [`regex_iterator] that is not an end-of-sequence iterator
+holds a [+:% zero-length match] if [`match`[0`].matched == true] and
+[`match`[0`].first == match`[0`].second].
+[:zh_CN] 非序列末尾迭代器的 [`regex_iterator] 类型的对象，当
+[`match`[0`].matched == true] 且 [`match`[0`].first == match`[0`].second] 时，
+持有一个[+:% 零长度匹配]。
+
+[begin:note]
+[:en] For example, this can occur when the part of the regular expression that
+matched consists only of an assertion (such as [`'^'], [`'$'], [`'\b'], [`'\B']).
+[:zh_CN] 例如，当其所匹配的正则表达式的部分仅由某个断言（如 [`'^']、[`'$']、
+[`'\b'] 或 [`'\B']）所构成时会发生。
+[end:note]

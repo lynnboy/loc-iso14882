@@ -1,0 +1,213 @@
+[section#re.alg.match
+    [`regex_match]
+]
+
+[%@lib regex_match]
+[codeblock:declaration]
+template<class BidirectionalIterator, class Allocator, class charT, class traits>
+  bool regex_match(BidirectionalIterator first, BidirectionalIterator last,
+                   match_results<BidirectionalIterator, Allocator>& m,
+                   const basic_regex<charT, traits>& e,
+                   regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`BidirectionalIterator] models [`:c bidirectional_iterator] ([#iterator.concept.bidir]).
+[:zh_CN] [`BidirectionalIterator] 构成 [`:c bidirectional_iterator]（[#iterator.concept.bidir]）。
+
+[para:effects]
+[:en] Determines whether there is a match between the regular expression [`e],
+and all of the character sequence [=range(first,last)].
+[:zh_CN] 确定在正则表达式 [`e] 和字符序列 [=range(first,last)] 之间是否存在匹配。
+
+[:en] The parameter [`flags] is used to control how the expression is matched
+against the character sequence.
+[:zh_CN] 形参 [`flags] 用于控制表达式如何与字符序列匹配。
+
+[:en] When determining if there is a match, only potential matches that match
+the entire character sequence are considered.
+[:zh_CN] 在确定是否存在匹配时，仅考虑可以匹配整个字符序列的潜在匹配结果。
+
+[:en] Returns [`true] if such a match exists, [`false] otherwise.
+[:zh_CN] 当存在这种匹配时返回 [`true]，否则返回 [`false]。
+
+[begin:example]
+[codeblock]
+std::regex re("Get|GetValue");
+std::cmatch m;
+regex_search("GetValue", m, re);        // [:en] returns [`true], and [`m`[0`]] contains [`"Get"] \
+                                        [:zh_CN] 返回 [`true]，且 [`m`[0`]] 包含 [`"Get"]
+regex_match ("GetValue", m, re);        // [:en] returns [`true], and [`m`[0`]] contains [`"GetValue"] \
+                                        [:zh_CN] 返回 [`true]，且 [`m`[0`]] 包含 [`"GetValue"]
+regex_search("GetValues", m, re);       // [:en] returns [`true], and [`m`[0`]] contains [`"Get"] \
+                                        [:zh_CN] 返回 [`true]，且 [`m`[0`]] 包含 [`"Get"]
+regex_match ("GetValues", m, re);       // [:en] returns [`false] [:zh_CN] 返回 [`false]
+[codeblock:end]
+[end:example]
+
+[para:ensures]
+[:en] [`m.ready() == true] in all cases.
+[:zh_CN] 任何情况下均有 [`m.ready() == true]。
+
+[:en] If the function returns [`false], then the effect on parameter [`m] is
+unspecified except that [`m.size()] returns [`0] and [`m.empty()] returns [`true].
+[:zh_CN] 如果函数返回 [`false]，则其对形参 [`m] 的效果是未指明的，但 [`m.size()]
+将返回 [`0] 且 [`m.empty()] 将返回 [`true]。
+
+[:en] Otherwise the effects on parameter [`m] are given in [#:tab#re.alg.match].
+[:zh_CN] 否则，其对形参 [`m] 的效果由 [#:tab#re.alg.match] 给出。
+[div:end]
+
+[table:grid#re.alg.match
+    [:en] Effects of [`regex_match] algorithm
+    [:zh_CN] [`regex_match] 算法的效果
+    [|  [:en] Element
+        [:zh_CN] 元素 ]
+    [|  [:en] Value
+        [:zh_CN] 值 ]
+]
+[|] [`m.size()]
+[|] [`1 + e.mark_count()]
+[-]
+
+[|] [`m.empty()]
+[|] [`false]
+[-]
+
+[|] [`m.prefix().first]
+[|] [`first]
+[-]
+
+[|] [`m.prefix().second]
+[|] [`first]
+[-]
+
+[|] [`m.prefix().matched]
+[|] [`false]
+[-]
+
+[|] [`m.suffix().first]
+[|] [`last]
+[-]
+
+[|] [`m.suffix().second]
+[|] [`last]
+[-]
+
+[|] [`m.suffix().matched]
+[|] [`false]
+[-]
+
+[|] [`m`[0`].first]
+[|] [`first]
+[-]
+
+[|] [`m`[0`].second]
+[|] [`last]
+[-]
+
+[|] [`m`[0`].matched]
+[|] [`true]
+[-]
+
+[|] [`m`[n`].first]
+[|] [:en] For all integers [`0 < n < m.size()], the start of the sequence that
+    matched sub-expression [`n].
+    [:zh_CN] 对于任何 [`0 < n < m.size()] 的整数，为匹配 [`n] 号子表达式的序列的开始。
+    [:en] Alternatively, if sub-expression [`n] did not participate in the match,
+    then [`last].
+    [:zh_CN] 或者，若 [`n] 号子表达式并未参与匹配，则为 [`last]。
+[-]
+
+[|] [`m`[n`].second]
+[|] [:en] For all integers [`0 < n < m.size()], the end of the sequence that
+    matched sub-expression [`n].
+    [:zh_CN] 对于任何 [`0 < n < m.size()] 的整数，为匹配 [`n] 号子表达式的序列的末尾。
+    [:en] Alternatively, if sub-expression [`n] did not participate in the match,
+    then [`last].
+    [:zh_CN] 或者，若 [`n] 号子表达式并未参与匹配，则为 [`last]。
+[-]
+
+[|] [`m`[n`].matched]
+[|] [:en] For all integers [`0 < n < m.size()], [`true] if sub-expression [`n]
+    participated in the match, [`false] otherwise.
+    [:zh_CN] 对于任何 [`0 < n < m.size()] 的整数，若 [`n] 号子表达式参与匹配则为
+    [`true]，否则为 [`false]。
+[-]
+[table:end]
+
+[%@lib regex_match]
+[codeblock:declaration]
+template<class BidirectionalIterator, class charT, class traits>
+  bool regex_match(BidirectionalIterator first, BidirectionalIterator last,
+                   const basic_regex<charT, traits>& e,
+                   regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Behaves [=lq]as if[=rq] by constructing an instance of
+[`match_results<BidirectionalIterator> what], and then returning the result of
+[`regex_match(first, last, what, e, flags)].
+[:zh_CN] 行为“如同”构造一个实例 [`match_results<BidirectionalIterator> what]，
+然后再返回 [`regex_match(first, last, what, e, flags)] 的结果。
+[div:end]
+
+[%@lib regex_match]
+[codeblock:declaration]
+template<class charT, class Allocator, class traits>
+  bool regex_match(const charT* str,
+                   match_results<const charT*, Allocator>& m,
+                   const basic_regex<charT, traits>& e,
+                   regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`regex_match(str, str + char_traits<charT>::length(str), m, e, flags)].
+[:zh_CN] [`regex_match(str, str + char_traits<charT>::length(str), m, e, flags)]。
+[div:end]
+
+[%@lib regex_match]
+[codeblock:declaration]
+template<class ST, class SA, class Allocator, class charT, class traits>
+  bool regex_match(const basic_string<charT, ST, SA>& s,
+                   match_results<typename basic_string<charT, ST, SA>::const_iterator,
+                                 Allocator>& m,
+                   const basic_regex<charT, traits>& e,
+                   regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`regex_match(s.begin(), s.end(), m, e, flags)].
+[:zh_CN] [`regex_match(s.begin(), s.end(), m, e, flags)]。
+[div:end]
+
+[%@lib regex_match]
+[codeblock:declaration]
+template<class charT, class traits>
+  bool regex_match(const charT* str,
+                   const basic_regex<charT, traits>& e,
+                   regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:] [`regex_match(str, str + char_traits<charT>::length(str), e, flags)]
+[div:end]
+
+[%@lib regex_match]
+[codeblock:declaration]
+template<class ST, class SA, class charT, class traits>
+  bool regex_match(const basic_string<charT, ST, SA>& s,
+                   const basic_regex<charT, traits>& e,
+                   regex_constants::match_flag_type flags = regex_constants::match_default);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`regex_match(s.begin(), s.end(), e, flags)].
+[:zh_CN] [`regex_match(s.begin(), s.end(), e, flags)]。
+[div:end]
