@@ -11,53 +11,44 @@
 [%constructor[!copy[!elision]]]
 [%constructor[!move[!elision]]]
 When certain criteria are met, an implementation is allowed to omit the
-copy/move construction of a class object, even if the constructor selected for
-the copy/move operation and/or the destructor for the object have
-[%side effects] side effects.
+creation of a class object from a source object of the same type (ignoring
+cv-qualification), even if the selected constructor and/or the destructor for
+the object have [%side effects] side effects.
 [:zh_CN]
 [%临时对象[!～的消除]]
 [%消除[!复制构造函数][% 构造函数[!复制～[!消除]]]]
 [%消除[!移动构造函数][% 构造函数[!移动～[!消除]]]]
 [%构造函数[!复制～[!消除]]]
 [%构造函数[!移动～[!消除]]]
-当满足特定的准则时，即使为复制/移动操作所选择的构造函数和/或析构函数带有
-[%副作用]副作用，仍然允许实现省略类对象的复制/移动构造过程。
+当满足特定的准则时，允许实现省略从相同类型（忽略 cv 限定性）的源对象创建类对象，
+即使为对象所选中的构造函数和/或析构函数带有[%副作用]副作用也是如此。
 
-[:en]
-In such cases, the implementation treats the source and target of the omitted
-copy/move operation as simply two different ways of referring to the same object.
-[:zh_CN]
-在这种情况下，实现只是把被省略的复制/移动操作的源和目标对象简单地当作指代相同
-对象的两个不同方式。
+[:en] In such cases, the implementation treats the source and target of the
+omitted initialization as simply two different ways of referring to the same object.
+[:zh_CN] 在这种情况下，实现只是把被省略的初始化的源和目标对象简单地当作指代相同对象
+的两个不同方式。
 
-[:en]
-If the first parameter of the selected constructor is an rvalue reference to the
-object[=']s type, the destruction of that object occurs when the target would
-have been destroyed; otherwise, the destruction occurs at the later of the times
-when the two objects would have been destroyed without the optimization.[#:fn]
-[:zh_CN]
-若所选择的构造函数的第一个形参是该对象类型的右值引用，则该对象的销毁将发生于目标
-对象将被销毁的时刻；否则，其销毁发生于这两个对象在未优化时将被销毁的最晚时刻[#:fn]。
+[:en] If the first parameter of the selected constructor is an rvalue reference
+to the object[=']s type, the destruction of that object occurs when the target
+would have been destroyed; otherwise, the destruction occurs at the later of the
+times when the two objects would have been destroyed without the optimization.[#:fn]
+[:zh_CN] 若所选择的构造函数的第一个形参是该对象类型的右值引用，则该对象的销毁将发生
+于目标对象将被销毁的时刻；否则，其销毁发生于这两个对象在未优化时将被销毁的最晚时刻[#:fn]。
 
-[note:foot]
-[:en]
-Because only one object is destroyed instead of two, and one copy/move
-constructor is not executed, there is still one object destroyed for each one
-constructed.
-[:zh_CN]
-因为只有一个对象而不是两个被销毁，而一个复制/移动构造函数并未被执行，所以对每个
-被构造的对象仍然只有一个对象被销毁。
-[note:end]
+[begin:note]
+[:en] Because only one object is destroyed instead of two, and the creation of
+one object is omitted, there is still one object destroyed for each one constructed.
+[:zh_CN] 因为只有一个对象而不是两个被销毁，而省略了一个对象的创建，
+所以对每个被构造的对象仍然有一个对象被销毁。
+[end:note]
 
-[:en]
-This elision of copy/move operations, called
+[:en] This elision of object creation, called
 [%@defn copy elision[%constructor[!copy[!elision]]]]
 [%@defn elision[!copy][%constructor[!copy[!elision]]]]
 [%@defn constructor[!copy[!elision]]] [%@defn constructor[!move[!elision]]]
 [+:% copy elision], is permitted in the following circumstances (which may be
 combined to eliminate multiple copies):
-[:zh_CN]
-这种对复制/移动操作的消除（被称为
+[:zh_CN] 这种对对象创建的消除（被称为
 [%@defn 复制消除[%构造函数[!复制～[!消除]]]]
 [%@defn 消除[!复制～][%构造函数[!复制～[!消除]]]]
 [%@defn 构造函数[!复制～[!消除]]] [%@defn 构造函数[!移动～[!消除]]]
@@ -65,74 +56,66 @@ combined to eliminate multiple copies):
 
 [list]
 [item]
-[:en] in a [`return] statement in a function with a class return type, when the
-[~expression] is the name of a non-volatile object with automatic storage
-duration (other than a function parameter or a variable introduced by the
-[~exception-declaration] of a [~handler] ([#except.handle])) with the same type
-(ignoring cv-qualification) as the function return type, the copy/move operation
-can be omitted by constructing the object directly into the function call[=']s
-return object
-[:zh_CN] 在返回类类型的函数的 [`return] 语句中，若其[~表达式]是（除函数形参或者
-由[~处理器]的[~异常声明式]（[#except.handle]）所引入的变量之外的）非 volatile
-的具有自动存储期的对象的名字，且它带有与函数返回类型相同的类型（忽略 cv 限定），
-则其复制/移动操作可以通过将该对象直接构造到该函数的返回值中而省略掉
+[:en] in a [`return] statement ([#stmt.return]) in a function with a class
+return type, when the [~expression] is the name of a non-volatile object [$o]
+with automatic storage duration (other than a function parameter or a variable
+introduced by the [~exception-declaration] of a [~handler] ([#except.handle])),
+the copy-initialization of the result object can be omitted by constructing [$o]
+directly into the function call[=']s result object;
+[:zh_CN] 在返回类类型的函数的 [`return] 语句（[#stmt.return]）中，若其[~表达式]是
+（除函数形参或者由[~处理器]的[~异常声明式]（[#except.handle]）所引入的变量之外的）
+非 volatile 的具有自动存储期的对象 [$o] 的名字，则结果对象的复制初始化可以通过
+将 [$o] 直接构造到该函数调用的结果对象中而省略掉；
 
 [item]
 [:en] in a [~throw-expression] ([#expr.throw]), when the operand is the name of
-a non-volatile object with automatic storage duration (other than a function or
-catch-clause parameter) that belongs to a scope that does not contain the
-innermost enclosing [~compound-statement] associated with a [~try-block]
-(if there is one), the copy/move operation can be omitted by constructing the
-object directly into the exception object
-[:zh_CN] 在 [~throw-表达式]（[#expr.throw]）中，若其操作数是（除函数或 catch
-子句的形参外）非 volatile 的具有自动存储期的对象的名字，且它属于某个并不包含与
-[~try-块]（如果有）相关联的[~复合语句]的作用域，则其复制/移动操作可以通过将该
-对象直接构造到该异常对象中而省略掉
+a non-volatile object [$o] with automatic storage duration (other than a function
+parameter or a variable introduced by the [~exception-declaration] of a [~handler])
+that belongs to a scope that does not contain the innermost enclosing
+[~compound-statement] associated with a [~try-block] (if there is one), the
+copy-initialization of the exception object can be omitted by constructing [$o]
+directly into the exception object;
+[:zh_CN] 在 [~throw-表达式]（[#expr.throw]）中，若其操作数是（除函数形参或由[~处理器]
+的[~异常声明式]所引入的变量外）非 volatile 的具有自动存储期的对象 [$o] 的名字，
+且它属于某个并不包含与 [~try-块]（如果有）相关联的[~复合语句]的作用域，则异常对象的
+复制初始化可以通过将 [$o] 直接构造到该异常对象中而省略掉；
 
 [item]
 [:en] in a coroutine ([#dcl.fct.def.coroutine]), a copy of a coroutine parameter
 can be omitted and references to that copy replaced with references to the
 corresponding parameter if the meaning of the program will be unchanged except
-for the execution of a constructor and destructor for the parameter copy object
+for the execution of a constructor and destructor for the parameter copy object;
 [:zh_CN] 在协程（[#dcl.fct.def.coroutine]）中，如果除了协程形参副本对象的构造
 函数和析构函数的执行之外不改变程序的意义，则可以省略掉协程形参的副本，并将对该
-副本的引用替换为对其对应形参的引用。
+副本的引用替换为对其对应形参的引用；
 
 [item]
 [:en] when the [~exception-declaration] of a [~handler] ([#except.handle])
-declares an object of the same type (except for cv-qualification) as the
-exception object ([#except.throw]), the copy operation can be omitted by
+declares an object [$o], the copy-initialization of [$o] can be omitted by
 treating the [~exception-declaration] as an alias for the exception object if
 the meaning of the program will be unchanged except for the execution of
-constructors and destructors for the object declared by the
-[~exception-declaration].
-[:zh_CN] 当某个[~处理器]（[#except.handle]）的[~异常声明式]声明了与异常对象
-（[#except.throw]）（除 cv 限定之外）类型相同的对象时，如果除了由[~异常声明式]
-所声明的对象的构造函数和析构函数的执行之外不改变程序的含义，则其复制/移动操作
-可以通过把该[~异常声明式]当作是异常对象的别名而省略掉。
+constructors and destructors for the object declared by the [~exception-declaration].
+[:zh_CN] 当某个[~处理器]（[#except.handle]）的[~异常声明式]声明了对象 [$o]，如果
+除了由[~异常声明式]所声明的对象的构造函数和析构函数的执行之外不改变程序的含义，
+则 [$o] 的复制初始化可以通过把该[~异常声明式]当作是异常对象的别名而省略掉。
 
 [begin:note]
-[:en]
-There cannot be a move from the exception object because it is always an lvalue.
-[:zh_CN]
-不可能从异常对象进行移动，这是因为它总是左值。
+[:en] There cannot be a move from the exception object because it is always an
+lvalue.
+[:zh_CN] 不可能从异常对象进行移动，这是因为它总是左值。
 [end:note]
 [list:end]
 
-[:en]
-Copy elision is not permitted where an expression is evaluated in a context
+[:en] Copy elision is not permitted where an expression is evaluated in a context
 requiring a constant expression ([#expr.const]) and in constant initialization
 ([#basic.start.static]).
-[:zh_CN]
-在需要常量表达式的语境中（[#expr.const]）以及常量初始化（[#basic.start.static]）
+[:zh_CN] 在需要常量表达式的语境中（[#expr.const]）以及常量初始化（[#basic.start.static]）
 之中对表达式求值时，不允许实施复制消除。
 
 [begin:note]
-[:en]
-It is possible that copy elision is performed if the same expression is
+[:en] It is possible that copy elision is performed if the same expression is
 evaluated in another context.
-[:zh_CN]
-同样的表达式在别的语境中求值时实施复制消除是可能的。
+[:zh_CN] 同样的表达式在别的语境中求值时实施复制消除是可能的。
 [end:note]
 
 [para]
@@ -173,28 +156,22 @@ void h() {
 }
 [codeblock:end]
 
-[:en]
-Here the criteria for elision can eliminate the copying of the object [`t] with
-automatic storage duration into the result object for the function call [`f()],
+[:en] Here the criteria for elision can eliminate the copying of the object [`t]
+with automatic storage duration into the result object for the function call [`f()],
 which is the non-local object [`t2].
-[:zh_CN]
-此处消除的判别准则允许将具有自动存储期的对象 [`t] 的复制消除为函数调用 [`f()] 的
-结果对象，亦即非局部对象 [`t2]。
+[:zh_CN] 此处消除的判别准则允许将具有自动存储期的对象 [`t] 的复制消除为
+函数调用 [`f()] 的结果对象，亦即非局部对象 [`t2]。
 
-[:en]
-Effectively, the construction of [`t] can be viewed as directly initializing
-[`t2], and that object[=']s destruction will occur at program exit.
-[:zh_CN]
-[`t] 的构造过程可以有效地看作是直接对 [`t2] 进行初始化，而该对象的析构将发生于
-程序退出之时。
+[:en] Effectively, the construction of [`t] can be viewed as directly
+initializing [`t2], and that object[=']s destruction will occur at program exit.
+[:zh_CN] [`t] 的构造过程可以有效地看作是直接对 [`t2] 进行初始化，而该对象的析构
+将发生于程序退出之时。
 
-[:en]
-Adding a move constructor to [`Thing] has the same effect, but it is the move
-construction from the object with automatic storage duration to [`t2] that is
-elided.
-[:zh_CN]
-为 [`Thing] 添加移动构造函数效果相同，但所消除的将是从具有自动存储期的对象向
-[`t2] 的移动构造。
+[:en] Adding a move constructor to [`Thing] has the same effect, but it is the
+move construction from the object with automatic storage duration to [`t2] that
+is elided.
+[:zh_CN] 为 [`Thing] 添加移动构造函数效果相同，但所消除的将是从具有自动存储期
+的对象向 [`t2] 的移动构造。
 [end:example]
 
 [para]
@@ -230,8 +207,7 @@ Weird g(bool b) {
   static Weird w1;
   Weird w2;
   if (b)
-    return w1;  // [:en] OK, uses [`Weird(Weird&)] \
-                [:zh_CN] OK，使用 [`Weird(Weird&)]
+    return w1;  // [:en] OK, uses [`Weird(Weird&)] [:zh_CN] OK，使用 [`Weird(Weird&)]
   else
     return w2;  // [:en] error: [`w2] in this context is an xvalue \
                 [:zh_CN] 错误：[`w2] 在此语境中是临限值
@@ -242,8 +218,7 @@ int& h(bool b, int i) {
   if (b)
     return s;   // OK
   else
-    return i;   // [:en] error: [`i] is an xvalue \
-                [:zh_CN] 错误：[`i] 是临限值
+    return i;   // [:en] error: [`i] is an xvalue [:zh_CN] 错误：[`i] 是临限值
 }
 
 decltype(auto) h2(Thing t) {
@@ -270,16 +245,13 @@ template<class T> void f() {
     try { g(x); }
     catch (...) {
       if (/*...*/)
-        throw x;        // [:en] does not move \
-                        [:zh_CN] 不会移动
-      throw y;          // [:en] moves \
-                        [:zh_CN] 会移动
+        throw x;        // [:en] does not move [:zh_CN] 不会移动
+      throw y;          // [:en] moves [:zh_CN] 会移动
     }
     g(y);
   } catch(...) {
     g(x);
-    g(y);               // [:en] error: [`y] is not in scope \
-                        [:zh_CN] 错误：[`y] 未在作用域中
+    g(y);               // [:en] error: [`y] is not in scope [:zh_CN] 错误：[`y] 未在作用域中
   }
 }
 [codeblock:end]

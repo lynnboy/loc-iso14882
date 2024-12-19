@@ -3,7 +3,7 @@
     [:zh_CN] [#temp]：模板
 ]
 
-[para:diff] [#dcl.constr]
+[para:diff] [#temp.constr]
 [?change]
 [:en] Some atomic constraints become fold expanded constraints.
 [:zh_CN] 一些原子约束变为折叠展开约束。
@@ -33,4 +33,47 @@ void g(A<S, S> *ap) {
   f(ap, ap);
 }
 [codeblock:end]
+[end:example]
+
+[para:diff] [#temp.deduct.call]
+[?change]
+[:en] Template argument deduction from overload sets succeeds in more cases.
+[:zh_CN] 可在更多情况下从重载集合进行模板实参推断。
+
+[?rationale]
+[:en] Allow consideration of constraints to disambiguate overload sets
+used as parameters in function calls.
+[:zh_CN] 允许考虑约束来对用作函数调用中形参的重载集消解歧义。
+
+[?effect]
+[:en] Valid [=CppXXIII] code may become ill-formed.
+[:zh_CN] 有效 [=CppXXIII] 代码可能变为非良构。
+
+[begin:example]
+[codeblock]
+template <typename T>
+void f(T &&, void (*)(T &&));
+
+void g(int &);              // #1
+inline namespace A {
+  void g(short &&);         // #2
+}
+inline namespace B {
+  void g(short &&);         // #3
+}
+
+void q() {
+  int x;
+  f(x, g);          // [:en] ill-formed; previously well-formed, deducing [`T = int&] \
+                    [:zh_CN] 非良构；之前为良构，推断出 [`T = int&]
+}
+[codeblock:end]
+
+[:en] There is no change to the applicable deduction rules for the individual
+[`g] candidates:
+[:zh_CN] 此对于各独立 [`g] 候选的可运用推断规则并没有变化：
+
+[:en] Type deduction from #1 does not succeed; type deductions from #2 and #3
+both succeed.
+[:zh_CN] 从 #1 进行类型推断并未成功；从 #2 和 #3 的类型推断均成功。
 [end:example]

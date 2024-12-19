@@ -2072,6 +2072,7 @@ unique keys                             |唯一键         |关联容器set,map,
 unique layout                           |唯一布局
 unique lock                             |独占锁，唯一锁
 unique pointer                          |独占指针       |`unique_ptr`，独占所有权
+unit-stride slice                       |单位跨步分片
 universal-character-name                |UCN，通用字符名|概念上兼容任何字符集的字符集，UCS，`\uxxxx`, `\Uxxxxxxxx`
 Unix time                               |Unix 时间      |1970-01-01开始计数的日历秒数（不算闰秒）
 `unlikely`                              |`unlikely` 属性|属性，无参数，用于标号或语句，标明执行路径非似然性

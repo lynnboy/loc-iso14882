@@ -1,0 +1,117 @@
+[section#mdspan.accessor.aligned.overview
+    [:en] Overview
+    [:zh_CN] 概述
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class ElementType, size_t ByteAlignment>
+  struct [[redoc("`:lib")]]aligned_accessor {
+    using offset_policy = default_accessor<ElementType>;
+    using element_type = ElementType;
+    using reference = ElementType&;
+    using data_handle_type = ElementType*;
+
+    static constexpr size_t byte_alignment = ByteAlignment;
+
+    constexpr aligned_accessor() noexcept = default;
+    template<class OtherElementType, size_t OtherByteAlignment>
+      constexpr aligned_accessor(
+        aligned_accessor<OtherElementType, OtherByteAlignment>) noexcept;
+    template<class OtherElementType>
+      constexpr explicit aligned_accessor(default_accessor<OtherElementType>) noexcept;
+
+    template<class OtherElementType>
+      constexpr operator default_accessor<OtherElementType>() const noexcept;
+
+    constexpr reference access(data_handle_type p, size_t i) const noexcept;
+
+    constexpr typename offset_policy::data_handle_type offset(
+      data_handle_type p, size_t i) const noexcept;
+  };
+}
+[codeblock:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`byte_alignment] is a power of two, and
+[:zh_CN] [`byte_alignment] 是二的幂，且
+[item]
+[:en] [`byte_alignment >= alignof(ElementType)] is [`true].
+[:zh_CN] [`byte_alignment >= alignof(ElementType)] 为 [`true]。
+[list:end]
+
+[para]
+[:en] [`aligned_accessor] meets the accessor policy requirements.
+[:zh_CN] [`aligned_accessor] 满足访问器策略的规定。
+
+[para]
+[:en] [`ElementType] is required to be a complete object type that is neither an
+abstract class type nor an array type.
+[:zh_CN] [`ElementType] 要求为一种既不是抽象类类型也不是数组类型的完整对象类型。
+
+[para]
+[:en] Each specialization of [`aligned_accessor] is a trivially copyable type
+that models [`:c semiregular].
+[:zh_CN] [`aligned_accessor] 的每个特例均为可平凡复制类型且构成 [`:c semiregular]。
+
+[para]
+[:en] [=range(0,[$n])] is an accessible range for an object [`p] of type
+[`data_handle_type] and an object of type [`aligned_accessor] if and only if
+[:zh_CN] 当且仅当
+[list]
+[item]
+[:en@~] [=range(p,p + [$n])] is a valid range, and,
+[:zh_CN@~] [=range(p,p + [$n])] 为有效范围，并且
+[item]
+[:en@~] if [$n] is greater than zero, then
+[`is_sufficiently_aligned<byte_alignment>(p)] is [`true].
+[:zh_CN@~] 当 [$n] 大于零时，[`is_sufficiently_aligned<byte_alignment>(p)] 为 [`true]，
+[list:end]
+[:zh_CN] 时，[=range(0,[$n])] 是对 [`data_handle_type] 类型的对象 [`p]
+和 [`aligned_accessor] 类型的对象的可访问范围。
+
+[para]
+[begin:example]
+[:en] The following function [`compute] uses [`is_sufficiently_aligned] to check
+whether a given [`mdspan] with [`default_accessor] has a data handle with
+sufficient alignment to be used with [`aligned_accessor<float, 4 * sizeof(float)>].
+[:zh_CN] 以下函数 [`compute] 使用 [`is_sufficiently_aligned] 来检查，给定的
+带有 [`default_accessor] 的 [`mdspan] 所有的数据句柄是否具有充分的对齐以能用于
+[`aligned_accessor<float, 4 * sizeof(float)>]。
+
+[:en] If so, the function dispatches to a function
+[`compute_using_fourfold_overalignment] that requires fourfold over-alignment
+of arrays, but can therefore use hardware-specific instructions,
+such as four-wide SIMD (Single Instruction Multiple Data) instructions.
+[:zh_CN] 若是如此，则此函数派发给要求四项重叠的过量对齐数组的函数
+[`compute_using_fourfold_overalignment]，由此可以使用硬件特有的指令，比如四项宽的
+SIMD（单指令多数据）指令。
+
+[:en] Otherwise, [`compute] dispatches to a possibly less optimized function
+[`compute_without_requiring_overalignment] that has no over-alignment requirement.
+[:zh_CN] 否则，[`compute] 派发给可能不那么优化的函数
+[`compute_without_requiring_overalignment]，它没有过量对齐要求。
+
+[codeblock]
+void compute_using_fourfold_overalignment(
+  std::mdspan<float, std::dims<1>, std::layout_right,
+    std::aligned_accessor<float, 4 * alignof(float)>> x);
+
+void compute_without_requiring_overalignment(
+  std::mdspan<float, std::dims<1>, std::layout_right> x);
+
+void compute(std::mdspan<float, std::dims<1>> x) {
+  constexpr auto byte_alignment = 4 * sizeof(float);
+  auto accessor = std::aligned_accessor<float, byte_alignment>{};
+  auto x_handle = x.data_handle();
+
+  if (std::is_sufficiently_aligned<byte_alignment>(x_handle)) {
+    compute_using_fourfold_overalignment(std::mdspan{x_handle, x.mapping(), accessor});
+  } else {
+    compute_without_requiring_overalignment(x);
+  }
+}
+[codeblock:end]
+[end:example]
