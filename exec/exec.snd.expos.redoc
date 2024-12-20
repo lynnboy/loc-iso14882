@@ -530,11 +530,18 @@ the initializer of a structured binding declaration ([#dcl.struct.bind]).
 
 [para]
 [:en] The expression in the [`noexcept] clause of the constructor of
-[*basic-state] is:
+[*basic-state] is
 [:zh_CN] [*basic-state] 的构造函数的 [`noexcept] 子句中的表达式为：
 [codeblock]
 is_nothrow_move_constructible_v<Rcvr> &&
-[[redoc("*:c>")]]nothrow-callable<decltype([[redoc("*>")]]impls-for<tag_of_t<Sndr>>::[[redoc("*>")]]get-state), Sndr, Rcvr&>
+[[redoc("*:c>")]]nothrow-callable<decltype([[redoc("*>")]]impls-for<tag_of_t<Sndr>>::[[redoc("*>")]]get-state), Sndr, Rcvr&> &&
+(same_as<[[redoc("*>")]]state-type<Sndr, Rcvr>, [[redoc("*>")]]get-state-result> ||
+ is_nothrow_constructible_v<[[redoc("*>")]]state-type<Sndr, Rcvr>, [[redoc("*>")]]get-state-result>)
+[codeblock:end]
+[:en@~] where [*get-state-result] is
+[:zh_CN@~] 其中 [*get-state-result] 为
+[codeblock]
+[[redoc("*>")]]call-result-t<decltype([[redoc("*>")]]impls-for<tag_of_t<Sndr>>::[[redoc("*>")]]get-state), Sndr, Rcvr&>.
 [codeblock:end]
 
 [para]
@@ -592,7 +599,7 @@ is initialized with a callable object equivalent to the following lambda:
   if constexpr (sizeof...(child) == 1)
     return ([[redoc("*>")]]FWD-ENV(get_env(child)), ...);
   else
-    return empty_env();
+    return env<>();
 }
 [codeblock:end]
 
@@ -710,8 +717,24 @@ template<>
 struct [[redoc("*>")]]impls-for<[[redoc("*>")]]write-env-t> : [[redoc("*>")]]default-impls {
   static constexpr auto [[redoc("*>")]]get-env =
     [](auto, const auto& state, const auto& rcvr) noexcept {
-      return [[redoc("*>")]]JOIN-ENV(state, get_env(rcvr));
+      return [[redoc("[=seebelow]")]];
     };
 };
 [codeblock:end]
 [div:end]
+
+[:en] Invocation of [`[*impls-for]<[*write-env-t]>::[*get-env]] returns an
+object [`e] such that
+[:zh_CN] [`[*impls-for]<[*write-env-t]>::[*get-env]] 的调用返回一个对象 [`e]，使得
+[list]
+[item]
+[:en@~] [`decltype(e)] models [*:c queryable] and
+[:zh_CN@~] [`decltype(e)] 构成 [*:c queryable] 并且
+[item]
+[:en@~] given a query object [`q], the expression [`e.query(q)]
+is expression-equivalent to [`state.query(q)] if that expression is valid,
+otherwise, [`e.query(q)] is expression-equivalent to [`get_env(rcvr).query(q)].
+[:zh_CN@~] 给定查询对象 [`q]，如果表达式 [`e.query(q)] 有效，则该表达式
+按表达式等价于 [`state.query(q)]，否则 [`e.query(q)] 按表达式等价于
+[`get_env(rcvr).query(q)].
+[list:end]

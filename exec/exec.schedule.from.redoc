@@ -177,15 +177,14 @@ is initialized with a callable object equivalent to the following lambda:
   using result_t = [[redoc("*>")]]decayed-tuple<Tag, Args...>;
   constexpr bool nothrow = is_nothrow_constructible_v<result_t, Tag, Args...>;
 
-  [[redoc("*>")]]TRY-EVAL(rcvr, [&]() noexcept(nothrow) {
+  try {
     state.[[redoc("*>")]]async-result.template emplace<result_t>(Tag(), std::forward<Args>(args)...);
-  }());
-
-  if (state.[[redoc("*>")]]async-result.valueless_by_exception())
-    return;
-  if (state.[[redoc("*>")]]async-result.index() == 0)
-    return;
-
+  } catch (...) {
+    if constexpr (!nothrow) {
+      set_error(std::move(rcvr), current_exception());
+      return;
+    }
+  }
   start(state.[[redoc("*>")]]op-state);
 };
 [codeblock:end]

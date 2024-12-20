@@ -24,23 +24,61 @@ given the initializer.
 [~简单类型说明符]（[#dcl.type.simple]）或[~typename-说明符]（[#temp.res]），利用
 这个初始化式构造一个所指定类型的值。
 
-[:en]
-[%deduction[!class template arguments]]
+[:en] [%deduction[!class template arguments]]
 If the type is a placeholder for a deduced class type, it is replaced by the
 return type of the function selected by overload resolution for class template
 deduction ([#over.match.class.deduct]) for the remainder of this subclause.
-[:zh_CN]
-[%推断[!类模板实参]]
+[:zh_CN] [%推断[!类模板实参]]
 如果类型是某个被推断类类型的占位符，则在本子条款的余下部分中，它被替换为由
 类模板推断（[#over.match.class.deduct]）所进行的重载决议所选择的函数的返回类型。
 
+[:en] Let [`T] denote the resulting type.
+[:zh_CN] 令 [`T] 代表结果类型。
+
+[:en] Then:
+[:zh_CN] 则有：
+
+[list]
+[item]
+[:en] If the initializer is a parenthesized single expression, the type
+conversion expression is equivalent to the corresponding cast expression ([#expr.cast]).
+[:zh_CN] 如果其初始化式是带有括号的单个表达式，则类型转换表达式等价于其所对应的
+转型表达式（[#expr.cast]）。
+
+[item]
+[:en] [%type[!incomplete]]
+Otherwise, if [`T] is [=cv] [`:key void], the initializer shall be [`()] or [`{}]
+(after pack expansion, if any), and the expression is a prvalue of type
+[`:key void] that performs no initialization.
+[:zh_CN] [%类型[!不完整～]]
+否则，如果 [`T] 为 [=cv] [`:key void]，则其初始化式应当为 [`()] 或 [`{}]
+（包组展开之后，如果有），并且表达式为不实施初始化的 [`:key void] 类型的纯右值。
+
+[item]
+[:en] Otherwise, if [`T] is a reference type, the expression has the same effect
+as direct-initializing an invented variable [`t] of type [`T] from the initializer
+and then using [`t] as the result of the expression; the result is an lvalue if
+[`T] is an lvalue reference type or an rvalue reference to function type and
+an xvalue otherwise.
+[:zh_CN] 否则，如果 [`T] 为引用类型，则表达式的效果与以该初始化式直接初始化一个 [`T]
+类型的虚构变量 [`t]，然后以 [`t] 为该表达式的结果相同；若 [`T] 是左值引用类型或
+函数类型的右值引用则结果是左值，否则为临限值。
+
+[item]
+[:en] Otherwise, the expression is a prvalue of type [`T] whose result object
+is direct-initialized ([#dcl.init]) with the initializer.
+[:zh_CN] 否则，表达式是 [`T] 类型的纯右值，其结果对象以初始化式进行直接初始化（[#dcl.init]）。
+[list:end]
+
 [para]
-[:en]
-Otherwise, if the type contains a placeholder type, it is replaced by the type
-determined by placeholder type deduction ([#dcl.type.auto.deduct]).
-[:zh_CN]
-否则，如果类型包含占位符类型，则它被替换为占位符类型推断（[#dcl.type.auto.deduct]）
+[:en] Otherwise, if the type contains a placeholder type, it is replaced by the
+type determined by placeholder type deduction ([#dcl.type.auto.deduct]).
+[:zh_CN] 否则，如果类型包含占位符类型，则它被替换为占位符类型推断（[#dcl.type.auto.deduct]）
 所确定的类型。
+
+[:en] If the initializer is a parenthesized optional [~expression-list],
+[`T] shall not be an array type.
+[:zh_CN] 如果初始化式是带括号的可选的[~表达式列表]，则 [`T] 不能是数组类型。
 
 [begin:example]
 [codeblock]
@@ -49,43 +87,9 @@ void f(A&);             // #1
 void f(A&&);            // #2
 A& g();
 void h() {
-  f(g());               // [:en] calls #1 \
-                        [:zh_CN] 调用 #1
-  f(A(g()));            // [:en] calls #2 with a temporary object \
-                        [:zh_CN] 以临时对象调用 #2
-  f(auto(g()));         // [:en] calls #2 with a temporary object \
-                        [:zh_CN] 以临时对象调用 #2
+  f(g());               // [:en] calls #1 [:zh_CN] 调用 #1
+  f(A(g()));            // [:en] calls #2 with a temporary object [:zh_CN] 以临时对象调用 #2
+  f(auto(g()));         // [:en] calls #2 with a temporary object [:zh_CN] 以临时对象调用 #2
 }
 [codeblock:end]
 [end:example]
-
-[para]
-[:en]
-If the initializer is a parenthesized single expression, the type conversion
-expression is equivalent to the corresponding cast expression ([#expr.cast]).
-[:zh_CN]
-如果其初始化式是带有括号的单个表达式，则类型转换表达式等价于其所对应的转型表达式
-（[#expr.cast]）。
-
-[:en]
-[%type[!incomplete]]
-Otherwise, if the type is [=cv] [`:key void] and the initializer is [`()] or
-[`{}] (after pack expansion, if any), the expression is a prvalue of type
-[`:key void] that performs no initialization.
-[:zh_CN]
-[%类型[!不完整～]]
-否则，如果类型是 [=cv] [`:key void]，且其初始化式（进行包组展开之后，如果有）为
-[`()] 或 [`{}]，则表达式为 [`:key void] 类型的纯右值且并不进行初始化。
-
-[:en]
-Otherwise, the expression is a prvalue of the specified type whose result object
-is direct-initialized ([#dcl.init]) with the initializer.
-[:zh_CN]
-否则，该表达式就是所指定类型的纯右值，其结果对象以该初始化式进行直接初始化
-（[#dcl.init]）。
-
-[:en]
-If the initializer is a parenthesized optional [~expression-list], the specified
-type shall not be an array type.
-[:zh_CN]
-如果初始化式是带括号的可选的[~表达式列表]，则所指定的类型不能是数组类型。

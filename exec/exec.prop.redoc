@@ -1,0 +1,59 @@
+[section#exec.prop
+    [:en] Class template [`prop]
+    [:zh_CN] 类模板 [`prop]
+]
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class QueryTag, class ValueType>
+  struct [[redoc("`:lib")]]prop {
+    QueryTag [[redoc("*>")]]query_;            // [=expos]
+    ValueType [[redoc("*>")]]value_;           // [=expos]
+
+    constexpr const ValueType& query(QueryTag) const noexcept {
+      return [[redoc("*>")]]value_;
+    }
+  };
+
+  template<class QueryTag, class ValueType>
+    prop(QueryTag, ValueType) -> prop<QueryTag, unwrap_reference_t<ValueType>>;
+}
+[codeblock:end]
+
+[para]
+[:en] Class template [`prop] is for building a queryable object
+from a query object and a value.
+[:zh_CN] 类模板 [`prop] 用于以一个查询对象和一个值构建可查询对象。
+
+[para:mandates]
+[:en] [`[*:c callable]<QueryTag, [*prop-like]<ValueType>>] is modeled,
+where [*prop-like] is the following exposition-only class template:
+[:zh_CN] [`[*:c callable]<QueryTag, [*prop-like]<ValueType>>] 得以构成，
+其中 [*prop-like] 是以下仅用于展示的类模板：
+
+[codeblock]
+template<class ValueType>
+struct [[redoc("*>")]]prop-like {              // [=expos]
+  const ValueType& query(auto) const noexcept;
+};
+[codeblock:end]
+
+[para]
+[begin:example]
+[codeblock]
+template<sender Sndr>
+sender auto parameterize_work(Sndr sndr) {
+  // [:en] Make an environment such that [`get_allocator(env)] returns a reference to a copy of [`my_alloc{}]. \
+  [:zh_CN] 制作一个环境，使得 [`get_allocator(env)] 返回到 [`my_alloc{}] 的一个副本的引用。
+  auto e = prop(get_allocator, my_alloc{});
+
+  // [:en] Parameterize the input sender so that it will use our custom execution environment. \
+  [:zh_CN] 对输入发送器参数化，使其会使用自定义的执行环境。
+  return write_env(sndr, e);
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] Specializations of [`prop] are not assignable.
+[:zh_CN] [`prop] 的特例不可赋值。

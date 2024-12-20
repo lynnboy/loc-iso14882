@@ -14,9 +14,9 @@
 [list]
 [item]
 [:en] [*count] is [`0] and [*state] is [*finishing], in which case [*pop-front]
-returns [`nullptr]; or
+sets [*state] to [*finished] and returns [`nullptr]; or
 [:zh_CN] [*count] 为 [`0] 且 [*state] 为 [*finishing]，这种情况下 [*pop-front]
-返回 [`nullptr]；或者
+设值 [*state] 为 [*finished] 并返回 [`nullptr]；或者
 [item]
 [:en] [*count] is greater than [`0], in which case an item is removed from the
 front of the queue, [*count] is decremented by [`1], and the removed item is returned.
@@ -40,6 +40,7 @@ void [[redoc("*>")]]push-back([[redoc("*>")]]run-loop-opstate-base* item);
 [:zh_CN] 此操作同步于获取了 [`item] 的 [*pop-front] 操作。
 [div:end]
 
+[%@lib@member get_scheduler[!run_loop]]
 [codeblock:declaration]
 [[redoc("*>")]]run-loop-scheduler get_scheduler();
 [codeblock:end]
@@ -51,18 +52,21 @@ that can be used to schedule work onto this [`run_loop] instance.
 [:zh_CN] 一个 [*run-loop-scheduler] 实例，可用于向此 [`run_loop] 实例调度工作。
 [div:end]
 
+[%@lib@member run[!run_loop]]
 [codeblock:declaration]
 void run();
 [codeblock:end]
 
 [div:description]
 [para:expects]
-[:en] [*state] is [*starting].
-[:zh_CN] [*state] 为 [*starting]。
+[:en] [*state] is either [*starting] or [*finishing].
+[:zh_CN] [*state] 为 [*starting] 或 [*finishing]。
 
 [para:effects]
-[:en] Sets the [*state] to [*running].
-[:zh_CN] 将 [*state] 设值为 [*running]。
+[:en] If [*state] is [*starting], sets the [*state] to [*running], otherwise
+leaves [*state] unchanged.
+[:zh_CN] 如果 [*state] 为 [*starting]，则将 [*state] 设值为 [*running]，否则
+保留 [*state] 不改动。
 
 [:en] Then, equivalent to:
 [:zh_CN] 然后，等价于：
@@ -77,11 +81,16 @@ while (auto* op = [[redoc("*>")]]pop-front()) {
 [:zh_CN] 当 [*state] 改变时，此改变不会引入数据竞争。
 [div:end]
 
+[%@lib@member finish[!run_loop]]
 [codeblock:declaration]
 void finish();
 [codeblock:end]
 
 [div:description]
+[para:expects]
+[:en] [*state] is either [*starting] or [*running].
+[:zh_CN] [*state] 为 [*starting] 或 [*running]。
+
 [para:effects]
 [:en] Changes [*state] to [*finishing].
 [:zh_CN] 将 [*state] 改为 [*finishing]。

@@ -10,20 +10,30 @@
 ]
 
 [para]
-[:en] A structured binding declaration introduces the [~identifier]s [$[`v]_0],
-[$[`v]_1], [$[`v]_2], [$\dotsc] of the [~attributed-identifier-list] as names of
-[+structured binding]s.
-[:zh_CN] 结构化绑定声明式，将[~带属性标识符列表]中的各[~标识符]
-[$[`v]_0]，[$[`v]_1]，[$[`v]_2]，[$\dotsc] 作为[+结构化绑定]名字而引入。
+[:en] A structured binding declaration introduces the [~identifier]s
+[$[`v]_0, [`v]_1, [`v]_2, \dotsc, [`v]_{N-1}] of the [~sb-identifier-list]
+as names.
+[:zh_CN] 结构化绑定声明式，将[~sb-标识符列表]中的各[~标识符]
+[$[`v]_0, [`v]_1, [`v]_2, \dotsc, [`v]_{N-1}] 作为名字而引入。
 
-[:en] The optional [~attribute-specifier-seq] of an [~attributed-identifier]
-appertains to the structured binding so introduced.
-[:zh_CN] [~带属性标识符列表]的可选[~属性说明符序列]属于其所引入的结构化绑定。
+[:en] An [~sb-identifier] that contains an ellipsis
+introduces a structured binding pack ([#temp.variadic]).
+[:zh_CN] 含有省略号的 [~sb-标识符]引入结构化绑定包组（[#temp.variadic]）。
+
+[:en] A [+structured binding] is either an [~sb-identifier] that does not
+contain an ellipsis or an element of a structured binding pack.
+[:zh_CN] [+结构化绑定]要么是不包含省略号的 [~sb-标识符]要么是结构化绑定包组的元素。
+
+[:en] The optional [~attribute-specifier-seq] of an [~sb-identifier] appertains
+to the associated structured bindings.
+[:zh_CN] [~sb-标识符列表]的可选[~属性说明符序列]属于关联的各结构化绑定。
 
 [:en] Let [=cv] denote the [~cv-qualifier]s in the [~decl-specifier-seq] and [^S]
-consist of the [~storage-class-specifier]s of the [~decl-specifier-seq] (if any).
+consist of each [~decl-specifier] of the [~decl-specifier-seq] that is
+[`constexpr], [`constinit], or a [~storage-class-specifier].
 [:zh_CN] 令 [=cv] 代表[~声明说明符序列]中的 [~cv-限定符]，并令 [^S] 由
-[~声明说明符序列]的各个[~存储类说明符]（如果有）构成。
+[~声明说明符序列]的各个可为 [`constexpr]、[`constinit] 或[~存储类说明符]的
+[~声明说明符]构成。
 
 [:en] A [=cv] that includes [`volatile] is deprecated; see [#depr.volatile.type].
 [:zh_CN] 包含 [`volatile] 的 [=cv] 已被摒弃；参见 [#depr.volatile.type]。
@@ -69,6 +79,57 @@ corresponding structured binding declaration.
 [end:note]
 
 [para]
+[:en] The [+structured binding size] of [`E], as defined below,
+is the number of structured bindings
+that need to be introduced by the structured binding declaration.
+[:zh_CN] 如下所定义的 [`E] 的[+结构化绑定大小]，是需要由结构化绑定声明式
+引入的结构化绑定的数量。
+
+[:en] If there is no structured binding pack, then the number of elements in the
+[~sb-identifier-list] shall be equal to the structured binding size of [`E].
+[:zh_CN] 如果没有结构化绑定包组，那么 [~sb-标识符列表]中的元素个数应当等于
+[`E] 的结构化绑定大小。
+
+[:en] Otherwise, the number of non-pack elements shall be no more than
+the structured binding size of [`E];
+the number of elements of the structured binding pack is
+the structured binding size of [`E] less
+the number of non-pack elements in the [~sb-identifier-list].
+[:zh_CN] 否则，非包组元素的个数应当不多于 [`E] 的结构化绑定大小；
+结构化绑定包组的元素个数为 [`E] 的结构化绑定大小减去 [~sb-标识符列表]中的
+非包组元素个数。
+
+[para]
+[:en] Let [$\textrm{SB}_i] denote the [$i^\textrm{th}] structured binding in the
+structured binding declaration after expanding the structured binding pack, if any.
+[:zh_CN] 令 SB[$_i] 代表展开结构化绑定包组后结构化绑定声明式中的第 [$i] 个
+结构化绑定，如果有。
+
+[begin:note]
+[:en] If there is no structured binding pack, then [$\textrm{SB}_i] denotes [$[`v]_i].
+[:zh_CN] 如果没有结构化绑定包组，那么 [$\textrm{SB}_i] 就代表 [$[`v]_i]。
+[end:note]
+
+[begin:example]
+[codeblock]
+struct C { int x, y, z; };
+
+template<class T>
+void now_i_know_my() {
+  auto [a, b, c] = C();     // [:en] OK, [$\textrm{SB}_0] is [`a], [$\textrm{SB}_1] is [`b], and [$\textrm{SB}_2] is [`c] \
+                            [:zh_CN] OK，[$\textrm{SB}_0] 为 [`a]，[$\textrm{SB}_1] 为 [`b]，而 [$\textrm{SB}_2] 为 [`c]
+  auto [d, ...e] = C();     // [:en] OK, [$\textrm{SB}_0] is [`d], the pack [`e] [$([`v]_1)] contains two structured bindings: [$\textrm{SB}_1] and [$\textrm{SB}_2] \
+                            [:zh_CN] OK，[$\textrm{SB}_0] 为 [`d]，包组 [`e] [$([`v]_1)] 包含两个结构化绑定：[$\textrm{SB}_1] 和 [$\textrm{SB}_2]
+  auto [...f, g] = C();     // [:en] OK, the pack [`f] [$([`v]_0)] contains two structured bindings: [$\textrm{SB}_0] and [$\textrm{SB}_1], and [$\textrm{SB}_2] is [`g] \
+                            [:zh_CN] OK，包组 [`f] [$([`v]_0)] 包含两个结构化绑定：[$\textrm{SB}_0] 和 [$\textrm{SB}_1]，而 [$\textrm{SB}_2] 为 [`g]
+  auto [h, i, j, ...k] = C();           // [:en] OK, the pack [`k] is empty [:zh_CN] OK，包组 [`k] 为空
+  auto [l, m, n, o, ...p] = C();        // [:en] error: structured binding size is too small \
+                                        [:zh_CN] 错误：结构化绑定大小太小
+}
+[codeblock:end]
+[end:example]
+
+[para]
 [:en] If a structured binding declaration appears as a [~condition],
 the decision variable ([#stmt.pre]) of the condition is [*e].
 [:zh_CN] 如果结构化绑定声明式作为[~条件]，则此条件的判断变量（[#stmt.pre]）为 [*e]。
@@ -79,14 +140,14 @@ structured binding declaration, the program is ill-formed.
 [:zh_CN] 如果该[~初始化式]指代由结构化绑定声明式所引入的名字之一，则程序非良构。
 
 [para]
-[:en] If [`E] is an array type with element type [`T], the number of elements in
-the [~attributed-identifier-list] shall be equal to the number of elements of [`E].
-[:zh_CN] 如果 [`E] 是元素类型为 [`T] 的数组类型，则[~带属性标识符列表]中的元素
-个数应当等于 [`E] 的元素个数。
+[:en] If [`E] is an array type with element type [`T], the structured binding
+size of [`E] is equal to the number of elements of [`E].
+[:zh_CN] 如果 [`E] 是元素类型为 [`T] 的数组类型，则 [`E] 的结构化绑定大小
+等于 [`E] 的元素个数。
 
-[:en] Each [$[`v]_i] is the name of an lvalue that refers to the element [$i] of
-the array and whose type is [`T]; the referenced type is [`T].
-[:zh_CN] 各个 [$[`v]_i] 为指代数组的第 [$i] 个元素（其类型为 [`T]）的左值的名字；
+[:en] Each [$\textrm{SB}_i] is the name of an lvalue that refers to the element
+[$i] of the array and whose type is [`T]; the referenced type is [`T].
+[:zh_CN] 各个 [$\textrm{SB}_i] 为指代数组的第 [$i] 个元素（其类型为 [`T]）的左值的名字；
 被引用的类型为 [`T]。
 
 [begin:note]
@@ -101,17 +162,33 @@ auto [ x, y ] = f();            // [:en] [`x] and [`y] refer to elements in a co
                                 [:zh_CN] [`x] 和 [`y] 指代数组返回值的副本中的元素
 auto& [ xr, yr ] = f();         // [:en] [`xr] and [`yr] refer to elements in the array referred to by [`f][=']s return value \
                                 [:zh_CN] [`x] 和 [`y] 指代 [`f] 的返回值所指代的数组中的元素
+
+auto g() -> int(&)[4];
+
+template<size_t N>
+void h(int (&arr)[N]) {
+  auto [a, ...b, c] = arr;  // [:en] [`a] names the first element of the array, [`b] is a pack referring to the second and \
+                            [:zh_CN] [`a] 指名数组的首个元素，[`b] 是指代第二个和
+                            // [:en@~] third elements, and [`c] names the fourth element \
+                            [:zh_CN@~] 第三个元素的包组，而 [`c] 指名第四个元素
+  auto& [...e] = arr;       // [:en] [`e] is a pack referring to the four elements of the array \
+                            [:zh_CN] [`e] 是指代数组的第四个元素的包组
+}
+
+void call_h() {
+  h(g());
+}
 [codeblock:end]
 [end:example]
 
 [para]
 [:en] Otherwise, if the [~qualified-id] [`std::tuple_size<E>] names a complete
 class type with a member named [`value], the expression [`std::tuple_size<E>::value]
-shall be a well-formed integral constant expression and the number of elements
-in the [~attributed-identifier-list] shall be equal to the value of that expression.
+shall be a well-formed integral constant expression and the structured binding
+size of [`E] is equal to the value of that expression.
 [:zh_CN] 否则，若[~限定标识] [`std::tuple_size<E>] 指名一个带有名为 [`value] 的
 成员的完整类类型，则表达式 [`std::tuple_size<E>::value] 应当是良构的
-整型常量表达式，且[~带属性标识符列表]中的元素个数应当等于这个表达式的值。
+整型常量表达式，且 [`E] 的结构化绑定大小等于这个表达式的值。
 
 [:en] Let [`i] be an index prvalue of type [`std::size_t] corresponding to [$[`v]_i].
 [:zh_CN] 令 [`i] 为对应于 [$[`v]_i] 的 [`std::size_t] 类型的索引纯右值。
@@ -154,9 +231,9 @@ follows:
 [^S] [`U][$_i] [`r][$_i] [`=] [~initializer] [`;]
 [syntax:end]
 
-[:en] Each [$[`v]_i] is the name of an lvalue of type [$[`T]_i] that refers to
-the object bound to [$[`r]_i]; the referenced type is [$[`T]_i].
-[:zh_CN] 令各个 [$[`v]_i] 为 [$[`T]_i] 类型的左值并指代与 [$[`r]_i] 绑定的对象；
+[:en] Each [$\textrm{SB}_i] is the name of an lvalue of type [$[`T]_i] that
+refers to the object bound to [$[`r]_i]; the referenced type is [$[`T]_i].
+[:zh_CN] 令各个 [$\textrm{SB}_i] 为 [$[`T]_i] 类型的左值并指代与 [$[`r]_i] 绑定的对象；
 被引用的类型为 [$[`T]_i]。
 
 [:en] The initialization of [*e] and any conversion of [*e] considered as a
@@ -173,24 +250,22 @@ initialization of any [$[`r]_j] where [$i < j].
 [:en] Otherwise, all of [`E][=']s non-static data members shall be direct
 members of [`E] or of the same base class of [`E], well-formed when named as
 [`[*e].[^name]] in the context of the structured binding, [`E] shall not have an
-anonymous union member, and the number of elements in the
-[~attributed-identifier-list] shall be equal to the number of non-static data
-members of [`E].
+anonymous union member, and the structured binding size of [`E] is equal to the
+number of non-static data members of [`E].
 [:zh_CN] 否则，[`E] 的每个非静态数据成员都应当是 [`E] 或 [`E] 的同一个基类的直接
 成员，在该结构化绑定的语境中以 [`[*e].[^name]] 进行指名是良构的，[`E] 不能带有
-匿名联合体成员，而且[~带属性标识符列表]中的元素个数应当等于 [`E] 的非静态数据成员
-的个数。
+匿名联合体成员，而且 [`E] 的结构化绑定大小等于 [`E] 的非静态数据成员的个数。
 
 [:en] Designating the non-static data members of [`E] as [$[`m]_0], [$[`m]_1],
-[$[`m]_2], [$\dotsc] (in declaration order), each [$[`v]_i] is the name of an
-lvalue that refers to the member [`m][$_i] of [*e] and whose type is
+[$[`m]_2], [$\dotsc] (in declaration order), each [$\textrm{SB}_i] is the name
+of an lvalue that refers to the member [`m][$_i] of [*e] and whose type is
 that of [`[*e].m[$_i]] ([#expr.ref]); the referenced type is the referenced type
 of [$[`m]_i] if that type is a reference type, or the type of [`[*e].m[$_i]]
 otherwise.
 [:zh_CN] 令 [$[`m]_0]，[$[`m]_1]，[$[`m]_2]，[$\dotsc]（以声明顺序）代表 [`E] 的
-各个非静态数据成员，则每个 [$[`v]_i] 均为指代 [*e] 的成员 [`m][$_i] 的左值的名字，
-其类型为 [`[*e].m[$_i]] 的类型（[#expr.ref]）；当 [$[`m]_i] 的类型是引用类型时，
-被引用的类型为 [$[`m]_i] 的被引用类型，否则为 [`[*e].m[$_i]] 的类型。
+各个非静态数据成员，则每个 [$\textrm{SB}_i] 均为指代 [*e] 的成员 [`m][$_i] 的左值
+的名字，其类型为 [`[*e].m[$_i]] 的类型（[#expr.ref]）；当 [$[`m]_i] 的类型是
+引用类型时，被引用的类型为 [$[`m]_i] 的被引用类型，否则为 [`[*e].m[$_i]] 的类型。
 
 [:en] The lvalue is a bit-field if that member is a bit-field.
 [:zh_CN] 当成员是位字段时该左值也是位字段。

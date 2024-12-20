@@ -31,34 +31,180 @@ on whether or not an expression satisfies these requirements.
 [syntax:end]
 
 [para]
-[:en] A variable or temporary object [`o] is [+constant-initialized] if
-[:zh_CN] 满足以下条件时，变量或临时对象 [`o] 被[+以常量初始化]：
+[:en] The [+constituent values[%constituent value]] of an object [$o] are
+[:zh_CN] 对象 [$o] 的[+成分值]有：
+[list]
+[item]
+[:en@~] if [$o] has scalar type, the value of [$o];
+[:zh_CN@~] 如果 [$o] 具有标量类型，则有 [$o] 的值；
+[item]
+[:en@~] otherwise, the constituent values of any direct subobjects of [$o]
+other than inactive union members.
+[:zh_CN@~] 否则，为 [$o] 的任何并非不活跃联合体成员的直接子对象的成分值。
+[list:end]
+
+[:en] The [+constituent references[%constituent reference]] of an object [$o] are
+[:zh_CN] 对象 [$o] 的[+成分引用]有：
+[list]
+[item]
+[:en@~] any direct members of [$o] that have reference type, and
+[:zh_CN@~] [$o] 的引用类型的直接成员，以及
+[item]
+[:en@~] the constituent references of any direct subobjects of [$o]
+other than inactive union members.
+[:zh_CN@~] [$o] 的任何并非不活跃联合体成员的直接子对象的成分引用。
+[list:end]
+
+[para]
+[:en] The constituent values and constituent references of a variable [`x]
+are defined as follows:
+[:zh_CN] 变量 [`x] 的成分值和成分引用定义如下：
+[list]
+[item]
+[:en] If [`x] declares an object, the constituent values and references of that
+object are constituent values and references of [`x].
+[:zh_CN] 若 [`x] 声明的是对象，则该对象的成分值和引用就是 [`x] 的成分值和引用。
+[item]
+[:en] If [`x] declares a reference, that reference is a constituent reference of [`x].
+[:zh_CN] 如果 [`x] 声明的是引用，则该引用是 [`x] 的成分引用。
+[list:end]
+
+[:en] For any constituent reference [`r] of a variable [`x], if [`r] is bound to
+a temporary object or subobject thereof whose lifetime is extended to that of [`r],
+the constituent values and references of that temporary object
+are also constituent values and references of [`x], recursively.
+[:zh_CN] 对于变量 [`x] 的任何成分引用 [`r]，如果 [`r] 绑定到了临时对象或其子对象
+且其生存期超出 [`r] 的生存期，则该临时对象的成分值和引用也是 [`x] 的成分值和引用，递归适用。
+
+[para]
+[:en] An object [$o] is [+constexpr-referenceable] from a point [$P] if
+[:zh_CN] 以下情况下，对象 [$o] 从位置 [$P] [+可 constexpr 引用]：
 
 [list]
 [item]
-[:en] either it has an initializer or its default-initialization results in some
-initialization being performed, and
-[:zh_CN] 要么它带有一个初始化式，要么其默认初始化导致进行某种初始化，并且
+[:en] [$o] has static storage duration, or
+[:zh_CN] [$o] 具有静态存储期，或者
 
 [item]
+[:en] [$o] has automatic storage duration, and, letting [`v] denote
+[:zh_CN] [$o] 具有自动存储期，以及，令 [`v] 代表
+[list]
+[item]
+[:en@~] the variable corresponding to [$o][=']s complete object or
+[:zh_CN@~] 对应于 [$o] 的完整对象的变量或
+[item]
+[:en@~] the variable to whose lifetime that of [$o] is extended,
+[:zh_CN] [$o] 扩展了其生存期的变量，
+[list:end]
+[:en@~] the smallest scope enclosing [`v] and the smallest scope enclosing [$P]
+that are neither
+[:zh_CN@~] 包围 [`v] 的最小作用域和包围 [$P] 的并非
+[list]
+[item]
+[:en@~] block scopes nor
+[:zh_CN@~] 块作用域或
+[item]
+[:en@~] function parameter scopes associated with a [~requirement-parameter-list]
+[:zh_CN@~] 与某个[~要求形参列表]关联的函数形参作用域
+[list:end]
+[:en@~] are the same function parameter scope.
+[:zh_CN@~] 的最小作用域是同一个函数形参作用域。
+[list:end]
+
+[begin:example]
+[codeblock]
+struct A {
+  int m;
+  const int& r;
+};
+void f() {
+  static int sx;
+  thread_local int tx;                  // [:en] [`tx] is never constexpr-referenceable \
+                                        [:zh_CN] [`tx] 从不是可 constexpr 引用的
+  int ax;
+  A aa = {1, 2};
+  static A sa = {3, 4};
+  // [:en] The objects [`sx], [`ax], and [`aa.m], [`sa.m], and the temporaries to which [`aa.r] and [`sa.r] are bound, are constexpr-referenceable. \
+  [:zh_CN] 对象 [`sx]、[`ax] 和 [`aa.m]、[`sa.m]，以及 [`aa.r] 和 [`sa.r] 所绑定的临时对象，都可 constexpr 引用
+  auto lambda = [] {
+    int ay;
+    // [:en] The objects [`sx], [`sa.m], and [`ay] (but not [`ax] or [`aa]), and the \
+    [:zh_CN] 对象 [`sx]、[`sa.m] 和 [`ay]（但并非 [`ax] 或 [`aa]），以及
+    // [:en@~] temporary to which [`sa.r] is bound, are constexpr-referenceable. \
+    [:zh_CN@~] [`sa.r] 所绑定的临时对象，可 constexpr 引用。
+  };
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] An object or reference [`x] is [+constexpr-representable] at a point [$P] if,
+for each constituent value of [`x] that points to or past an object [$o],
+and for each constituent reference of [`x] that refers to an object [$o],
+[$o] is constexpr-referenceable from [$P].
+[:zh_CN] 如果对象或引用 [`x] 的每个指向或越过某个对象 [$o] 的成分值，以及 [`x]
+的每个指代某个对象 [$o] 的成分引用，[$o] 都从 [$P] 可 constexpr 引用，
+则 [`x] 在 [$P] 处[+可 constexpr 表示]。
+
+
+[para]
+[:en] A variable [`v] is [+constant-initializable] if
+[:zh_CN] 满足以下条件时，变量 [`v] [+可常量初始化]：
+
+[list]
+[item]
 [:en] the full-expression of its initialization is a constant expression when
-interpreted as a [~constant-expression], except that if [`o] is an object, that
-full-expression may also invoke constexpr constructors for [`o] and its
-subobjects even if those objects are of non-literal class types.
-[:zh_CN] 其初始化的全表达式当作为[~常量表达式]解释时是常量表达式，不过当 [`o] 是
-对象时，该全表达式还可以为 [`o] 及其子对象调用 constexpr 构造函数，即便这些对象
-具有非字面类类型也是如此。
+interpreted as a [~constant-expression],
+[:zh_CN] 其初始化的全表达式当作为[~常量表达式]解释时是常量表达式，
 
 [begin:note]
-[:en] Such a class can have a non-trivial destructor.
-[:zh_CN] 这样的类可以带有非平凡的析构函数。
-
 [:en] Within this evaluation, [`std::is_constant_evaluated()] ([#meta.const.eval])
 returns [`:key true].
 [:zh_CN] 在这种求值之中时，[`std::is_constant_evaluated()]（[#meta.const.eval]）
 将返回 [`:key true]。
 [end:note]
+
+[:en] and
+[:zh_CN] 并且
+
+[item]
+[:en] immediately after the initializing declaration of [`v], the object or
+reference [`x] declared by [`v] is constexpr-representable, and
+[:zh_CN] 紧接 [`v] 的初始化声明式之后，[`v] 所声明的对象或引用 [`x] 即可 constexpr 表示，并且
+
+[item]
+[:en] if [`x] has static or thread storage duration, [`x] is
+constexpr-representable at the nearest point whose immediate scope is a
+namespace scope that follows the initializing declaration of [`v].
+[:zh_CN] 如果 [`x] 具有静态或线程存储期，则在 [`v] 的初始化声明式之后的以
+命名空间作用域为直接作用域的最近位置，[`x] 可 constexpr 表示。
 [list:end]
+
+[para]
+[:en] A constant-initializable variable is [+constant-initialized]
+if either it has an initializer or
+its default-initialization results in some initialization being performed.
+[:zh_CN] 如果可常量初始化的变量要么具有初始化式要么其默认初始化造成某项初始化被实施，
+那么它[+被常量初始化]。
+
+[begin:example]
+[codeblock]
+void f() {
+  int ax = 0;                   // [:en] [`ax] is constant-initialized [:zh_CN] [`ax] 被常量初始化
+  thread_local int tx = 0;      // [:en] [`tx] is constant-initialized [:zh_CN] [`tx] 被常量初始化
+  static int sx;                // [:en] [`sx] is not constant-initialized [:zh_CN] [`sx] 未被常量初始化
+  static int& rss = sx;         // [:en] [`rss] is constant-initialized [:zh_CN] [`rss] 被常量初始化
+  static int& rst = tx;         // [:en] [`rst] is not constant-initialized [:zh_CN] [`rst] 未被常量初始化
+  static int& rsa = ax;         // [:en] [`rsa] is not constant-initialized [:zh_CN] [`rsa] 未被常量初始化
+  thread_local int& rts = sx;   // [:en] [`rts] is constant-initialized [:zh_CN] [`rts] 被常量初始化
+  thread_local int& rtt = tx;   // [:en] [`rtt] is not constant-initialized [:zh_CN] [`rtt] 未被常量初始化
+  thread_local int& rta = ax;   // [:en] [`rta] is not constant-initialized [:zh_CN] [`rta] 未被常量初始化
+  int& ras = sx;                // [:en] [`ras] is constant-initialized [:zh_CN] [`ras] 被常量初始化
+  int& rat = tx;                // [:en] [`rat] is not constant-initialized [:zh_CN] [`rat] 未被常量初始化
+  int& raa = ax;                // [:en] [`raa] is constant-initialized [:zh_CN] [`raa] 被常量初始化
+}
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] A variable is [+potentially-constant] if it is constexpr or it has
@@ -85,29 +231,56 @@ constant expressions] at a point [$P] if [$V][=']s initializating declaration
 [:zh_CN@~] [$P] 与 [$D] 处于相同翻译单元中。
 [list:end]
 
-[:en] An object or reference is [+usable in constant expressions] if it is
-[:zh_CN] 以下情况下，对象或引用[+可被用在常量表达式之中]：
+[:en] An object or reference is [+potentially usable in constant expressions]
+at point [$P] if it is
+[:zh_CN] 以下情况下，对象或引用在位置 [$P] [+潜在可被用在常量表达式之中]：
 
 [list]
 [item]
-[:en@~] a variable that is usable in constant expressions, or
-[:zh_CN@~] 可被用在常量表达式之中的变量，或
-[item]
-[:en@~] a template parameter object ([#temp.param]), or
-[:zh_CN@~] 模板形参对象（[#temp.param]），或
-[item]
-[:en@~] a string literal object ([#lex.string]), or
-[:zh_CN@~] 字符串字面量对象（[#lex.string]），或
+[:en@~] the object or reference declared by a variable that is usable in
+constant expressions at [$P], or
+[:zh_CN@~] 它是在 [$P] 处可被用在常量表达式之中的变量所声明的对象或引用，或
 [item]
 [:en@~] a temporary object of non-volatile const-qualified literal type whose
 lifetime is extended ([#class.temporary]) to that of a variable that is usable
-in constant expressions, or
+in constant expressions at [$P],
 [:zh_CN@~] 非 volatile 且 const 限定的字面量类型的临时对象，并且其生存期已扩展
-（[#class.temporary]）到某个可在常量表达式中使用的变量的生存期，或
+（[#class.temporary]）到某个在 [$P] 处可在常量表达式中使用的变量的生存期，
 [item]
-[:en@~] a non-mutable subobject or reference member of any of the above.
-[:zh_CN@~] 以上任一的非 mutable 子对象或引用成员。
+[:en@~] a template parameter object ([#temp.param]),
+[:zh_CN@~] 模板形参对象（[#temp.param]），
+[item]
+[:en@~] a string literal object ([#lex.string]),
+[:zh_CN@~] 字符串字面量对象（[#lex.string]），
+[item]
+[:en@~] a non-mutable subobject of any of the above, or
+[:zh_CN@~] 以上任一的非 mutable 子对象，或
+[item]
+[:en@~] a reference member of any of the above.
+[:zh_CN@~] 以上任一的引用成员。
 [list:end]
+
+[:en] An object or reference is [+usable in constant expressions] at point [$P]
+if it is an object or reference that is potentially usable in constant
+expressions at [$P] and is constexpr-representable at [$P].
+[:zh_CN] 如果对象或引用是在位置 [$P] 潜在可被用在常量表达式之中且在 [$P] 可 constexpr
+表示，那么它[+可被用在常量表达式之中]。
+
+[begin:example]
+[codeblock]
+struct A {
+  int* const & r;
+};
+void f(int x) {
+  constexpr A a = {&x};
+  static_assert(a.r == &x);             // OK
+  [&] {
+    static_assert(a.r != nullptr);      // [:en] error: [`a.r] is not usable in constant expressions at this point \
+                                        [:zh_CN] 错误：[`a.r] 在此处不可被用在常量表达式之中
+  }();
+}
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] An expression [$E] is a [+:adj core constant[!expression]] unless the
@@ -181,9 +354,8 @@ dynamic type is constexpr-unknown;
 
 [item]
 [:en] an operation that would have undefined or erroneous behavior as specified
-in [#intro] through [#cpp], excluding [#dcl.attr.assume] and [#dcl.attr.noreturn];[#:fn]
-[:zh_CN] 可能具有在本文档从 [#intro] 到 [#cpp]，除了 [#dcl.attr.assume] 和
-[#dcl.attr.noreturn] 中所述的未定义或错误行为的操作[#:fn]；
+in [#intro] through [#[=lastcorechapter]];[#:fn]
+[:zh_CN] 可能具有在本文档从 [#intro] 到 [#[=lastcorechapter]][#:fn]；
 
 [note:foot]
 [:en] This includes, for example, signed integer overflow ([#expr.pre]), certain
@@ -198,6 +370,10 @@ shift operations ([#expr.shift])
 [:zh_CN] 左值向右值转换，但排除实施于下列情况的左值
 
 [list]
+[item]
+[:en] a glvalue of type [=cv] [`std::nullptr_t],
+[:zh_CN] [=cv] [`std::nullptr_t] 类型的泛左值，
+
 [item]
 [:en] a non-volatile glvalue that refers to an object that is usable in constant
 expressions, or
@@ -251,12 +427,12 @@ void g() {
 
 [begin:note]
 [:en] If the odr-use occurs in an invocation of a function call operator of a
-closure type, it no longer refers to [`:key this] or to an enclosing automatic
-variable due to the transformation ([#expr.prim.lambda.capture]) of the
-[~id-expression] into an access of the corresponding data member.
+closure type, it no longer refers to [`:key this] or to an enclosing variable
+with automatic storage duration due to the transformation ([#expr.prim.lambda.capture])
+of the [~id-expression] into an access of the corresponding data member.
 [:zh_CN] 如果这次 ODR 式使用发生于某个闭包类型的函数调用运算符的执行中，则它不再
-指代 [`:key this] 或者指代某个外围自动变量了，这是由于[~标识表达式]已被变换为其
-对应的数据成员的访问（[#expr.prim.lambda.capture]）。
+指代 [`:key this] 或者指代某个外围具有自动存储期的变量了，这是由于[~标识表达式]已被
+变换为其对应的数据成员的访问（[#expr.prim.lambda.capture]）。
 
 [begin:example]
 [codeblock]
@@ -316,11 +492,11 @@ with an allocated type [`T], where
 [:zh_CN@~] 所选中的分配函数是分配类型为 [`T] 的非分配形式（[#new.delete.placement]），其中
 [list]
 [item]
-[:en@~] the placement argument to the [~new-expression] points to an object that
-is pointer-interconvertible with an object of type [`T] or, if [`T] is an array
-type, with the first element of an object of type [`T], and
-[:zh_CN@~] [~new-表达式]的放置实参指向某个与 [`T] 类型的对象（或者当 [`T] 为
-数组类型时，与 [`T] 类型的对象的首个元素）可互相转换指针的对象，并且
+[:en@~] the placement argument to the [~new-expression] points to an object
+whose type is similar to [`T] ([#conv.qual]) or, if [`T] is an array type,
+to the first element of an object of a type similar to [`T], and
+[:zh_CN@~] [~new-表达式]的放置实参指向某个类型与 [`T] 相似（[#conv.qual]）
+的对象，或者当 [`T] 为数组类型时，指向某个类型与 [`T] 相似的对象的首个元素，并且
 [item]
 [:en@~] the placement argument points to storage whose duration began within the
 evaluation of [$E];
@@ -347,6 +523,15 @@ unless it deallocates a region of storage allocated within the evaluation of [$E
 的调用，除非它回收 [$E] 的求值之中所分配的存储区域；
 
 [item]
+[:en] a construction of an exception object, unless the exception object and
+all of its implicit copies created by invocations of
+[`std::current_exception] or [`std::rethrow_exception] ([#propagation])
+are destroyed within the evaluation of [$E];
+[:zh_CN] 异常对象的构造，除非该异常对象和所有由 [`std::current_exception] 或
+[`std::rethrow_exception]（[#propagation]）的调用中所创建的隐含副本都在 [$E] 的
+求值之中销毁；
+
+[item]
 [:en] an [~await-expression] ([#expr.await]);
 [:zh_CN] [~等待表达式]（[#expr.await]）；
 
@@ -361,15 +546,19 @@ or equality ([#expr.eq]) operator where the result is unspecified;
 （[#expr.eq]）运算符；
 
 [item]
-[:en] a [~throw-expression] ([#expr.throw]);
-[:zh_CN] [~throw-表达式]（[#expr.throw]）；
-
-[item]
 [:en] a [`:key dynamic_cast] ([#expr.dynamic.cast]) or [`:key typeid] ([#expr.typeid])
 expression on a glvalue that refers to an object whose dynamic type is
-constexpr-unknown or that would throw an expression;
-[:zh_CN] 运用于代表具有 constexpr 未知的动态类型的对象的泛左值上，或者可能抛出异常的
+constexpr-unknown;
+[:zh_CN] 运用于代表具有 constexpr 未知的动态类型的对象的泛左值上的
 [`:key dynamic_cast]（[#expr.dynamic.cast]）或 [`typeid]（[#expr.typeid]）表达式；
+
+[item]
+[:en] a [`:key dynamic_cast] ([#expr.dynamic.cast]) expression,
+[`typeid] ([#expr.typeid]) expression, or [~new-expression] ([#expr.new]) that
+would throw an exception where no definition of the exception type is reachable;
+[:zh_CN] 可能抛出异常的 [`:key dynamic_cast]（[#expr.dynamic.cast]）表达式，
+[`typeid]（[#expr.typeid]）表达式，或 [~new-表达式]（[#expr.new]），
+且没有可达的异常类型的定义式；
 
 [item]
 [:en] an [~asm-declaration] ([#dcl.asm]);
@@ -399,6 +588,13 @@ during constant evaluation.
 [list:end]
 
 [para]
+[:en] It is [?impldef whether an expression is a core constant expression]
+whether [$E] is a core constant expression if [$E] satisfies the constraints of
+a core constant expression, but evaluation of [$E] has runtime-undefined behavior.
+[:zh_CN] 如果 [$E] 满足对核心常量表达式的约束，但 [$E] 的求值具有运行时未定义行为，
+那么 [$E] 是否是核心常量表达式是[?impldef 表达式是否是核心常量表达式]。
+
+[para]
 [:en] It is unspecified whether [$E] is a core constant expression if [$E]
 satisfies the constraints of a core constant expression, but evaluation of [$E]
 would evaluate
@@ -408,31 +604,11 @@ would evaluate
 [list]
 [item]
 [:en@~] an operation that has undefined behavior as specified in [#library]
-through [#[=lastlibchapter]],
-[:zh_CN@~] 某个具有在从 [#library] 到 [#[=lastlibchapter]] 中所述的未定义行为的操作，
+through [#[=lastlibchapter]], or
+[:zh_CN@~] 某个具有在从 [#library] 到 [#[=lastlibchapter]] 中所述的未定义行为的操作，或者
 [item]
-[:en@~] an invocation of the [`va_start] macro ([#cstdarg.syn]),
-[:zh_CN@~] 调用了 [`va_start] 宏（[#cstdarg.syn]），
-[item]
-[:en@~] a call to a function that was previously declared with the [`noreturn]
-attribute ([#dcl.attr.noreturn]) and that call returns to its caller, or
-[:zh_CN@~] 对之前以 [`noreturn] 属性（[#dcl.attr.noreturn]）声明的函数的调用，
-而该调用返回到其调用方，或者
-[item]
-[:en@~] a statement with an assumption ([#dcl.attr.assume]) whose converted
-[~conditional-expression], if evaluated where the assumption appears,
-would not disqualify [$E] from being a core constant expression and
-would not evaluate to [`true].
-[:zh_CN@~] 带有假设（[#dcl.attr.assume]）的语句，其转换后的[~条件表达式]如果在
-假设出现之处求值本不会妨碍 [$E] 作为核心常量表达式且本会求值为 [`true]。
-
-[begin:note]
-[:en] [$E] is not disqualified from being a core constant expression if the
-hypothetical evaluation of the converted [~conditional-expression] would
-disqualify [$E] from being a core constant expression.
-[:zh_CN] 如果虚构的对转换后的[~条件表达式]的求值妨碍 [$E] 作为核心常量表达式，则
-不妨碍 [$E] 称为核心常量表达式。
-[end:note]
+[:en@~] an invocation of the [`va_start] macro ([#cstdarg.syn]).
+[:zh_CN@~] 调用了 [`va_start] 宏（[#cstdarg.syn]）。
 [list:end]
 
 [para]
@@ -508,6 +684,54 @@ the union, if any.
 [:en] The copy/move of the active member is trivial.
 [:zh_CN] 活跃成员的复制/移动是平凡操作。
 [end:note]
+
+[para]
+[:en] For the purposes of determining whether [$E] is a core constant expression,
+the evaluation of an [~id-expression] that names a structured binding
+[`v] ([#dcl.struct.bind]) has the following semantics:
+[:zh_CN] 为确定 [$E] 是否是核心常量表达式，对指明结构化绑定 [`v] 的[~标识表达式]
+（[#dcl.struct.bind]）的求值具有如下语义：
+
+[list]
+[item]
+[:en] If [`v] is an lvalue referring to the object bound to an invented
+reference [`r], the behavior is as if [`r] were nominated.
+[:zh_CN] 如果 [`v] 是指代绑定到虚构引用 [`r] 的对象的左值，则其行为如同指名的是 [`r]。
+[item]
+[:en] Otherwise, if [`v] names an array element or class member, the behavior is
+that of evaluating [`[$e]`[[$i]`]] or [`[$e].[$m]], respectively, where [$e] is
+the name of the variable initialized from the initializer of the structured
+binding declaration, and [$i] is the index of the element referred to by [`v] or
+[$m] is the name of the member referred to by [`v], respectively.
+[:zh_CN] 否则，如果 [`v] 指名的事数组元素或者类成员，则其行为分别为求值 [`[$e]`[[$i]`]]
+或 [`[$e].[$m]] 的行为，其中 [$e] 是以结构化绑定声明式的初始化式所初始化的变量的名字，
+而 [$i] 是 [`v] 所指代的元素的索引，或者 [$m] 是 [`v] 所指代的成员的名字。
+[list:end]
+
+[begin:example]
+[codeblock]
+#include <tuple>
+struct S {
+  mutable int m;
+  constexpr S(int m): m(m) {}
+  virtual int g() const;
+};
+void f(std::tuple<S&> t) {
+  auto [r] = t;
+  static_assert(r.g() >= 0);            // [:en] error: dynamic type is constexpr-unknown \
+                                        [:zh_CN] 错误：动态类型 constexpr 未知
+  constexpr auto [m] = S(1);
+  static_assert(m == 1);                // [:en] error: lvalue-to-rvalue conversion on mutable \
+                                        [:zh_CN] 错误：对 mutable 子对象 [`e.m] 实施左值向右值转换，
+                                        // [:en] subobject [`e.m], where [`e] is a constexpr object of type [`S] \
+                                        [:zh_CN] 其中 [`e] 是 [`S] 类型的 constepr 对象
+  using A = int[2];
+  constexpr auto [v0, v1] = A{2, 3};
+  static_assert(v0 + v1 == 5);          // [:en] OK, equivalent to [`e`[0`] + e`[1`]] where [`e] is a constexpr array \
+                                        [:zh_CN] OK，等价于 [`e`[0`] + e`[1`]]，其中 [`e] 为 constexpr 数组
+}
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] During the evaluation of an expression [$E] as a core constant expression,
@@ -730,50 +954,29 @@ contains only the conversions above.
 
 [para]
 [:en] A [+:adj constant[!expression]] is either a glvalue core constant
-expression that refers to an entity that is a permitted result of a constant
-expression (as defined below), or a prvalue core constant expression whose value
-satisfies the following constraints:
-[:zh_CN] [+:adj 常量[!表达式]]是泛左值核心常量表达式，其值所指代的实体是常量表达式
-所允许的某种结果（如下文定义），或者是纯右值核心常量表达式，其值满足如下约束条件：
+expression that refers to an object or a non-immediate function, or a prvalue
+core constant expression whose value satisfies the following constraints:
+[:zh_CN] [+:adj 常量[!表达式]]是泛左值核心常量表达式，其值所指代的是对象或非立即函数，
+或者是纯右值核心常量表达式，其值满足如下约束条件：
 
 [list]
 [item]
-[:en] if the value is an object of class type, each non-static data member of
-reference type refers to an entity that is a permitted result of a constant
-expression,
-[:zh_CN] 若其值为类类型的对象，则它的每个引用类型的数据成员所指代的实体都是
-常量表达式所允许的结果，
+[:en] each constituent reference refers to an object or a non-immediate function,
+[:zh_CN] 每个成分引用都指代对象或非立即函数，
 
 [item]
-[:en] if the value is an object of scalar type, it does not have an
-indeterminate or erroneous value ([#basic.indet]),
-[:zh_CN] 若其值为标量类型的对象，则它不具有不确定或错误值（[#basic.indet]），
+[:en] no constituent value of scalar type is an indeterminate value ([#basic.indet]),
+[:zh_CN] 没有标量类型成分值具有不确定值（[#basic.indet]），
 
 [item]
-[:en] if the value is of pointer type, it is a pointer to an object with static
-storage duration, a pointer past the end of such an object ([#expr.add]), 
-a pointer to a non-immediate function, or a null pointer value,
-[:zh_CN] 若其值为指针类型，则它为指向某个具有静态存储期的对象的指针，越过这种对象末尾
-的指针（[#expr.add]），指向某个非直接函数的指针，或空指针值，
+[:en] no constituent value of pointer type is a pointer to an immediate function
+or an invalid pointer value ([#basic.compound]), and
+[:zh_CN] 没有指针类型的成分值指向立即函数的指针或无效指针值（[#basic.compound]），并且
 
 [item]
-[:en] if the value is of pointer-to-member-function type, it does not designate
-an immediate function, and
-[:zh_CN] 若其值为成员函数指针类型，则它并不代表某个直接函数，并且
-
-[item]
-[:en] if the value is an object of class or array type, each subobject satisfies
-these constraints for the value.
-[:zh_CN] 若其值为类或数组类型的对象，其每个子对象都应当满足这些对于值的约束条件。
+[:en] no constituent value of pointer-to-member type designates an immediate function.
+[:zh_CN] 没有成员指针类型的成分值指代立即函数。
 [list:end]
-
-[:en] An entity is a [+permitted result of a constant expression[%constant
-expression[!permitted result of]]] if it is an object with static storage
-duration that either is not a temporary object or is a temporary object whose
-value satisfies the above constraints, or if it is a non-immediate function.
-[:zh_CN] 若某个实体是具有静态存储期的对象，并且要么不是临时对象，要么是临时对象但
-其值满足上述约束条件，或者它是个非直接函数，则该实体是[+常量表达式允许的结果
-[%常量表达式[!～允许的结果]]]。
 
 [begin:note]
 [:en] A glvalue core constant expression that either refers to or points to an
