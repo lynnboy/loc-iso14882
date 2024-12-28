@@ -25,6 +25,7 @@ conceptindex = 'conceptindex'
 xrefindex = 'xrefindex'
 xrefdelta = 'xrefdelta'
 
+lastcorechapter = 'cpp'
 firstlibchapter = 'support'
 lastlibchapter = 'exec'
 

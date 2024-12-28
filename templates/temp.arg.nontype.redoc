@@ -4,18 +4,22 @@
 ]
 
 [para]
-[:en] If the type [`T] of a [~template-parameter] ([#temp.param]) contains a
-placeholder type ([#dcl.spec.auto]) or a placeholder for a deduced class type
-([#dcl.type.class.deduct]), the type of the parameter is the type deduced for
-the variable [`x] in the invented declaration
-[:zh_CN] 如果[~模板形参]的类型 [`T]（[#temp.param]）中包含占位符类型
-（[#dcl.spec.auto]）或者推断类类型的占位符（[#dcl.type.class.deduct]），则该形参
-的类型是在以下虚构的声明式中对变量 [`x] 所推断的类型：
+[:en] A template argument [$E] for a non-type [~template-parameter] with
+declared type [`T] shall be such that the invented declaration
+[:zh_CN] 提供给声明类型为 [`T] 的非类型[~模板形参]的模板实参 [$E]，应当使得
+虚构的声明式
 [codeblock]
 T x = [[redoc("$>")]]E;
 [codeblock:end]
-[:en@~] where [$E] is the template argument provided for the parameter.
-[:zh_CN@~] 其中 [$E] 是为此形参提供的模板实参。
+[:en@~] satisfies the semantic constraints for the definition of
+a [`constexpr] variable with static storage duration ([#dcl.constexpr]).
+[:zh_CN] 满足针对具有静态存储期的 [`constexpr] 变量的定义式的语义约束（[#dcl.constexpr]）
+
+[:en] If [`T] contains a placeholder type ([#dcl.spec.auto]) or a placeholder
+for a deduced class type ([#dcl.type.class.deduct]), the type of the parameter
+is the type deduced for the above invented declaration.
+[:zh_CN] 如果 [`T] 中包含占位符类型（[#dcl.spec.auto]）或者推断类类型的占位符
+（[#dcl.type.class.deduct]），则该形参的类型是对上述虚构的声明式中所推断的类型。
 
 [begin:note]
 [:en] [$E] is a [~template-argument] or (for a default template argument) an
@@ -23,16 +27,15 @@ T x = [[redoc("$>")]]E;
 [:zh_CN] [$E] 是[~模板实参]或者（对于默认模板实参）是[~初始化式子句]。
 [end:note]
 
-[:en] If a deduced parameter type is not permitted for a [~template-parameter]
-declaration ([#temp.param]), the program is ill-formed.
-[:zh_CN] 如果一个[~模板形参]的声明式（[#temp.param]）不允许出现推断的形参类型，
+[:en] If the parameter type thus deduced is not permitted for a
+[~template-parameter] declaration ([#temp.param]), the program is ill-formed.
+[:zh_CN] 如果一个[~模板形参]的声明式（[#temp.param]）不允许出现这样推断的形参类型，
 则程序非良构。
 
 [para]
 [:en] The value of a non-type [~template-parameter] [$P] of (possibly deduced)
 type [`T] is determined from its template argument [$A] as follows.
-[:zh_CN] （可能被推断的）[`T] 类型的非类型[~模板形参]的值，按如下从起模板实参
-[$A] 确定。
+[:zh_CN] （可能被推断的）[`T] 类型的非类型[~模板形参]的值，按如下从起模板实参 [$A] 确定。
 
 [:en] If [`T] is not a class type and [$A] is not a [~braced-init-list], [$A]
 shall be a converted constant expression ([#expr.const]) of type [`T]; the value
@@ -120,6 +123,20 @@ pointer value shall not refer or point to (respectively):
 [para]
 [begin:example]
 [codeblock]
+template <int& r> class A{};
+extern int x;
+A<x> a;                 // OK
+void f(int p) {
+  constexpr int& r = p; // OK
+  A<r> a;               // [:en] error: a static constexpr [`int&] variable cannot be initialized to refer to [`p] here \
+                        [:zh_CN] 错误：这里静态 constexpr 的 [`int&] 变量不能初始化为指代 [`p]
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:example]
+[codeblock]
 template<const int* pci> struct X { /* ... */ };
 int ai[10];
 X<ai> xi;                       // [:en] array to pointer and qualification conversions \
@@ -175,8 +192,7 @@ B<J2{}> j2;     // [:en] error: template parameter object not template-argument-
 [begin:note]
 [:en] A [~string-literal] ([#lex.string]) is not an acceptable
 [~template-argument] for a [~template-parameter] of non-class type.
-[:zh_CN]
-[~字符串字面量]（[#lex.string]）对于非类类型的[~模板形参]不是可接受的[~模板实参]。
+[:zh_CN] [~字符串字面量]（[#lex.string]）对于非类类型的[~模板形参]不是可接受的[~模板实参]。
 
 [begin:example]
 [codeblock]

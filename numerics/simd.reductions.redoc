@@ -1,0 +1,177 @@
+[section#simd.reductions
+    [:en] [`basic_simd] reductions
+    [:zh_CN] [`basic_simd] 归约
+]
+
+[codeblock:declaration]
+template<class T, class Abi, class BinaryOperation = plus<>>
+  constexpr T reduce(const basic_simd<T, Abi>& x, BinaryOperation binary_op = {});
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`BinaryOperation] models [`[*:c reduction-binary-operation]<T>].
+[:zh_CN] [`BinaryOperation] 构成 [`[*:c reduction-binary-operation]<T>]。
+
+[para:expects]
+[:en] [`binary_op] does not modify [`x].
+[:zh_CN] [`binary_op] 不修改 [`x]。
+
+[para:returns]
+[:en] [`[^GENERALIZED_SUM](binary_op, simd<T, 1>(x`[0`]), [$\ldots], simd<T, 1>(x`[x.size() - 1`]))`[0`]]
+([#numerics.defns]).
+[:zh_CN] [`[^GENERALIZED_SUM](binary_op, simd<T, 1>(x`[0`]), [$\ldots], simd<T, 1>(x`[x.size() - 1`]))`[0`]]
+（[#numerics.defns]）。
+
+[para:throws]
+[:en] Any exception thrown from [`binary_op].
+[:zh_CN] [`binary_op] 中抛出的任何异常。
+[div:end]
+
+[codeblock:declaration]
+template<class T, class Abi, class BinaryOperation = plus<>>
+  constexpr T reduce(
+    const basic_simd<T, Abi>& x, const typename basic_simd<T, Abi>::mask_type& mask,
+    BinaryOperation binary_op = {}, type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`BinaryOperation] models [`[*:c reduction-binary-operation]<T>].
+[:zh_CN] [`BinaryOperation] 构成 [`[*:c reduction-binary-operation]<T>]。
+[item]
+[:en] An argument for [`identity_element] is provided for the invocation,
+unless [`BinaryOperation] is one of [`plus<>], [`multiplies<>], [`bit_and<>],
+[`bit_or<>], or [`bit_xor<>].
+[:zh_CN] 若 [`BinaryOperation] 不是 [`plus<>]、[`multiplies<>]、[`bit_and<>]、
+[`bit_or<>] 或 [`bit_xor<>] 之一，则调用时提供了一个用于 [`identity_element] 的实参。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] [`binary_op] does not modify [`x].
+[:zh_CN] [`binary_op] 不修改 [`x]。
+[item]
+[:en] For all finite values [`y] representable by [`T], the results of
+[`y == binary_op(simd<T, 1>(identity_element), simd<T, 1>(y))`[0`]] and
+[`y == binary_op(simd<T, 1>(y), simd<T, 1>(identity_element))`[0`]] are [`true].
+[:zh_CN] 对于可由 [`T] 表示的所有有穷值 [`y]，
+[`y == binary_op(simd<T, 1>(identity_element), simd<T, 1>(y))`[0`]] 和
+[`y == binary_op(simd<T, 1>(y), simd<T, 1>(identity_element))`[0`]] 的结果均为 [`true]。
+[list:end]
+
+[para:returns]
+[:en] If [`none_of(mask)] is [`true], returns [`identity_element].
+[:zh_CN] 若 [`none_of(mask)] 为 [`true]，则返回 [`identity_element]。
+
+[:en] Otherwise, returns
+[`[^GENERALIZED_SUM](binary_op, simd<T, 1>(x`[[$k_0]`]), [$\ldots], simd<T, 1>(x`[[$k_n]`]))`[0`]]
+where [$k_0, \ldots, k_n] are the selected indices of [`mask].
+[:zh_CN] 否则，返回
+[`[^GENERALIZED_SUM](binary_op, simd<T, 1>(x`[[$k_0]`]), [$\ldots], simd<T, 1>(x`[[$k_n]`]))`[0`]]，
+其中 [$k_0, \ldots, k_n] 为 [`mask] 的选中索引。
+
+[para:throws]
+[:en] Any exception thrown from [`binary_op].
+[:zh_CN] [`binary_op] 中抛出的任何异常。
+
+[para:remarks]
+[:en] The default argument for [`identity_element] is equal to
+[:zh_CN] 用于 [`identity_element] 的缺省实参
+[list]
+[item]
+[:en@~] [`T()] if [`BinaryOperation] is [`plus<>],
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`plus<>] 时等于 [`T()]，
+[item]
+[:en@~] [`T(1)] if [`BinaryOperation] is [`multiplies<>],
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`multiplies<>] 时等于 [`T(1)]，
+[item]
+[:en@~] [`T(~T())] if [`BinaryOperation] is [`bit_and<>],
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`bit_and<>] 时等于 [`T(~T())]，
+[item]
+[:en@~] [`T()] if [`BinaryOperation] is [`bit_or<>], or
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`bit_or<>] 时等于 [`T()]，或者
+[item]
+[:en@~] [`T()] if [`BinaryOperation] is [`bit_xor<>].
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`bit_xor<>] 时等于 [`T()]，
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class T, class Abi> constexpr T reduce_min(const basic_simd<T, Abi>& x) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] models [`totally_ordered].
+[:zh_CN] [`T] 构成 [`totally_ordered]。
+
+[para:returns]
+[:en] The value of an element [`x`[[$j]`]] for which [`x`[[$i]`] < x`[[$j]`]] is
+[`false] for all [$i] in the range of [=range(0,basic_simd<T, Abi>::size())].
+[:zh_CN] 返回某个元素 [`x`[[$j]`]] 的值，其中对于范围
+[=range(0,basic_simd<T, Abi>::size())] 中的所有 [$i]，[`x`[[$i]`] < x`[[$j]`]]
+均为 [`false]。
+[div:end]
+
+[codeblock:declaration]
+template<class T, class Abi>
+  constexpr T reduce_min(
+    const basic_simd<T, Abi>&, const typename basic_simd<T, Abi>::mask_type&) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] models [`totally_ordered].
+[:zh_CN] [`T] 构成 [`totally_ordered]。
+
+[para:returns]
+[:en] If [`none_of(mask)] is [`true], returns [`numeric_limits<T>::max()].
+[:zh_CN] 若 [`none_of(mask)] 为 [`true]，则返回 [`numeric_limits<T>::max()]。
+
+[:en] Otherwise, returns the value of a selected element [`x`[[$j]`]] for which
+[`x`[[$i]`] < x`[[$j]`]] is [`false] for all selected indices [$i] of [`mask].
+[:zh_CN] 否则，返回某个选中元素 [`x`[[$j]`]] 的值，其中对于 [`mask] 的所有选中索引 [$i]，
+[`x`[[$i]`] < x`[[$j]`]] 均为 [`false]。
+[div:end]
+
+[codeblock:declaration]
+template<class T, class Abi> constexpr T reduce_max(const basic_simd<T, Abi>& x) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] models [`totally_ordered].
+[:zh_CN] [`T] 构成 [`totally_ordered]。
+
+[para:returns]
+[:en] The value of an element [`x`[[$j]`]] for which [`x`[[$j]`] < x`[[$i]`]] is
+[`false] for all [$i] in the range of [=range(0,basic_simd<T, Abi>::size())].
+[:zh_CN] 返回某个元素 [`x`[[$j]`]] 的值，其中对于范围
+[=range(0,basic_simd<T, Abi>::size())] 中的所有 [$i]，[`x`[[$j]`] < x`[[$i]`]]
+均为 [`false]。
+[div:end]
+
+[codeblock:declaration]
+template<class T, class Abi>
+  constexpr T reduce_max(
+    const basic_simd<T, Abi>&, const typename basic_simd<T, Abi>::mask_type&) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] models [`totally_ordered].
+[:zh_CN] [`T] 构成 [`totally_ordered]。
+
+[para:returns]
+[:en] If [`none_of(mask)] is [`true], returns [`numeric_limits<V::value_type>::lowest()].
+[:zh_CN] 若 [`none_of(mask)] 为 [`true]，则返回 [`numeric_limits<V::value_type>::lowest()]。
+
+[:en] Otherwise, returns the value of a selected element [`x`[[$j]`]] for which
+[`x`[[$j]`] < x`[[$i]`]] is [`false] for all selected indices [$i] of [`mask].
+[:zh_CN] 否则，返回某个选中元素 [`x`[[$j]`]] 的值，其中对于 [`mask] 的所有选中索引 [$i]，
+[`x`[[$j]`] < x`[[$i]`]] 均为 [`false]。
+[div:end]

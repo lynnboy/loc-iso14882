@@ -871,6 +871,8 @@ cv-unqualified                          |无 cv 限定的
 |-|-|-|
 data                                    |数据
 data member                             |数据成员
+data-parallel object                    |数据并行对象
+data-parallel type                      |数据并行类型| `basic_simd` 和 `basic_simd_mask` 启用的特例
 data race                               |数据竞争   |潜在并发+非原子性+无HapB，UB
 data structure                          |数据结构
 data type                               |数据类型
@@ -975,6 +977,7 @@ elaborated-enum-specifier               |详述枚举说明符 |详述类型说�
 element                                 |元素       |数组，聚合，初始化式列表
 element access function                 |元素访问函数   |并行算法中使用的迭代器方法或函数对象，用于通过迭代器执行（读写）操作访问序列元素
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
+element-wise operation                  |逐元素运算 |SIMD
 eligible special member function        |合格的特殊成员函数 |可被认为存在：未被弃置，满足关联约束，约束偏序中优先
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
 ellipsis conversion sequence            |省略号转换序列 EllipsisCS  |重载决议中ICS的一种，省略号形参对应的转换
@@ -1579,7 +1582,7 @@ overrider                               |覆盖函数   |支持返回类型协�
 
 |English|中文|说明|
 |-|-|-|
-pack                                    |包组           |一种实体，概念上类似`tuple`，用于`...`。模板形参、函数形参、*带初始化俘获符*
+pack                                    |包组           |一种实体，概念上类似`tuple`，用于`...`。模板形参、函数形参、*带初始化俘获符*、结构化绑定
 pack expansion                          |包组展开式     |将包组中各实参带入模式并构成列表，`sizeof...`产生包组元素个数，折叠表达式递归求值折叠运算符
 padding bits                            |填充位         |对象表示中不属于值表示的位
 pair                                    |对偶
@@ -1597,6 +1600,7 @@ parent scope                            |父作用域       |作用域的直接�
 parenthesized expression                |带括号表达式
 partial order                           |偏序，非严格偏序，半序 |自反，反对称，传递，不要求完全性，如 <=
 partial ordering by constraints         |基于约束的偏序 |基于纳入关系比较约束的范式：`C1||...`中的每个`C1`均纳入了`C2&&...`中的所有`C2`，则前者纳入后者
+partial-ordering-constrained            |受偏序约束的
 partial ordering of function template   |函数模板的偏序 |函数模板“更特殊”关系
 partial ordering of partial specialization|部分特化式的偏序 |基于模板函数偏序规则：归一化变换后互相推断，忽略函数无实参的的形参包组、默认实参和省略号<br>再考虑重排序后对齐的形参列表间比较哪个更受约束
 partial specialization                  |部分特化，部分特化式   |类模板，变量模板。可以加约束。特例的模板实参可以推断出特化式的模板实参且满足约束，则匹配，再基于偏序选择
@@ -1827,6 +1831,8 @@ scoped enumerator                       |有作用域枚举符
 secondary comparison operator           |次级比较运算符 |`<`,`>`,`<=`,`>=`,`!=`
 seed sequence                           |种子序列       |保存`u32`的序列，可以`generate`到输出序列，或`param`到外部存储其状态
 selected destructor                     |选中的析构函数 |重载决议在预期析构函数中选择，基于约束偏序
+selected elements                       |选定元素       |SIMD
+selected indices                        |选定索引       |SIMD
 selection statement                     |选择语句       |if, switch
 semantics                               |语义
 semaphore                               |信号量
@@ -1931,6 +1937,7 @@ structural type                         |结构式类型     |可用作非类型
 structure tag                           |结构体标签
 structured binding                      |结构化绑定     |实体的一种，一组变量的语法糖<br>声明隐含变量`e`，数组：非引用时为数组副本，各标识符代表各元素<br>元组协议：以`e.get<i>()`或`get<i>(e)`初始化各个引用<br>单层数据成员展开：各标识符按成员声明顺序代表各成员，支持位字段
 structured binding declaration          |结构化绑定声明式   |`[]`语法的简单声明式，仅允许`static`, `thread_local`, `auto` 或 cv<br>初始化式为`=ass_expr`,`{ass_expr}`或`(ass_expr)`，数组或非联合体类类型
+structured binding pack                 |结构化绑定包组
 sub-expression                          |子表达式   |正则表达式：括号标记的部分
 subexpression                           |子表达式
 subnormal                               |次规范的
@@ -2137,6 +2144,7 @@ value category                          |值类别     |glvalue: lvalue, xvalue;
 value completion                        |值完成     |异步操作安置态之一
 value computation                       |值计算
 value-dependent                         |值待决     |模板中待决名参与的表达式，常量求值依存于模板形参
+value-preserving                        |保留值的
 value representation                    |值表示     |构成对象状态的位的值，排除填充位
 value-initialize                        |值初始化   |默认初始化或零初始化
 variable                                |变量       |对象或引用，不包括非静态数据成员引用
@@ -2147,6 +2155,7 @@ variadic function                       |变参函数   |以`...`形参结尾的
 variadic template                       |变参模板
 variant                                 |变体
 variant member                          |可变成员   |共用内存的数据成员：联合体的非静态数据成员，匿名联合体嵌入类中的非静态数据成员
+vectorizable type                       |可向量化类型
 vectorization-unsafe                    |向量化不安全 |包含线程同步的库函数，不包括new/delete
 viable                                  |可行的
 viable function                         |可行函数   |重载决议中从候选函数中选取，基于实参数量、各实参均存在ICS、满足约束

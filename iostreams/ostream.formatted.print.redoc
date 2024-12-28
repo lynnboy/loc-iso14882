@@ -35,7 +35,7 @@ template<class... Args>
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-print(os, "{}\n", format(fmt, std::forward<Args>(args)...));
+print(os, "{}\n", format(os.getloc(), fmt, std::forward<Args>(args)...));
 [codeblock:end]
 [div:end]
 
@@ -78,32 +78,31 @@ regard to the value of [`os.exceptions()] and without turning on
 的值，也不会打开 [`os] 的错误状态中的 [`ios_base::badbit]。
 [list:end]
 
+[para:~]
 [:en] After constructing a [`sentry] object, the function initializes an
-automatic variable via
-[:zh_CN] 构造一个 [`sentry] 对象之后，该函数以如下代码初始化一个自动变量：
+variable with automatic storage duration via
+[:zh_CN] 构造一个 [`sentry] 对象之后，该函数以如下代码初始化一个具有自动存储期的变量：
 [codeblock]
 string out = vformat(os.getloc(), fmt, args);
 [codeblock:end]
 
+[list]
+[item]
 [:en] If the function is [`vprint_unicode] and [`os] is a stream that refers to
-a terminal capable of displaying Unicode which is determined in an
-implementation-defined manner, writes [`out] to the terminal using the native
-Unicode API; if [`out] contains invalid code units, [%undefined] the behavior is
-undefined and implementations are encouraged to diagnose it.
-[:zh_CN] 如果是 [`vprint_unicode] 函数且 [`os] 是代表有能力显示 Unicode（以
-由实现定义的方式确定）的终端的流，则利用本地 Unicode API 将 [`out] 写出到终端；
-如果 [`out] 包含无效字符单元，则[%未定义]其行为未定义，鼓励实现对此进行诊断。
+a terminal that is capable of displaying Unicode only via a native Unicode API,
+which is determined in an implementation-defined manner, flushes [`os] and then
+writes [`out] to the terminal using the native Unicode API; if [`out] contains
+invalid code units, [%undefined] the behavior is undefined.
+[:zh_CN] 如果是 [`vprint_unicode] 函数且 [`os] 是代表仅能通过某个本地 Unicode API
+而有能力显示 Unicode（以由实现定义的方式确定）的终端的流，则冲洗 [`os]，然后利用本地
+Unicode API 将 [`out] 写出到终端；如果 [`out] 包含无效字符单元，则[%未定义]其行为未定义
+[item]
+[:en] Otherwise inserts the character sequence [=range(out.begin(),out.end())]
+into [`os].
+[:zh_CN] 否则将字符序列 [=range(out.begin(),out.end())] 插入到 [`os] 中。
+[list:end]
 
-[:en] If the native Unicode API is used, the function flushes [`os] before
-writing [`out].
-[:zh_CN] 如果使用了本地 Unicode API，则函数在写出 [`out] 之前冲洗 [`os]。
-
-[:en] Otherwise (if [`os] is not such a stream or the function is
-[`vprint_nonunicode]), inserts the character sequence
-[=range(out.begin(),out.end())] into [`os].
-[:zh_CN] 否则（[`os] 不是这种流，或不是 [`vprint_nonunicode] 函数），则将字符
-序列 [=range(out.begin(),out.end())] 插入到 [`os] 中。
-
+[para:~]
 [:en] If writing to the terminal or inserting into [`os] fails, calls
 [`os.setstate(ios_base::badbit)] (which may throw [`ios_base::failure]).
 [:zh_CN] 如果向终端的写入或向 [`os] 的插入失败，则调用

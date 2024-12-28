@@ -58,9 +58,28 @@ foo(1);                         // [:en] [`xs] contains one [~init-capture] [:zh
 [end:example]
 
 [para]
-[:en] A [+pack] is a template parameter pack, a function parameter pack, or an
-[~init-capture] pack.
-[:zh_CN] [+包组]是模板形参包组、函数形参包组或[~带初始化俘获符]包组。
+[:en] A [+structured binding pack] is an [~sb-identifier] that introduces zero
+or more structured bindings ([#dcl.struct.bind]).
+[:zh_CN] [+结构化绑定包组]是引入零个或更多结构化绑定的 [~sb-标识符]（[#dcl.struct.bind]）。
+
+[begin:example]
+[codeblock]
+auto foo() -> int(&)[2];
+
+template <class T>
+void g() {
+  auto [...a] = foo();          // [:en] [`a] is a structured binding pack containing two elements \
+                                [:zh_CN] [`a] 是包含两个元素的结构化绑定包组
+  auto [b, c, ...d] = foo();    // [:en] [`d] is a structured binding pack containing zero elements \
+                                [:zh_CN] [`d] 是包含零个元素的结构化绑定包组
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] A [+pack] is a template parameter pack, a function parameter pack, an
+[~init-capture] pack, or a structured binding pack.
+[:zh_CN] [+包组]是模板形参包组、函数形参包组、[~带初始化俘获符]包组或结构化绑定包组。
 
 [:en] The number of elements of a template parameter pack or a function
 parameter pack is the number of arguments provided for the parameter pack.
@@ -71,13 +90,11 @@ elements in the pack expansion of its [~initializer].
 [:zh_CN] [~带初始化俘获符]包组的元素数量是其[~初始化式]的包组展开中的元素数量。
 
 [para]
-[:en]
-[%pattern[%pack expansion[!pattern]]]
+[:en] [%pattern[%pack expansion[!pattern]]]
 A [+pack expansion] consists of a [+pattern[%pack expansion[!pattern]]] and an
 ellipsis, the instantiation of which produces zero or more instantiations of the
 pattern in a list (described below).
-[:zh_CN]
-[%模式[%包组展开式[!模式]]]
+[:zh_CN] [%模式[%包组展开式[!模式]]]
 [+包组展开式]由一个[+模式[%包组展开式[!模式]]]和一个省略号构成，它的实例化将产生
 包含零个或更多该模式的实例的一个列表（见下文说明）。
 
@@ -288,17 +305,23 @@ corresponding type or value template argument;
 [item]
 [:en] if the pack is a function parameter pack, the element is an [~id-expression]
 designating the [$i^\text{th}] function parameter that resulted from
-instantiation of the function parameter pack declaration; otherwise,
+instantiation of the function parameter pack declaration;
 [:zh_CN] 如果该包组是函数形参包组，则该元素是一个[~标识表达式]，并代表这个
-函数形参包组声明式的实例化所得到的第 [$i] 个函数形参；否则，
+函数形参包组声明式的实例化所得到的第 [$i] 个函数形参；
 
 [item]
 [:en] if the pack is an [~init-capture] pack, the element is an [~id-expression]
 designating the variable introduced by the [$i^\text{th}] [~init-capture] that
-resulted from instantiation of the [~init-capture] pack declaration.
-[:zh_CN] 如果该包组是[~带初始化俘获符]包组，则该元素是一个[~标识表达式]，并代表
-由这个[~带初始化俘获符]包组声明式的实例化所得到的第 [$i] 个[~带初始化俘获符]所
-引入的变量。
+resulted from instantiation of the [~init-capture] pack declaration; otherwise
+[:zh_CN] 如果该包组是[~带初始化俘获符]包组，则该元素是一个[~标识表达式]，并代表由这个
+[~带初始化俘获符]包组声明式的实例化所得到的第 [$i] 个[~带初始化俘获符]所引入的变量，或者
+
+[item]
+[:en] if the pack is a structured binding pack, the element is an
+[~id-expression] designating the [$i^\textrm{th}] structured binding in the pack
+that resulted from the structured binding declaration.
+[:zh_CN] 如果该包组是结构化绑定帮组，则该元素是一个[~标识表达式]，并代表由结构化绑定
+声明式产生的包组中的第 [$i] 个结构化绑定。
 [list:end]
 
 [:en] When [$N] is zero, the instantiation of a pack expansion does not alter
@@ -312,8 +335,7 @@ result in an ambiguity in the grammar.
 [para]
 [:en] The instantiation of a [`sizeof...] expression ([#expr.sizeof]) produces
 an integral constant with value [$N].
-[:zh_CN] [`sizeof...] 表达式（[#expr.sizeof]）的实例化，产生一个值为 [$N] 的
-整型常量。
+[:zh_CN] [`sizeof...] 表达式（[#expr.sizeof]）的实例化，产生一个值为 [$N] 的整型常量。
 
 [para]
 [:en] When instantiating a [~pack-index-expression] [$P], let [$K] be the index
@@ -418,18 +440,15 @@ the instantiation is ill-formed.
 [para]
 [:en] The instantiation of any other pack expansion produces a list of elements
 [$[`E]_1, [`E]_2, \dotsc, [`E]_N].
-[:zh_CN] 任何其他包组展开式的实例化，产生一个元素列表
-“[$[`E]_1, [`E]_2, \dotsc, [`E]_N]”。
+[:zh_CN] 任何其他包组展开式的实例化，产生一个元素列表“[$[`E]_1, [`E]_2, \dotsc, [`E]_N]”。
 
 [begin:note]
 [:en] The variety of list varies with the context: [~expression-list],
 [~base-specifier-list], [~template-argument-list], etc.
-[:zh_CN] 列表的种类跟随语境变化：[~表达式列表]，[~基说明符列表]，[~模板实参列表]，
-等等。
+[:zh_CN] 列表的种类跟随语境变化：[~表达式列表]，[~基说明符列表]，[~模板实参列表]，等等。
 [end:note]
 
-[:en] When [$N] is zero, the instantiation of the expansion produces an empty
-list.
+[:en] When [$N] is zero, the instantiation of the expansion produces an empty list.
 [:zh_CN] 当 [$N] 为零时，展开式的实例化产生空列表。
 
 [begin:example]

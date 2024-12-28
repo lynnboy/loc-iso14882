@@ -1,0 +1,205 @@
+[section#simd.ctor
+    [:en] [`basic_simd] constructors
+    [:zh_CN] [`basic_simd] 构造函数
+]
+
+[codeblock:declaration]
+template<class U> constexpr basic_simd(U&&) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`From] denote the type [`remove_cvref_t<U>].
+[:zh_CN] 令 [`From] 代表类型 [`remove_cvref_t<U>]。
+
+[para:constraints]
+[:en] [`From] satisfies [`convertible_to<value_type>], and either
+[:zh_CN] [`From] 满足 [`convertible_to<value_type>]，并且
+[list]
+[item]
+[:en] [`From] is an arithmetic type and the conversion from [`From] to
+[`value_type] is value-preserving ([#simd.general]), or
+[:zh_CN] [`From] 为算术类型且从 [`From] 向 [`value_type] 的转换是保留值的（[#simd.general]），或者
+[item]
+[:en] [`From] is not an arithmetic type and does not satisfy
+[*:c constexpr-wrapper-like], or
+[:zh_CN] [`From] 不是算术类型并且不满足 [*:c constexpr-wrapper-like]，或者
+[item]
+[:en] [`From] satisfies [*:c constexpr-wrapper-like],
+[`remove_const_t<decltype(From::value)>] is an arithmetic type, and
+[`From::value] is representable by [`value_type].
+[:zh_CN] [`From] 满足 [*:c constexpr-wrapper-like]，
+[`remove_const_t<decltype(From::value)>] 是算术类型，并且
+[`From::value] 可以用 [`value_type] 表示。
+[list:end]
+
+[para:effects]
+[:en] Initializes each element to the value of the argument after conversion to
+[`value_type].
+[:zh_CN] 将各个元素初始化为实参转换为 [`value_type] 后的值。
+[div:end]
+
+[codeblock:declaration]
+template<class U, class UAbi>
+  constexpr explicit([[redoc("[=seebelow]")]]) basic_simd(const basic_simd<U, UAbi>& x) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`[*simd-size-v]<U, UAbi> == size()] is [`true].
+[:zh_CN] [`[*simd-size-v]<U, UAbi> == size()] 为 [`true]。
+
+[para:effects]
+[:en] Initializes the [$i^\text{th}] element with [`static_cast<T>(x`[[$i]`])]
+for all [$i] in the range of [=range(0,size())].
+[:zh_CN] 对于范围 [=range(0,size())] 中的每个 [$i]，以
+[`static_cast<T>(x`[[$i]`])] 初始化第 [$i] 个元素。
+
+[para:remarks]
+[:en] The expression inside [`explicit] evaluates to [`true] if either
+[:zh_CN] 以下情况下 [`explicit] 中的表达式求值为 [`true]：
+[list]
+[item]
+[:en] the conversion from [`U] to [`value_type] is not value-preserving, or
+[:zh_CN] 从 [`U] 向 [`value_type] 的转换不是保留值的，或者
+[item]
+[:en] both [`U] and [`value_type] are integral types and the integer
+conversion rank ([#conv.rank]) of [`U] is greater than the integer
+conversion rank of [`value_type], or
+[:zh_CN] [`U] 和 [`value_type] 都是整型类型，且 [`U] 的整数转换等级（[#conv.rank]）
+大于 [`value_type] 的整数转换等级，或者
+[item]
+[:en] both [`U] and [`value_type] are floating-point types and the
+floating-point conversion rank ([#conv.rank]) of [`U] is greater than
+the floating-point conversion rank of [`value_type].
+[:zh_CN] [`U] 和 [`value_type] 都是浮点类型，且 [`U] 的浮点转换等级（[#conv.rank]）
+大于 [`value_type] 的浮点转换等级。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class G> constexpr explicit basic_simd(G&& gen) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`From][$_i] denote the type
+[`decltype(gen(integral_constant<[*simd-size-type], [$i]>()))].
+[:zh_CN] 令 [`From][$_i] 代表类型
+[`decltype(gen(integral_constant<[*simd-size-type], [$i]>()))]。
+
+[para:constraints]
+[:en] [`From][$_i] satisfies [`convertible_to<value_type>] for all [$i] in
+the range of [=range(0,size())].
+[:zh_CN] 对于范围 [=range(0,size())] 中的每个 [$i]，[`From][$_i]
+都满足 [`convertible_to<value_type>]。
+
+[:en] In addition, for all [$i] in the range of [=range(0,size())], if [`From][$_i]
+is an arithmetic type, conversion from [`From][$_i] to [`value_type]
+is value-preserving.
+[:zh_CN] 此外，对于范围 [=range(0,size())] 中的所有 [$i]，如果 [`From][$_i]
+是算术类型，则从 [`From][$_i] 向 [`value_type] 的转换是保留值的。
+
+[para:effects]
+[:en] Initializes the [$i^\text{th}] element with
+[`static_cast<value_type>(gen(integral_constant<[*simd-size-type], i>()))]
+for all [$i] in the range of [=range(0,size())].
+[:zh_CN] 对于范围 [=range(0,size())] 中的所有 [$i]，以
+[`static_cast<value_type>(gen(integral_constant<[*simd-size-type], i>()))]
+初始化第 [$i] 个元素。
+
+[para:remarks]
+[:en] The calls to [`gen] are unsequenced with respect to each other.
+[:zh_CN] 对 [`gen] 的调用互相之间是无顺序的。
+
+[:en] Vectorization-unsafe ([#algorithms.parallel.defns]) standard library
+functions may not be invoked by [`gen].
+[:zh_CN] [`gen] 不可调用向量化不安全（[#algorithms.parallel.defns]）的标准库函数。
+
+[:en] [`gen] is invoked exactly once for each [$i].
+[:zh_CN] 对于每个 [$i] 都恰好调用一次 [`gen]。
+[div:end]
+
+[codeblock:declaration]
+template<class R, class... Flags>
+  constexpr basic_simd(R&& r, simd_flags<Flags...> = {});
+template<class R, class... Flags>
+  constexpr basic_simd(R&& r, const mask_type& mask, simd_flags<Flags...> = {});
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`mask] be [`mask_type(true)] for the overload with no [`mask] parameter.
+[:zh_CN] 令 [`mask] 对于没有 [`mark] 形参的重载为 [`mask_type(true)]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`R] models [`ranges::contiguous_range] and [`ranges::sized_range],
+[:zh_CN] [`R] 构成 [`ranges::contiguous_range] 和 [`ranges::sized_range]，
+[item]
+[:en] [`ranges::size(r)] is a constant expression, and
+[:zh_CN] [`ranges::size(r)] 是常量表达式，并且
+[item]
+[:en] [`ranges::size(r)] is equal to [`size()].
+[:zh_CN] [`ranges::size(r)] 等于 [`size()]。
+[list:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`ranges::range_value_t<R>] is a vectorizable type, and
+[:zh_CN] [`ranges::range_value_t<R>] 是可向量化类型，并且
+[item]
+[:en] if the template parameter pack [`Flags] does not contain [*convert-flag],
+then the conversion from [`ranges::range_value_t<R>] to [`value_type] is
+value-preserving.
+[:zh_CN] 如果模板形参包组 [`Flags] 不包含 [*convert-flag]，那么从
+[`ranges::range_value_t<R>] 向 [`value_type] 的转换是保留值的。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] If the template parameter pack [`Flags] contains [*aligned-flag],
+[`ranges::data(range)] points to storage aligned by
+[`simd_alignment_v<basic_simd, ranges::range_value_t<R>>].
+[:zh_CN] 如果模板形参包组 [`Flags] 包含 [*aligned-flag]，那么 [`ranges::data(range)]
+指向按 [`simd_alignment_v<basic_simd, ranges::range_value_t<R>>] 对齐的存储。
+[item]
+[:en] If the template parameter pack [`Flags] contains [`[*overaligned-flag]<N>],
+[`ranges::data(range)] points to storage aligned by [`N].
+[:zh_CN] 如果模板形参包组 [`Flags] 包含 [`[*overaligned-flag]<N>]，那么
+[`ranges::data(range)] 指向按 [`N] 对齐的存储。
+[list:end]
+
+[para:effects]
+[:en] Initializes the [$i^\text{th}] element with
+[`mask`[[$i]`] ? static_cast<T>(ranges::data(range)`[[$i]`]) : T()]
+for all [$i] in the range of [=range(0,size())].
+[:zh_CN] 对于范围 [=range(0,size())] 中的所有 [$i]，以
+[`mask`[[$i]`] ? static_cast<T>(ranges::data(range)`[[$i]`]) : T()]
+初始化第 [$i] 个元素。
+[div:end]
+
+[codeblock:declaration]
+template<class R, class... Ts>
+  basic_simd(R&& r, Ts...) -> [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`R] models [`ranges::contiguous_range] and [`ranges::sized_range], and
+[:zh_CN] [`R] 构成 [`ranges::contiguous_range] 和 [`ranges::sized_range]，并且
+[item]
+[:en] [`ranges::size(r)] is a constant expression.
+[:zh_CN] [`ranges::size(r)] 是常量表达式。
+[list:end]
+
+[para:remarks]
+[:en] The deduced type is equivalent to
+[`simd<ranges::range_value_t<R>, ranges::size(r)>].
+[:zh_CN] 推断的类型等价于 [`simd<ranges::range_value_t<R>, ranges::size(r)>]。
+[div:end]

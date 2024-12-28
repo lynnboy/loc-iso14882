@@ -1,0 +1,140 @@
+[section#simd.overview
+    [:en] Class template [`simd_flags] overview
+    [:zh_CN] 类模板 [`simd_flags] 概述
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class T, class Abi> class basic_simd {
+  public:
+    using value_type = T;
+    using mask_type = basic_simd_mask<sizeof(T), Abi>;
+    using abi_type = Abi;
+
+    static constexpr integral_constant<[[redoc("*>")]]simd-size-type, [[redoc("*>")]]simd-size-v<T, Abi>> size {};
+
+    constexpr basic_simd() noexcept = default;
+
+    // [:en] [#simd.ctor], [`basic_simd] constructors \
+    [:zh_CN] [#simd.ctor]，[`basic_simd] 构造函数
+    template<class U> constexpr basic_simd(U&& value) noexcept;
+    template<class U, class UAbi>
+      constexpr explicit([[redoc("[=seebelow]")]]) basic_simd(const basic_simd<U, UAbi>&) noexcept;
+    template<class G> constexpr explicit basic_simd(G&& gen) noexcept;
+    template<class R, class... Flags>
+      constexpr basic_simd(R&& range, simd_flags<Flags...> = {});
+    template<class R, class... Flags>
+      constexpr basic_simd(R&& range, const mask_type& mask, simd_flags<Flags...> = {});
+
+    // [:en] [#simd.subscr], [`basic_simd] subscript operators \
+    [:zh_CN] [#simd.subscr]，[`basic_simd] 下标运算符
+    constexpr value_type operator[]([[redoc("*>")]]simd-size-type) const;
+
+    // [:en] [#simd.unary], [`basic_simd] unary operators \
+    [:zh_CN] [#simd.unary]，[`basic_simd] 一元运算符
+    constexpr basic_simd& operator++() noexcept;
+    constexpr basic_simd operator++(int) noexcept;
+    constexpr basic_simd& operator--() noexcept;
+    constexpr basic_simd operator--(int) noexcept;
+    constexpr mask_type operator!() const noexcept;
+    constexpr basic_simd operator~() const noexcept;
+    constexpr basic_simd operator+() const noexcept;
+    constexpr basic_simd operator-() const noexcept;
+
+    // [:en] [#simd.binary], [`basic_simd] binary operators \
+    [:zh_CN] [#simd.binary]，[`basic_simd] 二元运算符
+    friend constexpr basic_simd operator+(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator-(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator*(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator/(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator%(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator&(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator|(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator^(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator<<(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator>>(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd operator<<(const basic_simd&, [[redoc("*>")]]simd-size-type) noexcept;
+    friend constexpr basic_simd operator>>(const basic_simd&, [[redoc("*>")]]simd-size-type) noexcept;
+
+    // [:en] [#simd.cassign], [`basic_simd] compound assignment \
+    [:zh_CN] [#simd.cassign]，[`basic_simd] 复合赋值
+    friend constexpr basic_simd& operator+=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator-=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator*=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator/=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator%=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator&=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator|=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator^=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator<<=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator>>=(basic_simd&, const basic_simd&) noexcept;
+    friend constexpr basic_simd& operator<<=(basic_simd&, [[redoc("*>")]]simd-size-type) noexcept;
+    friend constexpr basic_simd& operator>>=(basic_simd&, [[redoc("*>")]]simd-size-type) noexcept;
+
+    // [:en] [#simd.comparison], [`basic_simd] compare operators \
+    [:zh_CN] [#simd.comparison]，[`basic_simd] 比较运算符
+    friend constexpr mask_type operator==(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr mask_type operator!=(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr mask_type operator>=(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr mask_type operator<=(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr mask_type operator>(const basic_simd&, const basic_simd&) noexcept;
+    friend constexpr mask_type operator<(const basic_simd&, const basic_simd&) noexcept;
+
+    // [:en] [#simd.cond], [`basic_simd] exposition only conditional operators \
+    [:zh_CN] [#simd.cond]，[`basic_simd] 仅用于阐释的条件运算符
+    friend constexpr basic_simd [[redoc("*>")]]simd-select-impl( // [=expos]
+      const mask_type&, const basic_simd&, const basic_simd&) noexcept;
+  };
+
+  template<class R, class... Ts>
+    basic_simd(R&& r, Ts...) -> [[redoc("[=seebelow]")]];
+}
+[codeblock:end]
+
+[para]
+[:en] Every specialization of [`basic_simd] is a complete type.
+[:zh_CN] [`basic_simd] 的每个特例都是完整类型。
+
+[:en] The specialization of [`basic_simd<T, Abi>] is
+[:zh_CN] 特例 [`basic_simd<T, Abi>]
+[list]
+[item]
+[:en@~] enabled, if [`T] is a vectorizable type, and there exists value
+[`N] in the range [=crange(1,64)], such that [`Abi] is [`[*deduce-abi-t]<T, N>],
+[:zh_CN@~] 若 [`T] 是可向量化类型，且存在范围 [=crange(1,64)] 中的值 [`N] 使得
+[`Abi] 为 [`[*deduce-abi-t]<T, N>]，则它被启用，
+[item]
+[:en@~] otherwise, disabled, if [`T] is not a vectorizable type,
+[:zh_CN@~] 否则，若 [`T] 不是可向量化类型则被禁用，
+[item]
+[:en@~] otherwise, it is [?impldef set of enabled [`basic_simd<T, Abi>]
+specializations] if such a specialization is enabled.
+[:zh_CN@~] 否则，这个特例是否被启用是[?impldef 启用的 [`basic_simd<T, Abi>] 特例的集合]。
+[list:end]
+
+[:en] If [`basic_simd<T, Abi>] is disabled, the specialization has a
+deleted default constructor, deleted destructor, deleted copy constructor, and
+deleted copy assignment.
+[:zh_CN] 如果 [`basic_simd<T, Abi>] 被禁用，那么该特例具有弃置的默认构造函数、
+弃置的析构函数、弃置的复制构造函数和弃置的复制赋值。
+
+[:en] In addition only the [`value_type], [`abi_type], and [`mask_type] members
+are present.
+[:zh_CN] 此外，仅提供成员 [`value_type]、[`abi_type] 和 [`mask_type]。
+
+[:en] If [`basic_simd<T, Abi>] is enabled, [`basic_simd<T, Abi>] is
+trivially copyable.
+[:zh_CN] 如果 [`basic_simd<T, Abi>] 被启用，那么 [`basic_simd<T, Abi>] 可平凡复制。
+
+[para:recommended]
+[:en] Implementations should support explicit conversions between specializations
+of [`basic_simd] and appropriate [?impldef conversions of [`basic_simd]
+from/to implementation-specific vector types] types.
+[:zh_CN] 各实现最好支持 [`basic_simd] 特例与适当的[?impldef [`basic_simd] 与
+特定于实现的向量类型之间的转换]类型之间的显式转换。
+
+[begin:note]
+[:en] Appropriate types are non-standard vector types which are available in the
+implementation.
+[:zh_CN] 这些适当类型是实现中可用的非标准的向量类型。
+[end:note]

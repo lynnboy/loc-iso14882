@@ -5,17 +5,9 @@
 
 [%@lib@raw [`atomic_ref<[^integral-type]>]]
 [para]
-[:en] There are specializations of the [`atomic_ref] class template for the
-integral types [`char], [`signed char], [`unsigned char], [`short],
-[`unsigned short], [`int], [`unsigned int], [`long], [`unsigned long],
-[`long long], [`unsigned long long], [`:key char8_t], [`:key char16_t],
-[`:key char32_t], [`:key wchar_t], and any other types needed by the typedefs in
-the header [?libheader@ref cstdint].
-[:zh_CN] [`atomic_ref] 类模板对整型类型 [`char]、[`signed char]、
-[`unsigned char]、[`short]、[`unsigned short]、[`int]、[`unsigned int]、[`long]、
-[`unsigned long]、[`long long]、[`unsigned long long]、[`:key char8_t]、
-[`:key char16_t]、[`:key char32_t]、[`:key wchar_t]，以及头文件
-[?libheader@ref cstdint] 中的各 typedef 所需的任何其他类型，进行了特化。
+[:en] There are specializations of the [`atomic_ref] class template for all
+integral types except [=cv] [`bool].
+[:zh_CN] [`atomic_ref] 类模板对除了 [=cv] [`bool] 之外的所有整型类型进行了特化。
 
 [:en] For each such type [`[^integral-type]], the specialization
 [`atomic_ref<[^integral-type]>] provides additional atomic operations
@@ -29,13 +21,19 @@ appropriate to integral types.
 [:zh_CN] 特例 [`atomic_ref<bool>] 使用主模板（[#atomics.ref.generic]）。
 [end:note]
 
+[para]
+[:en] The program is ill-formed if [`is_always_lock_free] is [`false] and
+[`is_volatile_v<T>] is [`true].
+[:zh_CN] 如果 [`is_always_lock_free] 为 [`false] 且 [`is_volatile_v<T>] 为 [`true]，
+那么程序非良构。
+
 [codeblock:synopsis]
 namespace std {
   template<> struct atomic_ref<[[redoc("^>")]]integral-type> {
   private:
     [[redoc("^>")]]integral-type* ptr;         // [=expos]
   public:
-    using value_type = [[redoc("^>")]]integral-type;
+    using value_type = remove_cv_t<[[redoc("^>")]]integral-type>;
     using difference_type = value_type;
     static constexpr size_t required_alignment = [[redoc("[?impdefx"
         "[:en] required alignment for [`atomic_ref] type[=']s operations"
@@ -46,54 +44,55 @@ namespace std {
         "[:zh_CN] 给定 [`atomic_ref] 类型的操作是否总是免锁的]")]];
     bool is_lock_free() const noexcept;
 
-    explicit atomic_ref([[redoc("^>")]]integral-type&);
-    atomic_ref(const atomic_ref&) noexcept;
+    constexpr explicit atomic_ref([[redoc("^>")]]integral-type&);
+    constexpr atomic_ref(const atomic_ref&) noexcept;
     atomic_ref& operator=(const atomic_ref&) = delete;
 
-    void store([[redoc("^>")]]integral-type, memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type operator=([[redoc("^>")]]integral-type) const noexcept;
-    [[redoc("^>")]]integral-type load(memory_order = memory_order::seq_cst) const noexcept;
-    operator [[redoc("^>")]]integral-type() const noexcept;
+    constexpr void store(value_type, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type operator=(value_type) const noexcept;
+    constexpr value_type load(memory_order = memory_order::seq_cst) const noexcept;
+    constexpr operator value_type() const noexcept;
 
-    [[redoc("^>")]]integral-type exchange([[redoc("^>")]]integral-type,
-                      memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_weak([[redoc("^>")]]integral-type&, [[redoc("^>")]]integral-type,
-                               memory_order, memory_order) const noexcept;
-    bool compare_exchange_strong([[redoc("^>")]]integral-type&, [[redoc("^>")]]integral-type,
-                                 memory_order, memory_order) const noexcept;
-    bool compare_exchange_weak([[redoc("^>")]]integral-type&, [[redoc("^>")]]integral-type,
-                               memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_strong([[redoc("^>")]]integral-type&, [[redoc("^>")]]integral-type,
-                                 memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type exchange(value_type,
+                                  memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, value_type,
+                                         memory_order, memory_order) const noexcept;
+    constexpr bool compare_exchange_strong(value_type&, value_type,
+                                           memory_order, memory_order) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, value_type,
+                                         memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_strong(value_type&, value_type,
+                                           memory_order = memory_order::seq_cst) const noexcept;
 
-    [[redoc("^>")]]integral-type fetch_add([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type fetch_sub([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type fetch_and([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type fetch_or([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type fetch_xor([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type fetch_max([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]integral-type fetch_min([[redoc("^>")]]integral-type,
-                       memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_add(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_sub(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_and(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_or(value_type,
+                                  memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_xor(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_max(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_min(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
 
-    [[redoc("^>")]]integral-type operator++(int) const noexcept;
-    [[redoc("^>")]]integral-type operator--(int) const noexcept;
-    [[redoc("^>")]]integral-type operator++() const noexcept;
-    [[redoc("^>")]]integral-type operator--() const noexcept;
-    [[redoc("^>")]]integral-type operator+=([[redoc("^>")]]integral-type) const noexcept;
-    [[redoc("^>")]]integral-type operator-=([[redoc("^>")]]integral-type) const noexcept;
-    [[redoc("^>")]]integral-type operator&=([[redoc("^>")]]integral-type) const noexcept;
-    [[redoc("^>")]]integral-type operator|=([[redoc("^>")]]integral-type) const noexcept;
-    [[redoc("^>")]]integral-type operator^=([[redoc("^>")]]integral-type) const noexcept;
+    constexpr value_type operator++(int) const noexcept;
+    constexpr value_type operator--(int) const noexcept;
+    constexpr value_type operator++() const noexcept;
+    constexpr value_type operator--() const noexcept;
+    constexpr value_type operator+=(value_type) const noexcept;
+    constexpr value_type operator-=(value_type) const noexcept;
+    constexpr value_type operator&=(value_type) const noexcept;
+    constexpr value_type operator|=(value_type) const noexcept;
+    constexpr value_type operator^=(value_type) const noexcept;
 
-    void wait([[redoc("^>")]]integral-type, memory_order = memory_order::seq_cst) const noexcept;
-    void notify_one() const noexcept;
-    void notify_all() const noexcept;
+    constexpr void wait(value_type, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr void notify_one() const noexcept;
+    constexpr void notify_all() const noexcept;
+    constexpr [[redoc("^>")]]integral-type* address() const noexcept;
   };
 }
 [codeblock:end]
@@ -119,11 +118,15 @@ primary template.
 [%@lib@member fetch_sub[!atomic_ref<[^integral-type]>]]
 [%@lib@member fetch_xor[!atomic_ref<[^integral-type]>]]
 [codeblock:declaration]
-[[redoc("^>")]]integral-type fetch_key[[redoc("^<3c")]]([[redoc("^>")]]integral-type operand,
+constexpr value_type fetch_key[[redoc("^<3c")]](value_type operand,
   memory_order order = memory_order::seq_cst) const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_const_v<[^integral-type]>] is [`false].
+[:zh_CN] [`is_const_v<[^integral-type]>] 为 [`false]。
+
 [para:effects]
 [:en] Atomically replaces the value referenced by [`*ptr] with the result of the
 computation applied to the value referenced by [`*ptr] and the given [`operand].
@@ -141,17 +144,14 @@ computation applied to the value referenced by [`*ptr] and the given [`operand].
 [:zh_CN] 原子地返回紧接其效果生效前 [`*ptr] 所引用的值。
 
 [para:remarks]
-[:en]
-[%signed integer representation[!two[=']s complement]]
+[:en] [%signed integer representation[!two[=']s complement]]
 Except for [`fetch_max] and [`fetch_min], for signed integer types, the result
 is as if the object value and parameters were converted to their corresponding
 unsigned types, the computation performed on those types, and the result
 converted back to the signed type.
-[:zh_CN]
-[%有符号整数表示[!二的补码]]
+[:zh_CN] [%有符号整数表示[!二的补码]]
 除了 [`fetch_max] 和 [`fetch_min] 之外，对有符号整数类型，其结果如同将对象值和
-各形参转换为它们的对应无符号类型，在这些类型上实施运算，然后将其结果转换回
-有符号类型。
+各形参转换为它们的对应无符号类型，在这些类型上实施运算，然后将其结果转换回有符号类型。
 
 [begin:note]
 [:en] There are no undefined results arising from the computation.
@@ -172,10 +172,14 @@ with the object value and the first parameter as the arguments.
 [%@lib@member operator|=[!atomic_ref<[^integral-type]>]]
 [%@lib@member operator^=[!atomic_ref<[^integral-type]>]]
 [codeblock:declaration]
-[[redoc("^>")]]integral-type operator [[redoc("^>")]]op=([[redoc("^>")]]integral-type operand) const noexcept;
+constexpr value_type operator [[redoc("^>")]]op=(value_type operand) const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_const_v<[^integral-type]>] is [`false].
+[:zh_CN] [`is_const_v<[^integral-type]>] 为 [`false]。
+
 [para:effects]
 [:en] Equivalent to: [`return fetch_[^key](operand) [^op] operand;]
 [:zh_CN] 等价于：[`return fetch_[^key](operand) [^op] operand;]

@@ -24,7 +24,7 @@ namespace std {
       constexpr explicit optional(in_place_t, Args&&...);
     template<class U, class... Args>
       constexpr explicit optional(in_place_t, initializer_list<U>, Args&&...);
-    template<class U = T>
+    template<class U = remove_cv_t<T>>
       constexpr explicit([[redoc("[=seebelow]")]]) optional(U&&);
     template<class U>
       constexpr explicit([[redoc("[=seebelow]")]]) optional(const optional<U>&);
@@ -40,7 +40,7 @@ namespace std {
     constexpr optional& operator=(nullopt_t) noexcept;
     constexpr optional& operator=(const optional&);
     constexpr optional& operator=(optional&&) noexcept([[redoc("[=seebelow]")]]);
-    template<class U = T> constexpr optional& operator=(U&&);
+    template<class U = remove_cv_t<T>> constexpr optional& operator=(U&&);
     template<class U> constexpr optional& operator=(const optional<U>&);
     template<class U> constexpr optional& operator=(optional<U>&&);
     template<class... Args> constexpr T& emplace(Args&&...);
@@ -71,8 +71,8 @@ namespace std {
     constexpr T& value() &;                                             // [=freestanding-deleted]
     constexpr T&& value() &&;                                           // [=freestanding-deleted]
     constexpr const T&& value() const &&;                               // [=freestanding-deleted]
-    template<class U> constexpr T value_or(U&&) const &;
-    template<class U> constexpr T value_or(U&&) &&;
+    template<class U = remove_cv_t<T>> constexpr T value_or(U&&) const &;
+    template<class U = remove_cv_t<T>> constexpr T value_or(U&&) &&;
 
     // [:en] [#optional.monadic], monadic operations \
     [:zh_CN] [#optional.monadic]，Monad 式操作
@@ -101,47 +101,31 @@ namespace std {
 [codeblock:end]
 
 [para]
-[:en]
-Any instance of [`optional<T>] at any given time either contains a value or does
-not contain a value.
-[:zh_CN]
-[`optional<T>] 的任何实例在任意给定时刻，或者包含一个值，或者不包含值。
+[:en] Any instance of [`optional<T>] at any given time either contains a value
+or does not contain a value.
+[:zh_CN] [`optional<T>] 的任何实例在任意给定时刻，或者包含一个值，或者不包含值。
 
-[:en]
-When an instance of [`optional<T>] [+contains a value[%contains a value
+[:en] When an instance of [`optional<T>] [+contains a value[%contains a value
 [![`optional]]]], it means that an object of type [`T], referred to as the
 optional object[=']s [+contained value[%contained value[![`optional]]]],
-is allocated within the storage of the optional object.
-[:zh_CN]
-当 [`optional<T>] 的一个实例[+包含值[%包含值[![`optional]]]]时，意味着一个 [`T]
-类型的对象, 被分配在该可选对象的存储之内，它被称之为该可选对象所[+包含的值
-[%包含的值[![`optional]]]]。
+is nested within ([#intro.object]) the optional object.
+[:zh_CN] 当 [`optional<T>] 的一个实例[+包含值[%包含值[![`optional]]]]时，意味着
+一个 [`T] 类型的对象, 被嵌套在该可选对象之内（[#intro.object]），它被称之为
+该可选对象所[+包含的值[%包含的值[![`optional]]]]。
 
-[:en]
-Implementations are not permitted to use additional storage, such as dynamic
-memory, to allocate its contained value.
-[:zh_CN]
-不允许实现利用诸如动态内存这样的其他存储来分配其所包含的值。
-
-[:en]
-When an object of type [`optional<T>] is contextually converted to [`bool],
+[:en] When an object of type [`optional<T>] is contextually converted to [`bool],
 the conversion returns [`true] if the object contains a value;
 otherwise the conversion returns [`false].
-[:zh_CN]
-当 [`optional<T>] 类型的对象按语境转换为 [`bool] 时，若对象包含值则该转换返回
-[`true]，否则该转换返回 [`false]。
+[:zh_CN] 当 [`optional<T>] 类型的对象按语境转换为 [`bool] 时，若对象包含值则
+该转换返回 [`true]，否则该转换返回 [`false]。
 
 [para]
-[:en]
-When an [`optional<T>] object contains a value, member [`val] points to the
-contained value.
-[:zh_CN]
-当 [`optional<T>] 对象包含值时，其 [`val] 成员指向所包含的值。
+[:en] When an [`optional<T>] object contains a value, member [`val] points to
+the contained value.
+[:zh_CN] 当 [`optional<T>] 对象包含值时，其 [`val] 成员指向所包含的值。
 
 [para]
-[:en]
-[`T] shall be a type other than [=cv] [`in_place_t] or [=cv] [`nullopt_t]
+[:en] [`T] shall be a type other than [=cv] [`in_place_t] or [=cv] [`nullopt_t]
 that meets the [^:oc Destructible] requirements ([#:tab#cpp17.destructible]).
-[:zh_CN]
-[`T] 应当为除了 [=cv] [`in_place_t] 或 [=cv] [`nullopt_t] 之外的类型，并满足
-[^:oc Destructible] 的规定（[#:tab#cpp17.destructible]）。
+[:zh_CN] [`T] 应当为除了 [=cv] [`in_place_t] 或 [=cv] [`nullopt_t] 之外的类型，
+并满足 [^:oc Destructible] 的规定（[#:tab#cpp17.destructible]）。

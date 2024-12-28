@@ -1,0 +1,113 @@
+[section#simd.creation
+    [:en] [`basic_simd] and [`basic_simd_mask] creation
+    [:zh_CN] [`basic_simd] 与 [`basic_simd_mask] 的创建
+]
+
+[codeblock:declaration]
+template<class T, class Abi>
+  constexpr auto simd_split(const basic_simd<typename T::value_type, Abi>& x) noexcept;
+template<class T, class Abi>
+  constexpr auto simd_split(const basic_simd_mask<[[redoc("*>")]]mask-element-size<T>, Abi>& x) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] For the first overload [`T] is an enabled specialization of [`basic_simd].
+[:zh_CN] 对于第一个重载，[`T] 为 [`basic_simd] 的被启用特例。
+
+[:en] If [`basic_simd<typename T::value_type, Abi>::size() % T::size()] is not [`0] then
+[`resize_simd_t<basic_simd<typename T::value_type, Abi>::size() % T::size(), T>]
+is valid and denotes a type.
+[:zh_CN] 若 [`basic_simd<typename T::value_type, Abi>::size() % T::size()]
+不是 [`0]，则
+[`resize_simd_t<basic_simd<typename T::value_type, Abi>::size() % T::size(), T>]
+有效且代表类型。
+
+[item]
+[:en] For the second overload [`T] is an enabled specialization of [`basic_simd_mask].
+[:zh_CN] 对于第二个重载，[`T] 为 [`basic_simd_mask] 的被启用特例。
+
+[:en] If [`basic_simd_mask<[*mask-element-size]<T>, Abi>::size() % T::size()]
+is not [`0] then
+[`resize_simd_t<basic_simd_mask<[*mask-element-size]<T>, Abi>::size() % T::size(), T>]
+is valid and denotes a type.
+[:zh_CN] 若 [`basic_simd_mask<[*mask-element-size]<T>, Abi>::size() % T::size()]
+不是 [`0]，则
+[`resize_simd_t<basic_simd_mask<[*mask-element-size]<T>, Abi>::size() % T::size(), T>]
+有效且代表类型。
+[list:end]
+
+[para]
+[:en] Let [$N] be [`x.size() / T::size()].
+[:zh_CN] 令 [$N] 为 [`x.size() / T::size()]。
+
+[para:returns]
+[list]
+[item]
+[:en] If [`x.size() % T::size() == 0] is [`true], an [`array<T, [$N]>] with the
+[$i^\text{th}] [`basic_simd] or [`basic_simd_mask] element of the [$j^\text{th}]
+[`array] element initialized to the value of the element in [`x] with index
+[`[$i] + [$j] * T::size()].
+[:zh_CN] 如果 [`x.size() % T::size() == 0] 为 [`true]，则返回一个 [`array<T, [$N]>]，
+第 [$j] 个 [`array] 元素的第 [$i] 个 [`basic_simd] 或 [`basic_simd_mask] 元素
+被初始化为 [`x] 中索引号为 [`[$i] + [$j] * T::size()] 的元素的值。
+
+[item]
+[:en] Otherwise, a [`tuple] of [$N] objects of type [`T] and one object of type
+[`resize_simd_t<x.size() % T::size(), T>].
+[:zh_CN] 否则，返回 [$N] 个 [`T] 类型对象和一个
+[`resize_simd_t<x.size() % T::size(), T>] 类型对象的 [`tuple]。
+
+[:en] The [$i^\text{th}] [`basic_simd] or [`basic_simd_mask] element of the
+[$j^\text{th}] [`tuple] element of type [`T] is initialized to the value of the
+element in [`x] with index [`[$i] + [$j] * T::size()].
+[:zh_CN] 第 [$j] 个 [`tuple] 元素的第 [$i] 个 [`basic_simd] 或 [`basic_simd_mask]
+的 [`T] 类型元素被初始化为 [`x] 中索引号为 [`[$i] + [$j] * T::size()] 的元素的值。
+
+[:en] The [$i^\text{th}] [`basic_simd] or [`basic_simd_mask] element of the
+[$N^\text{th}] [`tuple] element is initialized to the value of the element in
+[`x] with index [`[$i] + [$N] * T::size()].
+[:zh_CN] 第 [$N] 个 [`tuple] 元素的第 [$i] 个 [`basic_simd] 或 [`basic_simd_mask]
+元素被初始化为 [`x] 中索引号为 [`[$i] + [$N] * T::size()] 的元素的值。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class T, class... Abis>
+  constexpr simd<T, (basic_simd<T, Abis>::size() + ...)>
+    simd_cat(const basic_simd<T, Abis>&... xs) noexcept;
+template<size_t Bytes, class... Abis>
+  constexpr basic_simd_mask<Bytes, [[redoc("*>")]]deduce-abi-t<[[redoc("*>")]]integer-from<Bytes>,
+                            (basic_simd_mask<Bytes, Abis>::size() + ...)>>
+    simd_cat(const basic_simd_mask<Bytes, Abis>&... xs) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] For the first overload [`simd<T, (basic_simd<T, Abis>::size() + ...)>]
+is enabled.
+[:zh_CN] 对于第一个重载，[`simd<T, (basic_simd<T, Abis>::size() + ...)>] 被启用。
+[item]
+[:en] For the second overload
+[`basic_simd_mask<Bytes, [*deduce-abi-t]<[*integer-from]<Bytes>, (basic_simd_mask<Bytes, Abis>::size() + ...)>>]
+is enabled.
+[:zh_CN] 对于第二个重载，
+[`basic_simd_mask<Bytes, [*deduce-abi-t]<[*integer-from]<Bytes>, (basic_simd_mask<Bytes, Abis>::size() + ...)>>]
+被启用。
+[list:end]
+
+[para:returns]
+[:en] A data-parallel object initialized with the concatenated values in the
+[`xs] pack of data-parallel objects:
+[:zh_CN] 一个以数据并行对象的包组 [`xs] 中的拼接值初始化的数据并行对象：
+
+[:en] The [$i^\text{th}] [`basic_simd]/[`basic_simd_mask] element of the [$j^\text{th}]
+parameter in the [`xs] pack is copied to the return value[=']s element with
+index [$i] + the sum of the width of the first [$j] parameters in the [`xs] pack.
+[:zh_CN] 包组 [`xs] 的第 [$j] 个形参的第 [$i] 个 [`basic_simd]/[`basic_simd_mask]
+元素被赋值给返回值中索引号为 [$i] + 包组 [`xs] 中前 [$j] 个形参的宽度和的元素。
+[div:end]

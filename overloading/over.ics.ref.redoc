@@ -18,21 +18,18 @@ parameter type, the implicit conversion sequence is a derived-to-base conversion
 派生类向基类转换（[#over.best.ics]）。
 
 [item]
-[:en] Otherwise, if [`T] is a function type, or if the type of the argument is
-possibly cv-qualified [`T], or if [`T] is an array type of unknown bound with
-element type [`U] and the argument has an array type of known bound whose
-element type is possibly cv-qualified [`U], the implicit conversion sequence is
-the identity conversion.
-[:zh_CN] 否则，若 [`T] 是函数类型，或若实参的类型是可能被 cv 限定的 [`T]，或若
-[`T] 是具有元素类型 [`U] 的未知边界的数组类型而实参具有已知边界的数组类型且其
-元素类型是可能被 cv 限定的 [`U]，则其隐式转换序列为恒等转换。
+[:en] Otherwise, if the type of the argument is possibly cv-qualified [`T], or
+if [`T] is an array type of unknown bound with element type [`U] and the
+argument has an array type of known bound whose element type is possibly
+cv-qualified [`U], the implicit conversion sequence is the identity conversion.
+[:zh_CN] 否则，或若实参的类型是可能被 cv 限定的 [`T]，或若 [`T] 是具有元素类型
+[`U] 的未知边界的数组类型而实参具有已知边界的数组类型且其元素类型是可能被
+cv 限定的 [`U]，则其隐式转换序列为恒等转换。
 
-[begin:note]
-[:en] When [`T] is a function type, the type of the argument can differ only by
-the presence of [`:key noexcept].
-[:zh_CN] 当 [`T] 为函数类型时，实参的类型可以仅在是否有 [`:key noexcept] 方面
-有所不同。
-[end:note]
+[item]
+[:en] Otherwise, if [`T] is a function type,
+the implicit conversion sequence is a function pointer conversion.
+[:zh_CN] 否则，若 [`T] 是函数类型，则其隐式转换序列为函数指针转换。
 
 [item]
 [:en] Otherwise, the implicit conversion sequence is a qualification conversion.
@@ -47,6 +44,12 @@ int f(A&);
 int f(B&);
 int i = f(b);       // [:en] calls [`f(B&)], an exact match, rather than [`f(A&)], a conversion \
                     [:zh_CN]  调用了 [`f(B&)]，此为精确匹配，而不是 [`f(A&)]，此为转换
+
+void g() noexcept;
+int h(void (&)() noexcept); // #1
+int h(void (&)());          // #2
+int j = h(g);               // [:en] calls #1, an exact match, rather than #2, a function pointer conversion \
+                            [:zh_CN] 调用了精确匹配的 #1，而非函数指针转换的 #2
 [codeblock:end]
 [end:example]
 
@@ -58,25 +61,19 @@ conversion sequence is determined by the above rules.
 用户定义的转换序列（[#over.ics.user]），其第二个标准转换序列由上述规则决定。
 
 [para]
-[:en]
-When a parameter of reference type is not bound directly to an argument
+[:en] When a parameter of reference type is not bound directly to an argument
 expression, the conversion sequence is the one required to convert the argument
 expression to the referenced type according to [#over.best.ics].
-[:zh_CN]
-当引用类型的形参并未直接绑定到实参表达式时，其转换序列是根据 [#over.best.ics]
+[:zh_CN] 当引用类型的形参并未直接绑定到实参表达式时，其转换序列是根据 [#over.best.ics]
 将实参表达式转换为被引用类型所需要的转换序列。
 
-[:en]
-Conceptually, this conversion sequence corresponds to copy-initializing a
+[:en] Conceptually, this conversion sequence corresponds to copy-initializing a
 temporary of the referenced type with the argument expression.
-[:zh_CN]
-概念上来说，此转换序列对应于以该实参表达式复制初始化一个被引用类型的临时对象。
+[:zh_CN] 概念上来说，此转换序列对应于以该实参表达式复制初始化一个被引用类型的临时对象。
 
-[:en]
-Any difference in top-level cv-qualification is subsumed by the initialization
-itself and does not constitute a conversion.
-[:zh_CN]
-顶层的 cv 限定中的任何区别均被该初始化自身所涵盖且并不构成一个转换。
+[:en] Any difference in top-level cv-qualification is subsumed by the
+initialization itself and does not constitute a conversion.
+[:zh_CN] 顶层的 cv 限定中的任何区别均被该初始化自身所涵盖且并不构成一个转换。
 
 [para]
 [:en] Except for an implicit object parameter, for which see [#over.match.funcs],
@@ -98,33 +95,25 @@ temporary to be created to initialize the lvalue reference (see [#dcl.init.ref])
 [end:note]
 
 [para]
-[:en]
-Other restrictions on binding a reference to a particular argument that are not
-based on the types of the reference and the argument do not affect the formation
-of an implicit conversion sequence, however.
-[:zh_CN]
-然而，将引用绑定到某个特定实参的并非基于引用和实参的类型的其他限制，并不影响隐式
-转换序列的构成。
+[:en] Other restrictions on binding a reference to a particular argument that
+are not based on the types of the reference and the argument do not affect the
+formation of an implicit conversion sequence, however.
+[:zh_CN] 然而，将引用绑定到某个特定实参的并非基于引用和实参的类型的其他限制，并不影响
+隐式转换序列的构成。
 
 [begin:example]
-[:en]
-A function with an [=lq]lvalue reference to [`int][=rq] parameter can be a
+[:en] A function with an [=lq]lvalue reference to [`int][=rq] parameter can be a
 viable candidate even if the corresponding argument is an [`int] bit-field.
-[:zh_CN]
-带有“[`int] 的左值引用”形参的函数，即使当其对应实参为 [`int] 位字段时也可以是
-可行候选。
+[:zh_CN] 带有“[`int] 的左值引用”形参的函数，即使当其对应实参为 [`int] 位字段时也
+可以是可行候选。
 
-[:en]
-The formation of implicit conversion sequences treats the [`int] bit-field as an
-[`int] lvalue and finds an exact match with the parameter.
-[:zh_CN]
-隐式转换序列的构成将 [`int] 位字段当作 [`int] 左值并将它与该形参当作精确匹配。
+[:en] The formation of implicit conversion sequences treats the [`int] bit-field
+as an [`int] lvalue and finds an exact match with the parameter.
+[:zh_CN] 隐式转换序列的构成将 [`int] 位字段当作 [`int] 左值并将它与该形参当作精确匹配。
 
-[:en]
-If the function is selected by overload resolution, the call will nonetheless be
-ill-formed because of the prohibition on binding a non-[`:key const] lvalue
-reference to a bit-field ([#dcl.init.ref]).
-[:zh_CN]
-若该函数被重载决议所选择，则因为禁止将非 [`:key const] 左值引用绑定到位字段上
+[:en] If the function is selected by overload resolution, the call will
+nonetheless be ill-formed because of the prohibition on binding a
+non-[`:key const] lvalue reference to a bit-field ([#dcl.init.ref]).
+[:zh_CN] 若该函数被重载决议所选择，则因为禁止将非 [`:key const] 左值引用绑定到位字段上
 （[#dcl.init.ref]），该调用无论如何仍然是非良构的。
 [end:example]

@@ -1,0 +1,139 @@
+[section#simd.mask.overview
+    [:en] Class template [`basic_simd_mask] overview
+    [:zh_CN] 类模板 [`basic_simd_mask] 概述
+]
+
+[codeblock:synopsis]
+namespace std {
+  template<class Bytes, class Abi> class basic_simd_mask {
+  public:
+    using value_type = bool;
+    using abi_type = Abi;
+
+    static constexpr integral_constant<[[redoc("*>")]]simd-size-type, [[redoc("*>")]]simd-size-v<[[redoc("*>")]]integer-from<Bytes>, Abi>>
+      size {};
+
+    constexpr basic_simd_mask() noexcept = default;
+
+    // [:en] [#simd.mask.ctor], [`basic_simd_mask] constructors \
+    [:zh_CN] [#simd.mask.ctor]，[`basic_simd_mask] 构造函数
+    constexpr explicit basic_simd_mask(value_type) noexcept;
+    template<size_t UBytes, class UAbi>
+      constexpr explicit basic_simd_mask(const basic_simd_mask<UBytes, UAbi>&) noexcept;
+    template<class G> constexpr explicit basic_simd_mask(G&& gen) noexcept;
+
+    // [:en] [#simd.mask.subscr], [`basic_simd_mask] subscript operators \
+    [:zh_CN] [#simd.mask.subscr]，[`basic_simd_mask] 下标运算符
+    constexpr value_type operator[]([[redoc("*>")]]simd-size-type) const;
+
+    // [:en] [#simd.mask.unary], [`basic_simd_mask] unary operators \
+    [:zh_CN] [#simd.mask.unary]，[`basic_simd_mask] 一元运算符
+    constexpr basic_simd_mask operator!() const noexcept;
+    constexpr basic_simd<[[redoc("*>")]]integer-from<Bytes>, Abi> operator+() const noexcept;
+    constexpr basic_simd<[[redoc("*>")]]integer-from<Bytes>, Abi> operator-() const noexcept;
+    constexpr basic_simd<[[redoc("*>")]]integer-from<Bytes>, Abi> operator~() const noexcept;
+
+    // [:en] [#simd.mask.conv], [`basic_simd_mask] conversion operators \
+    [:zh_CN] [#simd.mask.conv]，[`basic_simd_mask] 转换运算符
+    template<class U, class A>
+      constexpr explicit(sizeof(U) != Bytes) operator basic_simd<U, A>() const noexcept;
+
+    // [:en] [#simd.mask.binary], [`basic_simd_mask] binary operators \
+    [:zh_CN] [#simd.mask.binary]，[`basic_simd_mask] 二元运算符
+    friend constexpr basic_simd_mask
+      operator&&(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator||(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator&(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator|(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator^(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+
+    // [:en] [#simd.mask.cassign], [`basic_simd_mask] compound assignment \
+    [:zh_CN] [#simd.mask.cassign]，[`basic_simd_mask] 复合赋值
+    friend constexpr basic_simd_mask&
+      operator&=(basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask&
+      operator|=(basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask&
+      operator^=(basic_simd_mask&, const basic_simd_mask&) noexcept;
+
+    // [:en] [#simd.mask.comparison], [`basic_simd_mask] comparisons \
+    [:zh_CN] [#simd.mask.comparison]，[`basic_simd_mask] 比较
+    friend constexpr basic_simd_mask
+      operator==(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator!=(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator>=(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator<=(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator>(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask
+      operator<(const basic_simd_mask&, const basic_simd_mask&) noexcept;
+
+    // [:en] [#simd.mask.cond], [`basic_simd_mask] exposition only conditional operators \
+    [:zh_CN] [#simd.mask.cond]，[`basic_simd_mask] 仅用于阐释的条件运算符
+    friend constexpr basic_simd_mask [[redoc("*>")]]simd-select-impl( // [=expos]
+      const basic_simd_mask&, const basic_simd_mask&, const basic_simd_mask&) noexcept;
+    friend constexpr basic_simd_mask [[redoc("*>")]]simd-select-impl( // [=expos]
+      const basic_simd_mask&, same_as<bool> auto, same_as<bool> auto) noexcept;
+    template<class T0, class T1>
+      friend constexpr simd<[[redoc("[=seebelow]")]], size()>
+        [[redoc("*>")]]simd-select-impl(const basic_simd_mask&, const T0&, const T1&) noexcept; // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Every specialization of [`basic_simd_mask] is a complete type.
+[:zh_CN] [`basic_simd_mask] 的每个特例都是完整类型。
+
+[:en] The specialization of [`basic_simd_mask<Bytes, Abi>] is
+[:zh_CN] 特例 [`basic_simd_mask<Bytes, Abi>]
+[list]
+[item]
+[:en@~] disabled, if there is no vectorizable type [`T] such that [`Bytes]
+is equal to [`sizeof(T)],
+[:zh_CN@~] 若不存在使得 [`Bytes] 等于 [`sizeof(T)] 的可向量化类型，则它被禁用，
+[item]
+[:en@~] otherwise, enabled, if there exists a vectorizable type [`T] and a
+value [`N] in the range [=crange(1,64)] such that [`Bytes] is equal to
+[`sizeof(T)] and [`Abi] is [`[*deduce-abi-t]<T, N>],
+[:zh_CN@~] 否则，若存在某个可向量化类型 [`T] 和一个范围 [=crange(1,64)] 中的值 [`N]，
+使得 [`Bytes] 等于 [`sizeof(T)] 且 [`Abi] 为 [`[*deduce-abi-t]<T, N>]，则它被启用，
+[item]
+[:en@~] otherwise, it is [?impldef set of enabled [`basic_simd_mask<Bytes, Abi>]
+specializations] if such a specialization is enabled.
+[:zh_CN@~] 否则，这个特例是否被启用是[?impldef 启用的 [`basic_simd_mask<Bytes, Abi>] 特例的集合]。
+[list:end]
+
+[:en] If [`basic_simd_mask<Bytes, Abi>] is disabled, the specialization has a
+deleted default constructor, deleted destructor, deleted copy constructor, and
+deleted copy assignment.
+[:zh_CN] 如果 [`basic_simd_mask<Bytes, Abi>] 被禁用，那么该特例具有弃置的默认构造函数、
+弃置的析构函数、弃置的复制构造函数和弃置的复制赋值。
+
+[:en] In addition only the [`value_type] and [`abi_type] members are present.
+[:zh_CN] 此外，仅提供成员 [`value_type] 和 [`abi_type]。
+
+[:en] If [`basic_simd_mask<Bytes, Abi>] is enabled,
+[`basic_simd_mask<Bytes, Abi>] is trivially copyable.
+[:zh_CN] 如果 [`basic_simd_mask<Bytes, Abi>] 被启用，那么
+[`basic_simd_mask<Bytes, Abi>] 可平凡复制。
+
+[para:recommended]
+[:en] Implementations should support explicit conversions between specializations
+of [`basic_simd_mask] and appropriate [?impldef conversions of [`basic_simd_mask]
+from/to implementation-specific vector types] types.
+[:zh_CN] 各实现最好支持 [`basic_simd_mask] 特例与适当的[?impldef [`basic_simd_mask] 与
+特定于实现的向量类型之间的转换]类型之间的显式转换。
+
+[begin:note]
+[:en] Appropriate types are non-standard vector types which are available in the
+implementation.
+[:zh_CN] 这些适当类型是实现中可用的非标准的向量类型。
+[end:note]

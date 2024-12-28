@@ -6,8 +6,8 @@
 [%@lib@raw [`atomic_ref<[^floating-point-type]>]]
 [para]
 [:en] There are specializations of the [`atomic_ref] class template for all
-cv-unqualified floating-point types.
-[:zh_CN] [`atomic_ref] 类模板对所有 cv 未限定的浮点类型进行了特化。
+floating-point types.
+[:zh_CN] [`atomic_ref] 类模板对所有浮点类型进行了特化。
 
 [:en] For each such type [`[^floating-point-type]], the specialization
 [`atomic_ref<[^floating-point-type]>] provides additional atomic operations
@@ -15,13 +15,19 @@ appropriate to floating-point types.
 [:zh_CN] 对于每个这样的类型 [`[^floating-point-type]]，特例
 [`atomic_ref<[^floating-point-type]>] 提供了适用于该浮点类型的额外的原子性操作。
 
+[para]
+[:en] The program is ill-formed if [`is_always_lock_free] is [`false] and
+[`is_volatile_v<T>] is [`true].
+[:zh_CN] 如果 [`is_always_lock_free] 为 [`false] 且 [`is_volatile_v<T>] 为 [`true]，
+那么程序非良构。
+
 [codeblock:synopsis]
 namespace std {
   template<> struct atomic_ref<[[redoc("^>")]]floating-point-type> {
   private:
     [[redoc("^>")]]floating-point-type* ptr;   // [=expos]
   public:
-    using value_type = [[redoc("^>")]]floating-point-type;
+    using value_type = remove_cv_t<[[redoc("^>")]]floating-point-type>;
     using difference_type = value_type;
     static constexpr size_t required_alignment = [[redoc("[?impdefx"
         "[:en] required alignment for [`atomic_ref] type[=']s operations"
@@ -32,37 +38,40 @@ namespace std {
         "[:zh_CN] 给定 [`atomic_ref] 类型的操作是否总是免锁的]")]];
     bool is_lock_free() const noexcept;
 
-    explicit atomic_ref([[redoc("^>")]]floating-point-type&);
-    atomic_ref(const atomic_ref&) noexcept;
+    constexpr explicit atomic_ref([[redoc("^>")]]floating-point-type&);
+    constexpr atomic_ref(const atomic_ref&) noexcept;
     atomic_ref& operator=(const atomic_ref&) = delete;
 
-    void store([[redoc("^>")]]floating-point-type, memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]floating-point-type operator=([[redoc("^>")]]floating-point-type) const noexcept;
-    [[redoc("^>")]]floating-point-type load(memory_order = memory_order::seq_cst) const noexcept;
-    operator [[redoc("^>")]]floating-point-type() const noexcept;
+    constexpr void store([[redoc("^>")]]floating-point-type,
+                         memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type operator=(value_type) const noexcept;
+    constexpr value_type load(memory_order = memory_order::seq_cst) const noexcept;
+    constexpr operator [[redoc("^>")]]floating-point-type() const noexcept;
 
-    [[redoc("^>")]]floating-point-type exchange([[redoc("^>")]]floating-point-type,
-                            memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_weak([[redoc("^>")]]floating-point-type&, [[redoc("^>")]]floating-point-type,
+    constexpr value_type exchange([[redoc("^>")]]floating-point-type,
+                                 memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, [[redoc("^>")]]floating-point-type,
                                memory_order, memory_order) const noexcept;
-    bool compare_exchange_strong([[redoc("^>")]]floating-point-type&, [[redoc("^>")]]floating-point-type,
+    constexpr bool compare_exchange_strong(value_type&, [[redoc("^>")]]floating-point-type,
                                  memory_order, memory_order) const noexcept;
-    bool compare_exchange_weak([[redoc("^>")]]floating-point-type&, [[redoc("^>")]]floating-point-type,
+    constexpr bool compare_exchange_weak(value_type&, [[redoc("^>")]]floating-point-type,
                                memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_strong([[redoc("^>")]]floating-point-type&, [[redoc("^>")]]floating-point-type,
+    constexpr bool compare_exchange_strong(value_type&, [[redoc("^>")]]floating-point-type,
                                  memory_order = memory_order::seq_cst) const noexcept;
 
-    [[redoc("^>")]]floating-point-type fetch_add([[redoc("^>")]]floating-point-type,
-                             memory_order = memory_order::seq_cst) const noexcept;
-    [[redoc("^>")]]floating-point-type fetch_sub([[redoc("^>")]]floating-point-type,
-                             memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_add([[redoc("^>")]]floating-point-type,
+                                  memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_sub([[redoc("^>")]]floating-point-type,
+                                  memory_order = memory_order::seq_cst) const noexcept;
 
-    [[redoc("^>")]]floating-point-type operator+=([[redoc("^>")]]floating-point-type) const noexcept;
-    [[redoc("^>")]]floating-point-type operator-=([[redoc("^>")]]floating-point-type) const noexcept;
+    constexpr value_type operator+=(value_type) const noexcept;
+    constexpr value_type operator-=(value_type) const noexcept;
 
-    void wait([[redoc("^>")]]floating-point-type, memory_order = memory_order::seq_cst) const noexcept;
-    void notify_one() const noexcept;
-    void notify_all() const noexcept;
+    constexpr void wait([[redoc("^>")]]floating-point-type,
+                        memory_order = memory_order::seq_cst) const noexcept;
+    constexpr void notify_one() const noexcept;
+    constexpr void notify_all() const noexcept;
+    constexpr [[redoc("^>")]]floating-point-type* address() const noexcept;
   };
 }
 [codeblock:end]
@@ -83,11 +92,15 @@ primary template.
 [%@lib@member fetch_add[!atomic_ref<[^floating-point-type]>]]
 [%@lib@member fetch_sub[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
-[[redoc("^>")]]floating-point-type fetch_key[[redoc("^<3c")]]([[redoc("^>")]]floating-point-type operand,
+constexpr value_type fetch_key[[redoc("^<3c")]](value_type operand,
                           memory_order order = memory_order::seq_cst) const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_const_v<[^floating-point-type]>] is [`false].
+[:zh_CN] [`is_const_v<[^floating-point-type]>] 为 [`false]。
+
 [para:effects]
 [:en] Atomically replaces the value referenced by [`*ptr] with the result of the
 computation applied to the value referenced by [`*ptr] and the given operand.
@@ -111,10 +124,10 @@ result is unspecified, but the operations otherwise have no undefined behavior.
 这些操作并没有未定义的行为。
 
 [:en] Atomic arithmetic operations on [`[^floating-point-type]] should conform
-to the [`std::numeric_limits<[^floating-point-type]>] traits associated with the
+to the [`std::numeric_limits<value_type>] traits associated with the
 floating-point type ([#limits.syn]).
 [:zh_CN] 对 [`[^floating-point-type]] 进行的原子性算术运算应当遵循与该浮点类型所
-关联的 [`std::numeric_limits<[^floating-point-type]>] 特征（[#limits.syn]）。
+关联的 [`std::numeric_limits<value_type>] 特征（[#limits.syn]）。
 
 [:en] The floating-point environment ([#cfenv]) for atomic arithmetic operations
 on [`[^floating-point-type]] may be different than the calling thread[=']s
@@ -126,10 +139,14 @@ floating-point environment.
 [%@lib@member operator+=[!atomic_ref<[^floating-point-type]>]]
 [%@lib@member operator-=[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
-[[redoc("^>")]]floating-point-type operator [[redoc("^>")]]op=([[redoc("^>")]]floating-point-type operand) const noexcept;
+constexpr value_type operator [[redoc("^>")]]op=(value_type operand) const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_const_v<[^floating-point-type]>] is [`false].
+[:zh_CN] [`is_const_v<[^floating-point-type]>] 为 [`false]。
+
 [para:effects]
 [:en] Equivalent to: [`return fetch_[^key](operand) [^op] operand;]
 [:zh_CN] 等价于：[`return fetch_[^key](operand) [^op] operand;]

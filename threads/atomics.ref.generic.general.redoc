@@ -12,7 +12,7 @@ namespace std {
     T* ptr;             // [=expos]
 
   public:
-    using value_type = T;
+    using value_type = remove_cv_t<T>;
     static constexpr size_t required_alignment = [[redoc("[?impdefx"
         "[:en] required alignment for [`atomic_ref] type[=']s operations"
         "[:zh_CN] [`atomic_ref] 类型的操作所需的对齐]")]];
@@ -23,27 +23,29 @@ namespace std {
     bool is_lock_free() const noexcept;
 
     explicit atomic_ref(T&);
-    atomic_ref(const atomic_ref&) noexcept;
-    atomic_ref& operator=(const atomic_ref&) = delete;
+    constexpr atomic_ref(const atomic_ref&) noexcept;
+    constexpr atomic_ref& operator=(const atomic_ref&) = delete;
 
-    void store(T, memory_order = memory_order::seq_cst) const noexcept;
-    T operator=(T) const noexcept;
-    T load(memory_order = memory_order::seq_cst) const noexcept;
-    operator T() const noexcept;
+    constexpr void store(value_type, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type operator=(value_type) const noexcept;
+    constexpr value_type load(memory_order = memory_order::seq_cst) const noexcept;
+    constexpr operator value_type() const noexcept;
 
-    T exchange(T, memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_weak(T&, T,
-                               memory_order, memory_order) const noexcept;
-    bool compare_exchange_strong(T&, T,
-                                 memory_order, memory_order) const noexcept;
-    bool compare_exchange_weak(T&, T,
-                               memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_strong(T&, T,
-                                 memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type exchange(value_type,
+                                  memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, value_type,
+                                         memory_order, memory_order) const noexcept;
+    constexpr bool compare_exchange_strong(value_type&, value_type,
+                                           memory_order, memory_order) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, value_type,
+                                         memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_strong(value_type&, value_type,
+                                           memory_order = memory_order::seq_cst) const noexcept;
 
-    void wait(T, memory_order = memory_order::seq_cst) const noexcept;
-    void notify_one() const noexcept;
-    void notify_all() const noexcept;
+    constexpr void wait(value_type, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr void notify_one() const noexcept;
+    constexpr void notify_all() const noexcept;
+    constexpr T* address() const noexcept;
   };
 }
 [codeblock:end]
@@ -92,3 +94,9 @@ operations to be applied to the referenced object.
 [:zh_CN] 各原子性操作或者 [`atomic_ref] 的构造函数可以获取一个共享资源，比如与
 所引用的对象相关联的锁，以允许对所引用的对象实施原子性操作。
 [end:note]
+
+[para]
+[:en] The program is ill-formed if [`is_always_lock_free] is [`false] and
+[`is_volatile_v<T>] is [`true].
+[:zh_CN] 如果 [`is_always_lock_free] 为 [`false] 且 [`is_volatile_v<T>] 为 [`true]，
+那么程序非良构。

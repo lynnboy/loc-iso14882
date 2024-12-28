@@ -1,0 +1,156 @@
+[section#range.cache.latest.iterator
+    [:en] Class [`cache_latest_view::[*iterator]]
+    [:zh_CN] 类 [`cache_latest_view::[*iterator]]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range V>
+    requires [[redoc("`:c>")]]view<V>
+  class cache_latest_view<V>::[[redoc("*>")]]iterator {
+    cache_latest_view* [[redoc("*>")]]parent_;                                 // [=expos]
+    iterator_t<V> [[redoc("*>")]]current_;                                     // [=expos]
+
+    constexpr explicit [[redoc("*>")]]iterator(cache_latest_view& parent);     // [=expos]
+
+  public:
+    using difference_type = range_difference_t<V>;
+    using value_type = range_value_t<V>;
+    using iterator_concept = input_iterator_tag;
+
+    [[redoc("*>")]]iterator([[redoc("*>")]]iterator&&) = default;
+    [[redoc("*>")]]iterator& operator=([[redoc("*>")]]iterator&&) = default;
+
+    constexpr iterator_t<V> base() &&;
+    constexpr const iterator_t<V>& base() const & noexcept;
+
+    constexpr range_reference_t<V>& operator*() const;
+
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr void operator++(int);
+
+    friend constexpr range_rvalue_reference_t<V> iter_move(const [[redoc("*>")]]iterator& i)
+      noexcept(noexcept(ranges::iter_move(i.[[redoc("*>")]]iterator)));
+
+    friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]current_, y.[[redoc("*>")]]current_)))
+      requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<V>>;
+  };
+}
+[codeblock:end]
+
+[%@lib@ctor cache_latest_view::[*iterator]]
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]iterator(cache_latest_view& parent);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*current_] with [`ranges::begin(parent.[*base_])] and
+[*parent_] with [`addressof(parent)].
+[:zh_CN] 以 [`ranges::begin(parent.[*base_])] 初始化 [*current_]，并以
+[`addressof(parent)] 初始化 [*parent_]。
+[div:end]
+
+[%@lib@member base[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+constexpr iterator_t<V> base() &&;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`std::move([*current_])].
+[:zh_CN] [`std::move([*current_])]。
+[div:end]
+
+[%@lib@member base[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+constexpr const iterator_t<V>& base() const & noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [*current_].
+[:zh_CN] [*current_]。
+[div:end]
+
+[%@lib@member operator++[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+constexpr iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]parent_->[[redoc("*>")]]cache_.reset();
+++[[redoc("*>")]]current_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[%@lib@member operator++[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`++*this].
+[:zh_CN] 等价于：[`++*this]。
+[div:end]
+
+[%@lib@member operator*[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+constexpr range_reference_t<V>& operator*() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr (is_reference_v<range_reference_t<V>>) {
+  if (![[redoc("*>")]]parent_->[[redoc("*>")]]cache_) {
+    [[redoc("*>")]]parent_->[[redoc("*>")]]cache_ = addressof([[redoc("*>")]]as-lvalue(*[[redoc("*>")]]current_));
+  }
+  return **[[redoc("*>")]]parent_->[[redoc("*>")]]cache_;
+} else {
+  if (![[redoc("*>")]]parent_->c[[redoc("*>")]]ache_) {
+    [[redoc("*>")]]parent_->[[redoc("*>")]]cache_.[[redoc("*>")]]emplace-deref([[redoc("*>")]]current_);
+  }
+  return *[[redoc("*>")]]parent_->[[redoc("*>")]]cache_;
+}
+[codeblock:end]
+
+[begin:note]
+[:en] Evaluations of [`operator*] on the same iterator object can conflict ([#intro.races]).
+[:zh_CN] 在同一个迭代器上同时求值 [`operator*] 可能有冲突（[#intro.races]）。
+[end:note]
+[div:end]
+
+[%@lib@member iter_move[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+friend constexpr range_rvalue_reference_t<V> iter_move(const [[redoc("*>")]]iterator& i)
+  noexcept(noexcept(ranges::iter_move(i.[[redoc("*>")]]current_)));
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::iter_move(i.[*current_]);]
+[:zh_CN] 等价于：[`return ranges::iter_move(i.[*current_]);]
+[div:end]
+
+[%@lib@member iter_swap[!cache_latest_view::[*iterator]]]
+[codeblock:declaration]
+friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]current_, y.[[redoc("*>")]]current_)))
+  requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<V>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`ranges::iter_swap(x.[*current_], y.[*current_])].
+[:zh_CN] 等价于 [`ranges::iter_swap(x.[*current_], y.[*current_])]。
+[div:end]

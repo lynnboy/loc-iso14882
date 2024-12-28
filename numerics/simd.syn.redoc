@@ -1,0 +1,385 @@
+[section#simd.syn
+    [:en] Header [`<simd>] synopsis
+    [:zh_CN] 头文件 [`simd] 纲要
+]
+
+[%@hdr@def simd]
+[codeblock:synopsis]
+namespace std {
+  // [:en] [#simd.traits], [`simd] type traits \
+  [:zh_CN] [#simd.traits]，[`simd] 类型特征
+  template<class T, class U = typename T::value_type> struct simd_alignment;
+  template<class T, class U = typename T::value_type>
+    constexpr size_t simd_alignment_v = simd_alignment<T, U>::value;
+
+  template<class T, class V> struct rebind_simd { using type = [[redoc("[=seebelow]", "_")]]_; };
+  template<class T, class V> using rebind_simd_t = typename rebind_simd<T, V>::type;
+  template<[[redoc("*>")]]simd-size-type N, class V> struct resize_simd { using type = [[redoc("[=seebelow]", "_")]]_; };
+  template<[[redoc("*>")]]simd-size-type N, class V> using resize_simd_t = typename resize_simd<N, V>::type;
+
+  // [:en] [#simd.flags], Load and store flags \
+  [:zh_CN] [#simd.flags]，加载与存储标志
+  template<class... Flags> struct simd_flags;
+  inline constexpr simd_flags<> simd_flag_default{};
+  inline constexpr simd_flags<[[redoc("*>")]]convert-flag> simd_flag_convert{};
+  inline constexpr simd_flags<[[redoc("*>")]]aligned-flag> simd_flag_aligned{};
+  template<size_t N> requires (has_single_bit(N))
+    constexpr simd_flags<[[redoc("*>")]]overaligned-flag<N>> simd_flag_overaligned{};
+
+  // [:en] [#simd.class], Class template [`basic_simd] \
+  [:zh_CN] [#simd.class]，类模板 [`basic_simd]
+  template<class T, class Abi = [[redoc("*>")]]native-abi<T>> class basic_simd;
+  template<class T, [[redoc("*>")]]simd-size-type N = [[redoc("*>")]]simd-size-v<T, [[redoc("*>")]]native-abi<T>>>
+    using simd = basic_simd<T, [[redoc("*>")]]deduce-abi-t<T, N>>;
+
+  // [:en] [#simd.mask.class], Class template [`basic_simd_mask] \
+  [:zh_CN] [#simd.mask.class]，类模板 [`basic_simd_mask]
+  template<size_t Bytes, class Abi = [[redoc("*>")]]native-abi<[[redoc("*>")]]integer-from<Bytes>>> class basic_simd_mask;
+  template<class T, [[redoc("*>")]]simd-size-type N = [[redoc("*>")]]simd-size-v<T, [[redoc("*>")]]native-abi<T>>>
+    using simd_mask = basic_simd_mask<sizeof(T), [[redoc("*>")]]deduce-abi-t<T, N>>;
+
+  // [:en] [#simd.loadstore], [`basic_simd] load and store functions \
+  [:zh_CN] [#simd.loadstore]，[`basic_simd] 加载与存储函数
+  template<class V = [[redoc("[=seebelow]")]], ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R>
+    constexpr V simd_unchecked_load(R&& r, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R>
+    constexpr V simd_unchecked_load(R&& r, const typename V::mask_type& k,
+                                    simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, class... Flags>
+    constexpr V simd_unchecked_load(I first, iter_difference_t<I> n,
+                                    simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, class... Flags>
+    constexpr V simd_unchecked_load(I first, iter_difference_t<I> n,
+                                    const typename V::mask_type& k, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    constexpr V simd_unchecked_load(I first, S last, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    constexpr V simd_unchecked_load(I first, S last, const typename V::mask_type& k,
+                                    simd_flags<Flags...> f = {});
+
+  template<class V = [[redoc("[=seebelow]")]], ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R>
+    constexpr V simd_partial_load(R&& r, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R>
+    constexpr V simd_partial_load(R&& r, const typename V::mask_type& k,
+                                  simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, class... Flags>
+    constexpr V simd_partial_load(I first, iter_difference_t<I> n, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, class... Flags>
+    constexpr V simd_partial_load(I first, iter_difference_t<I> n,
+                                  const typename V::mask_type& k, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    constexpr V simd_partial_load(I first, S last, simd_flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    constexpr V simd_partial_load(I first, S last, const typename V::mask_type& k,
+                                  simd_flags<Flags...> f = {});
+
+  template<class T, class Abi, ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R> && indirectly_writable<ranges::iterator_t<R>, T>
+    constexpr void simd_unchecked_store(const basic_simd<T, Abi>& v, R&& r,
+                                        simd_flags<Flags...> f = {});
+  template<class T, class Abi, ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R> && indirectly_writable<ranges::iterator_t<R>, T>
+    constexpr void simd_unchecked_store(const basic_simd<T, Abi>& v, R&& r,
+      const typename basic_simd<T, Abi>::mask_type& mask, simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_unchecked_store(const basic_simd<T, Abi>& v, I first,
+                                        iter_difference_t<I> n, simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_unchecked_store(const basic_simd<T, Abi>& v, I first,
+      iter_difference_t<I> n, const typename basic_simd<T, Abi>::mask_type& mask,
+      simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_unchecked_store(const basic_simd<T, Abi>& v, I first, S last,
+                                        simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_unchecked_store(const basic_simd<T, Abi>& v, I first, S last,
+      const typename basic_simd<T, Abi>::mask_type& mask, simd_flags<Flags...> f = {});
+
+  template<class T, class Abi, ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R> && indirectly_writable<ranges::iterator_t<R>, T>
+    constexpr void simd_partial_store(const basic_simd<T, Abi>& v, R&& r,
+                                      simd_flags<Flags...> f = {});
+  template<class T, class Abi, ranges::contiguous_range R, class... Flags>
+    requires ranges::sized_range<R> && indirectly_writable<ranges::iterator_t<R>, T>
+    constexpr void simd_partial_store(const basic_simd<T, Abi>& v, R&& r,
+      const typename basic_simd<T, Abi>::mask_type& mask, simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_partial_store(
+      const basic_simd<T, Abi>& v, I first, iter_difference_t<I> n,
+      simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_partial_store(
+      const basic_simd<T, Abi>& v, I first, iter_difference_t<I> n,
+      const typename basic_simd<T, Abi>::mask_type& mask, simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_partial_store(const basic_simd<T, Abi>& v, I first, S last,
+      simd_flags<Flags...> f = {});
+  template<class T, class Abi, contiguous_iterator I, sized_sentinel_for<I> S, class... Flags>
+    requires indirectly_writable<I, T>
+    constexpr void simd_partial_store(const basic_simd<T, Abi>& v, I first, S last,
+      const typename basic_simd<T, Abi>::mask_type& mask, simd_flags<Flags...> f = {});
+
+  // [:en] [#simd.creation], [`basic_simd] and [`basic_simd_mask] creation \
+  [:zh_CN] [#simd.creation]，[`basic_simd] 与 [`basic_simd_mask] 的创建
+  template<class T, class Abi>
+    constexpr auto
+      simd_split(const basic_simd<typename T::value_type, Abi>& x) noexcept;
+  template<class T, class Abi>
+    constexpr auto
+      simd_split(const basic_simd_mask<[[redoc("*>")]]mask-element-size<T>, Abi>& x) noexcept;
+
+  template<class T, class... Abis>
+    constexpr basic_simd<T, [[redoc("*>")]]deduce-abi-t<T, (basic_simd<T, Abis>::size() + ...)>>
+      simd_cat(const basic_simd<T, Abis>&...) noexcept;
+  template<size_t Bytes, class... Abis>
+    constexpr basic_simd_mask<Bytes, [[redoc("*>")]]deduce-abi-t<[[redoc("*>")]]integer-from<Bytes>,
+                              (basic_simd_mask<Bytes, Abis>::size() + ...)>>
+      simd_cat(const basic_simd_mask<Bytes, Abis>&...) noexcept;
+
+  // [:en] [#simd.mask.reductions], [`basic_simd_mask] reductions \
+  [:zh_CN] [#simd.mask.reductions]，[`basic_simd_mask] 归约
+  template<size_t Bytes, class Abi>
+    constexpr bool all_of(const basic_simd_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr bool any_of(const basic_simd_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr bool none_of(const basic_simd_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr [[redoc("*>")]]simd-size-type reduce_count(const basic_simd_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr [[redoc("*>")]]simd-size-type reduce_min_index(const basic_simd_mask<Bytes, Abi>&);
+  template<size_t Bytes, class Abi>
+    constexpr [[redoc("*>")]]simd-size-type reduce_max_index(const basic_simd_mask<Bytes, Abi>&);
+
+  constexpr bool all_of(same_as<bool> auto) noexcept;
+  constexpr bool any_of(same_as<bool> auto) noexcept;
+  constexpr bool none_of(same_as<bool> auto) noexcept;
+  constexpr [[redoc("*>")]]simd-size-type reduce_count(same_as<bool> auto) noexcept;
+  constexpr [[redoc("*>")]]simd-size-type reduce_min_index(same_as<bool> auto);
+  constexpr [[redoc("*>")]]simd-size-type reduce_max_index(same_as<bool> auto);
+
+  // [:en] [#simd.reductions], [`basic_simd] reductions \
+  [:zh_CN] [#simd.reductions]，[`basic_simd] 归约
+  template<class T, class Abi, class BinaryOperation = plus<>>
+    constexpr T reduce(const basic_simd<T, Abi>&, BinaryOperation = {});
+  template<class T, class Abi, class BinaryOperation = plus<>>
+    constexpr T reduce(
+      const basic_simd<T, Abi>& x, const typename basic_simd<T, Abi>::mask_type& mask,
+      BinaryOperation binary_op = {}, type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
+
+  template<class T, class Abi>
+    constexpr T reduce_min(const basic_simd<T, Abi>&) noexcept;
+  template<class T, class Abi>
+    constexpr T reduce_min(const basic_simd<T, Abi>&,
+                           const typename basic_simd<T, Abi>::mask_type&) noexcept;
+  template<class T, class Abi>
+    constexpr T reduce_max(const basic_simd<T, Abi>&) noexcept;
+  template<class T, class Abi>
+    constexpr T reduce_max(const basic_simd<T, Abi>&,
+                           const typename basic_simd<T, Abi>::mask_type&) noexcept;
+
+  // [:en] [#simd.alg], Algorithms \
+  [:zh_CN] [#simd.alg]，算法
+  template<class T, class Abi>
+    constexpr basic_simd<T, Abi>
+      min(const basic_simd<T, Abi>& a, const basic_simd<T, Abi>& b) noexcept;
+  template<class T, class Abi>
+    constexpr basic_simd<T, Abi>
+      max(const basic_simd<T, Abi>& a, const basic_simd<T, Abi>& b) noexcept;
+  template<class T, class Abi>
+    constexpr pair<basic_simd<T, Abi>, basic_simd<T, Abi>>
+      minmax(const basic_simd<T, Abi>& a, const basic_simd<T, Abi>& b) noexcept;
+  template<class T, class Abi>
+    constexpr basic_simd<T, Abi>
+      clamp(const basic_simd<T, Abi>& v, const basic_simd<T, Abi>& lo,
+            const basic_simd<T, Abi>& hi);
+
+  template<class T, class U>
+    constexpr auto simd_select(bool c, const T& a, const U& b)
+    -> remove_cvref_t<decltype(c ? a : b)>;
+  template<size_t Bytes, class Abi, class T, class U>
+    constexpr auto simd_select(const basic_simd_mask<Bytes, Abi>& c, const T& a, const U& b)
+    noexcept -> decltype([[redoc("*>")]]simd-select-impl(c, a, b));
+
+  // [:en] [#simd.math], Mathematical functions \
+  [:zh_CN] [#simd.math]，数学函数
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> acos(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> asin(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> atan(const V& x);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> atan2(const V0& y, const V1& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> cos(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> sin(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> tan(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> acosh(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> asinh(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> atanh(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> cosh(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> sinh(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> tanh(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> exp(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> exp2(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> expm1(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-simd-t<V>
+      frexp(const V& value, rebind_simd_t<int, [[redoc("*>")]]deduced-simd-t<V>>* exp);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr rebind_simd_t<int, [[redoc("*>")]]deduced-simd-t<V>> ilogb(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> ldexp(const V& x, const
+  rebind_simd_t<int, [[redoc("*>")]]deduced-simd-t<V>>& exp);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> log(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> log10(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> log1p(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> log2(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> logb(const V& x);
+  template<class T, class Abi>
+    constexpr basic_simd<T, Abi> modf(const type_identity_t<basic_simd<T, Abi>>& value,
+                                      basic_simd<T, Abi>* iptr);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> scalbn(const V& x, const
+  rebind_simd_t<int, [[redoc("*>")]]deduced-simd-t<V>>& n);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-simd-t<V> scalbln(
+      const V& x, const rebind_simd_t<long int, [[redoc("*>")]]deduced-simd-t<V>>& n);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> cbrt(const V& x);
+  template<signed_integral T, class Abi>
+    constexpr basic_simd<T, Abi> abs(const basic_simd<T, Abi>& j);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> abs(const V& j);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> fabs(const V& x);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> hypot(const V0& x, const V1& y);
+  template<class V0, class V1, class V2>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1, V2> hypot(const V0& x, const V1& y, const V2& z);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> pow(const V0& x, const V1& y);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> sqrt(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> erf(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> erfc(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> lgamma(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> tgamma(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> ceil(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-simd-t<V> floor(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-simd-t<V> nearbyint(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-simd-t<V> rint(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    rebind_simd_t<long int, [[redoc("*>")]]deduced-simd-t<V>> lrint(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    rebind_simd_t<long long int, V> llrint(const [[redoc("*>")]]deduced-simd-t<V>& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-simd-t<V> round(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr rebind_simd_t<long int, [[redoc("*>")]]deduced-simd-t<V>> lround(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr rebind_simd_t<long long int, [[redoc("*>")]]deduced-simd-t<V>> llround(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-simd-t<V> trunc(const V& x);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fmod(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> remainder(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1>
+      remquo(const V0& x, const V1& y, rebind_simd_t<int, [[redoc("*>")]]math-common-simd-t<V0, V1>>* quo);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> copysign(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> nextafter(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fdim(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fmax(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fmin(const V0& x, const V1& y);
+  template<class V0, class V1, class V2>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1, V2> fma(const V0& x, const V1& y, const V2& z);
+  template<class V0, class V1, class V2>
+    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1, V2>
+    lerp(const V0& a, const V1& b, const V2& t) noexcept;
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr rebind_simd_t<int, [[redoc("*>")]]deduced-simd-t<V>> fpclassify(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-simd-t<V>::mask_type isfinite(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-simd-t<V>::mask_type isinf(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-simd-t<V>::mask_type isnan(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-simd-t<V>::mask_type isnormal(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-simd-t<V>::mask_type signbit(const V& x);
+  template<class V0, class V1>
+    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
+      isgreater(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
+      isgreaterequal(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
+      isless(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
+      islessequal(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
+      islessgreater(const V0& x, const V1& y);
+  template<class V0, class V1>
+    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
+      isunordered(const V0& x, const V1& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> assoc_laguerre(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& n, const
+      rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& m,
+                     const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> assoc_legendre(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& l, const
+      rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& m,
+                     const V& x);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> beta(const V0& x, const V1& y);
+  template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-simd-t<V> comp_ellint_1(const V& k);
+  template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-simd-t<V> comp_ellint_2(const V& k);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> comp_ellint_3(const V0& k, const V1& nu);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_bessel_i(const V0& nu, const V1& x);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_bessel_j(const V0& nu, const V1& x);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_bessel_k(const V0& nu, const V1& x);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_neumann(const V0& nu, const V1& x);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> ellint_1(const V0& k, const V1& phi);
+  template<class V0, class V1>
+    [[redoc("*>")]]math-common-simd-t<V0, V1> ellint_2(const V0& k, const V1& phi);
+  template<class V0, class V1, class V2>
+    [[redoc("*>")]]math-common-simd-t<V0, V1, V2> ellint_3(const V0& k, const V1& nu, const V2& phi);
+  template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-simd-t<V> expint(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> hermite(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& n, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> laguerre(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& n, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> legendre(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& l, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> riemann_zeta(const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> sph_bessel(
+      const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& n, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V> sph_legendre(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& l,
+      const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& m, const V& theta);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-simd-t<V>
+      sph_neumann(const rebind_simd_t<unsigned, [[redoc("*>")]]deduced-simd-t<V>>& n, const V& x);
+}
+[codeblock:end]

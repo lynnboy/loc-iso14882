@@ -4,14 +4,31 @@
 ]
 
 [%@lib atomic_ref<T*>]
+[para]
+[:en] There are specializations of the [`atomic_ref] class template for all
+pointer-to-object types.
+[:zh_CN] [`atomic_ref] 类模板对所有对象指针类型进行了特化。
+
+[:en] For each such type [^pointer-type], the specialization
+[`atomic_ref<[^pointer-type]>] provides additional atomic operations
+appropriate to pointer types.
+[:zh_CN] 对于每个这样的类型 [^pointer-type]，特例 [`atomic_ref<[^pointer-type]>]
+提供了适用于该指针类型的额外的原子性操作。
+
+[para]
+[:en] The program is ill-formed if [`is_always_lock_free] is [`false] and
+[`is_volatile_v<T>] is [`true].
+[:zh_CN] 如果 [`is_always_lock_free] 为 [`false] 且 [`is_volatile_v<T>] 为 [`true]，
+那么程序非良构。
+
 [codeblock:synopsis]
 namespace std {
-  template<class T> struct atomic_ref<T*> {
+  template<class T> struct atomic_ref<[[redoc("^>")]]pointer-type> {
   private:
-    T** ptr;        // [=expos]
+    [[redoc("^>")]]pointer-type* ptr;        // [=expos]
 
   public:
-    using value_type = T*;
+    using value_type = remove_cv_t<[[redoc("^>")]]pointer-type>;
     using difference_type = ptrdiff_t;
     static constexpr size_t required_alignment = [[redoc("[?impdefx"
         "[:en] required alignment for [`atomic_ref] type[=']s operations"
@@ -22,40 +39,46 @@ namespace std {
         "[:zh_CN] 给定 [`atomic_ref] 类型的操作是否总是免锁的]")]];
     bool is_lock_free() const noexcept;
 
-    explicit atomic_ref(T*&);
-    atomic_ref(const atomic_ref&) noexcept;
+    constexpr explicit atomic_ref([[redoc("^>")]]pointer-type&);
+    constexpr atomic_ref(const atomic_ref&) noexcept;
     atomic_ref& operator=(const atomic_ref&) = delete;
 
-    void store(T*, memory_order = memory_order::seq_cst) const noexcept;
-    T* operator=(T*) const noexcept;
-    T* load(memory_order = memory_order::seq_cst) const noexcept;
-    operator T*() const noexcept;
+    constexpr void store(value_type, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type operator=(value_type) const noexcept;
+    constexpr value_type load(memory_order = memory_order::seq_cst) const noexcept;
+    constexpr operator value_type() const noexcept;
 
-    T* exchange(T*, memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_weak(T*&, T*,
-                               memory_order, memory_order) const noexcept;
-    bool compare_exchange_strong(T*&, T*,
-                                 memory_order, memory_order) const noexcept;
-    bool compare_exchange_weak(T*&, T*,
-                               memory_order = memory_order::seq_cst) const noexcept;
-    bool compare_exchange_strong(T*&, T*,
-                                 memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type exchange(value_type,
+                                  memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, value_type,
+                                         memory_order, memory_order) const noexcept;
+    constexpr bool compare_exchange_strong(value_type&, value_type,
+                                           memory_order, memory_order) const noexcept;
+    constexpr bool compare_exchange_weak(value_type&, value_type,
+                                         memory_order = memory_order::seq_cst) const noexcept;
+    constexpr bool compare_exchange_strong(value_type&, value_type,
+                                           memory_order = memory_order::seq_cst) const noexcept;
 
-    T* fetch_add(difference_type, memory_order = memory_order::seq_cst) const noexcept;
-    T* fetch_sub(difference_type, memory_order = memory_order::seq_cst) const noexcept;
-    T* fetch_max(T*, memory_order = memory_order::seq_cst) const noexcept;
-    T* fetch_min(T*, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_add(difference_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_sub(difference_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_max(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
+    constexpr value_type fetch_min(value_type,
+                                   memory_order = memory_order::seq_cst) const noexcept;
 
-    T* operator++(int) const noexcept;
-    T* operator--(int) const noexcept;
-    T* operator++() const noexcept;
-    T* operator--() const noexcept;
-    T* operator+=(difference_type) const noexcept;
-    T* operator-=(difference_type) const noexcept;
+    constexpr value_type operator++(int) const noexcept;
+    constexpr value_type operator--(int) const noexcept;
+    constexpr value_type operator++() const noexcept;
+    constexpr value_type operator--() const noexcept;
+    constexpr value_type operator+=(difference_type) const noexcept;
+    constexpr value_type operator-=(difference_type) const noexcept;
 
-    void wait(T*, memory_order = memory_order::seq_cst) const noexcept;
-    void notify_one() const noexcept;
-    void notify_all() const noexcept;
+    constexpr void wait(value_type, memory_order = memory_order::seq_cst) const noexcept;
+    constexpr void notify_one() const noexcept;
+    constexpr void notify_all() const noexcept;
+    constexpr [[redoc("^>")]]pointer-type* address() const noexcept;
   };
 }
 [codeblock:end]
@@ -78,13 +101,18 @@ primary template.
 [%@lib@member fetch_max[!atomic_ref<T*>]]
 [%@lib@member fetch_min[!atomic_ref<T*>]]
 [codeblock:declaration]
-T* fetch_key[[redoc("^<3c")]](difference_type operand, memory_order order = memory_order::seq_cst) const noexcept;
+constexpr value_type fetch_key[[redoc("^<3c")]](difference_type operand,
+                     memory_order order = memory_order::seq_cst) const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_const_v<[^pointer-type]>] is [`false].
+[:zh_CN] [`is_const_v<[^pointer-type]>] 为 [`false]。
+
 [para:mandates]
-[:en] [`T] is a complete object type.
-[:zh_CN] [`T] 为完整对象类型。
+[:en] [`remove_pointer_t<[^pointer-type]>] is a complete object type.
+[:zh_CN] [`remove_pointer_t<[^pointer-type]>] 为完整对象类型。
 
 [para:effects]
 [:en] Atomically replaces the value referenced by [`*ptr] with the result of the
@@ -126,10 +154,14 @@ the [`<] operator does not establish a strict weak ordering
 [%@lib@member operator+=[!atomic_ref<T*>]]
 [%@lib@member operator-=[!atomic_ref<T*>]]
 [codeblock:declaration]
-T* operator [[redoc("^>")]]op=(difference_type operand) const noexcept;
+constexpr value_type operator [[redoc("^>")]]op=(difference_type operand) const noexcept;
 [codeblock:end]
 
 [div:description]
+[para:constraints]
+[:en] [`is_const_v<[^pointer-type]>] is [`false].
+[:zh_CN] [`is_const_v<[^pointer-type]>] 为 [`false]。
+
 [para:effects]
 [:en] Equivalent to: [`return fetch_[^key](operand) [^op] operand;]
 [:zh_CN] 等价于：[`return fetch_[^key](operand) [^op] operand;]

@@ -1,0 +1,83 @@
+[section#range.cache.latest.view
+    [:en] Class template [`cache_latest_view]
+    [:zh_CN] 类模板 [`cache_latest_view]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range V>
+    requires [[redoc("`:c>")]]view<V>
+  class [[redoc("`:lib")]]cache_latest_view : public view_interface<cache_latest_view<V>> {
+    V [[redoc("*>")]]base_ = V();                                                      // [=expos]
+    using [[redoc("*>")]]cache-t = conditional_t<is_reference_v<range_reference_t<V>>, // [=expos]
+                                  add_pointer_t<range_reference_t<V>>,
+                                  range_reference_t<V>>;
+
+    [[redoc("*>")]]non-propagating-cache<cache-t> [[redoc("*>")]]cache_;                              // [=expos]
+
+    class [[redoc("*>")]]iterator;                                                     // [=expos]
+    class [[redoc("*>")]]sentinel;                                                     // [=expos]
+
+  public:
+    cache_latest_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+    constexpr explicit cache_latest_view(V base);
+
+    constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+    constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+    constexpr auto begin();
+    constexpr auto end();
+
+    constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+    constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+  };
+
+  template<class R>
+    cache_latest_view(R&&) -> cache_latest_view<views::all_t<R>>;
+}
+[codeblock:end]
+
+[%@lib@ctor cache_latest_view]
+[codeblock:declaration]
+constexpr explicit cache_latest_view(V base);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_]。
+[div:end]
+
+[%@lib@member begin[!cache_latest_view]]
+[codeblock:declaration]
+constexpr auto begin();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator](*this);]
+[:zh_CN] 等价于：[`return [*iterator](*this);]
+[div:end]
+
+[%@lib@member end[!cache_latest_view]]
+[codeblock:declaration]
+constexpr auto end();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*sentinel](*this);]
+[:zh_CN] 等价于：[`return [*sentinel](*this);]
+[div:end]
+
+[%@lib@member size[!cache_latest_view]]
+[codeblock:declaration]
+constexpr auto size() requires sized_range<V>;
+constexpr auto size() const requires sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::size([*base_]);]
+[:zh_CN] 等价于：[`return ranges::size([*base_]);]
+[div:end]

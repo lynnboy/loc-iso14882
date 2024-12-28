@@ -1,0 +1,122 @@
+[section#simd.expos.abi
+    [:en] [`simd] ABI tags
+    [:zh_CN] [`simd] ABI 标签
+]
+
+[codeblock:declaration]
+using [[redoc("*>")]]simd-size-type = [[redoc("[=seebelow]")]];
+template<class T> using [[redoc("*>")]]native-abi = [[redoc("[=seebelow]")]];
+template<class T, [[redoc("*>")]]simd-size-type N> using [[redoc("*>")]]deduce-abi-t = [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] An [+ABI tag] is a type that indicates a choice of size and binary
+representation for objects of data-parallel type.
+[:zh_CN] [+ABI 标签]用于指示为数据并行类型的对象选择的大小和二进制表示。
+
+[begin:note]
+[:en] The intent is for the size and binary representation to depend on the target
+architecture and compiler flags.
+[:zh_CN] 其设计意图是让大小和二进制表示取决于目标架构和编译期选项。
+
+[:en] The ABI tag, together with a given element type, implies the width.
+[:zh_CN] ABI 标签和给定的元素类型一同蕴含了宽度信息。
+[end:note]
+
+[para]
+[begin:note]
+[:en] The ABI tag is orthogonal to selecting the machine instruction set.
+[:zh_CN] ABI 标签与机器指令集的选择是正交的。
+
+[:en] The selected machine instruction set limits the usable ABI tag types,
+though (see [#simd.overview]).
+[:zh_CN] 然而选择的机器指令集限制了可用的 ABI 标签类型（参见 [#simd.overview]）。
+
+[:en] The ABI tags enable users to safely pass objects of data-parallel type
+between translation unit boundaries (e.g., function calls or I/O).
+[:zh_CN] ABI 标签允许用户能够安全地跨越翻译单元边界传递数据并行类型的对象
+（比如通过函数调用或 I/O）。
+[end:note]
+
+[para]
+[:en] An implementation defines ABI tag types as necessary for the following
+aliases.
+[:zh_CN] 实现在必要时为下列别名定义 ABI 标签类型。
+
+[para]
+[:en] [`[*deduce-abi-t]<T, N>] is defined if
+[:zh_CN] 以下情况下定义 [`[*deduce-abi-t]<T, N>]：
+[list]
+[item]
+[:en@~] [`T] is a vectorizable type,
+[:zh_CN@~] [`T] 为可向量化类型，
+[item]
+[:en@~] [`N] is greater than zero, and
+[:zh_CN@~] [`N] 大于零，且
+[item]
+[:en@~] [`N] is not larger than an implementation-defined maximum.
+[:zh_CN@~] [`N] 不大于某个由实现定义的最大值。
+[list:end]
+
+[:en] The [?impldef maximum width for [`simd] and [`simd_mask]] maximum for
+[`N] is not smaller than 64 and can differ depending on [`T].
+[:zh_CN] [`N] 的[?impldef [`simd] 和 [`simd_mask] 的最大宽度]最大值不小于 64，
+并且可根据 [`T] 而有所不同。
+
+[para]
+[:en] Where present, [`[*deduce-abi-t]<T, N>] names an ABI tag type such that
+[:zh_CN] 如果存在，[`[*deduce-abi-t]<T, N>] 应当指名一个 ABI 标签类型，使得
+[list]
+[item]
+[:en@~] [`[*simd-size-v]<T, [*deduce-abi-t]<T, N>>] equals [`N],
+[:zh_CN@~] [`[*simd-size-v]<T, [*deduce-abi-t]<T, N>>] 等于 [`N]，
+[item]
+[:en@~] [`basic_simd<T, [*deduce-abi-t]<T, N>>] is enabled ([#simd.overview]), and
+[:zh_CN@~] [`basic_simd<T, [*deduce-abi-t]<T, N>>] 被启用（[#simd.overview]），并且
+[item]
+[:en@~] [`basic_simd_mask<sizeof(T), [*deduce-abi-t]<[*integer-from]<sizeof(T)>, N>>]
+is enabled.
+[:zh_CN@~] [`basic_simd_mask<sizeof(T), [*deduce-abi-t]<[*integer-from]<sizeof(T)>, N>>]
+被启用。
+[list:end]
+
+[para]
+[:en] [`[*native-abi]<T>] is an [?impldef default ABI tag for [`basic_simd] and
+[`basic_simd_mask]] alias for an ABI tag.
+[:zh_CN] [`[*native-abi]<T>] 是[?impldef [`basic_simd] 和 [`basic_simd_mask]
+的默认 ABI 标签] ABI 标签别名。
+
+[:en] [`basic_simd<T, [*native-abi]<T>>] is an enabled specialization.
+[:zh_CN] [`basic_simd<T, [*native-abi]<T>>] 是被启用的特例。
+
+[begin:note]
+[:en] The intent is to use the ABI tag producing the most efficient data-parallel
+execution for the element type [`T] on the currently targeted system.
+[:zh_CN] 其设计意图是在当前的目标系统上使用针对元素类型 [`T] 可产生最高效的
+数据并行执行的 ABI 标签。
+
+[:en] For target architectures with ISA extensions, compiler flags can change
+the type of the [`[*native-abi]<T>] alias.
+[:zh_CN] 对于带有 ISA 扩展的目标架构，编译期选项可以改变 [`[*native-abi]<T>] 别名的类型。
+[end:note]
+
+[begin:example]
+[:en] Consider a target architecture supporting the ABI tags [`__simd128] and
+[`__simd256], where hardware support for [`__simd256] exists only for
+floating-point types.
+[:zh_CN] 考虑支持 ABI 标签 [`__simd128] 和 [`__simd256] 的目标架构，其对
+[`__simd256] 的硬件支持仅对浮点类型存在。
+
+[:en] The implementation therefore defines [`[*native-abi]<T>] as an alias for
+[:zh_CN] 从而实现可以将 [`[*native-abi]<T>] 定义为以下的别名：
+[list]
+[item]
+[:en@~] [`__simd256] if [`T] is a floating-point type, and
+[:zh_CN@~] 若 [`T] 是浮点类型则为 [`__simd256]，
+[item]
+[:en@~] [`__simd128] otherwise.
+[:zh_CN@~] 否则为 [`__simd128]。
+[list:end]
+[end:example]
+[div:end]
