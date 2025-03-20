@@ -57,11 +57,9 @@ synchronization operations.
 visible to another.
 [:zh_CN] 这些操作在使一个线程中的赋值对另一个线程可见时起到特殊的作用。
 
-[:en] A synchronization operation on one or more memory locations is either a
-consume operation, an acquire operation, a release operation, or both an acquire
-and release operation.
-[:zh_CN] 对一个或多个内存位置的同步操作，可以是消费操作，获取操作，释放操作，或者
-获取并释放操作。
+[:en] A synchronization operation on one or more memory locations is either an
+acquire operation, a release operation, or both an acquire and release operation.
+[:zh_CN] 对一个或多个内存位置的同步操作，可以是获取操作，释放操作，或者获取并释放操作。
 
 [:en] A synchronization operation without an associated memory location is a
 fence and can be either an acquire fence, a release fence, or both an acquire
@@ -158,176 +156,9 @@ release.
 [end:note]
 
 [para]
-[:en] An evaluation [$A] [+carries a dependency] to an evaluation [$B] if
-[:zh_CN] 符合如下条件时，求值 [$A] [+传递依赖]给求值 [$B]：
-
-[list]
-[item]
-[:en] the value of [$A] is used as an operand of [$B], unless:
-[:zh_CN] [$A] 的值被用作 [$B] 的操作数，除非：
-
-[list]
-[item]
-[:en] [$B] is an invocation of any specialization of [`std::kill_dependency]
-([#atomics.order]), or
-[:zh_CN] [$B] 是对 [`std::kill_dependency]（[#atomics.order]）的任何特例的调用，或者
-[item]
-[:en] [$A] is the left operand of a built-in logical [=logop and] ([`&&], see
-[#expr.log.and]) or logical [=logop or] ([`||], see [#expr.log.or]) operator, or
-[:zh_CN] [$A] 是内建逻辑 [=logop and]（[`&&]，参见 [#expr.log.and]）或逻辑
-[=logop or]（[`||]，参见 [#expr.log.or]）运算符的左操作数，或者
-[item]
-[:en] [$A] is the left operand of a conditional ([`?:], see [#expr.cond])
-operator, or
-[:zh_CN] [$A] 是条件（[`?:]，参见 [#expr.cond]）运算符的左操作数，或者
-[item]
-[:en] [$A] is the left operand of the built-in comma ([`,]) operator ([#expr.comma]);
-[:zh_CN] [$A] 是内建逗号（[`,]）运算符（[#expr.comma]）的左操作数；
-[list:end]
-
-[:en@~] or
-[:zh_CN@~] 或者
-
-[item]
-[:en] [$A] writes a scalar object or bit-field [$M], [$B] reads the value
-written by [$A] from [$M], and [$A] is sequenced before [$B], or
-[:zh_CN] [$A] 写入标量对象或位字段 [$M]，而 [$B] 从 [$M] 中读取由 [$A] 写入的值，
-且 [$A] 按顺序早于 [$B]，或者
-
-[item]
-[:en] for some evaluation [$X], [$A] carries a dependency to [$X], and
-[$X] carries a dependency to [$B].
-[:zh_CN] 对于某个求值 [$X]，[$A] 传递依赖给 [$X]，且 [$X] 传递依赖给 [$B]。
-[list:end]
-
-[begin:note]
-[:en] [=lq]Carries a dependency to[=rq] is a subset of [=lq]is sequenced before[=rq],
-and is similarly strictly intra-thread.
-[:zh_CN] “传递依赖给”关系是“按顺序早于”关系的子集，并且同样也是严格的线程内关系。
-[end:note]
-
-[para]
-[:en] An evaluation [$A] is [+dependency-ordered before] an evaluation [$B] if
-[:zh_CN] 符合如下条件时，求值 [$A] [+按依赖序早于]求值 [$B]：
-
-[list]
-[item]
-[:en] [$A] performs a release operation on an atomic object [$M], and, in another
-thread, [$B] performs a consume operation on [$M] and reads the value written by
-[$A], or
-[:zh_CN] [$A] 对某个原子性对象 [$M] 施以释放操作，而在另一线程中 [$B] 对 [$M] 施以
-消费操作，并读取到了 [$A] 所写入的值，或者
-
-[item]
-[:en] for some evaluation [$X], [$A] is dependency-ordered before [$X] and [$X]
-carries a dependency to [$B].
-[:zh_CN] 对于某个求值 [$X]，[$A] 按依赖序早于 [$X]，且 [$X] 传递依赖给 [$B]。
-[list:end]
-
-[begin:note]
-[:en] The relation [=lq]is dependency-ordered before[=rq] is analogous to
-[=lq]synchronizes with[=rq], but uses release/consume in place of release/acquire.
-[:zh_CN] “按依赖序早于”关系和“同步于”关系相似，但并不根据释放/获取操作，而是根据
-释放/消费操作。
-[end:note]
-
-[para]
-[:en] An evaluation [$A] [+inter-thread happens before] an evaluation [$B] if
-[:zh_CN] 符合如下条件时，求值 [$A] [+线程间发生早于]求值 [$B]：
-
-[list]
-[item]
-[:en] [$A] synchronizes with [$B], or
-[:zh_CN] [$A] 同步于 [$B]，或者
-[item]
-[:en] [$A] is dependency-ordered before [$B], or
-[:zh_CN] [$A] 按依赖序早于 [$B]，或者
-[item]
-[:en] for some evaluation [$X]
-[:zh_CN] 对于某个求值 [$X]
-
-[list]
-[item]
-[:en] [$A] synchronizes with [$X] and [$X] is sequenced before [$B], or
-[:zh_CN] [$A] 同步于 [$X]，且 [$X] 按顺序早于 [$B]，或者
-[item]
-[:en] [$A] is sequenced before [$X] and [$X] inter-thread happens before [$B], or
-[:zh_CN] [$A] 按顺序早于 [$X]，且 [$X] 线程间发生早于 [$B]，或者
-[item]
-[:en] [$A] inter-thread happens before [$X] and [$X] inter-thread happens before [$B].
-[:zh_CN] [$A] 线程间发生早于 [$X]，且 [$X] 线程间发生早于 [$B]。
-[list:end]
-[list:end]
-
-[begin:note]
-[:en] The [=lq]inter-thread happens before[=rq] relation describes arbitrary
-concatenations of [=lq]sequenced before[=rq], [=lq]synchronizes with[=rq] and
-[=lq]dependency-ordered before[=rq] relationships, with two exceptions.
-[:zh_CN] “线程间发生早于”关系描述了“按顺序早于”，“同步于”，和“按依赖序早于”关系
-的任意接合，但存在两个例外。
-
-[:en] The first exception is that a concatenation never ends with
-[=lq]dependency-ordered before[=rq] followed by [=lq]sequenced before[=rq].
-[:zh_CN] 第一个例外是，接合从来不以一个“按依赖序早于”关系跟着一个“按顺序早于”
-关系来结尾。
-
-[:en] The reason for this limitation is that a consume operation participating
-in a [=lq]dependency-ordered before[=rq] relationship provides ordering only
-with respect to operations to which this consume operation actually carries a
-dependency.
-[:zh_CN] 这条限制的原因在于，对于参与“按依赖序早于”关系的消费操作，仅对确实由它
-向之传递了依赖的操作来说才会提供有序性。
-
-[:en] The reason that this limitation applies only to the end of such a
-concatenation is that any subsequent release operation will provide the required
-ordering for a prior consume operation.
-[:zh_CN] 这条限制仅适用于这种接合的结尾的原因在于，任何后续的释放操作都将为之前
-的消费操作提供所需的有序性。
-
-[:en] The second exception is that a concatenation never consist entirely of
-[=lq]sequenced before[=rq].
-[:zh_CN] 第二个例外是，接合从来不会仅由“按顺序早于”关系构成。
-
-[:en] The reasons for this limitation are
-[:zh_CN] 这条限制的原因在于：
-
-[:en] (1) to permit [=lq]inter-thread happens before[=rq] to be transitively
-closed and
-[:zh_CN] 第一，使得“线程间发生早于”关系能够是可传递闭合的；
-
-[:en] (2) the [=lq]happens before[=rq]] relation, defined below, provides for
-relationships consisting entirely of [=lq]sequenced before[=rq].
-[:zh_CN] 第二，下文所定义的“发生早于”关系，已经定义了仅由“按顺序早于”关系构成的关系。
-[end:note]
-
-[para]
 [:en] An evaluation [$A] [+happens before] an evaluation [$B] (or, equivalently,
-[$B] [+happens after] [$A]) if
-[:zh_CN] 符合如下条件时，求值 [$A] [+发生早于]求值 [$B]（或者等价地说，
-[$B] [+发生晚于] [$A]）：
-
-[list]
-[item]
-[:en] [$A] is sequenced before [$B], or
-[:zh_CN] [$A] 按顺序早于 [$B]，或者
-[item]
-[:en] [$A] inter-thread happens before [$B].
-[:zh_CN] [$A] 线程间发生早于 [$B]。
-[list:end]
-
-[:en] The implementation shall ensure that no program execution demonstrates
-a cycle in the [=lq]happens before[=rq] relation.
-[:zh_CN] 实现应当保证程序的执行不会在“发生早于”关系上出现循环。
-
-[begin:note]
-[:en] This cycle would otherwise be possible only through the use of consume
-operations.
-[:zh_CN] 当仅使用消费操作时，才可能造成这种循环。
-[end:note]
-
-[para]
-[:en] An evaluation [$A] [+simply happens before] an evaluation [$B] if either
-[:zh_CN] 符合如下任何条件时，[$A] 的求值[+简单发生早于]求值 [$B]：
+[$B] happens after [$A]) if either
+[:zh_CN] 符合如下条件时，求值 [$A] [+发生早于]求值 [$B]（或者等价地说，[$B] 发生晚于 [$A]）：
 
 [list]
 [item]
@@ -337,14 +168,13 @@ operations.
 [:en@~] [$A] synchronizes with [$B], or
 [:zh_CN@~] [$A] 同步于 [$B]，或者
 [item]
-[:en@~] [$A] simply happens before [$X] and [$X] simply happens before [$B].
-[:zh_CN@~] [$A] 简单发生早于 [$X] 且 [$X] 简单发生早于 [$B]。
+[:en@~] [$A] happens before [$X] and [$X] happens before [$B].
+[:zh_CN@~] [$A] 发生早于 [$X] 且 [$X] 发生早于 [$B]。
 [list:end]
 
 [begin:note]
-[:en] In the absence of consume operations, the happens before and simply
-happens before relations are identical.
-[:zh_CN] 不涉及消费操作时，发生早于和简单发生早于关系等价。
+[:en] An evaluation does not happen before itself.
+[:zh_CN] 求值不会发生早于其自身。
 [end:note]
 
 [para]
@@ -358,13 +188,12 @@ happens before relations are identical.
 [item]
 [:en@~] [$A] synchronizes with [$D], and both [$A] and [$D] are sequentially
 consistent atomic operations ([#atomics.order]), or
-[:zh_CN@~] [$A] 同步于 [$D]，并且 [$A] 和 [$D] 都是序列一致的原子性操作
-（[#atomics.order]），或者
+[:zh_CN@~] [$A] 同步于 [$D]，并且 [$A] 和 [$D] 都是序列一致的原子性操作（[#atomics.order]），或者
 [item]
 [:en@~] there are evaluations [$B] and [$C] such that [$A] is sequenced before
-[$B], [$B] simply happens before [$C], and [$C] is sequenced before [$D], or
-[:zh_CN@~] 存在求值 [$B] 和 [$C]，使得 [$A] 按顺序早于 [$B]，[$B] 简单发生早于
-[$C]，并且 [$C] 按顺序早于 [$D]，或者
+[$B], [$B] happens before [$C], and [$C] is sequenced before [$D], or
+[:zh_CN@~] 存在求值 [$B] 和 [$C]，使得 [$A] 按顺序早于 [$B]，[$B] 发生早于 [$C]，并且
+[$C] 按顺序早于 [$D]，或者
 [item]
 [:en@~] there is an evaluation [$B] such that [$A] strongly happens before [$B],
 and [$B] strongly happens before [$D].
@@ -376,9 +205,6 @@ and [$B] strongly happens before [$D].
 evaluated before [$B] in all contexts.
 [:zh_CN] 不正式地说，如果 [$A] 强发生早于 [$A]，那么 [$A] 就会在所有的语境中都
 表现为在 [$B] 之前求值。
-
-[:en] Strongly happens before excludes consume operations.
-[:zh_CN] 强发生早于关系排除了消费操作。
 [end:note]
 
 [para]
@@ -583,10 +409,10 @@ since any program that behaves differently as a result has undefined behavior.
 [end:note]
 
 [para]
-[:en] Two accesses to the same object of type [`[`:key volatile] std::sig_atomic_t]
-do not result in a data race if both occur in the same thread, even if one or
-more occurs in a signal handler.
-[:zh_CN] 对同一个 [`[`:key volatile] std::sig_atomic_t] 类型的对象的两次访问，
+[:en] Two accesses to the same non-bit-field object of type
+[`[`:key volatile] std::sig_atomic_t] do not result in a data race if both occur
+in the same thread, even if one or more occurs in a signal handler.
+[:zh_CN] 对同一个 [`[`:key volatile] std::sig_atomic_t] 类型的非位字段对象的两次访问，
 如果发生于同一个线程内，则即使其中之一或两者均发生于信号处理函数中，也不会导致数据竞争。
 
 [:en] For each signal handler invocation, evaluations performed by the thread

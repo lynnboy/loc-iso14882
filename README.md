@@ -1092,6 +1092,7 @@ filesystem                              |文件系统
 final overrider                         |最终覆盖函数   |未在最终派生类中被进一步覆盖，提供实际行为
 final suspend point                     |最终暂停点     |协程代码隐含插入`co_await p.final_suspend();`，不可抛出异常<br>若承诺`unhandled_exception`抛出则认为在最终暂停点暂停
 finite state machine                    |有限状态机     |用于实现正则表达式的数据结构
+first declaration                       |首声明式
 floating-integral conversion            |浮点整形转换 FIC |转换类别的标准转换。f->i：截断；i->f：尽可能精确
 floating-point                          |浮点
 floating-point conversion               |浮点转换 FltC  |转换类别的标准转换。除提升外任意浮点间转换
