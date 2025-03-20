@@ -1,0 +1,396 @@
+[section#basic.contract.eval
+    [:en] Evaluation
+    [:zh_CN] 评估
+]
+
+[para]
+[:en]
+[%@defn evaluation semantics[%contract evaluation semantics]]
+[%@defn checking semantics[%contract evaluation semantics[!checking]]]
+[%@defn terminating semantics[%contract evaluation semantics[!terminating]]]
+[:zh_CN]
+[%@defn 求值语义[%契约评估语义]]
+[%@defn 检查语义[%契约评估语义[!检查]]]
+[%@defn 终止语义[%契约评估语义[!终止]]]
+
+[:en] An evaluation of a contract assertion uses one of the following four
+[+evaluation semantics]:
+[+ignore[%contract evaluation semantics[!ignore]]],
+[+observe[%contract evaluation semantics[!observe]]],
+[+enforce[%contract evaluation semantics[!enforce]]], or
+[+quick-enforce[%contract evaluation semantics[!quick-enforce]]].
+[:zh_CN] 契约断言的评估使用以下四种[+评估语义]之一：
+[+忽略[%契约评估语义[!忽略]]]、[+观察[%契约评估语义[!观察]]]、
+[+强制[%契约评估语义[!强制]]]或[+快速强制[%契约评估语义[!快速强制]]]。
+
+[:en] Observe, enforce, and quick-enforce are [+checking semantics
+[%contract evaluation semantics[!checking]]]; enforce and quick-enforce are
+[+terminating semantics[%contract evaluation semantics[!terminating]]].
+[:zh_CN] 观察、强制和快速强制是[+检查语义[%契约评估语义[!检查]]]；
+强制和快速强制是[+终止语义[%契约评估语义[!终止]]]；
+
+[para]
+[:en] It is [?impldef evaluation semantic used for the evaluation of a contract
+assertion] which evaluation semantic is used for any given evaluation of a
+contract assertion.
+[:zh_CN] 一条契约断言的任意一次给定评估所使用的是那种评估语义是[?impldef
+契约断言评估所使用的评估语义]。
+
+[begin:note]
+[:en] The range and flexibility of available choices of
+evaluation semantics depends on the implementation
+and need not allow all four evaluation semantics as possibilities.
+[:zh_CN] 评估语义的可用选择范围和灵活度取决于实现，并且无需允许全部四种评估语义
+都作为可能选项。
+
+[:en] The evaluation semantics can differ for different evaluations of the
+same contract assertion, including evaluations during constant evaluation.
+[:zh_CN] 同一条契约断言的不同次评估（包括于常量求值中的评估）可以采用不同评估语义。
+[end:note]
+
+[para:recommended]
+[:en] An implementation should provide the option to translate a program
+such that all evaluations of contract assertions use the ignore semantic
+as well as the option to translate a program
+such that all evaluations of contract assertions use the enforce semantic.
+[:zh_CN] 实现最好提供进行程序翻译以使用忽略语义进行全部契约断言评估的选项，
+以及进行程序翻译以使用强制语义进行全部契约断言评估的选项。
+
+[:en] By default, evaluations of contract assertions should use the enforce semantic.
+[:zh_CN] 默认情况下，最好使用强制语义进行契约断言评估。
+
+[para]
+[:en] The evaluation of a contract assertion using the ignore semantic has no effect.
+[:zh_CN] 使用忽略语义进行契约断言评估没有效果。
+
+[begin:note]
+[:en] The predicate is potentially evaluated ([#basic.def.odr]), but not evaluated.
+[:zh_CN] 谓词被潜在求值（[#basic.def.odr]）但不被求值。
+[end:note]
+
+[para]
+[:en] The evaluation [$A] of a contract assertion using a checking semantic
+determines the value of the predicate.
+[:zh_CN] 使用检查语义的契约断言评估 [$A] 确定谓词的值。
+
+[:en] It is unspecified whether the predicate is evaluated.
+[:zh_CN] 未指明是否对谓词求值。
+
+[:en] Let [$B] be the value that would result from evaluating the predicate.
+[:zh_CN] 令 [$B] 为谓词求值的可能结果。
+
+[begin:note]
+[:en] To determine whether a predicate would evaluate to [`:key true] or
+[`:key false], an alternative evaluation that produces the same value as the
+predicate but has no side effects can occur.
+[:zh_CN] 为确定谓词求值为 [`:key true] 还是 [`:key false]，可以进行产生与谓词
+的值相同但没有副作用的替代求值。
+
+[begin:example]
+[codeblock]
+struct S {
+  mutable int g = 5;
+} s;
+void f()
+  pre(( s.g++, false ));    // #1
+void g()
+{
+  f();  // [:en] Increment of [`s.g] might not occur, even if #1 uses a checking semantic. \
+        [:zh_CN] 即使 #1 使用检查语义，也可能不增加 [`s.g]。
+}
+[codeblock:end]
+[end:example]
+[end:note]
+
+[para]
+[:en] There is an observable checkpoint ([#intro.abstract]) [$C]
+that happens before [$A] such that any other operation [$O]
+that happens before [$A] also happens before [$C].
+[:zh_CN] 存在一个发生早于 [$A] 的可观察检查点（[#intro.abstract]）[$C]，使得
+任意发生早于 [$A] 的其他操作 [$O] 也发生早于 [$C]。
+
+[para]
+[:en] A [+contract violation] occurs when
+[:zh_CN] 以下情况下发生[+契约违例]：
+[list]
+[item]
+[:en@~] [$B] is [`:key false],
+[:zh_CN@~] [$B] 为 [`:key false]，
+[item]
+[:en@~] the evaluation of the predicate exits via an exception, or
+[:zh_CN@~] 谓词求值由于异常退出，或者
+[item]
+[:en@~] the evaluation of the predicate is performed in a context that is
+manifestly constant-evaluated ([#expr.const]) and the predicate
+is not a core constant expression.
+[:zh_CN@~] 谓词求值在显然常量求值（[#expr.const]）语境中进行，而谓词并非核心常量表达式。
+[list:end]
+
+[begin:note]
+[:en] If [$B] is [`:key true], no contract violation occurs and control flow
+continues normally after the point of evaluation of the contract assertion.
+[:zh_CN] 若 [$B] 为 [`:key true]，则不会发生契约违例，且控制流在契约断言的
+评估点照常继续执行。
+
+[:en] The evaluation of the predicate can fail to produce a value
+without causing a contract violation, for example, by calling [`longjmp] ([#csetjmp.syn])
+or terminating the program.
+[:zh_CN] 谓词求值可能无法产生值但不造成契约违例，例如通过调用 [`longjmp]（[#csetjmp.syn]）
+或终止程序。
+[end:note]
+
+[para]
+[:en] [%@defn contract evaluation semantics[!terminating]]
+If a contract violation occurs in a context that is manifestly constant-evaluate ([#expr.const]),
+and the evaluation semantic is a terminating semantic, the program is ill-formed.
+[:zh_CN] [%@defn 契约评估语义[!终止]]
+如果在显然常量求值（[#expr.const]）的语境中发生契约违例，且评估语义为终止语义，
+那么程序非良构。
+
+[para:~]
+[begin:note]
+[:en] A diagnostic is produced if the evaluation semantic is observe ([#intro.compliance]).
+[:zh_CN] 若评估语义为观察，则产生诊断消息（[#intro.compliance]）。
+[end:note]
+
+[para:~]
+[begin:note]
+[:en] Different evaluation semantics chosen for the same contract assertion in
+different translation units can result in violations of the one-definition rule
+([#basic.def.odr]) when a contract assertion has side effects that alter the
+value produced by a constant expression.
+[:zh_CN] 如果契约断言带有会改动常量表达式所产生值的副作用，那么在不同翻译单元
+中对同一契约断言选择不同评估语义，可能导致违反单一定义规则（[#basic.def.odr]）。
+
+[para:~]
+[begin:example]
+[codeblock]
+constexpr int f(int i)
+{
+  contract_assert((++const_cast<int&>(i), true));
+  return i;
+}
+inline void g()
+{
+  int a[f(1)];  // [:en] size dependent on the evaluation semantic of [`contract_assert] above \
+                [:zh_CN] 大小依赖于上面 [`contract_assert] 的评估语义
+}
+[codeblock:end]
+[end:example]
+[end:note]
+
+[para]
+[:en] When the program is [+contract-terminated], it is [?impldef method by
+which contract termination occurs] (depending on context) whether
+[:zh_CN] 当程序被[+契约终止]时，[?impldef 进行契约终止的方法]采用哪种方式
+（取决于语境）：
+[list]
+[item]
+[:en@~] [`std::terminate] is called,
+[:zh_CN@~] 调用 [`std::terminate]，
+[item]
+[:en@~] [`std::abort] is called, or
+[:zh_CN@~] 调用 [`std::abort]，或者
+[item]
+[:en@~] execution is terminated.
+[:zh_CN@~] 终止执行。
+
+[para:~]
+[begin:note]
+[:en] No further execution steps occur ([#intro.progress]).
+[:zh_CN] 不发生任何进一步的执行步骤（[#intro.progress]）。
+[end:note]
+[list:end]
+
+[para:~]
+[begin:note]
+[:en] Performing the actions of [`std::terminate] or [`std::abort] without
+actually making a library call is a conforming implementation of
+contract-termination ([#intro.abstract]).
+[:zh_CN] 实施 [`std::terminate] 或 [`std::abort] 的动作但不实际进行库函数调用，
+是契约终止的一种遵从实现（[#intro.abstract]）。
+[end:note]
+
+[para]
+[:en] [%contract evaluation semantics[!enforce]] [%contract evaluation semantics[!quick-enforce]]
+If a contract violation occurs in a context that is not manifestly
+constant-evaluated and the evaluation semantic is quick-enforce,
+the program is contract-terminated.
+[:zh_CN] [%契约评估语义[!强制]] [%契约评估语义[!快速强制]]
+如果在并非显然常量求值的语境中发生契约违例，且评估语义为快速强制，那么程序被契约终止。
+
+[para]
+[%[`contract_violation]]
+[%@lib contract_violation]
+[:en] [%contract evaluation semantics[!enforce]] [%contract evaluation semantics[!observe]]
+If a contract violation occurs in a context that is not manifestly
+constant-evaluated and the evaluation semantic is enforce or observe,
+the contract-violation handler ([#basic.contract.handler]) is invoked with an
+lvalue referring to an object [`v] of type
+[`const std::contracts::contract_violation] ([#support.contract.violation])
+containing information about the contract violation.
+[:zh_CN] [%契约评估语义[!强制]] [%契约评估语义[!观察]]
+如果在并非显然常量求值的语境中发生契约违例，且评估语义为强制或观察，
+则使用一个指代包含有关契约违例信息的类型为
+[`const std::contracts::contract_violation]（[#support.contract.violation]）
+的对象 [`v] 的左值调用契约违例处理器（[#basic.contract.handler]）。
+
+[:en] Storage for [`v] is allocated in an unspecified manner
+except as noted in [#basic.stc.dynamic.allocation].
+[:zh_CN] 除了 [#basic.stc.dynamic.allocation] 中所述之外，以未指明的方式分配
+[`v] 的存储。
+
+[:en] The lifetime of [`v] persists for the duration
+of the invocation of the contract-violation handler.
+[:zh_CN] [`v] 的生存期于契约违例处理器的调用期间持续。
+
+[para]
+[:en] If the contract violation occurred because the evaluation of the predicate
+exited via an exception, the contract-violation handler is invoked
+from within an active implicit handler for that exception ([#except.handle]).
+[:zh_CN] 如果契约违例是因为谓词求值由于异常退出而发生的，
+则从该异常的活跃隐式处理器（[#except.handle]）内调用契约违例处理器。
+
+[:en] If the contract-violation handler returns normally and the evaluation
+semantic is observe, that implicit handler is no longer considered active.
+[:zh_CN] 如果契约违例处理器正常返回且评估语义为观察，那么该隐式处理器不再被视为活跃。
+
+[para:~]
+[begin:note]
+[:en] The exception can be inspected or rethrown within the contract-violation handler.
+[:zh_CN] 可以在契约违例处理器内检查或重新抛出该异常。
+[end:note]
+
+[para]
+[:en] [%contract evaluation semantics[!enforce]]
+If the contract-violation handler returns normally and the evaluation semantic
+is enforce, the program is contract-terminated; if violation occurred
+as the result of an uncaught exception from the evaluation of the predicate,
+the implicit handler remains active when contract termination occurs.
+[:zh_CN] [%契约评估语义[!强制]]
+如果契约违例处理器正常返回且评估语义为强制，那么程序被契约终止；如果违例是由于
+谓词求值中的未捕获异常导致的，那么在契约终止发生时，该隐式处理器仍然保持活跃。
+
+[para]
+[:en] [%contract evaluation semantics[!observe]]
+[:zh_CN] [%契约评估语义[!观察]]
+[begin:note]
+[:en] If the contract-violation handler returns normally and the
+evaluation semantic is observe, control flow continues normally
+after the point of evaluation of the contract assertion.
+[:zh_CN] 如果契约违例处理器正常返回且评估语义为观察，那么控制流在契约断言的
+评估点照常继续执行。
+[end:note]
+
+[para]
+[:en] There is an observable checkpoint ([#intro.abstract]) [$C]
+that happens after the contract-violation handler returns normally
+such that any other operation [$O] that happens after the contract-violation
+handler returns also happens after [$C].
+[:zh_CN] 存在一个发生晚于契约违例处理器正常返回的可观察检查点（[#intro.abstract]）[$C]，
+使得发生晚于契约违例处理器的返回的任何其他操作 [$O] 均发生晚于 [$C]。
+
+[para]
+[begin:note]
+[:en] The terminating semantics terminate the program if execution would
+otherwise continue normally past a contract violation:
+the enforce semantic provides the opportunity to log information about the
+contract violation before terminating the program or to throw an exception
+to avoid termination, and the quick-enforce semantic is intended to terminate
+the program as soon as possible as well as to minimize the impact of
+contract checks on the generated code size.
+[:zh_CN] 终止语义在程序本会继续照常执行而越过一次契约违例时终止程序：
+强制语义提供了在终止程序之前记录有关契约违例的信息或抛出异常以避免终止的机会，
+而快速强制语义旨在尽可能快地终止程序并尽量减小契约检查对生成代码大小的影响。
+
+[:en] Conversely, the observe semantic provides the opportunity to
+log information about the contract violation without having to terminate the program.
+[:zh_CN] 相反，观察语义提供了记录有关契约违例信息的机会而无需终止程序。
+[end:note]
+
+[para]
+[:en] If a contract-violation handler invoked from the evaluation of a function
+contract assertion ([#dcl.contract.func]) exits via an exception,
+the behavior is as if the function body exits via that same exception.
+[:zh_CN] 如果从函数契约断言（[#dcl.contract.func]）的评估中调用的契约违例处理器
+由于异常退出，那么其行为如同函数体由同一异常退出。
+
+[begin:note]
+[:en] A [~function-try-block] ([#except.pre]) is the function body when present
+and thus does not have an opportunity to catch the exception.
+[:zh_CN] 若存在[~函数-try-块]（[#except.pre]），则其为函数体，并因而没有捕获
+该异常的机会。
+
+[:en] If the function has a non-throwing exception specification,
+the function [`std::terminate] is invoked ([#except.terminate]).
+[:zh_CN] 如果函数具有无抛出异常说明，那么将调用函数 [`std::terminate]（[#except.terminate]）。
+[end:note]
+
+[para:~]
+[begin:note]
+[:en] If a contract-violation handler invoked from an [~assertion-statement]
+([#stmt.contract.assert]) exits via an exception, the search for a handler
+continues from the execution of that statement.
+[:zh_CN] 如果从[~断言语句]（[#stmt.contract.assert]）调用的契约违例处理器
+由于异常退出，则从该语句的执行继续搜索处理器。
+[end:note]
+
+[para]
+[:en] To [+evaluate in sequence] a list [$R] of contract assertions:
+[:zh_CN] [+顺序评估]契约断言的列表 [$R]：
+
+[list]
+[item]
+[:en] Construct a list of contract assertions [$S] such that
+[:zh_CN] 构造一个契约断言列表 [$S]，使得
+
+[list]
+[item]
+[:en@~] all elements of [$R] are in [$S],
+[:zh_CN@~] [$R] 的所有元素均在 [$S] 中，
+
+[item]
+[:en@~] each element of [$R] may be repeated an
+[?impldef maximum number of repeated evaluations of a contract assertion]
+number of times within [$S], and
+[:zh_CN@~] [$R] 的每个元素都可在 [$S] 中重复[?impldef 契约断言重复评估的最大次数]
+次数，并且
+
+[item]
+[:en@~] if a contract assertion [$A] precedes another contract assertion [$B] in [$R],
+then the first occurrence of [$A] precedes the first occurrence of [$B] in [$S].
+[:zh_CN@~] 如果在 [$R] 中契约断言 [$A] 先于另一契约断言 [$B]，那么 [$A] 在 [$S]
+中的首次出现先于 [$B] 的首次出现。
+[list:end]
+
+[item]
+[:en] Evaluate each element of [$S] such that, if a contract assertion [$A]
+precedes a contract assertion [$B] in [$S], then the evaluation of [$A]
+is sequenced before the evaluation of [$B].
+[:zh_CN] 评估 [$S] 中的每个元素，使得如果在 [$S] 中契约断言 [$A] 先于契约断言 [$B]，
+那么 [$A] 的评估按顺序早于 [$B] 的评估。
+[list:end]
+
+[para:~]
+[begin:example]
+[codeblock]
+void f(int i)
+{
+  contract_assert(i > 0);   // #1
+  contract_assert(i < 10);  // #2
+    // [:en] valid sequence of evaluations: #1 #2 [:zh_CN] 有效评估序列：#1 #2
+    // [:en] valid sequence of evaluations: #1 #1 #2 #2 [:zh_CN] 有效评估序列：#1 #1 #2 #2
+    // [:en] valid sequence of evaluations: #1 #2 #1 #2 [:zh_CN] 有效评估序列：#1 #2 #1 #2
+    // [:en] valid sequence of evaluations: #1 #2 #2 #1 [:zh_CN] 有效评估序列：#1 #2 #2 #1
+    // [:en] invalid sequence of evaluations: #2 #1 [:zh_CN] 无效评估序列：#2 #1
+}
+[codeblock:end]
+[end:example]
+
+[para:recommended]
+[:en] An implementation should provide an option to perform
+a specified number of repeated evaluations for contract assertions.
+[:zh_CN] 实现最好提供选项，以对契约断言进行指定次数的重复评估。
+
+[:en] By default, no repeated evaluations should be performed.
+[:zh_CN] 默认情况下，不应进行重复评估。

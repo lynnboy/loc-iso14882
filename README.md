@@ -701,6 +701,7 @@ character literal                       |字符字面量     |预处理记号，
 character sequence                      |字符序列       |三种`char`的数组
 character set                           |字符集
 character string literal                |字符字符串字面量 |无前缀的*字符串字面量*
+checking semantics                      |检查语义       |契约评估语义：observe, enforce, quick-enforce
 child operations                        |子操作         |异步操作启动的异步操作
 class                                   |类
 class declaration                       |类声明式
@@ -819,6 +820,9 @@ contextual keyword                      |语境关键字，上下文关键字   
 contiguous container                    |连续容器       |其迭代器为连续迭代器：`array`,`vector`,`basic_string`
 contiguous iterator                     |连续迭代器     |随机访问+连续，概念`contiguous_iterator`
 continue statement                      |continue 语句  |跳出到循环末尾继续循环
+contract evaluation semantics           |契约评估语义   |忽略`ignore`，观察`observe`，强制`enforce`，快速强制`quick-enforce`
+contract-terminated                     |契约终止       |契约违例时终止程序
+contract violation                      |契约违例
 contravariant                           |逆变
 control character                       |控制字符       |代码点 0-1F，7F-9F
 control-flow-limited statement          |控制流受限语句 |圈定`goto`等所用标号范围
@@ -993,6 +997,7 @@ encode                                  |编码
 encoding prefix                         |编码前缀   |`L`, `u`, `u8`, `U`
 end-of-line indicator                   |行结束指示符   |`\n`，`\r\n`，等
 endian                                  |端序
+enforce                                 |强制       |契约评估语义之一，属于检查语义，属于终止语义。违例时执行契约违例处理器，执行“契约终止”
 entity                                  |实体       |值、对象、引用、结构化绑定、函数、枚举符、类型、类成员、位字段、模板、模板特例、命名空间、包组
 entry                                   |入口       |函数，catch，代码块
 enumerated element                      |列举元素   |列举类型中的具名常量`Cn`
@@ -1021,7 +1026,9 @@ error                                   |错误，误差
 error completion                        |错误完成   |异步操作安置态之一
 escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
+evaluate in sequence                    |顺序评估   |评估契约断言的列表
 evaluation                              |求值       |表达式的求值包括值计算和副作用
+evaluation semantics                    |评估语义   |契约评估语义
 Exact Match                             |精确匹配   |ICS等级，包括恒等Id、左值变换LvTrn、限定调整
 exception                               |异常
 exception-declaration                   |异常声明式 |catch中的异常变量声明式，仅支持一个异常，支持省略号，不支持默认值，不支持占位符？
@@ -1207,6 +1214,7 @@ identifier label                        |标识符标号
 IEC, International Electrotechnical Commission  |IEC，国际电工委员会
 IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师协会
 if statement                            |if 语句
+ignore                                  |忽略       |契约评估语义之一。不求值谓词
 ill-formed                              |非良构的   |语法或语义无效的代码
 immediate-escalating expression         |直接性扩散表达式
 immediate function                      |直接函数       |以`consteval`修饰的函数
@@ -1547,6 +1555,7 @@ object representation                   |对象表示   |全部`sizeof(T)`个字
 object type                             |对象类型   |非函数、引用、`void`
 object-like macro                       |对象式宏
 observable behavior                     |可观察行为
+observe                                 |观察       |契约评估语义之一，属于检查语义。违例时执行契约违例处理器并继续
 observer function                       |探察函数
 obstruction-free                        |免妨碍     |唯一未阻塞线程执行免锁执行必将完成
 odr-usable                              |可 ODR 式使用  |词法作用域中排除并未被俘获的变量
@@ -1729,6 +1738,7 @@ qualifier                               |限定符
 query                                   |查询
 query object                            |查询对象       |可查询对象的键，定制化点对象
 queryable object                        |可查询对象
+quick-enforce                           |快速强制       |契约评估语义之一，属于检查语义，属于终止语义。违例时执行“契约终止”
 quiet NaN                               |静默非数字     |对其运算产生NaN但不引发故障信号
 
 ### R
@@ -2002,6 +2012,7 @@ term                                    |术语
 terminal name                           |终端名     |using-声明符的目标，语言构造中最后一个成分名
 terminate                               |终止
 terminating null character              |终结空字符 |NTBS中的终结字符，`\0`
+terminating semantics                   |终止语义   |契约评估语义：enforce, quick-enforce
 thread                                  |线程
 thread of execution                     |执行线程，线程
 thread storage duration                 |线程存储期
