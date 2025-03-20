@@ -398,14 +398,15 @@ Original   |中文   |章节    |定义
 |-|-|-|-|
 *class-name*                |*类名*         | [class.pre]   | *标识符* \| *简单模板标识*
 *class-specifier*           |*类说明符*     | [class.pre]   | *类头* `{` *成员说明*__?__ `}`
-*class-head*                |*类头*         | [class.pre]   | *类关键字* *属性说明符序列*__?__ ( *类头名* *类虚说明符*__?__ \| ∅ ) *基子句*__?__
+*class-head*                |*类头*         | [class.pre]   | *类关键字* *属性说明符序列*__?__ ( *类头名* *类性质说明符*__\*__ \| ∅ ) *基子句*__?__
 *class-head-name*           |*类头名*       | [class.pre]   | *嵌套名说明符*__?__ *类名*
-*class-virt-specifier*      |*类虚说明符*   | [class.pre]   | `final`
+*class-property-specifier-seq*|*类性质说明符序列*| [class.pre] | *类性质说明符*__\+__
+*class-property-specifier*  |*类性质说明符*   | [class.pre]   | `final` \| `trivially_relocatable_if_eligible` \| `replaceable_if_eligible`
 *class-key*                 |*类关键字*     | [class.pre]   | `class` \| `struct` \| `union`
 *member-specification*      |*成员说明*     | [class.mem.general] | ( *成员声明式* \| *访问说明符* `:` )__\+__
 *member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *友元类型声明式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
 *member-declaration-list*   |*成员声明符列表*| [class.mem.general] | *成员声明符* ( `,` *成员声明符* )__\*__
-*member-declarator*         |*成员声明符*   | [class.mem.general] | *声明符* *虚说明符序列*__?__ *纯说明符*__?__ \|<br> *声明符* *requires-子句* \|<br> *声明符* *花括号或等号初始化式* \|<br> *标识符*__?__ *属性说明符序列*__?__ `:` *常量表达式* *花括号或等号初始化式*__?__
+*member-declarator*         |*成员声明符*   | [class.mem.general] | *声明符* *虚说明符序列*__?__ *函数契约说明符*__\*__ *纯说明符*__?__ \|<br> *声明符* *requires-子句* *函数契约说明符*__\*__ \|<br> *声明符* *花括号或等号初始化式* \|<br> *标识符*__?__ *属性说明符序列*__?__ `:` *常量表达式* *花括号或等号初始化式*__?__
 *virt-specifier-seq*        |*虚说明符序列* | [class.mem.general] | *虚说明符*__\+__
 *virt-specifier*            |*虚说明符*     | [class.mem.general] | `override` \| `final`
 *pure-specifier*            |*纯说明符*     | [class.mem.general] | `=` `0`
@@ -823,6 +824,7 @@ continue statement                      |continue 语句  |跳出到循环末尾
 contract evaluation semantics           |契约评估语义   |忽略`ignore`，观察`observe`，强制`enforce`，快速强制`quick-enforce`
 contract-terminated                     |契约终止       |契约违例时终止程序
 contract violation                      |契约违例
+contract-violation handler              |契约违例处理器 |`::contract_violation_handler`
 contravariant                           |逆变
 control character                       |控制字符       |代码点 0-1F，7F-9F
 control-flow-limited statement          |控制流受限语句 |圈定`goto`等所用标号范围
@@ -834,7 +836,6 @@ conversion-type-id                      |转换类型标识   |仅支持指针�
 conversion rank                         |转换等级
 converted bit-field                     |经转换位字段
 converted constant expression           |经转换的常量表达式
-converting constructor                  |转换构造函数   |非显式构造函数
 copy                                    |复制，副本
 copy assignment operator                |复制赋值运算符 |非静态非模板，`X`或`cv T&`单参数赋值运算符<br>若未显式声明，则隐式声明复制赋值，当存在移动时被弃置，否则为预置<br>隐式声明`T&(const T&)`或`T&(T&)`，递归要求潜在构造子对象可以对应赋值
 copy constructor                        |复制构造函数   |非模板，`cv T&`可接受单参数调用的构造函数<br>若未显式声明，则隐式声明非 explicit 复制构造，当存在移动时被弃置，否则为预置<br>隐式声明`const T&`或`T&`，递归要求潜在构造子对象可以对应构造
@@ -907,8 +908,10 @@ default argument                        |默认实参       |形参的初始化�
 default argument promotion              |默认实参提升   |调用前提升所有实参（IntP、FltP）
 default behavior                        |缺省行为       |某些函数，如果程序不提供就采用实现的缺省版本
 default constructor                     |默认构造函数   |无需实参的构造函数（每个非形参包组均有默认实参）<br>弃置隐含默认构造函数：有任何无法默认构造或通过默认成员初始化式初始化的可变成员、引用成员、const成员，有任何无法调用默认构造或析构的潜在构造子对象
+default contract-violation handler      |默认契约违例处理器 |
 default label                           |default 标号
 default member initializer              |默认成员初始化式   |非静态数据成员，默认的构造函数成员初始化式。引用不能绑定临时对象
+default-movable                         |默认可移动的   |`T::T(T&&)`, `=(T&&)`, `T::~T()` 均非用户提供或弃置
 default template argument               |默认模板实参   |模板形参的默认实参。类模板外成员定义式、友元类模板不能有默认模板实参，友元函数定义式可以指定默认模板实参<br>与默认实参类似的合并累积，不可重复指定
 default-initialization                  |默认初始化
 defaulted                               |预置的，默认的，缺省的
@@ -982,6 +985,8 @@ element                                 |元素       |数组，聚合，初始�
 element access function                 |元素访问函数   |并行算法中使用的迭代器方法或函数对象，用于通过迭代器执行（读写）操作访问序列元素
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 element-wise operation                  |逐元素运算 |SIMD
+eligible for replacement                |有可替换资格 |无虚基类，子对象均为可平凡重定位类型，`T::T(T&&)` 和 `=(T&&)` 选中且未弃置，未弃置析构函
+eligible for trivial relocation         |有可平凡重定位资格 |无虚基类，子对象均为可平凡重定位类型，未弃置析构函数
 eligible special member function        |合格的特殊成员函数 |可被认为存在：未被弃置，满足关联约束，约束偏序中优先
 ellipsis                                |省略号     |`...`：形参包组（模板、函数），包组展开，折叠展开；变参函数
 ellipsis conversion sequence            |省略号转换序列 EllipsisCS  |重载决议中ICS的一种，省略号形参对应的转换
@@ -1794,6 +1799,7 @@ release                                 |释放       |同步操作
 release sequence                        |释放序列   |某原子性对象上[释放+读改写*n]的最大序列
 remainder operator                      |求余运算符
 remote time zone database               |远程时区数据库
+replaceable class                       |可替换类   |有资格并标有 `replaceable_if_eligible` 的类，普通联合体，默认可移动类型
 replacement function                    |替代函数   |程序定义的用以替换实现的缺省函数的函数，如`operator new`
 repositional stream                     |可重定位流 |可 seek 到之前经过的位置
 representation                          |表示
@@ -2048,6 +2054,7 @@ trivial type                            |平凡类型       |标量、平凡类�
 trivially copyable class                |可平凡复制类   |至少有一个合格四个复制成员之一且全为平凡，析构函数平凡且非弃置。非多态
 trivially copyable type                 |可平凡复制类型 |可用`memcpy`复制：标量、可平凡复制类，数组
 trivially empty iteration statement     |平凡的空循环语句   |空循环体的`while`和`do-while`，空循环体和增量表达式的`for`
+trivially relocatable class             |可平凡重定位类 |有资格并标有 `trivially_relocatable_if_eligible` 的类，普通联合体，默认可移动类型
 truncation                              |截断
 tuple                                   |元组
 TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型
