@@ -1,0 +1,261 @@
+[section#hive.overview
+    [:en] Overview
+    [:zh_CN] 概要
+]
+
+[para]
+[:en] A [`hive] is a type of sequence container that provides constant-time
+insertion and erasure operations.
+[:zh_CN] [`hive] 是一种提供常数时间的插入和擦除操作的序列容器。
+
+[:en] Storage is automatically managed in multiple memory blocks,
+referred to as [+element blocks[%element block]].
+[:zh_CN] 在多个内存块中自动管理存储，它们被称为[+元素块]。
+
+[:en] Insertion position is determined by the container, and insertion
+may re-use the memory locations of erased elements.
+[:zh_CN] 由容器决定插入位置，并且插入时可能会重用已擦除元素的内存位置。
+
+[para]
+[:en] Element blocks which contain elements are referred to as [+:adj active[!blocks[%block]]],
+those which do not are referred to as [+:adj reserved[!blocks[%block]]].
+[:zh_CN] 包含元素的元素块被称为[+:adj 活跃[!块]]，不包含元素的则称为[+:adj 保留[!块]]。
+
+[:en] Active blocks which become empty of elements are
+either deallocated or become reserved blocks.
+[:zh_CN] 所含元素变空的活跃块要么被回收要么变为保留块。
+
+[:en] Reserved blocks become active blocks when they are used to store elements.
+[:zh_CN] 保留块被用于存储元素时变为活跃块。
+
+[:en] A user can create additional reserved blocks by calling [`reserve].
+[:zh_CN] 用户可以通过调用 [`reserve] 创建额外的保留块。
+
+[para]
+[:en] Erasures use unspecified techniques of constant time complexity
+to identify the memory locations of erased elements,
+which are subsequently skipped during iteration,
+as opposed to relocating subsequent elements during erasure.
+[:zh_CN] 擦除操作使用未指明的常数时间复杂度技术来识别已擦除元素的内存位置，
+在此后的迭代时会跳过这些元素，而不是在擦除时重新定位后续元素。
+
+[para]
+[:en] Active block capacities have an [?impldef growth factor of [`hive] active
+block capacities] growth factor (which need not be integral),
+for example a new active block's capacity could be equal to
+the summed capacities of the pre-existing active blocks.
+[:zh_CN] 活跃块容量具有[?impldef [`hive] 活跃块容量的增长因子]增长因子（其不必是整数），
+例如，新活跃块的容量可以等于现有活跃块的容量之和。
+
+[para]
+[:en] Limits can be placed on both the minimum and maximum element capacities
+of element blocks, both by users and implementations.
+[:zh_CN] 用户和实现都可以对元素块的最小和最大元素容量施加限制。
+
+[list]
+[item]
+[:en] The minimum limit shall be no larger than the maximum limit.
+[:zh_CN] 最小限制不得大于最大限制。
+
+[item]
+[:en] When limits are not specified by a user during construction,
+the implementation[=']s default limits are used.
+[:zh_CN] 在构造时用户未指定限制时，使用实现的默认限制。
+
+[item]
+[:en] The default limits of an implementation are not guaranteed to be the same as
+the minimum and maximum possible capacities for an implementation[=']s element blocks.
+[:zh_CN] 实现的默认限制不保证与实现的元素块最小和最大可能容量相同。
+
+[begin:note]
+[:en] To allow latitude for both implementation-specific and user-directed optimization.
+[:zh_CN] 这是为了同时允许采用实现特定与用户指导的优化。
+[end:note]
+
+[:en] The latter are defined as hard limits.
+[:zh_CN] 后者被定义为硬限制。
+
+[:en] The maximum hard limit shall be no larger than
+[`std::allocator_traits<Allocator>::max_size()].
+[:zh_CN] 最大硬限制不得大于 [`std::allocator_traits<Allocator>::max_size()]。
+
+[item]
+[:en] If user-specified limits are not within hard limits, or
+if the specified minimum limit is greater than the specified maximum limit,
+the behavior is undefined.
+[:zh_CN] 若用户指定的限制不在硬限制内，或者指定的最小限制大于指定的最大限制，
+则其行为未定义。
+
+[item]
+[:en] An element block is said to be [+within the bounds[%element block[!bounds]]]
+of a pair of minimum/maximum limits when its capacity is greater-or-equal-to the
+minimum limit and less-than-or-equal-to the maximum limit.
+[:zh_CN] 当元素块的容量大于等于最小限制且小于等于最大限制时，
+称其处于一对最小/最大限制[+边界[%元素块[!边界]]]内。
+[list:end]
+
+[para]
+[:en] A [`hive] conforms to the requirements for containers ([#container.reqmts]),
+with the exception of operators [`==] and [`!=].
+[:zh_CN] [`hive] 符合容器的规定（[#container.reqmts]），但不包括操作符 [`==] 和 [`!=]。
+
+[:en] A [`hive] also meets the requirements of a reversible container ([#container.rev.reqmts]),
+of an allocator-aware container ([#container.alloc.reqmts]), and
+some of the requirements of a sequence container ([#sequence.reqmts]).
+[:zh_CN] [`hive] 也满足可反向容器（[#container.rev.reqmts]），分配器感知容器
+（[#container.alloc.reqmts]）的规定，以及序列容器（[#sequence.reqmts]）的一些规定。
+
+[:en] Descriptions are provided here only for operations on [`hive]
+that are not described in that table or for operations
+where there is additional semantic information.
+[:zh_CN] 此处给出的说明仅包括未被此表格所描述的 [`hive] 的操作，以及具有
+额外的语义信息的操作。
+
+[para]
+[:en] The iterators of [`hive] meet the [^:oc BidirectionalIterator] requirements
+but also model [`[`:c three_way_comparable]<strong_ordering>].
+[:zh_CN] [`hive] 的迭代器满足 [^:oc BidirectionalIterator] 的规定，但也构成
+[`[`:c three_way_comparable]<strong_ordering>]。
+
+[codeblock:synopsis]
+namespace std {
+  template<class T, class Allocator = allocator<T>>
+  class [[redoc("`:lib>")]]hive {
+  public:
+    // [:en] types \
+    [:zh_CN] 类型
+    using value_type = T;
+    using allocator_type = Allocator;
+    using pointer = typename allocator_traits<Allocator>::pointer;
+    using const_pointer = typename allocator_traits<Allocator>::const_pointer;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+    using size_type = [[redoc("[=impdef]")]];                               // [:en] see [`container.requirements] [:zh_CN] 参见 [#container.requirements]
+    using difference_type = [[redoc("[=impdef]")]];                         // [:en] see [`container.requirements] [:zh_CN] 参见 [#container.requirements]
+    using iterator = [[redoc("[=impdef]")]];                                // [:en] see [`container.requirements] [:zh_CN] 参见 [#container.requirements]
+    using const_iterator = [[redoc("[=impdef]")]];                          // [:en] see [`container.requirements] [:zh_CN] 参见 [#container.requirements]
+    using reverse_iterator = std::reverse_iterator<iterator>;               // [:en] see [`container.requirements] [:zh_CN] 参见 [#container.requirements]
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;   // [:en] see [`container.requirements] [:zh_CN] 参见 [#container.requirements]
+
+    // [:en] [#hive.cons], construct/copy/destroy \
+    [:zh_CN] [#hive.cons]，构造/复制/销毁
+    constexpr hive() noexcept(noexcept(Allocator())) : hive(Allocator()) {}
+    constexpr explicit hive(const Allocator&) noexcept;
+    constexpr explicit hive(hive_limits block_limits) : hive(block_limits, Allocator()) {}
+    constexpr hive(hive_limits block_limits, const Allocator&);
+    explicit hive(size_type n, const Allocator& = Allocator());
+    hive(size_type n, hive_limits block_limits, const Allocator& = Allocator());
+    hive(size_type n, const T& value, const Allocator& = Allocator());
+    hive(size_type n, const T& value, hive_limits block_limits, const Allocator& = Allocator());
+    template<class InputIterator>
+      hive(InputIterator first, InputIterator last, const Allocator& = Allocator());
+    template<class InputIterator>
+      hive(InputIterator first, InputIterator last, hive_limits block_limits,
+           const Allocator& = Allocator());
+    template<[[redoc("*:c>")]]container-compatible-range<T> R>
+      hive(from_range_t, R&& rg, const Allocator& = Allocator());
+    template<[[redoc("*:c>")]]container-compatible-range<T> R>
+      hive(from_range_t, R&& rg, hive_limits block_limits, const Allocator& = Allocator());
+    hive(const hive& x);
+    hive(hive&&) noexcept;
+    hive(const hive& x, const type_identity_t<Allocator>& alloc);
+    hive(hive&&, const type_identity_t<Allocator>& alloc);
+    hive(initializer_list<T> il, const Allocator& = Allocator());
+    hive(initializer_list<T> il, hive_limits block_limits, const Allocator& = Allocator());
+    ~hive();
+
+    hive& operator=(const hive& x);
+    hive& operator=(hive&& x) noexcept([[redoc("[=seebelow]")]]);
+    hive& operator=(initializer_list<T>);
+    template<class InputIterator>
+      void assign(InputIterator first, InputIterator last);
+    template<[[redoc("*:c>")]]container-compatible-range<T> R>
+      void assign_range(R&& rg);
+    void assign(size_type n, const T& t);
+    void assign(initializer_list<T>);
+    allocator_type get_allocator() const noexcept;
+
+    // [:en] iterators \
+    [:zh_CN] 迭代器
+    iterator                begin() noexcept;
+    const_iterator          begin() const noexcept;
+    iterator                end() noexcept;
+    const_iterator          end() const noexcept;
+    reverse_iterator        rbegin() noexcept;
+    const_reverse_iterator  rbegin() const noexcept;
+    reverse_iterator        rend() noexcept;
+    const_reverse_iterator  rend() const noexcept;
+    const_iterator          cbegin() const noexcept;
+    const_iterator          cend() const noexcept;
+    const_reverse_iterator  crbegin() const noexcept;
+    const_reverse_iterator  crend() const noexcept;
+
+    // [:en] [#hive.capacity], capacity \
+    [:zh_CN] [#hive.capacity]，容量
+    bool empty() const noexcept;
+    size_type size() const noexcept;
+    size_type max_size() const noexcept;
+    size_type capacity() const noexcept;
+    void reserve(size_type n);
+    void shrink_to_fit();
+    void trim_capacity() noexcept;
+    void trim_capacity(size_type n) noexcept;
+    constexpr hive_limits block_capacity_limits() const noexcept;
+    static constexpr hive_limits block_capacity_default_limits() noexcept;
+    static constexpr hive_limits block_capacity_hard_limits() noexcept;
+    void reshape(hive_limits block_limits);
+
+    // [:en] [#hive.modifiers], modifiers \
+    [:zh_CN] [#hive.modifiers]，改动函数
+    template<class... Args> iterator emplace(Args&&... args);
+    template<class... Args> iterator emplace_hint(const_iterator hint, Args&&... args);
+    iterator insert(const T& x);
+    iterator insert(T&& x);
+    iterator insert(const_iterator hint, const T& x);
+    iterator insert(const_iterator hint, T&& x);
+    void insert(initializer_list<T> il);
+    template<[[redoc("*:c>")]]container-compatible-range<T> R>
+      void insert_range(R&& rg);
+    template<class InputIterator>
+      void insert(InputIterator first, InputIterator last);
+    void insert(size_type n, const T& x);
+
+    iterator erase(const_iterator position);
+    iterator erase(const_iterator first, const_iterator last);
+    void swap(hive&) noexcept([[redoc("[=seebelow]")]]);
+    void clear() noexcept;
+
+    // [:en] [#hive.operations], hive operations \
+    [:zh_CN] [#hive.operations]，蜂巢操作
+    void splice(hive& x);
+    void splice(hive&& x);
+    template<class BinaryPredicate = equal_to<T>>
+      size_type unique(BinaryPredicate binary_pred = BinaryPredicate());
+
+    template<class Compare = less<T>>
+      void sort(Compare comp = Compare());
+
+    iterator get_iterator(const_pointer p) noexcept;
+    const_iterator get_iterator(const_pointer p) const noexcept;
+
+  private:
+    hive_limits [[redoc("*>")]]current-limits = [[redoc("[=impdef]")]];     // [=expos]
+  };
+
+  template<class InputIterator, class Allocator = allocator<[[redoc("*>")]]iter-value-type<InputIterator>>>
+    hive(InputIterator, InputIterator, Allocator = Allocator())
+      -> hive<[[redoc("*>")]]iter-value-type<InputIterator>, Allocator>;
+
+  template<class InputIterator, class Allocator = allocator<[[redoc("*>")]]iter-value-type<InputIterator>>>
+    hive(InputIterator, InputIterator, hive_limits, Allocator = Allocator())
+      -> hive<[[redoc("*>")]]iter-value-type<InputIterator>, Allocator>;
+
+  template<ranges::[[redoc("`:c>")]]input_range R, class Allocator = allocator<ranges::range_value_t<R>>>
+    hive(from_range_t, R&&, Allocator = Allocator())
+      -> hive<ranges::range_value_t<R>, Allocator>;
+
+  template<ranges::[[redoc("`:c>")]]input_range R, class Allocator = allocator<ranges::range_value_t<R>>>
+    hive(from_range_t, R&&, hive_limits, Allocator = Allocator())
+      -> hive<ranges::range_value_t<R>, Allocator>;
+}
+[codeblock:end]

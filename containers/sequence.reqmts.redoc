@@ -13,10 +13,12 @@ type, into a strictly linear arrangement.
 [:zh_CN] 程序库提供了以下基本序列容器：[`vector]，[`inplace_vector]，[`forward_list]，
 [`list]，和 [`deque]。
 
-[:en] In addition, [`array] is provided as a sequence container which provides
-limited sequence operations because it has a fixed number of elements.
-[:zh_CN] 此外，[`array] 也作为序列容器提供，但具有有限的序列操作，因为它具有固定
-数量的元素。
+[:en] In addition, [`array] and [`hive] are provided as sequence containers which
+provides limited sequence operations, in [`array][=']s case because it has a
+fixed number of elements, and in [`hive][=']s case because insertion order is
+unspecified.
+[:zh_CN] 此外，[`array] 和 [`hive] 也作为序列容器提供，但具有有限的序列操作，
+对于 [`array]，因为它具有固定数量的元素，而对于 [`hive]，因为它未指明插入的顺序。
 
 [:en] The library also provides container adaptors that make it easy to
 construct abstract data types, such as [`stack]s, [`queue]s, [`flat_map]s,
@@ -51,8 +53,8 @@ requirements and refer to elements implicitly convertible to [`value_type],
 [:zh_CN] [`i] 和 [`j] 代表符合 [^:oc InputIterator] 规定的迭代器，并指代可以隐式
 转换为 [`value_type] 的元素，
 [item]
-[:en] [``[i, j)] denotes a valid range,
-[:zh_CN] [``[i, j)] 代表有效的范围，
+[:en] [=range(i,j)] denotes a valid range,
+[:zh_CN] [=range(i,j)] 代表有效的范围，
 [item]
 [:en] [`rg] denotes a value of type [`R] that models
 [`[*:c container-compatible-range]<T>],
@@ -71,8 +73,8 @@ requirements and refer to elements implicitly convertible to [`value_type],
 [:en] [`q] denotes a valid dereferenceable constant iterator to [`a],
 [:zh_CN] [`q] 代表 [`a] 中的有效可解引用的常量迭代器，
 [item]
-[:en] [``[q1, q2)] denotes a valid range of constant iterators in [`a],
-[:zh_CN] [``[q1, q2)] 代表 [`a] 中的常量迭代器的有效范围，
+[:en] [=range(q1,q2)] denotes a valid range of constant iterators in [`a],
+[:zh_CN] [=range(q1,q2)] 代表 [`a] 中的常量迭代器的有效范围，
 [item]
 [:en] [`t] denotes an lvalue or a const rvalue of [`X::value_type], and
 [:zh_CN] [`t] 代表 [`X::value_type] 的左值或 const 右值，而
@@ -141,8 +143,8 @@ requirements ([#forward.iterators]), [`T] is also [^:oc MoveInsertable] into [`X
 （[#forward.iterators]），则 [`T] 也向 [`X] 中 [^:oc MoveInsertable]。
 
 [para:effects]
-[:en] Constructs a sequence container equal to the range [``[i, j)].
-[:zh_CN] 构造等于范围 [``[i, j)] 的一个序列容器。
+[:en] Constructs a sequence container equal to the range [=range(i,j)].
+[:zh_CN] 构造等于范围 [=range(i,j)] 的一个序列容器。
 
 [:en] Each iterator in the range [=range(i,j)] is dereferenced exactly once.
 [:zh_CN] 范围 [=range(i,j)] 中的每个迭代器都恰好进行一次解引用。
@@ -161,10 +163,12 @@ X(from_range, rg)
 [:en] [`T] is [^:oc EmplaceConstructible] into [`X] from [`*ranges::begin(rg)].
 [:zh_CN] [`T] 为以 [`*ranges::begin(rg)] 向 [`X] 中 [^:oc EmplaceConstructible]。
 
-[:en] For [`vector], if [`R] models neither [`ranges::[`:c sized_range]] nor
-[`ranges::[`:c forward_range]], [`T] is also [^:oc MoveInsertable] into [`X].
-[:zh_CN] 对于 [`vector]，如果 [`R] 不构成 [`ranges::[`:c sized_range]] 或
-[`ranges::[`:c forward_range]]，则 [`T] 也向 [`X] 中 [^:oc MoveInsertable]。
+[:en] For [`vector], if [`R] models [`ranges::[`:c approximately_sized_range]]
+but not [`ranges::[`:c sized_range]] or models [`ranges::[`:c input_range]] but
+not [`ranges::[`:c forward_range]], [`T] is also [^:oc MoveInsertable] into [`X].
+[:zh_CN] 对于 [`vector]，如果 [`R] 构成 [`ranges::[`:c approximately_sized_range]]
+但不构成 [`ranges::[`:c sized_range]]，或者构成 [`ranges::[`:c input_range]] 但
+不构成 [`ranges::[`:c forward_range]]，则 [`T] 也向 [`X] 中 [^:oc MoveInsertable]。
 
 [para:effects]
 [:en] Constructs a sequence container equal to the range [`rg].
@@ -172,6 +176,14 @@ X(from_range, rg)
 
 [:en] Each iterator in the range [`rg] is dereferenced exactly once.
 [:zh_CN] 范围 [`rg] 中的每个迭代器都恰好进行一次解引用。
+
+[para:recommended]
+[:en] If [`R] models [`ranges::[`:c approximately_sized_range]] and
+[`ranges::distance(rg) <= ranges::reserve_hint(rg)] is [`true],
+an implementation should not perform any reallocation.
+[:zh_CN] 如果 [`R] 构成 [`ranges::[`:c approximately_sized_range]] 且
+[`ranges::distance(rg) <= ranges::reserve_hint(rg)] 为 [`true]，那么
+实现最好不实施任何重新分配。
 
 [para:ensures]
 [:en] [`distance(begin(), end()) == ranges::distance(rg)] is [`true].
@@ -351,8 +363,8 @@ requirements.
 [:zh_CN] [`i] 和 [`j] 都不是 [`a] 中的迭代器。
 
 [para:effects]
-[:en] Inserts copies of elements in [``[i, j)] before [`p].
-[:zh_CN] 在 [`p] 之前插入 [``[i, j)] 中的元素的副本。
+[:en] Inserts copies of elements in [=range(i,j)] before [`p].
+[:zh_CN] 在 [`p] 之前插入 [=range(i,j)] 中的元素的副本。
 
 [:en] Each iterator in the range [=range(i,j)] shall be dereferenced exactly once.
 [:zh_CN] 范围 [=range(i,j)] 中的每个迭代器都应当恰好进行一次解引用。
@@ -452,8 +464,8 @@ a.erase(q1, q2)
 [:zh_CN] 对于 [`vector]、[`inplace_vector] 和 [`deque]，[`T] 为 [^:oc MoveAssignable]。
 
 [para:effects]
-[:en] Erases the elements in the range [``[q1, q2)].
-[:zh_CN] 清除范围 [``[q1, q2)] 中的元素。
+[:en] Erases the elements in the range [=range(q1,q2)].
+[:zh_CN] 清除范围 [=range(q1,q2)] 中的元素。
 
 [para:returns]
 [:en] An iterator that points to the element pointed to by [`q2]
@@ -515,8 +527,8 @@ requirements ([#forward.iterators]), [`T] is also [^:oc MoveInsertable] into [`X
 [:zh_CN] [`i] 和 [`j] 都不是 [`a] 中的迭代器。
 
 [para:effects]
-[:en] Replaces elements in [`a] with a copy of [``[i, j)].
-[:zh_CN] 将 [`a] 中的元素替换为 [``[i, j)] 的副本。
+[:en] Replaces elements in [`a] with a copy of [=range(i,j)].
+[:zh_CN] 将 [`a] 中的元素替换为 [=range(i,j)] 的副本。
 
 [:en] Invalidates all references, pointers and iterators referring to the
 elements of [`a].
@@ -546,10 +558,12 @@ a.assign_range(rg)
 [:en] [`T] is [^:oc EmplaceConstructible] into [`X] from [`*ranges::begin(rg)].
 [:zh_CN] [`T] 为以 [`*ranges::begin(rg)] 向 [`X] 中 [^:oc EmplaceConstructible]。
 
-[:en] For [`vector], if [`R] models neither [`ranges::[`:c sized_range]] nor
-[`ranges::[`:c forward_range]], [`T] is also [^:oc MoveInsertable] into [`X].
-[:zh_CN] 对于 [`vector]，如果 [`R] 不构成 [`ranges::[`:c sized_range]] 或
-[`ranges::[`:c forward_range]]，则 [`T] 还为向 [`X] 中 [^:oc MoveInsertable]。
+[:en] For [`vector], if [`R] models [`ranges::[`:c approximately_sized_range]]
+but not [`ranges::[`:c sized_range]] or models [`ranges::[`:c input_range]] but
+not [`ranges::[`:c forward_range]], [`T] is also [^:oc MoveInsertable] into [`X].
+[:zh_CN] 对于 [`vector]，如果 [`R] 构成 [`ranges::[`:c approximately_sized_range]]
+但不构成 [`ranges::[`:c sized_range]]，或者构成 [`ranges::[`:c input_range]] 但
+不构成 [`ranges::[`:c forward_range]]，则 [`T] 还为向 [`X] 中 [^:oc MoveInsertable]。
 
 [:en] [`rg] and [`a] do not overlap.
 [:zh_CN] [`rg] 和 [`a] 不重叠。
@@ -567,6 +581,14 @@ elements of [`a].
 
 [:en] Each iterator in the range [`rg] is dereferenced exactly once.
 [:zh_CN] 范围 [`rg] 中的每个迭代器都恰好进行一次解引用。
+
+[para:recommended]
+[:en] If [`R] models [`ranges::[`:c approximately_sized_range]] and
+[`ranges::distance(rg) <= ranges::reserve_hint(rg)] is [`true],
+an implementation should not perform any reallocation.
+[:zh_CN] 如果 [`R] 构成 [`ranges::[`:c approximately_sized_range]] 且
+[`ranges::distance(rg) <= ranges::reserve_hint(rg)] 为 [`true]，那么
+实现最好不实施任何重新分配。
 [div:end]
 
 [codeblock:declaration]
@@ -632,7 +654,7 @@ iterator, then the constructor shall not participate in overload resolution.
 
 [codeblock]
 template<class InputIterator>
-  [[redoc("^>")]]return-type [[redoc(">")]]F(const_iterator p,
+  [[redoc("^>")]]return-type [[redoc("^>")]]F(const_iterator p,
                 InputIterator first, InputIterator last);       // [:en] such as [`insert()] \
                                                                 [:zh_CN] 比如 [`insert()]
 
@@ -681,6 +703,10 @@ a.front()
 [:en] [`reference]; [`const_reference] for constant [`a].
 [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]。
 
+[para:hardexpects]
+[:en] [`a.empty()] is [`false].
+[:zh_CN] [`a.empty()] 为 [`false]。
+
 [para:returns]
 [`*a.begin()]
 
@@ -699,6 +725,10 @@ a.back()
 [para:result]
 [:en] [`reference]; [`const_reference] for constant [`a].
 [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]。
+
+[para:hardexpects]
+[:en] [`a.empty()] is [`false].
+[:zh_CN] [`a.empty()] 为 [`false]。
 
 [para:effects]
 [:en] Equivalent to:
@@ -926,9 +956,9 @@ a.pop_front()
 [para:result]
 [`:key void]
 
-[para:expects]
+[para:hardexpects]
 [:en] [`a.empty()] is [`false].
-[:zh_CN] [`a.empty()] 为从 [`false]。
+[:zh_CN] [`a.empty()] 为 [`false]。
 
 [para:effects]
 [:en] Destroys the first element.
@@ -947,9 +977,9 @@ a.pop_back()
 [para:result]
 [`:key void]
 
-[para:expects]
+[para:hardexpects]
 [:en] [`a.empty()] is [`false].
-[:zh_CN] [`a.empty()] 为从 [`false]。
+[:zh_CN] [`a.empty()] 为 [`false]。
 
 [para:effects]
 [:en] Destroys the last element.
@@ -969,6 +999,10 @@ a[n]
 [para:result]
 [:en] [`reference]; [`const_reference] for constant [`a].
 [:zh_CN] [`reference]；对于常量 [`a] 为 [`const_reference]。
+
+[para:hardexpects]
+[:en] [`n < a.size()] is [`true].
+[:zh_CN] [`n < a.size()] 为 [`true]。
 
 [para:effects]
 [:en] Equivalent to: [`return *(a.begin() + n);]

@@ -7,7 +7,7 @@ Redoc is a markup language, all special things are in `[]`.
 
 ## Keyword Tables
 
-### Keywords 关键字
+### Keywords 关键词
 
 |||||||
 |-|-|-|-|-|-|
@@ -33,7 +33,7 @@ Redoc is a markup language, all special things are in `[]`.
 `and`| `and_eq`| `bitand`| `bitor`| `compl`| `not`
 `not_eq`| `or`| `or_eq`| `xor`| `xor_eq`
 
-### Contextual Keywords 语境关键字
+### Contextual Keywords 语境关键词
 
 |||||
 |-|-|-|-|
@@ -97,8 +97,8 @@ Original   |中文   |章节    |定义
 *hex-quad*                  |*hex-四位*     | [lex.universal.char] | *十六进制数字* **{4}**
 *simple-hexadecimal-digit-sequence*|*简单十六进制数字序列*| [lex.universal.char] | *十六进制数字*__+__
 *universal-character-name*  |*通用字符名*   | [lex.universal.char] | `\u` *hex-四位* \| `\U` *hex-四位* *hex-四位* \| `\u{` *简单十六进制数字序列* `}` \| *具名通用字符*
-*preprocessing-token*       |*预处理记号*   | [lex.pptoken] | *头文件名* \|<br> *import-关键字* \|<br> *module-关键字* \|<br> *export-关键字* \|<br> *标识符* \|<br> *预处理数字* \|<br>*字符字面量* \|<br> *用户定义字符字面量* \| <br>*字符串字面量* \|<br> *用户定义字符串字面量* \|<br>其他所有 *通用字符名*
-*token*                     |*记号*         | [lex.token]   | *标识符* \| *关键字* \| *字面量* \| *运算符或标点*
+*preprocessing-token*       |*预处理记号*   | [lex.pptoken] | *头文件名* \|<br> *import-关键词* \|<br> *module-关键词* \|<br> *export-关键词* \|<br> *标识符* \|<br> *预处理数字* \|<br>*字符字面量* \|<br> *用户定义字符字面量* \| <br>*字符串字面量* \|<br> *用户定义字符串字面量* \|<br>其他所有 *通用字符名*
+*token*                     |*记号*         | [lex.token]   | *标识符* \| *关键词* \| *字面量* \| *运算符或标点*
 *header-name*               |*头文件名*     | [lex.header]  | `<` *h-字符序列* `>` \| `"` *q-字符序列* `"`
 *h-char-sequence*           |*h-字符序列*   | [lex.header]  | *h-字符*__+__
 *h-char*                    |*h-字符*       | [lex.header]  | 源字符集 - ( 换行 \| `>` )
@@ -110,7 +110,7 @@ Original   |中文   |章节    |定义
 *identifier-continue*       |*标识符继续*   | [lex.name]    | *数字* \| *非数字* \| *通用字符名* ∈ <XID_Continue>
 *nondigit*                  |*非数字*       | [lex.name]    | [`a-zA-Z_`]
 *digit*                     |*数字*         | [lex.name]    | [`0-9`]
-*keyword*                   |*关键字*       | [lex.key]     | *标识符* ∈ **关键字表**
+*keyword*                   |*关键词*       | [lex.key]     | *标识符* ∈ **关键词表**
 *preprocessing-op-or-punc*  |*预处理运算符或标点*| [lex.operators] | *预处理运算符* \| *运算符或标点*
 *preprocessing-operator*    |*预处理运算符* | [lex.operators] | `#` \| `##` \| `%:` \| `%:%:`
 *operator-or-punctuator*    |*运算符或标点* | [lex.operators] | *预处理记号* ∈ **运算符和标点**
@@ -301,7 +301,7 @@ Original   |中文   |章节    |定义
 *type-name*                 |*类型名*       | [dcl.type.simple] | *类名* \| *枚举名* \| *typedef-名*
 *computed-type-specifier*   |*计算类型说明符*| [dcl.type.simple] | *decltype-说明符* \| *包组索引说明符*
 *pack-index-specifier*      |*包组索引说明符*| [dcl.type.pack.index] | *typedef-名* `...` `[` *常量表达式* `]`
-*elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键字* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键字* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> `enum` *嵌套名说明符*__?__ *标识符*
+*elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键词* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键词* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> `enum` *嵌套名说明符*__?__ *标识符*
 *decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
 *placeholder-type-specifier*|*占位符类型说明符*| [dcl.spec.auto.general] | *类型约束*__?__ (`auto` \| `decltype` `(` `auto` `)`)
 *init-declarator-list*      |*带初始化声明符列表*| [dcl.decl.general] | *带初始化声明符* (`,` *带初始化声明符*)__\*__
@@ -340,10 +340,10 @@ Original   |中文   |章节    |定义
 *deleted-function-body*     |*弃置函数体*   | [dcl.fct.def.general] | `=` `delete` (`(` *免求值字符串* `)`)__?__ `;`
 *enum-name*                 |*枚举名*       | [dcl.enum]    | *标识符*
 *enum-specifier*            |*枚举说明符*   | [dcl.enum]    | *枚举头* `{` ( ∅ \| *枚举符列表* `,`__?__ ) `}`
-*enum-head*                 |*枚举头*       | [dcl.enum]    | *枚举关键字* *属性说明符序列*__?__ *枚举头名*__?__ *枚举基*__?__
+*enum-head*                 |*枚举头*       | [dcl.enum]    | *枚举关键词* *属性说明符序列*__?__ *枚举头名*__?__ *枚举基*__?__
 *enum-head-name*            |*枚举头名*     | [dcl.enum]    | *嵌套名说明符*__?__ *标识符*
-*opaque-enum-declaration*   |*笼统枚举声明式*| [dcl.enum]   | *枚举关键字* *属性说明符序列*__?__ *枚举头名* *枚举基*__?__ `;`
-*enum-key*                  |*枚举关键字*   | [dcl.enum]    | `enum` \| `enum class` \| `enum struct`
+*opaque-enum-declaration*   |*笼统枚举声明式*| [dcl.enum]   | *枚举关键词* *属性说明符序列*__?__ *枚举头名* *枚举基*__?__ `;`
+*enum-key*                  |*枚举关键词*   | [dcl.enum]    | `enum` \| `enum class` \| `enum struct`
 *enum-base*                 |*枚举基*       | [dcl.enum]    | `:` *类型说明符序列*
 *enumerator-list*           |*枚举符列表*   | [dcl.enum]    | *枚举符定义式* (`,` *枚举符定义式*)__\*__
 *enumerator-definition*     |*枚举符定义式* | [dcl.enum]    | *枚举符* \| *枚举符* `=` *常量表达式*
@@ -383,14 +383,14 @@ Original   |中文   |章节    |定义
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
-*module-declaration*        |*模块声明式*   | [module.unit] | *导出关键字*__?__ *模块关键字* *模块名* *模块分区*__?__ *属性说明符序列*__?__ `;`
+*module-declaration*        |*模块声明式*   | [module.unit] | *导出关键词*__?__ *模块关键词* *模块名* *模块分区*__?__ *属性说明符序列*__?__ `;`
 *module-name*               |*模块名*       | [module.unit] | *模块名限定符*__?__ *标识符*
 *module-partition*          |*模块分区*     | [module.unit] | `:` *模块名限定符*__?__ *标识符*
 *module-name-qualifier*     |*模块名限定符* | [module.unit] | ( *标识符* `.` )__\+__
-*export-declaration*        |*导出声明式*   | [module.interface] | `export` ( *命名声明式* \| `{` *声明式序列*__?__ `}`) \|<br> *导出关键字* *模块导入声明式*
-*module-import-declaration* |*模块导入声明式*| [module.import] | *导入关键字* ( *模块名* \| *模块分区* \| *头文件名* ) *属性说明符序列*__?__ `;`
-*global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键字* `;` *声明式序列*__?__
-*private-module-fragment*   |*私有模块分段* | [module.private.frag] | *模块关键字* `:` `private` `;` *声明式序列*__?__
+*export-declaration*        |*导出声明式*   | [module.interface] | `export` ( *命名声明式* \| `{` *声明式序列*__?__ `}`) \|<br> *导出关键词* *模块导入声明式*
+*module-import-declaration* |*模块导入声明式*| [module.import] | *导入关键词* ( *模块名* \| *模块分区* \| *头文件名* ) *属性说明符序列*__?__ `;`
+*global-module-fragment*    |*全局模块分段* | [module.global.frag] | *模块关键词* `;` *声明式序列*__?__
+*private-module-fragment*   |*私有模块分段* | [module.private.frag] | *模块关键词* `:` `private` `;` *声明式序列*__?__
 
 ### Classes 类
 
@@ -398,11 +398,11 @@ Original   |中文   |章节    |定义
 |-|-|-|-|
 *class-name*                |*类名*         | [class.pre]   | *标识符* \| *简单模板标识*
 *class-specifier*           |*类说明符*     | [class.pre]   | *类头* `{` *成员说明*__?__ `}`
-*class-head*                |*类头*         | [class.pre]   | *类关键字* *属性说明符序列*__?__ ( *类头名* *类性质说明符*__\*__ \| ∅ ) *基子句*__?__
+*class-head*                |*类头*         | [class.pre]   | *类关键词* *属性说明符序列*__?__ ( *类头名* *类性质说明符*__\*__ \| ∅ ) *基子句*__?__
 *class-head-name*           |*类头名*       | [class.pre]   | *嵌套名说明符*__?__ *类名*
 *class-property-specifier-seq*|*类性质说明符序列*| [class.pre] | *类性质说明符*__\+__
 *class-property-specifier*  |*类性质说明符*   | [class.pre]   | `final` \| `trivially_relocatable_if_eligible` \| `replaceable_if_eligible`
-*class-key*                 |*类关键字*     | [class.pre]   | `class` \| `struct` \| `union`
+*class-key*                 |*类关键词*     | [class.pre]   | `class` \| `struct` \| `union`
 *member-specification*      |*成员说明*     | [class.mem.general] | ( *成员声明式* \| *访问说明符* `:` )__\+__
 *member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *友元类型声明式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
 *member-declaration-list*   |*成员声明符列表*| [class.mem.general] | *成员声明符* ( `,` *成员声明符* )__\*__
@@ -445,8 +445,8 @@ Original   |中文   |章节    |定义
 *constraint-logical-or-expression*|*约束逻辑或表达式*| [temp.pre] | *约束逻辑与表达式* ( `||` *约束逻辑与表达式* )__\*__
 *constraint-logical-and-expression*|*约束逻辑与表达式*| [temp.pre] | *初等表达式* ( `&&` *初等表达式* )__\*__
 *template-parameter*        |*模板形参*     | [temp.param]  | *类型形参* \| *形参声明式*
-*type-parameter*            |*类型形参*     | [temp.param]  | *类型形参关键字* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *类型约束* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *模板头* *类型形参关键字* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型表达式* )
-*type-parameter-key*        |*类型形参关键字*| [temp.param] | `class` \| `typename`
+*type-parameter*            |*类型形参*     | [temp.param]  | *类型形参关键词* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *类型约束* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型标识* ) \|<br> *模板头* *类型形参关键词* ( `...`__?__ *标识符*__?__ \| *标识符*__?__ `=` *类型表达式* )
+*type-parameter-key*        |*类型形参关键词*| [temp.param] | `class` \| `typename`
 *type-constraint*           |*类型约束*     | [temp.param]  | *嵌套名说明符*__?__ *概念名* ( `<` *模板实参列表* `>` )__?__
 *simple-template-id*        |*简单模板标识* | [temp.names]  | *模板名* `<` *模板实参列表*__?__ `>`
 *template-id*               |*模板标识*     | [temp.names]  | *简单模板标识* \|<br> ( *运算符函数标识* \| *字面量运算符标识* ) `<` *模板实参列表*__?__ `>` 
@@ -523,6 +523,7 @@ access control                          |访问控制   |对声明式而非实�
 access specifier                        |访问说明符 |重复声明不能改变访问
 accessible                              |可访问     |可访问基类：存在从访问点到基类公开成员的访问路径。基类可访问则可转换基类指针
 acquire                                 |获取       |同步操作
+active block                            |活跃块     |包含元素的蜂巢元素块
 active handler                          |活跃处理器 |捕获当前异常对象的处理器，异常形参完成初始化即活跃
 active macro directive                  |活跃宏指令 |宏定义点和去定义点之间
 active member                           |活跃成员   |联合体或类似联合体的处于生存期内的可变成员。通过成功赋值改变
@@ -604,7 +605,7 @@ atomic constraint                       |原子约束       |表达式`E`+形参
 atomic notifying operation              |原子性通知操作
 atomic waiting operation                |原子性等待操作
 attach to module                        |附属于模块     |可替换全局`new`/`delete`函数、命名空间、带语言连接说明的声明式等附属全局模块；一些指定目标的友元声明式归属目标所在模块；否则归属当前视野的模块
-attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键字标识符
+attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键词标识符
 attribute                               |属性          |查询发送器和异步操作的特征数据
 attribute-declaration                   |属性声明式     |仅有属性的空声明，不是块声明式
 automatic storage duration              |自动存储期
@@ -817,7 +818,7 @@ container                               |容器
 context                                 |语境，上下文
 contextually converted to bool          |按语境转换为 bool  |IFF可声明`bool t(e);`
 contextually implicitly converted to T  |按语境隐式转换为 T |IFF找到表达式类型C向语句可接受的类型T的非显式转换函数，且T唯一
-contextual keyword                      |语境关键字，上下文关键字   |仅在特定语境中具有特殊含义：`final` `override` `import` `module`
+contextual keyword                      |语境关键词，上下文关键词   |仅在特定语境中具有特殊含义：`final` `override` `import` `module`
 contiguous container                    |连续容器       |其迭代器为连续迭代器：`array`,`vector`,`basic_string`
 contiguous iterator                     |连续迭代器     |随机访问+连续，概念`contiguous_iterator`
 continue statement                      |continue 语句  |跳出到循环末尾继续循环
@@ -983,6 +984,8 @@ elaborated-type-specifier               |详述类型说明符 |仅引入类型�
 elaborated-enum-specifier               |详述枚举说明符 |详述类型说明符的一种，枚举类型的前向声明
 element                                 |元素       |数组，聚合，初始化式列表
 element access function                 |元素访问函数   |并行算法中使用的迭代器方法或函数对象，用于通过迭代器执行（读写）操作访问序列元素
+element block                           |元素块     |蜂巢存储块
+element block bounds                    |元素块边界 |蜂巢存储块的边界（最小限制，最大限制）
 element type                            |元素类型   |不能为引用、函数、未知边界数组或`void`，数组的cv调整为元素的cv
 element-wise operation                  |逐元素运算 |SIMD
 eligible for replacement                |有可替换资格 |无虚基类，子对象均为可平凡重定位类型，`T::T(T&&)` 和 `=(T&&)` 选中且未弃置，未弃置析构函
@@ -1064,7 +1067,7 @@ explicitly-defaulted function           |显式预置的函数 |特殊成员、�
 explicitly initialized elements         |显式初始化的元素|聚合初始化，非定名：前N个元素，定名：所指名的各元素
 exponent                                |指数
 export-declaration                      |导出声明式     |模块接口单元。不建立作用域。不能嵌套。必须引入名字。
-export-keyword                          |导出关键字     |预处理记号，在预处理阶段支持模块
+export-keyword                          |导出关键词     |预处理记号，在预处理阶段支持模块
 exported by M                           |被 M 导出      |M 中的导出*模块导入声明式*所导入的 UT，在导入 M 时也会被导入，称它们被 M 导出
 exported declaration                    |被导出声明式   |导出声明式中居于命名空间的声明式，或涉及被导出实体的命名空间，或头文件单元中的声明式<br>首个声明式决定是否导出<br>using声明式目标（除类型别名外）必须全部具有外部连接
 exposure                                |显露式         |声明式中除函数体、初始化式、友元外指名了TU局部实体
@@ -1248,7 +1251,7 @@ implicitly movable entity               |隐含可移动实体 |自动变量，�
 implied object argument                 |隐含对象实参   |重载决议中代表对象的隐含实参，对应隐含形参
 import                                  |导入       |模块导入时导入该模块所有导出的声明式，递归导入<br>不能导入实现单元，不能导入自身
 import declaration                      |导入声明式 |模块导入声明式。必须在模块单元或私有模块分段开头
-import-keyword                          |导入关键字 |预处理记号，在预处理阶段支持模块
+import-keyword                          |导入关键词 |预处理记号，在预处理阶段支持模块
 importable header                       |可导入头文件   |由实现定义，可作为模块导入，允许重复导入，导入宏
 impose                                  |施加
 inclusive-or expression                 |或表达式   |`xor_expr | xor_expr`。内建：按位或，一般算术转换
@@ -1326,7 +1329,7 @@ jump statement                          |跳转语句
 |English|中文|说明|
 |-|-|-|
 key equality predicate                  |键相等性谓词
-keyword                                 |关键字     |无条件关键字 + `import` `export` `module`
+keyword                                 |关键词     |无条件关键词 + `import` `export` `module`
 
 ### L
 
@@ -1427,7 +1430,7 @@ modifier function                       |改动函数
 model                                   |构成（概念）|符合概念`C`，并满足其规范中的语义规定
 module                                  |模块       |具名模块或全局模块
 module-declaration                      |模块声明式 |
-module-keyword                          |模块关键字 |预处理记号，在预处理阶段支持模块
+module-keyword                          |模块关键词 |预处理记号，在预处理阶段支持模块
 module implementation unit              |模块实现单元   |非以`export`开始的模块单元。`module M`自动导入`M`
 module-import-declaration               |模块导入声明式 |必须在模块单元或私有模块分段开头<br>导入模块包含其全部接口，仅同模块可导入分区，导入头文件单元为经过1-7阶段翻译结果
 module interface unit                   |模块接口单元   |以`export`开始的模块单元，仅一个
@@ -1807,6 +1810,7 @@ required behavior                       |预期行为   |由标准规定的行�
 requirement                             |规定，要求 |简单规定、类型规定、复合规定、嵌套规定
 requires-clause                         |requires 子句
 reserved                                |保留的     |规定使用权属于标准或实现的名字或实体
+reserved block                          |保留块     |不包含元素的蜂巢元素块
 reserved function                       |保留函数
 reserved identifier                     |保留标识符 |`__` 开头或 `_[A-Z]` 开头的任何标识符，以及 `_` 开头的全局命名空间成员
 restriction                             |限制，要求
@@ -2029,7 +2033,7 @@ three-way comparison operator function  |三路比较运算符函数
 throw                                   |抛出
 throw-expression                        |throw表达式|`throw e`：抛出，`throw`重新抛出当前处理的异常
 timed mutex                             |定时互斥体
-token                                   |记号       |编译器理解的语法元素：标识符，关键字，字面量，运算符或标点
+token                                   |记号       |编译器理解的语法元素：标识符，关键词，字面量，运算符或标点
 token concatenation                     |记号拼接   |预处理功能，`a ## b` -> `ab`
 top-level cv-qualifier                  |顶层 cv 限定符
 total order                             |全序，非严格全序，线序 |具有完全性的偏序，完整的 <=
