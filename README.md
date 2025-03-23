@@ -305,7 +305,7 @@ Original   |中文   |章节    |定义
 *decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
 *placeholder-type-specifier*|*占位符类型说明符*| [dcl.spec.auto.general] | *类型约束*__?__ (`auto` \| `decltype` `(` `auto` `)`)
 *init-declarator-list*      |*带初始化声明符列表*| [dcl.decl.general] | *带初始化声明符* (`,` *带初始化声明符*)__\*__
-*init-declarator*           |*带初始化声明符*| [dcl.decl.general] | *声明符* *初始化式*__?__ \| *声明符* *requires-子句*
+*init-declarator*           |*带初始化声明符*| [dcl.decl.general] | *声明符* *初始化式* \| *声明符* *requires-子句*__?__ *函数契约说明符*__\*__
 *declarator*                |*声明符*       | [dcl.decl.general] | *指针声明符* \| *非指针声明符* *形参和限定符* *尾部返回类型*
 *ptr-declarator*            |*指针声明符*   | [dcl.decl.general] | *指针运算符*__\*__ *非指针声明符*
 *noptr-declarator*          |*非指针声明符* | [dcl.decl.general] | ( *声明符标识* *属性说明符序列*__?__ \| `(` *指针声明符* `)` ) ( ∅ \| *形参和限定符* \| (`[` *常量表达式*__?__ `]` *属性说明符序列*__?__)__\+__ )
@@ -326,6 +326,12 @@ Original   |中文   |章节    |定义
 *parameter-declaration-clause*|*形参声明子句*| [dcl.fct]    | `...` \| *形参声明式列表*__?__ \| *形参声明式列表* `,`__?__ `...`
 *parameter-declaration-list*|*形参声明式列表*| [dcl.fct]    | *形参声明式* (`,` *形参声明式*)__\*__
 *parameter-declaration*     |*形参声明式*   | [dcl.fct]     | *属性说明符序列*__?__ `this`__?__ *声明说明符序列* (*声明符* \| *抽象声明符*)__?__ \|<br> *属性说明符序列*__?__ *声明说明符序列* (*声明符* \| *抽象声明符*)__?__ (`=` *初始化式子句*)
+*function-contract-specifier-seq*|*函数契约说明符序列*| [dcl.contract.func] | *函数契约说明符*__\+__
+*function-contract-specifier*|*函数契约说明符*| [dcl.contract.func] | *前条件说明符* \| *后条件说明符*
+*precondition-specifier*    |*前条件说明符* | [dcl.contract.func] | `pre` *属性说明符序列*__?__ `{` *条件表达式* `}`
+*postcondition-specifier*   |*后条件说明符* | [dcl.contract.func] | `post` *属性说明符序列*__?__ `{` *结果名引入符*__?__ *条件表达式* `}`
+*attributed-identifier*     |*带属性标识符* | [dcl.contract.res] | *标识符* *属性说明符序列*__?__
+*result-name-introducer*    |*结果名引入符* | [dcl.contract.res] | *带属性标识符* `:`
 *initializer*               |*初始化式*     | [dcl.init.general] | *花括号或等号初始化式* \| `(` *表达式列表* `)`
 *brace-or-equal-initializer*|*花括号或等号初始化式*| [dcl.init.general] | `=` *初始化式子句* \| *花括号初始化列表*
 *initializer-clause*        |*初始化式子句* | [dcl.init.general] | *赋值表达式* \| *花括号初始化列表*
@@ -335,7 +341,7 @@ Original   |中文   |章节    |定义
 *designated-initializer-clause*|*定名初始化式子句*| [dcl.init.general] | *定名符* *花括号或等号初始化式*
 *designator*                |*定名符*       | [dcl.init.general] | `.` *标识符*
 *expr-or-braced-init-list*  |*表达式或花括初始化列表*| [dcl.init.general] | *表达式* \| *花括号初始化列表*
-*function-definition*       |*函数定义式*   | [dcl.fct.def.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *声明符* ( *虚说明符序列*__?__ \| *requires-子句* ) *函数体*
+*function-definition*       |*函数定义式*   | [dcl.fct.def.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *声明符* ( *虚说明符序列*__?__ \| *requires-子句* ) *函数契约说明符*__\*__ *函数体*
 *function-body*             |*函数体*       | [dcl.fct.def.general] | *构造函数初始化式*__?__ *复合语句* \| *函数-try-块* \|<br> `=` `default` `;` \| *弃置函数体*
 *deleted-function-body*     |*弃置函数体*   | [dcl.fct.def.general] | `=` `delete` (`(` *免求值字符串* `)`)__?__ `;`
 *enum-name*                 |*枚举名*       | [dcl.enum]    | *标识符*
@@ -1144,6 +1150,7 @@ function-body                           |函数体         |指定代码或`=def
 function call expression                |函数调用表达式 |后缀表达式
 function call operator                  |函数调用运算符 |内建：静态、非静态、虚、析构/伪析构，`a(b,...)`, a SeqB b, b IndSeq, b SeqB 函数体
 function call operator function         |函数调用运算符函数 |`pf_expr.operator()(expr_list)`
+function contract assertion             |函数契约断言   |
 function declaration                    |函数声明式     |非`typedef`简单声明式，类型为函数类型。允许typedef名声明函数
 function declarator                     |函数声明符
 function-definition                     |函数定义式     |语法不允许用typedef名
@@ -1668,6 +1675,7 @@ pool                                    |内存池         |管理特定大小�
 pool resource                           |池化资源       |`synchronized_pool_resource`和`unsynchronized_pool_resource`。管理不同大小的内存池
 possibly-reclaimable                    |可能可回收     |涉险指针
 POSIX, Portable Operating System Interface  |POSIX，可移植操作系统接口
+postcondition assertion                 |后条件断言     |函数契约断言：`post {r: ...}`
 postfix                                 |后缀
 postfix decrement expression            |后置减量表达式 |后缀表达式
 postfix decrement operator              |后置减量运算符 |内建：结果为原值副本PRv，改动Lv，摒弃volatile，读取 SeqB 改动
@@ -1689,6 +1697,7 @@ potentially usable in constant expression|潜在可被用在常量表达式
 pragma                                  |语用       |预处理指令。预处理运算符将实参字符串去字符串化，再作为语用指令处理
 precede                                 |先于       |表达式在名字使用点之前：同UT时在其之前或居于其可达的类作用域，跨UT时模块导入指定先于关系，内部连接不能跨UT
 precedence                              |优先级
+precondition assertion                  |前条件断言  |函数契约断言：`pre {...}`
 preferred separator                     |首选分隔符
 prefix                                  |前缀       |字符字面量，字符串字面量：编码前缀和 `R`
 prefix decrement operator               |前置减量运算符 |一元表达式，摒弃volatile，结果为原对象Lv
@@ -1802,7 +1811,9 @@ release                                 |释放       |同步操作
 release sequence                        |释放序列   |某原子性对象上[释放+读改写*n]的最大序列
 remainder operator                      |求余运算符
 remote time zone database               |远程时区数据库
+replaceable function                    |可替换函数 |
 replaceable class                       |可替换类   |有资格并标有 `replaceable_if_eligible` 的类，普通联合体，默认可移动类型
+replacement body                        |替代函数体 |协程函数体转换改写
 replacement function                    |替代函数   |程序定义的用以替换实现的缺省函数的函数，如`operator new`
 repositional stream                     |可重定位流 |可 seek 到之前经过的位置
 representation                          |表示
@@ -1814,6 +1825,7 @@ reserved block                          |保留块     |不包含元素的蜂巢
 reserved function                       |保留函数
 reserved identifier                     |保留标识符 |`__` 开头或 `_[A-Z]` 开头的任何标识符，以及 `_` 开头的全局命名空间成员
 restriction                             |限制，要求
+result binding                          |结果绑定   |后条件断言中的结果名
 resumer                                 |恢复方     |调用协程句柄的恢复成员函数的函数
 resumption                              |恢复
 resumption member function              |恢复成员函数

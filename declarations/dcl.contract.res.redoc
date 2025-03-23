@@ -1,0 +1,104 @@
+[section#dcl.contract.res
+    [:en] Referring to the result object
+    [:zh_CN] 指代结果对象
+]
+
+[syntax]
+[rule attributed-identifier [:zh_CN] 带属性标识符 ]
+    [| identifier [~:opt attribute-specifier-seq] ]
+[rule:end]
+
+[rule result-name-introducer [:zh_CN] 结果名引入符 ]
+  [| attributed-identifier [`:] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en] The [~result-name-introducer] of a [~postcondition-specifier] is a declaration.
+[:zh_CN] [~有条件说明符]的[~结果名引入符]是一种声明式。
+
+[:en] The [~result-name-introducer] introduces the [~identifier] as the name of
+a [+result binding] of the associated function.
+[:zh_CN] [~结果名引入符]引入[~标识符]作为所关联函数的一个[+结果绑定]的名字。
+
+[:en] If a postcondition assertion has a [~result-name-introducer] and the
+return type of the function is [=cv] [`:key void], the program is ill-formed.
+[:zh_CN] 若某后条件断言带有[~结果名引入符]而函数的结构类型为 [=cv] [`:key void]，则程序非良构。
+
+[:en] A result binding denotes the object or reference returned by invocation of
+that function.
+[:zh_CN] 结果绑定代表函数调用所返回的对象或引用。
+
+[:en] The type of a result binding is the return type of its associated function
+[:zh_CN] 结果绑定的类型为其关联函数的返回类型。
+
+[:en] The optional [~attribute-specifier-seq] of the [~attributed-identifier]
+in the [~result-name-introducer] appertains to the result binding so introduced.
+[:zh_CN] [~结果名引入符]中的[~带属性标识符]的可选[~属性说明符序列]属于其所引入的结果绑定。
+
+[begin:note]
+[:en] An [~id-expression] that names a result binding is a [`:key const] lvalue ([#expr.prim.id.unqual]).
+[:zh_CN] 指名结果绑定的[~标识表达式]是 [`:key const] 左值（[#expr.prim.id.unqual]）。
+[end:note]
+
+[para:~]
+[begin:example]
+[codeblock]
+int f()
+  post(r : r == 1)
+{
+  return 1;
+}
+int i = f();    // [:en] Postcondition check succeeds. [:zh_CN] 后条件检查成功。
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+struct A {};
+struct B {
+  B() {}
+  B(const B&) {}
+};
+
+template <typename T>
+T f(T* const ptr)
+  post(r: &r == ptr)
+{
+  return {};
+}
+
+int main() {
+  A a = f(&a);  // [:en] The postcondition check can fail if the implementation introduces \
+                [:zh_CN] 如果实现为返回值引入临时对象（[#class.temporary]），
+                // [:en@~] a temporary for the return value ([#class.temporary]). \
+                [:zh_CN@~] 后条件检查就可能失败。
+  B b = f(&b);  // [:en] The postcondition check succeeds, no temporary is introduced. \
+                [:zh_CN] 后条件检查成功，未引入任何临时对象。
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] When the declared return type of a non-templated function contains a
+placeholder type, a [~postcondition-specifier] with a [~result-name-introducer]
+shall be present only on a definition.
+[:zh_CN] 当非模板函数的声明返回类型包含占位符类型时，带[~结果名引入符]的[~后条件说明符]
+只能出现在定义式中。
+
+[begin:example]
+[codeblock]
+auto g(auto&)
+  post (r: r >= 0);     // [:en] OK, [`g] is a template. [:zh_CN] OK，[`g] 是一个模板。
+
+auto h()
+  post (r: r >= 0);     // [:en] error: cannot name the return value [:zh_CN] 错误：不能命名返回值
+
+auto k()
+  post (r: r >= 0)      // OK
+{
+  return 0;
+}
+[codeblock:end]
+[end:example]

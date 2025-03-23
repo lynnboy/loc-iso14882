@@ -1,0 +1,168 @@
+[section#hive.operations
+    [:en] Operations
+    [:zh_CN] 操作
+]
+
+[para:~]
+[:en] In this subclause, arguments for a template parameter named [`Predicate]
+or [`BinaryPredicate] shall meet the corresponding requirements in
+[#algorithms.requirements].
+[:zh_CN] 本子条款中，对名为 [`Predicate] 或 [`BinaryPredicate] 的模板形参所提供
+的实参应当满足 [#algorithms.requirements] 中相应的规定。
+
+[:en] The semantics of [`i + n] and [`i - n], where [`i] is an iterator into the
+[`hive] and [`n] is an integer, are the same as those of [`next(i, n)] and
+[`prev(i, n)], respectively.
+[:zh_CN] [`i + n] 和 [`i - n] 的语义（其中 [`i] 为 [`hive] 中的迭代器，而 [`n] 为整数）
+与 [`next(i, n)] 和 [`prev(i, n)] 的语义相同。
+
+[:en] For [`sort], the definitions and requirements in [#alg.sorting] apply.
+[:zh_CN] [#alg.sorting] 中的定义和规定适用于 [`sort]。
+
+[%@lib@member splice[!hive]]
+[codeblock:declaration]
+void splice(hive& x);
+void splice(hive&& x);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`get_allocator() == x.get_allocator()] is [`true].
+[:zh_CN] [`get_allocator() == x.get_allocator()] 为 [`true]。
+
+[para:effects]
+[:en] If [`addressof(x) == this] is [`true], the behavior is erroneous and
+there are no effects.
+[:zh_CN] 如果 [`addressof(x) == this] 为 [`true]，则其行为错误且没有效果。
+
+[:en] Otherwise, inserts the contents of [`x] into [`*this] and [`x] becomes empty.
+[:zh_CN] 否则，将 [`x] 的内容插入到 [`*this] 中，且 [`x] 变为空。
+
+[:en] Pointers and references to the moved elements of [`x] now refer to those
+same elements but as members of [`*this].
+[:zh_CN] 指代 [`x] 的被移动元素的指针和引用随后仍指代相同的元素，但变为 [`*this] 的成员。
+
+[:en] Iterators referring to the moved elements continue to refer to their elements,
+but they now behave as iterators into [`*this], not into [`x].
+[:zh_CN] 指代被移动元素的迭代器将继续指代这些元素，但它们现在表现为 [`*this] 而不是 [`x] 中的迭代器。
+
+[para:throws]
+[:en] [`length_error] if any of [`x][=']s active blocks
+are not within the bounds of [*current-limits].
+[:zh_CN] 如果 [`x] 的任何活动块不在 [*current-limits] 的界限内，则抛出 [`length_error]。
+
+[para:complexity]
+[:en] Linear in the sum of all element blocks in [`x] plus all element blocks in [`*this].
+[:zh_CN] 与 [`x] 中所有元素块加上 [`*this] 中所有元素块的和成线性。
+
+[para:remarks]
+[:en] Reserved blocks in [`x] are not transferred into [`*this].
+[:zh_CN] [`x] 中的保留块不会转移到 [`*this] 中。
+
+[:en] If [`addressof(x) == this] is [`false],
+invalidates the past-the-end iterator for both [`x] and [`*this].
+[:zh_CN] 如果 [`addressof(x) == this] 为 [`false]，则使 [`x] 和 [`*this] 的尾后迭代器都失效。
+[div:end]
+
+[%@lib@member unique[!hive]]
+[codeblock:declaration]
+template<class BinaryPredicate = equal_to<T>>
+  size_type unique(BinaryPredicate binary_pred = BinaryPredicate());
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`binary_pred] is an equivalence relation.
+[:zh_CN] [`binary_pred] 为一种等价关系。
+
+[para:effects]
+[:en] Erases all but the first element from every consecutive group of
+equivalent elements.
+[:zh_CN] 清除每个等价元素的连续组中除第一个元素外的所有元素。
+
+[:en] That is, for a nonempty [`hive], erases all elements referred to by the
+iterator [`i] in the range [=range(begin() + 1,end())] for which
+[`binary_pred(*i, *(i - 1))] is [`true].
+[:zh_CN] 亦即，对于非空 [`hive]，清除由范围 [=range(begin() + 1,end())] 中使得
+[`binary_pred(*i, *(i - 1))] 为 [`true] 的迭代器 [`i] 所指代的所有元素。
+
+[para:returns]
+[:en] The number of elements erased.
+[:zh_CN] 被清除的元素个数。
+
+[para:throws]
+[:en] Nothing unless an exception is thrown by the predicate.
+[:zh_CN] 除非谓词抛出了异常，否则不抛出异常。
+
+[para:complexity]
+[:en] If [`empty()] is [`false], exactly [`size() - 1] applications of the
+corresponding predicate, otherwise no applications of the predicate.
+[:zh_CN] 如果 [`empty()] 为 [`false]，则恰好实施 [`size() - 1] 次对应的谓词，
+否则不实施谓词。
+
+[para:remarks]
+[:en] Invalidates references, pointers, and iterators referring to the erased elements.
+[:zh_CN] 使指代被擦除元素的所有引用、指针和迭代器失效。
+
+[:en] If the last element in [`*this] is erased, also invalidates the
+past-the-end iterator.
+[:zh_CN] 如果擦除了 [`*this] 中的最后一个元素，则也使尾后迭代器失效。
+[div:end]
+
+[%@lib@member sort[!hive]]
+[codeblock:declaration]
+template<class Compare = less<T>>
+  void sort(Compare comp = Compare());
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`T] is [^:oc MoveInsertable] into [`hive], [^:oc MoveAssignable], and
+[^:oc Swappable].
+[:zh_CN] [`T] 为向 [`hive] 中 [^:oc MoveInsertable]，为 [^:oc MoveAssignable]
+且为 [^:oc Swappable]。
+
+[para:effects]
+[:en] Sorts [`*this] according to the [`comp] function object.
+[:zh_CN] 根据 [`comp] 函数对象对 [`*this] 进行排序。
+
+[:en] If an exception is thrown, the order of the elements in [`*this] is unspecified.
+[:zh_CN] 如果抛出了异常，则 [`*this] 的元素顺序是未指明的。
+
+[para:complexity]
+[:en] [?bigoh N \log N] comparisons, where [$N] is [`size()].
+[:zh_CN] [?bigoh N \log N] 次比较，其中 [$N] 为 [`size()]。
+
+[para:remarks]
+[:en] May allocate.
+[:zh_CN] 可能发生分配。
+
+[:en] References, pointers, and iterators referring to elements in [`*this],
+as well as the past-the-end iterator, may be invalidated.
+[:zh_CN] 可能使指代 [`*this] 中元素的引用、指针和迭代器，以及尾后迭代器失效。
+
+[begin:note]
+[:en] Not required to be stable ([#algorithm.stable]).
+[:zh_CN] 不要求稳定 ([#algorithm.stable])。
+[end:note]
+[div:end]
+
+[%@lib@member get_iterator[!hive]]
+[codeblock:declaration]
+iterator get_iterator(const_pointer p) noexcept;
+const_iterator get_iterator(const_pointer p) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`p] points to an element in [`*this].
+[:zh_CN] [`p] 指向 [`*this] 中的元素。
+
+[para:returns]
+[:en] An [`iterator] or [`const_iterator] pointing to the same element as [`p].
+[:zh_CN] 与 [`p] 指向相同元素的 [`iterator] 或 [`const_iterator]。
+
+[para:complexity]
+[:en] Linear in the number of active blocks in [`*this].
+[:zh_CN] 与 [`*this] 中活动块的数量成线性。
+[div:end]
