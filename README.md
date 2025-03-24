@@ -192,7 +192,7 @@ Original   |中文   |章节    |定义
 *pack-index-expression*     |*包组索引表达式*| [expr.prim.pack.index] | *标识表达式* `...` `[` *常量表达式* `]`
 *lambda-expression*         |*lambda-表达式*| [expr.prim.lambda.general] | *lambda-引导符* ( ∅ \| `<` *模板形参列表* `>` *requires-子句*__?__ ) *属性说明符序列*__?__ *lambda-声明符* *复合语句*
 *lambda-introducer*         |*lambda-引导符*| [expr.prim.lambda.general] | `[` *lambda-俘获式*__?__ `]`
-*lambda-declarator*         |*lambda-声明符*| [expr.prim.lambda.general] | ( ( *lambda-说明符序列* *noexcept-说明符*__?__ \| *noexcept-说明符* ) *属性说明符序列*__?__ )? *尾部返回类型*__?__ \|<br>`(` *形参声明子句* `)` *lambda-说明符序列*__?__ *noexcept-说明符*__?__ *属性说明符序列*__?__ *尾部返回类型*__?__ *requires-子句*__?__
+*lambda-declarator*         |*lambda-声明符*| [expr.prim.lambda.general] | ( ( *lambda-说明符序列* *noexcept-说明符*__?__ \| *noexcept-说明符* ) *属性说明符序列*__?__ )? *尾部返回类型*__?__ *函数契约说明符序列*__?__ \|<br>`(` *形参声明子句* `)` *lambda-说明符序列*__?__ *noexcept-说明符*__?__ *属性说明符序列*__?__ *尾部返回类型*__?__ *requires-子句*__?__ *函数契约说明符序列*__?__
 *lambda-specifier*          |*lambda-说明符*|[expr.prim.lambda.general]| `consteval` \| `constexpr` \| `mutable` \| `static`
 *labmda-specifier-seq*      |*lambda-说明符序列*|[expr.prim.lambda.general]| ( `consteval` \| `constexpr` \| `mutable` \| `static`)__\+__
 *lambda-capture*            |*lambda-俘获式*| [expr.prim.lambda.capture] | *默认俘获符* \| (*默认俘获符* `,`)__?__ *俘获符列表*
@@ -927,6 +927,7 @@ defaulted function                      |预置函数       |隐式声明或显�
 deferred function                       |延迟函数       |`async`调用的函数
 define                                  |定义
 *defined-macro-expression*              |*已定义宏表达式* |`defined XX`或`defined (XX)`，宏是否定义
+defined prefix                          |有定义前置     |早于未定义行为前的检查点的操作
 defining type specifier                 |定义类型说明符 |类型说明符，加上类说明符和枚举说明符<br>函数形参和返回类型不能定义类型
 definition                              |定义式，定义   |代码结构称为‘定义式’，实体称为‘定义’，实体的内容和连接时存在性
 definition domain                       |定义域         |指是否处于私有模块分段，定义域影响内联函数/变量定义的可达性
@@ -1205,6 +1206,7 @@ handler function                        |处理函数   |`new_handler`等
 happens after                           |发生晚于 HapA
 happens before                          |发生早于 HapB  |确定任意两求值的顺序：线程内SeqB或线程间ITHB
 hard link                               |硬连接
+hardened implementation                 |加固实现
 *has-attribute-expression*              |*属性查询表达式* |`__has_cpp_attribute(attr)`，是否支持属性及其版本。属性允许宏展开
 *has-include-expression*                |*包含查询表达式* |`__has_include(hdr)`，是否可包含文件。宏行为同`#include`
 hash function                           |散列函数
@@ -1570,6 +1572,7 @@ object representation                   |对象表示   |全部`sizeof(T)`个字
 object type                             |对象类型   |非函数、引用、`void`
 object-like macro                       |对象式宏
 observable behavior                     |可观察行为
+observable checkpoints                  |可观察检查点
 observe                                 |观察       |契约评估语义之一，属于检查语义。违例时执行契约违例处理器并继续
 observer function                       |探察函数
 obstruction-free                        |免妨碍     |唯一未阻塞线程执行免锁执行必将完成
@@ -2105,6 +2108,7 @@ unary operator                          |一元运算符     |`&`：取地址，
 unary plus operator                     |一元加运算符   |一元运算符/表达式，算术、指针、无作用域枚举，提升整型和枚举
 unary right fold                        |一元右折叠     |`pack op ...`
 unblock                                 |解除阻塞
+uncaught exception                      |未捕获异常
 undefined                               |未定义的
 undefined behavior                      |UB，未定义行为 |任意可能行为
 underlying-type                         |底层类型       |字符类型。枚举，默认为`int`或以枚举符求值范围推定

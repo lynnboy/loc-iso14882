@@ -146,16 +146,19 @@ and for each constituent reference of [`x] that refers to an object [$o],
 的每个指代某个对象 [$o] 的成分引用，[$o] 都从 [$P] 可 constexpr 引用，
 则 [`x] 在 [$P] 处[+可 constexpr 表示]。
 
-
 [para]
-[:en] A variable [`v] is [+constant-initializable] if
-[:zh_CN] 满足以下条件时，变量 [`v] [+可常量初始化]：
+[:en] [%contract evaluation semantics[!ignore]]
+A variable [`v] is [+constant-initializable] if
+[:zh_CN] [%契约评估语义[!忽略]]
+满足以下条件时，变量 [`v] [+可常量初始化]：
 
 [list]
 [item]
 [:en] the full-expression of its initialization is a constant expression when
-interpreted as a [~constant-expression],
-[:zh_CN] 其初始化的全表达式当作为[~常量表达式]解释时是常量表达式，
+interpreted as a [~constant-expression] with all contract assertions
+using the ignore evaluation semantic ([#basic.contract.eval]),
+[:zh_CN] 其初始化的全表达式，当作为[~常量表达式]解释，且对所有契约断言使用忽略
+评估语义（[#basic.contract.eval]）时，是常量表达式，
 
 [begin:note]
 [:en] Within this evaluation, [`std::is_constant_evaluated()] ([#meta.const.eval])
@@ -164,8 +167,13 @@ returns [`:key true].
 将返回 [`:key true]。
 [end:note]
 
-[:en] and
-[:zh_CN] 并且
+[begin:note]
+[:en] The initialization, when evaluated, can still evaluate contract assertions
+with other evaluation semantics, resulting in a diagnostic or ill-formed program
+if a contract violation occurs.
+[:zh_CN] 当其初始化求值时，仍可以其他评估语义评估各契约断言，并于发生契约违例时
+导致诊断或者非良构的程序。
+[end:note]
 
 [item]
 [:en] immediately after the initializing declaration of [`v], the object or
@@ -181,11 +189,10 @@ namespace scope that follows the initializing declaration of [`v].
 [list:end]
 
 [para]
-[:en] A constant-initializable variable is [+constant-initialized]
-if either it has an initializer or
-its default-initialization results in some initialization being performed.
-[:zh_CN] 如果可常量初始化的变量要么具有初始化式要么其默认初始化造成某项初始化被实施，
-那么它[+被常量初始化]。
+[:en] A constant-initializable variable is [+constant-initialized] if either it
+has an initializer or its type is const-default-constructible ([#dcl.init.general]).
+[:zh_CN] 如果可常量初始化的变量要么具有初始化式要么其类型可 const 默认构造（[#dcl.init.general]），
+那么它[+被常量初始]。
 
 [begin:example]
 [codeblock]
@@ -306,10 +313,9 @@ class member access expression ([#expr.ref]);
 [list:end]
 
 [item]
-[:en] a control flow that passes through a declaration of a block variable
-([#basic.scope.block]) with static ([#basic.stc.static]) or thread
-([#basic.stc.thread]) storage duration, unless that variable is usable in
-constant expressions;
+[:en] a control flow that passes through a declaration of a block variable ([#basic.scope.block])
+with static ([#basic.stc.static]) or thread ([#basic.stc.thread]) storage duration,
+unless that variable is usable in constant expressions;
 [:zh_CN] 控制流通过具有静态（[#basic.stc.static]）或线程（[#basic.stc.thread]）
 存储期的块变量（[#basic.scope.block]）的声明式，除非该变量可在常量表达式中使用；
 
@@ -348,8 +354,7 @@ dynamic type is constexpr-unknown;
 [:zh_CN] 为某个动态类型 constexpr 未知的对象调用虚函数（[#class.virtual]）；
 
 [item]
-[:en] an expression that would exceed the implementation-defined limits (see
-[#implimits]);
+[:en] an expression that would exceed the implementation-defined limits (see [#implimits]);
 [:zh_CN] 可能超出由实现定义的限制额度的表达式（参见 [#implimits]）；
 
 [item]
@@ -382,8 +387,7 @@ expressions, or
 [item]
 [:en] a non-volatile glvalue of literal type that refers to a non-volatile object
 whose lifetime began within the evaluation of [$E];
-[:zh_CN] 字面类型的非 volatile 泛左值，指代在 [$E] 的求值中开始其生存期的非
-volatile 对象；
+[:zh_CN] 字面类型的非 volatile 泛左值，指代在 [$E] 的求值中开始其生存期的非 volatile 对象；
 [list:end]
 
 [item]
@@ -408,8 +412,7 @@ the lifetime of the union object began within the evaluation of [$E];
 with automatic storage duration defined outside that [~lambda-expression], where
 the reference would be an odr-use ([#term.odr.use], [#expr.prim.lambda]);
 [:zh_CN] 在 [~lambda-表达式]中，涉指了 [`:key this] 或者在该 [~lambda-表达式]
-之外定义的具有动态存储期的变量，而该涉指可能是一次 ODR 式使用（[#term.odr.use]，
-[#expr.prim.lambda]）；
+之外定义的具有动态存储期的变量，而该涉指可能是一次 ODR 式使用（[#term.odr.use]，[#expr.prim.lambda]）；
 
 [begin:example]
 [codeblock]
@@ -462,12 +465,11 @@ object whose type is similar to [`T];
 [:zh_CN] [`:key reinterpret_cast]（[#expr.reinterpret.cast]）；
 
 [item]
-[:en] a modification of an object ([#expr.ass], [#expr.post.incr], [#expr.pre.incr])
+[:en] a modification of an object ([#expr.assign], [#expr.post.incr], [#expr.pre.incr])
 unless it is applied to a non-volatile lvalue of literal type that refers to a
 non-volatile object whose lifetime began within the evaluation of [$E];
-[:zh_CN] 对对象的改动（[#expr.ass]，[#expr.post.incr]，[#expr.pre.incr]），除非
-实施于非 volatile 的字面类型的左值，并且它指代某个生存期开始于 [$E] 的求值中的非
-volatile 对象；
+[:zh_CN] 对对象的改动（[#expr.assign]，[#expr.post.incr]，[#expr.pre.incr]），除非实施于
+非 volatile 的字面类型的左值，并且它指代某个生存期开始于 [$E] 的求值中的非 volatile 对象；
 
 [item]
 [:en] an invocation of a destructor ([#class.dtor]) or a function call whose
@@ -507,8 +509,7 @@ evaluation of [$E];
 [item]
 [:en] a [~delete-expression] ([#expr.delete]), unless it deallocates a region of
 storage allocated within the evaluation of [$E];
-[:zh_CN] [~delete-表达式]（[#expr.delete]），除非其回收在 [$E] 的求值之中所分配
-的存储区域；
+[:zh_CN] [~delete-表达式]（[#expr.delete]），除非其回收在 [$E] 的求值之中所分配的存储区域；
 
 [item]
 [:en] a call to an instance of [`std::allocator<T>::allocate] ([#allocator.members]),
@@ -528,8 +529,7 @@ all of its implicit copies created by invocations of
 [`std::current_exception] or [`std::rethrow_exception] ([#propagation])
 are destroyed within the evaluation of [$E];
 [:zh_CN] 异常对象的构造，除非该异常对象和所有由 [`std::current_exception] 或
-[`std::rethrow_exception]（[#propagation]）的调用中所创建的隐含副本都在 [$E] 的
-求值之中销毁；
+[`std::rethrow_exception]（[#propagation]）的调用中所创建的隐含副本都在 [$E] 的求值之中销毁；
 
 [item]
 [:en] an [~await-expression] ([#expr.await]);
@@ -547,8 +547,7 @@ or equality ([#expr.eq]) operator where the result is unspecified;
 
 [item]
 [:en] a [`:key dynamic_cast] ([#expr.dynamic.cast]) or [`:key typeid] ([#expr.typeid])
-expression on a glvalue that refers to an object whose dynamic type is
-constexpr-unknown;
+expression on a glvalue that refers to an object whose dynamic type is constexpr-unknown;
 [:zh_CN] 运用于代表具有 constexpr 未知的动态类型的对象的泛左值上的
 [`:key dynamic_cast]（[#expr.dynamic.cast]）或 [`typeid]（[#expr.typeid]）表达式；
 
@@ -565,8 +564,8 @@ would throw an exception where no definition of the exception type is reachable;
 [:zh_CN] [~asm-声明式]（[#dcl.asm]）；
 
 [item]
-[:en] an invocation of the [`va_arg] macro ([#cstdarg.syn]);
-[:zh_CN] 对 [`va_arg] 宏的调用（[#cstdarg.syn]）；
+[:en] an invocation of the [`:m va_arg] macro ([#cstdarg.syn]);
+[:zh_CN] 对 [`:m va_arg] 宏的调用（[#cstdarg.syn]）；
 
 [item]
 [:en] a non-constant library call ([#defns.nonconst.libcall]); or
@@ -577,9 +576,8 @@ would throw an exception where no definition of the exception type is reachable;
 [:zh_CN] [`:key goto] 语句（[#stmt.goto]）。
 
 [begin:note]
-[:en] A [`:key goto] statement introduced by equivalence ([#stmt.stmt]) is not
-in scope.
-[:zh_CN] 以等价形式引入（[#stmt.stmt]）的 [`:key goto] 语句并不在作用域中。
+[:en] A [`:key goto] statement introduced by equivalence ([#stmt]) is not in scope.
+[:zh_CN] 以等价形式引入（[#stmt]）的 [`:key goto] 语句并不在作用域中。
 
 [:en] For example, a [`:key while] statement ([#stmt.while]) can be executed
 during constant evaluation.
@@ -595,9 +593,8 @@ a core constant expression, but evaluation of [$E] has runtime-undefined behavio
 那么 [$E] 是否是核心常量表达式是[?impldef 表达式是否是核心常量表达式]。
 
 [para]
-[:en] It is unspecified whether [$E] is a core constant expression if [$E]
-satisfies the constraints of a core constant expression, but evaluation of [$E]
-would evaluate
+[:en] It is unspecified whether [$E] is a core constant expression if [$E] satisfies
+the constraints of a core constant expression, but evaluation of [$E] would evaluate
 [:zh_CN] 如果 [$E] 满足对核心常量表达式的约束，但对 [$E] 的求值可能会求值以下各项，
 那么 [$E] 是否是核心常量表达式是未指明的：
 
@@ -607,8 +604,8 @@ would evaluate
 through [#[=lastlibchapter]], or
 [:zh_CN@~] 某个具有在从 [#library] 到 [#[=lastlibchapter]] 中所述的未定义行为的操作，或者
 [item]
-[:en@~] an invocation of the [`va_start] macro ([#cstdarg.syn]).
-[:zh_CN@~] 调用了 [`va_start] 宏（[#cstdarg.syn]）。
+[:en@~] an invocation of the [`:m va_start] macro ([#cstdarg.syn]).
+[:zh_CN@~] 调用了 [`:m va_start] 宏（[#cstdarg.syn]）。
 [list:end]
 
 [para]
@@ -665,18 +662,16 @@ constexpr int y = h(1);             // [:en] OK, initializes [`y] with the value
 [end:example]
 
 [para]
-[:en] For the purposes of determining whether an expression [$E] is a core
-constant expression, the evaluation of the body of a member function of
-[`std::allocator<T>] as defined in [#allocator.members], where [`T] is a literal
-type, is ignored.
+[:en] For the purposes of determining whether an expression [$E] is a core constant
+expression, the evaluation of the body of a member function of [`std::allocator<T>]
+as defined in [#allocator.members], where [`T] is a literal type, is ignored.
 [:zh_CN] 在确定某个表达式 [$E] 是否是核心常量表达式时，忽略对 [#allocator.members]
 中所定义的 [`std::allocator<T>]（其中 [`T] 为字面类型）的成员函数的函数体的求值。
 
 [para]
 [:en] For the purposes of determining whether [$E] is a core constant expression,
-the evaluation of a call to a trivial copy/move constructor or copy/move
-assignment operator of a union is considered to copy/move the active member of
-the union, if any.
+the evaluation of a call to a trivial copy/move constructor or copy/move assignment
+operator of a union is considered to copy/move the active member of the union, if any.
 [:zh_CN] 在确定 [$E] 是否是核心常量表达式时，对联合体调用平凡的复制/移动构造函数或
 复制/移动赋值运算符的求值被当做对该联合体的活跃成员进行复制/移动（如果有）。
 
@@ -834,8 +829,7 @@ if the lifetime of [`a] and its non-mutable subobjects (but not its mutable
 subobjects) were considered to start within [$E].
 [:zh_CN] 它为类类型或其（可能多维的）数组，此类类型具有 constexpr 析构函数，并且
 对于仅有效果为销毁 [`a] 的虚构的表达式 [$E]，如果 [`a] 及其非 mutable 子对象
-（但不包括其 mutable 子对象）的生存期被当做开始于 [$E] 之内，则 [$E] 可为核心
-常量表达式。
+（但不包括其 mutable 子对象）的生存期被当做开始于 [$E] 之内，则 [$E] 可为核心常量表达式。
 [list:end]
 
 [para]
@@ -904,8 +898,7 @@ expression and the implicit conversion sequence contains only
 [:en@~] integral promotions ([#conv.prom]),
 [:zh_CN@~] 整型提升（[#conv.prom]），
 [item]
-[:en@~] integral conversions ([#conv.integral]) other than narrowing conversions
-([#dcl.init.list]),
+[:en@~] integral conversions ([#conv.integral]) other than narrowing conversions ([#dcl.init.list]),
 [:zh_CN@~] 除了窄化转换（[#dcl.init.list]）之外的整型转换（[#conv.integral]），
 [item]
 [:en@~] floating-point promotions ([#conv.fpprom]),
@@ -931,11 +924,11 @@ be represented exactly in the destination type,
 [begin:note]
 [:en] Such expressions can be used in [`:key new] expressions ([#expr.new]), as
 case expressions ([#stmt.switch]), as enumerator initializers if the underlying
-type is fixed ([#dcl.enum]), as array bounds ([#dcl.array]), and as non-type
+type is fixed ([#dcl.enum]), as array bounds ([#dcl.array]), and as constant
 template arguments ([#temp.arg]).
-[:zh_CN] 此种表达式可用在 [`:key new] 表达式中（[#expr.new]），用作 case 表达式
-（[#stmt.switch]），用作底层类型已固定的枚举符的初始化式（[#dcl.enum]），用作
-数组边界（[#dcl.array]），以及用作整型或枚举的非类型模板实参（[#temp.arg]）。
+[:zh_CN] 此种表达式可用在 [`:key new] 表达式中（[#expr.new]），用作 case 表达式（[#stmt.switch]），
+用作底层类型已固定的枚举符的初始化式（[#dcl.enum]），用作数组边界（[#dcl.array]），
+以及用作整型或枚举的常量模板实参（[#temp.arg]）。
 [end:note]
 
 [:en]
@@ -953,11 +946,11 @@ contains only the conversions above.
 的表达式，所转换的表达式是常量表达式，且其转换序列中仅包含上述转换。
 
 [para]
-[:en] A [+:adj constant[!expression]] is either a glvalue core constant
-expression that refers to an object or a non-immediate function, or a prvalue
-core constant expression whose value satisfies the following constraints:
+[:en] A [+:adj constant[!expression]] is either a glvalue core constant expression
+that refers to an object or a non-immediate function, or a prvalue core constant
+expression whose result object ([#basic.lval]) satisfies the following constraints:
 [:zh_CN] [+:adj 常量[!表达式]]是泛左值核心常量表达式，其值所指代的是对象或非立即函数，
-或者是纯右值核心常量表达式，其值满足如下约束条件：
+或者是纯右值核心常量表达式，其结果对象（[#basic.lval]）满足如下约束条件：
 
 [list]
 [item]
@@ -965,8 +958,8 @@ core constant expression whose value satisfies the following constraints:
 [:zh_CN] 每个成分引用都指代对象或非立即函数，
 
 [item]
-[:en] no constituent value of scalar type is an indeterminate value ([#basic.indet]),
-[:zh_CN] 没有标量类型成分值具有不确定值（[#basic.indet]），
+[:en] no constituent value of scalar type is an indeterminate or erroneous value ([#basic.indet]),
+[:zh_CN] 没有标量类型成分值具有不确定或错误值（[#basic.indet]），
 
 [item]
 [:en] no constituent value of pointer type is a pointer to an immediate function
@@ -1048,8 +1041,7 @@ is potentially evaluated and either:
 an immediate function,
 [:zh_CN@~] 其最内层外围非块作用域是某个直接函数的函数形参作用域，
 [item]
-[:en@~] it is a subexpression of a manifestly constant-evaluated expression or
-conversion, or
+[:en@~] it is a subexpression of a manifestly constant-evaluated expression or conversion, or
 [:zh_CN@~] 它是显然常量求值的表达式或转换的子表达式，或者
 [item]
 [:en@~] its enclosing statement is enclosed ([#stmt.pre]) by the
@@ -1134,8 +1126,7 @@ enclosing non-block scope is [`[^F]][=']s function parameter scope.
 
 [begin:note@tail]
 [:en] Default member initializers used to initialize a base or member subobject
-([#class.base.init]) are considered to be part of the function body
-([#dcl.fct.def.general]).
+([#class.base.init]) are considered to be part of the function body ([#dcl.fct.def.general]).
 [:zh_CN] 用于初始化基类和成员子对象的默认成员初始化式（[#class.base.init]）被
 当做函数体的一部分（[#dcl.fct.def.general]）。
 [end:note]
@@ -1192,7 +1183,7 @@ constexpr T hh() {              // [:en] [`hh<int>] is an immediate function bec
 }
 
 int i = hh<int>();              // [:en] error: [`hh<int>()] is an immediate-escalating expression \
-                                [:zh_CN] 错误：[`hh<int>()] 是直接性扩散函数 \
+                                [:zh_CN] 错误：[`hh<int>()] 是直接性扩散函数
                                 // [:en@~] outside of an immediate-escalating function \
                                 [:zh_CN@~] 外面的直接性扩散表达式
 
@@ -1207,6 +1198,19 @@ constexpr int k(int) {          // [:en] [`k<int>] is not an immediate function 
   return A(42).y;               // [:en@~] constant expression and thus not immediate-escalating \
                                 [:zh_CN@~] 常量表达式因而不是直接性扩散的
 }
+
+constexpr int l(int c) pre(c >= 2) {
+  return (c % 2 == 0) ? c / 0 : c;
+}
+
+const int i0 = l(0);    // [:en] dynamic initialization; contract violation or undefined behavior \
+                        [:zh_CN] 动态初始化；契约违例或者未定义行为
+const int i1 = l(1);    // [:en] static initialization; value of [`1] or contract violation at compile time \
+                        [:zh_CN] 静态初始化；值为 [`1] 或者编译时契约违例
+const int i2 = l(2);    // [:en] dynamic initialization; undefined behavior \
+                        [:zh_CN] 动态初始化；未定义行为
+const int i3 = l(3);    // [:en] static initialization; value of [`3] \
+                        [:zh_CN] 静态初始化；值为 [`3]
 [codeblock:end]
 [end:example]
 
@@ -1227,18 +1231,18 @@ constexpr int k(int) {          // [:en] [`k<int>] is not an immediate function 
 [item]
 [:en@~] the result of substitution into an atomic constraint expression
 to determine whether it is satisfied ([#temp.constr.atomic]), or
-[:zh_CN@~] 向原子约束表达式中进行代换以确定其是否被满足（[#temp.constr.atomic]）
-的结果，或
+[:zh_CN@~] 向原子约束表达式中进行代换以确定其是否被满足（[#temp.constr.atomic]）的结果，或
 [item]
 [:en@~] the initializer of a variable that is usable in constant expressions or
 has constant initialization ([#basic.start.static]).[#:fn]
-[:zh_CN@~] 可被用在常量表达式中，或具有常量初始化的变量的初始化式
-（[#basic.start.static]）[#:fn]。
+[:zh_CN@~] 可被用在常量表达式中，或具有常量初始化的变量的初始化式（[#basic.start.static]）[#:fn]。
 
 [note:foot]
-[:en] Testing this condition can involve a trial evaluation of its initializer
-as described above.
-[:zh_CN] 这个条件的测试可以涉及对其初始化式进行如上所述的平凡求值。
+[:en] Testing this condition can involve a trial evaluation of its initializer,
+with evaluations of contract assertions using the ignore evaluation semantic
+([#basic.contract.eval]), as described above.
+[:zh_CN] 如上所述，这个条件的测试可以涉及对其初始化式进行尝试性求值，其中的
+契约断言评估使用忽略评估语义（[#basic.contract.eval]）。
 [note:end]
 
 [begin:example]
@@ -1250,13 +1254,11 @@ const int a = std::is_constant_evaluated() ? y : 1;     // [:en] dynamic initial
 double z[a];                                            // [:en] error: [`a] is not usable [:zh_CN] 错误：[`a] 不能被用在
                                                         // [:en@~] in constant expressions [:zh_CN@~] 常量表达式值中
 const int b = std::is_constant_evaluated() ? 2 : y;     // [:en] static initialization to 2 [:zh_CN] 静态初始化为 2
-int c = y + (std::is_constant_evaluated() ? 2 : y);     // [:en] dynamic initialization to [`y+y] \
-                                                        [:zh_CN] 动态初始化为 [`y+y]
+int c = y + (std::is_constant_evaluated() ? 2 : y);     // [:en] dynamic initialization to [`y+y] [:zh_CN] 动态初始化为 [`y+y]
 
 constexpr int f() {
   const int n = std::is_constant_evaluated() ? 13 : 17; // [:en] [`n] is 13 [:zh_CN] [`n] 为 13
-  int m = std::is_constant_evaluated() ? 13 : 17;       // [:en] [`m] can be 13 or 17 (see below) \
-                                                        [:zh_CN] [`m] 可为 13 或 17（见下文）
+  int m = std::is_constant_evaluated() ? 13 : 17;       // [:en] [`m] can be 13 or 17 (see below) [:zh_CN] [`m] 可为 13 或 17（见下文）
   char arr[n] = {}; // char[13]
   return m + sizeof(arr);
 }
@@ -1269,8 +1271,7 @@ int q = p + f();                                        // [:en] [`m] is 17 for 
 
 [begin:note]
 [:en] Except for a [~static_assert-message], a manifestly constant-evaluated
-expression is evaluated even in an unevaluated operand
-([#term.unevaluated.operand]).
+expression is evaluated even in an unevaluated operand ([#term.unevaluated.operand]).
 [:zh_CN] 除了 [~static_assert-消息]，显然常量求值表达式即便在免求值操作数中仍被
 求值（[#term.unevaluated.operand]）。
 [end:note]
@@ -1312,8 +1313,7 @@ expression is value-dependent ([#temp.dep.constexpr]).
 [note:end]
 
 [item]
-[:en] a potentially-evaluated subexpression ([#intro.execution]) of one of the
-above.
+[:en] a potentially-evaluated subexpression ([#intro.execution]) of one of the above.
 [:zh_CN] 以上各项之一的潜在求值子表达式（[#intro.execution]）。
 [list:end]
 
@@ -1333,7 +1333,6 @@ that is potentially constant evaluated, or
 [:zh_CN] 被潜在常量求值的表达式所指名（[#basic.def.odr]）的 constexpr 函数，或者
 
 [item]
-[:en] a potentially-constant variable named by a potentially constant evaluated
-expression.
+[:en] a potentially-constant variable named by a potentially constant evaluated expression.
 [:zh_CN] 被潜在常量求值表达式所指名的潜在常量变量。
 [list:end]

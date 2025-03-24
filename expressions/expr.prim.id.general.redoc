@@ -12,11 +12,9 @@
 [syntax:end]
 
 [para]
-[:en]
-[%name] [%id-expression]
+[:en] [%name] [%id-expression]
 An [~id-expression] is a restricted form of a [~primary-expression].
-[:zh_CN]
-[%名字] [%标识表达式]
+[:zh_CN] [%名字] [%标识表达式]
 [~标识表达式]是[~初等表达式]的一种受限形式。
 
 [begin:note]
@@ -31,22 +29,25 @@ class [`C] at a point where the current class ([#expr.prim.this]) is [`X] and
 某个类 [`C] 的非静态非类型成员，并且
 [list]
 [item]
-[:en@~] [$E] is potentially evaluated or [`C] is [`X] or a base class of [`X],
-and
+[:en@~] [$E] is potentially evaluated or [`C] is [`X] or a base class of [`X], and
 [:zh_CN@~] [$E] 潜在求值或 [`C] 是 [`X] 或 [`X] 的基类，并且
 [item]
-[:en@~] [$E] is not the [~id-expression] of a class member access expression
-([#expr.ref]), and
+[:en@~] [$E] is not the [~id-expression] of a class member access expression ([#expr.ref]), and
 [:zh_CN@~] [$E] 不是类成员访问表达式的[~标识表达式]（[#expr.ref]），并且
 [item]
 [:en@~] if [$E] is a [~qualified-id], [$E] is not the un-parenthesized operand
 of the unary [`&] operator ([#expr.unary.op]),
-[:zh_CN@~] 若 [$E] 是[~限定标识]，则 [$E] 不是一元 [`&] 运算符的不带括号的操作数
-（[#expr.unary.op]），
+[:zh_CN@~] 若 [$E] 是[~限定标识]，则 [$E] 不是一元 [`&] 运算符的不带括号的操作数（[#expr.unary.op]），
 [list:end]
 [:en@~] the [~id-expression] is transformed into a class member access expression
 using [`(*this)] as the object expression.
 [:zh_CN@~] 则该[~标识表达式]被变换为使用 [`(*this)] 为对象表达式的类成员访问表达式。
+
+[:en] If this transformation occurs in the predicate of a precondition assertion
+of a constructor of [`X] or a postcondition assertion of a destructor of [`X],
+the expression is ill-formed.
+[:zh_CN] 如果这种变换发生于 [`X] 的构造函数的置条件断言或 [`X] 的析构函数的
+后条件断言的谓词中，则表达式非良构。
 
 [begin:note]
 [:en] If [`C] is not [`X] or a base class of [`X], the class member access
@@ -55,19 +56,27 @@ expression is ill-formed.
 
 [:en] Also, if the [~id-expression] occurs within a static or explicit object
 member function, the class member access is ill-formed.
-[:zh_CN] 而且，如果该[~标识表达式]出现于静态或显式对象成员函数之内，则类成员访问
-非良构。
+[:zh_CN] 而且，如果该[~标识表达式]出现于静态或显式对象成员函数之内，则类成员访问非良构。
 [end:note]
 
-[:en] This transformation does not apply in the template definition context
-([#temp.dep.type]).
+[:en] This transformation does not apply in the template definition context ([#temp.dep.type]).
 [:zh_CN] 在模板定义式的语境中不适用这种变换（[#temp.dep.type]）。
+
+[begin:example]
+[codeblock]
+struct C {
+  bool b;
+  C() pre(b)                // [:en] error [:zh_CN] 错误
+      pre(&this->b)         // OK
+      pre(sizeof(b) > 0);   // [:en] OK, [`b] is not potentially evaluated. [:zh_CN] OK，[`b] 不潜在求值。
+};
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] If an [~id-expression] [$E] denotes a member [$M] of an anonymous union
 ([#class.union.anon]) [$U]:
-[:zh_CN] 如果[~标识表达式] [$E] 代表某个匿名联合体（[#class.union.anon]）[$U] 的
-成员 [$M]：
+[:zh_CN] 如果[~标识表达式] [$E] 代表某个匿名联合体（[#class.union.anon]）[$U] 的成员 [$M]：
 
 [list]
 [item]
@@ -78,16 +87,14 @@ transformation to a class member access expression).
 一个成员进行涉指（经过任何到类成员访问表达式的隐式变换之后）。
 
 [begin:example]
-[:en] [`o.x] is interpreted as [`o.[$u].x], where [$u] names the anonymous union
-member.
+[:en] [`o.x] is interpreted as [`o.[$u].x], where [$u] names the anonymous union member.
 [:zh_CN] [`o.x] 被判读为 [`o.[$u].x]，其中 [$u] 指名匿名联合体成员。
 [end:example]
 
 [item]
 [:en] Otherwise, [$E] is interpreted as a class member access ([#expr.ref]) that
 designates the member subobject [$M] of the anonymous union variable for [$U].
-[:zh_CN] 否则，[$E] 被判读为代表匿名联合体变量 [$U] 的成员子对象 [$M] 的
-类成员访问（[#expr.ref]）。
+[:zh_CN] 否则，[$E] 被判读为代表匿名联合体变量 [$U] 的成员子对象 [$M] 的类成员访问（[#expr.ref]）。
 
 [begin:note]
 [:en] Under this interpretation, [$E] no longer denotes a non-static data member.
@@ -95,8 +102,7 @@ designates the member subobject [$M] of the anonymous union variable for [$U].
 [end:note]
 
 [begin:example]
-[:en] [`N::x] is interpreted as [`N::[$u].x], where [$u] names the anonymous
-union variable.
+[:en] [`N::x] is interpreted as [`N::[$u].x], where [$u] names the anonymous union variable.
 [:zh_CN] [`N::x] 被判读为 [`N::[$u].x]，其中 [$u] 指名匿名联合体变量。
 [end:example]
 [list:end]
@@ -104,8 +110,7 @@ union variable.
 [para]
 [:en] An [~id-expression] that denotes a non-static data member or implicit
 object member function of a class can only be used:
-[:zh_CN] 代表类的非静态数据成员或隐式对象成员函数的[~标识表达式]，仅可按如下方式
-使用：
+[:zh_CN] 代表类的非静态数据成员或隐式对象成员函数的[~标识表达式]，仅可按如下方式使用：
 
 [list]
 [item]
@@ -136,21 +141,16 @@ int j = sizeof(S::m + 42);      // OK
 [list:end]
 
 [para]
-[:en]
-For an [~id-expression] that denotes an overload set, overload resolution is
+[:en] For an [~id-expression] that denotes an overload set, overload resolution is
 performed to select a unique function ([#over.match], [#over.over]).
-[:zh_CN]
-对于代表某个重载集合的[~标识表达式]，实施重载决议以选出唯一的函数（[#over.match]，
-[#over.over]）。
+[:zh_CN] 对于代表某个重载集合的[~标识表达式]，实施重载决议以选出唯一的函数（[#over.match]，[#over.over]）。
 
 [begin:note]
-[:en]
-A program cannot refer to a function with a trailing [~requires-clause] whose
-[~constraint-expression] is not satisfied, because such functions are never
+[:en] A program cannot refer to a function with a trailing [~requires-clause]
+whose [~constraint-expression] is not satisfied, because such functions are never
 selected by overload resolution.
-[:zh_CN]
-程序不能涉指带有尾部 [~requires-子句]且其[~约束表达式]未能满足的函数，因为这种
-函数永不会被重载决议所选择。
+[:zh_CN] 程序不能涉指带有尾部 [~requires-子句]且其[~约束表达式]未能满足的函数，
+因为这种函数永不会被重载决议所选择。
 
 [begin:example]
 [codeblock]
@@ -159,8 +159,7 @@ template<typename T> struct A {
 };
 
 void g() {
-  A<int>::f(0);                         // [:en] error: cannot call [`f] \
-                                        [:zh_CN] 错误：不能调用 [`f]
+  A<int>::f(0);                         // [:en] error: cannot call [`f] [:zh_CN] 错误：不能调用 [`f]
   void (*p1)(int) = A<int>::f;          // [:en] error: cannot take the address of [`f] \
                                         [:zh_CN] 错误：不能获取 [`f] 的地址
   decltype(A<int>::f)* p2 = nullptr;    // [:en] error: the type [`decltype(A<int>::f)] is invalid \
