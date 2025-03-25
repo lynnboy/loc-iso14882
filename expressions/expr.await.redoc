@@ -8,16 +8,13 @@
 [%[`co_await]]
 
 [para]
-[:en]
-The [`:key co_await] expression is used to suspend evaluation of a coroutine
+[:en] The [`:key co_await] expression is used to suspend evaluation of a coroutine
 ([#dcl.fct.def.coroutine]) while awaiting completion of the computation
 represented by the operand expression.
-[:zh_CN]
-[`:key co_await] 表达式用于暂停协程（[#dcl.fct.def.coroutine]）的执行，等待由其
-操作数表达式所表示的运算完成。
+[:zh_CN] [`:key co_await] 表达式用于暂停协程（[#dcl.fct.def.coroutine]）的执行，
+等待由其操作数表达式所表示的运算完成。
 
-[:en] Suspending the evaluation of a coroutine transfers control to its caller
-or resumer.
+[:en] Suspending the evaluation of a coroutine transfers control to its caller or resumer.
 [:zh_CN] 暂停协程的执行并将控制转移到其调用方或恢复方。
 
 [syntax]
@@ -33,246 +30,178 @@ expression within the [~compound-statement] of a [~function-body] or
 [:zh_CN] [~等待表达式]只能在[~函数体]或 [~lambda-表达式]的[~复合语句]中作为
 潜在求值表达式出现，两种情况下都应处于[~处理器]（[#except.pre]）之外。
 
-[:en]
-In a [~declaration-statement] or in the [~simple-declaration] (if any) of an
+[:en] In a [~declaration-statement] or in the [~simple-declaration] (if any) of an
 [~init-statement], an [~await-expression] shall appear only in an [~initializer]
 of that [~declaration-statement] or [~simple-declaration].
-[:zh_CN]
-在[~声明语句]或者[~初始化语句]的[~简单声明式]（如果有）中，[~等待表达式]只能
-出现于该[~声明语句]或[~简单声明式]的某个[~初始化式]之中。
+[:zh_CN] 在[~声明语句]或者[~初始化语句]的[~简单声明式]（如果有）中，[~等待表达式]
+只能出现于该[~声明语句]或[~简单声明式]的某个[~初始化式]之中。
 
-[:en]
-An [~await-expression] shall not appear in a default argument ([#dcl.fct.default]).
-[:zh_CN]
-[~等待表达式]不能在默认实参（[#dcl.fct.default]）中出现。
+[:en] An [~await-expression] shall not appear in a default argument ([#dcl.fct.default]).
+[:zh_CN] [~等待表达式]不能在默认实参（[#dcl.fct.default]）中出现。
 
-[:en]
-An [~await-expression] shall not appear in the initializer of a block variable
+[:en] An [~await-expression] shall not appear in the initializer of a block variable
 with static or thread storage duration.
-[:zh_CN]
-[~等待表达式]不能在具有静态或线程存储期的块变量的初始化式中出现。
+[:zh_CN] [~等待表达式]不能在具有静态或线程存储期的块变量的初始化式中出现。
 
-[:en]
-A context within a function where an [~await-expression] can appear is called a
+[:en] An [~await-expression] shall not be a potentially-evaluated subexpression
+of the predicate of a contract assertion ([#basic.contract]).
+[:zh_CN] [~等待表达式]不能是契约断言（[#basic.contract]）的谓词的潜在求值子表达式。
+
+[:en] A context within a function where an [~await-expression] can appear is called a
 [+:% suspension context] of the function.
-[:zh_CN]
-函数中可以出现[~等待表达式]的语境，被称为该函数的[+:% 暂停语境]。
+[:zh_CN] 函数中可以出现[~等待表达式]的语境，被称为该函数的[+:% 暂停语境]。
 
 [para]
-[:en]
-Evaluation of an [~await-expression] involves the following auxiliary types,
+[:en] Evaluation of an [~await-expression] involves the following auxiliary types,
 expressions, and objects:
-[:zh_CN]
-[~等待表达式]的求值涉及到以下各个辅助类型、表达式和对象：
+[:zh_CN] [~等待表达式]的求值涉及到以下各个辅助类型、表达式和对象：
 
 [list]
 [item]
-[:en]
-[^p] is an lvalue naming the promise object ([#dcl.fct.def.coroutine]) of the
-enclosing coroutine and [`P] is the type of that object.
-[:zh_CN]
-[^p] 为指名外围协程的承诺对象（[#dcl.fct.def.coroutine]）的左值，[`P] 为该对象的
-类型。
+[:en] [^p] is an lvalue naming the promise object ([#dcl.fct.def.coroutine]) of
+the enclosing coroutine and [`P] is the type of that object.
+[:zh_CN] [^p] 为指名外围协程的承诺对象（[#dcl.fct.def.coroutine]）的左值，
+[`P] 为该对象的类型。
 
 [item]
-[:en]
-Unless the [~await-expression] was implicitly produced by a [~yield-expression]
+[:en] Unless the [~await-expression] was implicitly produced by a [~yield-expression]
 ([#expr.yield]), an initial await expression, or a final await expression
 ([#dcl.fct.def.coroutine]), a search is performed for the name [`await_transform]
 in the scope of [`P] ([#class.member.lookup]).
-[:zh_CN]
-除非[~等待表达式]是由一个[~产出表达式]（[#expr.yield]），初始等待表达式，或最终
-等的表达式（[#dcl.fct.def.coroutine]）所隐含产生的，否则在 [`P] 的作用域中对名字
-[`await_transform] 进行搜索（[#class.member.lookup]）。
+[:zh_CN] 除非[~等待表达式]是由一个[~产出表达式]（[#expr.yield]），初始等待表达式，
+或最终等的表达式（[#dcl.fct.def.coroutine]）所隐含产生的，否则在 [`P] 的作用域中
+对名字 [`await_transform] 进行搜索（[#class.member.lookup]）。
 
-[:en]
-If this search is performed and finds at least one declaration, then [^a] is
-[^p][`.await_transform(][~cast-expression][`)]; otherwise, [^a] is the
-[~cast-expression].
+[:en] If this search is performed and finds at least one declaration, then [^a] is
+[^p][`.await_transform(][~cast-expression][`)]; otherwise, [^a] is the [~cast-expression].
 [:zh_CN] 如果实施了这次搜索且找到了至少一个声明式，则 [^a] 为
 [^p][`.await_transform(][~cast-expression][`)]；否则 [^a] 为该[~转型表达式]。
 
 [item]
-[:en]
-[^o] is determined by enumerating the applicable
-[`[`:key operator] [`:key co_await]] functions for an argument [^a]
-([#over.match.oper]), and choosing the best one through overload resolution
-([#over.match]).
-[:zh_CN]
-[^o] 的确定方法是：列举出可用于一个 [^a] 实参的
+[:en] [^o] is determined by enumerating the applicable
+[`[`:key operator] [`:key co_await]] functions for an argument [^a] ([#over.match.oper]),
+and choosing the best one through overload resolution ([#over.match]).
+[:zh_CN] [^o] 的确定方法是：列举出可用于一个 [^a] 实参的
 [`[`:key operator] [`:key co_await]] 函数（[#over.match.oper]），并通过重载决议
 选择其中最佳的一个（[#over.match]）。
 
-[:en]
-If overload resolution is ambiguous, the program is ill-formed.
-[:zh_CN]
-如果重载决议有歧义，则程序非良构。
+[:en] If overload resolution is ambiguous, the program is ill-formed.
+[:zh_CN] 如果重载决议有歧义，则程序非良构。
 
-[:en]
-If no viable functions are found, [^o] is [^a].
-[:zh_CN]
-如果未能找到可行函数，则 [^o] 为 [^a]。
+[:en] If no viable functions are found, [^o] is [^a].
+[:zh_CN] 如果未能找到可行函数，则 [^o] 为 [^a]。
 
-[:en]
-Otherwise, [^o] is a call to the selected function with the argument [^a].
-[:zh_CN]
-否则，[^o] 为以 [^a] 为实参对所选中的函数的调用。
+[:en] Otherwise, [^o] is a call to the selected function with the argument [^a].
+[:zh_CN] 否则，[^o] 为以 [^a] 为实参对所选中的函数的调用。
 
-[:en]
-If [^o] would be a prvalue, the temporary materialization conversion
+[:en] If [^o] would be a prvalue, the temporary materialization conversion
 ([#conv.rval]) is applied.
-[:zh_CN]
-如果 [^o] 是纯右值，则实施临时对象实质化转换（[#conv.rval]）。
+[:zh_CN] 如果 [^o] 是纯右值，则实施临时对象实质化转换（[#conv.rval]）。
 
 [item]
-[:en]
-[^e] is an lvalue referring to the result of evaluating the (possibly-converted)
-[^o].
-[:zh_CN]
-[^e] 是指代（可能经转换的）[^o] 的求值结果的左值。
+[:en] [^e] is an lvalue referring to the result of evaluating the (possibly-converted) [^o].
+[:zh_CN] [^e] 是指代（可能经转换的）[^o] 的求值结果的左值。
 
 [item]
 [/% FIXME: h needs to be an expression so we can use it as an argument
 % to await_suspend. What should its value category be?
 % Don't forget to remove "and objects" from the intro sentence when
 % this is fixed./]
-[:en]
-[^h] is an object of type [`std::coroutine_handle<P>] referring to the enclosing
-coroutine.
-[:zh_CN]
-[^h] 是代表其外围协程的 [`std::coroutine_handle<P>] 类型的对象。
+[:en] [^h] is an object of type [`std::coroutine_handle<P>] referring to the
+enclosing coroutine.
+[:zh_CN] [^h] 是代表其外围协程的 [`std::coroutine_handle<P>] 类型的对象。
 
 [item]
-[:en]
-[^await-ready] is the expression [^e][`.await_ready()], contextually converted
-to [`bool].
-[:zh_CN]
-[*await-ready] 是表达式 [^e][`.await_ready()]，并按语境转换为 [`bool]。
+[:en] [^await-ready] is the expression [^e][`.await_ready()], contextually converted to [`bool].
+[:zh_CN] [*await-ready] 是表达式 [^e][`.await_ready()]，并按语境转换为 [`bool]。
 
 [item]
-[:en]
-[^await-suspend] is the expression [^e][`.await_suspend(][^h][`)], which shall
-be a prvalue of type [`:key void], [`:key bool], or [`std::coroutine_handle<Z>]
+[:en] [^await-suspend] is the expression [^e][`.await_suspend(][^h][`)], which
+shall be a prvalue of type [`:key void], [`:key bool], or [`std::coroutine_handle<Z>]
 for some type [`Z].
-[:zh_CN]
-[^await-suspend] 是表达式 [^e][`.await_suspend(][^h][`)]，它应当为类型
-[`:key void]，[`:key bool]，或（对于某个类型 [`Z] 的）[`std::coroutine_handle<Z>]
-的纯右值。
+[:zh_CN] [^await-suspend] 是表达式 [^e][`.await_suspend(][^h][`)]，它应当为类型
+[`:key void]，[`:key bool]，或（对于某个类型 [`Z] 的）[`std::coroutine_handle<Z>] 的纯右值。
 
 [item]
-[:en]
-[^await-resume] is the expression [^e][`.await_resume()].
-[:zh_CN]
-[^await-resume] 是表达式 [^e][`.await_resume()]。
+[:en] [^await-resume] is the expression [^e][`.await_resume()].
+[:zh_CN] [^await-resume] 是表达式 [^e][`.await_resume()]。
 [list:end]
 
 [para]
-[:en]
-The [~await-expression] has the same type and value category as the
+[:en] The [~await-expression] has the same type and value category as the
 [^await-resume] expression.
-[:zh_CN]
-[~等待表达式]与表达式 [^await-resume] 具有相同的类型和值类别。
+[:zh_CN] [~等待表达式]与表达式 [^await-resume] 具有相同的类型和值类别。
 
 [para]
-[:en]
-The [~await-expression] evaluates the (possibly-converted) [^o] expression and
-the [^await-ready] expression, then:
-[:zh_CN]
-[~等待表达式]对（可能经转换的）表达式 [^o] 和表达式 [^await-ready] 求值，然后：
+[:en] The [~await-expression] evaluates the (possibly-converted) [^o] expression
+and the [^await-ready] expression, then:
+[:zh_CN] [~等待表达式]对（可能经转换的）表达式 [^o] 和表达式 [^await-ready] 求值，然后：
 
 [list]
 [item]
-[:en]
-If the result of [^await-ready] is [`:key false], the coroutine is considered
-suspended.
-[:zh_CN]
-如果 [^await-ready] 的结果为 [`:key false]，则认为协程已暂停。
+[:en] If the result of [^await-ready] is [`:key false], the coroutine is considered suspended.
+[:zh_CN] 如果 [^await-ready] 的结果为 [`:key false]，则认为协程已暂停。
 
-[:en]
-Then:
-[:zh_CN]
-然后：
+[:en] Then:
+[:zh_CN] 然后：
 
 [list]
 [item]
-[:en]
-If the type of [^await-suspend] is [`std::coroutine_handle<Z>],
+[:en] If the type of [^await-suspend] is [`std::coroutine_handle<Z>],
 [^await-suspend][`.resume()] is evaluated.
-[:zh_CN]
-如果 [^await-suspend] 的类型为 [`std::coroutine_handle<Z>]，则求值
+[:zh_CN] 如果 [^await-suspend] 的类型为 [`std::coroutine_handle<Z>]，则求值
 [^await-suspend][`.resume()]。
 
 [begin:note]
-[:en]
-This resumes the coroutine referred to by the result of [^await-suspend].
-[:zh_CN]
-这将恢复 [^await-suspend] 的结果所代表的协程。
+[:en] This resumes the coroutine referred to by the result of [^await-suspend].
+[:zh_CN] 这将恢复 [^await-suspend] 的结果所代表的协程。
 
-[:en]
-Any number of coroutines can be successively resumed in this fashion, eventually
-returning control flow to the current coroutine caller or resumer
-([#dcl.fct.def.coroutine]).
-[:zh_CN]
-可以以这种方式连续恢复任意数量的协程，直到最终将控制返回给当前协程调用方或恢复方
-（[#dcl.fct.def.coroutine]）。
+[:en] Any number of coroutines can be successively resumed in this fashion, eventually
+returning control flow to the current coroutine caller or resumer ([#dcl.fct.def.coroutine]).
+[:zh_CN] 可以以这种方式连续恢复任意数量的协程，直到最终将控制返回给当前协程调用方
+或恢复方（[#dcl.fct.def.coroutine]）。
 [end:note]
 
 [item]
-[:en]
-Otherwise, if the type of [^await-suspend] is [`:key bool], [^await-suspend] is
-evaluated, and the coroutine is resumed if the result is [`:key false].
-[:zh_CN]
-否则，如果 [^await-suspend] 的类型为 [`:key bool]，则求值 [^await-suspend]，并且
-当其结果为 [`:key false] 时该协程被恢复。
+[:en] Otherwise, if the type of [^await-suspend] is [`:key bool], [^await-suspend]
+is evaluated, and the coroutine is resumed if the result is [`:key false].
+[:zh_CN] 否则，如果 [^await-suspend] 的类型为 [`:key bool]，则求值 [^await-suspend]，
+并且当其结果为 [`:key false] 时该协程被恢复。
 
 [item]
-[:en]
-Otherwise, [^await-suspend] is evaluated.
-[:zh_CN]
-否则，求值 [^await-suspend]。
+[:en] Otherwise, [^await-suspend] is evaluated.
+[:zh_CN] 否则，求值 [^await-suspend]。
 [list:end]
 
-[:en]
-If the evaluation of [^await-suspend] exits via an exception, the exception is
-caught, the coroutine is resumed, and the exception is immediately rethrown
-([#except.throw]).
-[:zh_CN]
-如果对 [^await-suspend] 的求值由于抛出异常而退出，则捕获该异常，恢复协程，并立即
-重新抛出该异常（[#except.throw]）。
+[:en] If the evaluation of [^await-suspend] exits via an exception, the exception is
+caught, the coroutine is resumed, and the exception is immediately rethrown ([#except.throw]).
+[:zh_CN] 如果对 [^await-suspend] 的求值由于抛出异常而退出，则捕获该异常，恢复协程，
+并立即重新抛出该异常（[#except.throw]）。
 
-[:en]
-Otherwise, control flow returns to the current coroutine caller or resumer
+[:en] Otherwise, control flow returns to the current coroutine caller or resumer
 ([#dcl.fct.def.coroutine]) without exiting any scopes ([#stmt.jump]).
-[:zh_CN]
-否则，将控制返回给当前协程的调用方或恢复方（[#dcl.fct.def.coroutine]）而不退出
-任何作用域（[#stmt.jump]）。
+[:zh_CN] 否则，将控制返回给当前协程的调用方或恢复方（[#dcl.fct.def.coroutine]）
+而不退出任何作用域（[#stmt.jump]）。
 
-[:en]
-[%coroutine[!suspend point]]
+[:en] [%coroutine[!suspend point]]
 The point in the coroutine immediately prior to control returning to its caller
 or resumer is a coroutine [+suspend point].
-[:zh_CN]
-[%协程[!暂停点]]
+[:zh_CN] [%协程[!暂停点]]
 协程中紧接将控制返回给其调用方或恢复方之前的位置，为协程[+暂停点]。
 
 [item]
-[:en]
-If the result of [^await-ready] is [`:key true], or when the coroutine is
+[:en] If the result of [^await-ready] is [`:key true], or when the coroutine is
 resumed other than by rethrowing an exception from [^await-suspend], the
 [^await-resume] expression is evaluated, and its result is the result of the
 [~await-expression].
-[:zh_CN]
-如果 [^await-ready] 的结果为 [`:key true]，或者在协程除了因为从 [^await-suspend]
-重新抛出异常而恢复时，都对表达式 [^await-resume] 求值，其结果就是该[~等待表达式]
-的结果。
+[:zh_CN] 如果 [^await-ready] 的结果为 [`:key true]，或者在协程除了因为从
+[^await-suspend] 重新抛出异常而恢复时，都对表达式 [^await-resume] 求值，其结果
+就是该[~等待表达式]的结果。
 [list:end]
 
 [begin:note]
-[:en]
-With respect to sequencing, an [~await-expression] is indivisible
-([#intro.execution]).
-[:zh_CN]
-在顺序性方面，[~await-表达式]是不可分的（[#intro.execution]）。
+[:en] With respect to sequencing, an [~await-expression] is indivisible ([#intro.execution]).
+[:zh_CN] 在顺序性方面，[~await-表达式]是不可分的（[#intro.execution]）。
 [end:note]
 
 [para]

@@ -4,7 +4,7 @@
 ]
 
 [codeblock:synopsis]
-namespace std {
+namespace std::datapar {
   template<class T, class Abi> class basic_simd {
   public:
     using value_type = T;
@@ -17,14 +17,16 @@ namespace std {
 
     // [:en] [#simd.ctor], [`basic_simd] constructors \
     [:zh_CN] [#simd.ctor]，[`basic_simd] 构造函数
-    template<class U> constexpr basic_simd(U&& value) noexcept;
+    template<class U> constexpr explicit([[redoc("[=seebelow]")]]) basic_simd(U&& value) noexcept;
     template<class U, class UAbi>
       constexpr explicit([[redoc("[=seebelow]")]]) basic_simd(const basic_simd<U, UAbi>&) noexcept;
     template<class G> constexpr explicit basic_simd(G&& gen) noexcept;
     template<class R, class... Flags>
-      constexpr basic_simd(R&& range, simd_flags<Flags...> = {});
+      constexpr basic_simd(R&& range, flags<Flags...> = {});
     template<class R, class... Flags>
-      constexpr basic_simd(R&& range, const mask_type& mask, simd_flags<Flags...> = {});
+      constexpr basic_simd(R&& range, const mask_type& mask, flags<Flags...> = {});
+    template<[[redoc("*:c>")]]simd-floating-point V>
+      constexpr explicit([[redoc("[=seebelow]")]]) basic_simd(const V& reals, const V& imags = {}) noexcept;
 
     // [:en] [#simd.subscr], [`basic_simd] subscript operators \
     [:zh_CN] [#simd.subscr]，[`basic_simd] 下标运算符
@@ -80,6 +82,15 @@ namespace std {
     friend constexpr mask_type operator>(const basic_simd&, const basic_simd&) noexcept;
     friend constexpr mask_type operator<(const basic_simd&, const basic_simd&) noexcept;
 
+    // [:en] [#simd.complex.access], [`basic_simd] complex-value accessors \
+    [:zh_CN] [#simd.complex.access]，[`basic_simd] 复数值访问函数
+    constexpr auto real() const noexcept;
+    constexpr auto imag() const noexcept;
+    template<[[redoc("*:c>")]]simd-floating-point V>
+      constexpr void real(const V& v) noexcept;
+    template<[[redoc("*:c>")]]simd-floating-point V>
+      constexpr void imag(const V& v) noexcept;
+
     // [:en] [#simd.cond], [`basic_simd] exposition only conditional operators \
     [:zh_CN] [#simd.cond]，[`basic_simd] 仅用于阐释的条件运算符
     friend constexpr basic_simd [[redoc("*>")]]simd-select-impl( // [=expos]
@@ -112,26 +123,29 @@ specializations] if such a specialization is enabled.
 [:zh_CN@~] 否则，这个特例是否被启用是[?impldef 启用的 [`basic_simd<T, Abi>] 特例的集合]。
 [list:end]
 
-[:en] If [`basic_simd<T, Abi>] is disabled, the specialization has a
+[para:~]
+[:en] If [`basic_simd<T, Abi>] is disabled, then the specialization has a
 deleted default constructor, deleted destructor, deleted copy constructor, and
 deleted copy assignment.
 [:zh_CN] 如果 [`basic_simd<T, Abi>] 被禁用，那么该特例具有弃置的默认构造函数、
 弃置的析构函数、弃置的复制构造函数和弃置的复制赋值。
 
-[:en] In addition only the [`value_type], [`abi_type], and [`mask_type] members
-are present.
+[:en] In addition only the [`value_type], [`abi_type], and [`mask_type] members are present.
 [:zh_CN] 此外，仅提供成员 [`value_type]、[`abi_type] 和 [`mask_type]。
 
-[:en] If [`basic_simd<T, Abi>] is enabled, [`basic_simd<T, Abi>] is
-trivially copyable.
-[:zh_CN] 如果 [`basic_simd<T, Abi>] 被启用，那么 [`basic_simd<T, Abi>] 可平凡复制。
+[para:~]
+[:en] If [`basic_simd<T, Abi>] is enabled, then [`basic_simd<T, Abi>] is trivially
+copyable, default-initialization of an object of such a type default-initializes all
+elements, and value-initialization value-initializes all elements ([#dcl.init.general]).
+[:zh_CN] 如果 [`basic_simd<T, Abi>] 被启用，那么 [`basic_simd<T, Abi>] 可平凡复制，
+这种类型对象的默认初始化会默认初始化其所有元素，其值初始化会值初始化其所有元素（[#dcl.init.general]）。
 
 [para:recommended]
-[:en] Implementations should support explicit conversions between specializations
+[:en] Implementations should support implicit conversions between specializations
 of [`basic_simd] and appropriate [?impldef conversions of [`basic_simd]
 from/to implementation-specific vector types] types.
 [:zh_CN] 各实现最好支持 [`basic_simd] 特例与适当的[?impldef [`basic_simd] 与
-特定于实现的向量类型之间的转换]类型之间的显式转换。
+特定于实现的向量类型之间的转换]类型之间的隐式转换。
 
 [begin:note]
 [:en] Appropriate types are non-standard vector types which are available in the

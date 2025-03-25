@@ -99,7 +99,7 @@ def customlabel(instruction, args, refid, content, context):
 def supercite(_1):
     return '<sup>' + cite(_1) + '</sup>'
 
-# locations
+# locations:
 @applyTo(['%'])
 def indextext(_1, **kw) -> str:
     return index[generalindex].add(_1)
@@ -167,6 +167,10 @@ def libglobal(_1:str): return indexlibraryglobal(_1) + _1
 def libmember(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
 @applyTo(['?libspec'], within=['codeblock'])
 def libspec(_1:str, _2:str): return indexlibrarymember(_1, _2) + _1
+@applyTo(['`:m'])
+def libmacro(_1:str): return indexlibraryglobal(_1) + tcode(_1)
+@applyTo(['`:libxmacro'], within=['codeblock'])
+def libxmacro(_1:str): return indexlibraryglobal(idxxname(_1)) + xname(_1)
 
 # index for library headers
 @applyTo(['?libheader'])
@@ -263,6 +267,7 @@ def requires(_1:str): return Fundesc(text('Requires'))
 def constraints(_1:str): return Fundesc(text('Constraints'))
 def mandates(_1:str): return Fundesc(text('Mandates'))
 def expects(_1:str): return Fundesc(text('Preconditions'))
+def hardexpects(_1:str): return Fundesc(text('Hardened preconditions'))
 def effects(_1:str): return Fundesc(text('Effects'))
 def ensures(_1:str): return Fundesc(text('Postconditions'))
 def returns(_1:str): return Fundesc(text('Returns'))
@@ -273,7 +278,6 @@ def remarks(_1:str): return Fundesc(text('Remarks'))
 def errors(_1:str): return Fundesc(text('Error conditions'))
 def sync(_1:str): return Fundesc(text('Synchronization'))
 def implimits(_1:str): return Fundesc(text('Implementation limits'))
-def replaceable(_1:str): return Fundesc(text('Replaceable'))
 def returntype(_1:str): return Fundesc(text('Return type'))
 def cvalue(_1:str): return Fundesc(text('Value'))
 def ctype(_1:str): return Fundesc(text('Type'))
