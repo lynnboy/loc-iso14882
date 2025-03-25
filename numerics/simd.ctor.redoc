@@ -4,7 +4,7 @@
 ]
 
 [codeblock:declaration]
-template<class U> constexpr basic_simd(U&&) noexcept;
+template<class U> constexpr explicit([[redoc("[=seebelow]")]]) basic_simd(U&& value) noexcept;
 [codeblock:end]
 
 [div:description]
@@ -13,17 +13,26 @@ template<class U> constexpr basic_simd(U&&) noexcept;
 [:zh_CN] 令 [`From] 代表类型 [`remove_cvref_t<U>]。
 
 [para:constraints]
-[:en] [`From] satisfies [`convertible_to<value_type>], and either
-[:zh_CN] [`From] 满足 [`convertible_to<value_type>]，并且
+[:en] [`value_type] satisfies [`constructible_from<U>].
+[:zh_CN] [`value_type] 满足 [`constructible_from<U>]。
+
+[para:effects]
+[:en] Initializes each element to the value of the argument after conversion to [`value_type].
+[:zh_CN] 将各个元素初始化为实参转换为 [`value_type] 后的值。
+
+[para:remarks]
+[:en] The expression inside [`explicit] evaluates to [`false] if and only if
+[`U] satisfies [`convertible_to<value_type>], and either
+[:zh_CN] 当且仅当 [`U] 满足 [`convertible_to<value_type>]，并且以下之一成立时，
+[`explicit] 中的表达式求值为 [`false]：
 [list]
+[item]
+[:en] [`From] is not an arithmetic type and does not satisfy [*:c constexpr-wrapper-like], or
+[:zh_CN] [`From] 不是算术类型并且不满足 [*:c constexpr-wrapper-like]，或者
 [item]
 [:en] [`From] is an arithmetic type and the conversion from [`From] to
 [`value_type] is value-preserving ([#simd.general]), or
 [:zh_CN] [`From] 为算术类型且从 [`From] 向 [`value_type] 的转换是保留值的（[#simd.general]），或者
-[item]
-[:en] [`From] is not an arithmetic type and does not satisfy
-[*:c constexpr-wrapper-like], or
-[:zh_CN] [`From] 不是算术类型并且不满足 [*:c constexpr-wrapper-like]，或者
 [item]
 [:en] [`From] satisfies [*:c constexpr-wrapper-like],
 [`remove_const_t<decltype(From::value)>] is an arithmetic type, and
@@ -32,11 +41,6 @@ template<class U> constexpr basic_simd(U&&) noexcept;
 [`remove_const_t<decltype(From::value)>] 是算术类型，并且
 [`From::value] 可以用 [`value_type] 表示。
 [list:end]
-
-[para:effects]
-[:en] Initializes each element to the value of the argument after conversion to
-[`value_type].
-[:zh_CN] 将各个元素初始化为实参转换为 [`value_type] 后的值。
 [div:end]
 
 [codeblock:declaration]
@@ -63,9 +67,8 @@ for all [$i] in the range of [=range(0,size())].
 [:en] the conversion from [`U] to [`value_type] is not value-preserving, or
 [:zh_CN] 从 [`U] 向 [`value_type] 的转换不是保留值的，或者
 [item]
-[:en] both [`U] and [`value_type] are integral types and the integer
-conversion rank ([#conv.rank]) of [`U] is greater than the integer
-conversion rank of [`value_type], or
+[:en] both [`U] and [`value_type] are integral types and the integer conversion rank
+([#conv.rank]) of [`U] is greater than the integer conversion rank of [`value_type], or
 [:zh_CN] [`U] 和 [`value_type] 都是整型类型，且 [`U] 的整数转换等级（[#conv.rank]）
 大于 [`value_type] 的整数转换等级，或者
 [item]
@@ -78,7 +81,7 @@ the floating-point conversion rank of [`value_type].
 [div:end]
 
 [codeblock:declaration]
-template<class G> constexpr explicit basic_simd(G&& gen) noexcept;
+template<class G> constexpr explicit basic_simd(G&& gen);
 [codeblock:end]
 
 [div:description]
@@ -95,8 +98,7 @@ the range of [=range(0,size())].
 都满足 [`convertible_to<value_type>]。
 
 [:en] In addition, for all [$i] in the range of [=range(0,size())], if [`From][$_i]
-is an arithmetic type, conversion from [`From][$_i] to [`value_type]
-is value-preserving.
+is an arithmetic type, conversion from [`From][$_i] to [`value_type] is value-preserving.
 [:zh_CN] 此外，对于范围 [=range(0,size())] 中的所有 [$i]，如果 [`From][$_i]
 是算术类型，则从 [`From][$_i] 向 [`value_type] 的转换是保留值的。
 
@@ -109,22 +111,15 @@ for all [$i] in the range of [=range(0,size())].
 初始化第 [$i] 个元素。
 
 [para:remarks]
-[:en] The calls to [`gen] are unsequenced with respect to each other.
-[:zh_CN] 对 [`gen] 的调用互相之间是无顺序的。
-
-[:en] Vectorization-unsafe ([#algorithms.parallel.defns]) standard library
-functions may not be invoked by [`gen].
-[:zh_CN] [`gen] 不可调用向量化不安全（[#algorithms.parallel.defns]）的标准库函数。
-
-[:en] [`gen] is invoked exactly once for each [$i].
-[:zh_CN] 对于每个 [$i] 都恰好调用一次 [`gen]。
+[:en] [`gen] is invoked exactly once for each [$i], in increasing order of [$i].
+[:zh_CN] 依 [$i] 的增长顺序，对于每个 [$i] 都恰好调用一次 [`gen]。
 [div:end]
 
 [codeblock:declaration]
 template<class R, class... Flags>
-  constexpr basic_simd(R&& r, simd_flags<Flags...> = {});
+  constexpr basic_simd(R&& r, flags<Flags...> = {});
 template<class R, class... Flags>
-  constexpr basic_simd(R&& r, const mask_type& mask, simd_flags<Flags...> = {});
+  constexpr basic_simd(R&& r, const mask_type& mask, flags<Flags...> = {});
 [codeblock:end]
 
 [div:description]
@@ -135,8 +130,8 @@ template<class R, class... Flags>
 [para:constraints]
 [list]
 [item]
-[:en] [`R] models [`ranges::contiguous_range] and [`ranges::sized_range],
-[:zh_CN] [`R] 构成 [`ranges::contiguous_range] 和 [`ranges::sized_range]，
+[:en] [`R] models [`ranges::[`:c contiguous_range]] and [`ranges::[`:c sized_range]],
+[:zh_CN] [`R] 构成 [`ranges::[`:c contiguous_range]] 和 [`ranges::[`:c sized_range]]，
 [item]
 [:en] [`ranges::size(r)] is a constant expression, and
 [:zh_CN] [`ranges::size(r)] 是常量表达式，并且
@@ -151,9 +146,8 @@ template<class R, class... Flags>
 [:en] [`ranges::range_value_t<R>] is a vectorizable type, and
 [:zh_CN] [`ranges::range_value_t<R>] 是可向量化类型，并且
 [item]
-[:en] if the template parameter pack [`Flags] does not contain [*convert-flag],
-then the conversion from [`ranges::range_value_t<R>] to [`value_type] is
-value-preserving.
+[:en] if the template parameter pack [`Flags] does not contain [*convert-flag], then
+the conversion from [`ranges::range_value_t<R>] to [`value_type] is value-preserving.
 [:zh_CN] 如果模板形参包组 [`Flags] 不包含 [*convert-flag]，那么从
 [`ranges::range_value_t<R>] 向 [`value_type] 的转换是保留值的。
 [list:end]
@@ -163,9 +157,9 @@ value-preserving.
 [item]
 [:en] If the template parameter pack [`Flags] contains [*aligned-flag],
 [`ranges::data(range)] points to storage aligned by
-[`simd_alignment_v<basic_simd, ranges::range_value_t<R>>].
+[`alignment_v<basic_simd, ranges::range_value_t<R>>].
 [:zh_CN] 如果模板形参包组 [`Flags] 包含 [*aligned-flag]，那么 [`ranges::data(range)]
-指向按 [`simd_alignment_v<basic_simd, ranges::range_value_t<R>>] 对齐的存储。
+指向按 [`alignment_v<basic_simd, ranges::range_value_t<R>>] 对齐的存储。
 [item]
 [:en] If the template parameter pack [`Flags] contains [`[*overaligned-flag]<N>],
 [`ranges::data(range)] points to storage aligned by [`N].
@@ -191,8 +185,8 @@ template<class R, class... Ts>
 [para:constraints]
 [list]
 [item]
-[:en] [`R] models [`ranges::contiguous_range] and [`ranges::sized_range], and
-[:zh_CN] [`R] 构成 [`ranges::contiguous_range] 和 [`ranges::sized_range]，并且
+[:en] [`R] models [`ranges::[`:c contiguous_range]] and [`ranges::[`:c sized_range]], and
+[:zh_CN] [`R] 构成 [`ranges::[`:c contiguous_range]] 和 [`ranges::[`:c sized_range]]，并且
 [item]
 [:en] [`ranges::size(r)] is a constant expression.
 [:zh_CN] [`ranges::size(r)] 是常量表达式。
@@ -202,4 +196,35 @@ template<class R, class... Ts>
 [:en] The deduced type is equivalent to
 [`simd<ranges::range_value_t<R>, ranges::size(r)>].
 [:zh_CN] 推断的类型等价于 [`simd<ranges::range_value_t<R>, ranges::size(r)>]。
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]simd-floating-point V>
+  constexpr explicit([[redoc("[=seebelow]")]])
+    basic_simd(const V& reals, const V& imags = {}) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`[*:c simd-complex]<basic_simd>] is modeled, and
+[:zh_CN] [`[*:c simd-complex]<basic_simd>] 得以构成，并且
+[item]
+[:en] [`V::size() == size()] is [`true].
+[:zh_CN] [`V::size() == size()] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] Initializes the [$i^\text{th}] element with [`value_type(reals`[[$i]`], imags`[[$i]`])]
+for all [$i] in the range [=range(0,size())].
+[:zh_CN] 对于范围 [=range(0,size())] 中的每个 [$i]，以
+[`value_type(reals`[[$i]`], imags`[[$i]`])] 初始化第 [$i] 个元素。
+
+[para:remarks]
+[:en] The expression inside [`explicit] evaluates to [`false] if and only
+if the floating-point conversion rank of [`T::value_type] is greater than
+or equal to the floating-point conversion rank of [`V::value_type].
+[:zh_CN] 当且仅当 [`T::value_type] 的浮点转换等级大于等于 [`V::value_type]
+的浮点转换等级时，[`explicit] 中的表达式求值为 [`false]。
 [div:end]

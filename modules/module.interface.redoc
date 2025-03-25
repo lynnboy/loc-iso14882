@@ -129,14 +129,12 @@ import "c.h";
 import X;
 export using ::f, ::g, ::h;     // OK
 struct S;
-export using ::S;               // [:en] error: [`S] has module linkage \
-                                [:zh_CN] 错误：[`S] 具有模块连接
+export using ::S;               // [:en] error: [`S] has module linkage [:zh_CN] 错误：[`S] 具有模块连接
 namespace N {
   export int h();
   static int h(int);            // #1
 }
-export using N::h;              // [:en] error: #1 has internal linkage \
-                                [:zh_CN] 错误：#1 具有内部连接
+export using N::h;              // [:en] error: #1 has internal linkage [:zh_CN] 错误：#1 具有内部连接
 [codeblock:end]
 [end:example]
 
@@ -158,9 +156,9 @@ export using T = S;             // [:en] OK, exports name [`T] denoting type [`S
 [para]
 [:en] A redeclaration of an entity [$X] is implicitly exported if [$X] was
 introduced by an exported declaration; otherwise it shall not be exported
-if it is attached to a named module.
+unless it is a named namespace.
 [:zh_CN] 对于某个实体 [$X] 的重复声明式，如果 [$X] 是由某个被导出声明式所引入的，
-则它被隐式导出；否则若它附属于具名模块则它应当不被导出。
+则它被隐式导出；否则，它若不是具名命名空间则不应当被导出。
 
 [begin:example]
 [codeblock]
@@ -171,6 +169,14 @@ export typedef S S;             // [:en] OK, does not redeclare an entity \
                                 [:zh_CN] OK，并未重复声明任何实体
 export struct S;                // [:en] error: exported declaration follows non-exported declaration \
                                 [:zh_CN] 错误：被导出声明式跟在未被导出的声明式之后
+namespace N {                   // [:en] external linkage, attached to global module, not exported \
+                                [:zh_CN] 外部连接，附属于全局模块，不导出
+  void f();
+}
+namespace N {                   // [:en] OK, exported namespace redeclaring non-exported namespace \
+                                [:zh_CN] OK，导出的命名空间再次声明了未导出的命名空间
+  export void g();
+}
 [codeblock:end]
 [end:example]
 
@@ -207,15 +213,13 @@ export void f(S);               // OK
 struct T { };
 export T id(T);                 // OK
 
-export struct A;                // [:en] [`A] exported as incomplete \
-                                [:zh_CN] [`A] 作为不完整类型被导出
+export struct A;                // [:en] [`A] exported as incomplete [:zh_CN] [`A] 作为不完整类型被导出
 
 export auto rootFinder(double a) {
   return [=](double x) { return (x + a/x)/2; };
 }
 
-export const int n = 5;         // [:en] OK, [`n] has external linkage \
-                                [:zh_CN] OK，[`n] 具有外部连接
+export const int n = 5;         // [:en] OK, [`n] has external linkage [:zh_CN] OK，[`n] 具有外部连接
 [codeblock:end]
 
 [:en] Implementation unit of [`M]:
@@ -237,8 +241,7 @@ int main() {
   X::Y y;                       // [:en] OK, [`X::Y] is exported as a complete type \
                                 [:zh_CN] OK，[`X::Y] 作为完整类型被导出
   auto f = rootFinder(2);       // OK
-  return A{45}.value;           // [:en] error: [`A] is incomplete \
-                                [:zh_CN] 错误：[`A] 不完整
+  return A{45}.value;           // [:en] error: [`A] is incomplete [:zh_CN] 错误：[`A] 不完整
 }
 [codeblock:end]
 [end:example]
@@ -257,8 +260,7 @@ export module M;
 int g;
 export namespace N {
   int x;                        // OK
-  using ::g;                    // [:en] error: [`::g] has module linkage \
-                                [:zh_CN] 错误：[`::g] 具有模块连接
+  using ::g;                    // [:en] error: [`::g] has module linkage [:zh_CN] 错误：[`::g] 具有模块连接
 }
 [codeblock:end]
 [end:example]
