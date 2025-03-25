@@ -2182,6 +2182,7 @@ value-dependent                         |值待决     |模板中待决名参与
 value-preserving                        |保留值的
 value representation                    |值表示     |构成对象状态的位的值，排除填充位
 value-initialize                        |值初始化   |默认初始化或零初始化
+valueless                               |无值的     |间接对象`indirect`
 variable                                |变量       |对象或引用，不包括非静态数据成员引用
 variable argument                       |变参，可变实参
 variable argument function-like macro   |变参函数式宏 |`...`，多余实参合并作为一个可变实参来替换`__VA_ARGS__`<br>若存在可变实参，则`__VA_OPT__(xx)`替换为`xx`，否则替换为空

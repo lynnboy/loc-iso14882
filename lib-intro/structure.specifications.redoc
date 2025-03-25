@@ -79,8 +79,7 @@ appropriate):[#:fn]
 ([#over.match]).
 [:zh_CN] 该函数参与重载决议的条件（[#over.match]）。
 [begin:note]
-[:en] Failure to meet such a condition results in the function[=']s silent
-non-viability.
+[:en] Failure to meet such a condition results in the function[=']s silent non-viability.
 [:zh_CN] 无法满足这种条件将导致该函数默默地变为不可行。
 [end:note]
 [begin:example]
@@ -95,44 +94,75 @@ non-viability.
 [begin:example]
 [:en] An implementation can express such a condition via a
 [~constraint-expression] in a [~static_assert-declaration] ([#dcl.pre]).
-[:zh_CN] 实现可以通过 [~static_assert-声明式]（[#dcl.pre]）中的[~约束表达式]来
-表达这种条件。
+[:zh_CN] 实现可以通过 [~static_assert-声明式]（[#dcl.pre]）中的[~约束表达式]来表达这种条件。
 
-[:en] If the diagnostic is to be emitted only after the function has been
-selected by overload resolution, an implementation can express such a condition
-via a [~constraint-expression] ([#temp.constr.decl]) and also define the
-function as deleted.
+[:en] If the diagnostic is to be emitted only after the function has been selected
+by overload resolution, an implementation can express such a condition via a
+[~constraint-expression] ([#temp.constr.decl]) and also define the function as deleted.
 [:zh_CN] 如果需要仅在函数被重载决议选择后给出诊断，则实现可以通过[~约束表达式]来
 表达这种条件（[#temp.constr.decl]），并同时将函数定义为弃置的。
 [end:example]
 
 [item:expects]
-[:en] the conditions that the function assumes to hold whenever it is called;
+[:en] conditions that the function assumes to hold whenever it is called;
 violation of any preconditions results in undefined behavior.
 [:zh_CN] 函数假定每当其被调用时都已满足的条件；违反任何前条件均导致未定义行为。
+
+[begin:example]
+[:en] An implementation can express some such conditions via the use of a
+contract assertion, such as a precondition assertion ([#dcl.contract.func]).
+[:zh_CN] 实现可以通过使用契约断言，如前条件断言（[#dcl.contract.func]）来表达某些这种条件。
+[end:example]
+
+[item:hardexpects]
+[:en] conditions that the function assumes to hold whenever it is called.
+[:zh_CN] 函数假定每当其被调用时都已满足的条件。
+
+[list]
+[item]
+[:en] When invoking the function in a hardened implementation, prior to any
+other observable side effects of the function, one or more contract assertions
+whose predicates are as described in the hardened precondition
+are evaluated with a checking semantic ([#basic.contract.eval]).
+[:zh_CN] 在加固实现中调用该函数时，在该函数的任何其他可观察副作用之前，将使用检查语义
+（[#basic.contract.eval]）评估一个或多个契约断言，其谓词如加固前条件中所述。
+
+[:en] If any of these assertions is evaluated with a non-terminating semantic
+and the contract-violation handler returns, the program has undefined behavior.
+[:zh_CN] 如果这些断言中的任何一个使用非终止语义进行评估，并且契约违例处理器返回，
+则程序具有未定义行为。
+
+[item]
+[:en] When invoking the function in a non-hardened implementation,
+if any hardened precondition is violated, the program has undefined behavior.
+[:zh_CN] 在非加固实现中调用该函数时，如果违反了任何加固前条件，则程序具有未定义行为。
+[list:end]
 
 [item:effects]
 [:en] the actions performed by the function.
 [:zh_CN] 该函数实施的动作。
 
 [item:sync]
-[:en] the synchronization operations ([#intro.multithread]) applicable to the
-function.
+[:en] the synchronization operations ([#intro.multithread]) applicable to the function.
 [:zh_CN] 适用于该函数的同步操作（[#intro.multithread]）。
 
 [item:ensures]
-[:en] the conditions (sometimes temred observable results)
-established by the function.
+[:en] the conditions (sometimes temred observable results) established by the function.
 [:zh_CN] 该函数所建立的条件（有时被称为可观察结果）。
+
+[begin:example]
+[:en] An implementation can express some such conditions via the use of a
+contract assertion, such as a postcondition assertion ([#dcl.contract.func]).
+[:zh_CN] 实现可以通过使用契约断言，如后条件断言（[#dcl.contract.func]）来表达某些这种条件。
+[end:example]
 
 [item:result]
 [:en] for a [~typename-specifier], a description of the named type;
 for an [~expression], a description of the type and value category of the
 expression; the expression is an lvalue if the type is an lvalue reference type,
 an xvalue if the type is an rvalue reference type, and a prvalue otherwise.
-[:zh_CN] 对于 [~typename-说明符]，对所指名类型的描述；对于[~表达式]，对表达式
-类型和值类别的描述；当其类型为左值引用类型时，表达式是左值，当其类型为右值引用类型时
-为临限值，否则为纯右值。
+[:zh_CN] 对于 [~typename-说明符]，对所指名类型的描述；对于[~表达式]，对表达式类型和值类别
+的描述；当其类型为左值引用类型时，表达式是左值，当其类型为右值引用类型时为临限值，否则为纯右值。
 
 [item:returns]
 [:en] a description of the value(s) returned by the function.
@@ -171,22 +201,21 @@ prior to the [+:% equivalent-to] semantics.
 
 [:en] Next, the semantics of the code sequence are determined by the
 [?Fundesc Constraints], [?Fundesc Mandates], [?Fundesc Preconditions],
+[?Fundesc Hardened preconditions],
 [?Fundesc Effects], [?Fundesc Synchronization], [?Fundesc Postconditions],
 [?Fundesc Returns], [?Fundesc Throws], [?Fundesc Complexity], [?Fundesc Remarks],
 and [?Fundesc Error conditions] specified for the function invocations contained
 in the code sequence.
-[:zh_CN] 然后，根据代码序列中包含的各个函数调用所指定的 [?Fundesc 约束]、
-[?Fundesc 必需]、[?Fundesc 前条件]、[?Fundesc 效果]、[?Fundesc 同步]、
+[:zh_CN] 然后，根据代码序列中包含的各个函数调用所指定的 [?Fundesc 约束]、[?Fundesc 必需]、
+[?Fundesc 前条件]、[?Fundesc 加固前条件]、[?Fundesc 效果]、[?Fundesc 同步]、
 [?Fundesc 后条件]、[?Fundesc 返回]、[?Fundesc 抛出]、[?Fundesc 复杂度]、
 [?Fundesc 注解]、和 [?Fundesc 错误条件] 来确定代码序列的语义。
 
 [:en] The value returned from [`F] is specified by [`F][=']s [?Fundesc Returns]
-element, or if [`F] has no [?Fundesc Returns] element, a non-[`:key void] return
-from [`F] is specified by the [`return] statements ([#stmt.return]) in the code
-sequence.
-[:zh_CN] [`F] 的返回值由 [`F] 的 [?Fundesc 返回] 要素指定，或当 [`F] 没有
-[?Fundesc 返回] 要素时，[`F] 的非 [`:key void] 返回值由其代码序列中的 [`return]
-语句（[#stmt.return]）指定。
+element, or if [`F] has no [?Fundesc Returns] element, a non-[`:key void] return from
+[`F] is specified by the [`return] statements ([#stmt.return]) in the code sequence.
+[:zh_CN] [`F] 的返回值由 [`F] 的 [?Fundesc 返回] 要素指定，或当 [`F] 没有[?Fundesc 返回]
+要素时，[`F] 的非 [`:key void] 返回值由其代码序列中的 [`return] 语句（[#stmt.return]）指定。
 
 [:en] If [`F][=']s semantics contains a [?Fundesc Throws],
 [?Fundesc Postconditions], or [?Fundesc Complexity] element, then that
@@ -197,8 +226,7 @@ supersedes any occurrences of that element in the code sequence.
 [para]
 [:en] For non-reserved replacement and handler functions, [#support] specifies
 two behaviors for the functions in question: their required and default behavior.
-[:zh_CN] 针对非保留的替代函数和处理函数，[#support] 中指定了函数的两种行为：
-预期行为和缺省行为。
+[:zh_CN] 针对非保留的替代函数和处理函数，[#support] 中指定了函数的两种行为：预期行为和缺省行为。
 
 [:en] The [+default behavior[%behavior[!default]]] describes a function
 definition provided by the implementation.
@@ -224,8 +252,7 @@ of operations, the actual requirement is zero operations.[#:fn]
 
 [para]
 [:en] Complexity requirements specified in the library clauses are upper bounds,
-and implementations that provide better complexity guarantees meet the
-requirements.
+and implementations that provide better complexity guarantees meet the requirements.
 [:zh_CN] 程序库条款中所指定的复杂度规定是其上限，而提供更好复杂度的实现保证满足这些规定。
 
 [para]
