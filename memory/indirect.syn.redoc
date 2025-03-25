@@ -1,0 +1,88 @@
+[section#indirect.syn
+    [:en] Synopsis
+    [:zh_CN] 纲要
+]
+
+[%@hdr@def indirect]
+[codeblock:synopsis]
+namespace std {
+  template<class T, class Allocator = allocator<T>>
+  class indirect {
+  public:
+    using value_type = T;
+    using allocator_type = Allocator;
+    using pointer = typename allocator_traits<Allocator>::pointer;
+    using const_pointer = typename allocator_traits<Allocator>::const_pointer;
+
+    // [:en] [#indirect.ctor], constructors [:zh_CN] [#indirect.ctor]，构造函数
+    constexpr explicit indirect();
+    constexpr explicit indirect(allocator_arg_t, const Allocator& a);
+    constexpr indirect(const indirect& other);
+    constexpr indirect(allocator_arg_t, const Allocator& a, const indirect& other);
+    constexpr indirect(indirect&& other) noexcept;
+    constexpr indirect(allocator_arg_t, const Allocator& a, indirect&& other)
+      noexcept([[redoc("[=seebelow]")]]);
+    template<class U = T>
+      constexpr explicit indirect(U&& u);
+    template<class U = T>
+      constexpr explicit indirect(allocator_arg_t, const Allocator& a, U&& u);
+    template<class... Us>
+      constexpr explicit indirect(in_place_t, Us&&... us);
+    template<class... Us>
+      constexpr explicit indirect(allocator_arg_t, const Allocator& a,
+                                  in_place_t, Us&&... us);
+    template<class I, class... Us>
+      constexpr explicit indirect(in_place_t, initializer_list<I> ilist, Us&&... us);
+    template<class I, class... Us>
+      constexpr explicit indirect(allocator_arg_t, const Allocator& a,
+                                  in_place_t, initializer_list<I> ilist, Us&&... us);
+
+    // [:en] [#indirect.dtor], destructor [:zh_CN] [#indirect.dtor]，析构函数
+    constexpr ~indirect();
+
+    // [:en] [#indirect.asgn], assignment [:zh_CN] [#indirect.asgn]，赋值
+    constexpr indirect& operator=(const indirect& other);
+    constexpr indirect& operator=(indirect&& other) noexcept([[redoc("[=seebelow]")]]);
+    template<class U = T>
+      constexpr indirect& operator=(U&& u);
+
+    // [:en] [#indirect.obs], observers [:zh_CN] [#indirect.obs]，探察函数
+    constexpr const T& operator*() const & noexcept;
+    constexpr T& operator*() & noexcept;
+    constexpr const T&& operator*() const && noexcept;
+    constexpr T&& operator*() && noexcept;
+    constexpr const_pointer operator->() const noexcept;
+    constexpr pointer operator->() noexcept;
+    constexpr bool valueless_after_move() const noexcept;
+    constexpr allocator_type get_allocator() const noexcept;
+
+    // [:en] [#indirect.swap], swap [:zh_CN] [#indirect.swap]，交换
+    constexpr void swap(indirect& other) noexcept([[redoc("[=seebelow]")]]);
+    friend constexpr void swap(indirect& lhs, indirect& rhs) noexcept([[redoc("[=seebelow]")]]);
+
+    // [:en] [#indirect.relops], relational operators [:zh_CN] [#indirect.relops]，关系运算符
+    template<class U, class AA>
+      friend constexpr bool operator==(const indirect& lhs, const indirect<U, AA>& rhs)
+        noexcept([[redoc("[=seebelow]")]]);
+    template<class U, class AA>
+      friend constexpr auto operator<=>(const indirect& lhs, const indirect<U, AA>& rhs)
+        -> [[redoc("*>")]]synth-three-way-result<T, U>;
+
+    // [:en] [#indirect.comp.with.t], comparison with [`T] [:zh_CN] [#indirect.comp.with.t]，与 [`T] 的比较
+    template<class U>
+      friend constexpr bool operator==(const indirect& lhs, const U& rhs) noexcept([[redoc("[=seebelow]")]]);
+    template<class U>
+      friend constexpr auto operator<=>(const indirect& lhs, const U& rhs)
+        -> [[redoc("*>")]]synth-three-way-result<T, U>;
+
+  private:
+    pointer [[redoc("*>")]]p;                          // [=expos]
+    Allocator [[redoc("*>")]]alloc = Allocator();      // [=expos]
+  };
+  template<class Value>
+    indirect(Value) -> indirect<Value>;
+  template<class Allocator, class Value>
+    indirect(allocator_arg_t, Allocator, Value)
+      -> indirect<Value, typename allocator_traits<Allocator>::template rebind_alloc<Value>>;
+}
+[codeblock:end]

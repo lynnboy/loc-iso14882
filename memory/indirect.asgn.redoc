@@ -1,0 +1,192 @@
+[section#indirect.asgn
+    [:en] Assignment
+    [:zh_CN] 赋值
+]
+
+[%@lib@member operator=[!indirect]]
+[codeblock:declaration]
+constexpr indirect& operator=(const indirect& other);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[list]
+[item]
+[:en] [`is_copy_assignable_v<T>] is [`true], and
+[:zh_CN] [`is_copy_assignable_v<T>] 为 [`true]，并且
+[item]
+[:en] [`is_copy_constructible_v<T>] is [`true].
+[:zh_CN] [`is_copy_constructible_v<T>] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] If [`addressof(other) == this] is [`true], there are no effects.
+[:zh_CN] 如果 [`addressof(other) == this] 为 [`true]，则没有效果。
+
+[:en] Otherwise:
+[:zh_CN] 否则：
+[list]
+[item]
+[:en] The allocator needs updating if
+[`allocator_traits<Allocator>::propagate_on_container_copy_assignment::value] is [`true].
+[:zh_CN] 若 [`allocator_traits<Allocator>::propagate_on_container_copy_assignment::value]
+为 [`true] 则需要更新分配器。
+
+[item]
+[:en] If [`other] is valueless, [`*this] becomes valueless and the owned object
+in [`*this], if any, is destroyed using [`allocator_traits<Allocator>::destroy]
+and then the storage is deallocated.
+[:zh_CN] 如果 [`other] 无值，则 [`*this] 变为无值，并使用
+[`allocator_traits<Allocator>::destroy] 销毁 [`*this] 中拥有的对象（如果有），再回收其存储。
+
+[item]
+[:en] Otherwise, if [`[*alloc] == other.[*alloc]] is [`true] and [`*this] is not
+valueless, equivalent to [`**this = *other].
+[:zh_CN] 否则，如果 [`[*alloc] == other.[*alloc]] 为 [`true] 并且 [`*this] 并非无值，
+则等价于 [`**this = *other]。
+
+[item]
+[:en] Otherwise a new owned object is constructed in [`*this] using
+[`allocator_traits<Allocator>::construct] with the owned object from [`other] as
+the argument, using either the allocator in [`*this] or
+the allocator in [`other] if the allocator needs updating.
+[:zh_CN] 否则，使用 [`allocator_traits<Allocator>::construct]，以 [`other] 中所拥有
+的对象为实参，构造 [`*this] 中新拥有的对象，或者使用 [`*this] 中的分配器，或者当分配器
+需要更新时使用 [`other] 中的分配器。
+
+[item]
+[:en] The previously owned object in [`*this], if any, is destroyed using
+[`allocator_traits<Allocator>::destroy] and then the storage is deallocated.
+[:zh_CN] 使用 [`allocator_traits<Allocator>::destroy] 销毁 [`*this] 中之前拥有的对象
+（如果有），再回收其存储。
+
+[item]
+[:en] If the allocator needs updating, the allocator in [`*this] is replaced with
+a copy of the allocator in [`other].
+[:zh_CN] 如果分配器需要更新，则 [`*this] 中的分配器被替换为 [`other] 中分配器的副本。
+[list:end]
+
+[para:returns]
+[:en] A reference to [`*this].
+[:zh_CN] 到 [`*this] 的引用。
+
+[para:remarks]
+[:en] If any exception is thrown, the result of the expression
+[`this->valueless_after_move()] remains unchanged.
+[:zh_CN] 如果抛出了任何异常，那么表达式 [`this->valueless_after_move()] 的结果保持不变。
+
+[:en] If an exception is thrown during the call to [`T][=']s selected copy constructor, no effect.
+[:zh_CN] 如果在调用 [`T] 的选中构造函数时抛出了异常，那么没有效果。
+
+[:en] If an exception is thrown during the call to [`T][=']s copy assignment,
+the state of its contained value is as defined by the exception safety guarantee of
+[`T][=']s copy assignment.
+[:zh_CN] 如果在调用 [`T] 的复制赋值时抛出了异常，则其所含值的状态依据 [`T] 的复制赋值
+的异常安全性保证的定义。
+[div:end]
+
+[%@lib@member operator=[!indirect]]
+[codeblock:declaration]
+constexpr indirect& operator=(indirect&& other)
+  noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value ||
+           allocator_traits<Allocator>::is_always_equal::value);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`is_copy_constructible_v<T>] is [`true].
+[:zh_CN] [`is_copy_constructible_v<T>] 为 [`true]。
+
+[para:effects]
+[:en] If [`addressof(other) == this] is [`true], there are no effects.
+[:zh_CN] 如果 [`addressof(other) == this] 为 [`true]，则没有效果。
+
+[:en] Otherwise:
+[:zh_CN] 否则：
+[list]
+[item]
+[:en] The allocator needs updating if
+[`allocator_traits<Allocator>::propagate_on_container_move_assignment::value] is [`true].
+[:zh_CN] 若 [`allocator_traits<Allocator>::propagate_on_container_move_assignment::value]
+为 [`true] 则需要更新分配器。
+
+[item]
+[:en] If [`other] is valueless, [`*this] becomes valueless and the owned object
+in [`*this], if any, is destroyed using [`allocator_traits<Allocator>::destroy]
+and then the storage is deallocated.
+[:zh_CN] 如果 [`other] 无值，则 [`*this] 变为无值，并使用
+[`allocator_traits<Allocator>::destroy] 销毁 [`*this] 中拥有的对象（如果有），再回收其存储。
+
+[item]
+[:en] Otherwise, if [`[*alloc] == other.[*alloc]] is [`true], swaps the owned objects
+in [`*this] and [`other]; the owned object in [`other], if any, is then destroyed
+using [`allocator_traits<Allocator>::destroy] and then the storage is deallocated.
+[:zh_CN] 否则，如果 [`[*alloc] == other.[*alloc]] 为 [`true]，则交换 [`*this] 和 [`other]
+所拥有的对象；然后使用 [`allocator_traits<Allocator>::destroy] 销毁 [`other] 中拥有的
+对象（如果有），再回收其存储。
+
+[item]
+[:en] Otherwise, constructs a new owned object with the owned object of [`other]
+as the argument as an rvalue, using either the allocator in [`*this] or
+the allocator in [`other] if the allocator needs updating.
+[:zh_CN] 否则，以 [`other] 中所拥有的对象为右值实参构造新拥有的对象，或者使用 [`*this]
+中的分配器，或者当分配器需要更新时使用 [`other] 中的分配器。
+
+[item]
+[:en] The previously owned object in [`*this], if any, is destroyed using
+[`allocator_traits<Allocator>::destroy] and then the storage is deallocated.
+[:zh_CN] 使用 [`allocator_traits<Allocator>::destroy] 销毁 [`*this] 中之前拥有的对象
+（如果有），再回收其存储。
+
+[item]
+[:en] If the allocator needs updating, the allocator in [`*this] is replaced with
+a copy of the allocator in [`other].
+[:zh_CN] 如果分配器需要更新，则 [`*this] 中的分配器被替换为 [`other] 中分配器的副本。
+[list:end]
+
+[para:ensures]
+[:en] [`other] is valueless.
+[:zh_CN] [`other] 无值。
+
+[para:returns]
+[:en] A reference to [`*this].
+[:zh_CN] 到 [`*this] 的引用。
+
+[para:remarks]
+[:en] If any exception is thrown, there are no effects on [`*this] or [`other].
+[:zh_CN] 如果抛出了任何异常，那么对 [`*this] 或 [`other] 没有效果。
+[div:end]
+
+[%@lib@member operator=[!indirect]]
+[codeblock:declaration]
+template<class U = T>
+  constexpr indirect& operator=(U&& u);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`is_same_v<remove_cvref_t<U>, indirect>] is [`false],
+[:zh_CN] [`is_same_v<remove_cvref_t<U>, indirect>] 为 [`false]，
+[item]
+[:en] [`is_constructible_v<T, U>] is [`true], and
+[:zh_CN] [`is_constructible_v<T, U>] 为 [`true]，并且
+[item]
+[:en] [`is_assignable_v<T&, U>] is [`true].
+[:zh_CN] [`is_assignable_v<T&, U>] 为 [`true]。
+[list:end]
+
+[para:effects]
+[:en] If [`*this] is valueless then constructs an owned object of type [`T] with
+[`std::forward<U>(u)] using the allocator [*alloc].
+[:zh_CN] 如果 [`*this] 无值，那么使用分配器 [*alloc]，以 [`std::forward<U>(u)] 构造
+所拥有的 [`T] 类型对象。
+
+[:en] Otherwise, equivalent to [`**this = std::forward<U>(u)].
+[:zh_CN] 否则，等价于 [`**this = std::forward<U>(u)]。
+
+[para:returns]
+[:en] A reference to [`*this].
+[:zh_CN] 到 [`*this] 的引用。
+[div:end]
