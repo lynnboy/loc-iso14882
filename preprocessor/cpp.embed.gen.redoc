@@ -1,0 +1,247 @@
+[section#cpp.embed.gen
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] A preprocessing directive of the form
+[:zh_CN] 如下形式的预处理指令
+[syntax:explanation]
+[`#] [`embed] [`<] [~h-char-sequence] [`>] [~:opt pp-tokens] [~new-line]
+[syntax:end]
+[:en@~] searches a sequence of [?impldef sequence of places searched for an
+embedded resource] places for a resource identified uniquely by the specified
+sequence between the [`<] and [`>] delimiters.
+[:zh_CN@~] 在[?impldef 搜索嵌入资源的位置序列]位置序列中搜索由分隔符 [`<] 和 [`>]
+之间指定的序列所唯一标识的资源。
+
+[:en] How the places are specified or the resource identified is
+[?impldef search locations for embedded resources specified with [`<>]].
+[:zh_CN] 如何指定这些位置或标识资源是[?impldef 以 [`<>] 指定嵌入资源的搜索位置]。
+
+[para]
+[:en] A preprocessing directive of the form
+[:zh_CN] 如下形式的预处理指令
+[syntax:explanation]
+[`#] [`embed] [`"] [~q-char-sequence] [`"] [~:opt pp-tokens] [~new-line]
+[syntax:end]
+[:en@~] searches for a resource identified by the specified sequence between the
+[`"] delimiters.
+[:zh_CN@~] 搜索由分隔符 [`"] 之间的指定的序列所标识的资源。
+
+[:en] The named resource is searched for in an [?impldef manner of search for
+named resource] manner.
+[:zh_CN] 以[?impldef 搜索指名资源的方式]方式对所指名的文件进行搜索。
+
+[:en] If this search is not supported, or if the search fails, the directive is
+reprocessed as if it read
+[:zh_CN] 若不支持这项搜索，或者若搜索失败，则该指令如同读到如下指令而进行再次处理
+[syntax:explanation]
+[`#] [`embed] [`<] [~h-char-sequence] [`>] [~:opt pp-tokens] [~new-line]
+[syntax:end]
+[:en@~] with the identical contained sequence (including [`>] characters, if any)
+from the original directive.
+[:zh_CN@~] 其中包含与原指令中相同的序列（包括 [`>] 字符，如果有）。
+
+[para:recommended]
+[:en] A mechanism similar to, but distinct from, the [?impldef sequence of places
+searched for a header] search paths used for [`#include] ([#cpp.include]) is encouraged.
+[:zh_CN] 鼓励采用与用于 [`#include] 的[?impldef 搜索头文件的位置序列]搜索路径
+（[#cpp.include]）相似但不同的机制。
+
+[para]
+[:en] Either form of the [`#embed] directive processes the [~pp-tokens],
+if present, just as in normal text.
+[:zh_CN] 每种形式的 [`#embed] 指令都仅将[~预处理记号序列]（如果有）当作普通文本处理。
+
+[:en] The [~pp-tokens] shall then have the form [~embed-parameter-seq].
+[:zh_CN] [~预处理指令序列]应当随即具有[~嵌入参数序列]的形式。
+
+[para]
+[:en] A resource is a source of data accessible from the translation environment.
+[:zh_CN] 资源是从翻译环境中可以访问的数据的来源。
+
+[:en] A resource has an [~@c implementation-resource-width], which is the
+[?impldef size in bits of a resource] size in bits of the resource.
+[:zh_CN] 资源具有[~@c 实现资源宽度]，这是[?impldef 资源的位大小]资源的位大小。
+
+[:en] If the [~@c implementation-resource-width] is not an integral multiple of
+[`:m CHAR_BIT], the program is ill-formed.
+[:zh_CN] 如果[~@c 实现资源宽度]不是 [`:m CHAR_BIT] 的整数倍，则程序非良构。
+
+[:en] Let [+implementation-resource-count] be [~@c implementation-resource-width]
+divided by [`:m CHAR_BIT].
+[:zh_CN] 令[+实现资源计数]为[~@c 实现资源宽度]除以 [`:m CHAR_BIT]。
+
+[:en] Every resource also has a [+resource-count], which is
+[:zh_CN] 每个资源还有一个[+资源计数]，这是
+[list]
+[item]
+[:en@~] the value as computed from the optionally-provided [`limit]
+[~embed-parameter] ([#cpp.embed.param.limit]), if present;
+[:zh_CN@~] 如果出现可选提供的[~嵌入参数] [`limit]（[#cpp.embed.param.limit]）则为由其计算的值；
+[item]
+[:en@~] otherwise, the implementation-resource-count.
+[:zh_CN@~] 否则，为实现资源计数。
+[list:end]
+
+[:en] A resource is empty if the resource-count is zero.
+[:zh_CN] 若资源计数为零，则资源为空。
+
+[para]
+[begin:example]
+[codeblock]
+// [:en] ill-formed if the implementation-resource-width is 6 bits \
+[:zh_CN] 如果实现资源宽度为 6 位则非良构
+#embed "6_bits.bin"
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] The [`#embed] directive is replaced by a comma-delimited list of integer
+literals of type [`int], unless otherwise modified by embed parameters ([#cpp.embed.param]).
+[:zh_CN] 除非由嵌入参数另行修饰（[#cpp.embed.param]），否则 [`#embed] 指令被替换为
+[`int] 类型的整数字面量的逗号分隔列表。
+
+[para]
+[:en] The integer literals in the comma-delimited list correspond to
+resource-count consecutive calls to [`std::fgetc] ([#cstdio.syn])
+from the resource, as a binary file.
+[:zh_CN] 逗号分隔列表中的整数字面量对应于，将资源作为二进制文件连续进行
+资源计数次的 [`std::fgetc]（[#cstdio.syn]）。
+
+[:en] If any call to [`std::fgetc] returns [`EOF], the program is ill-formed.
+[:zh_CN] 如果任何一次调用 [`std::fgetc] 返回了 [`EOF]，则程序非良构。
+
+[para:recommended]
+[:en] The value of each integer literal should closely represent
+the bit stream of the resource unmodified.
+[:zh_CN] 整数字面量的每个值都应当严格表示未修改的资源的位流。
+
+[:en] This can require an implementation to consider potential differences between
+translation and execution environments, as well as any other applicable sources of mismatch.
+[:zh_CN] 这可能会要求实现考虑翻译和执行环境之间的潜在差异，以及其他有关的资源实配问题。
+
+[para:~]
+[begin:example]
+[codeblock]
+#include <cstring>
+#include <cstddef>
+#include <fstream>
+#include <vector>
+#include <cassert>
+
+int main() {
+  // [:en] If the file is the same as the resource in the translation environment, no assert in this program should fail. \
+  [:zh_CN] 如果文件与翻译环境中的资源是相同文件，那么程序中不应有失败的断言。
+  constexpr unsigned char d[] = {
+#embed <data.dat>
+  };
+  const std::vector<unsigned char> vec_d = {
+#embed <data.dat>
+  };
+
+  constexpr std::size_t expected_size = sizeof(d);
+
+  // [:en] same file in execution environment as was embedded \
+  [:zh_CN] 执行环境中的文件与所嵌入的相同
+  std::ifstream f_source("data.dat", std::ios::binary | std::ios::in);
+  unsigned char runtime_d[expected_size];
+  char* ifstream_ptr = reinterpret_cast<char*>(runtime_d);
+  assert(!f_source.read(ifstream_ptr, expected_size));
+  std::size_t ifstream_size = f_source.gcount();
+  assert (ifstream_size == expected_size);
+  int is_same = std::memcmp(&d[0], ifstream_ptr, ifstream_size);
+  assert(is_same == 0);
+  int is_same_vec = std::memcmp(vec_d.data(), ifstream_ptr, ifstream_size);
+  assert(is_same_vec == 0);
+}
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+int i = {
+#embed "i.dat"
+};  // [:en] well-formed if [`i.dat] produces a single value [:zh_CN] 若 [`i.dat] 阐释单个值，则良构
+int i2 =
+#embed "i.dat"
+;   // [:en] also well-formed if [`i.dat] produces a single value [:zh_CN] 若 [`i.dat] 阐释单个值，则也良构
+struct s {
+  double a, b, c;
+  struct { double e, f, g; } x;
+  double h, i, j;
+};
+is x = {
+// [:en] well-formed if the directive produces nine or fewer values [:zh_CN] 若指令阐释九个或更少值，则良构
+#embed "s.dat"
+};
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] A preprocessing directive of the form
+[:zh_CN] 如下形式的预处理指令
+[syntax:explanation]
+[`#] [`embed] [~:opt pp-tokens] [~new-line]
+[syntax:end]
+[:en@~] (that does not match one of the two previous forms) is permitted.
+[:zh_CN@~] （这并不匹配上述两种形式之一）是允许的。
+
+[:en] The preprocessing tokens after [`embed] in the directive are processed
+just as in normal text (i.e., each identifier currently defined as a macro name
+is replaced by its replacement list of preprocessing tokens).
+[:zh_CN] 对指令中 [`embed] 之后的预处理指令如同普通文本中那样进行处理（将每个
+当前定义为宏名的标识符替换为它的预处理记号的替换列表）。
+
+[:en] The directive resulting after all replacements of the third form shall match
+one of the two previous forms.
+[:zh_CN] 第三种形式进行全部替换之后所产生的指令应当匹配上述两种形式之一。
+
+[begin:note]
+[:en] Adjacent [~string-literal]s are not concatenated into a single
+[~string-literal] (see the translation phases in [#lex.phases]); thus,
+an expansion that results in two [~string-literal]s is an invalid directive.
+[:zh_CN] 相邻的[~字符串字面量]并不被拼接为一个[~字符串字面量]（参见
+[#lex.phases] 中的翻译阶段）；因此，造成两个[~字符串字面量]的扩展是无效指令。
+[end:note]
+
+[:en] Any further processing as in normal text described for the two previous
+forms is not performed.
+[:zh_CN] 不进行前两种形式所述为普通文本进行的任何进一步处理。
+
+[begin:note]
+[:en] That is, processing as in normal text happens once and only once for the entire directive.
+[:zh_CN] 亦即，整个指令中有且仅有一次进行作为普通文本的处理。
+[end:note]
+
+[para:~]
+[begin:example]
+[:en] If the directive matches the third form, the whole directive is replaced.
+[:zh_CN] 如果指令匹配第三种形式，则整个指令都被替换。
+
+[:en] If the directive matches the first two forms, everything after the name is replaced.
+[:zh_CN] 如果指令匹配前两种形式，则替换名字之后的所有部分。
+
+[codeblock]
+#define prefix(ARG) suffix(ARG)
+#define THE_ADDITION "teehee"
+#define THE_RESOURCE ":3c"
+#embed ":3c"        prefix(THE_ADDITION)
+#embed THE_RESOURCE prefix(THE_ADDITION)
+[codeblock:end]
+[:en] is equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+#embed ":3c" suffix("teehee")
+#embed ":3c" suffix("teehee")
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] The method by which a sequence of preprocessing tokens between a [`<] and a [`>]
+preprocessing token pair or a pair of [`"] characters is combined into a single
+resource name preprocessing token is [?impldef search locations for [`""] resource].
+[:zh_CN] 如何将预处理记号对 [`<] 和 [`>] 之间或一对 [`"] 字符之间的预处理记号序列
+合并为一个资源名预处理记号的方式是[?impldef [`""] 资源的搜索位置]。

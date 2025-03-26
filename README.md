@@ -488,7 +488,7 @@ Original   |中文   |章节    |定义
 *pp-private-module-fragment*|*预处理私有模块分段*| [cpp.pre] | `module` `:` `private` `;` *换行* *组*__?__
 *group*                     |*组*           | [cpp.pre]     | *组部分*__\*__
 *group-part*                |*组部分*       | [cpp.pre]     | *控制行* \| *if-节* \| *文本行* \|<br> `#` *有条件支持的指令*
-*control-line*              |*控制行*       | [cpp.pre]     | `#` `include` *预处理记号序列* *换行* \|<br> *预处理导入* \|<br> `#` `define` *标识符* ( ∅ \| *左括号* ( ∅ \| `...`__?__ \| *标识符列表* ( `,` `...` )__?__ ) `)` ) *替换列表* *换行* \|<br> `#` `undef` *标识符* *换行* \|<br> `#` `line` *预处理记号序列* *换行* \|<br> `#` `error` *预处理记号序列*__?__ *换行* \|<br> `#` `warning` *预处理记号序列*__?__ *换行* \|<br> `#` `pragma` *预处理记号序列*__?__ *换行* \|<br> `#` *换行*
+*control-line*              |*控制行*       | [cpp.pre]     | `#` `include` *预处理记号序列* *换行* \|<br> *预处理导入* \|<br> `#` `embed` *预处理记号序列* *换行* \|<br> `#` `define` *标识符* ( ∅ \| *左括号* ( ∅ \| `...`__?__ \| *标识符列表* ( `,` `...` )__?__ ) `)` ) *替换列表* *换行* \|<br> `#` `undef` *标识符* *换行* \|<br> `#` `line` *预处理记号序列* *换行* \|<br> `#` `error` *预处理记号序列*__?__ *换行* \|<br> `#` `warning` *预处理记号序列*__?__ *换行* \|<br> `#` `pragma` *预处理记号序列*__?__ *换行* \|<br> `#` *换行*
 *if-section*                |*if-节*        | [cpp.pre]     | *if-组* *elif-组*__\*__ *else-组*__?__ *endif-行*
 *if-group*                  |*if-组*        | [cpp.pre]     | `#` `if` *常量表达式* *换行* *组*__?__ \|<br> `#` (`ifdef`\|`ifndef`) *标识符* *换行* *组*__?__
 *elif-groups*               |*elif-组序列*  | [cpp.pre]     | *elif-组*__\+__
@@ -501,12 +501,19 @@ Original   |中文   |章节    |定义
 *identifier-list*           |*标识符列表*   | [cpp.pre]     | *标识符* ( `,` *标识符* )__\*__
 *replacement-list*          |*替换列表*     | [cpp.pre]     | *预处理记号序列*__?__
 *pp-tokens*                 |*预处理记号序列*| [cpp.pre]    | *预处理记号*__\+__
+*embed-parameter-seq*       |*嵌入参数序列* | [cpp.pre]     | *嵌入参数*__\+__
+*embed-parameter*           |*嵌入参数*     | [cpp.pre]     | *嵌入标准参数* \| *嵌入带前缀参数*
+*embed-standard-parameter*  |*嵌入标准参数* | [cpp.pre]    | ( `limit` \| `prefix` \| `suffix` \| `if_empty` ) `(` *预处理平衡记号序列* `)`
+*embed-prefixed-parameter*  |*嵌入带前缀参数*| [cpp.pre]  | *标识符* [`::] *标识符* ( `(` *预处理平衡记号序列* `)` )__?__
+*pp-balanced-token-seq*     |*预处理平衡记号序列*| [cpp.pre] | *预处理平衡记号*__\+__
+*pp-balanced-token*         |*预处理平衡记号*| [cpp.pre]    | `(` *预处理平衡记号序列*__?__ `)` \| `[` *预处理平衡记号序列*__?__ `]` \| `{` *预处理平衡记号序列*__?__ `}` \|<br> *预处理记号* - \[`()[]{}`\]
 *new-line*                  |*换行*         | [cpp.pre]     | 换行
 *defined-macro-expansion*   |*已定义宏表达式*| [cpp.cond]   | `defined` ( *标识符* \| `(` *标识符* `)` )
 *h-preprocessing-token*     |*h-预处理记号* | [cpp.cond]    | *预处理记号* - `>`
 *h-pp-tokens*               |*h-预处理记号序列*| [cpp.cond] | *h-预处理记号*__\+__
 *header-name-tokens*        |*头文件名记号序列*| [cpp.cond] | *字符串字面量* \| `<` *h-预处理记号序列* `>`
 *has-include-expression*    |*包含查询表达式*| [cpp.cond]   | `__has_include` `(` ( *头文件名* \| *头文件名记号序列* ) `)`
+*has-embed-expression*      |*嵌入查询表达式*| [cpp.cond]   | `__has_embed` `(` *预处理平衡记号序列* `)`
 *has-attribute-expression*  |*属性查询表达式*| [cpp.cond]   | `__has_cpp_attribute` `(` *预处理记号序列* `)`
 *pp-module*                 |*预处理模块指令*| [cpp.module] | `export`__?__ `module` *预处理记号序列*__?__ `;` *换行*
 *pp-import*                 |*预处理导入指令*| [cpp.import] | `export`__?__ `import` ( *头文件名* \| *头文件名记号序列* ) *预处理记号序列*__?__ `;` *换行* \|<br> `export`__?__ `import` *预处理记号序列* `;` *换行*
@@ -1241,8 +1248,9 @@ immediate scope                         |直接作用域     |最小的外围作
 immediate subexpression                 |直接子表达式   |应当在文法位置执行的表达式：成分表达式、隐含函数调用、lambda的捕获的初始化、默认实参、聚合的默认成员初始化式
 immediately-declared constraint         |直接声明约束   |以类型约束`C`声明的模板形参`C T`或`C<arglist> T`或包组形式，生成的约束表达式`C<T>`或`C<T, arglist>`或包组`&&`折叠
 implementation                          |实现
-implementation limits                   |实现限额
 implementation-defined                  |由实现定义的   |编译器实现自行决定的某些良构代码的行为
+implementation limits                   |实现限额
+implementation-resource-count           |实现资源计数   |嵌入资源的字节数
 implicit                                |隐式，暗中，隐含
 implicit conversion                     |隐式转换       |iff可声明`T t=e;`，e可隐式转换为 T
 implicit conversion sequence            |隐式转换序列   |实现隐式转换的序列：SCSeq+UDefC+SCSeq
@@ -1827,6 +1835,7 @@ reserved                                |保留的     |规定使用权属于标
 reserved block                          |保留块     |不包含元素的蜂巢元素块
 reserved function                       |保留函数
 reserved identifier                     |保留标识符 |`__` 开头或 `_[A-Z]` 开头的任何标识符，以及 `_` 开头的全局命名空间成员
+resource-count                          |资源计数   |嵌入资源的数值计数，参数控制或默认为实现资源计数
 restriction                             |限制，要求
 result binding                          |结果绑定   |后条件断言中的结果名
 resumer                                 |恢复方     |调用协程句柄的恢复成员函数的函数

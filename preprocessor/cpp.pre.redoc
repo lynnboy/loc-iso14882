@@ -36,6 +36,7 @@
 [rule@aligned control-line [:zh_CN] 控制行 ]
     [| [`#] [`include]  pp-tokens new-line ]
     [| pp-import ]
+    [| [`#] [`embed]    pp-tokens new-line ]
     [| [`#] [`define]   identifier replacement-list new-line ]
     [| [`#] [`define]   identifier lparen [~:opt identifier-list] [`)] replacement-list new-line ]
     [| [`#] [`define]   identifier lparen [`...] [`)] replacement-list new-line ]
@@ -104,6 +105,47 @@
     [| preprocessing-token [~:opt pp-tokens] ]
 [rule:end]
 
+[rule embed-parameter-seq [:zh_CN] embed-参数序列 ]
+    [| embed-parameter [~:opt embed-parameter-seq] ]
+[rule:end]
+
+[rule embed-parameter [:zh_CN] embed-参数 ]
+    [| embed-standard-parameter ]
+    [| embed-prefixed-parameter ]
+[rule:end]
+
+[rule embed-standard-parameter [:zh_CN] embed-标准参数 ]
+    [| [`limit] [`(] [~pp-balanced-token-seq] [`)] ]
+    [| [`prefix] [`(] [~pp-balanced-token-seq] [`)] ]
+    [| [`suffix] [`(] [~pp-balanced-token-seq] [`)] ]
+    [| [`if_empty] [`(] [~pp-balanced-token-seq] [`)] ]
+[rule:end]
+
+[rule embed-prefixed-parameter [:zh_CN] embed-带前缀参数 ]
+    [| identifier [`::] identifier ]
+    [| identifier [`::] identifier [`(] [~pp-balanced-token-seq] [`)] ]
+[rule:end]
+
+[rule pp-balanced-token-seq [:zh_CN] 预处理平衡记号序列 ]
+    [| pp-balanced-token [~:opt pp-balanced-token-seq] ]
+[rule:end]
+
+[rule pp-balanced-token [:zh_CN] 预处理平衡记号 ]
+    [| [`(] [~pp-balanced-token-seq] [`)] ]
+    [| [``[] [~pp-balanced-token-seq] [``]] ]
+    [| [`{] [~pp-balanced-token-seq] [`}] ]
+    [|:descriptive
+        [:en] any [~pp-token] except: [br]
+            parenthesis [=unicode(0028,left parenthesis)] and [=unicode(0029,right parenthesis)], [br]
+            bracket [=unicode(005b,left square bracket)] and [=unicode(005d,right square bracket)], or [br]
+            brace [=unicode(007b,left curly bracket)] and [=unicode(007b,right curly bracket)].
+        [:zh_CN] 任何[~预处理记号]，除了： [br]
+            括号 [=unicode(0028,left parenthesis)] 与 [=unicode(0029,right parenthesis)]，[br]
+            bracket [=unicode(005b,left square bracket)] 与 [=unicode(005d,right square bracket)]，或 [br]
+            brace [=unicode(007b,left curly bracket)] 与 [=unicode(007b,right curly bracket)]。
+    ]
+[rule:end]
+
 [rule new-line [:zh_CN] 换行 ]
     [|:descriptive
         [:en] the new-line character
@@ -117,11 +159,10 @@
 tokens that satisfies the following constraints:
 [:zh_CN] [+预处理指令]由预处理记号的序列构成，并满足如下约束条件：
 
-[:en] At the start of translation phase 4, the first preprocessing token in the
-sequence, referred to as a [+:adj directive-introducing[!token]], begins with the
-first character in the source file (optionally after whitespace containing no
-new-line characters) or follows whitespace containing at least one new-line
-character, and is
+[:en] At the start of translation phase 4, the first preprocessing token in the sequence,
+referred to as a [+:adj directive-introducing[!token]], begins with the first
+character in the source file (optionally after whitespace containing no new-line
+characters) or follows whitespace containing at least one new-line character, and is
 [:zh_CN] 在翻译阶段 4 开始时，该序列中的第一个预处理记号，称为[+:adj 指令发起[!记号]]，
 是以源文件中的第一个字符（可选地跟在不包含换行字符的空白之后）开头，或者跟在至少包含
 一个换行字符的空白后面，并且
@@ -148,8 +189,7 @@ logical source line by an [~identifier], [`:], or [`;] preprocessing token, or
 [item]
 [:en] an [`:key export] preprocessing token immediately followed on the same
 logical source line by one of the two preceding forms.
-[:zh_CN] 是一个预处理记号 [`:key export] 且紧跟其后的是同一个逻辑源文本行中以上
-两种形式之一。
+[:zh_CN] 是一个预处理记号 [`:key export] 且紧跟其后的是同一个逻辑源文本行中以上两种形式之一。
 [list:end]
 
 [:en] The last preprocessing token in the sequence is the first preprocessing
@@ -229,15 +269,18 @@ directive names appearing after a [`#] in the syntax.
 
 [:en] A [~conditionally-supported-directive] is conditionally-supported with
 [?impldef additional supported forms of preprocessing directive] semantics.
-[:zh_CN] [~有条件支持的指令]是有条件支持的，并具有[?impldef 额外支持的预处理指令
-的形式]语义。
+[:zh_CN] [~有条件支持的指令]是有条件支持的，并具有[?impldef 额外支持的预处理指令的形式]语义。
+
+[para]
+[:en] Any [~embed-prefixed-parameter] is conditionally-supported,
+with [?impldef supported forms of #embed prefix parameters] semantics.
+[:zh_CN] 任何 [~embed-带前缀参数] 都是有条件支持的，并带有[?impldef 支持的 #embed
+前缀参数形式]语义。
 
 [para]
 [:en] At the start of phase 4 of translation, the [~group] of a
-[~pp-global-module-fragment] shall contain neither a [~text-line] nor a
-[~pp-import].
-[:zh_CN] 在翻译阶段 4 开始时，[~预处理全局模块分段]的[~组]不能包含[~文本行]或
-[~预处理导入]。
+[~pp-global-module-fragment] shall contain neither a [~text-line] nor a [~pp-import].
+[:zh_CN] 在翻译阶段 4 开始时，[~预处理全局模块分段]的[~组]不能包含[~文本行]或[~预处理导入]。
 
 [para]
 [:en] When in a group that is skipped ([#cpp.cond]), the directive syntax is
@@ -257,9 +300,8 @@ comments or possibly other whitespace characters in translation phase 3).
 可能的空白字符的空格）。
 
 [para]
-[:en] The implementation can process and skip sections of source files
-conditionally, include other source files, import macros from header units, and
-replace macros.
+[:en] The implementation can process and skip sections of source files conditionally
+ include other source files, import macros from header units, and replace macros.
 [:zh_CN] 实现可以处理并有条件地处理并跳过源文件中的段落，包含其他源文件，从
 头文件单元导入宏，以及对宏进行替换。
 
@@ -277,16 +319,13 @@ to macro expansion unless otherwise stated.
 [begin:example]
 [:en] In:
 [:zh_CN] 下例中：
-
 [codeblock]
 #define EMPTY
 EMPTY   #   include <file.h>
 [codeblock:end]
-
 [:en@~] the sequence of preprocessing tokens on the second line is [span:em not]
 a preprocessing directive, because it does not begin with a [`#] at the start of
-translation phase 4, even though it will do so after the macro [`EMPTY] has been
-replaced.
+translation phase 4, even though it will do so after the macro [`EMPTY] has been replaced.
 [:zh_CN@~] 第二行中的预处理记号序列[span:em 并不是]预处理指令，因为在翻译阶段 4
 开始时它并不是以 [`#] 开始的，虽然宏 [`EMPTY] 被替换之后确实会这样。
 [end:example]

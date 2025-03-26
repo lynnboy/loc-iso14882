@@ -39,6 +39,11 @@
     [| [`__has_include] [`(] header-name-tokens [`)] ]
 [rule:end]
 
+[%[`__has_embed]]
+[rule has-embed-expression [:zh_CN] 嵌入查询表达式 ]
+    [| [`__has_embed] [`(] pp-balanced-token-seq [`)] ]
+[rule:end]
+
 [%[`__has_cpp_attribute]]
 [rule has-attribute-expression [:zh_CN] 属性查询表达式 ]
     [| [`__has_cpp_attribute] [`(] pp-tokens [`)] ]
@@ -48,12 +53,12 @@
 [para]
 [:en] The expression that controls conditional inclusion shall be an integral
 constant expression except that identifiers (including those lexically identical
-to keywords) are interpreted as described below[#:fn] and it may contain zero or
-more [~defined-macro-expression]s and/or [~has-include-expression]s and/or
-[~has-attribute-expression]s as unary operator expressions.
+to keywords) are interpreted as described below[#:fn] and it may contain zero or more
+[~defined-macro-expression]s, [~has-include-expression]s, [~has-attribute-expression]s,
+and/or [~has-embed-expression]s as unary operator expressions.
 [:zh_CN] 控制条件包含的表达式应当为整型常量表达式，但要按下文所述[#:fn]解释标识符
 （包括在词法上等同于关键词的标识符），且它可以包含零个或多个作为一元运算符表达式的
-[~已定义宏表达式]和/或[~包含查询表达式]和/或[~属性查询表达式]。
+[~已定义宏表达式]、[~包含查询表达式]、[~属性查询表达式]和/或[~嵌入查询表达式]。
 
 [note:foot]
 [:en] Because the controlling constant expression is evaluated during translation
@@ -99,6 +104,43 @@ source file succeeds, and to [`0] if the search fails.
 [:zh_CN] 如果对源文件的搜索成功，则[~包含查询表达式]求值为 [`1]，如果搜索失败则为 [`0]。
 
 [para]
+[:en] The parenthesized [~pp-balanced-token-seq] in each contained
+[~has-embed-expression] is processed as if that [~pp-balanced-token-seq] were the
+[~pp-tokens] in the third form of a [`#embed] directive ([#cpp.embed]).
+[:zh_CN] 各个[~嵌入查询表达式]中包含的带括号[~预处理平衡记号序列]，如同按照该
+[~预处理平衡记号序列]是 [`#embed] 指令的第三种形式中的[~预处理记号序列]一样处理（[#cpp.embed]）。
+
+[:en] If such a directive would not satisfy the syntactic requirements of a
+[`#embed] directive, the program is ill-formed.
+[:zh_CN] 若这种指令不能满足 [`#embed] 指令的语法规定，则程序非良构。
+
+[:en] The [~has-embed-expression] evaluates to:
+[:zh_CN] 此[~嵌入查询表达式]
+[list]
+[item]
+[:en] [`__STDC_EMBED_FOUND__] if the search for the resource succeeds, all the
+given [~embed-parameter]s in the [~embed-parameter-seq] are supported, and the
+resource is not empty.
+[:zh_CN] 如果资源搜索成功，[~嵌入参数序列]中给出的每个[~嵌入参数]都受支持，并且
+资源不为空，那么求值为 [`__STDC_EMBED_FOUND__]。
+[item]
+[:en] Otherwise, [`__STDC_EMBED_EMPTY__] if the search for the resource succeeds,
+all the given [~embed-parameter]s in the [~embed-parameter-seq] are supported,
+and the resource is empty.
+[:zh_CN] 否则，如果资源搜索成功，[~嵌入参数序列]中给出的每个[~嵌入参数]都受支持，
+而资源为空，那么求值为 [`__STDC_EMBED_EMPTY__]。
+[item]
+[:en] Otherwise, [`__STDC_EMBED_NOT_FOUND__].
+[:zh_CN] 否则，求值为 [`__STDC_EMBED_NOT_FOUND__]。
+[list:end]
+
+[begin:note]
+[:en] An unrecognized [~embed-parameter] in an [~has-embed-expression]
+is not ill-formed and is instead treated as not supported.
+[:zh_CN] [~嵌入查询表达式]中未能识别的[~嵌入参数]并不非良构，而是将之视为不受支持。
+[end:note]
+
+[para]
 [:en] Each [~has-attribute-expression] is replaced by a non-zero [~pp-number]
 matching the form of an [~integer-literal] if the implementation supports an
 attribute with the name specified by interpreting the [~pp-tokens], after macro
@@ -107,8 +149,7 @@ expansion, as an [~attribute-token], and by [`0] otherwise.
 作为一个[~属性记号]进行解释时所指名的属性，则它被替换为与[~整数字面量]的形式相匹配的
 一个非零的[~预处理数字]，否则被替换为 [`0]。
 
-[:en] The program is ill-formed if the [~pp-tokens] do not match the form of an
-[~attribute-token].
+[:en] The program is ill-formed if the [~pp-tokens] do not match the form of an [~attribute-token].
 [:zh_CN] 如果[~预处理记号序列]与[~属性记号]的形式不匹配，则程序非良构。
 
 [para]
@@ -140,7 +181,6 @@ any non-zero result.
 ]
 
 [|] assume              [|] 202207L [-]
-[|] carries_dependency  [|] 200809L [-]
 [|] deprecated          [|] 201309L [-]
 [|] fallthrough         [|] 201603L [-]
 [|] likely              [|] 201803L [-]
@@ -153,16 +193,16 @@ any non-zero result.
 
 [para]
 [:en] The [`#ifdef], [`#ifndef], [`#elifdef], and [`#elifndef] directives, and
-the [`defined] conditional inclusion operator, shall treat [`__has_include] and
-[`__has_cpp_attribute] as if they were the names of defined macros.
+the [`defined] conditional inclusion operator, shall treat [`__has_include],
+[`__has_embed], and [`__has_cpp_attribute] as if they were the names of defined macros.
 [:zh_CN] [`#ifdef]，[`#ifndef]，[`#elifdef]，和 [`#elifndef] 指令以及 [`defined]
-条件包含运算符，将 [`__has_include] 和 [`__has_cpp_attribute] 当做如同是一些已定义
-的宏的名字。
+条件包含运算符，将 [`__has_include]、[`__has_embed] 和 [`__has_cpp_attribute]
+当做如同是一些已定义的宏的名字。
 
-[:en] The identifier [`__has_include] and [`__has_cpp_attribute] shall not
-appear in any context not mentioned in this subclause.
-[:zh_CN] 本子条款中未提及的任何其他语境都不能出现标识符 [`__has_include] 和
-[`__has_cpp_attribute]。
+[:en] The identifier [`__has_include], [`__has_embed], and [`__has_cpp_attribute]
+shall not appear in any context not mentioned in this subclause.
+[:zh_CN] 本子条款中未提及的任何其他语境都不能出现标识符 [`__has_include]、[`__has_embed]
+和 [`__has_cpp_attribute]。
 
 [para]
 [:en] Each preprocessing token that remains (in the list of preprocessing tokens
@@ -174,7 +214,6 @@ occurred shall be in the lexical form of a token ([#lex.token]).
 [para]
 [:en] Preprocessing directives of the forms
 [:zh_CN] 如下形式的预处理指令
-
 [syntax:explanation]
 [rule@aligned ]
 [%[`#if]]
@@ -183,7 +222,6 @@ occurred shall be in the lexical form of a token ([#lex.token]).
     [| [`#] [`elif]     constant-expression new-line [~:opt group] ]
 [rule:end]
 [syntax:end]
-
 [:en@~] check whether the controlling constant expression evaluates to nonzero.
 [:zh_CN@~] 检查其控制常量表达式求值是否非零。
 
@@ -202,13 +240,13 @@ of the two specified forms prior to macro replacement, the behavior is undefined
 
 [para]
 [:en] After all replacements due to macro expansion and evaluation of
-[~defined-macro-expression]s, [~has-include-expression]s, and
-[~has-attribute-expression]s have been performed, all remaining identifiers and
+[~defined-macro-expression]s, [~has-include-expression]s, [~has-embed-expression]s,
+and [~has-attribute-expression]s have been performed, all remaining identifiers and
 keywords, except for [`true] and [`false], are replaced with the [~pp-number]
 [`0], and then each preprocessing token is converted into a token.
-[:zh_CN] 在进行所有的宏展开和对[~已定义宏表达式]、[~包查询含表达式]和[~属性查询表达式]
-的求值所导致的替换之后，所有余下的除 [`true] 和 [`false] 之外的标识符和关键词均被
-替换为[~预处理数字] [`0]，随即每个预处理记号均被转换为一个记号。
+[:zh_CN] 在进行所有的宏展开和对[~已定义宏表达式]、[~包查询含表达式]、[~嵌入询含表达式]
+和[~属性查询表达式]的求值所导致的替换之后，所有余下的除 [`true] 和 [`false] 之外
+的标识符和关键词均被替换为[~预处理数字] [`0]，随即每个预处理记号均被转换为一个记号。
 
 [begin:note]
 [:en] An alternative token ([#lex.digraph]) is not an identifier, even when its
@@ -238,13 +276,11 @@ respectively, [`intmax_t] or [`uintmax_t] ([#cstdint.syn]).
 integer literal [`0x8000] is signed and positive within a [`#if] expression even
 though it is unsigned in translation phase 7 ([#lex.phases]).
 [:zh_CN] 因此，如果某个实现中 [`std::numeric_limits<int>::max()] 为 [`0x7FFF] 而
-[`std::numeric_limits<unsigned int>::max()] 为 [`0xFFFF]，则即使在翻译阶段 7
-（[#lex.phases]）中整数字面量 [`0x8000] 是无符号的，它在 [`#if] 表达式中也是
-有符号且为正的。
+[`std::numeric_limits<unsigned int>::max()] 为 [`0xFFFF]，则即使在翻译阶段 7（[#lex.phases]）
+中整数字面量 [`0x8000] 是无符号的，它在 [`#if] 表达式中也是有符号且为正的。
 [end:note]
 
-[:en] This includes interpreting [~character-literal]s according to the rules in
-[#lex.ccon].
+[:en] This includes interpreting [~character-literal]s according to the rules in [#lex.ccon].
 [:zh_CN] 其中包括了根据 [#lex.ccon] 中的规则对[~字符字面量]的解释。
 
 [begin:note]
@@ -260,7 +296,6 @@ before processing continues.
 [para]
 [:en] Preprocessing directives of the forms
 [:zh_CN] 如下形式的预处理指令
-
 [syntax:explanation]
 [rule@aligned ]
 [%[`#ifdef]]
@@ -273,7 +308,6 @@ before processing continues.
     [| [`#] [`elifndef] identifier new-line [~:opt group] ]
 [rule:end]
 [syntax:end]
-
 [:en@~] check whether the identifier is or is not currently defined as a macro name.
 [:zh_CN@~] 检查该标识符当前是否被定义为宏名。
 
@@ -289,9 +323,8 @@ before processing continues.
 
 [:en] If it evaluates to false (zero), the group that it controls is skipped:
 directives are processed only through the name that determines the directive in
-order to keep track of the level of nested conditionals; the rest of the
-directives[='] preprocessing tokens are ignored, as are the other preprocessing
-tokens in the group.
+order to keep track of the level of nested conditionals; the rest of the directives[=']
+preprocessing tokens are ignored, as are the other preprocessing tokens in the group.
 [:zh_CN] 若求值为假（零），则跳过其所控制的组：随即为了跟踪条件的嵌套层次，仅处理
 用以确定指令的名字；如同该组之中的其他预处理记号一样忽略这些指令余下的预处理记号。
 
@@ -310,8 +343,7 @@ directive, all the groups until the [`#endif] [%[`#endif]] are skipped.[#:fn]
 [note:foot]
 [:en] As indicated by the syntax, a preprocessing token cannot follow a [`#else]
 or [`#endif] directive before the terminating new-line character.
-[:zh_CN] 正如在语法中指出的，不能在 [`#else] 或 [`#endif] 指令的终结换行字符之前
-跟有预处理记号。
+[:zh_CN] 正如在语法中指出的，不能在 [`#else] 或 [`#endif] 指令的终结换行字符之前跟有预处理记号。
 
 [:en] However, comments can appear anywhere in a source file, including within a
 preprocessing directive.

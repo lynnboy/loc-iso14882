@@ -1,0 +1,72 @@
+[section#cpp.embed.param.limit
+    [:en] [`limit] parameter
+    [:zh_CN] [`limit] 参数
+]
+
+[para]
+[:en] An [~embed-parameter] of the form [`limit (] [~pp-balanced-token-seq] [`)]
+specifies the maximum possible number of elements in the comma-delimited list.
+[:zh_CN] 形式为“[`limit (] [~预处理平衡记号序列] [`)]”的[~嵌入参数]指定
+逗号分隔列表的最大可能元素数量。
+
+[:en] It shall appear at most once in the [~embed-parameter-seq].
+[:zh_CN] 它在[~嵌入参数序列]中最多可出现一次。
+
+[:en] The token [`defined] shall not appear in the [~constant-expression].
+[:zh_CN] [~常量表达式]中不能出现记号 [`defined]。
+
+[para]
+[:en] The [~pp-balanced-token-seq] is evaluated as a [~constant-expression]
+using the rules as described in conditional inclusion ([#cpp.cond]), but without
+being processed as in normal text an additional time.
+[:zh_CN] [~预处理平衡记号序列]作为[~常量表达式]，使用条件包含中描述的规则（[#cpp.cond]）
+求值，但不会再次作为普通文本处理。
+
+[para:~]
+[begin:example]
+[codeblock]
+#undef DATA_LIMIT
+#if __has_embed(<data.dat> limit(DATA_LIMIT))
+#endif
+[codeblock:end]
+[:en] is equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+#if __has_embed(<data.dat> limit(0))
+#endif
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+#embed <data.dat> limit(__has_include("a.h"))
+
+#if __has_embed(<data.dat> limit(__has_include("a.h")))
+// [:en] ill-formed: [`__has_include] ([#cpp.cond]) cannot appear here [:zh_CN] 非良构：此处不能有 [`__has_include]（[#cpp.cond]）
+#endif
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] The [~constant-expression] shall be an integral constant expression
+whose value is greater than or equal to zero.
+[:zh_CN] [~常量表达式]应当为值大于等于零的整型常量表达式。
+
+[:en] The resource-count ([#cpp.embed.gen]) becomes implementation-resource-count,
+if the value of the [~constant-expression] is greater than implementation-resource-count;
+otherwise, the value of the [~constant-expression].
+[:zh_CN] 若[~常量表达式]的值大于实现资源计数，则资源计数（[#cpp.embed.gen]）变为
+实现资源计数；否则为[~常量表达式]的值。
+
+[begin:example]
+[codeblock]
+constexpr unsigned char sound_signature[] = {
+  // [:en] a hypothetical resource capable of expanding to four or more elements \
+  [:zh_CN] 足以扩展为四个或更多元素的虚构资源
+#embed <sdk/jump.wav> limit(2+2)
+};
+
+static_assert(sizeof(sound_signature) == 4);    // OK
+[codeblock:end]
+[end:example]
