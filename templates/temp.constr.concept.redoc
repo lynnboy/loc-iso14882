@@ -1,0 +1,81 @@
+[section#temp.constr.concept
+    [:en] Concept-dependent constraints
+    [:zh_CN] 概念待决约束
+]
+
+[para]
+[:en] A [+:adj concept-dependent[!constraint]] [`CD] is an atomic constraint whose
+expression is a concept-id [`CI] whose [~concept-name] names a dependent concept named [`C].
+[:zh_CN] [+:adj 概念待决[!约束]] [`CD] 是原子约束，其表达式为[~概念名]指名了
+名为 [`C] 的待决概念的概念标识 [`CI]。
+
+[para]
+[:en] To determine if [`CD] is [+satisfied[%constraint[!satisfaction[!concept-dependent]]]],
+the parameter mapping and template arguments are first substituted into [`C].
+[:zh_CN] 为确定 [`CD] 是否被[+满足[%约束[!满足[!概念待决]]]]，首先向 [`C] 中进行
+形参映射和模板实参的代换。
+
+[:en] If substitution results in an invalid concept-id in the immediate context
+of the constraint ([#temp.deduct.general]), the constraint is not satisfied.
+[:zh_CN] 如果代换在约束的直接语境中导致无效概念标识（[#temp.deduct.general]），则约束不满足。
+
+[:en] Otherwise, let [`CI[$']] be the normal form ([#temp.constr.normal]) of the
+concept-id after substitution of [`C].
+[:zh_CN] 否则，令 [`CI[$']] 为 [`C] 进行代换后的概念标识的范式（[#temp.constr.normal]）。
+
+[begin:note]
+[:en] Normalization of [`CI] might be ill-formed; no diagnostics is required.
+[:zh_CN] [`CI] 的规范化可能非良构；无须诊断。
+[end:note]
+
+[para]
+[:en] To form [`CI[$'']], each appearance of [`C][=']s template parameters in
+the parameter mappings of the atomic constraints (including concept-dependent
+constraints) in [`CI[$']] is substituted with their respective arguments from
+the parameter mapping of [`CD] and the arguments of [`CI].
+[:zh_CN] 为构成 [`CI[$'']]，将 [`CI[$']] 中的各个原子约束（包括概念待决约束）的形参映射
+中所出现的每个 [`C] 的模板形参，代换为其在的 [`CD] 的形参映射中的对应实参和 [`CI] 的实参。
+
+[para]
+[:en] [`CD] is satisfied if [`CI[$'']] is satisfied.
+[:zh_CN] 若 [`CI[$'']] 被满足则 [`CD] 被满足。
+
+[begin:note]
+[:en] Checking whether [`CI[$'']] is satisfied
+can lead to further normalization of concept-dependent constraints.
+[:zh_CN] 对 [`CI[$'']] 是否满足的检查可能导致进一步的概念待决约束的规范化。
+[end:note]
+
+[begin:example]
+[codeblock]
+template<typename>
+concept C = true;
+
+template<typename T, template<typename> concept CC>
+concept D = CC<T>;
+
+template<typename T,
+         template<typename> concept CT,
+         template<typename, template<typename> concept> concept CU>
+int f() requires CU<T, CT>;
+int _ = f<int, C, D>();
+[codeblock:end]
+
+[:en] In this example, the associated constraint of [`f] is a concept-dependent
+constraint [$CI] whose expression is the concept-id [`CU<T, CT>] with the mapping
+[$[`T] \mapsto [`T], [`CT] \mapsto [`CT], [`CU] \mapsto [`CU]].
+[:zh_CN] 此例中，[`f] 的关联约束是概念待决约束 [$CI]，其表达式为具有映射
+[$[`T] \mapsto [`T], [`CT] \mapsto [`CT], [`CU] \mapsto [`CU]] 的概念标识 [`CU<T, CT>]。
+
+[:en] [$CI'] is the result of substituting [`D] into [$CI].
+[:zh_CN] [$CI'] 是将 [`D] 代换入 [$CI] 的结果。
+
+[:en] We consider the normal form [$CI''] of [`D<T, CT>],
+which is [`CC<T>] with the mapping [$[`T] \mapsto [`T], [`CC] \mapsto [`CC]].
+[:zh_CN] 考虑 [`D<T, CT>] 的范式 [$CI'']，其为具有映射
+[$[`T] \mapsto [`T], [`CC] \mapsto [`CC]] 的 [`CC<T>]。
+
+[:en] By recursion, [`C] is substituted in [`CC<T>] and then
+normalized to the atomic constraint [`true], which is satisfied.
+[:zh_CN] 递归地，将 [`C] 代换入 [`CC<T>]，继而规范化为原子约束 [`true]，其被满足。
+[end:example]

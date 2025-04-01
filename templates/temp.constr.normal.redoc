@@ -27,17 +27,36 @@ normal forms of [`E1] and [`E2].
 [:zh_CN] 表达式 [`E1 && E2] 的范式是 [`E1] 和 [`E2] 的范式的合取。
 
 [item]
-[:en] The normal form of a concept-id [`C<A[$_1], A[$_2], ..., A[$_n]>] is the
-normal form of the [~constraint-expression] of [`C], after substituting
-[`A[$_1], A[$_2], ..., A[$_n]] for [`C][=']s respective template parameters in
-the parameter mappings in each atomic constraint.
-[:zh_CN] 概念标识 [`C<A[$_1], A[$_2], ..., A[$_n]>] 的范式是 [`C] 的[~约束表达式]
-的范式，并经过代换 [`A[$_1], A[$_2], ..., A[$_n]] 为各个原子约束中的形参映射中的
-[`C] 的相应模板形参。
+[:en] For a concept-id [`C<A[$_1], A[$_2], [$\dotsc], A[$_n]>] termed [`CI]:
+[:zh_CN] 将概念标识 [`C<A[$_1], A[$_2], [$\dotsc], A[$_n]>] 称为 [`CI]：
+
+[list]
+[item]
+[:en] If [`C] names a dependent concept, the normal form of [`CI] is a
+concept-dependent constraint whose concept-id is [`CI] and
+whose parameter mapping is the identity mapping.
+[:zh_CN] 如果 [`C] 指名了待决概念，那么 [`CI] 的范式为一个概念待决约束，
+其概念标识为 [`CI] 且其形参映射为恒等映射。
+
+[item]
+[:en] Otherwise, to form [`CE], any non-dependent concept template argument [`A[$_i]]
+is substituted into the [~constraint-expression] of [`C].
+[:zh_CN] 否则，为构成 [`CE]，将任何非待决概念模板实参 [`A[$_i]] 代换入 [`C] 的[~约束表达式]。
+
+[:en] If any such substitution results in an invalid concept-id,
+the program is ill-formed; no diagnostic is required.
+[:zh_CN] 如果任何这种代换导致了无效的概念标识，则程序非良构；无须诊断。
+
+[:en] The normal form of [`CI] is the result of substituting, in the normal form
+[`N] of [`CE], appearances of [`C][=']s template parameters in the parameter
+mappings of the atomic constraints in [`N] with their respective arguments from [`C].
+[:zh_CN] [`CI] 的范式是 [`C] 为，在 [`CE] 的范式 [`N] 中进行代换的结果，其中将
+[`N] 中的各个原子约束的形参映射中出现的 [`C] 的模板形参代换为它们在 [`C] 中的对应实参。
 
 [:en] If any such substitution results in an invalid type or expression, the
 program is ill-formed; no diagnostic is required.
 [:zh_CN] 如果任何这种代换导致了无效的类型或表达式，则程序非良构；无须诊断。
+[list:end]
 
 [begin:example]
 [codeblock]
@@ -46,56 +65,77 @@ template<typename U> concept B = A<U*>;
 template<typename V> concept C = B<V&>;
 [codeblock:end]
 
-[:en] Normalization of [`B][=']s [~constraint-expression] is valid and results
-in [`T::value] (with the mapping [$[`T] \mapsto [`U*]]) [$\lor] [`true] (with an
-empty mapping), despite the expression [`T::value] being ill-formed for a
-pointer type [`T].
+[:en] Normalization of [`B][=']s [~constraint-expression] is valid and results in
+[`T::value] (with the mapping [$[`T] \mapsto [`U*]]) [$\lor] [`true] (with an empty
+mapping), despite the expression [`T::value] being ill-formed for a pointer type [`T].
 [:zh_CN] [`B] 的[~约束表达式]的规范化有效，其结果为 [`T::value]（映射为
 [$[`T] \mapsto [`U*]]）[$\lor] [`true]（映射为空），而不管表达式 [`T::value]
 对于指针类型 [`T] 非良构这一点。
 
 [:en] Normalization of [`C][='s] [~constraint-expression] results in the program
-being ill-formed, because it would form the invalid type [`V&*] in the parameter
-mapping.
-[:zh_CN] [`B] 的[~约束表达式]的规范化导致程序非良构，因为它将会在形参映射中构成
-无效的类型 [`V&*]。
+being ill-formed, because it would form the invalid type [`V&*] in the parameter mapping.
+[:zh_CN] [`B] 的[~约束表达式]的规范化导致程序非良构，因为它将会在形参映射中构成无效的类型 [`V&*]。
 [end:example]
 
 [item]
-[:en] For a [~fold-operator] ([#expr.prim.fold]) that is either [`&&] or [`||],
-the normal form of an expression [`( ... [~fold-operator] E )] is the normal
-form of [`( E \grammarterm{fold-operator} ... )].
-[:zh_CN] 对于[~折叠运算符]（[#expr.prim.fold]）[`&&] 或 [`||]，表达式
-[`( ... [~折叠运算符] E )] 的范式为 [`( E \grammarterm{fold-operator} ... )] 的范式。
+[:en] For a [~fold-operator] [`Op] ([#expr.prim.fold]) that is either [`&&] or [`||]:
+[:zh_CN] 对于[~折叠运算符] [`Op]（[#expr.prim.fold]）[`&&] 或 [`||]：
 
-[item]
-[:en] For a [~fold-operator] that is either [`&&] or [`||], the normal form of
-an expression [`( E1 [~fold-operator] ... [~fold-operator] E2 )] is the normal
-form of
-[:zh_CN] 对于折叠运算符 [`&&] 或 [`||]，表达式
-[`( E1 [~折叠运算符] ... [~折叠运算符] E2 )] 的范式为
 [list]
 [item]
-[:en@~] [`( E1 [~fold-operator] ... ) [~fold-operator] E2]
-if [`E1] contains an unexpanded pack, or
-[:zh_CN@~] 若 [`E1] 包含未展开包组，则为 [`( E1 [~折叠运算符] ... ) [~折叠运算符] E2]
-的范式。
+[:en] The normal form of an expression [`( ... Op E )] is the normal form of [`( E Op ... )].
+[:zh_CN] 表达式 [`( ... Op E )] 的范式为 [`( E Op ... )] 的范式。
+
 [item]
-[:en@~] [`E1 [~fold-operator] ( E2 [~fold-operator] ... )] otherwise.
-[:zh_CN@~] 否则为 [`E1 [~折叠运算符] ( E2 [~折叠运算符] ... )] 的范式。
+[:en] The normal form of an expression [`( E1 Op ... Op E2 )] is the normal form of
+[:zh_CN] 表达式 [`( E1 Op ... Op E2 )] 的范式
+[list]
+[item]
+[:en@~] [`( E1 Op ... ) Op E2] if [`E1] contains an unexpanded pack, or
+[:zh_CN] 当 [`E1] 含有未展开包组时为 [`( E1 Op ... ) Op E2]，
+[item]
+[:en@~] [`E1 Op ( E2 Op ... )] otherwise.
+[:zh_CN@~] 否则为 [`E1 Op ( E2 Op ... )]。
 [list:end]
 
 [item]
-[:en] The normal form of [`( E && ... )] is a fold expanded constraint ([#temp.constr.fold])
-whose constraint is the normal form of [`E] and whose [~fold-operator] is [`&&].
-[:zh_CN] [`( E && ... )] 的范式是折叠展开约束（[#temp.constr.fold]），其约束是
-[`E] 的范式，其[~折叠运算符]为 [`&&]。
+[:en] The normal form of an expression [`F] of the form [`( E Op ... )] is as follows:
+[:zh_CN] 形式为 [`( E && ... )] 的表达式 [`F] 的范式如下：
+
+[:en] If [`E] names any unexpanded concept template parameter pack,
+it shall not name any unexpanded template parameter pack of another kind.
+[:zh_CN] 如果 [`E] 指名了未展开的概念模板形参包组，那么它不能指名任何未展开的
+其他种类的未展开模板形参包组。
+
+[:en] Let [`E[$']] be the normal form of [`E].
+[:zh_CN] 令 [`E[$']] 为 [`E] 的范式。
+
+[list]
+[item]
+[:en] If [`E] names any unexpanded concept template parameter pack [`P[$_k]] that
+has corresponding template arguments in the parameter mapping of any atomic constraint
+(including concept-dependent constraints) of [`E[$']],
+the number of arguments specified for all such [`P[$_k]] shall be the same number [$N].
+[:zh_CN] 如果 [`E] 指名了任何未展开的概念模板形参包组 [`P[$_k]]，后者带有 [`E[$']]
+的任何原子约束（包括概念待决约束）的形参映射中的相应模板实参，那么为所有这种 [`P[$_k]]
+指定的实参的数量都应当为相同的数 [$N]。
+
+[:en] The normal form of [`F] is the normal form of [`E[$_0] Op [$\dotsb] Op E[$_{N-1}]]
+after substituting in [`E[$_i]] the respective [$i^\text{th}] concept argument of each [`P[$_k]].
+[:zh_CN] [`F] 的范式为 [`E[$_0] Op [$\dotsb] Op E[$_{N-1}]] 在将 [`E[$_i]] 中的
+为每个 [`P[$_k]] 的第 [$i] 个概念实参进行代换之后的范式。
+
+[:en] If any such substitution results in an invalid type or expression,
+the program is ill-formed; no diagnostic is required.
+[:zh_CN] 如果任何这种代换导致了无效的类型或表达式，则程序非良构；无须诊断。
 
 [item]
-[:en] The normal form of [`( E || ... )] is a fold expanded constraint
-whose constraint is the normal form of [`E] and whose [~fold-operator] is [`||].
-[:zh_CN] [`( E || ... )] 的范式是折叠展开约束，其约束是 [`E] 的范式，其
-[~折叠运算符]为 [`||]。
+[:en] Otherwise, the normal form of [`F] is a fold expanded constraint ([#temp.constr.fold])
+whose constraint is [`E[$']] and whose [~fold-operator] is [`Op].
+[:zh_CN] 否则，[`F] 的范式为一个折叠展开约束（[#temp.constr.fold]），其约束是 [`E[$']]，
+其[~折叠运算符]为 [`Op]。
+[list:end]
+[list:end]
 
 [item]
 [:en] The normal form of any other expression [`E] is the atomic constraint
@@ -111,8 +151,7 @@ called [+normalization[%normalization[!constraint][%constraint[!normalization]]]
 [begin:note]
 [:en] Normalization of [~constraint-expression]s is performed when determining
 the associated constraints ([#temp.constr.constr]) of a declaration and when
-evaluating the value of an [~id-expression] that names a concept specialization
-([#expr.prim.id]).
+evaluating the value of an [~id-expression] that names a concept specialization ([#expr.prim.id]).
 [:zh_CN] [~约束表达式]的规范化是在确定声明式的关联约束（[#temp.constr.constr]）时，
 以及在为指名某个概念特例的[~标识表达式]（[#expr.prim.id]）进行求值时实施的。
 [end:note]
@@ -145,6 +184,82 @@ template<C4 U> void f3(U);      // #3
 [:en] The associated constraints of #3 are [`requires (T x) { ++x; }] (with
 mapping [$[`T] \mapsto [`U]]).
 [:zh_CN] #3 的关联约束为 [`requires (T x) { ++x; }]（映射为 [$[`T] \mapsto [`U]]）。
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+template<typename T>
+concept C = true;
+template<typename T, template<typename> concept CT>
+concept CC = CT<T>;
+
+template<typename U,
+         template<typename, template<typename> concept> concept CT>
+  void f() requires CT<U*, C>;
+template<typename U>
+  void g() requires CC<U*, C>;
+[codeblock:end]
+
+[:en] The normal form of the associated constraints of [`f] is
+the concept-dependent constraint [`CT<T, C>].
+[:zh_CN] [`f] 的关联约束的范式为概念待决约束 [`CT<T, C>]。
+
+[br]
+
+[:en] The normal form of the associated constraints of [`g] is the atomic constraint [`true].
+[:zh_CN] [`g] 的关联约束的范式为原子约束 [`true]。
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+template<typename T>
+concept A = true;
+template<typename T>
+concept B = A<T> && true;                               // [:en] [`B] subsumes [`A] [:zh_CN] [`B] 纳入 [`A]
+template<typename T>
+concept C = true;
+template<typename T>
+concept D = C<T> && true;                               // [:en] [`D] subsumes [`C] [:zh_CN] [`D] 纳入 [`C]
+
+template<typename T, template<typename> concept... CTs>
+concept all_of = (CTs<T> && ...);
+
+template<typename T> requires all_of<T, A, C>
+  constexpr int f(T) { return 1; }                      // #1
+template<typename T> requires all_of<T, B, D>
+  constexpr int f(T) { return 2; }                      // #2
+
+static_assert(f(1) == 2);                               // ok
+[codeblock:end]
+
+[:en] The normal form of [`all_of<T, A, C>] is the conjunction of the normal forms
+of [`A<T>] and [`C<T>].
+[:zh_CN] [`all_of<T, A, C>] 的范式是 [`A<T>] 和 [`C<T>] 的范式的合取。
+
+[br]
+
+[:en] Similarly, the normal form of [`all_of<T, B, D>] is
+the conjunction of the normal forms of [`B<T>] and [`D<T>].
+[:zh_CN] 类似地，[`all_of<T, B, D>] 的范式是 [`B<T>] 和 [`D<T>] 的范式的合取。
+
+[br]
+
+[:en] #2 therefore is more constrained than #1.
+[:zh_CN] 因而 #2 比 #1 更受约束。
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+template<typename T, template<typename> concept>
+struct wrapper {};
+
+template<typename... T, template<typename> concept... CTs>
+  int f(wrapper<T, CTs>...) requires (CTs<T> && ...);   // [:en] error: the fold expression expands mixed kind template parameters \
+                                                        [:zh_CN] 错误：折叠表达式展开为种类混合的模板形参
+[codeblock:end]
 [end:example]
 
 [%:end#constraint.normalization]

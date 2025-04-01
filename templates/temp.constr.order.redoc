@@ -10,9 +10,8 @@ if and only if, for every disjunctive clause [$P_i] in the disjunctive normal
 form[#:fn#$1] of [$P], [$P_i] subsumes every conjunctive clause [$Q_j] in the
 conjunctive normal form[#:fn#$2] of [$Q], where
 [:zh_CN] [%纳入[%约束[!纳入关系]]]
-当且仅当对于 [$P] 的析取范式[#:fn#$1]中的每个析取子句 [$P_i]，[$P_i] 均纳入了
-[$Q] 的合取范式[#:fn#$2]中的所有合取子句 [$Q_j] 时，
-[$P] [+纳入[%约束[!纳入关系]]] [$Q]，其中
+当且仅当对于 [$P] 的析取范式[#:fn#$1]中的每个析取子句 [$P_i]，[$P_i] 均纳入了 [$Q]
+的合取范式[#:fn#$2]中的所有合取子句 [$Q_j] 时，[$P] [+纳入[%约束[!纳入关系]]] [$Q]，其中
 
 [note:foot#$1]
 [:en] A constraint is in disjunctive normal form when it is a disjunction of
@@ -53,9 +52,8 @@ exists an atomic constraint [$Q_{jb}] in [$Q_j] such that [$P_{ia}] subsumes
 存在原子约束 [$Q_{jb}]，使得 [$P_{ia}] 纳入 [$Q_{jb}] 时，[$P_i] 纳入 [$Q_j]，
 
 [item]
-[:en] an atomic constraint [$A] subsumes another atomic constraint [$B] if and
-only if [$A] and [$B] are identical using the rules described in [#temp.constr.atomic],
-and
+[:en] an atomic constraint [$A] subsumes another atomic constraint [$B] if and only if
+[$A] and [$B] are identical using the rules described in [#temp.constr.atomic], and
 [:zh_CN] 当且仅当原子约束 [$A] 和另一原子约束 [$B] 根据 [#temp.constr.atomic] 中
 描述的规则相同时，[$A] 纳入 [$B]，而
 
@@ -100,8 +98,7 @@ the constraint of [$A] subsumes that of [$B].
 [:en@~] the matching of template template arguments ([#temp.arg.template]),
 [:zh_CN@~] 模板模板实参的匹配（[#temp.arg.template]），
 [item]
-[:en@~] the partial ordering of class template specializations
-([#temp.spec.partial.order]), and
+[:en@~] the partial ordering of class template specializations ([#temp.spec.partial.order]), and
 [:zh_CN@~] 类模板特例的偏序（[#temp.spec.partial.order]），以及
 [item]
 [:en@~] the partial ordering of function templates ([#temp.func.order]).
@@ -110,16 +107,22 @@ the constraint of [$A] subsumes that of [$B].
 [end:note]
 
 [para]
+[:en] The associated constraints [`C] of a declaration [`D]
+[%subsumption[!eligible for]] are [+eligible for subsumption[%eligible[!for subsumption]]]
+unless [`C] contains a concept-dependent constraint.
+[:zh_CN] 声明式 [`D] 的关联约束 [`C]，除非其含有概念待决约束，否则它就是
+[+有纳入资格[%有资格[!纳入]]]的[%纳入[!有资格]]。
+
+[para]
 [:en] A declaration [`D1] is [+at least as constrained] as a declaration [`D2] if
-[:zh_CN] 以下条件下，称声明式 [`D1] [+至少与[%至少与～同样受约束]]声明式 [`D2]
-[+:% 同样受约束]。
+[:zh_CN] 以下条件下，称声明式 [`D1] [+至少与[%至少与～同样受约束]]声明式 [`D2] [+:% 同样受约束]。
 
 [list]
 [item]
 [:en] [`D1] and [`D2] are both constrained declarations and [`D1][=']s
-associated constraints subsume those of [`D2]; or
-[:zh_CN] [`D1] 和 [`D2] 都为受约束声明式，且 [`D1] 的关联约束纳入了 [`D2] 的
-关联约束；或者
+associated constraints are eligible for subsumption and subsume those of [`D2]; or
+[:zh_CN] [`D1] 和 [`D2] 都为受约束声明式，并且 [`D1] 的关联约束有纳入资格且纳入了
+[`D2] 的关联约束；或者
 
 [item]
 [:en] [`D2] has no associated constraints.
@@ -127,9 +130,8 @@ associated constraints subsume those of [`D2]; or
 [list:end]
 
 [para]
-[:en] A declaration [`D1] is [+more constrained] than another declaration [`D2]
-when [`D1] is at least as constrained as [`D2], and [`D2] is not at least as
-constrained as [`D1].
+[:en] A declaration [`D1] is [+more constrained] than another declaration [`D2] when
+[`D1] is at least as constrained as [`D2], and [`D2] is not at least as constrained as [`D1].
 [:zh_CN] 当 [`D1] 至少与 [`D2] 同样受约束但 [`D2] 并非至少与 [`D1] 同样受约束时，
 称声明式 [`D1] 比另一个声明式 [`D2] [+更受约束]。
 
@@ -148,6 +150,23 @@ f((int*)0);                     // [:en] selects #2 [:zh_CN] 选择 #2
 g(true);                        // [:en] selects #3 because [`C1<bool>] is not satisfied \
                                 [:zh_CN] 选择 #3，因为 [`C1<bool>] 未能满足
 g(0);                           // [:en] selects #4 [:zh_CN] 选择 #4
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[codeblock]
+template<template<typename T> concept CT, typename T>
+struct S {};
+template<typename T>
+concept A = true;
+
+template<template<typename T> concept X, typename T>
+int f(S<X, T>) requires A<T> { return 42; }             // #1
+template<template<typename T> concept X, typename T>
+int f(S<X, T>) requires X<T> { return 43; }             // #2
+
+f(S<A, int>{});                 // [:en] ok, select #1 because #2 is not eligible for subsumption \
+                                [:zh_CN] OK，选择 #1，因为 #2 没有纳入资格
 [codeblock:end]
 [end:example]
 

@@ -11,6 +11,9 @@
 [rule template-parameter [:zh_CN] 模板形参 ]
     [| type-parameter ]
     [| parameter-declaration ]
+    [| type-tt-parameter ]
+    [| variable-tt-parameter ]
+    [| concept-tt-parameter ]
 [rule:end]
 
 [rule type-parameter [:zh_CN] 类型形参 ]
@@ -18,8 +21,6 @@
     [| type-parameter-key [~:opt identifier] [`=] type-id ]
     [| type-constraint [`:opt ...] [~:opt identifier] ]
     [| type-constraint [~:opt identifier] [`=] type-id ]
-    [| template-head type-parameter-key [`:opt ...] [~:opt identifier] ]
-    [| template-head type-parameter-key [~:opt identifier] [`=] id-expression ]
 [rule:end]
 
 [rule type-parameter-key [:zh_CN] 类型形参关键词 ]
@@ -31,6 +32,26 @@
     [| [~:opt nested-name-specifier] concept-name ]
     [| [~:opt nested-name-specifier] concept-name [`<] [~:opt template-argument-list] [`>] ]
 [rule:end]
+
+[rule type-tt-parameter [:zh_CN] 类型-tt-形参 ]
+    [| template-head type-parameter-key [`:opt ...] [~:opt identifier] ]
+    [| template-head type-parameter-key [~:opt identifier] [~type-tt-parameter-default] ]
+[rule:end]
+
+[rule type-tt-parameter-default [:zh_CN] 类型-tt-形参默认实参 ]
+    [| [`=] [~:opt nested-name-specifier] [~template-name] ]
+    [| [`=] nested-name-specifier [`template] [~template-name] ]
+[rule:end]
+
+[rule variable-tt-parameter [:zh_CN] 变量-tt-形参 ]
+    [| template-head [`auto] [`:opt ...] [~:opt identifier] ]
+    [| template-head [`auto] [~:opt identifier] [`=] [~:opt nested-name-specifier] [~template-name] ]
+[rule:end]
+
+[rule concept-tt-parameter [:zh_CN] 概念-tt-形参 ]
+    [| [`template] [`<] template-parameter-list [`>] [`concept] [`:opt ...] [~:opt identifier] ]
+    [| [`template] [`<] template-parameter-list [`>] [`concept] [~:opt identifier] [`=] [~:opt nested-name-specifier] [~template-name] ]
+[rule:end]
 [syntax:end]
 
 [:en] [%component name]
@@ -40,36 +61,102 @@ its [~nested-name-specifier] (if any).
 [~类型约束]的成分名为其[~概念名]，和它的[~嵌套名说明符]的成分名（如果有）。
 
 [begin:note]
-[:en] The [`>] token following the [~template-parameter-list] of a [~type-parameter]
+[:en] The [`>] token following the [~template-parameter-list] of a
+[~type-tt-parameter], [~variable-tt-parameter], or [~concept-tt-parameter]
 can be the product of replacing a [`>>] token by two consecutive [`>] tokens ([#temp.names]).
-[:zh_CN] [~类型形参]的[~模板形参列表]后面跟着的 [`>] 记号，可能是把 [`>>] 记号
-替换为两个连续的 [`>] 记号而产生的（[#temp.names]）。
+[:zh_CN] [~类型-tt-形参]、[~变量-tt-形参]或[~概念-tt-形参]的[~模板形参列表]后面
+跟着的 [`>] 记号，可能是把 [`>>] 记号替换为两个连续的 [`>] 记号而产生的（[#temp.names]）。
 [end:note]
+
+[para]
+[:en] A template parameter is of one of the following kinds:
+[:zh_CN] 模板形参有以下种类：
+[list]
+[item]
+[:en] A [+:adj type[!template parameter]] is a
+template parameter introduced by a [~type-parameter].
+[:zh_CN] [~类型形参]引入的模板形参是[+:adj 类型[!模板形参]]。
+[item]
+[:en] A [+:adj constant[!template parameter]] is
+a template parameter introduced by a [~parameter-declaration].
+[:zh_CN] [~形参声明式]引入的模板形参是[+:adj 常量[!模板形参]]。
+[item]
+[:en] A [+:adj type template[!template parameter]] is
+a template parameter introduced by a [~type-tt-parameter].
+[:zh_CN] [~类型-tt-形参]引入的模板形参是[+:adj 类型模板[!模板形参]]。
+[item]
+[:en] A [+:adj variable template[!template parameter]] is
+a template parameter introduced by a [~variable-tt-parameter].
+[:zh_CN] [~变量-tt-形参]引入的模板形参是[+:adj 变量模板[!模板形参]]。
+[item]
+[:en] A [+:adj concept[!template parameter]] is
+a template parameter introduced by a [~concept-tt-parameter].
+[:zh_CN] [~概念-tt-形参]引入的模板形参是[+:adj 概念[!模板形参]]。
+[list:end]
+
+[para]
+[:en] Type template template parameters, variable template template parameters, and concept
+template parameters are collectively referred to as [+:adj template[!template parameters]].
+[:zh_CN] 类型模板模板形参、变量模板模板形参和概念模板形参统称为[+:adj 模板[!模板形参]]。
+
+[para]
+[:en] A concept template parameter shall not have associated constraints ([#temp.constr.decl]).
+[:zh_CN] 概念模板形参不能与约束相关联（[#temp.constr.decl]）。
+
+[para]
+[:en] If a [~template-parameter] is a [~parameter-declaration] that declares a
+pack ([#dcl.fct]), or otherwise has an ellipsis prior to its optional [~identifier],
+then the [~template-parameter] declares a template parameter pack ([#temp.variadic]).
+[:zh_CN] 如果[~模板形参]是一个声明包组的[~模板声明式]（[#dcl.fct]），或者其可选的
+[~标识符]之前有省略号，那么概[~模板形参]声明的是模板形参包组（[#temp.variadic]）。
+
+[:en] A template parameter pack that is a [~parameter-declaration] whose type
+contains one or more unexpanded packs is a pack expansion.
+[:zh_CN] 若作为[~形参声明式]的模板形参包组的类型含有一个或多个未展开的包组，则它是包组展开式。
+
+[:en] Similarly, a template parameter pack that is a template template parameter with
+a [~template-parameter-list] containing one or more unexpanded packs is a pack expansion.
+[:zh_CN] 与此类似，若作为模板模板形参的模板形参包组的[~模板形参列表]中含有
+一个或多个未展开的包组，则它是包组展开式。
+
+[:en] A type parameter pack with a [~type-constraint] that
+contains an unexpanded parameter pack is a pack expansion.
+[:zh_CN] 若类型形参包组的[~类型约束]含有一个未展开形参包组，则它是包组展开式。
+
+[:en] A template parameter pack that is a pack expansion shall not expand a
+template parameter pack declared in the same [~template-parameter-list].
+[:zh_CN] 作为包组展开式的模板形参包组，不能展开声明于相同[~模板形参列表]中的模板形参包组。
+
+[begin:example]
+[codeblock]
+template <class... Types>                       // [:en] [`Types] is a template type parameter pack [:zh_CN] [`Types] 是模板类型形参包组
+   class Tuple;                                 // [:en@~] but not a pack expansion [:zh_CN@~] 但不是包组展开式
+
+template <class T, int... Dims>                 // [:en] [`Dims] is a constant template parameter pack [:zh_CN] [`Dims] 是常量模板形参包组
+   struct multi_array;                          // [:en@~] but not a pack expansion [:zh_CN@~] 但不是包组展开式
+
+template <class... T>
+  struct value_holder {
+    template <T... Values> struct apply { };    // [:en] [`Values] is a constant template parameter pack [:zh_CN] [`Values] 是常量模板形参包组
+  };                                            // [:en@~] and a pack expansion [:zh_CN@~] 也是包组展开式
+
+template <class... T, T... Values>              // [:en] error: [`Values] expands template type parameter [:zh_CN] 错误：[`Values] 展开了相同模板形参列表
+  struct static_array;                          // [:en@~] pack [`T] within the same template parameter list [:zh_CN@~] 中的模板类型形参包组 [`T]
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] There is no semantic difference between [`:key class] and [`:key typename]
 in a [~type-parameter-key].
 [:zh_CN] [~类型形参关键词]中的 [`:key class] 和 [`:key typename] 之间没有语义差别。
 
-[:en] [`:key typename] followed by an [~unqualified-id] names a template type
-parameter.
+[:en] [`:key typename] followed by an [~unqualified-id] names a template type parameter.
 [:zh_CN] [`:key typename] 后面跟着[~无限定标识]指名一个模板类型形参。
 
-[:en] [`:key typename] followed by a [~qualified-id] denotes the type in a
-non-type[#:fn] [~parameter-declaration].
-[:zh_CN] [`:key typename] 后面跟着[~限定标识]代表非类型[#:fn][~形参声明式]中的类型。
+[:en] [`:key typename] followed by a [~qualified-id] denotes the type in a [~parameter-declaration].
+[:zh_CN] [`:key typename] 后面跟着[~限定标识]代表[~形参声明式]中的类型。
 
-[note:foot]
-[:en] Since template [~template-parameter]s and template [~template-argument]s
-are treated as types for descriptive purposes, the terms [+:% non-type parameter]
-and [+:% non-type argument] are used to refer to non-type, non-template
-parameters and arguments.
-[:zh_CN] 由于在进行描述时模板[~模板形参]和模板[~模板实参]被当作类型，所以术语
-[+:% 非类型形参]和[+:% 非类型实参]用来指代非类型非模板形参和实参。
-[note:end]
-
-[:en] A [~template-parameter] of the form [`:key class] [~identifier] is a
-[~type-parameter].
+[:en] A [~template-parameter] of the form [`:key class] [~identifier] is a [~type-parameter].
 [:zh_CN] 形式为“[`:key class] [~标识符]”的[~模板形参]是[~类型形参]。
 
 [begin:example]
@@ -78,54 +165,44 @@ class T { /* ... */ };
 int i;
 
 template<class T, T i> void f(T t) {
-  T t1 = i;         // [:en] [~template-parameter]s [`T] and [`i] \
-                    [:zh_CN] [~模板形参] [`T] 和 [`i]
-  ::T t2 = ::i;     // [:en] global namespace members [`T] and [`i] \
-                    [:zh_CN] 全局命名空间成员 [`T] 和 [`i]
+  T t1 = i;         // [:en] template parameters [`T] and [`i] [:zh_CN] 模板形参 [`T] 和 [`i]
+  ::T t2 = ::i;     // [:en] global namespace members [`T] and [`i] [:zh_CN] 全局命名空间成员 [`T] 和 [`i]
 }
 [codeblock:end]
 
-[:en] Here, the template [`f] has a [~type-parameter] called [`T], rather than
-an unnamed non-type [~template-parameter] of class [`T].
-[:zh_CN] 此处，模板 [`f] 带有一个叫作 [`T] 的[~类型形参]，而不是类 [`T] 的无名
-非类型[~模板形参]。
+[:en] Here, the template [`f] has a type template parameter called [`T],
+rather than an unnamed constant template parameter of class [`T].
+[:zh_CN] 此处，模板 [`f] 带有一个叫作 [`T] 的类型模板形参，而不是类 [`T] 的无名常量模板形参。
 [end:example]
 
-[:en] A [~template-parameter] declaration shall not have a [~storage-class-specifier].
-[:zh_CN] [~模板形参]声明式中不能有[~存储类说明符]。
+[:en] The [~template-declaration] of a [~template-parameter] shall not have
+a [~storage-class-specifier].
+[:zh_CN] [~模板形参]的[~形参声明式]中不能有[~存储类说明符]。
 
 [:en] Types shall not be defined in a [~template-parameter] declaration.
 [:zh_CN] [~模板形参]声明式中不能定义类型。
 
 [para]
-[:en] The [~identifier] in a [~type-parameter] is not looked up.
-[:zh_CN] 不查找[~类型形参]中的[~标识符]。
+[:en] The [~identifier] in a [~template-parameter] denoting a type or template is not looked up.
+[:zh_CN] 不查找代表类型或模板的[~模板形参]中的[~标识符]。
 
-[:en] A [~type-parameter] whose [~identifier] does not follow an ellipsis defines
-its [~identifier] to be a [~typedef-name] (if declared without [`:key template])
-or [~template-name] (if declared with [`:key template]) in the scope of the
-template declaration.
-[:zh_CN] [~标识符]并不跟着省略号的[~类型形参]，将其[~标识符]定义为其模板声明式
-的作用域中的 [~typedef-名]（不以 [`:key template] 声明时）或[~模板名]
-（以 [`:key template] 声明时）。
-
-[begin:note]
-[:en] A template argument can be a class template or alias template.
-[:zh_CN] 模板实参可以是类模板或别名模板。
-
-[:en] For example,
-[:zh_CN] 例如，
-
-[codeblock]
-template<class T> class myarray { /* ... */ };
-
-template<class K, class V, template<class T> class C = myarray>
-class Map {
-  C<K> key;
-  C<V> value;
-};
-[codeblock:end]
-[end:note]
+[:en] An [~identifier] that does not follow an ellipsis is defined to be
+[:zh_CN] 并不跟着省略号的[~标识符]，在模板声明式的作用域中，
+[list]
+[item]
+[:en@~] a [~typedef-name] for a [~type-parameter],
+[:zh_CN@~] 对于[~类型形参]，它被定义为 [~typedef-名]，
+[item]
+[:en@~] a [~template-name] for a [~variable-tt-parameter],
+[:zh_CN@~] 对于[~变量-tt-形参]，它被定义为 [~模板名]，
+[item]
+[:en@~] a [~template-name] for a [~type-tt-parameter], or
+[:zh_CN@~] 对于[~类型-tt-形参]，它被定义为 [~模板名]，以及
+[item]
+[:en@~] a [~concept-name] for a [~concept-tt-parameter],
+[:zh_CN@~] 对于[~概念-tt-形参]，它被定义为 [~概念名]。
+[list:end]
+[:en@~] in the scope of the template declaration.
 
 [para]
 [:en] A [~type-constraint] [`Q] that designates a concept [`C] can be used to
@@ -134,25 +211,22 @@ with a [~constraint-expression] [`E] defined as follows.
 [:zh_CN] 指定了概念 [`C] 的[~类型约束] [`Q]，可被用于约束依据语境确定的类型或
 模板类型形参包组 [`T]，它带有如下定义的[~约束表达式] [`E]。
 
-[:en] If [`Q] is of the form [`C<A[$_1], [$\cdots], A[$_n]>], then let [`E[$']]
-be [`C<T, A[$_1], [$\cdots], A[$_n]>].
-[:zh_CN] 若 [`Q] 的形式为 [`C<A[$_1], [$\cdots], A[$_n]>]，则令 [`E[$']] 为
-[`C<T, A[$_1], [$\cdots], A[$_n]>]。
+[:en] If [`Q] is of the form [`C<A[$_1], [$\dotsc], A[$_n]>], then let [`E[$']]
+be [`C<T, A[$_1], [$\dotsc], A[$_n]>].
+[:zh_CN] 若 [`Q] 的形式为 [`C<A[$_1], [$\dotsc], A[$_n]>]，则令 [`E[$']] 为
+[`C<T, A[$_1], [$\dotsc], A[$_n]>]。
 
 [:en] Otherwise, let [`E[$']] be [`C<T>].
 [:zh_CN] 否则，令 [`E[$']] 为 [`C<T>]。
 
-[:en] If [`T] is not a pack, then [`E] is [`E[$']], otherwise [`E] is
-[`(E[$'] && ...)].
+[:en] If [`T] is not a pack, then [`E] is [`E[$']], otherwise [`E] is [`(E[$'] && ...)].
 [:zh_CN] 若 [`T] 不是包组，则 [`E] 即为 [`E[$']]，否则 [`E] 为 [`(E[$'] && ...)]。
 
 [:en] This [~constraint-expression] [`E] is called the
-[+immediately-declared constraint[%constraint[!immediately-declared]]] of [`Q]
-for [`T].
+[+immediately-declared constraint[%constraint[!immediately-declared]]] of [`Q] for [`T].
 [:zh_CN] 这个[~约束表达式] [`E] 称为 [`Q] 针对 [`T] 的[+直接声明约束[%约束[!直接声明～]]]。
 
-[:en] The concept designated by a [~type-constraint] shall be a type concept
-([#temp.concept]).
+[:en] The concept designated by a [~type-constraint] shall be a type concept ([#temp.concept]).
 [:zh_CN] 由[~类型约束]所指定的概念应当是类型概念（[#temp.concept]）。
 
 [para]
@@ -175,9 +249,9 @@ template<C3<int>... T> struct s5;       // [:en] associates [`(C3<T, int> && ...
 [end:example]
 
 [para]
-[:en] A non-type [~template-parameter] shall have one of the following (possibly
+[:en] A constant template parameter shall have one of the following (possibly
 cv-qualified) types:
-[:zh_CN] 非类型[~模板形参]应当具有如下之一的（可能被 cv 限定的）类型：
+[:zh_CN] 非常量模板形参应当具有如下之一的（可能被 cv 限定的）类型：
 
 [list]
 [item]
@@ -210,8 +284,7 @@ when determining its type.
 [:zh_CN@~] 具有以下性质的字面量类类型：
 [list]
 [item]
-[:en@~] all base classes and non-static data members are public and non-mutable
-and
+[:en@~] all base classes and non-static data members are public and non-mutable and
 [:zh_CN@~] 所有基类和非静态数据成员均为 [`public] 且非 [`mutable]，并且
 [item]
 [:en@~] the types of all base classes and non-static data members are
@@ -221,24 +294,22 @@ structural types or (possibly multidimensional) array thereof.
 [list:end]
 
 [para]
-[:en] An [~id-expression] naming a non-type [~template-parameter] of class type
+[:en] An [~id-expression] naming a constant template parameter of class type
 [`T] denotes a static storage duration object of type [`const T], known as a
 [+template parameter object], which is template-argument-equivalent ([#temp.type])
 to the corresponding template argument after it has been converted to the type
-of the [~template-parameter] ([#temp.arg.nontype]).
-[:zh_CN] 指名类类型 [`T] 的某个非类型[~模板形参]的[~标识表达式]代表 [`const T]
+of the template parameter ([#temp.arg.nontype]).
+[:zh_CN] 指名类类型 [`T] 的某个常量模板形参的[~标识表达式]代表 [`const T]
 类型的某个静态存储期的对象，称为[+模板形参对象]，它按模板实参等价（[#temp.type]）
-于转换为该[~模板形参]的类型（[#temp.arg.nontype]）之后的对应模板实参。
+于转换为该模板形参的类型（[#temp.arg.nontype]）之后的对应模板实参。
 
 [:en] No two template parameter objects are template-argument-equivalent.
 [:zh_CN] 任何两个模板形参对象均不互相按模板实参等价。
 
 [begin:note]
-[:en]
-If an [~id-expression] names a non-type non-reference [~template-parameter],
+[:en] If an [~id-expression] names a non-reference constant template parameter,
 then it is a prvalue if it has non-class type.
-[:zh_CN]
-如果某个[~标识表达式]指名某个非类型的非引用[~模板形参]，则当它具有非类类型时它是纯右值。
+[:zh_CN] 如果某个[~标识表达式]指名某个非引用的常量模板形参，则当它具有非类类型时它是纯右值。
 
 [:en] Otherwise, if it is of class type [`T], it is an lvalue and has type
 [`const T] ([#expr.prim.id.unqual]).
@@ -250,28 +321,22 @@ then it is a prvalue if it has non-class type.
 using X = int;
 struct A {};
 template<const X& x, int i, A a> void f() {
-  i++;                          // [:en] error: change of [~template-parameter] value \
-                                [:zh_CN] 错误：[~模板形参]的值被改变
+  i++;                          // [:en] error: change of template parameter value [:zh_CN] 错误：[~模板形参]的值被改变
 
   &x;                           // OK
-  &i;                           // [:en] error: address of non-reference [~template-parameter] \
-                                [:zh_CN] 错误：非引用[~模板形参]的地址
+  &i;                           // [:en] error: address of non-reference template parameter [:zh_CN] 错误：非引用[~模板形参]的地址
   &a;                           // OK
-  int& ri = i;                  // [:en] error: attempt to bind non-const reference to temporary \
-                                [:zh_CN] 错误：视图将非 const 引用绑定到临时对象上
-  const int& cri = i;           // [:en] OK, const reference binds to temporary \
-                                [:zh_CN] OK，const 引用绑定到临时对象上
-  const A& ra = a;              // [:en] OK, const reference binds to a template parameter object \
-                                [:zh_CN] OK，const 引用绑定到模板形参对象上
+  int& ri = i;                  // [:en] error: attempt to bind non-const reference to temporary [:zh_CN] 错误：视图将非 const 引用绑定到临时对象上
+  const int& cri = i;           // [:en] OK, const reference binds to temporary [:zh_CN] OK，const 引用绑定到临时对象上
+  const A& ra = a;              // [:en] OK, const reference binds to a template parameter object [:zh_CN] OK，const 引用绑定到模板形参对象上
 }
 [codeblock:end]
 [end:example]
 
 [para]
 [begin:note]
-[:en] A non-type [~template-parameter] cannot be declared to have type
-[=cv] [`:key void].
-[:zh_CN] 非类型[~模板形参]不能被声明为具有 [=cv] [`:key void] 类型。
+[:en] A constant template parameter cannot be declared to have type [=cv] [`:key void].
+[:zh_CN] 常量模板形参不能被声明为具有 [=cv] [`:key void] 类型。
 
 [begin:example]
 [codeblock]
@@ -283,13 +348,11 @@ template<void* pv> class Y;     // OK
 
 [para]
 [:en] [%array[!template parameter of type]]
-A non-type [~template-parameter] of type [=lq]array of [`T][=rq] or
+A constant template parameter of type [=lq]array of [`T][=rq] or
 [%function[!template parameter of type]]
 of function type [`T] is adjusted to be of type [=lq]pointer to [`T][=rq].
-[:zh_CN] [%数组[!～类型的模板形参]]
-“[`T] 的数组”或
-[%函数[!～类型的模板形参]]
-函数类型 [`T] 的非类型[~模板形参]被调整为类型“[`T] 的指针”。
+[:zh_CN] [%数组[!～类型的模板形参]]“[`T] 的数组”或
+[%函数[!～类型的模板形参]]函数类型 [`T] 的常量模板形参被调整为类型“[`T] 的指针”。
 
 [begin:example]
 [codeblock]
@@ -305,11 +368,10 @@ S<v> z;                         // [:en] OK due to both adjustment and conversio
 [end:example]
 
 [para]
-[:en] A non-type template parameter declared with a type that contains a
-placeholder type with a [~type-constraint] introduces the immediately-declared
-constraint of the [~type-constraint] for the invented type corresponding to the
-placeholder ([#dcl.fct]).
-[:zh_CN] 以包含带有[~类型约束]的占位符类型的类型所声明的非类型模板形参，为这个
+[:en] A constant template parameter declared with a type that contains a placeholder type
+with a [~type-constraint] introduces the immediately-declared constraint of the
+[~type-constraint] for the invented type corresponding to the placeholder ([#dcl.fct]).
+[:zh_CN] 以包含带有[~类型约束]的占位符类型的类型所声明的常量模板形参，为这个
 [~类型约束]针对对应于该占位符的虚构类型引入一个直接声明约束（[#dcl.fct]）。
 
 [para]
@@ -318,10 +380,8 @@ specified after [`=] in a [~template-parameter].
 [:zh_CN] [+:adj 默认[!模板实参]]是在[~模板形参]中于 [`=] 之后所指定的模板实参（[#temp.arg]）。
 
 [:en] A default template argument may be specified for any kind of
-[~template-parameter] (type, non-type, template) that is not a template
-parameter pack ([#temp.variadic]).
-[:zh_CN] 可以为除了模板形参包组（[#temp.variadic]）以外的任意种类的[~模板形参]
-（类型、非类型或模板）指定默认模板实参。
+template parameter that is not a template parameter pack ([#temp.variadic]).
+[:zh_CN] 可以为除了模板形参包组（[#temp.variadic]）以外的任意种类的模板形参指定默认模板实参。
 
 [:en] A default template argument may be specified in a template declaration.
 [:zh_CN] 模板声明式中可以指定默认模板实参。
@@ -329,11 +389,9 @@ parameter pack ([#temp.variadic]).
 [:en] A default template argument shall not be specified in the
 [~template-parameter-list]s of the definition of a member of a class template
 that appears outside of the member[=']s class.
-[:zh_CN] 类模板的成员，处于该成员所在类外面的定义式的[~模板形参列表]中，不能指定
-默认模板实参。
+[:zh_CN] 类模板的成员，处于该成员所在类外面的定义式的[~模板形参列表]中，不能指定默认模板实参。
 
-[:en] A default template argument shall not be specified in a friend class
-template declaration.
+[:en] A default template argument shall not be specified in a friend class template declaration.
 [:zh_CN] 不能在友元类模板声明式中指定默认模板实参。
 
 [:en] If a friend function template declaration [$D] specifies a default
@@ -366,22 +424,23 @@ template<class T1 = int, class T2 = int> class A;
 [:en] If a [~template-parameter] of a class template, variable template, or
 alias template has a default template argument, each subsequent
 [~template-parameter] shall either have a default template argument supplied
-or be a template parameter pack.
+or declare a template parameter pack.
 [:zh_CN] 若类模板，变量模板或别名模板的某个[~模板形参]带有默认模板实参，则其每个
-后续的[~模板形参]应当要么提供默认模板实参，要么是个模板形参包组。
+后续的[~模板形参]应当要么提供默认模板实参，要么声明一个模板形参包组。
 
 [:en] If a [~template-parameter] of a primary class template, primary variable
-template, or alias template is a template parameter pack, it shall be the last
-[~template-parameter].
-[:zh_CN] 若主类模板，主变量模板或别名模板的某个[~模板形参]是模板形参包组，则它
-应当是最后一个[~模板形参]。
+template, or alias template declares a template parameter pack, it shall be the
+last [~template-parameter].
+[:zh_CN] 若主类模板，主变量模板或别名模板的某个[~模板形参]声明了模板形参包组，
+则它应当是最后一个[~模板形参]。
 
-[:en] A template parameter pack of a function template shall not be followed by
-another template parameter unless that template parameter can be deduced from
-the parameter-type-list ([#dcl.fct]) of the function template or has a default
-argument ([#temp.deduct]).
-[:zh_CN] 函数模板的模板形参包组后面，不能跟着另一个模板形参，除非这个模板形参
-可以从该函数模板的形参类型列表（[#dcl.fct]）进行推断或带有默认实参（[#temp.deduct]）。
+[:en] If a [~template-parameter] of a function template declares a template
+parameter pack, it shall not be followed by another [~template-parameter] unless
+that template parameter is deducible from the parameter-type-list ([#dcl.fct])
+of the function template or has a default argument ([#temp.deduct]).
+[:zh_CN] 如果函数模板的[~模板形参]声明的是模板形参包组，那么它后面不能跟着另一个
+[~模板形参]，除非这个模板形参可以从该函数模板的形参类型列表（[#dcl.fct]）进行推断
+或带有默认实参（[#temp.deduct]）。
 
 [:en] A template parameter of a deduction guide template ([#temp.deduct.guide])
 that does not have a default argument shall be deducible from the
@@ -402,12 +461,12 @@ template<class... T, class U> void g() { }      // [:en] error [:zh_CN] 错误
 
 [para]
 [:en] [%[`<][!template and]]
-When parsing a default template argument for a non-type [~template-parameter],
+When parsing a default template argument for a constant template parameter,
 the first non-nested [`>] is taken as the end of the [~template-parameter-list]
 rather than a greater-than operator.
 [:zh_CN] [%[`<][!模板与～]]
-当解析非类型[~模板形参]的默认模板实参时，其第一个非嵌套的 [`>] 被当作
-[~模板形参列表]的结尾而不是大于运算符。
+当解析常量模板形参的默认模板实参时，其第一个非嵌套的 [`>] 被当作[~模板形参列表]
+的结尾而不是大于运算符。
 
 [begin:example]
 [codeblock]
@@ -445,52 +504,16 @@ template <template <class TT = char> class T> void A<T>::g() {
 [codeblock:end]
 [end:example]
 
-[para]
-[:en] If a [~template-parameter] is a [~type-parameter] with an ellipsis prior
-to its optional [~identifier] or is a [~parameter-declaration] that declares a
-pack ([#dcl.fct]), then the [~template-parameter] is a template parameter pack
-([#temp.variadic]).
-[:zh_CN] 若某个[~模板形参]是一个在其可选的[~标识符]之前带有省略号的[~类型形参]，
-或者是一个声明了包组（[#dcl.fct]）的[~模板声明式]，则该[~模板形参]是模板形参包组
-（[#temp.variadic]）。
-
-[:en] A template parameter pack that is a [~parameter-declaration] whose type
-contains one or more unexpanded packs is a pack expansion.
-[:zh_CN] 如果某个模板形参包组是一个其类型中包含一个或多个未展开的包组的[~形参声明式]，
-则它是包组展开式。
-
-[:en] Similarly, a template parameter pack that is a [~type-parameter] with a
-[~template-parameter-list] containing one or more unexpanded packs is a pack
-expansion.
-[:zh_CN] 相似地，如果某个模板形参包组是一个[~类型形参]，并带有包含一个或多个未展开
-的包组的[~模板形参列表]，则它是包组展开式。
-
-[:en] A type parameter pack with a [~type-constraint] that contains an unexpanded
-parameter pack is a pack expansion.
-[:zh_CN] 带有包含未展开形参包组的[~类型约束]的类型形参包组，是包组展开式。
-
-[:en] A template parameter pack that is a pack expansion shall not expand a
-template parameter pack declared in the same [~template-parameter-list].
-[:zh_CN] 作为包组展开式的模板形参包组，不能对声明于相同的[~模板形参列表]中的
-模板形参包组进行展开。
+[:en] The associated constraints of a template template parameter
+shall not contain a concept-dependent constraint ([#temp.constr.concept]).
+[:zh_CN] 模板模板形参的关联约束不能含有概念待决的约束（[#temp.constr.concept]）。
 
 [begin:example]
 [codeblock]
-template <class... Types>                       // [:en] [`Types] is a template type parameter pack \
-                                                [:zh_CN] [`Types] 是模板类型形参包组
-   class Tuple;                                 // [:en@~] but not a pack expansion [:zh_CN@~] 但不是包组展开式
-template <class T, int... Dims>                 // [:en] [`Dims] is a non-type template parameter pack \
-                                                [:zh_CN] [`Dims] 是非类型模板形参包组
-   struct multi_array;                          // [:en@~] but not a pack expansion [:zh_CN@~] 但不是包组展开式
-template <class... T>
-  struct value_holder {
-    template <T... Values> struct apply { };    // [:en] [`Values] is a non-type template parameter pack \
-                                                [:zh_CN] [`Values] 是非类型模板形参包组
-  };                                            // [:en@~] and a pack expansion [:zh_CN@~] 也是包组展开式
-
-template <class... T, T... Values>              // [:en] error: [`Values] expands template type parameter \
-                                                [:zh_CN] 错误：[`Values] 展开了同一个模板形参列表
-  struct static_array;                          // [:en@~] pack [`T] within the same template parameter list \
-                                                [:zh_CN@~] 中的模板类型形参包组 [`T]
+template<
+  template<typename> concept C,
+  template<C> class TT  // [:en] error: [`C] forms a concept-dependent constraint [:zh_CN] 错误：[`C] 形成了概念待决的约束
+>
+struct A {};
 [codeblock:end]
 [end:example]
