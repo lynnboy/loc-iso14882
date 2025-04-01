@@ -251,7 +251,7 @@ Original   |中文   |章节    |定义
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
-*statement*                 |*语句*         | [stmt.pre]    | *带标号语句* \|<br> *属性说明符序列*__?__ *表达式语句* \|<br> *属性说明符序列*__?__ *复合语句* \|<br> *属性说明符序列*__?__ *选择语句* \|<br> *属性说明符序列*__?__ *循环语句* \|<br> *属性说明符序列*__?__ *跳转语句* \|<br> *声明语句* \|<br> *属性说明符序列*__?__ *try-块*
+*statement*                 |*语句*         | [stmt.pre]    | *带标号语句* \|<br> *属性说明符序列*__?__ *表达式语句* \|<br> *属性说明符序列*__?__ *复合语句* \|<br> *属性说明符序列*__?__ *选择语句* \|<br> *属性说明符序列*__?__ *循环语句* \|<br> *属性说明符序列*__?__ *跳转语句* \|<br> *属性说明符序列*__?__ *断言语句* \|<br> *声明语句* \|<br> *属性说明符序列*__?__ *try-块*
 *init-statement*            |*初始化语句*   | [stmt.pre]    | *表达式语句* \| *简单声明式* \| *别名声明式*
 *condition*                 |*条件*         | [stmt.pre]    | *表达式* \|<br> *属性说明符序列*__?__ *声明说明符序列* *声明符* *花括号或等号初始化式*\|<br> *结构化绑定声明式* *初始化式*
 *label*                     |*标号*         | [stmt.label]  | *属性说明符序列*__?__ (*标识符* \| `case` *常量表达式* \| `default` ) `:`
@@ -266,6 +266,7 @@ Original   |中文   |章节    |定义
 *for-range-initializer*     |*for-范围初始化式*| [stmt.iter.general] | *表达式或花括号初始化列表*
 *jump-statement*            |*跳转语句*     | [stmt.jump.general] | `break` `;` \| `continue` `;` \|<br> `return` *表达式或花括号初始化列表*__?__ `;` \| *协程返回语句* \|<br> `goto` *标识符* `;`
 *coroutine-return-statement*|*协程返回语句* | [stmt.return.coroutine] | `co_return` *表达式或花括号初始化列表*__?__ `;`
+*assertion-statement*       |*断言语句*     | [stmt.contract.assert] | `contract_assert` *属性说明符序列*__?__ `(` *条件表达式* `)` `;`
 *declaration-statement*     |*声明语句*     | [stmt.dcl]    | *块声明式*
 
 ### Declarations 声明

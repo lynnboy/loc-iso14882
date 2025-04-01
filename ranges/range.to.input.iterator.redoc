@@ -1,0 +1,174 @@
+[section#range.to.input.iterator
+    [:en] Class template [`to_input_view::[*iterator]]
+    [:zh_CN] 类模板 [`to_input_view::[*iterator]]
+]
+
+[codeblock:synopsis]
+namespace std::ranges {
+  template<[[redoc("`:c>")]]input_range V>
+    requires [[redoc("`:c>")]]view<V>
+  template<bool Const>
+  class to_input_view<V>::[[redoc("*>")]]iterator {
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                         // [=expos]
+
+    iterator_t<[[redoc("*>")]]Base> [[redoc("*>")]]current_ = iterator_t<[[redoc("*>")]]Base>();             // [=expos]
+
+    constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]Base> current);      // [=expos]
+
+  public:
+    using difference_type = range_difference_t<[[redoc("*>")]]Base>;
+    using value_type = range_value_t<[[redoc("*>")]]Base>;
+    using iterator_concept = input_iterator_tag;
+
+    [[redoc("*>")]]iterator() requires [[redoc("`:c>")]]default_initializable<iterator_t<[[redoc("*>")]]Base>> = default;
+
+    [[redoc("*>")]]iterator([[redoc("*>")]]iterator&&) = default;
+    [[redoc("*>")]]iterator& operator=([[redoc("*>")]]iterator&&) = default;
+
+    constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
+      requires Const && [[redoc("`:c>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
+
+    constexpr iterator_t<[[redoc("*>")]]Base> base() &&;
+    constexpr const iterator_t<[[redoc("*>")]]Base>& base() const & noexcept;
+
+    constexpr decltype(auto) operator*() const { return *[[redoc("*>")]]current_; }
+
+    constexpr [[redoc("*>")]]iterator& operator++();
+    constexpr void operator++(int);
+
+    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const sentinel_t<[[redoc("*>")]]Base>& y);
+
+    friend constexpr difference_type operator-(const sentinel_t<[[redoc("*>")]]Base>& y, const [[redoc("*>")]]iterator& x)
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+    friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const sentinel_t<[[redoc("*>")]]Base>& y)
+      requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+
+    friend constexpr range_rvalue_reference_t<[[redoc("*>")]]Base> iter_move(const [[redoc("*>")]]iterator& i)
+      noexcept(noexcept(ranges::iter_move(i.[[redoc("*>")]]current_)));
+
+    friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+      noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]current_, y.[[redoc("*>")]]current_)))
+      requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]iterator(iterator_t<[[redoc("*>")]]Base> current);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*current_] with [`std::move(current)].
+[:zh_CN] 以 [`std::move(current)] 初始化 [*current_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator([[redoc("*>")]]iterator<!Const> i)
+  requires Const && [[redoc("*>")]]convertible_to<iterator_t<V>, iterator_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*current_] with [`std::move(i.[*current_])].
+[:zh_CN] 以 [`std::move(i.[*current_])] 初始化 [*current_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr iterator_t<[[redoc("*>")]]Base> base() &&;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`std::move([*current_])].
+[:zh_CN] [`std::move([*current_])]。
+[div:end]
+
+[codeblock:declaration]
+constexpr const iterator_t<[[redoc("*>")]]Base>& base() const & noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [*current_].
+[:zh_CN] [*current_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+++[[redoc("*>")]]current_;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr void operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`++*this;]
+[:zh_CN] 等价于：[`++*this;]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const sentinel_t<[[redoc("*>")]]Base>& y);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`x.[*current_] == y].
+[:zh_CN] [`x.[*current_] == y]。
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(const sentinel_t<[[redoc("*>")]]Base>& y, const [[redoc("*>")]]iterator& x)
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`y - x.[*current_]].
+[:zh_CN] [`y - x.[*current_]]。
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(const [[redoc("*>")]]iterator& x, const sentinel_t<[[redoc("*>")]]Base>& y)
+  requires [[redoc("`:c>")]]sized_sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`x.[*current_] - y].
+[:zh_CN] [`x.[*current_] - y]。
+[div:end]
+
+[codeblock:declaration]
+friend constexpr range_rvalue_reference_t<[[redoc("*>")]]Base> iter_move(const [[redoc("*>")]]iterator& i)
+  noexcept(noexcept(ranges::iter_move(i.[[redoc("*>")]]current_)));
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::iter_move(i.[*current_]);]
+[:zh_CN] 等价于：[`return ranges::iter_move(i.[*current_]);]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr void iter_swap(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]iterator& y)
+  noexcept(noexcept(ranges::iter_swap(x.[[redoc("*>")]]current_, y.[[redoc("*>")]]current_)))
+  requires [[redoc("`:c>")]]indirectly_swappable<iterator_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`ranges::iter_swap(x.[*current_], y.[*current_]);]
+[:zh_CN] 等价于：[`ranges::iter_swap(x.[*current_], y.[*current_]);]
+[div:end]
