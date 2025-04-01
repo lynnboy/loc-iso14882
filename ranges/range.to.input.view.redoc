@@ -1,0 +1,85 @@
+[section#range.to.input.view
+    [:en] Class template [`to_input_view]
+    [:zh_CN] 类模板 [`to_input_view]
+]
+
+[codeblock:synopsis]
+template<[[redoc("`:c>")]]input_range V>
+  requires [[redoc("`:c>")]]view<V>
+class to_input_view : public view_interface<to_input_view<V>> {
+  V [[redoc("*>")]]base_ = V();                        // [=expos]
+
+  template<bool Const> class [[redoc("*>")]]iterator;  // [=expos]
+
+public:
+  to_input_view() requires [[redoc("`:c>")]]default_initializable<V> = default;
+  constexpr explicit to_input_view(V base);
+
+  constexpr V base() const & requires [[redoc("`:c>")]]copy_constructible<V> { return [[redoc("*>")]]base_; }
+  constexpr V base() && { return std::move([[redoc("*>")]]base_); }
+
+  constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>);
+  constexpr auto begin() const requires [[redoc("`:c>")]]range<const V>;
+
+  constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V>);
+  constexpr auto end() const requires [[redoc("`:c>")]]range<const V>;
+
+  constexpr auto size() requires [[redoc("`:c>")]]sized_range<V>;
+  constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+};
+
+template<class R>
+  to_input_view(R&&) -> to_input_view<views::all_t<R>>;
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr explicit to_input_view(V base);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*base_] with [`std::move(base)].
+[:zh_CN] 以 [`std::move(base)] 初始化 [*base_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr auto begin() requires (![[redoc("*:c>")]]simple-view<V>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator]<false>(ranges::begin([*base_]));]
+[:zh_CN] 等价于：[`return [*iterator]<false>(ranges::begin([*base_]));]
+[div:end]
+
+[codeblock:declaration]
+constexpr auto begin() const requires [[redoc("`:c>")]]range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*iterator]<true>(ranges::begin([*base_]));]
+[:zh_CN] 等价于：[`return [*iterator]<true>(ranges::begin([*base_]));]
+[div:end]
+
+[codeblock:declaration]
+constexpr auto end() requires (![[redoc("*:c>")]]simple-view<V>);
+constexpr auto end() const requires [[redoc("`:c>")]]range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::end([*base_]);]
+[:zh_CN] 等价于：[`return ranges::end([*base_]);]
+[div:end]
+
+[codeblock:declaration]
+constexpr auto size() requires[[redoc("`:c>")]]sized_range<V>;
+constexpr auto size() const requires [[redoc("`:c>")]]sized_range<const V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return ranges::size([*base_]);]
+[:zh_CN] 等价于：[`return ranges::size([*base_]);]
+[div:end]
