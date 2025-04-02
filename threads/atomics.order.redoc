@@ -5,13 +5,11 @@
 
 [%@lib memory_order]
 [%@lib@member relaxed[!memory_order]]
-[%@lib@member consume[!memory_order]]
 [%@lib@member acquire[!memory_order]]
 [%@lib@member release[!memory_order]]
 [%@lib@member acq_rel[!memory_order]]
 [%@lib@member seq_cst[!memory_order]]
 [%@lib memory_order_relaxed]
-[%@lib memory_order_consume]
 [%@lib memory_order_acquire]
 [%@lib memory_order_release]
 [%@lib memory_order_acq_rel]
@@ -19,7 +17,7 @@
 [codeblock:synopsis]
 namespace std {
   enum class memory_order : [[redoc("[=unspec]")]] {
-    relaxed, consume, acquire, release, acq_rel, seq_cst
+    relaxed = 0, acquire = 2, release = 3, acq_rel = 4, seq_cst = 5
   };
 }
 [codeblock:end]
@@ -47,30 +45,10 @@ affected memory location.
 [`memory_order::seq_cst]：存储操作在所影响的内存位置上实施释放操作。
 
 [item]
-[:en] [`memory_order::consume]: a load operation performs a consume operation on
-the affected memory location.
-[:zh_CN] [`memory_order::consume]：加载操作在所影响的内存位置上实施消费操作。
-
-[begin:note]
-[:en] Prefer [`memory_order::acquire], which provides stronger guarantees than
-[`memory_order::consume].
-[:zh_CN] 优先采用 [`memory_order::acquire]，它提供比 [`memory_order::consume]
-更强的保证。
-
-[:en] Implementations have found it infeasible to provide performance better
-than that of [`memory_order::acquire].
-[:zh_CN] 各实现已经发现，要提供比 [`memory_order::acquire] 更好的性能并不可行。
-
-[:en] Specification revisions are under consideration.
-[:zh_CN] 正在考虑对规范进行修订。
-[end:note]
-
-[item]
-[:en] [`memory_order::acquire], [`memory_order::acq_rel], and
-[`memory_order::seq_cst]: a load operation performs an acquire operation on the
-affected memory location.
-[:zh_CN] [`memory_order::acquire]、[`memory_order::acq_rel] 和
-[`memory_order::seq_cst]：加载操作在所影响的内存位置上实施获取操作。
+[:en] [`memory_order::acquire], [`memory_order::acq_rel], and [`memory_order::seq_cst]:
+a load operation performs an acquire operation on the affected memory location.
+[:zh_CN] [`memory_order::acquire]、[`memory_order::acq_rel] 和 [`memory_order::seq_cst]：
+加载操作在所影响的内存位置上实施获取操作。
 [list:end]
 
 [begin:note]
@@ -78,21 +56,18 @@ affected memory location.
 respect to memory ordering.
 [:zh_CN] 指定了 [`memory_order::relaxed] 的原子性操作对于内存排序方面是宽松的。
 
-[:en] Implementations must still guarantee that any given atomic access to a
-particular atomic object be indivisible with respect to all other atomic
-accesses to that object.
+[:en] Implementations must still guarantee that any given atomic access to a particular
+atomic object be indivisible with respect to all other atomic accesses to that object.
 [:zh_CN] 但各实现仍必须确保任意给定的到特定原子性对象的原子性访问，对于到该对象
 的任何其他原子性访问来说都是不可分的。
 [end:note]
 
 [para]
-[:en] An atomic operation [$A] that performs a release operation on an atomic
-object [$M] synchronizes with an atomic operation [$B] that performs an acquire
-operation on [$M] and takes its value from any side effect in the release
-sequence headed by [$A].
-[:zh_CN] 在原子性对象 [$M] 上实施释放操作的原子性操作 [$A]，以及在 [$M] 上实施
-获取操作的原子性操作 [$B]，且 [$B] 从以 [$A] 开始的释放序列中的任何副作用获得了
-值，则 [$A] 同步于 [$B]。
+[:en] An atomic operation [$A] that performs a release operation on an atomic object [$M]
+synchronizes with an atomic operation [$B] that performs an acquire operation on [$M]
+and takes its value from any side effect in the release sequence headed by [$A].
+[:zh_CN] 在原子性对象 [$M] 上实施释放操作的原子性操作 [$A]，以及在 [$M] 上实施获取操作的
+原子性操作 [$B]，且 [$B] 从以 [$A] 开始的释放序列中的任何副作用获得了值，则 [$A] 同步于 [$B]。
 
 [para]
 [:en] An atomic operation [$A] on some atomic object [$M] is
@@ -144,8 +119,7 @@ required to be satisfied by [$S]:
 [item]
 [:en] if [$A] and [$B] are both [`memory_order::seq_cst] operations, then [$A]
 precedes [$B] in [$S]; and
-[:zh_CN] 若 [$A] 和 [$B] 均为 [`memory_order::seq_cst] 操作，则 [$A] 在 [$S] 中
-先于 [$B]；并且
+[:zh_CN] 若 [$A] 和 [$B] 均为 [`memory_order::seq_cst] 操作，则 [$A] 在 [$S] 中先于 [$B]；并且
 
 [item]
 [:en] if [$A] is a [`memory_order::seq_cst] operation and [$B] happens before
@@ -161,8 +135,7 @@ a [`memory_order::seq_cst] fence [$Y], then [$A] precedes [$Y] in [$S]; and
 
 [item]
 [:en] if a [`memory_order::seq_cst] fence [$X] happens before [$A] and [$B]
-happens before a [`memory_order::seq_cst] fence [$Y], then [$X] precedes [$Y] in
-[$S].
+happens before a [`memory_order::seq_cst] fence [$Y], then [$X] precedes [$Y] in [$S].
 [:zh_CN] 若某个 [`memory_order::seq_cst] 屏障 [$X] 发生早于 [$A]，且 [$B] 发生
 早于某个 [`memory_order::seq_cst] 屏障 [$Y]，则 [$X] 在 [$S] 中先于 [$Y]。
 [list:end]
@@ -177,16 +150,14 @@ order of any atomic object [$M].
 value either from the last modification of [$M] that precedes [$A] in [$S] or
 from some non-[`memory_order::seq_cst] modification of [$M] that does not happen
 before any modification of [$M] that precedes [$A] in [$S].
-[:zh_CN] 它还保证了对 [$M] 的 [`memory_order::seq_cst] 加载操作 [$A]，要么读取到
-在 [$S] 中先于 [$A] 的 [$M] 的最后一次改动操作的值，要么读取到并非发生早于在
-[$S] 中先于 [$A] 的 [$M] 的任何改动操作的对 [$M] 的非 [`memory_order::seq_cst]
-的改动操作的值。
+[:zh_CN] 它还保证了对 [$M] 的 [`memory_order::seq_cst] 加载操作 [$A]，要么读取到在
+[$S] 中先于 [$A] 的 [$M] 的最后一次改动操作的值，要么读取到并非发生早于在[$S] 中
+先于 [$A] 的 [$M] 的任何改动操作的对 [$M] 的非 [`memory_order::seq_cst] 的改动操作的值。
 [end:note]
 
 [para]
 [begin:note]
-[:en] We do not require that [$S] be consistent with [=lq]happens before[=rq]
-([#intro.races]).
+[:en] We do not require that [$S] be consistent with [=lq]happens before[=rq] ([#intro.races]).
 [:zh_CN] 并不要求 [$S] 与“发生早于”关系（[#intro.races]）保持一致。
 
 [:en] This allows more efficient implementation of [`memory_order::acquire] and
@@ -194,22 +165,18 @@ before any modification of [$M] that precedes [$A] in [$S].
 [:zh_CN] 这样就允许在某些机器架构上能够更高效地实现 [`memory_order::acquire] 和
 [`memory_order::release]。
 
-[:en] It can produce surprising results when these are mixed with
-[`memory_order::seq_cst] accesses.
-[:zh_CN] 而当这些操作与 [`memory_order::seq_cst] 的访问混合使用时可能会导致出人
-意料的结果。
+[:en] It can produce surprising results when these are mixed with [`memory_order::seq_cst] accesses.
+[:zh_CN] 而当这些操作与 [`memory_order::seq_cst] 的访问混合使用时可能会导致出人意料的结果。
 [end:note]
 
 [para]
 [begin:note]
 [:en] [`memory_order::seq_cst] ensures sequential consistency only for a program
-that is free of data races and uses exclusively [`memory_order::seq_cst] atomic
-operations.
+that is free of data races and uses exclusively [`memory_order::seq_cst] atomic operations.
 [:zh_CN] [`memory_order::seq_cst] 仅对没有数据竞争且完全使用
 [`memory_order::seq_cst] 原子性操作的程序保证顺序一致性。
 
-[:en] Any use of weaker ordering will invalidate this guarantee unless extreme
-care is used.
+[:en] Any use of weaker ordering will invalidate this guarantee unless extreme care is used.
 [:zh_CN] 除非极端小心，否则任何对较弱顺序性的使用，都会使这项保证失效。
 
 [:en] In many cases, [`memory_order::seq_cst] atomic operations are reorderable
@@ -228,15 +195,13 @@ computed that circularly depend on their own computation.
 [:zh_CN] 例如，设 [`x] 和 [`y] 初始为零，
 
 [codeblock]
-// [:en] Thread 1: \
-[:zh_CN] 线程 1：
+// [:en] Thread 1: [:zh_CN] 线程 1：
 r1 = y.load(memory_order::relaxed);
 x.store(r1, memory_order::relaxed);
 [codeblock:end]
 
 [codeblock]
-// [:en] Thread 2: \
-[:zh_CN] 线程 2：
+// [:en] Thread 2: [:zh_CN] 线程 2：
 r2 = x.load(memory_order::relaxed);
 y.store(r2, memory_order::relaxed);
 [codeblock:end]
@@ -255,19 +220,16 @@ circularly depends on the store to [`y] storing [`42].
 [begin:note]
 [:en] The recommendation similarly disallows [`r1 == r2 == 42] in the following
 example, with [`x] and [`y] again initially zero:
-[:zh_CN] 与此相似，此建议在以下示例中也禁止 [`r1 == r2 == 42]，设 [`x] 和 [`y]
-初始也为零：
+[:zh_CN] 与此相似，此建议在以下示例中也禁止 [`r1 == r2 == 42]，设 [`x] 和 [`y] 初始也为零：
 
 [codeblock]
-// [:en] Thread 1: \
-[:zh_CN] 线程 1：
+// [:en] Thread 1: [:zh_CN] 线程 1：
 r1 = x.load(memory_order::relaxed);
 if (r1 == 42) y.store(42, memory_order::relaxed);
 [codeblock:end]
 
 [codeblock]
-// [:en] Thread 2: \
-[:zh_CN] 线程 2：
+// [:en] Thread 2: [:zh_CN] 线程 2：
 r2 = y.load(memory_order::relaxed);
 if (r2 == 42) x.store(42, memory_order::relaxed);
 [codeblock:end]
@@ -285,19 +247,3 @@ read-modify-write operation.
 atomic loads should observe atomic stores, within a reasonable amount of time.
 [:zh_CN] 实现应当使得原子性存储操作对原子性加载操作可见，且原子性加载操作应当
 在某个合理的时间段内观察到原子性存储。
-
-[%@lib kill_dependency]
-[codeblock:declaration]
-template<class T>
-  constexpr T kill_dependency(T y) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] The argument does not carry a dependency to the return value ([#intro.multithread]).
-[:zh_CN] 实参不传递依赖给返回值（[#intro.multithread]）。
-
-[para:returns]
-[:en] [`y].
-[:zh_CN] [`y]。
-[div:end]
