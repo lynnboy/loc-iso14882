@@ -11,34 +11,42 @@ may use to perform operations on containers and other sequences in parallel.
 
 [para]
 [:en] A [+parallel algorithm] is a function template listed in this document
-with a template parameter named [`ExecutionPolicy].
-[:zh_CN] [+并行算法]，是本文档中所列出的带有一个名为 [`ExecutionPolicy] 的模板
-形参的函数模板。
+with a template parameter named [`ExecutionPolicy] or constrained by the following
+exposition-only concept:
+[:zh_CN] [+并行算法]，是本文档中所列出的带有一个名为 [`ExecutionPolicy] 或
+以如下仅用于阐释的概念约束的模板形参的函数模板：
+
+[codeblock]
+template<class Ep>
+  concept [[redoc("*:c@def>")]]execution-policy = is_execution_policy_v<remove_cvref_t<Ep>>;     // [=expos]
+[codeblock:end]
+
+[:en] Such a template parameter is termed an [+:adj execution policy[!template parameter]].
+[:zh_CN] 这样的模板形参被称为[+:adj 执行策略[!模板形参]]。
 
 [para]
-[:en] Parallel algorithms access objects indirectly accessible via their
-arguments by invoking the following functions:
+[:en] A parallel algorithm accesses objects indirectly accessible via its arguments
+by invoking the following functions:
 [:zh_CN] 并行算法通过调用下列函数来访问可间接访问的对象：
 
 [list]
 [item]
-[:en] All operations of the categories of the iterators or [`mdspan] types that
-the algorithm is instantiated with.
-[:zh_CN] 用以实例化该算法的迭代器的所属类别或 [`mdspan] 类型的所有操作。
+[:en] All operations of the categories of the iterators, sentinels, or [`mdspan]
+types that the algorithm is instantiated with.
+[:zh_CN] 用以实例化该算法的迭代器的所属类别、哨位或 [`mdspan] 类型的所有操作。
 
 [item]
-[:en] Operations on those sequence elements that are required by its
-specification.
+[:en] Operations on those sequence elements that are required by its specification.
 [:zh_CN] 由其规范中所规定的对这些序列元素的操作。
 
 [item]
-[:en] User-provided function objects to be applied during the execution of the
+[:en] User-provided invocable objects to be applied during the execution of the
 algorithm, if required by the specification.
-[:zh_CN] 当规范中有所规定时，由用户提供的用以在算法的执行过程中运用的函数对象。
+[:zh_CN] 当规范中有所规定时，由用户提供的用以在算法的执行过程中运用的可调用对象。
 
 [item]
-[:en] Operations on those function objects required by the specification.
-[:zh_CN] 由其规范所规定的对这些函数对象的操作。
+[:en] Operations on those invocable objects required by the specification.
+[:zh_CN] 由其规范所规定的对这些可调用对象的操作。
 
 [begin:note]
 [:en] See [#algorithms.requirements].
@@ -59,9 +67,8 @@ algorithm, if required by the specification.
 [:en] Operations of the random-access iterator of the actual template argument
 (as per [#random.access.iterators]), as implied by the name of the template
 parameter [`RandomAccessIterator].
-[:zh_CN] 对其实际的模板实参上的各种随机访问迭代器的操作
-（据 [#random.access.iterators]），这是由模板形参 [`RandomAccessIterator] 的名字
-所要求的。
+[:zh_CN] 对其实际的模板实参上的各种随机访问迭代器的操作（据 [#random.access.iterators]），
+这是由模板形参 [`RandomAccessIterator] 的名字所要求的。
 
 [item]
 [:en] The [`swap] function on the elements of the sequence (as per the
@@ -78,15 +85,15 @@ preconditions specified in [#sort]).
 [:en] A standard library function is [+vectorization-unsafe] if it is specified
 to synchronize with another function invocation, or another function invocation
 is specified to synchronize with it, and if it is not a memory allocation or
-deallocation function.
+deallocation function or lock-free atomic modify-write operation ([#atomics.order]).
 [:zh_CN] 如果某个标准程序库函数被指定为同步于其他函数调用，或者有其他函数被指定
-为调用同步于它，并且它并非是内存分配或回收函数，则它是[+向量化不安全]的。
+为调用同步于它，并且它并非是内存分配或回收函数或者免锁的原子修改写操作（[#atomics.order]），
+则它是[+向量化不安全]的。
 
 [begin:note]
 [:en] Implementations must ensure that internal synchronization inside standard
 library functions does not prevent forward progress when those functions are
-executed by threads of execution with weakly parallel forward progress
-guarantees.
+executed by threads of execution with weakly parallel forward progress guarantees.
 [:zh_CN] 各实现必须保证标准程序库函数间的内部同步操作，当这些函数在具有弱并行
 向前进展保证的执行线程中执行时，不会妨碍向前进展保证。
 [end:note]
