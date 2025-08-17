@@ -46,17 +46,68 @@ template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2, [[red
   constexpr ranges::merge_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>, O>
     ranges::merge(R1&& r1, R2&& r2, O result,
                   Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I1, [[redoc("`:c>")]]sized_sentinel_for<I1> S1,
+         [[redoc("`:c>")]]random_access_iterator I2, [[redoc("`:c>")]]sized_sentinel_for<I2> S2,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS, class Comp = ranges::less,
+         class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  ranges::merge_result<I1, I2, O>
+    ranges::merge(Ep&& exec, I1 first1, S1 last1, I2 first2, S2 last2, O result, OutS result_last,
+                  Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R1, [[redoc("*:c>")]]sized-random-access-range R2,
+         [[redoc("*:c>")]]sized-random-access-range OutR, class Comp = ranges::less,
+         class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]mergeable<iterator_t<R1>, iterator_t<R2>, iterator_t<OutR>, Comp, Proj1, Proj2>
+  ranges::merge_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>, borrowed_iterator_t<OutR>>
+    ranges::merge(Ep&& exec, R1&& r1, R2&& r2, OutR&& result_r,
+                  Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [$N] be [`(last1 - first1) + (last2 - first2)].
-[:zh_CN] 令 [$N] 为 [`(last1 - first1) + (last2 - first2)]。
+[:en] Let:
+[:zh_CN] 令：
 
-[:en] Let [`comp] be [`less{}], [`proj1] be [`identity{}], and [`proj2] be
-[`identity{}], for the overloads with no parameters by those names.
-[:zh_CN] 对于没有名为 [`comp] 和 [`proj1] 和 [`proj2] 的形参的重载，令 [`comp]
-为 [`less()]，[`proj1] 为 [`identity{}]，以及 [`proj2] 为 [`identity{}]。
+[list]
+[item]
+[:en@~] [$N] be:
+[:zh_CN@~] [$N] 为：
+[list]
+[item]
+[:en@~] [`(last1 - first1) + (last2 - first2)]
+for the overloads with no parameter [`result_last] or [`result_r];
+[:zh_CN@~] 对于不带有形参 [`result_last] 或 [`result_r] 的重载，为
+[`(last1 - first1) + (last2 - first2)]；
+[item]
+[:en@~] [$\min([`(last1 - first1) + (last2 - first2)], \ [`result_last - result])]
+for the overloads with parameters [`result_last] or [`result_r];
+[:zh_CN@~] 对于带有形参 [`result_last] 或 [`result_r] 的重载，为
+[$\min([`(last1 - first1) + (last2 - first2)], \ [`result_last - result])]；
+[list:end]
+
+[item]
+[:en@~] [`comp] be [`less{}], [`proj1] be [`identity{}], and [`proj2] be [`identity{}],
+for the overloads with no parameters by those names;
+[:zh_CN@~] 对于没有这些名字的形参的重载，令 [`comp] 为 [`less()]，
+[`proj1] 为 [`identity{}]，而 [`proj2] 为 [`identity{}]；
+[item]
+[:en@~] [$E([`e1], [`e1])] be [`bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))];
+[:zh_CN@~] [$E([`e1], [`e1])] 为 [`bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))]；
+[item]
+[:en@~] [$K] be the smallest integer in [=range(0,last1 - first1)] such that for
+the element [`e1] in the position [`first1 + [$K]] there are at least [$N - K]
+elements [`e2] in [=range(first2,last2)] for which [$E([`e1], [`e1])] holds,
+and be equal to [`last1 - first1] if no such integer exists.
+[:zh_CN@~] [$K] 为 [=range(0,last1 - first1)] 中的最小整数，使得对于位置
+[`first1 + [$K]] 中的元素 [`e1]，在 [=range(first2,last2)] 中存在至少 [$N - K]
+个元素 [`e2] 满足 [$E([`e1], [`e1])] 成立，若不存在这样的整数，则令其等于 [`last1 - first1]。
+
+[begin:note]
+[:en] [`first1 + [$K]] points to the position past the last element to be copied.
+[:zh_CN] [`first1 + [$K]] 指向最后一个被复制的元素之后的位置。
+[end:note]
+[list:end]
 
 [para:expects]
 [:en] The ranges [=range(first1,last1)] and [=range(first2,last2)] are sorted
@@ -68,47 +119,46 @@ with respect to [`comp] and [`proj1] or [`proj2], respectively.
 [:zh_CN] 结果范围与任何一个源范围都没有重叠。
 
 [para:effects]
-[:en] Copies all the elements of the two ranges [=range(first1,last1)] and
-[=range(first2,last2)] into the range [=range(result,result_last)], where
-[`result_last] is [`result + [$N]].
-[:zh_CN] 将两个范围 [=range(first1,last1)] 和 [=range(first2,last2)] 中的所有
-元素复制到范围 [=range(result,result_last)] 中，其中 [`result_last] 为
-[`result + [$N]]。
+[:en] Copies the first [$K] elements of the range [=range(first1,last1)] and
+the first [$N - K] elements of the range [=range(first2,last2)] into the range
+[=range(result,result + [$N])].
+[:zh_CN] 将范围 [=range(first1,last1)] 中的前 [$K] 个元素和范围 [=range(first2,last2)]
+中的前 [$N - K] 个元素复制到范围 [=range(result,result + [$N])] 中。
 
 [:en] If an element [`a] precedes [`b] in an input range, [`a] is copied into
 the output range before [`b].
-[:zh_CN] 若元素 [`a] 在输入范围中处于 [`b] 之前，则 [`a] 在 [`b] 之前被复制到
-输出范围之中。
+[:zh_CN] 若元素 [`a] 在输入范围中处于 [`b] 之前，则 [`a] 在 [`b] 之前被复制到输出范围之中。
 
 [:en] If [`e1] is an element of [=range(first1,last1)] and [`e2] of
 [=range(first2,last2)], [`e2] is copied into the output range before [`e1] if
-and only if [`bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))] is [`true].
+and only if [$E([`e1], [`e1])] is [`true].
 [:zh_CN] 若 [`e1] 为 [=range(first1,last1)] 中的元素，而 [`e2] 为
-[=range(first2,last2)] 中的元素，则当且仅当
-[`bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))] 为 [`true] 时，
+[=range(first2,last2)] 中的元素，则当且仅当 [$E([`e1], [`e1])] 为 [`true] 时，
 [`e2] 在 [`e1] 之前被复制到输出范围之中。
 
 [para:returns]
 [list]
 [item]
-[:en] [`result_last] for the overloads in namespace [`std].
-[:zh_CN] 命名空间 [`std] 中的各重载返回 [`result_last]。
+[:en] [`result + [$N]] for the overloads in namespace [`std].
+[:zh_CN] 命名空间 [`std] 中的各重载返回 [`result + [$N]]。
 [item]
-[:en] [`{last1, last2, result_last}] for the overloads in namespace [`ranges].
-[:zh_CN] 命名空间 [`ranges] 中的各重载返回 [`{last1, last2, result_last}]。
+[:en] [`{first1 + [$K], first2 + [$N] - [$K], result + [$N]}] for the overloads
+in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各重载返回
+[`{first1 + [$K], first2 + [$N] - [$K], result + [$N]}]。
 [list:end]
 
 [para:complexity]
 [list]
 [item]
-[:en] For the overloads with no [`ExecutionPolicy], at most [$N - 1] comparisons
+[:en] For the non-parallel algorithm overloads, at most [$N - 1] comparisons
 and applications of each projection.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行 [$N - 1] 次比较和每种
-投射的运用。
+[:zh_CN] 对于非并行算法重载，最多进行 [$N - 1] 次比较和每种投射的运用。
 
 [item]
-[:en] For the overloads with an [`ExecutionPolicy], [?bigoh N] comparisons.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，进行 [?bigoh N] 次比较。
+[:en] For the parallel algorithm overloads, [?bigoh N] comparisons
+and applications of each projection.
+[:zh_CN] 对于并行算法重载，进行 [?bigoh N] 次比较和每种投射的运用。
 [list:end]
 
 [para:remarks]
@@ -186,10 +236,9 @@ and [^:oc MoveAssignable] ([#:tab#cpp17.moveassignable]) requirements.
 
 [list]
 [item]
-[:en] For the overloads with no [`ExecutionPolicy], and if enough additional
+[:en] For the non-parallel algorithm overloads, and if enough additional
 memory is available, at most [$N - 1] comparisons.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，并且当有足够的额外内存时，最多
-进行 [$N - 1] 次比较。
+[:zh_CN] 对于非并行算法重载，并且当有足够的额外内存时，最多进行 [$N - 1] 次比较。
 
 [item]
 [:en] Otherwise, [?bigoh N \log N] comparisons.
@@ -217,5 +266,24 @@ template<[[redoc("`:c>")]]bidirectional_range R, class Comp = ranges::less, clas
 [:zh_CN] 等价于：
 [codeblock]
 return ranges::inplace_merge(ranges::begin(r), middle, ranges::end(r), comp, proj);
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Comp = ranges::less,
+         class Proj = identity>
+  requires [[redoc("`:c>")]]sortable<iterator_t<R>, Comp, Proj>
+  borrowed_iterator_t<R>
+    ranges::inplace_merge(Ep&& exec, R&& r, iterator_t<R> middle, Comp comp = {},
+                          Proj proj = {});
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return ranges::inplace_merge(std::forward<Ep>(exec), ranges::begin(r), middle,
+                             ranges::end(r), comp, proj);
 [codeblock:end]
 [div:end]

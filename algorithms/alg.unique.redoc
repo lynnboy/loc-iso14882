@@ -27,6 +27,16 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
   requires [[redoc("`:c>")]]permutable<iterator_t<R>>
   constexpr borrowed_subrange_t<R>
     ranges::unique(R&& r, C comp = {}, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity,
+         [[redoc("`:c>")]]indirect_equivalence_relation<projected<I, Proj>> C = ranges::equal_to>
+  requires [[redoc("`:c>")]]permutable<I>
+  subrange<I> ranges::unique(Ep&& exec, I first, S last, C comp = {}, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         [[redoc("`:c>")]]indirect_equivalence_relation<projected<iterator_t<R>, Proj>> C = ranges::equal_to>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  borrowed_subrange_t<R> ranges::unique(Ep&& exec, R&& r, C comp = {}, Proj proj = {});
 [codeblock:end]
 
 [div:description]
@@ -76,8 +86,7 @@ range [=range(first + 1,last)] for which [$E] is [`true].
 
 [para:complexity]
 [:en] For nonempty ranges, exactly [`(last - first) - 1] applications of the
-corresponding predicate and no more than twice as many applications of any
-projection.
+corresponding predicate and no more than twice as many applications of any projection.
 [:zh_CN] 对于非空范围，恰好进行 [`(last - first) - 1] 次对应谓词的运用，以及
 不多于两倍的任何投射的运用。
 [div:end]
@@ -122,14 +131,28 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
             [[redoc("`:c>")]]indirectly_copyable_storable<iterator_t<R>, O>)
   constexpr ranges::unique_copy_result<borrowed_iterator_t<R>, O>
     ranges::unique_copy(R&& r, O result, C comp = {}, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS, class Proj = identity,
+         [[redoc("`:c>")]]indirect_equivalence_relation<projected<I, Proj>> C = ranges::equal_to>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::unique_copy_result<I, O>
+    ranges::unique_copy(Ep&& exec, I first, S last, O result, OutS result_last,
+                        C comp = {}, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+         class Proj = identity,
+         [[redoc("`:c>")]]indirect_equivalence_relation<projected<iterator_t<R>, Proj>> C = ranges::equal_to>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>>
+  ranges::unique_copy_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::unique_copy(Ep&& exec, R&& r, OutR&& result_r, C comp = {}, Proj proj = {});
 [codeblock:end]
 
 [div:description]
 [para]
 [:en] Let [`pred] be [`equal_to{}] for the overloads in namespace [`std] with no
-parameter [`pred], and let [$E] be
+parameter [`pred], and let [$E([`i])] be
 [:zh_CN] 令 [`pred] 对于命名空间 [`std] 中的没有形参 [`pred] 的各重载为
-[`equal_to{}]，并令 [$E]：
+[`equal_to{}]，并令 [$E([`i])]：
 [list]
 [item]
 [:en@~] [`bool(pred(*i, *(i - 1)))] for the overloads in namespace [`std].
@@ -141,6 +164,25 @@ overloads in namespace [`ranges].
 [`bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))]。
 [list:end]
 
+[para]
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en@~] [$M] be the number of iterators [`i] in the range [=range(first + 1,last)]
+for which [$E([`i])] is [`false];
+[:zh_CN@~] [$M] 为范围 [=range(first + 1,last)] 中使得 [$E([`i])] 为 [`false] 的迭代器
+[`i] 的数量；
+[item]
+[:en@~] [`result_last] be [`result + [$M] + 1] for the overloads with no
+parameter [`result_last] or [`result_r];
+[:zh_CN@~] 对于没有形参 [`result_last] 或 [`result_r] 的各重载，令 [`result_last]
+为 [`result + [$M] + 1]；
+[item]
+[:en@~] [$N] be [$\min(M + 1, \ [`result_last - result])].
+[:zh_CN@~] 令 [$N] 为 [$\min(M + 1, \ [`result_last - result])]。
+[list:end]
+
 [para:mandates]
 [:en] [`*first] is writable ([#iterator.requirements.general]) to [`result].
 [:zh_CN] [`*first] 可向 [`result] 写出（[#iterator.requirements.general]）。
@@ -148,9 +190,8 @@ overloads in namespace [`ranges].
 [para:expects]
 [list]
 [item]
-[:en] The ranges [=range(first,last)] and [=range(result,result + (last - first))]
-do not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first))] 没有重叠。
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N])] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N])] 没有重叠。
 
 [item]
 [:en] For the overloads in namespace [`std]:
@@ -175,44 +216,57 @@ of [`InputIterator].
 requirements and its value type is the same as [`T], then [`T] meets the
 [^:oc CopyAssignable] ([#:tab#cpp17.copyassignable]) requirements.
 [:zh_CN] 否则，如果 [`OutputIterator] 满足 [^:oc ForwardIterator] 的规定，且其
-值类型与 [`T] 相同，则 [`T] 满足 [^:oc CopyAssignable]
-（[#:tab#cpp17.copyassignable]）的规定。
+值类型与 [`T] 相同，则 [`T] 满足 [^:oc CopyAssignable]（[#:tab#cpp17.copyassignable]）的规定。
 
 [:en] Otherwise, [`T] meets both the [^:oc CopyConstructible]
 ([#:tab#cpp17.copyconstructible]) and [^:oc CopyAssignable] requirements.
 [:zh_CN] 否则，[`T] 同时满足 [^:oc CopyConstructible]
 （[#:tab#cpp17.copyconstructible]）和 [^:oc CopyAssignable] 的规定。
+[list:end]
+[list:end]
 
 [begin:note]
-[:en] For the overloads with an [`ExecutionPolicy], there might be a performance
-cost if the value type of [`ForwardIterator1] does not meet both the
+[:en] For the parallel algorithm overloads in namespace [`std], there can be a
+performance cost if the value type of [`ForwardIterator1] does not meet both the
 [^:oc CopyConstructible] and [^:oc CopyAssignable] requirements.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，当 [`ForwardIterator1] 的值类型并不
-同时满足 [^:oc CopyConstructible] 和 [^:oc CopyAssignable] 的规定时，可能存在
-性能损耗。
+[:zh_CN] 对于命名空间 [`std] 中的并行算法重载，当 [`ForwardIterator1] 的值类型并不
+同时满足 [^:oc CopyConstructible] 和 [^:oc CopyAssignable] 的规定时，可能存在性能损耗。
+
+[:en] For the parallel algorithm overloads in namespace [`ranges], there can be a
+performance cost if [`iter_value_t<I>] does not model [`:c copyable].
+[:zh_CN] 对于命名空间 [`ranges] 中的并行算法重载，当 [`iter_value_t<I>] 并不构成
+[`:c copyable] 时，可能存在性能损耗。
 [end:note]
-[list:end]
-[list:end]
 
 [para:effects]
-[:en] Copies only the first element from every consecutive group of equal
-elements referred to by the iterator [`i] in the range [=range(first,last)]
-for which [$E] holds.
-[:zh_CN] 对每个相等元素的连续组的第一个元素进行复制，其中元素为由范围
-[=range(first + 1,last)] 中的迭代器 [`i] 所指代的，且使得 [$E] 成立的元素。
+[:en] Copies only the first element from [$N] consecutive groups of equivalent
+elements referred to by the iterator [`i] in the range [=range(first + 1,last)]
+for which [$E([`i])] holds into the range [=range(result, result + [$N])].
+[:zh_CN] 将范围 [=range(first + 1,last)] 中的迭代器 [`i] 所指代的
+使得 [$E([`i`])] 成立的 [$N] 个等价元素的连续组中的第一个元素，复制到范围
+[=range(result, result + [$N])] 中。
 
 [para:returns]
 [list]
 [item]
-[:en@~] [`result + [$N]], for the overloads in namespace [`std].
-[:zh_CN@~] 对于命名空间 [`std] 中的各重载，返回 [`result + [$N]]。
+[:en] [`result + [$N]], for the overloads in namespace [`std].
+[:zh_CN] 对于命名空间 [`std] 中的各重载，返回 [`result + [$N]]。
 [item]
-[:en@~] [`{last, result + [$N]}], for the overloads in namespace [`ranges].
-[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载，返回 [`{last, result + [$N]}]。
+[:en] [`{last, result + [$N]}], for the overloads in namespace [`ranges],
+if [$N] is equal to [$M + 1].
+[:zh_CN] 对于命名空间 [`ranges] 中的各重载，若 [$N] 等于 [$M + 1]，则返回 [`{last, result + [$N]}]。
+[item]
+[:en] Otherwise, [`{j, result_last}] for the overloads in namespace [`ranges],
+where [`j] is the iterator in [=range(first + 1,last)] for which [$E([`j])]
+is [`false] and there are exactly [$N - 1] iterators [`i] in
+[=range(first + 1,j)] for which [$E([`i])] is [`false].
+[:zh_CN] 否则，对于命名空间 [`ranges] 中的各重载，返回 [`{j, result_last}]，其中
+[`j] 为 [=range(first + 1,last)] 中使得 [$E([`j])] 为 [`false] 的迭代器，且在
+[=range(first + 1,j)] 中恰好有 [$N - 1] 个迭代器 [`i] 使得 [$E([`i])] 为 [`false]。
 [list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first - 1] applications of the corresponding predicate
+[:en] At most [`last - first - 1] applications of the corresponding predicate
 and no more than twice as many applications of any projection.
-[:zh_CN] 恰好进行 [`last - first - 1] 次对应谓词的运用，以及不多于两倍的任何投射的运用。
+[:zh_CN] 最多进行 [`last - first - 1] 次对应谓词的运用，以及不多于两倍的任何投射的运用。
 [div:end]

@@ -62,8 +62,10 @@ in an initialization or conversion sequence in such a context.
 
 [list]
 [item]
-[:en] If [$E] is an [~id-expression] ([#expr.prim.id]), the set contains only [$E].
-[:zh_CN] 若 [$E] 是个[~标识表达式]（[#expr.prim.id]），则该集合仅包含 [$E]。
+[:en] If [$E] is an [~id-expression] ([#expr.prim.id]) or a [~splice-expression]
+([#expr.prim.splice]), the set contains only [$E].
+[:zh_CN] 若 [$E] 是个[~标识表达式]（[#expr.prim.id]）或[~拼接表达式]（[#expr.prim.splice]），
+则该集合仅包含 [$E]。
 
 [item]
 [:en] If [$E] is a subscripting operation ([#expr.sub]) with an array operand,
@@ -112,10 +114,10 @@ potential results of the right operand.
 [list:end]
 
 [begin:note]
-[:en] This set is a (possibly-empty) set of [~id-expression]s, each of which is
-either [$E] or a subexpression of [$E].
-[:zh_CN] 这个集合是[~标识表达式]的（可能为空的）集合，其中的每个要么为 [$E]
-要么为 [$E] 的子表达式。
+[:en] This set is a (possibly-empty) set of [~id-expression]s and [~splice-expression],
+each of which is either [$E] or a subexpression of [$E].
+[:zh_CN] 这个集合是[~标识表达式]和[~拼接表达式]的（可能为空的）集合，其中的每个要么为
+[$E] 要么为 [$E] 的子表达式。
 
 [begin:example]
 [:en] In the following example, the set of potential results of the initializer
@@ -124,6 +126,10 @@ subexpression.
 [:zh_CN] 以下例子中，[`n] 的初始化式的潜在结果集合包含第一个 [`S::x] 子表达式，
 但不包含第二个 [`S::x] 子表达式。
 
+[:en] The set of potential results of the initializer of [`o] contains
+the subexpression [``[:^^ S::x:`]].
+[:zh_CN] [`o] 的初始化式的潜在结果集合包含子表达式 [``[:^^ S::x:`]]。
+
 [codeblock]
 struct S { static const int x = 0; };
 const int &f(const int &r);
@@ -131,6 +137,7 @@ int n = b ? (1, S::x)           // [:en] [`S::x] is not odr-used here \
                                 [:zh_CN] [`S::x] 并未被 ODR 式使用
           : f(S::x);            // [:en] [`S::x] is odr-used here, so a definition is required \
                                 [:zh_CN] [`S::x] 被 ODR 式使用，所以需要一个定义式
+int o = [:^^S::x:];
 [codeblock:end]
 [end:example]
 [end:note]
@@ -145,13 +152,13 @@ an expression or conversion as follows:
 [:en] A function is named by an expression or conversion if it is the selected
 member of an overload set ([#basic.lookup], [#over.match], [#over.over]) in an
 overload resolution performed as part of forming that expression or conversion,
-unless it is a pure virtual function and either the expression is not an
-[~id-expression] naming the function with an explicitly qualified name or the
-expression forms a pointer to member ([#expr.unary.op]).
-[:zh_CN] 如果在构成某个表达式或转换的一部分所进行的重载决议中，某个函数是某个
-重载集合中所选中的成员（[#basic.lookup]，[#over.match]，[#over.over]），则这个
-函数被该表达式或转换所指名，除非它是纯虚函数，并且要么该表达式并非指名该函数的
-带有明确限定的名字的[~标识表达式]，要么该表达式构成了成员指针（[#expr.unary.op]）。
+and either it is not a pure virtual function or the expression is an
+[~id-expression] naming the function with an explicitly qualified name that
+does not form a pointer to member ([#expr.unary.op]).
+[:zh_CN] 如果在构成某个表达式或转换的一部分所进行的重载决议中，某个函数是某个重载集合中
+所选中的成员（[#basic.lookup]，[#over.match]，[#over.over]），并且要么它不是纯虚函数，
+要么该表达式是指名该函数的带有明确限定的名字的[~标识表达式]，且并不构成成员指针（[#expr.unary.op]），
+则这个函数被该表达式或转换所指名。
 
 [begin:note]
 [:en] This covers taking the address of functions ([#conv.func], [#expr.unary.op]),
@@ -186,8 +193,9 @@ and [#class.free].
 
 [para#term.odr.use]
 [:en] A variable is named by an expression if the expression is an
-[~id-expression] that denotes it.
-[:zh_CN] 如果表达式为代表某个变量的[~标识表达式]，则该表达式指名该变量。
+[~id-expression] or [~splice-expression] ([#expr.prim.splice]) that designates it.
+[:zh_CN] 如果表达式为代表某个变量的[~标识表达式]或[~拼接表达式]（[#expr.prim.splice]），
+则该表达式指名该变量。
 
 [:en] A variable [`x] that is named by a potentially-evaluated expression [$N]
 that appears at a point [$P] is [+odr-used[%odr-use]] by [$N] unless
@@ -196,8 +204,7 @@ that appears at a point [$P] is [+odr-used[%odr-use]] by [$N] unless
 
 [list]
 [item]
-[:en] [`x] is a reference that is usable in constant expressions at [$P]
-([#expr.const]), or
+[:en] [`x] is a reference that is usable in constant expressions at [$P] ([#expr.const]), or
 [:zh_CN] [`x] 是个可用于 [$P] 处的常量表达式之中的引用（[#expr.const]），或
 [item]
 [:en] [$N] is an element of the set of potential results of an expression [$E], where
@@ -210,8 +217,7 @@ lvalue-to-rvalue conversion is not applied or
 [item]
 [:en] [`x] is a non-volatile object that is usable in constant expression at
 [$P] and has no mutable subobjects and
-[:zh_CN] [`x] 是个可用于 [$P] 处的常量表达式之中的非 volatile 对象，且不包含
-可改动子对象，并且
+[:zh_CN] [`x] 是个可用于 [$P] 处的常量表达式之中的非 volatile 对象，且不包含可改动子对象，并且
 [list]
 [item]
 [:en] [$E] is a class member access expression ([#expr.ref]) naming a
@@ -222,8 +228,7 @@ non-volatile-qualified type or
 [item]
 [:en] the lvalue-to-rvalue conversion ([#conv.lval]) is applied to [$E] and
 [$E] has non-volatile-qualified non-class type.
-[:zh_CN] 未对 [$E] 实施左值向右值转换（[#conv.lval]），且 [$E] 具有非 volatile
-限定的非类类型。
+[:zh_CN] 未对 [$E] 实施左值向右值转换（[#conv.lval]），且 [$E] 具有非 volatile 限定的非类类型。
 [list:end]
 [list:end]
 [list:end]
@@ -257,9 +262,15 @@ int h(bool cond) {
 [end:example]
 
 [para]
-[:en] A structured binding is odr-used if it appears as a potentially-evaluated
+[:en] A structured binding is named by an expression if that expression is
+either an [~id-expression] or a [~splice-expression]
+that designates that structured binding.
+[:zh_CN] 当某个表达式是指名某个结构化绑定的[~标识表达式]或者[~拼接表达式]时，该表达式
+指名该结构化绑定。
+
+[:en] A structured binding is odr-used if it is named by a potentially-evaluated
 expression.
-[:zh_CN] 当结构化绑定作为潜在求值表达式出现时，它即被 ODR 式使用。
+[:zh_CN] 当结构化绑定被潜在求值表达式指名时，它即被 ODR 式使用。
 
 [para]
 [:en] [`*[`:key this]] is odr-used if [`:key this] appears as a
@@ -318,8 +329,7 @@ ODR 式使用另一个类的赋值运算符函数。
 non-lambda function parameter scope exists and, if the innermost such scope is a
 function parameter scope, it corresponds to a non-static member function, and
 [:zh_CN] 要么该局部实体不是 [`*[`:key this]]，要么存在某个外围的类作用域或非 lambda 的
-函数形参作用域，且当最内层的这种作用域是函数形参作用域时它对应于某个非静态成员
-函数，以及
+函数形参作用域，且当最内层的这种作用域是函数形参作用域时它对应于某个非静态成员函数，以及
 
 [item]
 [:en] for each intervening scope ([#basic.scope.scope]) between the point at
@@ -339,8 +349,7 @@ function definition scope), either
 [item]
 [:en@~] the intervening scope is the function parameter scope of a
 [~lambda-expression] or [~requires-expression], or
-[:zh_CN@~] 这个介入的作用域是某个 [~lambda-表达式]或 [~requires-表达式]的
-函数形参作用域，或者
+[:zh_CN@~] 这个介入的作用域是某个 [~lambda-表达式]或 [~requires-表达式]的函数形参作用域，或者
 [item]
 [:en@~] the intervening scope is the lambda scope of a [~lambda-expression]
 that has a [~simple-capture] naming the entity or has a [~capture-default], and
@@ -405,9 +414,8 @@ or variable that is odr-used in that program outside of a discarded statement
 变量，应该至少有一条定义式；无须诊断。
 
 [:en] The definition can appear explicitly in the program, it can be found in the
-standard or a user-defined library, or (when appropriate) it is
-implicitly defined (see [#class.default.ctor], [#class.copy.ctor], [#class.dtor],
-and [#class.copy.assign]).
+standard or a user-defined library, or (when appropriate) it is implicitly defined
+(see [#class.default.ctor], [#class.copy.ctor], [#class.dtor], and [#class.copy.assign]).
 [:zh_CN] 该定义式可以明确出现在程序中，可以在标准或用户定义程序库中找到，或（适当地）被
 隐式定义（见 [#class.default.ctor]，[#class.copy.ctor]，[#class.dtor]，和 [#class.copy.assign]）。
 
@@ -433,11 +441,9 @@ because the local class [`A] cannot be named outside this translation unit.
 translation unit excluding its [~private-module-fragment] (if any).
 [:zh_CN] [+定义域]为[~私有模块分段]或翻译单元中除[~私有模块分段]以外的部分（如果有）。
 
-[:en] A definition of an inline function or variable shall be reachable from the
-end of every definition domain in which it is odr-used outside of a discarded
-statement.
-[:zh_CN] 内联的函数或变量，在于弃用语句之外 ODR 式使用它的每个定义域末尾处，应该有一个
-定义式可达。
+[:en] A definition of an inline function or variable shall be reachable from the end
+of every definition domain in which it is odr-used outside of a discarded statement.
+[:zh_CN] 内联的函数或变量，在于弃用语句之外 ODR 式使用它的每个定义域末尾处，应该有一个定义式可达。
 
 [para]
 [:en] [%type[!incomplete]]
@@ -452,12 +458,9 @@ never defines [`X]:
 [:zh_CN] 如下的这个完整的翻译单元是良构的，虽然它并没有定义 [`X]：
 
 [codeblock]
-struct X;                       // [:en] declare [`X] as a struct type \
-                                [:zh_CN] 声明 [`X] 为结构体类型
-struct X* x1;                   // [:en] use [`X] in pointer formation \
-                                [:zh_CN] 在指针构成中使用 [`X]
-X* x2;                          // [:en] use [`X] in pointer formation \
-                                [:zh_CN] 在指针构成中使用  [`X]
+struct X;                       // [:en] declare [`X] as a struct type [:zh_CN] 声明 [`X] 为结构体类型
+struct X* x1;                   // [:en] use [`X] in pointer formation [:zh_CN] 在指针构成中使用 [`X]
+X* x2;                          // [:en] use [`X] in pointer formation [:zh_CN] 在指针构成中使用  [`X]
 [codeblock:end]
 [end:example]
 
@@ -486,8 +489,7 @@ object of type [`T] ([#conv.lval]), or
 [:zh_CN] 对指代 [`T] 类型的对象的泛左值实施左值向右值转换（[#conv.lval]），或
 [item]
 [:en] an expression is converted (either implicitly or explicitly) to type [`T]
-([#conv], [#expr.type.conv], [#expr.dynamic.cast], [#expr.static.cast],
-[#expr.cast]), or
+([#conv], [#expr.type.conv], [#expr.dynamic.cast], [#expr.static.cast], [#expr.cast]), or
 [:zh_CN] 将表达式（隐式或显式地）转换为类型 [`T]（[#conv]，[#expr.type.conv]，
 [#expr.dynamic.cast]，[#expr.static.cast]，[#expr.cast]），或
 [item]
@@ -499,8 +501,7 @@ object of type [`T] ([#conv.lval]), or
 [`:key dynamic_cast]（[#expr.dynamic.cast]），或 [`:key static_cast]
 （[#expr.static.cast]），转换为 [`T] 的指针或 [`T] 的引用，或
 [item]
-[:en] a class member access operator is applied to an expression of type [`T]
-([#expr.ref]), or
+[:en] a class member access operator is applied to an expression of type [`T] ([#expr.ref]), or
 [:zh_CN] 对 [`T] 类型的表达式运用类成员访问运算符（[#expr.ref]），或
 [item]
 [:en] the [`:key typeid] operator ([#expr.typeid]) or the [`:key sizeof] operator
@@ -528,8 +529,19 @@ pointer to [`T] ([#except.handle]).
 [end:note]
 
 [para]
-[:en] For any definable item [`D] with definitions in multiple translation units,
-[:zh_CN] 对于任意在多个翻译单元中有定义式的可定义项 [`D]，
+[:en] If a definable item [`D] is defined in a translation unit by an injected
+declaration [$X] ([#expr.const]) and another translation unit contains a
+definition of [`D], that definition shall be an injected declaration
+having the same characteristic sequence as [$X];
+a diagnostic is required only if [`D] is attached to a named module and
+a prior definition is reachable at the point where a later definition occurs.
+[:zh_CN] 如果可定义项 [`D] 在某个翻译单元中由注入声明式 [$X]（[#expr.const]）所定义，
+而另一个翻译单元包含 [`D] 的定义式，则该定义式应当是一个具有与 [$X] 相同的特性序列的
+注入声明式；仅当 [`D] 附属于具名模块，且在后面的定义式出现之处有之前的定义式可达时需要诊断。
+
+[para]
+[:en] For any other definable item [`D] with definitions in multiple translation units,
+[:zh_CN] 对于其他任意在多个翻译单元中有定义式的可定义项 [`D]，
 [list]
 [item]
 [:en@~] if [`D] is a non-inline non-templated function or variable, or
@@ -543,10 +555,8 @@ following requirements,
 [:zh_CN@~] 则程序非良构；
 
 [:en] a diagnostic is required only if the definable item is attached to a named
-module and a prior definition is reachable at the point where a later definition
-occurs.
-[:zh_CN] 仅当可定义项附属于具名模块，且在后面的定义式出现之处有之前的定义式可达
-时需要诊断。
+module and a prior definition is reachable at the point where a later definition occurs.
+[:zh_CN] 仅当可定义项附属于具名模块，且在后面的定义式出现之处有之前的定义式可达时需要诊断。
 
 [:en] Given such an item, for all definitions of [`D], or, if [`D] is an unnamed
 enumeration, for all definitions of [`D] that are reachable at any given program
@@ -568,7 +578,7 @@ tokens of the corresponding [~lambda-expression].
 
 [item]
 [:en] In each such definition, corresponding names, looked up according to
-[#basic.lookup], shall refer to the same entity, after overload resolution
+[#basic.lookup], shall denote the same entity, after overload resolution
 ([#over.match]) and after matching of partial template specialization
 ([#temp.spec.partial.match]), except that a name can refer to
 [:zh_CN] 在每个这种定义式中，每个对应的名字，根据 [#basic.lookup] 进行的查找结果，
@@ -602,11 +612,10 @@ tokens of the corresponding [~lambda-expression].
 [:zh_CN@~] 或者
 
 [item]
-[:en] a reference with internal or no linkage initialized with a constant
-expression such that the reference refers to the same entity in all definitions
-of [`D].
+[:en] a reference with internal or no linkage initialized with a constant expression
+such that the reference refers to the same object or function in all definitions of [`D].
 [:zh_CN] 具有内部连接或无连接的引用，其以常量表达式初始化并使该引用在 [`D] 的
-所有定义式中都指代相同的实体。
+所有定义式中都指代相同的对象或函数。
 [list:end]
 
 [item]
@@ -645,15 +654,20 @@ operator delete functions, shall refer to the same function.
 [item]
 [:en] In each such definition, a default argument used by an (implicit or explicit)
 function call or a default template argument used by an (implicit or explicit)
-[~template-id] or [~simple-template-id] is treated as if its token sequence were
-present in the definition of [`D];
+[~template-id], [~simple-template-id], or [~splice-specialization-specifier]
+is treated as if its token sequence were present in the definition of [`D];
 [:zh_CN] 每个这种定义式中，由（隐式或显式的）函数调用所使用的默认实参，或者由
-（隐式或显式的）[~模板标识]或[~简单模板标识]所使用的默认模板实参，是被当作如同
-其记号序列位于 [`D] 的定义式之中的；
+（隐式或显式的）[~模板标识]、[~简单模板标识]或[~拼接特化说明符]所使用的默认模板实参，
+是被当作如同其记号序列位于 [`D] 的定义式之中的；
 
 [:en@~] that is, the default argument or default template argument is subject to
 the requirements described in this paragraph (recursively).
 [:zh_CN@~] 也就是说，默认实参或默认模板实参也（递归地）遵守本段落中所描述的各项规定。
+
+[item]
+[:en] In each such definition, corresponding [~reflect-expression]s ([#expr.reflect])
+compute equivalent values ([#expr.eq]).
+[:zh_CN] 每个这种定义式中，对应的 [~反射表达式]（[#expr.reflect]）计算的值等价（[#expr.eq]）。
 [list:end]
 
 [para]
@@ -767,8 +781,7 @@ struct X {
 
 [:en] If the definition of [`f] appears in multiple translation units, the
 behavior of the program is as if there is only one definition of [`f].
-[:zh_CN] 若 [`f] 的定义式在多个翻译单元中出现，则程序的行为如同仅有一个 [`f] 的
-定义式。
+[:zh_CN] 若 [`f] 的定义式在多个翻译单元中出现，则程序的行为如同仅有一个 [`f] 的定义式。
 
 [:en] If the definition of [`g] appears in multiple translation units, the
 program is ill-formed (no diagnostic required) because each such definition uses
@@ -777,9 +790,8 @@ a default argument that refers to a distinct [~lambda-expression] closure type.
 这样的定义式使用的默认实参指代了不同的 [~lambda-表达式]闭包类型。
 
 [:en] The definition of [`X] can appear in multiple translation units of a valid
-program; the [~lambda-expression]s defined within the default argument of
-[`X::h] within the definition of [`X] denote the same closure type in each
-translation unit.
+program; the [~lambda-expression]s defined within the default argument of [`X::h]
+within the definition of [`X] denote the same closure type in each translation unit.
 [:zh_CN] [`X] 的定义式可以在合法程序的多个翻译单元中出现；在 [`X] 的定义式中的
 [`X::h] 的默认实参中所定义的 [~lambda-表达式]，在各个翻译单元中都代表相同的闭包类型。
 [end:example]

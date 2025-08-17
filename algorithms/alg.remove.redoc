@@ -33,6 +33,20 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
            [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T*>
   constexpr borrowed_subrange_t<R>
     ranges::remove(R&& r, const T& value, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, class T = projected_value_t<I, Proj>>
+  requires [[redoc("·:c>")]]indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T*>
+  subrange<I>
+    ranges::remove(Ep&& exec, I first, S last, const T& value, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         class T = projected_value_t<iterator_t<R>, Proj>>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>> &&
+           [[redoc("·:c>")]]indirect_binary_predicate<ranges::equal_to,
+                                      projected<iterator_t<R>, Proj>, const T*>
+  borrowed_subrange_t<R>
+    ranges::remove(Ep&& exec, R&& r, const T& value, Proj proj = {});
+
 template<[[redoc("`:c>")]]permutable I, [[redoc("`:c>")]]sentinel_for<I> S, class Proj = identity,
          [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
   constexpr subrange<I> ranges::remove_if(I first, S last, Pred pred, Proj proj = {});
@@ -41,6 +55,16 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
   requires [[redoc("`:c>")]]permutable<iterator_t<R>>
   constexpr borrowed_subrange_t<R>
     ranges::remove_if(R&& r, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  subrange<I>
+    ranges::remove_if(Ep&& exec, I first, S last, Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  borrowed_subrange_t<R>
+    ranges::remove_if(Ep&& exec, R&& r, Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
@@ -71,8 +95,7 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
 [para:effects]
 [:en] Eliminates all the elements referred to by iterator [`i] in the range
 [=range(first,last)] for which [$E] holds.
-[:zh_CN] 将范围 [=range(first,last)] 中的迭代器 [`i] 所指代的所有使得 [$E] 成立
-的元素排除。
+[:zh_CN] 将范围 [=range(first,last)] 中的迭代器 [`i] 所指代的所有使得 [$E] 成立的元素排除。
 
 [para:returns]
 [:en] Let [$j] be the end of the resulting range.
@@ -90,8 +113,7 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
 [list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate and
-any projection.
+[:en] Exactly [`last - first] applications of the corresponding predicate and any projection.
 [:zh_CN] 恰好进行 [`last - first] 次对应谓词和任何投射的运用。
 
 [para:remarks]
@@ -146,6 +168,23 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
            [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T*>
   constexpr ranges::remove_copy_result<borrowed_iterator_t<R>, O>
     ranges::remove_copy(R&& r, O result, const T& value, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS,
+         class Proj = identity, class T = projected_value_t<I, Proj>>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O> &&
+           [[redoc("·:c>")]]indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T*>
+  ranges::remove_copy_result<I, O>
+    ranges::remove_copy(Ep&& exec, I first, S last, O result, OutS result_last,
+                        const T& value, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+         class Proj = identity, class T = projected_value_t<iterator_t<R>, Proj>>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>> &&
+           [[redoc("·:c>")]]indirect_binary_predicate<ranges::equal_to,
+                                      projected<iterator_t<R>, Proj>, const T*>
+  ranges::remove_copy_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::remove_copy(Ep&& exec, R&& r, OutR&& result_r, const T& value, Proj proj = {});
+
 template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, [[redoc("`:c>")]]weakly_incrementable O,
          class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
   requires [[redoc("`:c>")]]indirectly_copyable<I, O>
@@ -156,12 +195,26 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
   requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, O>
   constexpr ranges::remove_copy_if_result<borrowed_iterator_t<R>, O>
     ranges::remove_copy_if(R&& r, O result, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::remove_copy_if_result<I, O>
+    ranges::remove_copy_if(Ep&& exec, I first, S last, O result, OutS result_last,
+                           Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+         class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>>
+  ranges::remove_copy_if_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::remove_copy_if(Ep&& exec, R&& r, OutR&& result_r, Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [$E] be
-[:zh_CN] 令 [$E]：
+[:en] Let [$E([`i])] be
+[:zh_CN] 令 [$E([`i])]：
 [list]
 [item]
 [:en@~] [`bool(*i == value)] for [`remove_copy];
@@ -174,54 +227,74 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
 [:zh_CN@~] 对于 [`ranges::remove_copy] 为 [`bool(invoke(proj, *i) == value)]；
 [item]
 [:en@~] [`bool(invoke(pred, invoke(proj, *i)))] for [`ranges::remove_copy_if],
-[:zh_CN@~] 对于 [`ranges::remove_copy_if] 为
-[`bool(invoke(pred, invoke(proj, *i)))]。
+[:zh_CN@~] 对于 [`ranges::remove_copy_if] 为 [`bool(invoke(pred, invoke(proj, *i)))]。
 [list:end]
 
 [para]
-[:en] Let [$N] be the number of elements in [=range(first,last)] for which [$E]
-is [`false].
-[:zh_CN] 令 [$N] 为 [=range(first,last)] 中使得 [$E] 为 [`false] 的元素的数量。
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en] [$M] be the number of iterators [`i] in [=range(first,last)] for which [$E([`i])] is [`false];
+[:zh_CN] [$M] 为 [=range(first,last)] 中使得 [$E([`i])] 为 [`false] 的迭代器 [`i] 的数量；
+[item]
+[:en] [`result_last] be [`result + [$M]] for the overloads with no parameter
+[`result_last] or [`result_r];
+[:zh_CN] 对于没有形参 [`result_last] 或 [`result_r] 的重载，令 [`result_last] 为 [`result + [$M]]；
+[item]
+[:en] [$N] be [$\min(M, \ [`result_last - result])].
+[:zh_CN] 令 [$N] 为 [$\min(M, \ [`result_last - result])]。
+[list:end]
 
 [para:mandates]
 [:en] [`*first] is writable ([#iterator.requirements.general]) to [`result].
 [:zh_CN] [`*first] 可向 [`result] 写出（[#iterator.requirements.general]）。
 
 [para:expects]
-[:en] The ranges [=range(first,last)] and [=range(result,result + (last - first))]
-do not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first))]
-没有重叠。
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N])] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N])] 没有重叠。
 
 [begin:note]
-[:en] For the overloads with an [`ExecutionPolicy], there might be a performance
-cost if [`iterator_traits<ForwardIterator1>::value_type] does not meet the
-[^:oc MoveConstructible] ([#:tab#cpp17.moveconstructible]) requirements.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，当
+[:en] For the parallel algorithm overloads in namespace [`std], there can be a
+performance cost if [`iterator_traits<ForwardIterator1>::value_type] does not meet
+the [^:oc MoveConstructible] ([#:tab#cpp17.moveconstructible]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的并行算法重载，当
 [`iterator_traits<ForwardIterator1>::value_type] 不符合 [^:oc MoveConstructible]
 的规定（[#:tab#cpp17.moveconstructible]）时，可能存在性能损耗。
+
+[:en] For the parallel algorithm overloads in namespace [`ranges], there can be a
+performance cost if [`iter_value_t<I>] does not model [`:c move_constructible].
+[:zh_CN] 对于命名空间 [`ranges] 中的并行算法重载，当 [`iter_value_t<I>] 不构成
+[`:c move_constructible] 时，可能存在性能损耗。
 [end:note]
 
 [para:effects]
-[:en] Copies all the elements referred to by the iterator [`i] in the range
-[=range(first,last)] for which [$E] is [`false].
-[:zh_CN] 对范围 [=range(first,last)] 中的迭代器 [`i] 所指代的所有使得 [$E] 为
-[`false] 的元素进行复制。
+[:en] Copies the first [$N] elements referred to by the iterator [`i] in the range
+[=range(first,last)] for which [$E([`i])] is [`false] into the range [=range(result, result + [$N])].
+[:zh_CN] 将范围 [=range(first,last)] 中的前 [$N] 个使得 [$E([`i])] 为 [`false] 的
+迭代器 [`i] 所指代的元素，复制到范围 [=range(result, result + [$N])] 中。
 
 [para:returns]
 [list]
 [item]
-[:en@~] [`result + [$N]], for the algorithms in namespace [`std].
-[:zh_CN@~] 对于命名空间 [`std] 中的各算法，返回 [`result + [$N]]。
+[:en] [`result + [$N]], for the algorithms in namespace [`std].
+[:zh_CN] 对于命名空间 [`std] 中的各算法，返回 [`result + [$N]]。
 [item]
-[:en@~] [`{last, result + [$N]}], for the algorithms in namespace [`ranges].
-[:zh_CN@~] 对于命名空间 [`ranges] 中的各算法，返回 [`{last, result + [$N]}]。
+[:en] [`{last, result + [$N]}], for the algorithms in namespace [`ranges], if [$N] is equal to [$M].
+[:zh_CN] 对于命名空间 [`ranges] 中的各算法，当 [$N] 等于 [$M] 时返回 [`{last, result + [$N]}]。
+[item]
+[:en] Otherwise, [`{j, result_last}], for the algorithms in namespace [`ranges],
+where [`j] is the iterator in [=range(first, last)] for which [$E([`j])] is [`false]
+and there are exactly [$N] iterators [`i] in [=range(first, i)] for which [$E([`i])] is [`false].
+[:zh_CN] 否则，对于命名空间 [`ranges] 中的各算法，返回 [`{j, result_last}]，其中 [`j] 是
+[=range(first, last)] 中使得 [$E([`j])] 为 [`false] 的迭代器，并且在 [=range(first, last)]
+中有恰好 [$N] 个迭代器 [`i] 使得 [$E([`i])] 为 [`false]。
 [list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate and
+[:en] At most [`last - first] applications of the corresponding predicate and
 any projection.
-[:zh_CN] 恰好进行 [`last - first] 次对应谓词和任何投射的运用。
+[:zh_CN] 最多进行 [`last - first] 次对应谓词和任何投射的运用。
 
 [para:remarks]
 [:en] Stable ([#algorithm.stable]).

@@ -37,6 +37,22 @@ template<[[redoc("`:c>")]]input_range R, class Proj = identity,
            [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<iterator_t<R>, Proj>, const T1*>
   constexpr borrowed_iterator_t<R>
     ranges::replace(R&& r, const T1& old_value, const T2& new_value, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, class T1 = projected_value_t<I, Proj>, class T2 = T1>
+  requires [[redoc("`:c>")]]indirectly_writable<I, const T2&> &&
+           [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T1*>
+  I ranges::replace(Ep&& exec, I first, S last,
+                    const T1& old_value, const T2& new_value, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         class T1 = projected_value_t<iterator_t<R>, Proj>, class T2 = T1>
+  requires [[redoc("`:c>")]]indirectly_writable<iterator_t<R>, const T2&> &&
+            [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to,
+                                      projected<iterator_t<R>, Proj>, const T1*>
+  borrowed_iterator_t<R>
+    ranges::replace(Ep&& exec, R&& r, const T1& old_value, const T2& new_value,
+                    Proj proj = {});
+
 template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class Proj = identity,
          class T = projected_value_t<I, Proj>,
          [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
@@ -47,12 +63,25 @@ template<[[redoc("`:c>")]]input_range R, class Proj = identity, class T = projec
   requires [[redoc("`:c>")]]indirectly_writable<iterator_t<R>, const T&>
   constexpr borrowed_iterator_t<R>
     ranges::replace_if(R&& r, Pred pred, const T& new_value, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, class T = projected_value_t<I, Proj>,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_writable<I, const T&>
+  I ranges::replace_if(Ep&& exec, I first, S last, Pred pred,
+                       const T& new_value, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         class T = projected_value_t<iterator_t<R>, Proj>,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_writable<iterator_t<R>, const T&>
+  borrowed_iterator_t<R>
+    ranges::replace_if(Ep&& exec, R&& r, Pred pred, const T& new_value, Proj proj = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [$E] be
-[:zh_CN] 令 [$E]：
+[:en] Let [$E([`i])] be
+[:zh_CN] 令 [$E([`i])]：
 [list]
 [item]
 [:en@~] [`bool(*i == old_value)] for [`replace];
@@ -74,8 +103,8 @@ template<[[redoc("`:c>")]]input_range R, class Proj = identity, class T = projec
 
 [para:effects]
 [:en] Substitutes elements referred by the iterator [`i] in the range
-[=range(first,last)] with [`new_value], when [$E] is [`true].
-[:zh_CN] 将范围 [=range(first,last)] 中由迭代器 [`i] 所指代的使 [$E] 为 [`true]
+[=range(first,last)] with [`new_value], when [$E([`i])] is [`true].
+[:zh_CN] 将范围 [=range(first,last)] 中由迭代器 [`i] 所指代的使 [$E([`i])] 为 [`true]
 的元素代换为 [`new_value]。
 
 [para:returns]
@@ -133,6 +162,27 @@ template<[[redoc("`:c>")]]input_range R, class O, class Proj = identity,
     ranges::replace_copy(R&& r, O result, const T1& old_value, const T2& new_value,
                          Proj proj = {});
 
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS,
+         class Proj = identity,
+         class T1 = projected_value_t<I, Proj>, class T2 = iter_value_t<O>>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O> &&
+           [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to, projected<I, Proj>, const T1*> &&
+           [[redoc("`:c>")]]indirectly_writable<O, const T2&>
+  ranges::replace_copy_result<I, O>
+    ranges::replace_copy(Ep&& exec, I first, S last, O result, OutS result_last,
+                         const T1& old_value, const T2& new_value, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+         class Proj = identity, class T1 = projected_value_t<iterator_t<R>, Proj>,
+         class T2 = range_value_t<OutR>>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>> &&
+           [[redoc("`:c>")]]indirect_binary_predicate<ranges::equal_to,
+                                      projected<iterator_t<R>, Proj>, const T1*> &&
+           [[redoc("`:c>")]]indirectly_writable<iterator_t<OutR>, const T2&>
+  ranges::replace_copy_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::replace_copy(Ep&& exec, R&& r, OutR&& result_r, const T1& old_value,
+                         const T2& new_value, Proj proj = {});
+
 template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, class O, class T = iter_value_t<O>,
          class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
   requires [[redoc("`:c>")]]indirectly_copyable<I, O> && [[redoc("`:c>")]]output_iterator<O, const T&>
@@ -145,12 +195,28 @@ template<[[redoc("`:c>")]]input_range R, class O, class T = iter_value_t<O>, cla
   constexpr ranges::replace_copy_if_result<borrowed_iterator_t<R>, O>
     ranges::replace_copy_if(R&& r, O result, Pred pred, const T& new_value,
                             Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS, class T = iter_value_t<O>,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O> && [[redoc("`:c>")]]indirectly_writable<O, const T&>
+  ranges::replace_copy_if_result<I, O>
+    ranges::replace_copy_if(Ep&& exec, I first, S last, O result, OutS result_last,
+                            Pred pred, const T& new_value, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+         class T = range_value_t<OutR>, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>> &&
+           [[redoc("`:c>")]]indirectly_writable<OutR, const T&>
+  ranges::replace_copy_if_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::replace_copy_if(Ep&& exec, R&& r, OutR&& result_r, Pred pred, const T& new_value,
+                            Proj proj = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [$E] be
-[:zh_CN] 令 [$E]：
+[:en] Let [$E([`i])] be
+[:zh_CN] 令 [$E([`i])]：
 [list]
 [item]
 [:en@~] [`bool(*(first + (i - result)) == old_value)] for [`replace_copy];
@@ -170,6 +236,20 @@ template<[[redoc("`:c>")]]input_range R, class O, class T = iter_value_t<O>, cla
 [`bool(invoke(pred, invoke(proj, *(first + (i - result)))))]。
 [list:end]
 
+[para]
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en] [`result_last] be [`result + (last - first)] for the overloads with no
+parameter [`result_last] or [`result_r];
+[:zh_CN] 对于没有形参 [`result_last] 或 [`result_r] 的重载，令 [`result_last] 为
+[`result + (last - first)]；
+[item]
+[:en] [$N] be [$\min([`last - first], \ [`result_last - result])].
+[:zh_CN] 令 [$N] 为 [$\min([`last - first], \ [`result_last - result])]。
+[list:end]
+
 [para:mandates]
 [:en] The results of the expressions [`*first] and [`new_value] are writable
 ([#iterator.requirements.general]) to [`result].
@@ -177,19 +257,17 @@ template<[[redoc("`:c>")]]input_range R, class O, class T = iter_value_t<O>, cla
 （[#iterator.requirements.general]）。
 
 [para:expects]
-[:en] The ranges [=range(first,last)] and [=range(result,result + (last - first))]
-do not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first))]
-没有重叠。
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N])] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N])] 没有重叠。
 
 [para:effects]
 [:en] Assigns through every iterator [`i] in the range
-[=range(result,result + (last - first))] a new corresponding value
-[:zh_CN] 通过范围 [=range(result,result + (last - first))] 中的每个迭代器 [`i]：
+[=range(result,result + [$N])] a new corresponding value
+[:zh_CN] 通过范围 [=range(result,result + [$N])] 中的每个迭代器 [`i]：
 [list]
 [item]
-[:en@~] [`new_value] if [$E] is [`true] or
-[:zh_CN@~] 当 [$E] 为 [`true] 时赋值 [`new_value]，
+[:en@~] [`new_value] if [$E([`i])] is [`true] or
+[:zh_CN@~] 当 [$E([`i])] 为 [`true] 时赋值 [`new_value]，
 [item]
 [:en@~] [`*(first + (i - result))] otherwise.
 [:zh_CN@~] 否则赋值 [`*(first + (i - result))]。
@@ -198,17 +276,14 @@ do not overlap.
 [para:returns]
 [list]
 [item]
-[:en@~] [`result + (last - first)] for the overload in namespace [`std].
-[:zh_CN@~] 对于命名空间 [`std] 中的重载，返回 [`result + (last - first)]。
+[:en@~] [`result + [$N]] for the overload in namespace [`std].
+[:zh_CN@~] 对于命名空间 [`std] 中的重载，返回 [`result + [$N]]。
 [item]
-[:en@~] [`{last, result + (last - first)}] for the overloads in namespace
-[`ranges].
-[:zh_CN@~] 对于命名空间 [`ranges] 中的重载，返回
-[`{last, result + (last - first)}]。
+[:en@~] [`{first + [$N], result + [$N]}] for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的重载，返回 [`{first + [$N], result + [$N]}]。
 [list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate and
-any projection.
-[:zh_CN] 恰好进行 [`last - first] 次对应谓词和任何投射的运用。
+[:en] Exactly [$N] applications of the corresponding predicate and any projection.
+[:zh_CN] 恰好进行 [$N] 次对应谓词和任何投射的运用。
 [div:end]

@@ -15,6 +15,9 @@ template<class ExecutionPolicy, class ForwardIterator>
 
 template<[[redoc("`:c>")]]permutable I, [[redoc("`:c>")]]sentinel_for<I> S>
   constexpr subrange<I> ranges::rotate(I first, I middle, S last);
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S>
+  requires [[redoc("`:c>")]]permutable<I>
+  subrange<I> ranges::rotate(Ep&& exec, I first, I middle, S last);
 [codeblock:end]
 
 [div:description]
@@ -26,10 +29,9 @@ template<[[redoc("`:c>")]]permutable I, [[redoc("`:c>")]]sentinel_for<I> S>
 ([#swappable.requirements]), and the type of [`*first] meets the
 [^:oc MoveConstructible] ([#:tab#cpp17.moveconstructible]) and
 [^:oc MoveAssignable] ([#:tab#cpp17.moveassignable]) requirements.
-[:zh_CN] [`ForwardIterator] 满足 [^:oc ValueSwappable] 的规定
-（[#swappable.requirements]），并且 [`*first] 的类型满足 [^:oc MoveConstructible]
-（[#:tab#cpp17.moveconstructible]）和 [^:oc MoveAssignable]
-（[#:tab#cpp17.moveassignable]）的规定。
+[:zh_CN] [`ForwardIterator] 满足 [^:oc ValueSwappable] 的规定（[#swappable.requirements]），
+并且 [`*first] 的类型满足 [^:oc MoveConstructible]（[#:tab#cpp17.moveconstructible]）
+和 [^:oc MoveAssignable]（[#:tab#cpp17.moveassignable]）的规定。
 
 [para:effects]
 [:en] For each non-negative integer [`i < (last - first)], places the element
@@ -72,6 +74,21 @@ template<[[redoc("`:c>")]]forward_range R>
 [`return ranges::rotate(ranges::begin(r), middle, ranges::end(r));]
 [:zh_CN] 等价于：
 [`return ranges::rotate(ranges::begin(r), middle, ranges::end(r));]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  borrowed_subrange_t<R> ranges::rotate(Ep&& exec, R&& r, iterator_t<R> middle);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return ranges::rotate(std::forward<Ep>(exec), ranges::begin(r), middle, ranges::end(r));
+[codeblock:end]
 [div:end]
 
 [%@lib rotate_copy]
@@ -130,6 +147,50 @@ the following assignment takes place:
 [div:end]
 
 [codeblock:declaration]
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::rotate_copy_truncated_result<I, O>
+    ranges::rotate_copy(Ep&& exec, I first, I middle, S last, O result, OutS result_last);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$M] be [`last - first] and [$N] be [$\min(M, \ [`result_last - result])].
+[:zh_CN] 令 [$M] 为 [`last - first] 并令 [$N] 为 [$\min(M, \ [`result_last - result])]。
+
+[para:expects]
+[:en] [=range(first,middle)] and [=range(middle,last)] are valid ranges.
+[:zh_CN] [=range(first,middle)] 和 [=range(middle,last)] 是有效范围。
+
+[:en] The ranges [=range(first,last)] and [=range(result,result + `[$N`])] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + `[$N`])] 没有重叠。
+
+[para:effects]
+[:en] Copies the range [=range(first,last)] to the range
+[=range(result,result + `[$N`])] such that for each non-negative integer [$i < N]
+the following assignment takes place:
+[`*(result + [$i]) =  *(first + ([$i] + (middle - first)) % [$M])].
+[:zh_CN] 将范围 [=range(first,last)] 复制到范围 [=range(result,result + `[$N`])]
+中，其中对于每个非负整数 [$i < N]，都进行了以下赋值：
+[`*(result + [$i]) =  *(first + ([$i] + (middle - first)) % [$M])]。
+
+[para:returns]
+[list]
+[item]
+[:en] [`{middle + [$N], first, result + [$N]}] if [$N] is less than [`last - middle].
+[:zh_CN] 若 [$N] 小于 [`last - middle] 则返回 [`{middle + [$N], first, result + [$N]}]。
+[item]
+[:en] Otherwise, [`{last, first + ([$N] + (middle - first)) % [$M], result + [$N]}].
+[:zh_CN] 否则，返回 [`{last, first + ([$N] + (middle - first)) % [$M], result + [$N]}]。
+[list:end]
+
+[para:complexity]
+[:en] Exactly [$N] assignments.
+[:zh_CN] 恰好进行 [$N] 次赋值。
+[div:end]
+
+[codeblock:declaration]
 template<[[redoc("`:c>")]]forward_range R, [[redoc("`:c>")]]weakly_incrementable O>
   requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, O>
   constexpr ranges::rotate_copy_result<borrowed_iterator_t<R>, O>
@@ -142,5 +203,22 @@ template<[[redoc("`:c>")]]forward_range R, [[redoc("`:c>")]]weakly_incrementable
 [:zh_CN] 等价于：
 [codeblock]
 return ranges::rotate_copy(ranges::begin(r), middle, ranges::end(r), std::move(result));
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>>
+  ranges::rotate_copy_truncated_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::rotate_copy(Ep&& exec, R&& r, iterator_t<R> middle, OutR&& result_r);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return ranges::rotate_copy(std::forward<Ep>(exec), ranges::begin(r), middle, ranges::end(r),
+                           ranges::begin(result_r), ranges::end(result_r));
 [codeblock:end]
 [div:end]

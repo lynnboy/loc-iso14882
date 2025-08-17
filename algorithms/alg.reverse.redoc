@@ -17,6 +17,13 @@ template<[[redoc("`:c>")]]bidirectional_iterator I, [[redoc("`:c>")]]sentinel_fo
 template<[[redoc("`:c>")]]bidirectional_range R>
   requires [[redoc("`:c>")]]permutable<iterator_t<R>>
   constexpr borrowed_iterator_t<R> ranges::reverse(R&& r);
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S>
+  requires [[redoc("`:c>")]]permutable<I>
+  I ranges::reverse(Ep&& exec, I first, S last);
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  borrowed_iterator_t<R> ranges::reverse(Ep&& exec, R&& r);
 [codeblock:end]
 
 [div:description]
@@ -93,6 +100,48 @@ not overlap.
 [:en@~] [`{last, result + [$N]}], for the overloads in namespace [`ranges].
 [:zh_CN@~] 对于命名空间 [`ranges] 中的各重载，返回 [`{last, result + [$N]}]。
 [list:end]
+
+[para:complexity]
+[:en] Exactly [$N] assignments.
+[:zh_CN] 恰好进行 [$N] 次赋值。
+[div:end]
+
+[codeblock:declaration]
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::reverse_copy_truncated_result<I, O>
+    ranges::reverse_copy(Ep&& exec, I first, S last, O result,
+                         OutS result_last);
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>>
+  ranges::reverse_copy_truncated_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::reverse_copy(Ep&& exec, R&& r, OutR&& result_r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$N] be [$\min([`last - first], \ [`result_last - result])], and
+let [*NEW_FIRST] be [`first + (last - first) - [$N]].
+[:zh_CN] 令 [$N] 为 [$\min([`last - first], \ [`result_last - result])]，并令
+[*NEW_FIRST] 为 [`first + (last - first) - [$N]]。
+
+[para:expects]
+[:en] The ranges [=range(first,last)] and [=range(result,result + `[$N`])] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + `[$N`])] 没有重叠。
+
+[para:effects]
+[:en] Copies the range [=range([*NEW_FIRST],last)] to the range
+[=range(result,result + `[$N`])] such that for every non-negative integer
+[$i < N] the following assignment takes place:
+[`*(result + [$N] - 1 - [$i]) = *([*NEW_FIRST] + [$i])].
+[:zh_CN] 将范围 [=range([*NEW_FIRST],last)] 复制到范围 [=range(result,result + `[$N`])]
+中，其中对于每个非负整数 [`i < N]，都进行了以下赋值：
+[`*(result + [$N] - 1 - [$i]) = *([*NEW_FIRST] + [$i])]。
+
+[para:returns]
+[:en] [`{last, [*NEW_FIRST], result + [$N]}].
+[:zh_CN] [`{last, [*NEW_FIRST], result + [$N]}]。
 
 [para:complexity]
 [:en] Exactly [$N] assignments.

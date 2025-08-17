@@ -54,36 +54,56 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
 [%@lib copy]
 [codeblock:declaration]
 template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
-  ForwardIterator2 copy(ExecutionPolicy&& policy,
+  ForwardIterator2 copy(ExecutionPolicy&& exec,
                         ForwardIterator1 first, ForwardIterator1 last,
                         ForwardIterator2 result);
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::copy_result<I, O>
+    ranges::copy(Ep&& exec, I first, S last, O result, OutS result_last);
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>>
+  ranges::copy_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::copy(Ep&& exec, R&& r, OutR&& result_r);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [`result_last] be [`result + (last - first)] for the overload in namespace [`std].
+[:zh_CN] 令 [`result_last] 对于命名空间 [`std] 中的重载为 [`result + (last - first)]。
+
+[para]
+[:en] Let [$N] be [$\min([`last - first], \ [`result_last - result])].
+[:zh_CN] 令 [$N] 为 [$\min([`last - first], \ [`result_last - result])]。
+
 [para:expects]
-[:en] The ranges [=range(first,last)] and [=range(result,result + (last - first)]
-do not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first)]
-没有重叠。
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N]] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N]] 没有重叠。
 
 [para:effects]
-[:en] Copies elements in the range [=range(first,last)] into the range
-[=range(result,result + (last - first))].
-[:zh_CN] 将范围 [=range(first,last)] 中的元素复制到范围 [=range(result,result +
-(last - first))] 中。
+[:en] Copies elements in the range [=range(first,first + [$N])] into the range
+[=range(result,result + [$N])].
+[:zh_CN] 将范围 [=range(first,first + [$N])] 中的元素复制到范围
+[=range(result,result + [$N])] 中。
 
-[:en] For each non-negative integer [`n < (last - first)], performs
-[`*(result + n) = *(first + n)].
-[:zh_CN] 对于每个非负整数 [`n < (last - first)]，实施
-[`*(result + n) = *(first + n)]。
+[:en] For each non-negative integer [$n < N], performs [`*(result + [$n]) = *(first + [$n])].
+[:zh_CN] 对于每个非负整数 [$n < N]，实施 [`*(result + [$n]) = *(first + [$n])]。
 
 [para:returns]
-[:en] [`result + (last - first)].
-[:zh_CN] [`result + (last - first)]。
+[list]
+[item]
+[:en] [`result + [$N]] for the overload in namespace [`std].
+[:zh_CN] 对于命名空间 [`std] 中的重载，返回 [`result + (last - first)]。
+[item]
+[:en] [`{first + [$N], result + [$N]}] for the overload in namespace [`ranges].
+[:zh_CN] 对于命名空间 [`ranges] 中的重载，返回 [`{first + [$N], result + [$N]}]。
+[list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] assignments.
-[:zh_CN] 恰好进行 [`last - first] 次赋值。
+[:en] Exactly [$N] assignments.
+[:zh_CN] 恰好进行 [$N] 次赋值。
 [div:end]
 
 [%@lib copy_n]
@@ -100,6 +120,12 @@ template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]weakly_incrementabl
   requires [[redoc("`:c>")]]indirectly_copyable<I, O>
   constexpr ranges::copy_n_result<I, O>
     ranges::copy_n(I first, iter_difference_t<I> n, O result);
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]random_access_iterator O,
+         [[redoc("`:c>")]]sized_sentinel_for<O> OutS>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::copy_n_result<I, O>
+    ranges::copy_n(Ep&& exec, I first, iter_difference_t<I> n, O result, OutS result_last);
 [codeblock:end]
 
 [div:description]
@@ -107,9 +133,16 @@ template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]weakly_incrementabl
 [:en] Let [$N] be [$\max(0, [`n])].
 [:zh_CN] 令 [$N] 为 [$\max(0, [`n])]。
 
+[para]
+[:en] Let [`result_last] be [`result + [$M]] for the overloads with no parameter [`result_last].
+[:zh_CN] 令 [`result_last] 对于没有 [`result_last] 形参的重载为 [`result + [$M]]。
+
+[para]
+[:en] Let [$M] be [$\min([`result_last - result], M)].
+[:zh_CN] 令 [$M] 为 [$\min([`result_last - result], M)]。
+
 [para:mandates]
-[:en] The type [`Size] is convertible to an integral type ([#conv.integral],
-[#class.conv]).
+[:en] The type [`Size] is convertible to an integral type ([#conv.integral], [#class.conv]).
 [:zh_CN] 类型 [`Size] 可以转换为整型类型（[#conv.integral]，[#class.conv]）。
 
 [para:effects]
@@ -153,64 +186,100 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
   requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, O>
   constexpr ranges::copy_if_result<borrowed_iterator_t<R>, O>
     ranges::copy_if(R&& r, O result, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+          [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS,
+          class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O>
+  ranges::copy_if_result<I, O>
+    ranges::copy_if(Ep&& exec, I first, S last, O result, OutS result_last,
+                    Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+          class Proj = identity,
+          [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR>>
+  ranges::copy_if_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::copy_if(Ep&& exec, R&& r, OutR&& result_r, Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [$E] be:
-[:zh_CN] 令 [$E]：
+[:en] Let [$E([`i])] be:
+[:zh_CN] 令 [$E([`i])]：
 
 [list]
 [item]
 [:en@~] [`bool(pred(*i))] for the overloads in namespace [`std].
 [:zh_CN@~] 对于命名空间 [`std] 中的重载，为 [`bool(pred(*i))]。
 [item]
-[:en@~] [`bool(invoke(pred, invoke(proj, *i)))] for the overloads in namespace
-[`ranges],
+[:en@~] [`bool(invoke(pred, invoke(proj, *i)))] for the overloads in namespace [`ranges].
 [:zh_CN@~] 对于命名空间 [`ranges] 中的重载，为
-[`bool(invoke(pred, invoke(proj, *i)))]，
+[`bool(invoke(pred, invoke(proj, *i)))]。
 [list:end]
 
-[:en@~] and [$N] be the number of iterators [`i] in the range [=range(first,last)]
-for which the condition [$E] holds.
-[:zh_CN@~] 并令 [$N] 为范围 [=range(first,last)] 中使得条件 [$E] 成立的迭代器
-[`i] 的数量。
+[para]
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en@~] [$M] be the number of iterators [`i] in the range [=range(first,last)]
+for which the condition [$E([`i])] holds;
+[:zh_CN@~] [$N] 为范围 [=range(first,last)] 中使得条件 [$E([`i])] 成立的迭代器 [`i] 的数量。
+[item]
+[:en@~] [`result_last] be [`result + [$M]] for the overloads with no parameter
+[`result_last] or [`result_r];
+[:zh_CN@~] 对于没有 [`result_last] 或 [`result_r] 形参的重载，[`result_last] 为 [`result + [$M]]；
+[item]
+[:en@~] [$N] be [$\min(M, [`result_last - result])].
+[:zh_CN@~] 令 [$N] 为 [$\min(M, [`result_last - result])]。
+[list:end]
 
 [para:expects]
-[:en] The ranges [=range(first,last)] and [=range(result,result + (last - first))]
-do not overlap.
-[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + (last - first))]
-没有重叠。
+[:en] The ranges [=range(first,last)] and [=range(result,result + [$N])] do not overlap.
+[:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + [$N])] 没有重叠。
 
 [begin:note]
-[:en] For the overload with an [`ExecutionPolicy], there might be a performance
-cost if [`iterator_traits<ForwardIterator1>::value_type] is not
-[^:oc MoveConstructible] ([#:tab#cpp17.moveconstructible]).
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，当
-[`iterator_traits<ForwardIterator1>::value_type] 不为 [^:oc MoveConstructible]
-（[#:tab#cpp17.moveconstructible]）时可能存在一些性能损耗。
+[:en] For the parallel algorithm overload in namespace [`std], there can be a
+performance cost if [`iterator_traits<ForwardIterator1>::value_type] does not
+meet the [^:oc MoveConstructible] ([#:tab#cpp17.moveconstructible]) requirements.
+[:zh_CN] 对于命名空间 [`std] 中的并行算法重载，当
+[`iterator_traits<ForwardIterator1>::value_type] 不满足 [^:oc MoveConstructible]
+（[#:tab#cpp17.moveconstructible]）的规定时可能存在一些性能损耗。
+
+[:en] For the parallel algorithm overloads in namespace [`ranges], there can be
+a performance cost if [`iter_value_t<I>] does not model [`:c move_constructible].
+[:zh_CN] 对于命名空间 [`ranges] 中的并行算法重载，当
+[`iter_value_t<I>] 不构成 [`:c move_constructible] 时可能存在一些性能损耗。
 [end:note]
 
 [para:effects]
-[:en] Copies all of the elements referred to by the iterator [`i] in the range
-[=range(first,last)] for which [$E] is [`true].
-[:zh_CN] 对范围 [=range(first,last)] 中由迭代器 [`i] 所指代的所有使 [$E] 为
-[`true] 的元素进行复制。
+[:en] Copies the first [$N] elements referred to by the iterator [`i] in the range
+[=range(first,last)] for which [$E([`i])] is [`true] into the range [=range(result,result + [$N])].
+[:zh_CN] 将范围 [=range(first,last)] 中由迭代器 [`i] 所指代的前 [$N] 个使 [$E] 为
+[`true] 的元素，复制到范围 [=range(result,result + [$N])] 中。
 
 [para:returns]
 [list]
 [item]
-[:en@~] [`result + [$N]] for the overload in namespace [`std].
-[:zh_CN@~] 对于命名空间 [`std] 中的重载，返回 [`result + [$N]]。
+[:en] [`result + [$N]] for the overload in namespace [`std].
+[:zh_CN] 对于命名空间 [`std] 中的重载，返回 [`result + [$N]]。
 [item]
-[:en@~] [`{last, result + [$N]}] for the overloads in namespace [`ranges].
-[:zh_CN@~] 对于命名空间 [`ranges] 中的重载，返回 [`{last, result + [$N]}]。
+[:en] [`{last, result + [$N]}] for the overloads in namespace [`ranges],
+if [$N] is equal to [$M].
+[:zh_CN] 对于命名空间 [`ranges] 中的重载，若 [$N] 等于 [$M]，则返回 [`{last, result + [$N]}]。
+[item]
+[:en] Otherwise, [`{j, result_last}] for the overloads in namespace [`ranges],
+where [`j] is the iterator in [=range(first,last)] for which [$E([`j])] holds and
+there are exactly [$N] iterators [`i] in [=range(first,j)] for which [$E([`i])] holds.
+[:zh_CN] 否则，对于命名空间 [`ranges] 中的重载，返回 [`{j, result_last}]，其中 [`j] 是
+[=range(first,last)] 中使 [$E([`j])] 成立的迭代器，并且在 [=range(first,j)] 中
+恰好有 [$N] 个迭代器 [`i] 使 [$E([`i])] 成立。
 [list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of the corresponding predicate and
+[:en] At most [`last - first] applications of the corresponding predicate and
 any projection.
-[:zh_CN] 恰好进行 [`last - first] 次对应谓词和任何投射的运用。
+[:zh_CN] 最多进行 [`last - first] 次对应谓词和任何投射的运用。
 
 [para:remarks]
 [:en] Stable ([#algorithm.stable]).

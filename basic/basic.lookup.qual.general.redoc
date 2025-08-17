@@ -4,23 +4,19 @@
 ]
 
 [para]
-[:en]
-[%name[!qualified]] [%qualification[!explicit]]
+[:en] [%name[!qualified]] [%qualification[!explicit]]
 Lookup of an [~identifier] followed by a [`::] scope resolution operator
 considers only namespaces, types, and templates whose specializations are types.
-[:zh_CN]
-[%名[!限定～]] [%限定[!明确～]]
-对后面跟着作用域解析运算符 [`::] 的[~标识符]进行的查找，仅考察命名空间，类型，和
-特例为类型的模板。
+[:zh_CN] [%名[!限定～]] [%限定[!明确～]]
+对后面跟着作用域解析运算符 [`::] 的[~标识符]进行的查找，仅考察命名空间，类型，和特例为类型的模板。
 
-[:en]
-If a name, [~template-id], or [~computed-type-specifier] is followed by a [`::],
-it shall designate a namespace, class, enumeration, or dependent type,
+[:en] If a name, [~template-id], [~splice-scope-specifier], or [~computed-type-specifier]
+is followed by a [`::], it shall either be a dependent [~splice-scope-specifier] ([#temp.dep.splice])
+or it shall designate a namespace, class, enumeration, or dependent type,
 and the [`::] is never interpreted as a complete [~nested-name-specifier].
-[:zh_CN]
-如果某个名字，[~模板标识]，或 [~计算类型说明符]后面跟着 [`::]，则它应当代表某个
-命名空间，类，枚举，或者待决类型，而且这个 [`::] 从不会被解读为完整的
-[~嵌套名说明符]。
+[:zh_CN] 如果某个名字、[~模板标识]、[~拼接作用域说明符]或 [~计算类型说明符]后面跟着 [`::]，
+则它要么应当是待决的[~拼接作用域说明符]（[#temp.dep.splice]），要么应当代表某个
+命名空间、类、枚举或者待决类型，而且这个 [`::] 从不会被解读为完整的[~嵌套名说明符]。
 
 [begin:example]
 [codeblock]
@@ -30,17 +26,14 @@ public:
 };
 int main() {
   int A;
-  A::n = 42;            // [:en] OK \
-                        [:zh_CN] OK
-  A b;                  // [:en] error: [`A] does not name a type \
-                        [:zh_CN] 错误：[`A] 不是类型名
+  A::n = 42;            // OK
+  A b;                  // [:en] error: [`A] does not name a type [:zh_CN] 错误：[`A] 不是类型名
 }
 template<int> struct B : A {};
 namespace N {
   template<int> void B();
   int f() {
-    return B<0>::n;     // [:en] error: [`N::B<0>] is not a type \
-                        [:zh_CN] 错误：[`N::B<0>] 不是类型
+    return B<0>::n;     // [:en] error: [`N::B<0>] is not a type [:zh_CN] 错误：[`N::B<0>] 不是类型
   }
 }
 [codeblock:end]
@@ -54,11 +47,9 @@ namespace N {
 [%作用域解析运算符[%运算符[!作用域解析～]]]
 
 [para]
-[:en]
-A member-qualified name is the (unique) component name ([#expr.prim.id.unqual]),
+[:en] A member-qualified name is the (unique) component name ([#expr.prim.id.unqual]),
 if any, of
-[:zh_CN]
-成员限定名，是类成员访问表达式（[#expr.ref]）的[~标识表达式]中的
+[:zh_CN] 成员限定名，是类成员访问表达式（[#expr.ref]）的[~标识表达式]中的
 [list]
 [item]
 [:en@~] an [~unqualified-id] or
@@ -71,10 +62,8 @@ if any, of
 [:en@~] in the [~id-expression] of a class member access expression ([#expr.ref]).
 [:zh_CN@~] 的（唯一）成分名（[#expr.prim.id.unqual]）（如果有）。
 
-[:en]
-A [+:adj qualified[!name]] is
-[:zh_CN]
-[+:adj 限定[!名字]]是
+[:en] A [+:adj qualified[!name]] is
+[:zh_CN] [+:adj 限定[!名字]]是
 [list]
 [item]
 [:en@~] a member-qualified name or
@@ -96,82 +85,60 @@ A [+:adj qualified[!name]] is
 [:en@~] a [~qualified-namespace-specifier], or
 [:zh_CN@~] [~限定命名空间说明符]，或者
 [item]
-[:en@~] a [~nested-name-specifier], [~elaborated-type-specifier], or
+[:en@~] a [~nested-name-specifier], [~reflection-name], [~elaborated-type-specifier], or
 [~class-or-decltype] that has a [~nested-name-specifier] ([#expr.prim.id.qual]).
-[:zh_CN@~] [~嵌套名说明符]，[~详述类型说明符]，或具有[~嵌套名说明符]的
+[:zh_CN@~] [~嵌套名说明符]，[~反射名]，[~详述类型说明符]，或具有[~嵌套名说明符]的
 [~类或-decltype]（[#expr.prim.id.qual]）。
 [list:end]
 [list:end]
 
-[:en]
-The [+lookup context] of a member-qualified name is the type of its associated
-object expression (considered dependent if the object expression is
-type-dependent).
-[:zh_CN]
-成员限定名的[+查找语境]是其所关联的对象表达式的类型（当对象表达式类型待决时
-被认为是待决的）。
+[:en] The [+lookup context] of a member-qualified name is the type of its associated
+object expression (considered dependent if the object expression is type-dependent).
+[:zh_CN] 成员限定名的[+查找语境]是其所关联的对象表达式的类型（当对象表达式类型待决时被认为是待决的）。
 
-[:en]
-The lookup context of any other qualified name is the type, template, or
+[:en] The lookup context of any other qualified name is the type, template, or
 namespace nominated by the preceding [~nested-name-specifier].
-[:zh_CN]
-其他任何限定名的查找语境是其之前的[~嵌套名说明符]所提名的类型，模板，或命名空间。
+[:zh_CN] 其他任何限定名的查找语境是其之前的[~嵌套名说明符]所提名的类型，模板，或命名空间。
 
 [begin:note]
-[:en]
-When parsing a class member access, the name following the [`->] or [`.] is
+[:en] When parsing a class member access, the name following the [`->] or [`.] is
 a qualified name even though it is not yet known of which kind.
-[:zh_CN]
-解析一个类成员访问时，跟在 [`->] 或 [`.] 之后的名字，即便尚未知道是哪一种，都是
-限定名。
+[:zh_CN] 解析一个类成员访问时，跟在 [`->] 或 [`.] 之后的名字，即便尚未知道是哪一种，都是限定名。
 [end:note]
 
 [begin:example]
-[:en]
-In
-[:zh_CN]
-以下例子中
+[:en] In
+[:zh_CN] 以下例子中
 [codeblock]
   N::C::m.Base::f()
 [codeblock:end]
-[:en@~]
-[`Base] is a member-qualified name; the other qualified names are [`C], [`m],
-and [`f].
-[:zh_CN@~]
-[`Base] 是成员限定名；其他限定名还有 [`C]、[`m] 和 [`f]。
+[:en@~] [`Base] is a member-qualified name; the other qualified names are [`C], [`m], and [`f].
+[:zh_CN@~] [`Base] 是成员限定名；其他限定名还有 [`C]、[`m] 和 [`f]。
 [end:example]
 
 [para]
-[:en]
-[+Qualified name lookup[%lookup[!qualified name]]] in a class, namespace, or
+[:en] [+Qualified name lookup[%lookup[!qualified name]]] in a class, namespace, or
 enumeration performs a search of the scope associated with it
 ([#class.member.lookup]) except as specified below.
-[:zh_CN]
-在某个类，命名空间，或枚举中进行[+限定名查找[%查找[!限定名]]]，除了下文所述之外，
+[:zh_CN] 在某个类，命名空间，或枚举中进行[+限定名查找[%查找[!限定名]]]，除了下文所述之外，
 实施其所关联的作用域的搜索（[#class.member.lookup]）。
 
-[:en]
-Unless otherwise specified, a qualified name undergoes qualified name lookup in
+[:en] Unless otherwise specified, a qualified name undergoes qualified name lookup in
 its lookup context from the point where it appears unless the lookup context
 either is dependent and is not the current instantiation ([#temp.dep.type]) or
 is not a class or class template.
-[:zh_CN]
-除非另有规定，对于限定名，除非其查找语境要么待决且并非当前实例（[#temp.dep.type]），
+[:zh_CN] 除非另有规定，对于限定名，除非其查找语境要么待决且并非当前实例（[#temp.dep.type]），
 要么并非类或类模板，均要从其出现点在其查找语境中进行限定名查找。
 
-[:en]
-If nothing is found by qualified lookup for a member-qualified name that is the
+[:en] If nothing is found by qualified lookup for a member-qualified name that is the
 terminal name ([#expr.prim.id.unqual]) of a [~nested-name-specifier] and is not
 dependent, it undergoes unqualified lookup.
-[:zh_CN]
-对于作为[~嵌套名说明符]的终端名（[#expr.prim.id.unqual]）且并非待决的成员限定名，
+[:zh_CN] 对于作为[~嵌套名说明符]的终端名（[#expr.prim.id.unqual]）且并非待决的成员限定名，
 如果为其进行限定名查找未能找到任何东西，则进行无限定查找。
 
 [begin:note]
-[:en]
-During lookup for a template specialization, no names are dependent.
-[:zh_CN]
-对模板特例的查找过程中，没有待决的名字。
+[:en] During lookup for a template specialization, no names are dependent.
+[:zh_CN] 对模板特例的查找过程中，没有待决的名字。
 [end:note]
 
 [begin:example]
@@ -189,85 +156,61 @@ template<int> using D = A;
 template<int> using X = A;
 
 template<class T>
-void g(T *p) {                  // [:en] as instantiated for [`g<A>]: \
-                                [:zh_CN] 作为 [`g<A>] 实例化时：
+void g(T *p) {                  // [:en] as instantiated for [`g<A>]: [:zh_CN] 作为 [`g<A>] 实例化时：
   p->X<0>::f();                 // [:en] error: [`A::X] not found in [`((p->X) < 0) > ::f()] \
                                 [:zh_CN] 错误：[`((p->X) < 0) > ::f()] 中并未找到 [`A::X]
-  p->template X<0>::f();        // [:en] OK, [`::X] found in definition context \
-                                [:zh_CN] OK，在定义式语句中找到了 [`::X]
-  p->B::f();                    // [:en] OK, non-type [`A::B] ignored \
-                                [:zh_CN] OK，忽略非类型的 [`A::B]
-  p->template C<0>::f();        // [:en] error: [`A::C] is not a template \
-                                [:zh_CN] 错误：[`A::C] 不是模板
-  p->template D<0>::f();        // [:en] error: [`A::D<0>] is not a class type \
-                                [:zh_CN] 错误：[`A::D<0>] 不是类类型
-  p->T::f();                    // [:en] error: [`A::T] is not a class type \
-                                [:zh_CN] 错误：[`A::T] 不是类类型
+  p->template X<0>::f();        // [:en] OK, [`::X] found in definition context [:zh_CN] OK，在定义式语句中找到了 [`::X]
+  p->B::f();                    // [:en] OK, non-type [`A::B] ignored [:zh_CN] OK，忽略非类型的 [`A::B]
+  p->template C<0>::f();        // [:en] error: [`A::C] is not a template [:zh_CN] 错误：[`A::C] 不是模板
+  p->template D<0>::f();        // [:en] error: [`A::D<0>] is not a class type [:zh_CN] 错误：[`A::D<0>] 不是类类型
+  p->T::f();                    // [:en] error: [`A::T] is not a class type [:zh_CN] 错误：[`A::T] 不是类类型
 }
 template void g(A*);
 [codeblock:end]
 [end:example]
 
 [para]
-[:en]
-If a qualified name [$Q] follows a [`~]:
-[:zh_CN]
-如果限定名 [$Q] 跟在一个 [`~] 之后：
+[:en] If a qualified name [$Q] follows a [`~]:
+[:zh_CN] 如果限定名 [$Q] 跟在一个 [`~] 之后：
 
 [list]
 [item]
-[:en]
-If [$Q] is a member-qualified name, it undergoes unqualified lookup as well as
+[:en] If [$Q] is a member-qualified name, it undergoes unqualified lookup as well as
 qualified lookup.
-[:zh_CN]
-如果 [$Q] 是成员限定名，则对其实施无限定查找和限定查找。
+[:zh_CN] 如果 [$Q] 是成员限定名，则对其实施无限定查找和限定查找。
 
 [item]
-[:en]
-Otherwise, its [~nested-name-specifier] [$N] shall nominate a type.
-[:zh_CN]
-否则，其[~嵌套名说明符] [$N] 应当提名某个类型。
+[:en] Otherwise, its [~nested-name-specifier] [$N] shall nominate a type.
+[:zh_CN] 否则，其[~嵌套名说明符] [$N] 应当提名某个类型。
 
-[:en]
-If [$N] has another [~nested-name-specifier] [$S], [$Q] is looked up as if its
+[:en] If [$N] has another [~nested-name-specifier] [$S], [$Q] is looked up as if its
 lookup context were that nominated by [$S].
-[:zh_CN]
-如果 [$N] 具有另一个[~嵌套名说明符] [$S]，则对 [$Q] 的查找如同其查找语境是 [$S]
+[:zh_CN] 如果 [$N] 具有另一个[~嵌套名说明符] [$S]，则对 [$Q] 的查找如同其查找语境是 [$S]
 所提名的那样进行。
 
 [item]
-[:en]
-Otherwise, if the terminal name of [$N] is a member-qualified name [$M], [$Q] is
-looked up as if [$[`~]Q] appeared in place of [$M] (as above).
-[:zh_CN]
-否则，如果 [$N] 的终端名是一个成员限定名 [$M]，则对 [$Q] 的查找如同以 [$[`~]Q]
+[:en] Otherwise, if the terminal name of [$N] is a member-qualified name [$M],
+[$Q] is looked up as if [$[`~]Q] appeared in place of [$M] (as above).
+[:zh_CN] 否则，如果 [$N] 的终端名是一个成员限定名 [$M]，则对 [$Q] 的查找如同以 [$[`~]Q]
 代替 [$M] 出现那样进行（如上一条）。
 
 [item]
-[:en]
-Otherwise, [$Q] undergoes unqualified lookup.
-[:zh_CN]
-否则，对 [$Q] 实施无限定查找。
+[:en] Otherwise, [$Q] undergoes unqualified lookup.
+[:zh_CN] 否则，对 [$Q] 实施无限定查找。
 
 [item]
-[:en]
-Each lookup for [$Q] considers only types (if [$Q] is not followed by a [`<])
+[:en] Each lookup for [$Q] considers only types (if [$Q] is not followed by a [`<])
 and templates whose specializations are types.
-[:zh_CN]
-对 [$Q] 的每次查找都只考察类型（当 [$Q] 之后未跟随 [`<] 时）和特例为类型的模板。
+[:zh_CN] 对 [$Q] 的每次查找都只考察类型（当 [$Q] 之后未跟随 [`<] 时）和特例为类型的模板。
 
-[:en]
-If it finds nothing or is ambiguous, it is discarded.
-[:zh_CN]
-如果未找到任何东西或者有歧义，则它被丢弃。
+[:en] If it finds nothing or is ambiguous, it is discarded.
+[:zh_CN] 如果未找到任何东西或者有歧义，则它被丢弃。
 
 [item]
-[:en]
-The [~type-name] that is or contains [$Q] shall refer to its (original) lookup
-context (ignoring cv-qualification) under the interpretation established by at
-least one (successful) lookup performed.
-[:zh_CN]
-是 [$Q] 或者包含 [$Q] 的[~类型名]，在由所实施的至少一次（成功的）查找所设立的
+[:en] The [~type-name] that is or contains [$Q] shall refer to its (original)
+lookup context (ignoring cv-qualification) under the interpretation established
+by at least one (successful) lookup performed.
+[:zh_CN] 是 [$Q] 或者包含 [$Q] 的[~类型名]，在由所实施的至少一次（成功的）查找所设立的
 判读之下，应当指代其（原来的）查找语境（忽略 cv 限定）。
 [list:end]
 
@@ -280,10 +223,8 @@ typedef int I1, I2;
 extern int* p;
 extern int* q;
 void f() {
-  p->C::I::~I();        // [:en] [`I] is looked up in the scope of [`C] \
-                        [:zh_CN] 在 [`C] 的作用域中查找 [`I]
-  q->I1::~I2();         // [:en] [`I2] is found by unqualified lookup \
-                        [:zh_CN] [`I2] 被无限定查找找到
+  p->C::I::~I();        // [:en] [`I] is looked up in the scope of [`C] [:zh_CN] 在 [`C] 的作用域中查找 [`I]
+  q->I1::~I2();         // [:en] [`I2] is found by unqualified lookup [:zh_CN] [`I2] 被无限定查找找到
 }
 struct A {
   ~A();
@@ -291,8 +232,7 @@ struct A {
 typedef A AB;
 int main() {
   AB* p;
-  p->AB::~AB();         // [:en] explicitly calls the destructor for [`A] \
-                        [:zh_CN] 显式调用 [`A] 的析构函数
+  p->AB::~AB();         // [:en] explicitly calls the destructor for [`A] [:zh_CN] 显式调用 [`A] 的析构函数
 }
 [codeblock:end]
 [end:example]

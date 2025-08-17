@@ -54,6 +54,18 @@ template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2, class
   requires [[redoc("`:c>")]]indirectly_comparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
   constexpr bool ranges::equal(R1&& r1, R2&& r2, Pred pred = {},
                                Proj1 proj1 = {}, Proj2 proj2 = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I1, [[redoc("`:c>")]]sized_sentinel_for<I1> S1,
+         [[redoc("`:c>")]]random_access_iterator I2, [[redoc("`:c>")]]sized_sentinel_for<I2> S2,
+         class Pred = ranges::equal_to, class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]indirectly_comparable<I1, I2, Pred, Proj1, Proj2>
+  bool ranges::equal(Ep&& exec, I1 first1, S1 last1, I2 first2, S2 last2,
+                     Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R1, [[redoc("*:c>")]]sized-random-access-range R2,
+         class Pred = ranges::equal_to, class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]indirectly_comparable<iterator_t<R1>, iterator_t<R2>, Pred, Proj1, Proj2>
+  bool ranges::equal(Ep&& exec, R1&& r1, R2&& r2,
+                     Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
 [codeblock:end]
 
 [div:description]
@@ -63,9 +75,9 @@ template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2, class
 
 [list]
 [item]
-[:en@~] [`last2] be [`first2 + (last1 - first1)] for the overloads with no
-parameter [`last2] or [`r2];
-[:zh_CN@~] [`last2] 对于没有形参 [`last2] 或 [`r2] 的重载为
+[:en@~] [`last2] be [`first2 + (last1 - first1)] for the overloads in namespace
+[`std] with no parameter [`last2];
+[:zh_CN@~] [`last2] 对于命名空间 [`std] 中没有形参 [`last2] 的重载为
 [`first2 + (last1 - first1)]；
 
 [item]
@@ -116,35 +128,22 @@ range [=range(first1,last1)].
 [item]
 [:en@~] the types of [`first1], [`last1], [`first2], and [`last2] pairwise model
 [`:c sized_sentinel_for] ([#iterator.concept.sizedsentinel]) and
-[`last1 - first1 != last2 - first2] for the first overload in namespace [`ranges],
-[:zh_CN@~] 对于命名空间 [`ranges] 中的第一个重载，[`first1]，[`last1]，[`first2]，
-和 [`last2] 的类型配对构成了 [`:c sized_sentinel_for]
-（[#iterator.concept.sizedsentinel]），并且有 [`last1 - first1 != last2 - first2]，
+[`last1 - first1 != last2 - first2] for the first and third overloads in
+namespace [`ranges], or
+[:zh_CN@~] 对于命名空间 [`ranges] 中的第一和第三个重载，[`first1]，[`last1]，[`first2]，
+和 [`last2] 的类型配对构成了 [`:c sized_sentinel_for]（[#iterator.concept.sizedsentinel]），
+并且有 [`last1 - first1 != last2 - first2]，或者
 [item]
 [:en@~] [`R1] and [`R2] each model [`:c sized_range] and
-[`ranges::distance(r1) != ranges::distance(r2)] for the second overload in
-namespace [`ranges],
-[:zh_CN@~] 对于命名空间 [`ranges] 中的第二个重载，[`R1] 和 [`R2] 各自构成
+[`ranges::distance(r1) != ranges::distance(r2)] for the second and fourth overloads
+in namespace [`ranges],
+[:zh_CN@~] 对于命名空间 [`ranges] 中的第二和第四个重载，[`R1] 和 [`R2] 各自构成
 [`:c sized_range]，且有 [`ranges::distance(r1) != ranges::distance(r2)]，
 [list:end]
 
 [:en@~] then no applications of the corresponding predicate and each projection;
-otherwise,
-[:zh_CN@~] 则不对相应谓词和各个投射进行运用；否则，
-
-[list]
-[item]
-[:en] For the overloads with no [`ExecutionPolicy], at most
-[$\min([`last1 - first1], \ [`last2 - first2])] applications of the
-corresponding predicate and any projections.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行
-[$\min([`last1 - first1], \ [`last2 - first2])] 次相应谓词和任何投射的运用。
-
-[item]
-[:en] For the overloads with an [`ExecutionPolicy],
-[?bigoh\min([`last1 - first1], \ [`last2 - first2])] applications of the
-corresponding predicate.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，
-[?bigoh\min([`last1 - first1], \ [`last2 - first2])] 次相应谓词的运用。
-[list:end]
+otherwise, at most [$\min([`last1 - first1], [`last2 - first2])]
+applications of the corresponding predicate and any projections.
+[:zh_CN@~] 则不对相应谓词和各个投射进行运用；否则，最多进行
+[$\min([`last1 - first1], [`last2 - first2])] 次相应谓词和任何投射的运用。
 [div:end]

@@ -17,18 +17,23 @@ template<[[redoc("`:c>")]]input_iterator I, [[redoc("`:c>")]]sentinel_for<I> S, 
 template<[[redoc("`:c>")]]input_range R, class Proj = identity,
          [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
   constexpr bool ranges::is_partitioned(R&& r, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  bool ranges::is_partitioned(Ep&& exec, I first, S last, Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  bool ranges::is_partitioned(Ep&& exec, R&& r, Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named
-[`proj].
+[:en] Let [`proj] be [`identity{}] for the overloads with no parameter named [`proj].
 [:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]。
 
 [para:returns]
 [:en] [`true] if and only if the elements [`e] of [=range(first,last)] are
-partitioned with respect to the expression
-[`bool(invoke(pred, invoke(proj, e)))].
+partitioned with respect to the expression [`bool(invoke(pred, invoke(proj, e)))].
 [:zh_CN] 当且仅当 [=range(first,last)] 中的各元素 [`e] 根据表达式
 [`bool(invoke(pred, invoke(proj, e)))] 进行了分区时返回 [`true]。
 
@@ -47,8 +52,7 @@ template<class ForwardIterator, class Predicate>
     partition(ForwardIterator first, ForwardIterator last, Predicate pred);
 template<class ExecutionPolicy, class ForwardIterator, class Predicate>
   ForwardIterator
-    partition(ExecutionPolicy&& exec,
-              ForwardIterator first, ForwardIterator last, Predicate pred);
+    partition(ExecutionPolicy&& exec, ForwardIterator first, ForwardIterator last, Predicate pred);
 
 template<[[redoc("`:c>")]]permutable I, [[redoc("`:c>")]]sentinel_for<I> S, class Proj = identity,
          [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
@@ -59,6 +63,14 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
   requires [[redoc("`:c>")]]permutable<iterator_t<R>>
   constexpr borrowed_subrange_t<R>
     ranges::partition(R&& r, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  subrange<I> ranges::partition(Ep&& exec, I first, S last, Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  borrowed_subrange_t<R> ranges::partition(Ep&& exec, R&& r, Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
@@ -77,16 +89,13 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
 [para:effects]
 [:en] Places all the elements [`e] in [=range(first,last)] that satisfy
 [$E([`e])] before all the elements that do not.
-[:zh_CN] 将 [=range(first,last)] 中的所有符合 [$E([`e])] 的元素 [`e] 置于所有
-不符合的元素之前。
+[:zh_CN] 将 [=range(first,last)] 中的所有符合 [$E([`e])] 的元素 [`e] 置于所有不符合的元素之前。
 
 [para:returns]
-[:en] Let [`i] be an iterator such that [$E([`*j])] is [`true] for every
-iterator [`j] in [=range(first,i)] and [`false] for every iterator [`j] in
-[=range(i,last)].
-[:zh_CN] 令 [`i] 为使得 [$E([`*j])] 对于 [=range(first,i)] 中的每个迭代器 [`j]
-均为 [`false]，而对于 [=range(i,last)] 中的每个迭代器 [`j] 均为 [`false] 的
-迭代器。
+[:en] Let [`i] be an iterator such that [$E([`*j])] is [`true] for every iterator [`j]
+in [=range(first,i)] and [`false] for every iterator [`j] in [=range(i,last)].
+[:zh_CN] 令 [`i] 为使得 [$E([`*j])] 对于 [=range(first,i)] 中的每个迭代器 [`j] 均为
+[`false]，而对于 [=range(i,last)] 中的每个迭代器 [`j] 均为 [`false] 的迭代器。
 
 [:en] Returns:
 [:zh_CN] 返回：
@@ -106,9 +115,9 @@ iterator [`j] in [=range(first,i)] and [`false] for every iterator [`j] in
 
 [list]
 [item]
-[:en] For the overload with no [`ExecutionPolicy], exactly [$N] applications of
+[:en] For the non-parallel algorithm overloads, exactly [$N] applications of
 the predicate and projection.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，恰好进行 [$N] 次谓词和投射的运用。
+[:zh_CN] 对于各非并行算法重载，恰好进行 [$N] 次谓词和投射的运用。
 
 [:en] At most [$N / 2] swaps if the type of [`first] meets the
 [^:oc BidirectionalIterator] requirements for the overloads in namespace [`std]
@@ -116,14 +125,12 @@ or models [`:c bidirectional_iterator] for the overloads in namespace [`ranges],
 and at most [$N] swaps otherwise.
 [:zh_CN] 当 [`first] 的类型对于命名空间 [`std] 中的各重载满足
 [^:oc BidirectionalIterator] 的规定，或对于命名空间 [`ranges] 中的各重载构成
-[`:c bidirectional_iterator] 时，最多进行 [$N / 2] 次交换；否则最多进行 [$N] 次
-交换。
+[`:c bidirectional_iterator] 时，最多进行 [$N / 2] 次交换；否则最多进行 [$N] 次交换。
 
 [item]
-[:en] For the overload with an [`ExecutionPolicy], [?bigoh N \log N] swaps and
+[:en] For the parallel algorithm overloads, [?bigoh N \log N] swaps and
 [?bigoh N] applications of the predicate.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，[?bigoh N \log N] 次交换和
-[?bigoh N] 次谓词的运用。
+[:zh_CN] 对于各并行算法重载，[?bigoh N \log N] 次交换和 [?bigoh N] 次谓词的运用。
 [list:end]
 [div:end]
 
@@ -146,6 +153,17 @@ template<[[redoc("`:c>")]]bidirectional_range R, class Proj = identity,
          [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
   requires [[redoc("`:c>")]]permutable<iterator_t<R>>
   constexpr borrowed_subrange_t<R> ranges::stable_partition(R&& r, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  requires [[redoc("`:c>")]]permutable<I>
+  subrange<I>
+    ranges::stable_partition(Ep&& exec, I first, S last, Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]permutable<iterator_t<R>>
+  borrowed_subrange_t<R>
+    ranges::stable_partition(Ep&& exec, R&& r, Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
@@ -168,8 +186,7 @@ and [^:oc MoveAssignable] ([#:tab#cpp17.moveassignable]) requirements.
 [para:effects]
 [:en] Places all the elements [`e] in [=range(first,last)] that satisfy
 [$E([`e])] before all the elements that do not.
-[:zh_CN] 将 [=range(first,last)] 中的所有符合 [$E([`e])] 的元素 [`e] 置于所有
-不符合的元素之前。
+[:zh_CN] 将 [=range(first,last)] 中的所有符合 [$E([`e])] 的元素 [`e] 置于所有不符合的元素之前。
 
 [:en] The relative order of the elements in both groups is preserved.
 [:zh_CN] 两个分组中，各元素之间的相对顺序均被保留。
@@ -178,9 +195,8 @@ and [^:oc MoveAssignable] ([#:tab#cpp17.moveassignable]) requirements.
 [:en] Let [`i] be an iterator such that for every iterator [`j] in
 [=range(first,i)], [$E([`*j])] is [`true], and for every iterator [`j] in the
 range [=range(i,last)], [$E([`*j])] is [`false].
-[:zh_CN] 令 [`i] 为使得对于 [=range(first,i)] 中的每个迭代器 [`j]，[$E([`*j])]
-均为 [`true]，而对于范围 [=range(i,last)] 中的每个迭代器 [`j]，[$E([`*j])] 均为
-[`false] 的迭代器。
+[:zh_CN] 令 [`i] 为使得对于 [=range(first,i)] 中的每个迭代器 [`j]，[$E([`*j])] 均为 [`true]，
+而对于范围 [=range(i,last)] 中的每个迭代器 [`j]，[$E([`*j])] 均为 [`false] 的迭代器。
 
 [:en] Returns:
 [:zh_CN] 返回：
@@ -200,19 +216,18 @@ range [=range(i,last)], [$E([`*j])] is [`false].
 
 [list]
 [item]
-[:en] For the overloads with no [`ExecutionPolicy], at most [$N \log_2 N] swaps,
+[:en] For the non-parallel algorithm overloads, at most [$N \log_2 N] swaps,
 but only [?bigoh N] swaps if there is enough extra memory.
-[:zh_CN] 对于不带有 [`ExecutionPolicy] 的重载，最多进行 [$N \log_2 N] 次交换，
+[:zh_CN] 对于各非并行算法重载，最多进行 [$N \log_2 N] 次交换，
 但当有足够的额外内存时仅进行 [?bigoh N] 次交换。
 
 [:en] Exactly [$N] applications of the predicate and projection.
 [:zh_CN] 恰好进行 [$N] 次谓词和投射的运用。
 
 [item]
-[:en] For the overload with an [`ExecutionPolicy], [?bigoh N \log N] swap and
+[:en] For the parallel algorithm overloads, [?bigoh N \log N] swap and
 [?bigoh N] applications of the predicate.
-[:zh_CN] 对于带有 [`ExecutionPolicy] 的重载，进行 [?bigoh N \log N] 次交换和
-[?bigoh N] 次谓词的运用。
+[:zh_CN] 对于各并行算法重载，进行 [?bigoh N \log N] 次交换和 [?bigoh N] 次谓词的运用。
 [list:end]
 [div:end]
 
@@ -242,6 +257,25 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
            [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, O2>
   constexpr ranges::partition_copy_result<borrowed_iterator_t<R>, O1, O2>
     ranges::partition_copy(R&& r, O1 out_true, O2 out_false, Pred pred, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O1, [[redoc("`:c>")]]sized_sentinel_for<O1> OutS1,
+         [[redoc("`:c>")]]random_access_iterator O2, [[redoc("`:c>")]]sized_sentinel_for<O2> OutS2,
+         class Proj = identity, [[redoc("`:c>")]]indirect_unary_predicate<projected<I, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<I, O1> && [[redoc("`:c>")]]indirectly_copyable<I, O2>
+  ranges::partition_copy_result<I, O1, O2>
+    ranges::partition_copy(Ep&& exec, I first, S last, O1 out_true, OutS1 last_true,
+                           O2 out_false, OutS2 last_false, Pred pred, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R,
+         [[redoc("*:c>")]]sized-random-access-range OutR1, [[redoc("*:c>")]]sized-random-access-range OutR2,
+         class Proj = identity,
+         [[redoc("`:c>")]]indirect_unary_predicate<projected<iterator_t<R>, Proj>> Pred>
+  requires [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR1>> &&
+            [[redoc("`:c>")]]indirectly_copyable<iterator_t<R>, iterator_t<OutR2>>
+  ranges::partition_copy_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR1>,
+                                borrowed_iterator_t<OutR2>>
+    ranges::partition_copy(Ep&& exec, R&& r, OutR1&& out_true_r, OutR2&& out_false_r,
+                           Pred pred, Proj proj = {});
 [codeblock:end]
 
 [div:description]
@@ -250,6 +284,51 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
 [`proj] and let [$E(x)] be [`bool(invoke(pred, invoke(proj, [$x])))].
 [:zh_CN] 令 [`proj] 对于没有名为 [`proj] 的形参的重载为 [`identity{}]，并令
 [$E(x)] 为 [`bool(invoke(pred, invoke(proj, [$x])))]。
+
+[para]
+[:en] For the overloads with no parameters [`last_true], [`last_false],
+[`out_true_r], or [`out_false_r], let
+[:zh_CN] 对于没有形参 [`last_true]、[`last_false]、[`out_true_r] 或
+[`out_false_r] 的各重载，令
+[list]
+[item]
+[:en@~] [$M] be the number of iterators [`i] in [=range(first,last)] for which
+[$E([`*i])] is [`true], and [$K] be [`last - first - [$M]];
+[:zh_CN@~] [$M] 为 [=range(first,last)] 中使得 [$E([`*i])] 为 [`true] 的迭代器
+[`i] 的数量，而 [$K] 为 [`last - first - [$M]]；
+[item]
+[:en@~] [`last_true] be [`out_true + [$M]], and [`last_false] be [`out_false + [$K]].
+[:zh_CN@~] [`last_true] 为p[`out_true + [$M]]，而 [`last_false] 为 [`out_false + [$K]]。
+[list:end]
+
+[para]
+[:en] For the overloads with parameters [`last_true], [`last_false], [`out_true_r],
+or [`out_false_r], let [$M] be [`last_true - out_true] and [$K] be [`last_false - out_false].
+[:zh_CN] 对于带有形参 [`last_true]、[`last_false]、[`out_true_r] 或 [`out_false_r]
+的各重载，令 [$M] 为 [`last_true - out_true]，而 [$K] 为 [`last_false - out_false]。
+
+[para]
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en@~] [`i1] be the iterator in [=range(first,last)] for which [$E([`*i1])] is
+[`true] and there are exactly [$M] iterators [`j] in [=range(first,[`i1])] for
+which [$E([`*j])] is [`true], or [`last] if no such iterator exists;
+[:zh_CN@~] [`i1] 为 [=range(first,last)] 中使得 [$E([`*i1])] 为 [`true] 且在
+[=range(first,[`i1])] 中恰有 [$M] 个迭代器 [`j] 使得 [$E([`*j])] 为 [`true] 的
+迭代器，或者如果不存在这样的迭代器则为 [`last]；
+[item]
+[:en@~] [`i2] be the iterator in [=range(first,last)] for which [$E([`*i2])] is
+[`false] and there are exactly [$K] iterators [`j] in [=range(first,[`i2])] for
+which [$E([`*j])] is [`false], or [`last] if no such iterator exists;
+[:zh_CN@~] [`i2] 为 [=range(first,last)] 中使得 [$E([`*i2])] 为 [`false] 且在
+[=range(first,[`i2])] 中恰有 [$K] 个迭代器 [`j] 使得 [$E([`*j])] 为 [`false] 的
+迭代器，或者如果不存在这样的迭代器则为 [`last]；
+[item]
+[:en@~] [$N] be [$\min([`i1 - first], \ [`i2 - first])].
+[:zh_CN@~] [$N] 为 [$\min([`i1 - first], \ [`i2 - first])]。
+[list:end]
 
 [para:mandates]
 [:en] For the overloads in namespace [`std], the expression [`*first] is
@@ -263,26 +342,31 @@ writable ([#iterator.requirements.general]) to [`out_true] and [`out_false].
 
 [para:~]
 [begin:note]
-[:en] For the overload with an [`ExecutionPolicy], there might be a performance
-cost if [`first][=']s value type does not meet the [^:oc CopyConstructible]
-requirements.
-[:zh_CN] 对于带有一个 [`ExecutionPolicy] 的重载，如果 [`first] 的值类型不满足
-[^:oc CopyConstructible] 的规定时，可能存在性能损耗。
+[:en] For the parallel algorithm overload in namespace [`std], there can be a performance
+cost if [`first][=']s value type does not meet the [^:oc CopyConstructible] requirements.
+[:zh_CN] 对于命名空间 [`std] 中的并行算法重载，如果 [`first] 的值类型不满足
+[^:oc CopyConstructible] 的规定，则可能存在性能损耗。
+
+[:en] For the parallel algorithm overload in namespace [`ranges], there can be a
+performance cost if [`first][=']s value type does not model [`:c copy_constructible].
+[:zh_CN] 对于命名空间 [`std] 中的并行算法重载，如果 [`first] 的值类型不构成
+[`:c copy_constructible]，则可能存在性能损耗。
 [end:note]
 
 [para:effects]
-[:en] For each iterator [`i] in [=range(first,last)], copies [`*i] to the output
-range beginning with [`out_true] if [$E([`*i])] is [`true], or to the output
-range beginning with [`out_false] otherwise.
-[:zh_CN] 对于范围 [=range(first,last)] 中的每个迭代器 [`i]，如果 [$E([`*i])] 为
-[`true]，则将 [`*i] 复制到以 [`out_true] 开始的输出范围，否则就将其复制到以
-[`out_false] 开始的输出范围。
+[:en] For each iterator [`i] in [=range(first,first + [$N])], copies [`*i] to the
+output range [=range(out_true,last_true)] if [$E([`*i])] is [`true], or to the
+output range [=range(out_false,last_false)] otherwise.
+[:zh_CN] 对于范围 [=range(first,first + [$N])] 中的每个迭代器 [`i]，如果 [$E([`*i])]
+为 [`true]，则将 [`*i] 复制到输出范围 [=range(out_true,last_true)]，否则就将其复制到
+输出范围 [=range(out_false,last_false)]。
 
 [para:returns]
-[:en] Let [`o1] be the end of the output range beginning at [`out_true], and
-[`o2] the end of the output range beginning at [`out_false].
-[:zh_CN] 令 [`o1] 为以 [`out_true] 开始的输出范围的末尾，而 [`o2] 为以
-[`out_false] 开始的输出范围的末尾。
+[:en] Let [`o1] be the iterator past the last copied element in the output range
+[=range(out_true,last_true)], and [`o2] be the iterator past the last copied
+element in the output range [=range(out_false,last_false)].
+[:zh_CN] 令 [`o1] 为输出范围 [=range(out_true,last_true)] 中最后一个被复制元素之后的迭代器，
+而 [`o2] 为输出范围 [=range(out_false,last_false)] 中最后一个被复制元素之后的迭代器。
 
 [:en] Returns
 [:zh_CN] 返回：
@@ -292,13 +376,13 @@ range beginning with [`out_false] otherwise.
 [:en@~] [`{o1, o2}] for the overloads in namespace [`std].
 [:zh_CN@~] 对于命名空间 [`std] 中的各重载返回 [`{o1, o2}]。
 [item]
-[:en@~] [`{last, o1, o2}] for the overloads in namespace [`ranges].
-[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载返回 [`{last, o1, o2}]。
+[:en@~] [`{first + [$N], o1, o2}] for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的各重载返回 [`{first + [$N], o1, o2}]。
 [list:end]
 
 [para:complexity]
-[:en] Exactly [`last - first] applications of [`pred] and [`proj].
-[:zh_CN] 恰好进行 [`last - first] 次 [`pred] 和 [`proj] 的运用。
+[:en] At most [`last - first] applications of [`pred] and [`proj].
+[:zh_CN] 最多进行 [`last - first] 次 [`pred] 和 [`proj] 的运用。
 [div:end]
 
 [%@lib partition_point]
@@ -324,8 +408,7 @@ template<[[redoc("`:c>")]]forward_range R, class Proj = identity,
 [$E(x)] 为 [`bool(invoke(pred, invoke(proj, [$x])))]。
 
 [para:expects]
-[:en] The elements [`e] of [=range(first,last)] are partitioned with respect to
-[$E([`e])].
+[:en] The elements [`e] of [=range(first,last)] are partitioned with respect to [$E([`e])].
 [:zh_CN] [=range(first,last)] 中的元素 [`e] 已经根据 [$E([`e])] 进行了分区。
 
 [para:returns]

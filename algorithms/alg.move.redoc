@@ -21,15 +21,14 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
 
 [div:description]
 [para]
-[:en] Let [$E] be
-[:zh_CN] 令 [$E]：
+[:en] Let [$E(n)] be
+[:zh_CN] 令 [$E(n)]：
 [list]
 [item]
 [:en@~] [`std::move(*(first + [$n]))] for the overload in namespace [`std];
 [:zh_CN@~] 对于命名空间 [`std] 中的重载为 [`std::move(*(first + [$n]))]；
 [item]
-[:en@~] [`ranges::iter_move(first + [$n])] for the overloads in namespace
-[`ranges].
+[:en@~] [`ranges::iter_move(first + [$n])] for the overloads in namespace [`ranges].
 [:zh_CN@~] 对于命名空间 [`ranges] 中的重载为 [`ranges::iter_move(first + [$n])]。
 [list:end]
 
@@ -46,8 +45,8 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
 [:zh_CN] 将范围 [=range(first,last)] 中从 [`first] 开始直到 [`last] 的元素移动到
 范围 [=range(result,result + `[$N`])] 中。
 
-[:en] For each non-negative integer [$n < N], performs [`*(result + [$n]) = [$E]].
-[:zh_CN] 对于每个非负整数 [$n < N]，实施 [`*(result + [$n]) = [$E]]。
+[:en] For each non-negative integer [$n < N], performs [`*(result + [$n]) = [$E(n)]].
+[:zh_CN] 对于每个非负整数 [$n < N]，实施 [`*(result + [$n]) = [$E(n)]]。
 
 [para:returns]
 [list]
@@ -67,35 +66,65 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
 [%@lib@raw [`move][![:en]algorithm[:zh_CN]算法]]
 [codeblock:declaration]
 template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
-  ForwardIterator2 move(ExecutionPolicy&& policy,
+  ForwardIterator2 move(ExecutionPolicy&& exec,
                         ForwardIterator1 first, ForwardIterator1 last,
                         ForwardIterator2 result);
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS>
+  requires [[redoc("`:c>")]]indirectly_movable<I, O>
+  ranges::move_result<I, O>
+    ranges::move(Ep&& exec, I first, S last, O result, OutS result_last);
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR>
+  requires [[redoc("`:c>")]]indirectly_movable<iterator_t<R>, iterator_t<OutR>>
+  ranges::move_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::move(Ep&& exec, R&& r, OutR&& result_r);
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [$N] be [`last - first].
-[:zh_CN] 令 [$N] 为 [`last - first]。
+[:en] Let [$E(n)] be
+[:zh_CN] 令 [$E(n)]：
+
+[list]
+[item]
+[:en@~] [`std::move(*(first + [$n]))] for the overload in namespace [`std];
+[:zh_CN@~] 对于命名空间 [`std] 中的重载为 [`std::move(*(first + [$n]))]；
+[item]
+[:en@~] [`ranges::iter_move(first + [$n])] for the overloads in namespace [`ranges].
+[:zh_CN@~] 对于命名空间 [`ranges] 中的重载为 [`ranges::iter_move(first + [$n])]。
+[list:end]
+
+[para]
+[:en] Let [`result_last] be [`result + (last - first)] for the overloads in namespace [`std].
+[:zh_CN] 对于命名空间 [`std] 中的重载，令 [`result_last] 为 [`result + (last - first)]。
+
+[para]
+[:en] Let [$N] be [$\min([`last - first], \ [`result_last - result])].
+[:zh_CN] 令 [$N] 为 [$\min([`last - first], \ [`result_last - result])]。
 
 [para:expects]
-[:en] The ranges [=range(first,last)] and [=range(result,result + `[$N`])] do
-not overlap.
+[:en] The ranges [=range(first,last)] and [=range(result,result + `[$N`])] do not overlap.
 [:zh_CN] 范围 [=range(first,last)] 和 [=range(result,result + `[$N`])] 没有重叠。
 
 [para:effects]
-[:en] Moves elements in the range [=range(first,last)] into the range
+[:en] Moves elements in the range [=range(first,first + [$N])] into the range
 [=range(result,result + `[$N`])].
-[:zh_CN] 将范围 [=range(first,last)] 中的元素移动到范围
+[:zh_CN] 将范围 [=range(first,first + [$N])] 中的元素移动到范围
 [=range(result,result + `[$N`])] 中。
 
-[:en] For each non-negative integer [$n < N], performs
-[`*(result + [$n]) = std::move(*(first + [$n]))].
-[:zh_CN] 对于每个非负整数 [$n < N]，实施
-[`*(result + [$n]) = std::move(*(first + [$n]))]。
+[:en] For each non-negative integer [$n < N], performs [`*(result + [$n]) = [$E(n)]].
+[:zh_CN] 对于每个非负整数 [$n < N]，实施 [`*(result + [$n]) = [$E(n)]]。
 
 [para:returns]
-[:en] [`result + [$N]].
-[:zh_CN] [`result + [$N]]。
+[list]
+[item]
+[:en] [`result + [$N]] for the overload in namespace [`std].
+[:zh_CN] 对于命名空间 [`std] 中的重载，返回 [`result + [$N]]。
+[item]
+[:en] [`{first + [$N], result + [$N]}] for the overloads in namespace [`ranges].
+[:zh_CN] 对于命名空间 [`ranges] 中的重载，返回 [`{first + [$N], result + [$N]}]。
+[list:end]
 
 [para:complexity]
 [:en] Exactly [$N] assignments.
@@ -121,15 +150,14 @@ template<[[redoc("`:c>")]]bidirectional_range R, [[redoc("`:c>")]]bidirectional_
 
 [div:description]
 [para]
-[:en] Let [$E] be
-[:zh_CN] 令 [$E]：
+[:en] Let [$E(n)] be
+[:zh_CN] 令 [$E(n)]：
 [list]
 [item]
 [:en@~] [`std::move(*(last - [$n]))] for the overload in namespace [`std];
 [:zh_CN@~] 对于命名空间 [`std] 中的重载为 [`std::move(*(last - [$n]))]；
 [item]
-[:en@~] [`ranges::iter_move(last - [$n])] for the overloads in namespace
-[`ranges].
+[:en@~] [`ranges::iter_move(last - [$n])] for the overloads in namespace [`ranges].
 [:zh_CN@~] 对于命名空间 [`ranges] 中的重载为 [`ranges::iter_move(last - [$n])]。
 [list:end]
 
@@ -154,8 +182,8 @@ range [=range(result - `[$N`],result)].
 [`move_backward] 来代替 [`move]。
 [note:end]
 
-[:en] For each positive integer [$n \le N], performs [`*(result - [$n]) = [$E]].
-[:zh_CN] 对于每个正整数 [$n \le N]，实施 [`*(result - [$n]) = [$E]]。
+[:en] For each positive integer [$n \le N], performs [`*(result - [$n]) = [$E(n)]].
+[:zh_CN] 对于每个正整数 [$n \le N]，实施 [`*(result - [$n]) = [$E(n)]]。
 
 [para:returns]
 [list]

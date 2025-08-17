@@ -263,9 +263,8 @@ type of [`wchar_t]] signed or unsigned integer type as its underlying type.
 [:en] Types [`:key char16_t] and [`:key char32_t] denote distinct types whose
 underlying types are [`uint_least16_t] and [`uint_least32_t], respectively, in
 [?libheader@ref cstdint].
-[:zh_CN] [`:key char16_t] 和 [`:key char32_t] 类型分别代表以
-[?libheader@ref cstdint] 中的 [`uint_least16_t] 和 [`uint_least32_t] 为底层类型
-的独立类型。
+[:zh_CN] [`:key char16_t] 和 [`:key char32_t] 类型分别代表以 [?libheader@ref cstdint]
+中的 [`uint_least16_t] 和 [`uint_least32_t] 为底层类型的独立类型。
 
 [para]
 [:en] [%Boolean type] [%type[!Boolean]]
@@ -461,6 +460,147 @@ conversions ([#conv.ptr], [#conv.mem]).
 [`[`:key sizeof](std::nullptr_t)] shall be equal to [`[`:key sizeof]([`:key void]*)].
 [:zh_CN]
 [`[`:key sizeof](std::nullptr_t)] 应当等于 [`[`:key sizeof]([`:key void]*)]。
+
+[para]
+[:en] A value of type [`std::meta::info] is called a [+reflection].
+[:zh_CN] 类型 [`std::meta::info] 的值被称为[+反射]。
+
+[:en] There exists a unique [+:adj null[!reflection]];
+[:zh_CN] 存在一个独一无二的[+:adj 空[!反射]]；
+
+[:en] every other reflection is a representation of
+[:zh_CN] 其他每个反射都是某个构造的代表：
+[list]
+[item]
+[:en@~] a value of scalar type ([#temp.param]),
+[:zh_CN@~] 标量类型的值（[#temp.param]），
+[item]
+[:en@~] an object with static storage duration ([#basic.stc]),
+[:zh_CN@~] 具有静态存储期的对象（[#basic.stc]），
+[item]
+[:en@~] a variable ([#basic.pre]),
+[:zh_CN@~] 变量（[#basic.pre]），
+[item]
+[:en@~] a structured binding ([#dcl.struct.bind]),
+[:zh_CN@~] 结构化绑定（[#dcl.struct.bind]），
+[item]
+[:en@~] a function ([#dcl.fct]),
+[:zh_CN@~] 函数（[#dcl.fct]），
+[item]
+[:en@~] a function parameter,
+[:zh_CN@~] 函数形参，
+[item]
+[:en@~] an enumerator ([#dcl.enum]),
+[:zh_CN@~] 枚举符（[#dcl.enum]），
+[item]
+[:en@~] an annotation ([#dcl.attr.grammar]),
+[:zh_CN@~] 标注（[#dcl.attr.grammar]），
+[item]
+[:en@~] a type alias ([#dcl.typedef]),
+[:zh_CN@~] 类型别名（[#dcl.typedef]），
+[item]
+[:en@~] a type ([#basic.types]),
+[:zh_CN@~] 类型（[#basic.types]），
+[item]
+[:en@~] a class member ([#class.mem]),
+[:zh_CN@~] 类成员（[#class.mem]），
+[item]
+[:en@~] an unnamed bit-field ([#class.bit]),
+[:zh_CN@~] 无名位字段（[#class.bit]），
+[item]
+[:en@~] a class template ([#temp.pre]),
+[:zh_CN@~] 类模板（[#temp.pre]），
+[item]
+[:en@~] a function template,
+[:zh_CN@~] 函数模板，
+[item]
+[:en@~] a variable template,
+[:zh_CN@~] 变量模板，
+[item]
+[:en@~] an alias template ([#temp.alias]),
+[:zh_CN@~] 别名模板（[#temp.alias]），
+[item]
+[:en@~] a concept ([#temp.concept]),
+[:zh_CN@~] 概念（[#temp.concept]），
+[item]
+[:en@~] a namespace alias ([#namespace.alias]),
+[:zh_CN@~] 命名空间别名（[#namespace.alias]），
+[item]
+[:en@~] a namespace ([#basic.namespace.general]),
+[:zh_CN@~] 命名空间（[#basic.namespace.general]），
+[item]
+[:en@~] a direct base class relationship ([#class.derived.general]), or
+[:zh_CN@~] 直接基类关系（[#class.derived.general]），或者
+[item]
+[:en@~] a data member description ([#class.mem.general]).
+[:zh_CN@~] 数据成员描述（[#class.mem.general]）。
+[list:end]
+
+[:en] A reflection is said to [+represent] the corresponding construct.
+[:zh_CN] 反射被称为[+代表]相应的构造。
+
+[begin:note]
+[:en] A reflection of a value can be produced by library functions such as
+[`std::meta::constant_of] and [`std::meta::reflect_constant].
+[:zh_CN] 值的反射可以通过库函数如 [`std::meta::constant_of] 和
+[`std::meta::reflect_constant] 生成。
+[end:note]
+
+[begin:example]
+[codeblock]
+int arr[] = {1, 2, 3};
+auto [a1, a2, a3] = arr;
+void fn();
+enum Enum { A };
+using Alias = int;
+struct B {};
+struct S : B {
+  int mem;
+  int : 0;
+};
+template<auto> struct TCls {};
+template<auto> void TFn();
+template<auto> int TVar;
+template<auto> concept Concept = requires { true; };
+namespace NS {};
+namespace NSAlias = NS;
+
+constexpr auto ctx = std::meta::access_context::current();
+
+constexpr auto r1 = std::meta::reflect_constant(42);        // [:en] represents [`int] value of [`42] [:zh_CN] 代表 [`int] 值 [`42]
+constexpr auto r2 = std::meta::reflect_object(arr[1]);      // [:en] represents [`int] object [:zh_CN] 代表 [`int] 对象
+constexpr auto r3 = ^^arr;                                  // [:en] represents a variable [:zh_CN] 代表变量
+constexpr auto r4 = ^^a3;                                   // [:en] represents a structured binding [:zh_CN] 代表结构化绑定
+constexpr auto r5 = ^^fn;                                   // [:en] represents a function [:zh_CN] 代表函数
+constexpr auto r6 = ^^Enum::A;                              // [:en] represents an enumerator [:zh_CN] 代表枚举符
+constexpr auto r7 = ^^Alias;                                // [:en] represents a type alias [:zh_CN] 代表类型别名
+constexpr auto r8 = ^^S;                                    // [:en] represents a type [:zh_CN] 代表类型
+constexpr auto r9 = ^^S::mem;                               // [:en] represents a class member [:zh_CN] 代表类成员
+constexpr auto r10 = std::meta::members_of(^^S, ctx)[1];    // [:en] represents an unnamed bit-field [:zh_CN] 代表无名位字段
+constexpr auto r11 = ^^TCls;                                // [:en] represents a class template [:zh_CN] 代表类模板
+constexpr auto r12 = ^^TFn;                                 // [:en] represents a function template [:zh_CN] 代表函数模板
+constexpr auto r13 = ^^TVar;                                // [:en] represents a variable template [:zh_CN] 代表变量模板
+constexpr auto r14 = ^^Concept;                             // [:en] represents a concept [:zh_CN] 代表概念
+constexpr auto r15 = ^^NSAlias;                             // [:en] represents a namespace alias [:zh_CN] 代表命名空间别名
+constexpr auto r16 = ^^NS;                                  // [:en] represents a namespace [:zh_CN] 代表命名空间
+constexpr auto r17 = std::meta::bases_of(^^S, ctx)[0];      // [:en] represents a direct base class relationship [:zh_CN] 代表直接基类关系
+constexpr auto r18 =
+  std::meta::data_member_spec(^^int, {.name="member"});     // [:en] represents a data member description [:zh_CN] 代表数据成员描述
+[codeblock:end]
+[end:example]
+
+[para:recommended]
+[:en] Implementations should not represent other constructs specified in this
+document, such as [~using-declarator]s, partial template specializations, attributes,
+placeholder types, statements, or expressions, as values of type [`std::meta::info].
+[:zh_CN] 实现不应当将本文档中指定的其他构造，如[~using-声明符]、部分模板特化式、
+属性、占位符类型、语句或表达式，表示为 [`std::meta::info] 类型的值。
+
+[begin:note]
+[:en] Future revisions of this document can specify semantics for reflections
+representing any such constructs.
+[:zh_CN] 本文档的未来修订版可以为代表任何此类构造的反射指定语义。
+[end:note]
 
 [para]
 [:en] [%type[!fundamental]]

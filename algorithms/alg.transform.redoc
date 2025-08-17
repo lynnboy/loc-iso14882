@@ -41,20 +41,56 @@ template<[[redoc("`:c>")]]input_range R, [[redoc("`:c>")]]weakly_incrementable O
   requires [[redoc("`:c>")]]indirectly_writable<O, indirect_result_t<F&, projected<iterator_t<R>, Proj>>>
   constexpr ranges::unary_transform_result<borrowed_iterator_t<R>, O>
     ranges::transform(R&& r, O result, F op, Proj proj = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS,
+         [[redoc("`:c>")]]copy_constructible F, class Proj = identity>
+  requires [[redoc("`:c>")]]indirectly_writable<O, indirect_result_t<F&, projected<I, Proj>>>
+  ranges::unary_transform_result<I, O>
+    ranges::transform(Ep&& exec, I first1, S last1, O result, OutS result_last,
+                      F op, Proj proj = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R, [[redoc("*:c>")]]sized-random-access-range OutR,
+          [[redoc("`:c>")]]copy_constructible F, class Proj = identity>
+  requires [[redoc("`:c>")]]indirectly_writable<iterator_t<OutR>,
+                                indirect_result_t<F&, projected<iterator_t<R>, Proj>>>
+  ranges::unary_transform_result<borrowed_iterator_t<R>, borrowed_iterator_t<OutR>>
+    ranges::transform(Ep&& exec, R&& r, OutR&& result_r, F op, Proj proj = {});
+
 template<[[redoc("`:c>")]]input_iterator I1, [[redoc("`:c>")]]sentinel_for<I1> S1, [[redoc("`:c>")]]input_iterator I2, [[redoc("`:c>")]]sentinel_for<I2> S2,
          [[redoc("`:c>")]]weakly_incrementable O, [[redoc("`:c>")]]copy_constructible F, class Proj1 = identity,
          class Proj2 = identity>
   requires [[redoc("`:c>")]]indirectly_writable<O, indirect_result_t<F&, projected<I1, Proj1>,
-                                         projected<I2, Proj2>>>
+                               projected<I2, Proj2>>>
   constexpr ranges::binary_transform_result<I1, I2, O>
     ranges::transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
                       F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
 template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2, [[redoc("`:c>")]]weakly_incrementable O,
          [[redoc("`:c>")]]copy_constructible F, class Proj1 = identity, class Proj2 = identity>
   requires [[redoc("`:c>")]]indirectly_writable<O, indirect_result_t<F&, projected<iterator_t<R1>, Proj1>,
-                                         projected<iterator_t<R2>, Proj2>>>
+                               projected<iterator_t<R2>, Proj2>>>
   constexpr ranges::binary_transform_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>, O>
     ranges::transform(R1&& r1, R2&& r2, O result,
+                      F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I1, [[redoc("`:c>")]]sized_sentinel_for<I1> S1,
+         [[redoc("`:c>")]]random_access_iterator I2, [[redoc("`:c>")]]sized_sentinel_for<I2> S2,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS,
+         [[redoc("`:c>")]]copy_constructible F, class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]indirectly_writable<O, indirect_result_t<F&, projected<I1, Proj1>,
+                                projected<I2, Proj2>>>
+  ranges::binary_transform_result<I1, I2, O>
+    ranges::transform(Ep&& exec, I1 first1, S1 last1, I2 first2, S2 last2,
+                      O result, OutS result_last,
+                      F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R1, [[redoc("*:c>")]]sized-random-access-range R2,
+         [[redoc("*:c>")]]sized-random-access-range OutR, [[redoc("`:c>")]]copy_constructible F,
+          class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]indirectly_writable<iterator_t<OutR>,
+                                indirect_result_t<F&, projected<iterator_t<R1>, Proj1>,
+                                projected<iterator_t<R2>, Proj2>>>
+  ranges::binary_transform_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>,
+                                  borrowed_iterator_t<OutR>>
+    ranges::transform(Ep&& exec, R1&& r1, R2&& r2, OutR&& result_r,
                       F binary_op, Proj1 proj1 = {}, Proj2 proj2 = {});
 [codeblock:end]
 
@@ -64,15 +100,22 @@ template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2, [[red
 [:zh_CN] 令：
 [list]
 [item]
-[:en@~] [`last2] be [`first2 + (last1 - first1)] for the overloads with
-parameter [`first2] but no parameter [`last2];
-[:zh_CN] 令 [`last2] 对于带有形参 [`first2] 但没有形参 [`last2] 的重载为
-[`first2 + (last1 - first1)]；
+[:en@~] [`last2] be [`first2 + (last1 - first1)] for the overloads in namespace
+[`std] with parameter [`first2] but no parameter [`last2];
+[:zh_CN] 令 [`last2] 对于命名空间 [`std] 中带有形参 [`first2] 但没有形参 [`last2]
+的重载为 [`first2 + (last1 - first1)]；
 [item]
-[:en@~] [$N] be [`last1 - first1] for unary transforms;
+[:en@~] [$M] be [`last1 - first1] for unary transforms;
 [$\min([`last1 - first1], \ [`last2 - first2])] for binary transforms, and
-[:zh_CN@~] [$N] 对于一元变换为 [`last1 - first1]，或对于二元变换为
+[:zh_CN@~] [$M] 对于一元变换为 [`last1 - first1]，或对于二元变换为
 [$\min([`last1 - first1], \ [`last2 - first2])]；
+[item]
+[:en] [`result_last] be [`result + [$M]] for the overloads with no parameter
+[`result_last] or [`result_r];
+[:zh_CN] 对于没有形参 [`result_last] 或 [`result_r] 的重载，令 [`result_last] 为 [`result + [$M]]；
+[item]
+[:en] [$N] be [$\min(M, \ [`result_last - result])];
+[:zh_CN] 令 [$N] 为 [$\min(M, \ [`result_last - result])]；
 
 [item]
 [:en] [$E] be:
@@ -80,10 +123,8 @@ parameter [`first2] but no parameter [`last2];
 
 [list]
 [item]
-[:en@~] [`op(*(first1 + (i - result)))] for unary transforms defined in
-namespace [`std];
-[:zh_CN@~] 对于定义于命名空间 [`std] 中的一元变换为
-[`op(*(first1 + (i - result)))]；
+[:en@~] [`op(*(first1 + (i - result)))] for unary transforms defined in namespace [`std];
+[:zh_CN@~] 对于定义于命名空间 [`std] 中的一元变换为 [`op(*(first1 + (i - result)))]；
 [item]
 [:en@~] [`binary_op(*(first1 + (i - result)), *(first2 + (i - result)))] for
 binary transforms defined in namespace [`std];
@@ -106,10 +147,14 @@ invoke(proj2, *(first2 + (i - result))))]。
 [list:end]
 
 [para:expects]
+[:en] For parallel algorithm overloads [`op] and [`binary_op] satisfy the
+requirements specified in [#algorithms.parallel.user].
+[:zh_CN] 对于并行算法重载，[`op] 和 [`binary_op] 满足 [#algorithms.parallel.user]
+中指定的要求。
+
 [:en] [`op] and [`binary_op] do not invalidate iterators or subranges, nor
 modify elements in the ranges
-[:zh_CN] [`op] 和 [`binary_op] 不会使以下各范围的迭代器或子范围无效，也不会对
-其中的元素进行改动：
+[:zh_CN] [`op] 和 [`binary_op] 不会使以下各范围的迭代器或子范围无效，也不会对其中的元素进行改动：
 
 [list]
 [item]
@@ -130,9 +175,9 @@ modify elements in the ranges
 
 [para:effects]
 [:en] Assigns through every iterator [`i] in the range
-[=range(result,result + `[$N`])] a new corresponding value equal to [$E].
+[=range(result,result + `[$N`])] a new corresponding value equal to [$E([`i])].
 [:zh_CN] 通过范围 [=range(result,result + `[$N`])] 中的每个迭代器 [`i]，以一个
-新的等于 [$E] 的对应值进行赋值。
+新的等于 [$E([`i])] 的对应值进行赋值。
 
 [para:returns]
 [list]
@@ -155,8 +200,8 @@ defined in namespace [`ranges].
 [:en] Exactly [$N] applications of [`op] or [`binary_op], and any projections.
 [:zh_CN] 恰好进行 [$N] 次 [`op] 或 [`binary_op]，以及任何投射的运用。
 
-[:en] This requirement also applies to the overload with an [`ExecutionPolicy].
-[:zh_CN] 这项规定同样适用于带有 [`ExecutionPolicy] 的重载。
+[:en] This requirement also applies to the parallel algorithm overloads.
+[:zh_CN] 这项规定同样适用于并行算法重载。
 
 [para:remarks]
 [:en] [`result] may be equal to [`first1] or [`first2].

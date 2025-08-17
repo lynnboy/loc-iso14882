@@ -45,14 +45,49 @@ template<[[redoc("`:c>")]]input_range R1, [[redoc("`:c>")]]input_range R2, [[red
   constexpr ranges::set_intersection_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>, O>
     ranges::set_intersection(R1&& r1, R2&& r2, O result,
                              Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_iterator I1, [[redoc("`:c>")]]sized_sentinel_for<I1> S1,
+         [[redoc("`:c>")]]random_access_iterator I2, [[redoc("`:c>")]]sized_sentinel_for<I2> S2,
+         [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS, class Comp = ranges::less,
+         class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  ranges::set_intersection_result<I1, I2, O>
+    ranges::set_intersection(Ep&& exec, I1 first1, S1 last1,
+                      I2 first2, S2 last2, O result, OutS result_last,
+                      Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
+template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-access-range R1, [[redoc("*:c>")]]sized-random-access-range R2,
+         [[redoc("*:c>")]]sized-random-access-range OutR, class Comp = ranges::less,
+         class Proj1 = identity, class Proj2 = identity>
+  requires [[redoc("`:c>")]]mergeable<iterator_t<R1>, iterator_t<R2>, iterator_t<OutR>, Comp, Proj1, Proj2>
+  ranges::set_intersection_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>,
+                                  borrowed_iterator_t<OutR>>
+    ranges::set_intersection(Ep&& exec, R1&& r1, R2&& r2, OutR&& result_r, Comp comp = {},
+                             Proj1 proj1 = {}, Proj2 proj2 = {});
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [`comp] be [`less{}], and [`proj1] and [`proj2] be [`identity{}], for
-the overloads with no parameters by those names.
-[:zh_CN] 对于没有名为 [`comp] 和 [`proj1] 和 [`proj2] 的形参的重载，令 [`comp]
-为 [`less()]，以及 [`proj1] 和 [`proj2] 为 [`identity{}]。
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en@~] [`comp] be [`less{}], and [`proj1] and [`proj2] be [`identity{}] for
+the overloads with no parameters by those names;
+[:zh_CN@~] 对于没有名为 [`comp] 和 [`proj1] 和 [`proj2] 的形参的重载，令 [`comp]
+为 [`less()]，以及 [`proj1] 和 [`proj2] 为 [`identity{}]；
+[item]
+[:en@~] [$M] be the number of elements in [=range(first1,last1)] that are
+present in [=range(first2,last2)];
+[:zh_CN@~] 令 [$M] 为出现在 [=range(first2,last2)] 中的 [=range(first1,last1)] 中的元素的数量；
+[item]
+[:en@~] [`result_last] be [`result + [$M]] for the overloads with no parameter
+[`result_last] or [`result_r];
+[:zh_CN@~] 对于没有形参 [`result_last] 或 [`result_r] 的重载，令 [`result_last] 为
+[`result + [$M]]；
+[item]
+[:en@~] [$N] be [$\min(M, \ [`result_last - result])].
+[:zh_CN@~] [$N] 为 [$\min(M, \ [`result_last - result])]。
+[list:end]
 
 [para:expects]
 [:en] The ranges [=range(first1,last1)] and [=range(first2,last2)] are sorted
@@ -64,31 +99,33 @@ with respect to [`comp] and [`proj1] or [`proj2], respectively.
 [:zh_CN] 结果范围不与任何一个源范围有重叠。
 
 [para:effects]
-[:en] Constructs a sorted intersection of the elements from the two ranges;
+[:en] Constructs a sorted intersection of [$N] elements from the two ranges;
 that is, the set of elements that are present in both of the ranges.
-[:zh_CN] 构造两个范围中元素的有序交集；就是说，由同时出现于两个范围的元素所构成
-的集合。
+[:zh_CN] 构造两个范围中 [$N] 个元素的有序交集；就是说，由同时出现于两个范围的元素所构成的集合。
 
 [para:returns]
-[:en] Let [`result_last] be the end of the constructed range.
-[:zh_CN] 令 [`result_last] 为所构造的范围的末尾。
-
-[:en] Returns
-[:zh_CN] 返回：
 [list]
 [item]
-[:en@~] [`result_last] for the overloads in namespace [`std].
-[:zh_CN@~] 命名空间 [`std] 中的各重载返回 [`result_last]。
+[:en] [`result_last] for the overloads in namespace [`std].
+[:zh_CN] 命名空间 [`std] 中的各重载返回 [`result_last]。
 [item]
-[:en@~] [`{last1, last2, result_last}] for the overloads in namespace [`ranges].
-[:zh_CN@~] 命名空间 [`ranges] 中的各重载返回 [`{last1, last2, result_last}]。
+[:en] [`{last1, last2, result + [$N]}] for the overloads in namespace [`ranges],
+if [$N] is equal to [$M].
+[:zh_CN] 命名空间 [`ranges] 中的各重载，当 [$N] 等于 [$M] 时，返回
+[`{last1, last2, result + [$N]}]。
+[item]
+[:en] Otherwise, [`{j1, j2, result_last}] for the overloads in namespace [`ranges],
+where the iterators [`j1] and [`j2] point to positions past the last copied or
+skipped elements in [=range(first1,last1)] and [=range(first2,last2)], respectively.
+[:zh_CN] 否则，命名空间 [`ranges] 中的各重载返回 [`{j1, j2, result_last}]，
+其中迭代器 [`j1] 和 [`j2] 分别指向 [=range(first1,last1)] 和
+[=range(first2,last2)] 中最后一个被复制或跳过的元素之后的位置。
 [list:end]
 
 [para:complexity]
 [:en] At most [`2 * ((last1 - first1) + (last2 - first2)) - 1] comparisons and
 applications of each projection.
-[:zh_CN] 最多进行 [`2 * ((last1 - first1) + (last2 - first2)) - 1] 次比较和每种
-投射的运用。
+[:zh_CN] 最多进行 [`2 * ((last1 - first1) + (last2 - first2)) - 1] 次比较和每种投射的运用。
 
 [para:remarks]
 [:en] Stable ([#algorithm.stable]).
