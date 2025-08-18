@@ -17,6 +17,7 @@
     [| using-declaration ]
     [| using-enum-declaration ]
     [| static_assert-declaration ]
+    [| consteval-block-declaration ]
     [| template-declaration ]
     [| explicit-specialization ]
     [| deduction-guide ]
@@ -102,8 +103,7 @@ union members ([#class.union.anon]) and direct members thereof.
 成员，包括匿名联合体成员（[#class.union.anon]）及其直接成员。
 
 [:en] Members of a class are data members, member functions ([#class.mfct]),
-nested types, enumerators, and member templates ([#temp.mem]) and specializations
-thereof.
+nested types, enumerators, and member templates ([#temp.mem]) and specializations thereof.
 [:zh_CN] 类的成员包括数据成员，成员函数（[#class.mfct]），嵌套的类型，枚举符，以及成员
 模板（[#temp.mem]）及其特例。
 
@@ -119,8 +119,8 @@ thereof.
 [end:note]
 
 [para]
-[:en] A [~member-declaration] does not declare new members of the class if it is
-[:zh_CN] 以下[~成员声明式]并不声明类的新成员：
+[:en] A [~member-declaration] does not itself declare new members of the class if it is
+[:zh_CN] 以下[~成员声明式]自身并不声明类的新成员：
 
 [list]
 [item]
@@ -135,6 +135,9 @@ thereof.
 [item]
 [:en@~] a [~static_assert-declaration],
 [:zh_CN@~] [~static_assert-声明式]，
+[item]
+[:en@~] a [~consteval-block-declaration],
+[:zh_CN@~] [~consteval-块声明式]，
 [item]
 [:en@~] a [~using-declaration] ([#namespace.udecl]), or
 [:zh_CN@~] [~using-声明式]（[#namespace.udecl]），或者
@@ -184,21 +187,34 @@ class.
 [:zh_CN] 其他的任何数据成员或成员函数都是[+:adj 非静态[!成员]]（分别是
 [+:adj 非静态[!数据成员]]和[+:adj 非静态[!成员函数]]（[#class.mfct.non-static]））。
 
-[begin:note]
-[:en] A non-static data member of non-reference type is a member subobject of a
-class object ([#intro.object]).
-[:zh_CN] 非引用类型的非静态数据成员是类对象的成员子对象（[#intro.object]）。
-[end:note]
+[para]
+[:en] Every object of class type has a unique member subobject
+corresponding to each of its direct non-static data members.
+[:zh_CN] 每个类类型的对象都有一个唯一的成员子对象对应于其每个直接的非静态数据成员。
+
+[:en] If any non-static data member of a class [`C] is of reference type,
+then let [`D] be an invented class that is identical to [`C] except that
+each non-static member of [`D] corresponding to a member of [`C] of
+type [=lq]reference to [`T][=rq] instead has type [=lq]pointer to [`T][=rq].
+[:zh_CN] 如果类 [`C] 的任何非静态数据成员是引用类型，则令 [`D] 为一个与 [`C]
+相同的虚构的类，但对应于 [`C] 中类型为“[`T] 的引用”的成员的 [`D] 中的非静态成员
+的类型改为“[`T] 的指针”。
+
+[:en] Every member subobject of a complete object of type [`C] has the same size, alignment,
+and offset as that of the corresponding subobject of a complete object of type [`D].
+[:zh_CN] [`C] 类型的完整对象的每个成员子对象，其大小，对齐和偏移与
+[`D] 类型的完整对象的对应子对象的大小，对齐和偏移相同。
+
+[:en] The size and alignment of [`C] are the same as the size and alignment of [`D].
+[:zh_CN] [`C] 的大小和对齐与 [`D] 的大小和对齐相同。
 
 [para]
-[:en] A member shall not be declared twice in the [~member-specification],
-except that
+[:en] A member shall not be declared twice in the [~member-specification], except that
 [:zh_CN] 除了以下情况外，[~成员说明]中不能对一个成员声明两次：
 
 [list]
 [item]
-[:en@~] a nested class or member class template can be declared and then later
-defined, and
+[:en@~] a nested class or member class template can be declared and then later defined, and
 [:zh_CN@~] 嵌套类或成员类模板可以先声明稍候再进行定义，以及
 
 [item]
@@ -323,8 +339,7 @@ struct S {
 [end:example]
 
 [para]
-[:en] A [~brace-or-equal-initializer] shall appear only in the declaration of a
-data member.
+[:en] A [~brace-or-equal-initializer] shall appear only in the declaration of a data member.
 [:zh_CN] [~花括号或等号初始化式]只能出现于数据成员的声明式中。
 
 [:en] (For static data members, see [#class.static.data]; for non-static
@@ -360,8 +375,7 @@ the subexpression appears.
 [para]
 [:en] The [~decl-specifier-seq] may be omitted in constructor, destructor, and
 conversion function declarations only; when declaring another kind of member the
-[~decl-specifier-seq] shall contain a [~type-specifier] that is not a
-[~cv-qualifier].
+[~decl-specifier-seq] shall contain a [~type-specifier] that is not a [~cv-qualifier].
 [:zh_CN] 只有在构造函数、析构函数以及转换函数的声明式之中才可以省略[~声明说明符序列]；
 当声明其他种类的成员时，其[~声明说明符序列]应当包含一个并非 [~cv-限定符]的[~类型说明符]。
 
@@ -488,8 +502,7 @@ have a name different from [`T]:
 [:zh_CN] 类 [`T] 的每个成员函数；
 
 [begin:note]
-[:en] This restriction does not apply to constructors, which do not have names
-([#class.ctor]).
+[:en] This restriction does not apply to constructors, which do not have names ([#class.ctor]).
 [:zh_CN] 这条限制并不适用于构造函数，它们并没有名字（[#class.ctor]）。
 [end:note]
 
@@ -520,8 +533,7 @@ every non-static data member of class [`T] shall have a name different from [`T]
 [para]
 [:en] The [+common initial sequence] of two standard-layout struct ([#class.prop])
 types is the longest sequence of non-static data members and bit-fields in
-declaration order, starting with the first such entity in each of the structs,
-such that
+declaration order, starting with the first such entity in each of the structs, such that
 [:zh_CN] 两个标准布局结构体（[#class.prop]）类型类型的[+共同起始序列]，是非静态
 数据成员和位字段依照声明顺序的最长序列，开始于每个结构体中的第一个这种实体，使得
 [list]
@@ -536,12 +548,10 @@ such that
 [:en@~] if a [~has-attribute-expression] ([#cpp.cond]) is not [`0] for the
 [`no_unique_address] attribute, then neither entity is declared with the
 [`no_unique_address] attribute ([#dcl.attr.nouniqueaddr]), and
-[:zh_CN@~] 若 [~属性查询表达式] ([#cpp.cond]) 对 [`no_unique_address] 属性不为
-[`0]，则两个实体都未以 [`no_unique_address] 属性（[#dcl.attr.nouniqueaddr]）
-所声明，并且
+[:zh_CN@~] 若 [~属性查询表达式] ([#cpp.cond]) 对 [`no_unique_address] 属性不为 [`0]，
+则两个实体都未以 [`no_unique_address] 属性（[#dcl.attr.nouniqueaddr]）所声明，并且
 [item]
-[:en@~] either both entities are bit-fields with the same width or neither is a
-bit-field.
+[:en@~] either both entities are bit-fields with the same width or neither is a bit-field.
 [:zh_CN@~] 要么两个实体都是具有相同宽度的位字段要么都不是位字段。
 [list:end]
 
@@ -554,8 +564,7 @@ struct D { int d; char b : 4; };
 struct E { unsigned int e; char b; };
 [codeblock:end]
 
-[:en] The common initial sequence of [`A] and [`B] comprises all members of
-either class.
+[:en] The common initial sequence of [`A] and [`B] comprises all members of either class.
 [:zh_CN] [`A] 和 [`B] 的共同起始序列由两个类的所有成员构成。
 
 [:en] The common initial sequence of [`A] and [`C] and of [`A] and [`D]
@@ -583,9 +592,8 @@ number of non-static data members and corresponding non-static data members
 [para]
 [:en] In a standard-layout union with an active member ([#class.union]) of struct
 type [`T1], it is permitted to read a non-static data member [`m] of another union
-member of struct type [`T2] provided [`m] is part of the common initial sequence
-of [`T1] and [`T2]; the behavior is as if the corresponding member of [`T1] were
-nominated.
+member of struct type [`T2] provided [`m] is part of the common initial sequence of
+[`T1] and [`T2]; the behavior is as if the corresponding member of [`T1] were nominated.
 [:zh_CN] 在具有结构体类型 [`T1] 的活跃成员（[#class.union]）的标准布局联合体中，
 允许读取具有结构体类型 [`T2] 的另一个联合体成员的非静态数据成员 [`m]，只要 [`m] 属于
 [`T] 和 [`T2] 的共同起始序列的一部分即可；其行为如同 [`T1] 的响应成员被提名一样。
@@ -616,8 +624,7 @@ member is not a bit-fiend.
 [:zh_CN] 若标准布局类对象带有任何非静态数据成员，则当其第一个非静态数据成员不是位字段时，
 其地址与该成员的地址相同。
 
-[:en] Its address is also the same as the address of each of its base class
-subobjects.
+[:en] Its address is also the same as the address of each of its base class subobjects.
 [:zh_CN] 其地址同样与其任何基类子对象的地址相同。
 
 [begin:note]
@@ -632,4 +639,69 @@ achieve appropriate alignment.
 [:en] The object and its first subobject are pointer-interconvertible
 ([#basic.compound], [#expr.static.cast]).
 [:zh_CN] 对象及其第一个子对象是指针可相互转换的（[#basic.compound]，[#expr.static.cast]）。
+[end:note]
+
+[para]
+[:en] A [+:adj data member[!description]] is a quintuple ([$T], [$N], [$A], [$W], [$\mathit{NUA}])
+describing the potential declaration of a non-static data member where
+[:zh_CN] [+数据成员[!描述]]是一个五元组（[$T]，[$N]，[$A]，[$W]，[$\mathit{NUA}]），
+描述非静态数据成员的可能声明式，其中
+[list]
+[item]
+[:en@~] [$T] is a type,
+[:zh_CN@~] [$T] 是一个类型，
+[item]
+[:en@~] [$N] is an [~identifier] or [$\bot],
+[:zh_CN@~] [$N] 是一个[~标识符]或 [$\bot]，
+[item]
+[:en@~] [$A] is an alignment or [$\bot],
+[:zh_CN@~] [$A] 是一个对齐或 [$\bot]，
+[item]
+[:en@~] [$W] is a bit-field width or [$\bot], and
+[:zh_CN] [$W] 是一个位字段宽度或 [$\bot]，而
+[item]
+[:en@~] [$\mathit{NUA}] is a boolean value.
+[:zh_CN@~] [$\mathit{NUA}] 是一个布尔值。
+[list:end]
+
+[:en] Two data member descriptions are equal
+if each of their respective components are the same entities,
+are the same identifiers, have equal values, or are both [$\bot].
+[:zh_CN] 如果两个数据成员描述中各自的对应成分是相同的实体，
+是相同的标识符，具有相等的值，或者都是 [$\bot]，它们就相等。
+
+[begin:note]
+[:en] The components of a data member description describe a data member such that
+[:zh_CN] 数据成员描述的各成分描述一个数据成员，使得
+[list]
+[item]
+[:en@~] its type is specified using the type given by [$T],
+[:zh_CN@~] 其类型由 [$T] 所给出的类型指定，
+[item]
+[:en@~] it is declared with the name given by [$N]
+if [$N] is not [$\bot] and is otherwise unnamed,
+[:zh_CN@~] 若 [$N] 不为 [$\bot]，则它以 [$N] 所给出的名字声明，否则为无名，
+[item]
+[:en@~] it is declared with the [~alignment-specifier] ([#dcl.align])
+given by [`alignas([$A])] if [$A] is not [$\bot] and
+is otherwise declared without an [~alignment-specifier],
+[:zh_CN@~] 若 [$A] 不为 [$\bot]，则它以 [`alignas([$A])] 所给出的[~对齐说明符]
+声明（[#dcl.align]），否则声明时无[~对齐说明符]，
+[item]
+[:en@~] it is a bit-field ([#class.bit]) with the width given by [$W]
+if [$W] is not [$\bot] and is otherwise not a bit-field, and
+[:zh_CN@~] 若 [$W] 不为 [$\bot]，则它是具有 [$W] 所给出的宽度的位字段（[#class.bit]），
+否则它不是位字段，以及
+[item]
+[:en@~] it is declared with the attribute [``[`[no_unique_address`]`]] ([#dcl.attr.nouniqueaddr])
+if [$\mathit{NUA}] is true and is otherwise declared without that attribute.
+[:zh_CN@~] 若 [$\mathit{NUA}] 为真，则它以属性 [``[`[no_unique_address`]`]]（[#dcl.attr.nouniqueaddr]）
+声明，否则声明时没有该属性。
+[list:end]
+
+[:en] Data member descriptions are represented by reflections ([#basic.fundamental])
+returned by [`std::meta::data_member_spec] ([#meta.reflection.define.aggregate]) and
+can be reified as data members of a class using [`std::meta::define_aggregate].
+[:zh_CN] 数据成员描述由 [`std::meta::data_member_spec] ([#meta.reflection.define.aggregate]) 
+所返回的反射代表，并且可以使用 [`std::meta::define_aggregate] 将其具体化为类的数据成员。
 [end:note]

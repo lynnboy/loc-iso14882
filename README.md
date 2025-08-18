@@ -279,7 +279,7 @@ Original   |中文   |章节    |定义
 *declaration*               |*声明式*       | [dcl.pre]     | *命名声明式* \| *特殊声明式*
 *name-declaration*          |*命名声明式*   | [dcl.pre]     | *块声明式* \| *无声明说明符函数声明式* \| *函数定义式* \|<br> *友元类型声明式* \|<br> *模板声明式* \| *推断导引* \|<br> *连接说明* \| *命名空间定义式* \|<br> *空声明式* \| *属性声明式* \| *模块导入声明式*
 *special-declaration*       |*特殊声明式*   | [dcl.pre]     | *显式实例化式* \| *显式特化式* \| *导出声明式*
-*block-declaration*         |*块声明式*     | [dcl.pre]     | *简单声明式* \| *asm-声明式* \| *命名空间别名定义式* \|<br> *using-声明式* \| *using-枚举声明式* \| *using-指令* \|<br> *static_assert-声明式* \| *别名声明式* \| *笼统枚举声明式*
+*block-declaration*         |*块声明式*     | [dcl.pre]     | *简单声明式* \| *asm-声明式* \| *命名空间别名定义式* \|<br> *using-声明式* \| *using-枚举声明式* \| *using-指令* \|<br> *static_assert-声明式* \| *consteval-块声明式* \|<br> *别名声明式* \| *笼统枚举声明式*
 *nodeclspec-function-declaration*|*无声明说明符函数声明式*| [dcl.pre] |*属性说明符序列*__?__ *声明符* `;`
 *alias-declaration*         |*别名声明式*   | [dcl.pre]     | `using` *标识符* *属性说明符序列*__?__ `=` *定义类型标识* `;`
 *sb-identifier*             |*sb-标识符*    | [dcl.pre]     | `...`__?__ *标识符* *属性说明符序列*__?__
@@ -288,6 +288,7 @@ Original   |中文   |章节    |定义
 *simple-declaration*        |*简单声明式*   | [dcl.pre]     | *声明说明符序列* *带初始化声明符列表*__?__ `;` \|<br> *属性说明符序列* *声明说明符序列* *带初始化声明符列表* `;` \|<br> *结构化绑定声明式* *初始化式* `;`
 *static_assert-message*     |*static_assert-消息*| [dcl.pre]| *免求值字符串* \| *常量表达式*
 *static_assert-declaration* |*static_assert-声明式*| [dcl.pre] | `static_assert` `(` *常量表达式* ( `,` *static_assert-消息* ) `)` `;`
+*consteval-block-declaration*|*consteval-块声明式*| [dcl.pre] | `consteval` *复合语句*
 *empty-declaration*         |*空声明式*     | [dcl.pre]     | `;`
 *attribute-declaration*     |*属性声明式*   | [dcl.pre]     | *属性说明符序列* `;`
 *decl-specifier*            |*声明说明符*   | [dcl.spec.general] | *存储类说明符* \| *定义类型说明符* \| *函数声明符* \|<br> `friend` \| `typedef` \| `constexpr` \| `consteval` \| `constinit` \| `inline`
@@ -302,11 +303,12 @@ Original   |中文   |章节    |定义
 *defining-type-specifier-seq*|*定义类型说明符序列*| [dcl.type.general] | *定义类型说明符*__\+__ *属性说明符序列*__?__
 *simple-type-specifier*     |*简单类型说明符*| [dcl.type.simple] | *嵌套名说明符*__?__ (*类型名* \| *模板名*) \|<br> *嵌套名说明符* `template` *简单模板标识* \|<br> *计算类型说明符* \| *占位符类型说明符* \|<br> `char` \| `char8_t` \| `char16_t` \| `char32_t` \| `wchar_t` \|<br> `bool` \| `short` \| `int` \| `long` \|<br> `signed` \| `unsigned` \| `float` \| `double` \| `void`
 *type-name*                 |*类型名*       | [dcl.type.simple] | *类名* \| *枚举名* \| *typedef-名*
-*computed-type-specifier*   |*计算类型说明符*| [dcl.type.simple] | *decltype-说明符* \| *包组索引说明符*
+*computed-type-specifier*   |*计算类型说明符*| [dcl.type.simple] | *decltype-说明符* \| *包组索引说明符* \| *拼接类型说明符*
 *pack-index-specifier*      |*包组索引说明符*| [dcl.type.pack.index] | *typedef-名* `...` `[` *常量表达式* `]`
 *elaborated-type-specifier* |*详述类型说明符*| [dcl.type.elab] | *类关键词* *属性说明符序列*__?__ *嵌套名说明符*__?__ *标识符* \|<br> *类关键词* (*嵌套名说明符* `template`__?__)__?__ *简单模板标识* \|<br> `enum` *嵌套名说明符*__?__ *标识符*
 *decltype-specifier*        |*decltype-说明符*| [dcl.type.decltype] | `decltype` `(` *表达式* `)`
 *placeholder-type-specifier*|*占位符类型说明符*| [dcl.spec.auto.general] | *类型约束*__?__ (`auto` \| `decltype` `(` `auto` `)`)
+*splice-type-specifier*     |*拼接类型说明符*| [dcl.type.splice] | `typename`__?__ ( *拼接说明符* \| *拼接特例说明符* )
 *init-declarator-list*      |*带初始化声明符列表*| [dcl.decl.general] | *带初始化声明符* (`,` *带初始化声明符*)__\*__
 *init-declarator*           |*带初始化声明符*| [dcl.decl.general] | *声明符* *初始化式* \| *声明符* *requires-子句*__?__ *函数契约说明符*__\*__
 *declarator*                |*声明符*       | [dcl.decl.general] | *指针声明符* \| *非指针声明符* *形参和限定符* *尾部返回类型*
@@ -358,7 +360,7 @@ Original   |中文   |章节    |定义
 *enumerator-definition*     |*枚举符定义式* | [dcl.enum]    | *枚举符* \| *枚举符* `=` *常量表达式*
 *enumerator*                |*枚举符*       | [dcl.enum]    | *标识符* *属性说明符序列*__?__
 *using-enum-declaration*    |*using-枚举声明式*| [enum.udecl] | `using` `enum` *using-枚举声明符* `;`
-*using-enum-declarator*     |*using-枚举声明符*| [enum.udecl] | *嵌套名说明符*__?__ ( *标识符* \| *简单模板标识* )
+*using-enum-declarator*     |*using-枚举声明符*| [enum.udecl] | *嵌套名说明符*__?__ ( *标识符* \| *简单模板标识* ) \| *拼接类型说明符*
 *namespace-name*            |*命名空间名*   | [namespace.def.general] | *标识符* \| *命名空间别名*
 *namespace-definition*      |*命名空间定义式*| [namespace.def.general] | *具名命名空间定义式* \| *无名命名空间定义式* \| *嵌套命名空间定义式*
 *named-namespace-definition*|*具名命名空间定义式*| [namespace.def.general] | `inline`__?__ `namespace` *属性说明符序列*__?__ *标识符* `{` *命名空间体* `}`
@@ -367,26 +369,28 @@ Original   |中文   |章节    |定义
 *enclosing-namespace-specifier*|*外围命名空间说明符*| [namespace.def.general] | *标识符* (`::` `inline`__?__ *标识符* )__\*__
 *namespace-body*            |*命名空间体*   | [namespace.def.general] | *声明式序列*__?__
 *namespace-alias*           |*命名空间别名* | [namespace.alias] | *标识符*
-*namespace-alias-definition*|*命名空间别名定义式*| [namespace.alias] | `namespace` *标识符* `=` *限定命名空间说明符* `;`
+*namespace-alias-definition*|*命名空间别名定义式*| [namespace.alias] | `namespace` *标识符* `=` ( *限定命名空间说明符* \| *拼接说明符* ) `;`
 *qualified-namespace-specifier*|*限定命名空间说明符*| [namespace.alias] | *嵌套名说明符*__?__ *命名空间名*
-*using-directive*           |*using-指令*   | [namespace.udir] | *属性说明符序列*__?__ `using` `namespace` *嵌套名说明符*__?__ *命名空间名* `;`
+*using-directive*           |*using-指令*   | [namespace.udir] | *属性说明符序列*__?__ `using` `namespace` ( *嵌套名说明符*__?__ *命名空间名* \| *拼接说明符* ) `;`
 *using-declaration*         |*using-声明式* | [namespace.udecl] | `using` *using-声明符列表* `;`
 *using-declarator-list*     |*using-声明符列表*| [namespace.udecl] | *using-声明符* `...`__?__ ( `,` *using-声明符* `...`__?__ )__\*__
 *using-declarator*          |*using-声明符* | [namespace.udecl] | `typename`__?__ *嵌套名说明符* *无限定标识*
 *asm-declaration*           |*asm-声明式*   | [dcl.asm]     | *属性说明符序列*__?__ `asm` `(` *平衡记号序列* `)` `;`
 *linkage-specification*     |*连接说明*     | [dcl.link]    | `extern` *免求值字符串* ( `{` *声明式序列*__?__ `}` \| *命名声明式* )
 *attribute-specifier-seq*   |*属性说明符序列*| [dcl.attr.grammar] | *属性说明符*__\+__
-*attribute-specifier*       |*属性说明符*   | [dcl.attr.grammar] | `[` `[` *属性-using-前缀*__?__ *属性列表* `]` `]` \|<br> *对齐说明符*
+*attribute-specifier*       |*属性说明符*   | [dcl.attr.grammar] | `[` `[` ( *属性-using-前缀*__?__ *属性列表* \| *标注列表* ) `]` `]` \|<br> *对齐说明符*
 *alignment-specifier*       |*对齐说明符*   | [dcl.attr.grammar] | `alignas` `(` (*类型标识* \| *常量表达式*) `...`__?__ `)`
 *attribute-using-prefix*    |*属性-using-前缀*| [dcl.attr.grammar] | `using` *属性命名空间* `:`
 *attribute-list*            |*属性列表*     | [dcl.attr.grammar] | ( ∅ \| *属性* `...`__?__ ) ( `,` ( ∅ \| *属性* `...`__?__ ) )__\*__
+*annotation-list*           |*标注列表*     | [dcl.attr.grammar] | *标注* `...`__?__ ( `,` ( *标注* `...`__?__ ) )__\*__
 *attribute*                 |*属性*         | [dcl.attr.grammar] | *属性记号* *属性实参子句*__?__
+*annotation*                |*标注*         | [dcl.attr.grammar] | `=` *常量表达式*
 *attribute-token*           |*属性记号*     | [dcl.attr.grammar] | *标识符* \| *有作用域属性记号*
 *attribute-scoped-token*    |*有作用域属性记号*| [dcl.attr.grammar] | *属性命名空间* `::` *标识符*
 *attribute-namespace*       |*属性命名空间* | [dcl.attr.grammar] | *标识符*
 *attribute-argument-clause* |*属性实参子句* | [dcl.attr.grammar] | `(` *平衡记号序列*__?__ `)`
 *balanced-token-seq*        |*平衡记号序列* | [dcl.attr.grammar] | *平衡记号*__\+__
-*balanced-token*            |*平衡记号*     | [dcl.attr.grammar] | `(` *平衡记号序列*__?__ `)` \| `[` *平衡记号序列*__?__ `]` \| `{` *平衡记号序列*__?__ `}` \|<br> *记号* - \[`()[]{}`\]
+*balanced-token*            |*平衡记号*     | [dcl.attr.grammar] | `(` *平衡记号序列*__?__ `)` \| `[` *平衡记号序列*__?__ `]` \| `{` *平衡记号序列*__?__ `}` \| `[:` *平衡记号序列*__?__ `:]` \|<br> *记号* - ( \[`()[]{}`\] \| `[:` \| `:]` )
 
 ### Modules 模块
 
@@ -413,7 +417,7 @@ Original   |中文   |章节    |定义
 *class-property-specifier*  |*类性质说明符*   | [class.pre]   | `final` \| `trivially_relocatable_if_eligible` \| `replaceable_if_eligible`
 *class-key*                 |*类关键词*     | [class.pre]   | `class` \| `struct` \| `union`
 *member-specification*      |*成员说明*     | [class.mem.general] | ( *成员声明式* \| *访问说明符* `:` )__\+__
-*member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *友元类型声明式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
+*member-declaration*        |*成员声明式*   | [class.mem.general] | *属性说明符序列*__?__ *声明说明符序列*__?__ *成员声明符列表*__?__ `;` \|<br> *函数定义式* \| *友元类型声明式* \| *using-声明式* \| *using-枚举声明式* \|<br> *static_assert-声明式* \|<br> *consteval-块声明式* \|<br> *模板声明式* \| *显式特化式* \| *推断导引* \|<br> *别名声明式* \| *笼统枚举声明式* \| *空声明式*
 *member-declaration-list*   |*成员声明符列表*| [class.mem.general] | *成员声明符* ( `,` *成员声明符* )__\*__
 *member-declarator*         |*成员声明符*   | [class.mem.general] | *声明符* *虚说明符序列*__?__ *函数契约说明符*__\*__ *纯说明符*__?__ \|<br> *声明符* *requires-子句* *函数契约说明符*__\*__ \|<br> *声明符* *花括号或等号初始化式* \|<br> *标识符*__?__ *属性说明符序列*__?__ `:` *常量表达式* *花括号或等号初始化式*__?__
 *virt-specifier-seq*        |*虚说明符序列* | [class.mem.general] | *虚说明符*__\+__
@@ -578,6 +582,7 @@ amendment                               |文档修订
 amortized constant                      |摊销常量
 and expression                          |与表达式   |`eq_expr & eq_expr`。内建：按位与，一般算术转换
 and operator                            |与运算符   |`&`
+annotation                              |标注
 anonymous union                         |匿名联合体 |无名类型，内嵌其成员到所在作用域
 anonymous union member                  |匿名联合体成员 |匿名union非静态数据成员，不允许存储类说明符
 anonymous union variable                |匿名联合体变量 |匿名union变量
@@ -902,6 +907,7 @@ cv-unqualified                          |无 cv 限定的
 |-|-|-|
 data                                    |数据
 data member                             |数据成员
+data member description                 |数据成员描述| 数据成员的五元组 (T, N, A, W, ⊥)，类型、名字?、对齐?、字段宽度?、`no_unique_address`
 data-parallel object                    |数据并行对象
 data-parallel type                      |数据并行类型| `basic_simd` 和 `basic_simd_mask` 启用的特例
 data race                               |数据竞争   |潜在并发+非原子性+无HapB，UB
@@ -967,8 +973,9 @@ dependent name                          |待决名字   |依存于模板的名�
 deprecated                              |被摒弃的   |因为有某种问题而不建议使用的，未来会被移除的功能设施
 `deprecated`                            |`deprecated` 属性|属性，允许参数`("msg")`，用于任何名字或实体
 derived class                           |派生类
-designate                               |指定
+designate                               |指定，指名
 designated initializer                  |定名初始化式
+designating class                       |指名类
 destringize                             |去字符串化 |字符串恢复为文本，相当于`sputs`
 destroy                                 |销毁
 destroying operator delete              |销毁用 delete 运算符   |成员，非数组，`(T*, destroying_delete_t, ...)`，由此函数负责析构；只要提供就排除非销毁函数
@@ -2107,6 +2114,7 @@ truncation                              |截断
 tuple                                   |元组
 TU-local                                |翻译单元局部   |实体为内部连接或非嵌套无名类型
 type                                    |类型           |一种实体，决定值表示的意义
+type alias                              |类型别名
 type concept                            |类型概念       |针对类型（原型形参为类型）的概念
 type-dependent                          |类型待决       |模板中待决名参与的表达式，依存于模板形参的类型
 type identification                     |类型识别       |`typeid`
@@ -2142,6 +2150,7 @@ unblock                                 |解除阻塞
 uncaught exception                      |未捕获异常
 undefined                               |未定义的
 undefined behavior                      |UB，未定义行为 |任意可能行为
+underlying constant                     |底层常量       |标注的反射值
 underlying entity                       |底层实体
 underlying-type                         |底层类型       |字符类型。枚举，默认为`int`或以枚举符求值范围推定
 unevaluated operand                     |免求值操作数   |编译期语法结构，仅获得类型/元信息，不求值

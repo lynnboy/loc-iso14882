@@ -48,6 +48,7 @@
     [| using-enum-declaration ]
     [| using-directive ]
     [| static_assert-declaration ]
+    [| consteval-block-declaration ]
     [| alias-declaration ]
     [| opaque-enum-declaration ]
 [rule:end]
@@ -88,6 +89,10 @@
 [rule static_assert-declaration [:zh_CN] static_assert-声明式 ]
     [| [`:key static_assert] [`(] constant-expression [`)] [`;] ]
     [| [`:key static_assert] [`(] constant-expression [`,] static_assert-message [`)] [`;] ]
+[rule:end]
+
+[rule consteval-block-declaration [:zh_CN] consteval-块声明式 ]
+    [| [`:key consteval] compound-statement ]
 [rule:end]
 
 [rule empty-declaration [:zh_CN] 空声明式 ]
@@ -263,11 +268,9 @@ the [~assignment-expression] shall be of non-union class type.
 [para]
 [:en] If the [~decl-specifier-seq] contains the [`:key typedef] specifier, the
 declaration is a [+typedef declaration[%declaration[!typedef]]] and each
-[~declarator-id] is declared to be a [~typedef-name], synonymous with its
-associated type ([#dcl.typedef]).
+[~declarator-id] is declared to be a [~typedef-name] ([#dcl.typedef]).
 [:zh_CN] 若[~声明说明符序列]包含 [`:key typedef] 说明符，则该声明式为
-[+typedef 声明式[%声明式[!typedef ～]]]，而每个[~声明符标识]则被声明为
-[~typedef-名]，它们是其所关联的类型的同义词（[#dcl.typedef]）。
+[+typedef 声明式[%声明式[!typedef ～]]]，而每个[~声明符标识]则被声明为[~typedef-名]（[#dcl.typedef]）。
 
 [begin:note]
 [:en] Such a [~declarator-id] is an [~identifier] ([#class.conv.fct]).
@@ -290,10 +293,8 @@ reference type, the declaration is an [+object declaration[%declaration[!object]
 [codeblock]
 int f(), x;             // [:en] OK, function declaration for [`f] and object declaration for [`x] \
                         [:zh_CN] OK，[`f] 的函数声明式和 [`x] 的对象声明式
-extern void g(),        // [:en] OK, function declaration for [`g] \
-                        [:zh_CN] OK，[`g] 的函数声明式
-  y;                    // [:en] error: [`void] is not an object type \
-                        [:zh_CN] 错误：[`void] 不是对象类型
+extern void g(),        // [:en] OK, function declaration for [`g] [:zh_CN] OK，[`g] 的函数声明式
+  y;                    // [:en] error: [`void] is not an object type [:zh_CN] 错误：[`void] 不是对象类型
 [codeblock:end]
 [end:example]
 
@@ -445,6 +446,41 @@ void g(char c) {
   f(0);             // OK
   f(c);             // [:en] error on implementations where [`sizeof(int) > 1]: must be [`int]-sized \
                     [:zh_CN] 在 [`sizeof(int) > 1] 的实现上发生错误：必须为 [`int] 的大小
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] For a [~consteval-block-declaration] [$D], the expression [$E] corresponding to [$D] is:
+[:zh_CN] 对于 [~consteval-块声明式] [$D]，对应与 [$D] 的表达式 [$E] 是：
+
+[codeblock:notation]
+  [] -> void static consteval [[redoc("~>")]]compound-statement ()
+[codeblock:end]
+
+[:en] [$E] shall be a constant expression ([#expr.const]).
+[:zh_CN] [$E] 应当为常量表达式（[#expr.const]）。
+
+[begin:note]
+[:en] The evaluation of the expression corresponding to a [~consteval-block-declaration] ([#lex.phases])
+can produce injected declarations as side effects.
+[:zh_CN] 对于 [~consteval-块声明式] ([#lex.phases])，对应的表达式的求值可能会
+产生注入声明式作为其副作用。
+[end:note]
+
+[begin:example]
+[codeblock]
+struct S;
+consteval {
+  std::meta::define_aggregate(^^S, {});     // OK
+
+  template<class T>
+  struct X { };                             // [:en] error: local templates are not allowed [:zh_CN] 错误：不允许局部模板
+
+  template<class T>
+  concept C = true;                         // [:en] error: local concepts are not allowed [:zh_CN] 错误：不允许局部概念
+
+  return;                                   // OK
 }
 [codeblock:end]
 [end:example]
