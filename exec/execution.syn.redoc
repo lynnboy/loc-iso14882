@@ -81,6 +81,7 @@ namespace std::execution {
   struct [[redoc("`:lib")]]get_forward_progress_guarantee_t { [[redoc("[=unspec]")]] };
   template<class CPO>
     struct [[redoc("`:lib")]]get_completion_scheduler_t { [[redoc("[=unspec]")]] };
+  struct get_await_completion_adaptor_t { [[redoc("[=unspec]")]] };
 
   inline constexpr get_domain_t [[redoc("`:lib")]]get_domain{};
   inline constexpr get_scheduler_t [[redoc("`:lib")]]get_scheduler{};
@@ -89,6 +90,7 @@ namespace std::execution {
   inline constexpr get_forward_progress_guarantee_t [[redoc("`:lib")]]get_forward_progress_guarantee{};
   template<class CPO>
     constexpr get_completion_scheduler_t<CPO> [[redoc("`:lib")]]get_completion_scheduler{};
+  inline constexpr get_await_completion_adaptor_t get_await_completion_adaptor{};
 
   struct [[redoc("`:lib")]]get_env_t { [[redoc("[=unspec]")]] };
   inline constexpr get_env_t [[redoc("`:lib")]]get_env{};
@@ -152,23 +154,17 @@ namespace std::execution {
   template<class Sndr>
     concept [[redoc("`:c>")]]sender = [[redoc("[=seebelow]")]];
 
-  template<class Sndr, class Env = env<>>
+  template<class Sndr, class... Env>
     concept [[redoc("`:c>")]]sender_in = [[redoc("[=seebelow]")]];
+
+  template<class Sndr>
+    concept [[redoc("`:c>")]]dependent_sender = [[redoc("[=seebelow]")]];
 
   template<class Sndr, class Rcvr>
     concept [[redoc("`:c>")]]sender_to = [[redoc("[=seebelow]")]];
 
   template<class... Ts>
     struct [[redoc("*>")]]type-list;                                           // [=expos]
-
-  // [:en] [#exec.getcomplsigs], completion signatures \
-  [:zh_CN] [#exec.getcomplsigs]，完成签名
-  struct get_completion_signatures_t;
-  inline constexpr get_completion_signatures_t get_completion_signatures {};
-
-  template<class Sndr, class Env = env<>>
-      requires [[redoc("`:c>")]]sender_in<Sndr, Env>
-    using completion_signatures_of_t = [[redoc("*>")]]call-result-t<get_completion_signatures_t, Sndr, Env>;
 
   template<class... Ts>
     using [[redoc("*>")]]decayed-tuple = tuple<decay_t<Ts>...>;                // [=expos]
@@ -191,10 +187,10 @@ namespace std::execution {
       requires [[redoc("`:c>")]]sender_in<Sndr, Env>
     constexpr bool sends_stopped = [[redoc("[=seebelow]")]];
 
-  template<class Sndr, class Env>
+  template<class Sndr, class... Env>
     using [[redoc("*>")]]single-sender-value-type = [[redoc("[=seebelow]")]];                 // [=expos]
 
-  template<class Sndr, class Env>
+  template<class Sndr, class... Env>
     concept [[redoc("*:c>")]]single-sender = [[redoc("[=seebelow]")]]; // [=expos]
 
   template<[[redoc("`:c>")]]sender Sndr>
@@ -241,8 +237,8 @@ namespace std::execution {
   inline constexpr schedule_t [[redoc("`:lib")]]schedule{};
   inline constexpr [[redoc("[=unspec]")]] [[redoc("`:lib")]]read_env{};
 
-  template<[[redoc("`:c>")]]scheduler Sndr>
-    using [[redoc("`:lib")]]schedule_result_t = decltype(schedule(declval<Sndr>()));
+  template<[[redoc("`:c>")]]scheduler Sch>
+    using [[redoc("`:lib")]]schedule_result_t = decltype(schedule(declval<Sch>()));
 
   // [:en] [#exec.adapt], sender adaptors \
   [:zh_CN] [#exec.adapt]，发送器适配器
@@ -260,13 +256,18 @@ namespace std::execution {
   struct [[redoc("`:lib")]]let_error_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]let_stopped_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]bulk_t { [[redoc("[=unspec]")]] };
-  struct [[redoc("`:lib")]]split_t { [[redoc("[=unspec]")]] };
+  struct [[redoc("`:lib")]]bulk_chunked_t { [[redoc("[=unspec]")]] };
+  struct [[redoc("`:lib")]]bulk_unchunked_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]when_all_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]when_all_with_variant_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]into_variant_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]stopped_as_optional_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]stopped_as_error_t { [[redoc("[=unspec]")]] };
+  struct [[redoc("`:lib")]]associate_t { [[redoc("[=unspec]")]] };
+  struct [[redoc("`:lib")]]spawn_future_t { [[redoc("[=unspec]")]] };
 
+  inline constexpr [[redoc("[=unspec]")]] [[redoc("`:lib")]]write_env{};
+  inline constexpr [[redoc("[=unspec]")]] [[redoc("`:lib")]]unstoppable{};
   inline constexpr starts_on_t [[redoc("`:lib")]]starts_on{};
   inline constexpr continues_on_t [[redoc("`:lib")]]continues_on{};
   inline constexpr on_t [[redoc("`:lib")]]on{};
@@ -278,46 +279,36 @@ namespace std::execution {
   inline constexpr let_error_t [[redoc("`:lib")]]let_error{};
   inline constexpr let_stopped_t [[redoc("`:lib")]]let_stopped{};
   inline constexpr bulk_t [[redoc("`:lib")]]bulk{};
-  inline constexpr split_t [[redoc("`:lib")]]split{};
+  inline constexpr bulk_chunked_t [[redoc("`:lib")]]bulk_chunked{};
+  inline constexpr bulk_unchunked_t [[redoc("`:lib")]]bulk_unchunked{};
   inline constexpr when_all_t [[redoc("`:lib")]]when_all{};
   inline constexpr when_all_with_variant_t [[redoc("`:lib")]]when_all_with_variant{};
   inline constexpr into_variant_t [[redoc("`:lib")]]into_variant{};
   inline constexpr stopped_as_optional_t [[redoc("`:lib")]]stopped_as_optional{};
   inline constexpr stopped_as_error_t [[redoc("`:lib")]]stopped_as_error{};
+  inline constexpr associate_t [[redoc("`:lib")]]associate{};
+  inline constexpr spawn_future_t [[redoc("`:lib")]]spawn_future{};
 
-  // [:en] [#exec.util], sender and receiver utilities \
-  [:zh_CN] [#exec.util]，发送器与接收器工具
-  // [:] [#exec.util.cmplsig]
+  // [:en] [#exec.cmplsig], completion signatures \
+  [:zh_CN] [#exec.cmplsig]，完成签名
   template<class Fn>
     concept [[redoc("*:c>")]]completion-signature = [[redoc("[=seebelow]")]];                   // [=expos]
 
   template<[[redoc("*:c>")]]completion-signature... Fns>
-    struct [[redoc("`:lib")]]completion_signatures {};
+    struct [[redoc("`:lib")]]completion_signatures;
 
   template<class Sigs>
     concept [[redoc("*:c>")]]valid-completion-signatures = [[redoc("[=seebelow]")]];            // [=expos]
 
-  // [#exec.util.cmplsig.trans]
-  template<
-    [[redoc("*:c>")]]valid-completion-signatures InputSignatures,
-    [[redoc("*:c>")]]valid-completion-signatures AdditionalSignatures = completion_signatures<>,
-    template<class...> class SetValue = [[redoc("[=seebelow]")]],
-    template<class> class SetError = [[redoc("[=seebelow]")]],
-    [[redoc("*:c>")]]valid-completion-signatures SetStopped = completion_signatures<set_stopped_t()>>
-  using transform_completion_signatures = completion_signatures<[[redoc("[=seebelow]")]]>;
+  struct dependent_sender_error : exception {};
 
-  template<
-    [[redoc("`:c>")]]sender Sndr,
-    class Env = env<>,
-    [[redoc("*:c>")]]valid-completion-signatures AdditionalSignatures = completion_signatures<>,
-    template<class...> class SetValue = [[redoc("[=seebelow]")]],
-    template<class> class SetError = [[redoc("[=seebelow]")]],
-    [[redoc("*:c>")]]valid-completion-signatures SetStopped = completion_signatures<set_stopped_t()>>
-      requires [[redoc("`:c>")]]sender_in<Sndr, Env>
-  using transform_completion_signatures_of =
-    transform_completion_signatures<
-      completion_signatures_of_t<Sndr, Env>,
-      AdditionalSignatures, SetValue, SetError, SetStopped>;
+  // [#exec.getcomplsigs]
+  template<class Sndr, class... Env>
+    consteval auto get_completion_signatures() -> [[redoc("*:c>")]]valid-completion-signatures auto;
+
+  template<class Sndr, class... Env>
+      requires [[redoc("`:c>")]]sender_in<Sndr, Env...>
+    using completion_signatures_of_t = decltype(get_completion_signatures<Sndr, Env...>());
 
   // [:en] [#exec.run.loop], run_loop \
   [:zh_CN] [#exec.run.loop]，[`run_loop]
@@ -335,6 +326,11 @@ namespace std::this_thread {
 }
 
 namespace std::execution {
+  // [:en] [#exec.consumers], consumers \
+  [:zh_CN] [#exec.consumers]，消耗方
+  struct [[redoc("`:lib")]]spawn_t { [[redoc("[=unspec]")]] };
+  inline constexpr spawn_t spawn{};
+
   // [#exec.as.awaitable]
   struct [[redoc("`:lib")]]as_awaitable_t { [[redoc("[=unspec]")]] };
   inline constexpr as_awaitable_t [[redoc("`:lib")]]as_awaitable{};
@@ -342,6 +338,66 @@ namespace std::execution {
   // [#exec.with.awaitable.senders]
   template<[[redoc("*:c>")]]class-type Promise>
     struct with_awaitable_senders;
+
+  // [:en] [#exec.scope.concepts], scope concepts \
+  [:zh_CN] [#exec.scope.concepts]，作用域概念
+  template<class Token>
+    concept [[redoc("`:lib")]]scope_token = [[redoc("[=seebelow]")]];
+
+  // [#exec.scope.simple.counting]
+  class simple_counting_scope;
+
+  // [#exec.scope.counting]
+  class counting_scope;
+}
+
+namespace std::execution {
+  // [:en] [#exec.par.scheduler], parallel scheduler \
+  [:zh_CN] [#exec.par.scheduler]，并行调度器
+  class [[redoc("`:lib")]]parallel_scheduler { [[redoc("[=unspec]")]] };
+  parallel_scheduler get_parallel_scheduler();
+}
+
+// [:en] [#exec.sysctxrepl], namespace [`system_context_replaceability] \
+[:zh_CN] [#exec.sysctxrepl]，命名空间 [`system_context_replaceability]
+namespace std::execution::[[redoc("`:lib")]]system_context_replaceability {
+  struct receiver_proxy;
+  struct bulk_item_receiver_proxy;
+  struct parallel_scheduler_backend;
+
+  shared_ptr<parallel_scheduler_backend> query_parallel_scheduler_backend();
+}
+
+namespace std::execution {
+  // [#exec.affine.on]
+  struct [[redoc("`:lib")]]affine_on_t { [[redoc("[=unspec]")]] };
+  inline constexpr affine_on_t [[redoc("`:lib")]]affine_on{};
+
+  // [#exec.inline.scheduler]
+  class [[redoc("`:lib")]]inline_scheduler;
+
+  // [#exec.task.scheduler]
+  class [[redoc("`:lib")]]task_scheduler;
+
+  template<class E>
+  struct [[redoc("`:lib")]]with_error {
+    using type = remove_cvref_t<E>;
+    type error;
+  };
+  template<class E>
+    with_error(E) -> with_error<E>;
+
+  template<[[redoc("`:c>")]]scheduler Sch>
+  struct change_coroutine_scheduler {
+    using type = remove_cvref_t<Sch>;
+    type scheduler;
+  };
+  template<[[redoc("`:c>")]]scheduler Sch>
+    change_coroutine_scheduler(Sch) -> change_coroutine_scheduler<Sch>;
+
+  // [#exec.task]
+  template<class T, class Environment>
+    class [[redoc("`:lib")]]task;
 }
 [codeblock:end]
 
@@ -368,25 +424,32 @@ namespace std::execution {
 [list:end]
 
 [para]
-[:en] For types [`Sndr] and [`Env], [`[*single-sender-value-type]<Sndr, Env>] is an alias for:
-[:zh_CN] 对于类型 [`Sndr] 与 [`Env]，[`[*single-sender-value-type]<Sndr, Env>] 是以下别名：
+[:en] For type [`Sndr] and pack of types [`Env], let [`CS] be [`completion_signatures_of_t<Sndr, Env...>].
+[:zh_CN] 对于类型 [`Sndr] 与类型包组 [`Env]，令 [`CS] 为 [`completion_signatures_of_t<Sndr, Env...>]。
+
+[:en] Then [`[*single-sender-value-type]<Sndr, Env...>] is ill-formed if [`CS]
+is ill-formed or if [`sizeof...(Env) > 1] is [`true]; otherwise, it is an alias for:
+[:zh_CN] 则 [`[*single-sender-value-type]<Sndr, Env...>] 在 [`CS] 非良构或
+[`sizeof...(Env) > 1] 为 [`true] 时非良构；否则，它是以下类型的别名：
 [list]
 [item]
-[:en] [`value_types_of_t<Sndr, Env, decay_t, type_identity_t>] if that type is well-formed,
-[:zh_CN] 若 [`value_types_of_t<Sndr, Env, decay_t, type_identity_t>] 良构则为该类型，
-[item]
-[:en] Otherwise, [`void] if [`value_types_of_t<Sndr, Env, tuple, variant>] is
-[`variant<tuple<>>] or [`variant<>],
-[:zh_CN] 否则，若 [`value_types_of_t<Sndr, Env, tuple, variant>] 为
-[`variant<tuple<>>] 或 [`variant<>]，则为 [`void]，
-[item]
-[:en] Otherwise, [`value_types_of_t<Sndr, Env, [*decayed-tuple], type_identity_t>]
-if that type is well-formed,
-[:zh_CN] 否则，若 [`value_types_of_t<Sndr, Env, [*decayed-tuple], type_identity_t>]
+[:en] [`[*gather-signatures]<set_value_t, CS, decay_t, type_identity_t>] if that
+type is well-formed,
+[:zh_CN] 若 [`[*gather-signatures]<set_value_t, CS, decay_t, type_identity_t>]
 良构则为该类型，
 [item]
-[:en] Otherwise, [`[*single-sender-value-type]<Sndr, Env>] is ill-formed.
-[:zh_CN] 否则，[`[*single-sender-value-type]<Sndr, Env>] 非良构。
+[:en] Otherwise, [`void] if [`[*gather-signatures]<set_value_t, CS, tuple, variant>]
+is [`variant<tuple<>>] or [`variant<>],
+[:zh_CN] 否则，若 [`[*gather-signatures]<set_value_t, CS, tuple, variant>] 为
+[`variant<tuple<>>] 或 [`variant<>]，则为 [`void]，
+[item]
+[:en] Otherwise, [`[*gather-signatures]<set_value_t, CS, [*decayed-tuple], type_identity_t>]
+if that type is well-formed,
+[:zh_CN] 否则，若 [`[*gather-signatures]<set_value_t, CS, [*decayed-tuple], type_identity_t>]
+良构则为该类型，
+[item]
+[:en] Otherwise, [`[*single-sender-value-type]<Sndr, Env...>] is ill-formed.
+[:zh_CN] 否则，[`[*single-sender-value-type]<Sndr, Env...>] 非良构。
 [list:end]
 
 [para]
@@ -395,10 +458,17 @@ if that type is well-formed,
 
 [codeblock]
 namespace std::execution {
-  template<class Sndr, class Env>
-    concept [[redoc("*:c@def>")]]single-sender = [[redoc("`:c>")]]sender_in<Sndr, Env> &&
+  template<class Sndr, class... Env>
+    concept [[redoc("*:c@def>")]]single-sender = [[redoc("`:c>")]]sender_in<Sndr, Env...> &&
       requires {
-        typename [[redoc("*>")]]single-sender-value-type<Sndr, Env>;
+        typename [[redoc("*>")]]single-sender-value-type<Sndr, Env...>;
       };
 }
 [codeblock:end]
+
+[para]
+[:en] A type satisfies and models the exposition-only concept
+[*:c@def valid-completion-signatures] if
+it is a specialization of the [`completion_signatures] class template.
+[:zh_CN] 如果一个类型是 [`completion_signatures] 类模板的特例，则它满足并构成
+仅用于阐释的概念 [*:c@def valid-completion-signatures]。

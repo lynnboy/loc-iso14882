@@ -25,10 +25,11 @@ a sender and a receiver to produce an operation state.
 [:zh_CN] [`connect] 定制化点对象用于连接（[#exec.async.ops]）一个发送器和一个接收器
 以产生一个操作状态。
 
+[%@lib [*is-dependent-sender-helper]]
 [codeblock:synopsis]
 namespace std::execution {
-  template<class Sigs>
-    concept [[redoc("*:c>")]]valid-completion-signatures = [[redoc("[=seebelow]")]];            // [=expos]
+  template<auto>
+    concept [[redoc("*:c@def>")]]is-constant = true;                                 // [=expos]
 
   template<class Sndr>
     concept [[redoc("*:c@def>")]]is-sender =                                         // [=expos]
@@ -40,22 +41,35 @@ namespace std::execution {
       [[redoc("*:c>")]]is-awaitable<Sndr, [[redoc("*>")]]env-promise<env<>>>;                 // [#exec.awaitable]
 
   template<class Sndr>
+    inline constexpr bool enable_sender = [[redoc("*:c>")]]enable-sender<Sndr>;
+
+  template<class Sndr>
+    consteval bool [[redoc("*>")]]is-dependent-sender-helper() try {           // [=expos]
+      get_completion_signatures<Sndr>();
+      return false;
+    } catch (dependent_sender_error&) {
+      return true;
+    }
+
+  template<class Sndr>
     concept [[redoc("`:c@def>")]]sender =
-      bool([[redoc("*:c>")]]enable-sender<remove_cvref_t<Sndr>>) &&
+      enable_sender<remove_cvref_t<Sndr>> &&
       requires (const remove_cvref_t<Sndr>& sndr) {
         { get_env(sndr) } -> [[redoc("*:c>")]]queryable;
       } &&
       [[redoc("`:c>")]]move_constructible<remove_cvref_t<Sndr>> &&
       [[redoc("`:c>")]]constructible_from<remove_cvref_t<Sndr>, Sndr>;
 
-  template<class Sndr, class Env = env<>>
+  template<class Sndr, class... Env>
     concept [[redoc("`:c@def>")]]sender_in =
       [[redoc("`:c>")]]sender<Sndr> &&
-      [[redoc("*:c>")]]queryable<Env> &&
-      requires (Sndr&& sndr, Env&& env) {
-        { get_completion_signatures(std::forward<Sndr>(sndr), std::forward<Env>(env)) }
-          -> [[redoc("*:c>")]]valid-completion-signatures;
-      };
+      (sizeof...(Env) <= 1) &&
+      ([[redoc("*:c>")]]queryable<Env> &&...) &&
+      [[redoc("*:c>")]]is-constant<get_completion_signatures<Sndr, Env...>()>;
+
+  template<class Sndr>
+    concept [[redoc("`:c@def>")]]dependent_sender =
+      [[redoc("`:c>")]]sender<Sndr> && bool_constant<[[redoc("*>")]]is-dependent-sender-helper<Sndr>()>::value;
 
   template<class Sndr, class Rcvr>
     concept [[redoc("`:c@def>")]]sender_to =
@@ -66,6 +80,13 @@ namespace std::execution {
       };
 }
 [codeblock:end]
+
+[para]
+[:en] For a type [`Sndr], if [`[`:c sender]<Sndr>] is [`true] and
+[`[`:c dependent_sender]<Sndr>] is [`false],
+then [`Sndr] is a non-dependent sender ([#exec.async.ops]).
+[:zh_CN] 对于类型 [`Sndr]，如果 [`[`:c sender]<Sndr>] 为 [`true] 且
+[`[`:c dependent_sender]<Sndr>] 为 [`false]，则 [`Sndr] 是非待决发送器（[#exec.async.ops]）。
 
 [para]
 [:en] Given a subexpression [`sndr], let [`Sndr] be [`decltype((sndr))] and
@@ -87,11 +108,16 @@ the resulting operation state are permissible completions for [`Sndr] and [`Env]
 对于 [`Sndr] 和 [`Env] 都是受允许完成，那么 [`Sndr] 和 [`Env] 构成
 [`[`:c sender_in]<Sndr, Env>]。
 
-[para]
-[:en] A type models the exposition-only concept [*:c@def valid-completion-signatures]
-if it denotes a specialization of the [`completion_signatures] class template.
-[:zh_CN] 如果某个类型代表类模板 [`completion_signatures] 的某个特例，那么它构成
-仅用于阐释的概念 [*:c@def valid-completion-signatures]。
+[para:remarks]
+[:en] Pursuant to [#namespace.std], users may specialize [`enable_sender] to
+[`true] for cv-unqualified program-defined types that model [`:c sender], and
+[`false] for types that do not.
+[:zh_CN] 根据 [#namespace.std]，用户可以为构成 [`:c sender] 的 [=cv] 未限定的
+程序定义类型将 [`enable_sender] 特化为 [`true]，并为不构成的类型特化为 [`false]。
+
+[:en] Such specializations shall be usable in constant expressions ([#expr.const])
+and have type [`const bool].
+[:zh_CN] 这样的特例应当可用于常量表达式（[#expr.const]），并且类型为 [`const bool]。
 
 [para]
 [:en] The exposition-only concepts [*:c sender-of] and [*:c sender-in-of]
@@ -105,15 +131,22 @@ namespace std::execution {
   template<class... As>
     using [[redoc("*>")]]value-signature = set_value_t(As...);             // [=expos]
 
+  template<class Sndr, class SetValue, class... Env>
+    concept [[redoc("*:c@def>")]]sender-in-of-impl =                             // [=expos]
+      [[redoc("`:c>")]]sender_in<Sndr, Env...> &&
+      [[redoc("*>")]]MATCHING-SIG(SetValue,                                // [:en] see [#exec.general] [:zh_CN] 参见 [#exec.general]
+                   [[redoc("*>")]]gather-signatures<set_value_t,           // [:en] see [#exec.cmplsig] [:zh_CN] 参见 [#exec.cmplsig]
+                                     completion_signatures_of_t<Sndr, Env...>,
+                                     [[redoc("*>")]]value-signature,
+                                     type_identity_t>);
+
   template<class Sndr, class Env, class... Values>
-    concept [[redoc("*:c@def>")]]sender-in-of =
-      [[redoc("`:c>")]]sender_in<Sndr, Env> &&
-      [[redoc("*>")]]MATCHING-SIG(                     // [:en] see [#exec.general] [:zh_CN] 参见 [#exec.general]
-        set_value_t(Values...),
-        value_types_of_t<Sndr, Env, [[redoc("*>")]]value-signature, type_identity_t>);
+    concept [[redoc("*:c@def>")]]sender-in-of =                                  // [=expos]
+      [[redoc("*:c>")]]sender-in-of-impl<Sndr, set_value_t(Values...), Env>;
 
   template<class Sndr, class... Values>
-    concept [[redoc("*:c@def>")]]sender-of = [[redoc("*:c>")]]sender-in-of<Sndr, env<>, Values...>;
+    concept [[redoc("*:c@def>")]]sender-of =                                     // [=expos]
+      [[redoc("*:c>")]]sender-in-of-impl<Sndr, set_value_t(Values...)>;
 }
 [codeblock:end]
 

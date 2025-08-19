@@ -30,6 +30,15 @@ resolution if any, and any necessary implicit conversions and materializations.
 选中的 [`operator co_await]（如果有），以及任何必要的隐式转换和实质化。
 [end:note]
 
+[para:~]
+[:en] Let [`[*GET-AWAITER](c)] be expression-equivalent to [`[*GET-AWAITER](c, q)]
+where [`q] is an lvalue of an unspecified empty class type [`[^none-such]] that
+lacks an [`await_transform] member, and where [`coroutine_handle<[^none-such]>]
+behaves as [`coroutine_handle<void>].
+[:zh_CN] 令 [`[*GET-AWAITER](c)] 按表达式等价于 [`[*GET-AWAITER](c, q)]，其中
+[`q] 是某个未指定空类类型 [`[^none-such]] 的左值，该类型缺少 [`await_transform] 成员，
+并且 [`coroutine_handle<[^none-such]>] 的行为如同 [`coroutine_handle<void>]。
+
 [para]
 [:en] Let [*:c is-awaitable] be the following exposition-only concept:
 [:zh_CN] 令 [*:c is-awaitable] 为以下仅用于阐释的概念：
@@ -39,26 +48,25 @@ namespace std {
   template<class T>
   concept [[redoc("*:c>")]]await-suspend-result = [[redoc("[=seebelow]")]];                     // [=expos]
 
-  template<class A, class Promise>
+  template<class A, class... Promise>
   concept [[redoc("*:c@def>")]]is-awaiter =                                          // [=expos]
-    requires (A& a, coroutine_handle<Promise> h) {
+    requires (A& a, coroutine_handle<Promise...> h) {
       a.await_ready() ? 1 : 0;
       { a.await_suspend(h) } -> [[redoc("*:c>")]]await-suspend-result;
       a.await_resume();
     };
 
-  template<class C, class Promise>
+  template<class C, class... Promise>
   concept [[redoc("*:c@def>")]]is-awaitable =                                        // [=expos]
-    requires (C (*fc)() noexcept, Promise& p) {
-      { [[redoc("*>")]]GET-AWAITER(fc(), p) } -> [[redoc("*:c>")]]is-awaiter<Promise>;
+    requires (C (*fc)() noexcept, Promise&... p) {
+      { [[redoc("*>")]]GET-AWAITER(fc(), p...) } -> [[redoc("*:c>")]]is-awaiter<Promise...>;
     };
 }
 [codeblock:end]
 
 [:en] [`[*:c@def await-suspend-result]<T>] is [`true]
 if and only if one of the following is [`true]:
-[:zh_CN] 当且仅当以下之一为 [`true] 时，[`[*:c@def await-suspend-result]<T>]
-为 [`true]：
+[:zh_CN] 当且仅当以下之一为 [`true] 时，[`[*:c@def await-suspend-result]<T>] 为 [`true]：
 [list]
 [item]
 [:en@~] [`T] is [`void], or
@@ -74,10 +82,12 @@ if and only if one of the following is [`true]:
 [para]
 [:en] For a subexpression [`c] such that [`decltype((c))] is type [`C], and
 an lvalue [`p] of type [`Promise], [`[*await-result-type]<C, Promise>] denotes
-the type [`decltype([*GET-AWAITER](c, p).await_resume())].
+the type [`decltype([*GET-AWAITER](c, p).await_resume())] and
+[`[*await-result-type]<C>] denotes the type [`decltype([*GET-AWAITER](c).await_resume())].
 [:zh_CN] 对于子表达式 [`c] 并使得 [`decltype((c))] 为类型 [`C]，以及 [`Promise]
 类型的左值 [`p]，[`[*await-result-type]<C, Promise>] 代表类型
-[`decltype([*GET-AWAITER](c, p).await_resume())]。
+[`decltype([*GET-AWAITER](c, p).await_resume())]，而 [`[*await-result-type]<C>]
+代表类型 [`decltype([*GET-AWAITER](c).await_resume())]。
 
 [para]
 [:en] Let [*with-await-transform] be the exposition-only class template:
@@ -98,8 +108,9 @@ namespace std::execution {
         }
 
       template<[[redoc("*:c>")]]has-as-awaitable<Derived> T>
-        decltype(auto) await_transform(T&& value)
-          noexcept(noexcept(std::forward<T>(value).as_awaitable(declval<Derived&>()))) {
+        auto await_transform(T&& value)
+          noexcept(noexcept(std::forward<T>(value).as_awaitable(declval<Derived&>())))
+          -> decltype(std::forward<T>(value).as_awaitable(declval<Derived&>())) {
           return std::forward<T>(value).as_awaitable(static_cast<Derived&>(*this));
         }
     };

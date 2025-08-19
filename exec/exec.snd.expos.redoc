@@ -8,6 +8,7 @@
 [:zh_CN] 子条款 [#exec.snd] 利用了下列仅用于阐释的实体。
 
 [para]
+[%@lib [*FWD-ENV]]
 [:en] For a queryable object [`env], [`[*FWD-ENV](env)] is an expression
 whose type satisfies [*:c queryable] such that for a query object [`q] and
 a pack of subexpressions [`as], the expression [`[*FWD-ENV](env).query(q, as...)]
@@ -17,6 +18,10 @@ otherwise, it is expression-equivalent to [`env.query(q, as...)].
 的表达式，使得对于查询对象 [`q] 和子表达式包组 [`as]，当 [`forwarding_query(q)]
 为 [`false] 时表达式 [`[*FWD-ENV](env).query(q, as...)] 非良构；否则
 按表达式等价于 [`env.query(q, as...)]。
+
+[%@lib [*FWD-ENV-T]]
+[:en] The type [`[*FWD-ENV-T](Env)] is [`decltype([*FWD-ENV](declval<Env>()))].
+[:zh_CN] 类型 [`[*FWD-ENV-T](Env)] 为 [`decltype([*FWD-ENV](declval<Env>()))]。
 
 [para]
 [:en] For a query object [`q] and a subexpression [`v], [`[*MAKE-ENV](q, v)]
@@ -201,7 +206,7 @@ return Domain();
 [codeblock]
 [] {
   auto [_, sch, _] = sndr;
-  return [[redoc("*>")]]query-or-default(get_domain, sch, default_domain());
+  return [[redoc("*>")]]query-with-default(get_domain, sch, default_domain());
 }();
 [codeblock:end]
 
@@ -277,11 +282,11 @@ struct [[redoc("*>")]]on-stop-request {
 
 [para]
 [codeblock]
-template<class T[[redoc("$")]]_0, class T[[redoc("$")]]_1, ..., class T[[redoc("$")]]_n>
+template<class T[[redoc("$")]]_0, class T[[redoc("$")]]_1, [[redoc("[$\\dotsc]")]], class T[[redoc("$")]]_n>
 struct [[redoc("*>")]]product-type {       // [=expos]
   T[[redoc("$")]]_0 t[[redoc("$")]]_0;                // [=expos]
   T[[redoc("$")]]_1 t[[redoc("$")]]_1;                // [=expos]
-    ...
+    [[redoc("[$\\vdots]")]]
   T[[redoc("$")]]_n t[[redoc("$")]]_n;                // [=expos]
 
   template<size_t I, class Self>
@@ -352,6 +357,18 @@ statement above is not potentially throwing; otherwise, [`false].
 否则为 [`false]。
 [div:end]
 
+[para]
+[:en] Let [*:c valid-specialization] be the following concept:
+[:zh_CN] 令 [*:c valid-specialization] 为如下概念：
+
+[codeblock]
+namespace std::execution {
+  template<template<class...> class T, class... Args>
+  concept [[redoc("*:c@def")]]valid-specialization =                                // [=expos]
+    requires { typename T<Args...>; };
+}
+[codeblock:end]
+
 [codeblock:declaration]
 template<class Tag, class Data = [[redoc("[=seebelow]")]], class... Child>
   constexpr auto [[redoc("*>")]]make-sender(Tag tag, Data&& data, Child&&... child);
@@ -364,8 +381,20 @@ template<class Tag, class Data = [[redoc("[=seebelow]")]], class... Child>
 [list]
 [item] [`[`:c semiregular]<Tag>]
 [item] [`[*:c movable-value]<Data>]
-[item] [`([`:c sender]<Child> &&...)]
+[item] [`([`:c sender]<Child> && ...)]
+[item]
+[:en] [`[`:c dependent_sender]<Sndr> || [`:c sender_in]<Sndr>], where [`Sndr] is
+[`[*basic-sender]<Tag, Data, Child...>] as defined below.
+[:zh_CN] [`[`:c dependent_sender]<Sndr> || [`:c sender_in]<Sndr>]，其中 [`Sndr] 为
+[`[*basic-sender]<Tag, Data, Child...>]，如下所定义。
 [list:end]
+
+[para:~:recommended]
+[:en] If evaluation of [`[`:c sender_in]<Sndr>] results in an uncaught exception
+from the evaluation of [`get_completion_signatures<Sndr>()], the implementation
+should include information about that exception in the resulting diagnostic.
+[:zh_CN] 如果 [`[`:c sender_in]<Sndr>] 的求值导致求值 [`get_completion_signatures<Sndr>()]
+时抛出未捕获异常，那么实现应在产生的诊断中包含有关该异常的信息。
 
 [para:returns]
 [:en] A prvalue of type [`[*basic-sender]<Tag, decay_t<Data>, decay_t<Child>...>]
@@ -382,24 +411,26 @@ namespace std::execution {
   concept [[redoc("*:c@def>")]]completion-tag =                                      // [=expos]
     [[redoc("`:c>")]]same_as<Tag, set_value_t> || [[redoc("`:c>")]]same_as<Tag, set_error_t> || [[redoc("`:c>")]]same_as<Tag, set_stopped_t>;
 
-  template<template<class...> class T, class... Args>
-  concept [[redoc("*:c@def>")]]valid-specialization =                                // [=expos]
-    requires { typename T<Args...>; };
-
   struct [[redoc("*>")]]default-impls {                                        // [=expos]
-    static constexpr auto [[redoc("*>")]]get-attrs = [[redoc("[=seebelow]")]];              // [=expos]
-    static constexpr auto [[redoc("*>")]]get-env = [[redoc("[=seebelow]")]];                // [=expos]
-    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];              // [=expos]
-    static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];                  // [=expos]
-    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];               // [=expos]
+    static constexpr auto [[redoc("*>")]]get-attrs = [[redoc("[=seebelow]")]];                // [=expos]
+    static constexpr auto [[redoc("*>")]]get-env = [[redoc("[=seebelow]")]];                  // [=expos]
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];                // [=expos]
+    static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];                    // [=expos]
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];                 // [=expos]
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types();                      // [=expos]
   };
 
   template<class Tag>
-  struct [[redoc("*>")]]impls-for : [[redoc("*>")]]default-impls {};       // [=expos]
+  struct [[redoc("*>")]]impls-for : [[redoc("*>")]]default-impls {};                          // [=expos]
 
   template<class Sndr, class Rcvr>                              // [=expos]
   using [[redoc("*>")]]state-type = decay_t<[[redoc("*>")]]call-result-t<
     decltype([[redoc("*>")]]impls-for<tag_of_t<Sndr>>::[[redoc("*>")]]get-state), Sndr, Rcvr&>>;
+
+  template<class Sndr>
+  using [[redoc("*>")]]data-type = decltype(declval<Sndr>().template [[redoc("*>")]]get<1>());                // [=expos]
 
   template<class Index, class Sndr, class Rcvr>                 // [=expos]
   using [[redoc("*>")]]env-type = [[redoc("*>")]]call-result-t<
@@ -407,10 +438,10 @@ namespace std::execution {
     [[redoc("*>")]]state-type<Sndr, Rcvr>&, const Rcvr&>;
 
   template<class Sndr, size_t I = 0>
-  using [[redoc("*>")]]child-type = decltype(declval<Sndr>().template [[redoc("*>")]]get<I+2>());     // [=expos]
+  using [[redoc("*>")]]child-type = decltype(declval<Sndr>().template [[redoc("*>")]]get<I+2>());             // [=expos]
 
   template<class Sndr>
-  using [[redoc("*>")]]indices-for = remove_reference_t<Sndr>::[[redoc("*>")]]indices-for;           // [=expos]
+  using [[redoc("*>")]]indices-for = remove_reference_t<Sndr>::[[redoc("*>")]]indices-for;                    // [=expos]
 
   template<class Sndr, class Rcvr>
   struct [[redoc("*>")]]basic-state {                                          // [=expos]
@@ -429,7 +460,7 @@ namespace std::execution {
 
     using [[redoc("*>")]]tag-t = tag_of_t<Sndr>;                               // [=expos]
     using [[redoc("*>")]]state-t = [[redoc("*>")]]state-type<Sndr, Rcvr>;                     // [=expos]
-    static constexpr const auto& [[redoc("*>")]]complete = [[redoc("*>")]]impls-for<[[redoc("*>")]]tag-t>::[[redoc("*>")]]complete;   // [=expos]
+    static constexpr const auto& [[redoc("*>")]]complete = [[redoc("*>")]]impls-for<[[redoc("*>")]]tag-t>::[[redoc("*>")]]complete;         // [=expos]
 
     template<class... Args>
       requires [[redoc("*:c>")]]callable<decltype([[redoc("*>")]]complete), Index, [[redoc("*>")]]state-t&, Rcvr&, set_value_t, Args...>
@@ -452,10 +483,10 @@ namespace std::execution {
       return [[redoc("*>")]]impls-for<tag-t>::[[redoc("*>")]]get-env(Index(), op->[[redoc("*>")]]state, op->[[redoc("*>")]]rcvr);
     }
 
-    [[redoc("*>")]]basic-state<Sndr, Rcvr>* [[redoc("*>")]]op;                           // [=expos]
+    [[redoc("*>")]]basic-state<Sndr, Rcvr>* [[redoc("*>")]]op;                                // [=expos]
   };
 
-  constexpr auto [[redoc("*>")]]connect-all = [[redoc("[=seebelow]")]];                         // [=expos]
+  constexpr auto [[redoc("*>")]]connect-all = [[redoc("[=seebelow]")]];                       // [=expos]
 
   template<class Sndr, class Rcvr>
   using [[redoc("*>")]]connect-all-result = [[redoc("*>")]]call-result-t<                     // [=expos]
@@ -464,13 +495,13 @@ namespace std::execution {
   template<class Sndr, class Rcvr>
     requires [[redoc("*:c>")]]valid-specialization<[[redoc("*>")]]state-type, Sndr, Rcvr> &&
              [[redoc("*:c>")]]valid-specialization<[[redoc("*>")]]connect-all-result, Sndr, Rcvr>
-  struct [[redoc("*>")]]basic-operation : [[redoc("*>")]]basic-state<Sndr, Rcvr> {                // [=expos]
+  struct [[redoc("*>")]]basic-operation : [[redoc("*>")]]basic-state<Sndr, Rcvr> {            // [=expos]
     using operation_state_concept = operation_state_t;
     using [[redoc("*>")]]tag-t = tag_of_t<Sndr>;                               // [=expos]
 
-    [[redoc("*>")]]connect-all-result<Sndr, Rcvr> [[redoc("*>")]]inner-ops;              // [=expos]
+    [[redoc("*>")]]connect-all-result<Sndr, Rcvr> [[redoc("*>")]]inner-ops;                   // [=expos]
 
-    [[redoc("*>")]]basic-operation(Sndr&& sndr, Rcvr&& rcvr) noexcept([[redoc("[=seebelow]")]])  // [=expos]
+    [[redoc("*>")]]basic-operation(Sndr&& sndr, Rcvr&& rcvr) noexcept([[redoc("[=seebelow]")]])               // [=expos]
       : [[redoc("*>")]]basic-state<Sndr, Rcvr>(std::forward<Sndr>(sndr), std::move(rcvr)),
         [[redoc("*>")]]inner-ops([[redoc("*>")]]connect-all(this, std::forward<Sndr>(sndr), [[redoc("*>")]]indices-for<Sndr>()))
     {}
@@ -481,13 +512,10 @@ namespace std::execution {
     }
   };
 
-  template<class Sndr, class Env>
-  using [[redoc("*>")]]completion-signatures-for = [[redoc("[=seebelow]")]];                   // [=expos]
-
   template<class Tag, class Data, class... Child>
-  struct [[redoc("*>")]]basic-sender : [[redoc("*>")]]product-type<Tag, Data, Child...> {    // [=expos]
+  struct [[redoc("*>")]]basic-sender : [[redoc("*>")]]product-type<Tag, Data, Child...> {     // [=expos]
     using sender_concept = sender_t;
-    using [[redoc("*>")]]indices-for = index_sequence_for<Child...>;       // [=expos]
+    using [[redoc("*>")]]indices-for = index_sequence_for<Child...>;           // [=expos]
 
     decltype(auto) get_env() const noexcept {
       auto& [_, data, ...child] = *this;
@@ -500,11 +528,8 @@ namespace std::execution {
       return {std::forward<Self>(self), std::move(rcvr)};
     }
 
-    template<[[redoc("*:c>")]]decays-to<[[redoc("*>")]]basic-sender> Self, class Env>
-    auto get_completion_signatures(this Self&& self, Env&& env) noexcept
-      -> [[redoc("*>")]]completion-signatures-for<Self, Env> {
-      return {};
-    }
+    template<[[redoc("*:c>")]]decays-to<[[redoc("*>")]]basic-sender> Self, class... Env>
+    static constexpr auto get_completion_signatures();
   };
 }
 [codeblock:end]
@@ -614,7 +639,7 @@ is initialized with a callable object equivalent to the following lambda:
 [codeblock]
 []<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept -> decltype(auto) {
   auto& [_, data, ...child] = sndr;
-  return std::forward_like<Sndr>(data);
+  return [[redoc("*>")]]allocator-aware-forward(std::forward_like<Sndr>(data), rcvr);
 }
 [codeblock:end]
 
@@ -641,89 +666,179 @@ is initialized with a callable object equivalent to the following lambda:
 }
 [codeblock:end]
 
-[para]
-[:en] For a subexpression [`sndr] let [`Sndr] be [`decltype((sndr))].
-[:zh_CN] 对于子表达式 [`sndr]，令 [`Sndr] 为 [`decltype((sndr))]。
-
-[:en] Let [`rcvr] be a receiver with an associated environment of type [`Env]
-such that [`[`:c sender_in]<Sndr, Env>] is [`true].
-[:zh_CN] 令 [`rcvr] 为带有 [`Env] 类型的关联环境的接收器，使得
-[`[`:c sender_in]<Sndr, Env>] 为 [`true]。
-
-[:en] [`[*completion-signatures-for]<Sndr, Env>] denotes a specialization of
-[`completion_signatures], the set of whose template arguments correspond to the
-set of completion operations that are potentially evaluated as a result of starting
-([#exec.async.ops]) the operation state that results from connecting [`sndr] and [`rcvr].
-[:zh_CN] [`[*completion-signatures-for]<Sndr, Env>] 代表 [`completion_signatures]
-的特例，其模板实参集合，与连接 [`sndr] 和 [`rcvr] 所得的操作状态的启动（[#exec.async.ops]）
-中潜在可能求值完成操作的集合相对应。
-
-[:en] When [`[`:c sender_in]<Sndr, Env>] is [`false], the type denoted by
-[`[*completion-signatures-for]<Sndr, Env>],
-if any, is not a specialization of [`completion_signatures].
-[:zh_CN] 若 [`[`:c sender_in]<Sndr, Env>] 为 [`false]，则
-[`[*completion-signatures-for]<Sndr, Env>] 所代表的类型（如果有）不是
-[`completion_signatures] 的特例。
-
-[para:recommended:~]
-[:en] When [`[`:c sender_in]<Sndr, Env>] is [`false], implementations are
-encouraged to use the type denoted by [`[*completion-signatures-for]<Sndr, Env>]
-to communicate to users why.
-[:zh_CN] 当 [`[`:c sender_in]<Sndr, Env>] 为 [`false] 时，鼓励实现利用
-[`[*completion-signatures-for]<Sndr, Env>] 所代表的类型向用户通报其原因。
-
+[%@lib@member [*check-types][![*default-impls]]]
 [codeblock:declaration]
-template<[[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable Env>
-  constexpr auto [[redoc("*>")]]write-env(Sndr&& sndr, Env&& env);     // [=expos]
+template<class Sndr, class... Env>
+  static consteval void [[redoc("*>")]]default-impls::[[redoc("*>")]]check-types();
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] [*write-env] is an exposition-only sender adaptor that, when connected
-with a receiver [`rcvr], connects the adapted sender with a receiver whose
-execution environment is the result of joining the [*:c queryable] argument
-[`env] to the result of [`get_env(rcvr)].
-[:zh_CN] [*write-env] 是仅用于阐释的发送器适配器，当将其与接收器 [`rcvr] 连接时，
-它把所适配的发送器与某个以合并 [*:c queryable] 实参 [`env] 和 [`get_env(rcvr)]
-的结果为执行环境的接收器进行连接。
+[:en] Let [`Is] be the pack of integral template arguments of
+the [`integer_sequence] specialization denoted by [`[*indices-for]<Sndr>].
+[:zh_CN] 令 [`Is] 为 [`[*indices-for]<Sndr>] 所代表的 [`integer_sequence] 特例的
+整型模板实参包组。
 
-[para]
-[:en] Let [`write-env-t] be an exposition-only empty class type.
-[:zh_CN] 令 [`write-env-t] 为仅用于阐释的空类类型。
-
-[para:returns]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
 [codeblock]
-[[redoc("*>")]]make-sender([[redoc("*>")]]write-env-t(), std::forward<Env>(env), std::forward<Sndr>(sndr))
+(get_completion_signatures<[[redoc("*>")]]child-type<Sndr, Is>, [[redoc("*>")]]FWD-ENV-T(Env)...>(), ...);
 [codeblock:end]
 
-[para:remarks]
-[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
-is specialized for [*write-env-t] as follows:
-[:zh_CN] 仅用于阐释的类类型 [*impls-for]（[#exec.snd.general]）针对 [`write-env-t]
-进行如下特化：
+[para]
+[begin:note]
+[:en] For any types [`T] and [`S], and pack [`E], let [`e] be the expression
+[`[*impls-for]<T>::[*check-types]<S, E...>()].
+[:zh_CN] 对于任意类型 [`T] 和 [`S]，以及包组 [`E]，令 [`e] 为表达式
+[`[*impls-for]<T>::[*check-types]<S, E...>()]。
+
+[:en] Then exactly one of the following is [`true]:
+[:zh_CN] 那么下列各项中恰有一项为 [`true]：
+
+[list]
+[item]
+[:en@~] [`e] is ill-formed, or
+[:zh_CN@~] [`e] 非良构，或者
+[item]
+[:en@~] the evaluation of [`e] exits with an exception, or
+[:zh_CN@~] [`e] 的求值抛出了异常，或者
+[item]
+[:en@~] [`e] is a core constant expression.
+[:zh_CN@~] [`e] 是核心常量表达式。
+[list:end]
+
+[:en] When [`e] is a core constant expression,
+the pack [`S, E...] uniquely determines a set of completion signatures.
+[:zh_CN] 当 [`e] 是核心常量表达式时，包组 [`S, E...] 唯一确定一组完成签名。
+[end:note]
+[div:end]
+
+[%@lib@member get_completion_signatures[![*basic-sender]]]
+[codeblock:declaration]
+template<class Tag, class Data, class... Child>
+  template<class Sndr, class... Env>
+    constexpr auto [[redoc("*>")]]basic-sender<Tag, Data, Child...>::get_completion_signatures();
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`Rcvr] be the type of a receiver whose environment has type [`E],
+where [`E] is the first type in the list [`Env..., env<>].
+[:zh_CN] 令 [`Rcvr] 为环境类型为 [`E] 的接收器的类型，
+其中 [`E] 为列表 [`Env..., env<>] 中的第一个类型。
+
+[:en] Let [`[^CHECK-TYPES]()] be the expression
+[`[*impls-for]<Tag>::template [*check-types]<Sndr, E>()], and
+let [`CS] be a type determined as follows:
+[:zh_CN] 令 [`[^CHECK-TYPES]()] 为表达式
+[`[*impls-for]<Tag>::template [*check-types]<Sndr, E>()]，并令 [`CS] 为如下确定的类型：
+
+[list]
+[item]
+[:en] If [`[*CHECK-TYPES]()] is a core constant expression,
+let [`op] be an lvalue subexpression whose type is [`connect_result_t<Sndr, Rcvr>].
+[:zh_CN] 如果 [`[*CHECK-TYPES]()] 是核心常量表达式，
+令 [`op] 为类型为 [`connect_result_t<Sndr, Rcvr>] 的左值子表达式。
+
+[:en] Then [`CS] is the specialization of [`completion_signatures] the set of
+whose template arguments correspond to the set of completion operations that are
+potentially evaluated ([#basic.def.odr]) as a result of evaluating [`op.start()].
+[:zh_CN] 那么 [`CS] 是 [`completion_signatures] 的特例，其模板实参集合对应于
+可能在求值 [`op.start()] 所造成的潜在求值的完成操作集合（[#basic.def.odr]）。
+
+[item]
+[:en] Otherwise, [`CS] is [`completion_signatures<>].
+[:zh_CN] 否则，[`CS] 为 [`completion_signatures<>]。
+[list:end]
+
+[para:constraints]
+[:en] [`[*CHECK-TYPES]()] is a well-formed expression.
+[:zh_CN] [`[*CHECK-TYPES]()] 是良构表达式。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
 [codeblock]
-template<>
-struct [[redoc("*>")]]impls-for<[[redoc("*>")]]write-env-t> : [[redoc("*>")]]default-impls {
-  static constexpr auto [[redoc("*>")]]get-env =
-    [](auto, const auto& state, const auto& rcvr) noexcept {
-      return [[redoc("[=seebelow]")]];
-    };
-};
+[[redoc("*>")]]CHECK-TYPES();
+return CS();
 [codeblock:end]
 [div:end]
 
-[:en] Invocation of [`[*impls-for]<[*write-env-t]>::[*get-env]] returns an
-object [`e] such that
-[:zh_CN] [`[*impls-for]<[*write-env-t]>::[*get-env]] 的调用返回一个对象 [`e]，使得
+[para]
+[%@lib [*overload-set]]
+[codeblock]
+template<class... Fns>
+struct [[redoc("*>")]]overload-set : Fns... {
+  using Fns::operator()...;
+};
+[codeblock:end]
+
+[para]
+[%@lib [*not-a-sender]]
+[%@lib@member get_completion_signatures[![*not-a-sender]]]
+[codeblock]
+struct [[redoc("*>")]]not-a-sender {
+  using sender_concept = sender_t;
+
+  template<class Sndr>
+    static consteval auto get_completion_signatures() -> completion_signatures<> {
+      throw [[redoc("^>")]]unspecified-exception();
+  }
+};
+[codeblock:end]
+[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
+[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
+
+[para]
+[%@lib [*decay-copyable-result-datums]]
+[codeblock]
+constexpr void [[redoc("*>")]]decay-copyable-result-datums(auto cs) {
+  cs.[[redoc("*>")]]for-each([]<class Tag, class... Ts>(Tag(*)(Ts...)) {
+    if constexpr (!(is_constructible_v<decay_t<Ts>, Ts> &&...))
+      throw [[redoc("^>")]]unspecified-exception();
+  });
+}
+[codeblock:end]
+[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
+[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
+
+[codeblock:declaration]
+template<class T, class Context>
+  decltype(auto) [[redoc("*>")]]allocator-aware-forward(T&& obj, Context&& context);       // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] [*allocator-aware-forward] is an exposition-only function used to
+either create a new object of type [`T] from [`obj]
+or forward [`obj] depending on whether an allocator is available.
+[:zh_CN] [*allocator-aware-forward] 是仅用于阐释的函数，取决于是否有可用的分配器，
+用于从 [`obj] 创建 [`T] 类型的新对象，或者转发 [`obj]。
+
+[:en] If the environment associated with [`context] provides an allocator
+(i.e., the expression [`get_allocator(get_env(context))] is valid),
+let [`alloc] be the result of this expression and let [`P] be [`remove_cvref_t<T>].
+[:zh_CN] 如果与 [`context] 关联的环境提供了分配器（即表达式
+[`get_allocator(get_env(context))] 有效），则令 [`alloc] 为此表达式的结果，并令
+[`P] 为 [`remove_cvref_t<T>]。
+
+[para:returns]
 [list]
 [item]
-[:en@~] [`decltype(e)] models [*:c queryable] and
-[:zh_CN@~] [`decltype(e)] 构成 [*:c queryable] 并且
+[:en] If [*alloc] is not defined, returns [`std::forward<T>(obj)],
+[:zh_CN] 如果 [*alloc] 未定义，则返回 [`std::forward<T>(obj)]，
 [item]
-[:en@~] given a query object [`q], the expression [`e.query(q)]
-is expression-equivalent to [`state.query(q)] if that expression is valid,
-otherwise, [`e.query(q)] is expression-equivalent to [`get_env(rcvr).query(q)].
-[:zh_CN@~] 给定查询对象 [`q]，如果表达式 [`e.query(q)] 有效，则该表达式
-按表达式等价于 [`state.query(q)]，否则 [`e.query(q)] 按表达式等价于
-[`get_env(rcvr).query(q)].
+[:en] otherwise if [`P] is a specialization of [*product-type],
+returns an object of type [`P] whose elements are initialized using
+[:zh_CN] 否则，如果 [`P] 是 [*product-type] 的特例，则返回 [`P] 类型的对象，其各元素以
+[codeblock]
+make_obj_using_allocator<decltype(e)>(std::forward_like<T>(e), [[redoc("*>")]]alloc)
+[codeblock:end]
+[:en@~] where [`e] is the corresponding element of [`obj],
+[:zh_CN@~] 初始化，其中 [`e] 是 [`obj] 的对应元素，
+[item]
+[:en] otherwise, returns [`make_obj_using_allocator<P>(std::forward<T>(obj), [*alloc])].
+[:zh_CN] 否则，返回 [`make_obj_using_allocator<P>(std::forward<T>(obj), [*alloc])]。
 [list:end]
+[div:end]
