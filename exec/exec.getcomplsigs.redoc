@@ -2,47 +2,98 @@
     [`execution::get_completion_signatures]
 ]
 
+[%@lib get_completion_signatures]
+[codeblock:declaration]
+template<class Sndr, class... Env>
+  consteval auto get_completion_signatures() -> [[redoc("*:c")]]valid-completion-signatures auto;
+[codeblock:end]
+
+[div:description]
 [para]
-[:en] [`get_completion_signatures] is a customization point object.
-[:zh_CN] [`get_completion_signatures] 是一个定制化点对象。
+[:en] Let [$except] be an rvalue subexpression of an unspecified class type
+[$Except] such that
+[`[`:c move_constructible]<[$Except]> && [`:c derived_from]<[$Except], exception>] is [`true].
+[:zh_CN] 令 [$except] 为右值子表达式，具有某个未指定的类类型 [$Except]，使得
+[`[`:c move_constructible]<[$Except]> && [`:c derived_from]<[$Except], exception>] 为 [`true]。
 
-[:en] Let [`sndr] be an expression such that [`decltype((sndr))] is [`Sndr], and
-let [`env] be an expression such that [`decltype((env))] is [`Env].
-[:zh_CN] 令 [`sndr] 为表达式并使得 [`decltype((sndr))] 为 [`Sndr]，并令 [`env]
-为表达式并使得 [`decltype((env))] 为 [`Env]。
+[:en] Let [`[^CHECKED-COMPLSIGS]([$e])] be [$e] if [$e] is a core constant
+expression whose type satisfies [*:c valid-completion-signatures];
+otherwise, it is the following expression:
+[:zh_CN] 令 [`[^CHECKED-COMPLSIGS]([$e])] 在当 [$e] 是核心常量表达式且其类型满足
+[*:c valid-completion-signatures] 时为 [$e]；否则为以下表达式：
+[codeblock]
+([[redoc("$>")]]e, throw [[redoc("$>")]]except, completion_signatures())
+[codeblock:end]
 
-[:en] Let [`new_sndr] be the expression
-[`transform_sender(decltype([*get-domain-late](sndr, env)){}, sndr, env)], and
-let [`NewSndr] be [`decltype((new_sndr))].
-[:zh_CN] 令 [`new_sndr] 为表达式
-[`transform_sender(decltype([*get-domain-late](sndr, env)){}, sndr, env)]，
-并令 [`NewSndr] 为 [`decltype((new_sndr))]。
+[:en] Let [`[^get-complsigs]<Sndr, Env...>()] be expression-equivalent to
+[`remove_reference_t<Sndr>::template get_completion_signatures<Sndr, Env...>()].
+[:zh_CN] 令 [`[^get-complsigs]<Sndr, Env...>()] 按表达式等价于
+[`remove_reference_t<Sndr>::template get_completion_signatures<Sndr, Env...>()]。
 
-[:en] Then [`get_completion_signatures(sndr, env)] is expression-equivalent to
-[`(void(sndr), void(env), CS())] except that [`void(sndr)] and [`void(env)] are
-indeterminately sequenced, where [`CS] is:
-[:zh_CN] 由此，[`get_completion_signatures(sndr, env)] 按表达式等价于
-[`(void(sndr), void(env), CS())]，但 [`void(sndr)] 和 [`void(env)] 是顺序不确定的，其中 [`CS] 为：
+[:en] Let [`NewSndr] be [`Sndr] if [`sizeof...(Env) == 0] is [`true];
+otherwise, [`decltype([$s])] where [$s] is the following expression:
+[:zh_CN] 令 [`NewSndr] 在当 [`sizeof...(Env) == 0] 为 [`true] 时为 [`Sndr]；
+否则为 [`decltype([$s])]，其中 [$s] 为以下表达式：
+[codeblock]
+transform_sender(
+  [[redoc("*>")]]get-domain-late(declval<Sndr>(), declval<Env>()...),
+  declval<Sndr>(),
+  declval<Env>()...)
+[codeblock:end]
+
+[para:constraints]
+[:en] [`sizeof...(Env) <= 1] is [`true].
+[:zh_CN] [`sizeof...(Env) <= 1] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return [$e];] where [$e] is expression-equivalent to the following:
+[:zh_CN] 等价于：[`return [$e];]，其中 [$e] 按表达式等价于以下内容：
 [list]
 [item]
-[:en] [`decltype(new_sndr.get_completion_signatures(env))] if that type is well-formed,
-[:zh_CN] [`decltype(new_sndr.get_completion_signatures(env))] 若该类型良构，
+[:en] [`[^CHECKED-COMPLSIGS]([^get-complsigs]<NewSndr, Env...>())]
+if [`[^get-complsigs]<NewSndr, Env...>()] is a well-formed expression.
+[:zh_CN] 若 [`[^get-complsigs]<NewSndr, Env...>()] 是良构表达式，则为
+[`[^CHECKED-COMPLSIGS]([^get-complsigs]<NewSndr, Env...>())]。
+
 [item]
-[:en] Otherwise, [`remove_cvref_t<NewSndr>::completion_signatures] if that type is well-formed,
-[:zh_CN] 否则，为 [`remove_cvref_t<NewSndr>::completion_signatures] 若该类型良构，
+[:en] Otherwise, [`[^CHECKED-COMPLSIGS]([^get-complsigs]<NewSndr>())]
+if [`[^get-complsigs]<NewSndr>()] is a well-formed expression.
+[:zh_CN] 否则，若 [`[^get-complsigs]<NewSndr>()] 是良构表达式，则为
+[`[^CHECKED-COMPLSIGS]([^get-complsigs]<NewSndr>())]。
+
 [item]
-[:en] Otherwise, if [`[*:c is-awaitable]<NewSndr, [*env-promise]<Env>>] is [`true], then:
-[:zh_CN] 否则，若 [`[*:c is-awaitable]<NewSndr, [*env-promise]<Env>>] 为 [`true]，则为
+[:en] Otherwise,
+[:zh_CN] 否则，如果 [`[*:c is-awaitable]<NewSndr, [*env-promise]<Env>...>] 为 [`true]，则为
 [codeblock]
 completion_signatures<
-  [[redoc("*>")]]SET-VALUE-SIG([[redoc("*>")]]await-result-type<NewSndr, [[redoc("*>")]]env-promise<Env>>),        // ([#exec.snd.concepts])
+  [[redoc("*>")]]SET-VALUE-SIG([[redoc("*>")]]await-result-type<NewSndr, [[redoc("*>")]]env-promise<Env>...>),   // [#exec.snd.concepts]
   set_error_t(exception_ptr),
   set_stopped_t()>
 [codeblock:end]
+[:en@~] if [`[*:c is-awaitable]<NewSndr, [*env-promise]<Env>...>] is [`true].
+
 [item]
-[:en] Otherwise, [`CS] is ill-formed.
-[:zh_CN] 否则，[`CS] 非良构。
+[:en] Otherwise, [`(throw [^dependent-sender-error](), completion_signatures())]
+if [`sizeof...(Env) == 0] is [`true], where [^dependent-sender-error] is
+[`dependent_sender_error] or an unspecified type derived publicly and
+unambiguously from [`dependent_sender_error].
+[:zh_CN] 否则，如果 [`sizeof...(Env) == 0] 为 [`true]，则为
+[`(throw [^dependent-sender-error](), completion_signatures())]，其中
+[^dependent-sender-error] 为 [`dependent_sender_error] 或者某个公开且无歧义派生自
+[`dependent_sender_error] 的未指明类型。
+
+[item]
+[:en] Otherwise, [`(throw [$except], completion_signatures())].
+[:zh_CN] 否则，为 [`(throw [$except], completion_signatures())]。
 [list:end]
+
+[para]
+[:en] Given a type [`Env], if [`completion_signatures_of_t<Sndr>] and
+[`completion_signatures_of_t<Sndr, Env>] are both well-formed,
+they shall denote the same type.
+[:zh_CN] 给定类型 [`Env]，如果 [`completion_signatures_of_t<Sndr>] 和
+[`completion_signatures_of_t<Sndr, Env>] 均良构，那么它们应当代表同一类型。
+[div:end]
 
 [para]
 [:en] Let [`rcvr] be an rvalue whose type [`Rcvr] models [`:c receiver], and

@@ -56,7 +56,7 @@ pipeable sender adaptor closure object.
 按表达式等价于：
 [codeblock]
 transform_sender(
-  [[redoc("*>")]]query-or-default(get_domain, sch, default_domain()),
+  [[redoc("*>")]]query-with-default(get_domain, sch, default_domain()),
   [[redoc("*>")]]make-sender(on, sch, sndr))
 [codeblock:end]
 [:en@~] except that [`sch] is evaluated only once.
@@ -102,23 +102,8 @@ transform_sender(
 [:en] Otherwise:
 [:zh_CN] 否则：
 
-[:en] Let [*not-a-scheduler] be an unspecified empty class type, and
-let [*not-a-sender] be the exposition-only type:
-[:zh_CN] 令 [*not-a-scheduler] 为某个未指明的空类类型，并令 [*not-a-sender]
-为以下仅用于阐释的类型：
-[codeblock]
-struct [[redoc("*>")]]not-a-sender {
-  using sender_concept = sender_t;
-
-  auto get_completion_signatures(auto&&) const {
-    return [[redoc("[=seebelow]")]];
-  }
-};
-[codeblock:end]
-[:en@~] where the member function [`get_completion_signatures] returns an object
-of a type that is not a specialization of the [`completion_signatures] class template.
-[:zh_CN@~] 其中成员函数 [`get_completion_signatures] 返回一个类型并非类模板
-[`completion_signatures] 的特例的对象。
+[:en] Let [*not-a-scheduler] be an unspecified empty class type.
+[:zh_CN] 令 [*not-a-scheduler] 为某个未指明的空类类型。
 
 [para]
 [:en] The expression [`on.transform_env(out_sndr, env)] has effects equivalent to:
@@ -158,24 +143,17 @@ if constexpr ([[redoc("`:c>")]]scheduler<decltype(data)>) {
   if constexpr ([[redoc("`:c>")]]same_as<decltype(orig_sch), [[redoc("*>")]]not-a-scheduler>) {
     return [[redoc("*>")]]not-a-sender{};
   } else {
-    return [[redoc("*>")]]write-env(
+    return write_env(
       continues_on(
         std::forward_like<OutSndr>(closure)(
           continues_on(
-            [[redoc("*>")]]write-env(std::forward_like<OutSndr>(child), [[redoc("*>")]]SCHED-ENV(orig_sch)),
+            write_env(std::forward_like<OutSndr>(child), [[redoc("*>")]]SCHED-ENV(orig_sch)),
             sch)),
         orig_sch),
       [[redoc("*>")]]SCHED-ENV(sch));
   }
 }
 [codeblock:end]
-
-[para:recommended]
-[:en] Implementations should use the return type of
-[`[*not-a-sender]::get_completion_signatures] to inform users that their usage of
-[`on] is incorrect because there is no available scheduler onto which to restore execution.
-[:zh_CN] 各实现最好使用 [`[*not-a-sender]::get_completion_signatures] 的返回类型
-来告知用户它们对 [`on] 的用法，由于没有可用的可以恢复执行的调度器而是不正确的。
 
 [para]
 [:en] Let [`out_sndr] be a subexpression denoting a sender returned from [`on(sch, sndr)]

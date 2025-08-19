@@ -60,6 +60,7 @@ transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-send
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
 specialized for [*let-cpo] as follows:
 [:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*let-cpo] 进行如下特化：
+[%@lib [*impls-for]<[*decayed-typeof]<[*let-cpo]>>]
 [codeblock]
 namespace std::execution {
   template<class State, class Rcvr, class... Args>
@@ -69,6 +70,9 @@ namespace std::execution {
   struct [[redoc("*>")]]impls-for<[[redoc("*>")]]decayed-typeof<[[redoc("*>")]]let-cpo>> : [[redoc("*>")]]default-impls {
     static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types();
   };
 }
 [codeblock:end]
@@ -114,11 +118,50 @@ namespace std::execution {
 [:zh_CN@~] [`decltype(e)] 构成 [*:c queryable] 并且
 [item]
 [:en@~] given a query object [`q], the expression [`e.query(q)]
-is expression-equivalent to [`[*env].query(q)] if that expression is valid,
-otherwise [`e.query(q)] is expression-equivalent to [`get_env([*rcvr]).query(q)].
+is expression-equivalent to [`[*env].query(q)] if that expression is valid;
+otherwise, if the type of [`q] satisfies [*:c forwarding-query],
+[`e.query(q)] is expression-equivalent to [`get_env([*rcvr]).query(q)];
+otherwise, [`e.query(q)] is ill-formed.
 [:zh_CN@~] 给定查询对象 [`q]，如果表达式 [`e.query(q)] 有效，那么该表达式按表达式等价于
-[`[*env].query(q)]，否则 [`e.query(q)] 按表达式等价于 [`get_env([*rcvr]).query(q)]。
+[`[*env].query(q)]；否则，如果 [`q] 的类型符合 [*:c forwarding-query]，那么
+[`e.query(q)] 按表达式等价于 [`get_env([*rcvr]).query(q)]；否则，[`e.query(q)] 非良构。
 [list:end]
+
+[%@lib@member [*check-types][![*impls-for]<[*decayed-typeof]<[*let-cpo]>>]]
+[codeblock:declaration]
+template<class Sndr, class... Env>
+  static consteval void [[redoc("*>")]]check-types();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using LetFn = remove_cvref_t<[[redoc("*>")]]data-type<Sndr>>;
+auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+auto fn = []<class... Ts>([[redoc("*>")]]decayed-typeof<[[redoc("*>")]]set-cpo>(*)(Ts...)) {
+  if constexpr (![[redoc("^>")]]is-valid-let-sender)   // \seebelow
+    throw [[redoc("^>")]]unspecified-exception();
+};
+cs.[[redoc("*>")]]for-each([[redoc("*>")]]overload-set(fn, [](auto){}));
+[codeblock:end]
+[:en@~] where [^unspecified-exception] is a type derived from [`exception], and
+where [^is-valid-let-sender] is [`true] if and only if all of the following are [`true]:
+[:zh_CN@~] 其中 [^unspecified-exception] 是派生于 [`exception] 的类型，并且
+当且仅当下列各项均为 [`true] 时 [^is-valid-let-sender] 为 [`true]：
+[list]
+[item] [`([^constructible_from]<decay_t<Ts>, Ts> &&...)]
+[item] [`[^invocable]<LetFn, decay_t<Ts>&...>]
+[item] [`[^sender]<invoke_result_t<LetFn, decay_t<Ts>&...>>]
+[item]
+[`sizeof...(Env) == 0 || [^sender_in]<invoke_result_t<LetFn, decay_t<Ts>&...>, [^env-t]...>]
+[list:end]
+[:en@~] where [^env-t] is the pack
+[`decltype([*let-cpo].transform_env(declval<Sndr>(), declval<Env>()))].
+[:zh_CN@~] 其中 [^env-t] 是包组
+[`decltype([*let-cpo].transform_env(declval<Sndr>(), declval<Env>()))]。
+[div:end]
 
 [para]
 [:en] [`[*impls-for]<[*decayed-typeof]<[*let-cpo]>>::[*get-state]]
@@ -139,14 +182,15 @@ is initialized with a callable object equivalent to the following:
     args_variant_t [[redoc("*>")]]args;        // [=expos]
     ops2_variant_t [[redoc("*>")]]ops2;        // [=expos]
   };
-  return [[redoc("*>")]]state-type{std::forward_like<Sndr>(fn), [[redoc("*>")]]let-env(child), {}, {}};
+  return [[redoc("*>")]]state-type{[[redoc("*>")]]allocator-aware-forward(std::forward_like<Sndr>(fn), rcvr),
+                    [[redoc("*>")]]let-env(child), {}, {}};
 }
 [codeblock:end]
 
 [para]
 [:en] Let [`Sigs] be a pack of the arguments to the [`completion_signatures]
-specialization named by [`completion_signatures_of_t<[*child-type]<Sndr>, env_of_t<Rcvr>>].
-[:zh_CN] 令 [`Sigs] 为由 [`completion_signatures_of_t<[*child-type]<Sndr>, env_of_t<Rcvr>>]
+specialization named by [`completion_signatures_of_t<[*child-type]<Sndr>, [*FWD-ENV-T](env_of_t<Rcvr>)>].
+[:zh_CN] 令 [`Sigs] 为由 [`completion_signatures_of_t<[*child-type]<Sndr>, [*FWD-ENV-T](env_of_t<Rcvr>)>]
 指名的 [`completion_signatures] 的特例的实参包组。
 
 [:en] Let [`LetSigs] be a pack of those types in [`Sigs] with a return type of
@@ -166,14 +210,14 @@ denotes the type [`[*decayed-tuple]<Args...>].
 
 [para]
 [:en] Given a type [`Tag] and a pack [`Args], let [*as-sndr2] be an alias template such
-that [`[*as-sndr2]<Tag(Args...)>] denotes the type [`[*call-result-t]<Fn, decay_t<Args>&...>].
+that [`[*as-sndr2]<Tag(Args...)>] denotes the type [`[*call-result-t]<F, decay_t<Args>&...>].
 [:zh_CN] 给定类型 [`Tag] 和包组 [`Args]，令 [*as-sndr2] 为一个别名模板，使得
-[`[*as-sndr2]<Tag(Args...)>] 代表类型 [`[*call-result-t]<Fn, decay_t<Args>&...>]。
+[`[*as-sndr2]<Tag(Args...)>] 代表类型 [`[*call-result-t]<F, decay_t<Args>&...>]。
 
 [:en] Then [`ops2_variant_t] denotes the type
 [:zh_CN] 然后令 [`ops2_variant_t] 代表类型
 [codeblock]
-variant<monostate, connect_result_t<[[redoc("*>")]]as-sndr2<LetSigs>, [[redoc("*>")]]receiver2<Rcvr, Env>>...>
+variant<monostate, connect_result_t<[[redoc("*>")]]as-sndr2<LetSigs>, [[redoc("*>")]]receiver2<Rcvr, env_t>>...>
 [codeblock:end]
 [:en@~] except with duplicate types removed.
 [:zh_CN@~] 但移除其中的重复类型。
@@ -223,8 +267,12 @@ then the expression [`[*let-cpo].transform_env(sndr, env)] is ill-formed.
 [:zh_CN] 如果 [`[*:c sender-for]<Sndr, [*decayed-typeof]<[*let-cpo]>>] 为 [`false]，
 则表达式 [`[*let-cpo].transform_env(sndr, env)] 非良构。
 
-[:en] Otherwise, it is equal to [`[*JOIN-ENV]([*let-env](sndr), [*FWD-ENV](env))].
-[:zh_CN] 否则，它等于 [`[*JOIN-ENV]([*let-env](sndr), [*FWD-ENV](env))]。
+[:en] Otherwise, it is equal to:
+[:zh_CN] 否则，它等于：
+[codeblock]
+auto& [_, _, child] = sndr;
+return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]let-env(child), [[redoc("*>")]]FWD-ENV(env));
+[codeblock:end]
 
 [para]
 [:en] Let the subexpression [`out_sndr] denote the result of the invocation

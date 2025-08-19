@@ -32,7 +32,7 @@ and [`Sndr] be [`decltype((sndr))].
 [:zh_CN] 否则，表达式 [`schedule_from(sch, sndr)] 按表达式等价于：
 [codeblock]
 transform_sender(
-  [[redoc("*>")]]query-or-default(get_domain, sch, default_domain()),
+  [[redoc("*>")]]query-with-default(get_domain, sch, default_domain()),
   [[redoc("*>")]]make-sender(schedule_from, sch, sndr))
 [codeblock:end]
 [:en@~] except that [`sch] is evaluated only once.
@@ -43,6 +43,7 @@ transform_sender(
 specialized for [`schedule_from_t] as follows:
 [:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
 [`schedule_from_t] 进行如下特化：
+[%@lib [*impls-for]<schedule_from_t>]
 [codeblock]
 namespace std::execution {
   template<>
@@ -50,6 +51,9 @@ namespace std::execution {
     static constexpr auto [[redoc("*>")]]get-attrs = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types();
   };
 }
 [codeblock:end]
@@ -72,7 +76,7 @@ is initialized with a callable object equivalent to the following lambda:
 的可调用对象初始化：
 [codeblock]
 []<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept([[redoc("[=seebelow]")]])
-    requires [[redoc("`:c>"")]]sender_in<[[redoc("*>")]]child-type<Sndr>, env_of_t<Rcvr>> {
+    requires [[redoc("`:c>"")]]sender_in<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(env_of_t<Rcvr>)> {
 
   auto& [_, sch, child] = sndr;
 
@@ -95,25 +99,49 @@ is initialized with a callable object equivalent to the following lambda:
 }
 [codeblock:end]
 
+[%@lib@member [*check-types][![*impls-for]<schedule_from_t>]]
+[codeblock:declaration]
+template<class Sndr, class... Env>
+  static consteval void [[redoc("*>")]]check-types();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+get_completion_signatures<schedule_result_t<[[redoc("*>")]]data-type<Sndr>>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+[[redoc("*>")]]decay-copyable-result-datums(cs);   // [:en] see [#exec.snd.expos] [:zh_CN] 见 [#exec.snd.expos]
+[codeblock:end]
+[div:end]
+
 [para]
 [:en] Objects of the local class [*state-type] can be used to initialize a structured binding.
 [:zh_CN] 局部类 [*state-type] 的对象可用于初始化结构化绑定。
 
 [para]
-[:en] Let [`Sigs] be a pack of the arguments to the [`completion_signatures]
-specialization named by [`completion_signatures_of_t<[*child-type]<Sndr>, env_of_t<Rcvr>>].
-[:zh_CN] 令 [`Sigs] 为 [`completion_signatures_of_t<[*child-type]<Sndr>, env_of_t<Rcvr>>]
+[:en] Let [`Sigs] be a pack of the arguments to the [`completion_signatures] specialization
+named by [`completion_signatures_of_t<[*child-type]<Sndr>, [*FWD-ENV-T](env_of_t<Rcvr>)>].
+[:zh_CN] 令 [`Sigs] 为
+[`completion_signatures_of_t<[*child-type]<Sndr>, [*FWD-ENV-T](env_of_t<Rcvr>)>]
 所指名的 [`completion_signatures] 的特例的实参包组。
 
-[:en] Let [*as-tuple] be an alias template that transforms a completion signature
-[`Tag(Args...)] into the tuple specialization [`[*decayed-tuple]<Tag, Args...>].
-[:zh_CN] 令 [*as-tuple] 为将完成签名 [`Tag(Args...)] 变换为元组特例
-[`[*decayed-tuple]<Tag, Args...>] 的别名模板。
+[:en] Let [*as-tuple] be an alias template such that [`[*as-tuple]<Tag(Args...)>]
+denotes the type [`[*decayed-tuple]<Tag, Args...>], and let
+[*is-nothrow-decay-copy-sig] be a variable template such that
+[`auto([*is-nothrow-decay-copy-sig]<Tag(Args...)>)] is a constant expression of
+type [`bool] and equal to [`(is_nothrow_constructible_v<decay_t<Args>, Args> && ...)].
+[:zh_CN] 令 [*as-tuple] 使得 [`[*as-tuple]<Tag(Args...)>] 代表类型
+[`[*decayed-tuple]<Tag, Args...>] 的别名模板，并令 [*is-nothrow-decay-copy-sig]
+为使得 [`auto([*is-nothrow-decay-copy-sig]<Tag(Args...)>)] 是 [`bool] 类型的
+常量表达式的变量模板，并且等于 [`(is_nothrow_constructible_v<decay_t<Args>, Args> && ...)]。
 
-[:en] Then [`variant_t] denotes the type [`variant<monostate, [*as-tuple]<Sigs>...>],
+[:en] Then [`variant_t] denotes the type
+[`variant<monostate, [*as-tuple]<Sigs>..., [*error-completion]...>],
 except with duplicate types removed.
-[:zh_CN] 然后，[`variant_t] 代表类型 [`variant<monostate, [*as-tuple]<Sigs>...>]，
-但从中移除重复类型。
+[:zh_CN] 然后，[`variant_t] 代表类型
+[`variant<monostate, [*as-tuple]<Sigs>..., [*error-completion]...>]，但从中移除重复类型。
 
 [para]
 [:en] [`receiver_t] is an alias for the following exposition-only class:
@@ -169,15 +197,14 @@ is initialized with a callable object equivalent to the following lambda:
 []<class Tag, class... Args>(auto, auto& state, auto& rcvr, Tag, Args&&... args) noexcept
     -> void {
   using result_t = [[redoc("*>")]]decayed-tuple<Tag, Args...>;
-  constexpr bool nothrow = is_nothrow_constructible_v<result_t, Tag, Args...>;
+  constexpr bool nothrow = (is_nothrow_constructible_v<decay_t<Args>, Args> && ...);
 
   try {
     state.[[redoc("*>")]]async-result.template emplace<result_t>(Tag(), std::forward<Args>(args)...);
   } catch (...) {
-    if constexpr (!nothrow) {
-      set_error(std::move(rcvr), current_exception());
-      return;
-    }
+    if constexpr (!nothrow)
+      state.[[redoc("*>")]]async-result.template emplace<tuple<set_error_t,
+                                                exception_ptr>>(set_error, current_exception());
   }
   start(state.[[redoc("*>")]]op-state);
 };

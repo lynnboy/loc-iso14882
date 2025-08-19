@@ -1,19 +1,27 @@
 [section#exec.bulk
-    [`execution::bulk]
+    [:en] [`execution::bulk], [`execution::bulk_chunked], and [`execution::bulk_unchunked]
+    [:zh_CN] [`execution::bulk]，[`execution::bulk_chunked]，与 [`execution::bulk_unchunked]
 ]
 
 [para]
-[:en] [`bulk] runs a task repeatedly for every index in an index space.
-[:zh_CN] [`bulk] 对索引空间中的每个索引重复执行一项任务。
+[:en] [`bulk], [`bulk_chunked], and [`bulk_unchunked] runs a task repeatedly for
+every index in an index space.
+[:zh_CN] [`bulk]、[`bulk_chunked] 和 [`bulk_unchunked] 对索引空间中的每个索引重复执行一项任务。
 
 [para]
-[:en] The name [`bulk] denotes a pipeable sender adaptor object.
-[:zh_CN] 名字 [`bulk] 代表一个可连管道的发送器适配器对象。
+[:en] The names [`bulk], [`bulk_chunked], and [`bulk_unchunked] denote pipeable
+sender adaptor objects.
+[:zh_CN] 名字 [`bulk]、[`bulk_chunked] 和 [`bulk_unchunked] 都代表可连管道的发送器适配器对象。
 
-[:en] For subexpressions [`sndr], [`shape], and [`f], let [`Shape] be
-[`decltype(auto(shape))].
-[:zh_CN] 对于子表达式 [`sndr]，[`shape] 和 [`f]，令 [`Shape] 为
-[`decltype(auto(shape))]。
+[:en] Let [^bulk-algo] be either [`bulk], [`bulk_chunked], or [`bulk_unchunked].
+[:zh_CN] 令 [^bulk-algo] 为 [`bulk]、[`bulk_chunked] 或 [`bulk_unchunked]。
+
+[:en] For subexpressions [`sndr], [`policy], [`shape], and [`f], let [`Policy]
+be [`remove_cvref_t<decltype(policy)>], [`Shape] be [`decltype(auto(shape))],
+and [`Func] be [`decay_t<decltype((f))>].
+[:zh_CN] 对于子表达式 [`sndr]、[`policy]、[`shape] 和 [`f]，令 [`Policy] 为
+[`remove_cvref_t<decltype(policy)>]，[`Shape] 为 [`decltype(auto(shape))]，
+[`Func] 为 [`decay_t<decltype((f))>]。
 
 [:en] If
 [:zh_CN] 如果
@@ -22,46 +30,126 @@
 [:en@~] [`decltype((sndr))] does not satisfy [`:c sender], or
 [:zh_CN@~] [`decltype((sndr))] 不满足 [`:c sender]，或者
 [item]
+[:en@~] [`is_execution_policy_v<Policy>] is [`false], or
+[:zh_CN@~] [`is_execution_policy_v<Policy>] 为 [`false]，或者
+[item]
 [:en@~] [`Shape] does not satisfy [`:c integral], or
 [:zh_CN@~] [`Shape] 不满足 [`:c integral]，或者
 [item]
-[:en@~] [`decltype((f))] does not satisfy [*:c movable-value],
-[:zh_CN@~] [`decltype((f))] 不满足 [*:c movable-value]，
+[:en@~] [`Func] does not model [`:c copy_constructible],
+[:zh_CN@~] [`Func] 不构成 [`:c copy_constructible]，
 [list:end]
-[:en@~] [`bulk(sndr, shape, f)] is ill-formed.
-[:zh_CN@~] 那么 [`bulk(sndr, shape, f)] 非良构。
+[:en@~] [`[^bulk-algo](sndr, policy, shape, f)] is ill-formed.
+[:zh_CN@~] 那么 [`[^bulk-algo](sndr, policy, shape, f)] 非良构。
 
 [para]
-[:en] Otherwise, the expression [`bulk(sndr, shape, f)] is expression-equivalent to:
-[:zh_CN] 否则，表达式 [`bulk(sndr, shape, f)] 按表达式等价于：
+[:en] Otherwise, the expression [`[^bulk-algo](sndr, policy, shape, f)] is
+expression-equivalent to:
+[:zh_CN] 否则，表达式 [`[^bulk-algo](sndr, policy, shape, f)] 按表达式等价于：
 [codeblock]
-transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(bulk, [[redoc("*>")]]product-type{shape, f}, sndr))
+transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(
+    [[redoc("^>")]]bulk-algo, [[redoc("*>")]]product-type<[[redoc("[=seebelow]")]], Shape, Func>{policy, shape, f}, sndr))
 [codeblock:end]
 [:en@~] except that [`sndr] is evaluated only once.
 [:zh_CN@~] 但 [`sndr] 仅被求值一次。
 
+[:en] The first template argument of [*product-type] is [`Policy]
+if [`Policy] models [`:c copy_constructible], and [`const Policy&] otherwise.
+[:zh_CN] 如果 [`Policy] 构成 [`:c copy_constructible]，则
+[*product-type] 的第一个模板实参为 [`Policy]，否则为 [`const Policy&]。
+
+[para]
+[:en] Let [`sndr] and [`env] be subexpressions such that [`Sndr] is [`decltype((sndr))].
+[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`[*:c sender-for]<Sndr, bulk_t>] is [`false], then the expression
+[`bulk.transform_sender(sndr, env)] is ill-formed; otherwise, it is equivalent to:
+[codeblock]
+auto [_, data, child] = sndr;
+auto& [policy, shape, f] = data;
+auto new_f = [func = std::move(f)](Shape begin, Shape end, auto&&... vs)
+    noexcept(noexcept(f(begin, vs...))) {
+  while (begin != end) func(begin++, vs...);
+}
+return bulk_chunked(std::move(child), policy, shape, std::move(new_f));
+[codeblock:end]
+
+[begin:note]
+[:en] This causes the [`bulk(sndr, policy, shape, f)] sender to be
+expressed in terms of [`bulk_chunked(sndr, policy, shape, f)] when
+it is connected to a receiver whose execution domain does not customize [`bulk].
+[:zh_CN] 这导致，[`bulk(sndr, policy, shape, f)] 发送器仅在连接到不自定义 [`bulk]
+的执行域的接收器时，才以 [`bulk_chunked(sndr, policy, shape, f)] 的形式表示。
+[end:note]
+
 [para]
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
-specialized for [`continues_on_t] as follows:
+specialized for [`bulk_chunked_t] as follows:
 [:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
-[`continues_on_t] 进行如下特化：
+[`bulk_chunked_t] 进行如下特化：
+[%@lib [*impls-for]<bulk_chunked_t>]
 [codeblock]
 namespace std::execution {
   template<>
-  struct [[redoc("*>")]]impls-for<bulk_t> : [[redoc("*>")]]default-impls {
+  struct [[redoc("*>")]]impls-for<bulk_chunked_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types();
+  };
+}
+[codeblock:end]
+
+[:en] The member [`[*impls-for]<bulk_chunked_t>::[*complete]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<bulk_chunked_t>::[*complete]] 以等价于如下 lambda 的
+可调用对象初始化：
+[codeblock]
+[]<class Index, class State, class Rcvr, class Tag, class... Args>
+  (Index, State& state, Rcvr& rcvr, Tag, Args&&... args) noexcept
+  -> void requires [[redoc("[=seebelow]")]] {
+    if constexpr ([[redoc("`:c>")]]same_as<Tag, set_value_t>) {
+      auto& [policy, shape, f] = state;
+      constexpr bool nothrow = noexcept(f(auto(shape), auto(shape), args...));
+      [[redoc("*>")]]TRY-EVAL(rcvr, [&]() noexcept(nothrow) {
+        f(static_cast<decltype(auto(shape))>(0), auto(shape), args...);
+        Tag()(std::move(rcvr), std::forward<Args>(args)...);
+      }());
+    } else {
+      Tag()(std::move(rcvr), std::forward<Args>(args)...);
+    }
+  }
+[codeblock:end]
+
+[:en] The expression in the [~requires-clause] of the lambda above is [`true]
+if and only if [`Tag] denotes a type other than [`set_value_t] or
+if the expression [`f(auto(shape), auto(shape), args...)] is well-formed.
+[:zh_CN] 以上 lambda 的 [~requires-子句]中的表达式，当且仅当 [`Tag] 代表不是
+[`set_value_t] 的类型，或当表达式 [`f(auto(shape), auto(shape), args...)] 良构时，为 [`true]。
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+specialized for [`bulk_unchunked_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
+[`bulk_unchunked_t] 进行如下特化：
+[%@lib [*impls-for]<bulk_unchunked_t>]
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<bulk_unchunked_t> : [[redoc("*>")]]default-impls {
     static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
   };
 }
 [codeblock:end]
 
-[para]
-[:en] The member [`[*impls-for]<bulk_t>::[*complete]]
+[:en] The member [`[*impls-for]<bulk_unchunked_t>::[*complete]]
 is initialized with a callable object equivalent to the following lambda:
-[:zh_CN] 成员 [`[*impls-for]<bulk_t>::[*complete]] 以等价于如下 lambda 的
+[:zh_CN] 成员 [`[*impls-for]<bulk_unchunked_t>::[*complete]] 以等价于如下 lambda 的
 可调用对象初始化：
 [codeblock]
 []<class Index, class State, class Rcvr, class Tag, class... Args>
-  (Index, State& state, Rcvr& rcvr, Tag, Args&&... args) noexcept -> void requires [[redoc("[=seebelow]")]] {
+  (Index, State& state, Rcvr& rcvr, Tag, Args&&... args) noexcept
+  -> void requires [[redoc("[=seebelow]")]] {
     if constexpr ([[redoc("`:c>")]]same_as<Tag, set_value_t>) {
       auto& [shape, f] = state;
       constexpr bool nothrow = noexcept(f(auto(shape), args...));
@@ -77,7 +165,6 @@ is initialized with a callable object equivalent to the following lambda:
   }
 [codeblock:end]
 
-[para]
 [:en] The expression in the [~requires-clause] of the lambda above is [`true]
 if and only if [`Tag] denotes a type other than [`set_value_t] or
 if the expression [`f(auto(shape), args...)] is well-formed.
