@@ -1,0 +1,273 @@
+[section#exec.associate
+    [`std::execution::associate]
+]
+
+[para]
+[:en] [`associate] tries to associate a sender with an async scope such that the
+scope can track the lifetime of any asynchronous operations created with the sender.
+[:zh_CN] [`associate] 尝试将发送器与异步作用域关联，以便该作用域可以跟踪与发送器
+一起创建的任何异步操作的生命周期。
+
+[para]
+[:en] Let [*associate-data] be the following exposition-only class template:
+[:zh_CN] 令 [*associate-data] 为以下仅用于阐释的类模板：
+
+[%@lib execution::[*associate-data]]
+[codeblock:synopsis]
+namespace std::execution {
+  template<[[redoc("`:c>")]]scope_token Token, [[redoc("`:c>")]]sender Sender>
+  struct [[redoc("*>")]]associate-data {                                       // [=expos]
+    using [[redoc("*>")]]wrap-sender =                                         // [=expos]
+      remove_cvref_t<decltype(declval<Token&>().wrap(declval<Sender>()))>;
+
+    explicit [[redoc("*>")]]associate-data(Token t, Sender&& s)
+      : [[redoc("*>")]]sndr(t.wrap(std::forward<Sender>(s))),
+        [[redoc("*>")]]token(t) {
+      if (![[redoc("*>")]]token.try_associate())
+        [[redoc("*>")]]sndr.reset();
+    }
+
+    [[redoc("*>")]]associate-data(const [[redoc("*>")]]associate-data& other)
+      noexcept(is_nothrow_copy_constructible_v<[[redoc("*>")]]wrap-sender> &&
+               noexcept(other.[[redoc("*>")]]token.try_associate()));
+
+    [[redoc("*>")]]associate-data([[redoc("*>")]]associate-data&& other)
+      noexcept(is_nothrow_move_constructible_v<[[redoc("*>")]]wrap-sender>);
+
+    ~[[redoc("*>")]]associate-data();
+
+    optional<pair<Token, [[redoc("*>")]]wrap-sender>>
+      release() && noexcept(is_nothrow_move_constructible_v<[[redoc("*>")]]wrap-sender>);
+
+  private:
+    optional<[[redoc("*>")]]wrap-sender> [[redoc("*>")]]sndr;  // [=expos]
+    Token [[redoc("*>")]]token;                 // [=expos]
+  };
+
+  template<[[redoc("`:c>")]]scope_token Token, [[redoc("`:c>")]]sender Sender>
+    [[redoc("*>")]]associate-data(Token, Sender&&) -> [[redoc("*>")]]associate-data<Token, Sender>;
+}
+[codeblock:end]
+
+[para]
+[:en] For an [*associate-data] object [`a], [`a.[*sndr].has_value()] is [`true]
+if and only if an association was successfully made and is owned by [`a].
+[:zh_CN] 对于 [`*associate-data] 对象 [`a]，当且仅当成功建立了关联并且由 [`a]
+拥有时，[`a.[*sndr].has_value()] 为 [`true]。
+
+[%@lib@ctor execution::[*associate-data]]
+[codeblock:declaration]
+[[redoc("*>")]]associate-data(const [[redoc("*>")]]associate-data& other)
+  noexcept(is_nothrow_copy_constructible_v<[[redoc("*>")]]wrap-sender> &&
+           noexcept(other.[[redoc("*>")]]token.try_associate()));
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`[`:c copy_constructible]<[*wrap-sender]>] is [`true].
+[:zh_CN] [`[`:c copy_constructible]<[*wrap-sender]>] 为 [`true]。
+
+[para:effects]
+[:en] Value-initializes [*sndr] and initializes [*token] with [`other.[*token]].
+[:zh_CN] 值初始化 [*sndr] 并以 [`other.[*token]] 初始化 [*token]。
+
+[:en] If [`other.[*sndr].has_value()] is [`false], no further effects; otherwise,
+calls [`[*token].try_associate()] and, if that returns [`true],
+calls [`[*sndr].emplace(*other.[*sndr])] and, if that exits with an exception,
+calls [`[*token].disassociate()] before propagating the exception.
+[:zh_CN] 如果 [`other.[*sndr].has_value()] 为 [`false]，则没有进一步效果；否则，
+调用 [`[*token].try_associate()]，且若其返回 [`true]，则
+调用 [`[*sndr].emplace(*other.[*sndr])]，且若其以异常退出，则在传播异常之前
+调用 [`[*token].disassociate()]。
+[div:end]
+
+[%@lib@ctor execution::[*associate-data]]
+[codeblock:declaration]
+[[redoc("*>")]]associate-data([[redoc("*>")]]associate-data&& other)
+  noexcept(is_nothrow_move_constructible_v<[[redoc("*>")]]wrap-sender>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*sndr] with [`std::move(other.[*sndr])] and initializes
+[*token] with [`std::move(other.[*token])] and then calls [`other.[*sndr].reset()].
+[:zh_CN] 以 [`std::move(other.[*sndr])] 初始化 [*sndr]，
+以 [`std::move(other.[*token])] 初始化 [*token]，然后调用 [`other.[*sndr].reset()]。
+[div:end]
+
+[%@lib@dtor execution::[*associate-data]]
+[codeblock:declaration]
+~[[redoc("*>")]]associate-data();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If [`[*sndr].has_value()] returns [`false] then no effect;
+otherwise, invokes [`[*sndr].reset()] before invoking [`[*token].disassociate()].
+[:zh_CN] 如果 [`[*sndr].has_value()] 返回 [`false] 则没有效果；
+否则，在调用 [`[*token].disassociate()] 之前调用 [`[*sndr].reset()]。
+[div:end]
+
+[%@lib@member release[!execution::[*associate-data]]]
+[codeblock:declaration]
+optional<pair<Token, [[redoc("*>")]]wrap-sender>>
+  release() && noexcept(is_nothrow_move_constructible_v<[[redoc("*>")]]wrap-sender>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If [`[*sndr].has_value()] returns [`false] then returns an [`optional]
+that does not contain a value; otherwise returns an [`optional]
+containing a value of type [`pair<Token, [*wrap-sender]>] as if by:
+[:zh_CN] 如果 [`[*sndr].has_value()] 返回 [`false]，则返回一个不包含值的 [`optional]；
+否则，返回包含类型为 [`pair<Token, [*wrap-sender]>] 的值 [`optional]，如同：
+[codeblock]
+return optional(pair([[redoc("*>")]]token, std::move(*[[redoc("*>")]]sndr)));
+[codeblock:end]
+
+[para:ensures]
+[:en] [*sndr] does not contain a value.
+[:zh_CN] [*sndr] 不包含值。
+[div:end]
+
+[para]
+[:en] The name [`associate] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`associate] 代表一个可连管道的发送器适配器对象。
+
+[:en] For subexpressions [`sndr] and [`token]:
+[:zh_CN] 对于子表达式 [`sndr] 和 [`token]：
+
+[list]
+[item]
+[:en] If [`decltype((sndr))] does not satisfy [`:c sender], or
+[`remove_cvref_t<decltype((token))>] does not satisfy [`:c scope_token], then
+[`associate(sndr, token)] is ill-formed.
+[:zh_CN] 如果 [`decltype((sndr))] 不符合 [`:c sender]，或者
+[`remove_cvref_t<decltype((token))>] 不符合 [`:c scope_token]，那么
+[`associate(sndr, token)] 非良构。
+
+[item]
+[:en] Otherwise, the expression [`associate(sndr, token)] is expression-equivalent to:
+[:zh_CN] 否则，表达式 [`associate(sndr, token)] 按表达式等价于：
+[codeblock]
+transform_sender([[redoc("*>")]]get-domain-early(sndr),
+                 [[redoc("*>")]]make-sender(associate, [[redoc("*>")]]associate-data(token, sndr)))
+[codeblock:end]
+[:en@~] except that [`sndr] is evaluated only once.
+[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+[list:end]
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+is specialized for [`associate_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [`associate_t]
+进行如下特化：
+
+[%@lib execution::[*impls-for]<associate_t>]
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<associate_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];                // [=expos]
+    static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];                    // [=expos]
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types() {                     // [=expos]
+        using associate_data_t = remove_cvref_t<[[redoc("*>")]]data-type<Sndr>>;
+        using child_type_t = typename associate_data_t::[[redoc("*>")]]wrap-sender;
+        (void)get_completion_signatures<child_type_t, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+    }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<associate_t>::[*get-state]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<associate_t>::[*get-state]] 以等价于如下 lambda 的
+可调用对象初始化：
+
+[codeblock]
+[]<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept([[redoc("[=seebelow]")]]) {
+  auto [_, data] = std::forward<Sndr>(sndr);
+  auto dataParts = std::move(data).release();
+
+  using scope_tkn = decltype(dataParts->first);
+  using wrap_sender = decltype(dataParts->second);
+  using op_t = connect_result_t<wrap_sender, Rcvr>;
+
+  struct op_state {
+    bool [[redoc("*>")]]associated = false;    // [=expos]
+    union {
+      Rcvr* [[redoc("*>")]]rcvr;               // [=expos]
+      struct {
+        scope_tkn [[redoc("*>")]]token;        // [=expos]
+        op_t [[redoc("*>")]]op;                // [=expos]
+      } [[redoc("*>")]]assoc;                  // [=expos]
+    };
+
+    explicit op_state(Rcvr& r) noexcept
+      : [[redoc("*>")]]rcvr(addressof(r)) {}
+
+    explicit op_state(scope_tkn tkn, wrap_sender&& sndr, Rcvr& r) try
+      : [[redoc("*>")]]associated(true),
+        [[redoc("*>")]]assoc(tkn, connect(std::move(sndr), std::move(r))) {
+    }
+    catch (...) {
+      tkn.disassociate();
+      throw;
+    }
+
+    op_state(op_state&&) = delete;
+
+    ~op_state() {
+      if ([[redoc("*>")]]associated) {
+        [[redoc("*>")]]assoc.[[redoc("*>")]]op.~op_t();
+        [[redoc("*>")]]assoc.[[redoc("*>")]]token.disassociate();
+        [[redoc("*>")]]assoc.[[redoc("*>")]]token.~scope_tkn();
+      }
+    }
+
+    void [[redoc("*>")]]run() noexcept {       // [=expos]
+      if ([[redoc("*>")]]associated)
+        start([[redoc("*>")]]assoc.[[redoc("*>")]]op);
+      else
+        set_stopped(std::move(*[[redoc("*>")]]rcvr));
+    }
+  };
+
+  if (dataParts)
+    return op_state{std::move(dataParts->first), std::move(dataParts->second), rcvr};
+  else
+    return op_state{rcvr};
+}
+[codeblock:end]
+
+[para]
+[:en] The expression in the [`noexcept] clause of
+[`[*impls-for]<associate_t>::[*get-state]] is
+[:zh_CN] [`[*impls-for]<associate_t>::[*get-state]] 的 [`noexcept] 子句中的表达式是
+[codeblock]
+is_nothrow_constructible_v<remove_cvref_t<Sndr>, Sndr> &&
+is_nothrow_move_constructible_v<[[redoc("*>")]]wrap-sender> &&
+[[redoc("*:c>")]]nothrow-callable<connect_t, [[redoc("*>")]]wrap-sender, Rcvr>
+[codeblock:end]
+[:en@~] where [*wrap-sender] is the type [`remove_cvref_t<[*data-type]<Sndr>>::[*wrap-sender]].
+[:zh_CN@~] 其中 [*wrap-sender] 的类型为 [`remove_cvref_t<[*data-type]<Sndr>>::[*wrap-sender]]。
+
+[para]
+[:en] The member [`[*impls-for]<associate_t>::[*start]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<associate_t>::[*start]] 以等价于如下 lambda 的
+可调用对象初始化：
+[codeblock]
+[](auto& state, auto&) noexcept -> void {
+  state.[[redoc("*>")]]run();
+}
+[codeblock:end]
+
+[para]
+[:en] The evaluation of [`associate(sndr, token)] may cause side effects
+observable via [`token][=']s associated async scope object.
+[:zh_CN] [`associate(sndr, token)] 的求值可能会导致通过 [`token] 的
+关联异步作用域对象可观察的副作用。

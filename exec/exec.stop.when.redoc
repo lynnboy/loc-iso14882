@@ -1,0 +1,98 @@
+[section#exec.stop.when
+    [:en] Exposition-only [`std::execution::[*stop-when]]
+    [:zh_CN] 仅用于阐释的 [`std::execution::[*stop-when]]
+]
+
+[para]
+[:en] [*stop-when] fuses an additional stop token [`t] into a sender so that,
+upon connecting to a receiver [`r], the resulting operation state receives stop
+requests from both [`t] and the token returned from [`get_stop_token(get_env(r))].
+[:zh_CN] [`*stop-when] 将额外的停止令牌 [`t] 融合到发送器中，以便在连接到接收器 [`r] 时，
+结果操作状态同时接收来自 [`t] 和 [`get_stop_token(get_env(r))] 返回的令牌的停止请求。
+
+[para]
+[:en] The name [*stop-when] denotes an exposition-only sender adaptor.
+[:zh_CN] 名字 [*stop-when] 代表一个仅用于阐释的发送器适配器。
+
+[:en] For subexpressions [`sndr] and [`token]:
+[:zh_CN] 对于子表达式 [`sndr] 和 [`token]：
+
+[list]
+[item]
+[:en] If [`decltype((sndr))] does not satisfy [`:c sender], or
+[`remove_cvref_t<decltype((token))>] does not satisfy [`:c stoppable_token],
+then [`[*stop-when](sndr, token)] is ill-formed.
+[:zh_CN] 如果 [`decltype((sndr))] 不符合 [`:c sender]，或者
+[`remove_cvref_t<decltype((token))>] 不符合 [`:c stoppable_token]，那么
+[`[*stop-when](sndr, token)] 非良构。
+
+[item]
+[:en] Otherwise, if [`remove_cvref_t<decltype((token))>] models [`:c unstoppable_token]
+then [`[*stop-when](sndr, token)] is expression-equivalent to [`sndr].
+[:zh_CN] 否则，如果 [`remove_cvref_t<decltype((token))>] 构成 [`:c unstoppable_token]，
+那么 [`[*stop-when](sndr, token)] 按表达式等价于 [`sndr]。
+
+[item]
+[:en] Otherwise, [`[*stop-when](sndr, token)] returns a sender [`osndr].
+[:zh_CN] 否则，表达式 [`[*stop-when](sndr, token)] 返回一个发送器 [`osndr]。
+
+[:en] If [`osndr] is connected to a receiver [`r],
+let [`rtoken] be the result of [`get_stop_token(get_env(r))].
+[:zh_CN] 如果 [`osndr] 连接到接收器 [`r]，则令 [`rtoken] 为
+[`get_stop_token(get_env(r))] 的结果。
+
+ [list]
+ [item]
+[:en] If the type of [`rtoken] models [`:c unstoppable_token] then the effects of
+connecting [`osndr] to [`r] are equivalent to
+[`connect(write_env(sndr, prop(get_stop_token, token)), r)].
+[:zh_CN] 如果 [`rtoken] 的类型构成 [`:c unstoppable_token]，那么连接 [`osndr] 到
+[`r] 的效果等价于 [`connect(write_env(sndr, prop(get_stop_token, token)), r)]。
+
+ [item]
+[:en] Otherwise, the effects of connecting [`osndr] to [`r] are equivalent to
+[`connect(write_env(sndr, prop(get_stop_token, stoken)), r)]
+where [`stoken] is an object of an exposition-only type [*stoken-t] such that:
+[:zh_CN] 否则，连接 [`osndr] 到 [`r] 的效果等价于
+[`connect(write_env(sndr, prop(get_stop_token, stoken)), r)]，
+其中 [`stoken] 是仅用于阐释的类型 [*stoken-t] 的对象，使得：
+
+  [list]
+  [item]
+[:en] [*stoken-t] models [`:c stoppable_token];
+[:zh_CN] [*stoken-t] 构成 [`:c stoppable_token]；
+  [item]
+[:en] [`stoken.stop_requested()] returns
+[`token.stop_requested() || rtoken.stop_requested()];
+[:zh_CN] [`stoken.stop_requested()] 返回
+[`token.stop_requested() || rtoken.stop_requested()]；
+  [item]
+[:en] [`stoken.stop_possible()] returns
+[`token.stop_possible() || rtoken.stop_possible()]; and
+[:zh_CN] [`stoken.stop_possible()] 返回
+[`token.stop_possible() || rtoken.stop_possible()]；并且
+  [item]
+[:en] for types [`Fn] and [`Init] such that both
+[`[`:c invocable]<Fn>] and [`[`:c constructible_from]<Fn, Init>] are modeled,
+[`[*stoken-t]::callback_type<Fn>] models [`[*:c stoppable-callback-for]<Fn, [*stoken-t], Init>].
+[:zh_CN] 对于使得 [`[`:c invocable]<Fn>] 和 [`[`:c constructible_from]<Fn, Init>]
+均得以构成的类型 [`Fn] 和 [`Init]，[`[*stoken-t]::callback_type<Fn>]
+构成 [`[*:c stoppable-callback-for]<Fn, [*stoken-t], Init>]。
+
+[begin:note@tail]
+[:en] For an object [`fn] of type [`Fn] constructed from a value, [`init], of
+type [`Init], registering [`fn] using [`[*stoken-t]::callback_type<Fn>(stoken, init)]
+results in an invocation of [`fn] when a callback registered with [`token] or
+[`rtoken] would be invoked.
+[:zh_CN] 对于从某个 [`Init] 类型值 [`init] 构造的 [`Fn] 类型的对象 [`fn]，
+用 [`[*stoken-t]::callback_type<Fn>(stoken, init)] 注册 [`fn] 会导致当使用
+[`token] 或 [`rtoken] 注册的回调被调用时，将会调用 [`fn]。
+
+[:en] [`fn] is invoked at most once.
+[:zh_CN] [`fn] 至多被调用一次。
+[end:note]
+  [list:end]
+
+ [list:end]
+
+[list:end]

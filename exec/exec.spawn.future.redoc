@@ -1,0 +1,409 @@
+[section#exec.spawn.future
+    [`std::execution::spawn_future]
+]
+
+[para]
+[:en] [`spawn_future] attempts to associate the given input sender with the given
+token[=']s async scope and, on success, eagerly starts the input sender;
+the return value is a sender that, when connected and started, completes with either
+the result of the eagerly-started input sender or with
+[`set_stopped] if the input sender was not started.
+[:zh_CN] [`spawn_future] 尝试将给定的输入发送器与给定令牌的异步作用域关联，
+并在成功时，急切地启动输入发送器；其返回值是一个发送器，当连接并启动时，
+以这个急切启动的输入发送器的结果完成，或者若输入发送器未启动则以 [`set_stopped] 完成。
+
+[para]
+[:en] The name [`spawn_future] denotes a customization point object.
+[:zh_CN] 名字 [`spawn_future] 代表一个定制化点对象。
+
+[:en] For subexpressions [`sndr], [`token], and [`env],
+[:zh_CN] 对于子表达式 [`sndr]、[`token] 和 [`env]，
+[list]
+[item]
+[:en@~] let [`Sndr] be [`decltype((sndr))],
+[:zh_CN@~] 令 [`Sndr] 为 [`decltype((sndr))]，
+[item]
+[:en@~] let [`Token] be [`remove_cvref_t<decltype((token))>], and
+[:zh_CN@~] 令 [`Token] 为 [`remove_cvref_t<decltype((token))>]，并且
+[item]
+[:en@~] let [`Env] be [`remove_cvref_t<decltype((env))>].
+[:zh_CN@~] 令 [`Env] 为 [`remove_cvref_t<decltype((env))>]。
+[list:end]
+
+[:en] If any of [`[`:c sender]<Sndr>], [`[`:c scope_token]<Token>], or
+[`[*:c queryable]<Env>] are not satisfied,
+the expression [`spawn_future(sndr, token, env)] is ill-formed.
+[:zh_CN] 如果 [`[`:c sender]<Sndr>]、[`[`:c scope_token]<Token>] 或
+[`[*:c queryable]<Env>] 中有任何不满足的情况，那么
+表达式 [`spawn_future(sndr, token, env)] 非良构。
+
+[para]
+[:en] Let [*spawn-future-state-base] be the exposition-only class template:
+[:zh_CN] 令 [`spawn-future-state-base] 为仅用于阐释的类模板：
+
+[%@lib execution::[*spawn-future-state-base]]
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Completions>
+  struct [[redoc("*>")]]spawn-future-state-base;                                   // [=expos]
+
+  template<class... Sigs>
+  struct [[redoc("*>")]]spawn-future-state-base<completion_signatures<Sigs...>> {  // [=expos]
+    using [[redoc("*>")]]variant-t = [[redoc("[=seebelow]")]];                                    // [=expos]
+    [[redoc("*>")]]variant-t [[redoc("*>")]]result;                                               // [=expos]
+    virtual void [[redoc("*>")]]complete() noexcept = 0;                           // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`Sigs] be the pack of arguments to the [`completion_signatures]
+specialization provided as a parameter to the [*spawn-future-state-base] class template.
+[:zh_CN] 令 [`Sigs] 为 [`completion_signatures] 特例的实参包组，该特例作为形参
+提供给 [*spawn-future-state-base] 类模板。
+
+[:en] Let [*as-tuple] be an alias template that transforms a completion signature
+[`Tag(Args...)] into the tuple specialization [`[*decayed-tuple]<Tag, Args...>].
+[:zh_CN] 令 [`*as-tuple] 为将完成签名 [`Tag(Args...)] 转换为元组特例
+[`[*decayed-tuple]<Tag, Args...>] 的别名模板。
+
+[list]
+[item]
+[:en] If [`is_nothrow_constructible_v<decay_t<Arg>, Arg>] is [`true] for every
+type [`Arg] in every parameter pack [`Args] in every completion signature
+[`Tag(Args...)] in [`Sigs] then [*variant-t] denotes the type
+[`variant<monostate, tuple<set_stopped_t>, [^as-tuple]<Sigs>...>],
+except with duplicate types removed.
+[:zh_CN] 如果 [`is_nothrow_constructible_v<decay_t<Arg>, Arg>] 对于[`Sigs] 中的
+每个完成签名 [`Tag(Args...)] 中的每个形参包组 [`Args] 中的每个类型 [`Arg] 都为 [`true]，
+那么 [*variant-t] 代表移除了重复类型的类型
+[`variant<monostate, tuple<set_stopped_t>, [^as-tuple]<Sigs>...>]。
+
+[item]
+[:en] Otherwise [*variant-t] denotes the type
+[`variant<monostate, tuple<set_stopped_t>, tuple<set_error_t, exception_ptr>, [^as-tuple]<Sigs>...>],
+except with duplicate types removed.
+[:zh_CN] 否则，[*variant-t] 代表移除了重复类型的类型
+[`variant<monostate, tuple<set_stopped_t>, tuple<set_error_t, exception_ptr>, [^as-tuple]<Sigs>...>]。
+[list:end]
+
+[para]
+[:en] Let [*spawn-future-receiver] be the exposition-only class template:
+[:zh_CN] 令 [`spawn-future-receiver] 为仅用于阐释的类模板：
+
+[%@lib execution::[*spawn-future-receiver]]
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Completions>
+  struct [[redoc("*>")]]spawn-future-receiver {                                // [=expos]
+    using receiver_concept = receiver_t;
+
+    [[redoc("*>")]]spawn-future-state-base<Completions>* [[redoc("*>")]]state;                // [=expos]
+
+    template<class... T>
+      void set_value(T&&... t) && noexcept {
+        [[redoc("*>")]]set-complete<set_value_t>(std::forward<T>(t)...);
+      }
+
+    template<class E>
+      void set_error(E&& e) && noexcept {
+        [[redoc("*>")]]set-complete<set_error_t>(std::forward<E>(e));
+      }
+
+    void set_stopped() && noexcept {
+      [[redoc("*>")]]set-complete<set_stopped_t>();
+    }
+
+  private:
+    template<class CPO, class... T>
+      void [[redoc("*>")]]set-complete(T&&... t) noexcept {                    // [=expos]
+        constexpr bool nothrow = (is_nothrow_constructible_v<decay_t<T>, T> && ...);
+        try {
+          [[redoc("*>")]]state->[[redoc("*>")]]result.template emplace<[[redoc("*>")]]decayed-tuple<CPO, T...>>(CPO{},
+                                                                   std::forward<T>(t)...);
+        }
+        catch (...) {
+          if constexpr (!nothrow) {
+            using tuple_t = [[redoc("*>")]]decayed-tuple<set_error_t, exception_ptr>;
+            [[redoc("*>")]]state->[[redoc("*>")]]result.template emplace<tuple_t>(set_error_t{}, current_exception());
+          }
+        }
+        [[redoc("*>")]]state->[[redoc("*>")]]complete();
+      }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [^ssource-t] be an unspecified type that models [*:c stoppable-source]
+and let [`ssource] be an lvalue of type [^ssource-t].
+[:zh_CN] 令 [^ssource-t] 为构成 [*:c stoppable-source] 的未指明类型，并令
+[`ssource] 为 [^ssource-t] 类型的左值。
+
+[:en] Let [^stoken-t] be [`decltype(ssource.get_token())].
+[:zh_CN] 令 [^stoken-t] 为 [`decltype(ssource.get_token())]。
+
+[:en] Let [*future-spawned-sender] be the alias template:
+[:zh_CN] 令 [*future-spawned-sender] 为别名模板：
+
+[codeblock:synopsis]
+template<[[redoc("`:c>")]]sender Sender, class Env>
+using [[redoc("*>")]]future-spawned-sender =                                   // [=expos]
+  decltype(write_env([[redoc("*>")]]stop-when(declval<Sender>(), declval<[[redoc("^>")]]stoken-t>()), declval<Env>()));
+[codeblock:end]
+
+[para]
+[:en] Let [*spawn-future-state] be the exposition-only class template:
+[:zh_CN] 令 [`spawn-future-state] 为仅用于阐释的类模板：
+
+[%@lib execution::[*spawn-future-state]]
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Alloc, [[redoc("`:c>")]]scope_token Token, [[redoc("`:c>")]]sender Sender, class Env>
+  struct [[redoc("*>")]]spawn-future-state                                                 // [=expos]
+    : [[redoc("*>")]]spawn-future-state-base<completion_signatures_of_t<[[redoc("*>")]]future-spawned-sender<Sender, Env>>> {
+    using [[redoc("*>")]]sigs-t =                                                          // [=expos]
+      completion_signatures_of_t<[[redoc("*>")]]future-spawned-sender<Sender, Env>>;
+    using [[redoc("*>")]]receiver-t =                                                      // [=expos]
+      [[redoc("*>")]]spawn-future-receiver<[[redoc("*>")]]sigs-t>;
+    using [[redoc("*>")]]op-t =                                                            // [=expos]
+      connect_result_t<[[redoc("*>")]]future-spawned-sender<Sender, Env>, [[redoc("*>")]]receiver-t>;
+
+    [[redoc("*>")]]spawn-future-state(Alloc alloc, Sender&& sndr, Token token, Env env)    // [=expos]
+      : [[redoc("*>")]]alloc(std::move(alloc)),
+        [[redoc("*>")]]op(connect(
+          write_env([[redoc("*>")]]stop-when(std::forward<Sender>(sndr), [[redoc("*>")]]ssource.get_token()), std::move(env)),
+          [[redoc("*>")]]receiver-t(this))),
+        [[redoc("*>")]]token(std::move(token)),
+        [[redoc("*>")]]associated(token.try_associate()) {
+          if (associated)
+            start([[redoc("*>")]]op);
+          else
+            set_stopped([[redoc("*>")]]receiver-t(this));
+        }
+
+    void [[redoc("*>")]]complete() noexcept override;                                      // [=expos]
+    void [[redoc("*>")]]consume([[redoc("`:c>")]]receiver auto& rcvr) noexcept;                             // [=expos]
+    void [[redoc("*>")]]abandon() noexcept;                                                // [=expos]
+
+  private:
+    using @\exposid{alloc-t}@ =                                                         // [=expos]
+      typename allocator_traits<Alloc>::template rebind_alloc<@\exposid{spawn-future-state}@>;
+
+    [[redoc("*>")]]alloc-t [[redoc("*>")]]alloc;                                                          // [=expos]
+    [[redoc("*>")]]ssource-t [[redoc("*>")]]ssource;                                                      // [=expos]
+    [[redoc("*>")]]op-t [[redoc("*>")]]op;                                                                // [=expos]
+    Token [[redoc("*>")]]token;                                                            // [=expos]
+    bool [[redoc("*>")]]associated;                                                        // [=expos]
+
+    void [[redoc("*>")]]destroy() noexcept;                                                // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] For purposes of determining the existence of a data race, [*complete],
+[*consume], and [*abandon] behave as atomic operations ([#intro.multithread]).
+[:zh_CN] 为了确定数据竞争的存在，将 [*complete]、[*consume] 和 [*abandon] 的行为
+当做如同原子操作（[#intro.multithread]）。
+
+[:en] These operations on a single object of a type that is a specialization of
+[*spawn-future-state] appear to occur in a single total order.
+[:zh_CN] 在类型为 [*spawn-future-state] 的特例的单个对象上进行的这些操作，
+表现为以单一的总顺序发生。
+
+[%@lib@member [*complete][!execution::[*spawn-future-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]complete() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] No effects if this invocation of [*complete] happens before
+an invocation of [*consume] or [*abandon] on [`*this];
+[:zh_CN] 如果对 [*complete] 的本次调用发生早于对 [`*this] 的 [*consume] 或
+[*abandon] 的调用，则没有效果。
+[item]
+[:en@~] otherwise, if an invocation of [*consume] on [`*this] happens before
+this invocation of [*complete] then there is a receiver, [`rcvr], registered and
+that receiver is completed as if by [`[*consume](rcvr)];
+[:zh_CN@~] 否则，如果对 [`*this] 的 [*consume] 的某次调用发生早于
+[*complete] 的本次调用，那么有一个接收器 [`rcvr] 被注册，并且该接收器如同以
+[`[*consume](rcvr)] 完成；
+[item]
+[:en@~] otherwise, [*destroy] is invoked.
+[:zh_CN@~] 否则，调用 [*destroy]。
+[list:end]
+[div:end]
+
+[%@lib@member [*consume][!execution::[*spawn-future-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]consume([[redoc("`:c>")]]receiver auto& rcvr) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] If this invocation of [*consume] happens before an invocation of [*complete]
+on [`*this] then [`rcvr] is registered to be completed when
+[*complete] is subsequently invoked on [`*this];
+[:zh_CN] 如果对 [*consume] 的本次调用发生早于对 [`*this] 的 [*complete] 的某次调用，
+那么 [`rcvr] 被注册为当随后对 [`*this] 的 [*complete] 调用时完成。
+
+[item]
+[:en@~] otherwise, [`rcvr] is completed as if by:
+[:zh_CN@~] 否则，[`rcvr] 通过以下方式完成：
+[codeblock]
+std::move(this->@\exposid{result}@).visit(
+  [&rcvr](auto&& tuple) noexcept {
+    if constexpr (!@\libconcept{same_as}@<remove_reference_t<decltype(tuple)>, monostate>) {
+      apply([&rcvr](auto cpo, auto&&... vals) {
+        cpo(std::move(rcvr), std::move(vals)...);
+      }, std::move(tuple));
+    }
+  });
+[codeblock:end]
+[list:end]
+[div:end]
+
+[%@lib@member [*abandon][!execution::[*spawn-future-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]abandon() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] If this invocation of [*abandon] happens before an invocation of [*complete]
+on [`*this] then equivalent to:
+[:zh_CN] 如果对 [*abandon] 的本次调用发生早于对 [`*this] 的 [*complete] 的某次调用，
+那么其等价于：
+[codeblock]
+[[redoc("*>")]]ssource.request_stop();
+[codeblock:end]
+
+[item]
+[:en@~] otherwise, [*destroy] is invoked.
+[:zh_CN@~] 否则，调用 [*destroy]。
+[list:end]
+[div:end]
+
+[%@lib@member [*destroy][!execution::[*spawn-future-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]destroy() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto token = std::move(this->[[redoc("*>")]]token);
+bool associated = this->[[redoc("*>")]]associated;
+
+{
+  auto alloc = std::move(this->[[redoc("*>")]]alloc);
+
+  allocator_traits<[[redoc("*>")]]alloc-t>::destroy(alloc, this);
+  allocator_traits<[[redoc("*>")]]alloc-t>::deallocate(alloc, this, 1);
+}
+
+if (associated)
+  token.disassociate();
+[codeblock:end]
+[div:end]
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+is specialized for [`spawn_future_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
+[`spawn_future_t] 进行如下特化：
+
+[%@lib execution::[*impls-for]<spawn_future_t>]
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<spawn_future_t> : [[redoc("*>")]]default-impls {
+    static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];                    // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<spawn_future_t>::[*start]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<spawn_future_t>::[*start]] 以等价于以下 lambda 的
+可调用对象初始化：
+[codeblock]
+[](auto& state, auto& rcvr) noexcept -> void {
+  state->[[redoc("*>")]]consume(rcvr);
+}
+[codeblock:end]
+
+[para]
+[:en] For the expression [`spawn_future(sndr, token, env)]
+let [`new_sender] be the expression [`token.wrap(sndr)] and
+let [`alloc] and [`senv] be defined as follows:
+[:zh_CN] 对于表达式 [`spawn_future(sndr, token, env)]，令 [`new_sender] 为表达式
+[`token.wrap(sndr)]，并令 [`alloc] 和 [`senv] 定义如下：
+
+[list]
+[item]
+[:en] if the expression [`get_allocator(env)] is well-formed, then [`alloc] is
+the result of [`get_allocator(env)] and [`senv] is the expression [`env];
+[:zh_CN] 如果表达式 [`get_allocator(env)] 良构，则 [`alloc] 为
+[`get_allocator(env)] 的结果，而 [`senv] 为表达式 [`env]；
+[item]
+[:en] otherwise, if the expression [`get_allocator(get_env(new_sender))] is
+well-formed, then [`alloc] is the result of [`get_allocator(get_env(new_sender))]
+and [`senv] is the expression [`[*JOIN-ENV](prop(get_allocator, alloc), env)];
+[:zh_CN] 否则，如果表达式 [`get_allocator(get_env(new_sender))] 良构，则 [`alloc]
+为 [`get_allocator(get_env(new_sender))] 的结果，而 [`senv] 为表达式
+[`[*JOIN-ENV](prop(get_allocator, alloc), env)]。
+[item]
+[:en] otherwise, [`alloc] is [`allocator<void>()] and [`senv] is the expression [`env].
+[:zh_CN] 否则，[`alloc] 为 [`allocator<void>()]，而 [`senv] 为表达式 [`env]。
+[list:end]
+
+[para]
+[:en] The expression [`spawn_future(sndr, token, env)] has the following effects:
+[:zh_CN] 表达式 [`spawn_future(sndr, token, env)] 具有以下效果：
+
+[list]
+[item]
+[:en] Uses [`alloc] to allocate and construct an object [`s] of a type that is
+a specialization of [*spawn-future-state] from [`alloc], [`token.wrap(sndr)],
+[`token], and [`senv].
+[:zh_CN] 使用 [`alloc] 分配并构造一个对象 [`s]，其类型为以 [`alloc]、
+[`token.wrap(sndr)]、[`token] 和 [`senv] 指定的 [*spawn-future-state] 特例。
+
+[:en] If an exception is thrown then any constructed objects are destroyed and
+any allocated memory is deallocated.
+[:zh_CN] 如果抛出异常，则销毁任何已构造的对象，回收任何已分配的内存。
+
+[item]
+[:en] Constructs an object [`u] of a type that is a specialization of [`unique_ptr] such that:
+[:zh_CN] 构造一个对象 [`u]，其类型为 [`unique_ptr] 的特例，使得：
+[list]
+[item]
+[:en@~] [`u.get()] is equal to the address of [`s], and
+[:zh_CN@~] [`u.get()] 等于 [`s] 的地址，并且
+[item]
+[:en@~] [`u.get_deleter()(u.release())] is equivalent to [`u.release()->[*abandon]()].
+[:zh_CN@~] [`u.get_deleter()(u.release())] 等价于 [`u.release()->[*abandon]()]。
+[list:end]
+
+[item]
+[:en] Returns [`[*make-sender](spawn_future, std::move(u))].
+[:zh_CN] 返回 [`[*make-sender](spawn_future, std::move(u))]。
+[list:end]
+
+[para]
+[:en] The expression [`spawn_future(sndr, token)] is expression-equivalent to
+[`spawn_future(sndr, token, execution::env<>())].
+[:zh_CN] 表达式 [`spawn_future(sndr, token)] 按表达式等价于
+[`spawn_future(sndr, token, execution::env<>())]。
