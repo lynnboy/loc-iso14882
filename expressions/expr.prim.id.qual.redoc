@@ -21,8 +21,14 @@
     [| type-name [`::] ]
     [| namespace-name [`::] ]
     [| computed-type-specifier [`::] ]
+    [| splice-scope-specifier [`::] ]
     [| nested-name-specifier identifier [`::] ]
     [| nested-name-specifier [`:opt:key template] simple-template-id [`::] ]
+[rule:end]
+
+[rule splice-scope-specifier [:zh_CN] 拼接作用域说明符 ]
+    [| splice-specifier ]
+    [| [`:opt:key template] splice-specialization-specifier ]
 [rule:end]
 [syntax:end]
 
@@ -38,6 +44,38 @@ The component names of a [~qualified-id] are those of its
 and/or [~nested-name-specifier].
 [:zh_CN] [~嵌套名说明符]的成分名为它的[~标识符]（如果有），以及它的[~类型名]，
 [~命名空间名]，[~简单模板标识]，以及[~嵌套名说明符]的成分名。
+
+[para]
+[:en] A [~splice-specifier] or [~splice-specialization-specifier] that is not
+followed by [`::] is never interpreted as part of a [~splice-scope-specifier].
+[:zh_CN] 后面没有跟随 [`::] 的[~拼接说明符]或[~拼接特例说明符]永远不会解释为
+[~拼接作用域说明符]的一部分。
+
+[:en] The keyword [`:key template] may only be omitted from the form
+[`[`:opt:key template] [~splice-specialization-specifier] ::]
+when the [~splice-specialization-specifier] is preceded by [`:key typename].
+[:zh_CN] 关键词 [`:key template] 仅可在“[`[`:opt:key template] [~拼接特例说明符] ::]”
+形式中的 [~拼接特例说明符] 之前有 [`:key typename] 时省略。
+
+[begin:example]
+[codeblock]
+template<int V>
+struct TCls {
+  static constexpr int s = V;
+  using type = int;
+};
+
+int v1 = [:^^TCls<1>:]::s;
+int v2 = template [:^^TCls:]<2>::s;             // [:en] OK, [`:key template] binds to [~splice-scope-specifier] \
+                                                [:zh_CN] OK，[`:key template] 绑定到[~拼接作用域说明符]
+typename [:^^TCls:]<3>::type v3 = 3;            // [:en] OK, [`:key typename] binds to the qualified name \
+                                                [:zh_CN] OK，[`:key typename] 绑定到限定名
+template [:^^TCls:]<3>::type v4 = 4;            // [:en] OK, [`:key template] binds to the [~splice-scope-specifier] \
+                                                [:zh_CN] OK，[`:key template] 绑定到[~拼接作用域说明符]
+typename template [:^^TCls:]<3>::type v5 = 5;   // [:en] OK, same as [`v3] [:zh_CN] OK，和 [`v3] 相同
+[:^^TCls:]<3>::type v6 = 6;                     // [:en] error: unexpected [`<] [:zh_CN] 错误：意外的 [`<]
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] A [~nested-name-specifier] is [+declarative] if it is part of
@@ -57,8 +95,9 @@ and/or [~nested-name-specifier].
 [:zh_CN@~] 声明性[~嵌套名说明符]。
 [list:end]
 
-[:en] A declarative [~nested-name-specifier] shall not have a [~computed-type-specifier].
-[:zh_CN] 声明性[~嵌套名说明符]不应当带有[~计算类型说明符]。
+[:en] A declarative [~nested-name-specifier] shall not have a [~computed-type-specifier]
+or [~splice-scope-specifier].
+[:zh_CN] 声明性[~嵌套名说明符]不应当带有[~计算类型说明符]或[~拼接作用域说明符]。
 
 [:en] A declaration that uses a declarative [~nested-name-specifier] shall be a friend
 declaration or inhabit a scope that contains the entity being redeclared or specialized.
@@ -66,14 +105,48 @@ declaration or inhabit a scope that contains the entity being redeclared or spec
 特化的实体的作用域。
 
 [para]
-[:en] The [~nested-name-specifier] [`::] nominates the global namespace.
-[:zh_CN] [~嵌套名说明符] [`::] 提名全局命名空间。
+[:en] The entity designated by a [~nested-name-specifier] is determined as follows:
+[:zh_CN] [~嵌套名说明符]所指名的实体的确定方式如下：
 
-[:en] A [~nested-name-specifier] with a [~computed-type-specifier] nominates the type
-denoted by the [~computed-type-specifier], which shall be a class or enumeration type.
-[:zh_CN] 带有 [~计算类型说明符]的[~嵌套名说明符]提名该 [~计算类型说明符]所代表的
+[list]
+[item]
+[:en] The [~nested-name-specifier] [`::] designates the global namespace.
+[:zh_CN] [~嵌套名说明符] [`::] 指名全局命名空间。
+
+[item]
+[:en] A [~nested-name-specifier] with a [~computed-type-specifier] designates the same type
+designated by the [~computed-type-specifier], which shall be a class or enumeration type.
+[:zh_CN] 带有 [~计算类型说明符]的[~嵌套名说明符]指名该 [~计算类型说明符]所指名的
 类型，它应当为类或枚举类型。
 
+[item]
+[:en] For a [~nested-name-specifier] of the form [`[~splice-specifier] ::], the
+[~splice-specifier] shall designate a class or enumeration type or a namespace.
+[:zh_CN] 对于“[`[~拼接说明符] ::]”形式的[~嵌套名说明符]，其[~拼接说明符] 应当
+指名一个类或枚举类型或命名空间。
+
+[:en] The [~nested-name-specifier] designates the same entity as the [~splice-specifier].
+[:zh_CN] [~嵌套名说明符]指名与[~拼接说明符]相同的实体。
+
+[item]
+[:en] For a [~nested-name-specifier] of the form
+[`[`:opt:key template] [~splice-specialization-specifier] ::],
+the [~splice-specifier] of the [~splice-specialization-specifier] shall designate
+a class template or an alias template [$T].
+[:zh_CN] 对于形式为“[`[`:opt:key template] [~拼接特例说明符] ::]”的[~嵌套名说明符]，
+其[~拼接特例说明符]的[~拼接说明符]应当指名一个类模板或一个别名模板 [$T]。
+
+[:en] Letting [$S] be the specialization of [$T] corresponding to the template
+argument list of the [~splice-specialization-specifier],
+[$S] shall either be a class template specialization or
+an alias template specialization that denotes a class or enumeration type.
+[:zh_CN] 令 [$S] 为 [$T] 对应于[~拼接特例说明符]的模板实参列表的特例，[$S] 应当
+要么是类模板特例，要么是代表类或枚举类型的别名模板特例。
+
+[:en] The [~nested-name-specifier] designates the underlying entity of [$S].
+[:zh_CN] [~嵌套名说明符]指名 [$S] 的底层实体。
+
+[item]
 [:en] If a [~nested-name-specifier] [$N] is declarative and has a
 [~simple-template-id] with a template argument list [$A] that involves a
 template parameter, let [$T] be the template nominated by [$N] without [$A].
@@ -86,27 +159,28 @@ template parameter, let [$T] be the template nominated by [$N] without [$A].
 [list]
 [item]
 [:en] If [$A] is the template argument list ([#temp.arg]) of the corresponding
-[~template-head] [$H] ([#temp.mem]), [$N] nominates the primary template of [$T];
+[~template-head] [$H] ([#temp.mem]), [$N] designates the primary template of [$T];
 [$H] shall be equivalent to the [~template-head] of [$T] ([#temp.over.link]).
 [:zh_CN] 如果 [$A] 是对应的[~模板头] [$H]（[#temp.mem]）的模板实参列表（[#temp.arg]），
-则 [$N] 提名 [$T] 的主模板；[$H] 应当等价于 [$T] 的[~模板头]（[#temp.over.link]）。
+则 [$N] 指名 [$T] 的主模板；[$H] 应当等价于 [$T] 的[~模板头]（[#temp.over.link]）。
 
 [item]
-[:en] Otherwise, [$N] nominates the partial specialization ([#temp.spec.partial])
+[:en] Otherwise, [$N] designates the partial specialization ([#temp.spec.partial])
 of [$T] whose template argument list is equivalent to [$A] ([#temp.over.link]);
 the program is ill-formed if no such partial specialization exists.
-[:zh_CN] 否则，[$N] 提名 [$T] 的具有等价于 [$A] 的模板实参列表（[#temp.over.link]）
+[:zh_CN] 否则，[$N] 指名 [$T] 的具有等价于 [$A] 的模板实参列表（[#temp.over.link]）
 的部分特化式（[#temp.spec.partial]）；如果不存在这种部分特化式则程序非良构。
 [list:end]
 
-[:en] Any other [~nested-name-specifier] nominates the entity denoted by its
+[:en] Any other [~nested-name-specifier] designates the entity denotes by its
 [~type-name], [~namespace-name], [~identifier], or [~simple-template-id].
-[:zh_CN] 任何其他[~嵌套名说明符]均提名由其[~类型名]，[~命名空间名]，[~标识符]，或
+[:zh_CN] 任何其他[~嵌套名说明符]均指名由其[~类型名]，[~命名空间名]，[~标识符]，或
 [~简单模板标识]所代表的实体。
 
 [:en] If the [~nested-name-specifier] is not declarative, the entity shall not
 be a template.
 [:zh_CN] 如果[~嵌套名说明符]并非声明性的，则该实体应当不是模板。
+[list:end]
 
 [para]
 [:en] A [~qualified-id] shall not be of the form

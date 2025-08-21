@@ -186,11 +186,12 @@ Original   |中文   |章节    |定义
 
 Original   |中文   |章节    |定义
 |-|-|-|-|
-*primary-expression*        |*初等表达式*   | [expr.prim]   | *字面量* \|<br> `this` \|<br> `(` *表达式* `)` \|<br> *标识表达式* \|<br> *lambda-表达式* \|<br> *折叠表达式* \|<br> *requires-表达式*
+*primary-expression*        |*初等表达式*   | [expr.prim]   | *字面量* \|<br> `this` \|<br> `(` *表达式* `)` \|<br> *标识表达式* \|<br> *lambda-表达式* \|<br> *折叠表达式* \|<br> *requires-表达式* \|<br> *拼接表达式*
 *id-expression*             |*标识表达式*   | [expr.prim.id.general] | *无限定标识* \| *限定标识* \| *包组索引表达式*
 *unqualified-id*            |*无限定标识*   | [expr.prim.id.unqual] | *标识符* \|<br> *运算符函数标识* \|<br> *转换函数标识* \|<br> *字面量运算符标识* \|<br> `~` *类型名* \|<br> `~` *计算类型说明符* \|<br> *模板标识*
 *qualified-id*              |*限定标识*     | [expr.prim.id.qual] | *嵌套名说明符* `template`__?__ *无限定标识*
-*nested-name-specifier*     |*嵌套名说明符* | [expr.prim.id.qual] | ( ∅ \| *类型名* \| *命名空间名* \| *计算类型说明符* ) `::` ( ( *标识符* \| `template`__?__ *简单模板标识* ) `::`)__*__
+*nested-name-specifier*     |*嵌套名说明符* | [expr.prim.id.qual] | ( ∅ \| *类型名* \| *命名空间名* \| *计算类型说明符* \| *拼接作用域说明符* ) `::` \|<br> *嵌套名说明符* ( *标识符* \| `template`__?__ *简单模板标识* ) `::`
+*splice-scope-specifier*    |*拼接作用域说明符*| [expr.prim.id.qual] | *拼接说明符* \| `template`__?__ *拼接特例说明符*
 *pack-index-expression*     |*包组索引表达式*| [expr.prim.pack.index] | *标识表达式* `...` `[` *常量表达式* `]`
 *lambda-expression*         |*lambda-表达式*| [expr.prim.lambda.general] | *lambda-引导符* ( ∅ \| `<` *模板形参列表* `>` *requires-子句*__?__ ) *属性说明符序列*__?__ *lambda-声明符* *复合语句*
 *lambda-introducer*         |*lambda-引导符*| [expr.prim.lambda.general] | `[` *lambda-俘获式*__?__ `]`
@@ -211,13 +212,14 @@ Original   |中文   |章节    |定义
 *requirement-seq*           |*规定序列*     | [expr.prim.req.general] | *规定*__+__
 *requirement*               |*规定*         | [expr.prim.req.general] | *简单规定* \| *类型规定* \| *复合规定* \| *嵌套规定*
 *simple-requirement*        |*简单规定*     | [expr.prim.req.simple] | *表达式* `;`
-*type-requirement*          |*类型规定*     | [expr.prim.req.type] | `typename` *嵌套名说明符*__?__ *类型名* `;`
+*type-requirement*          |*类型规定*     | [expr.prim.req.type] | `typename` *嵌套名说明符*__?__ *类型名* `;` \| `typename` ( *拼接说明符* \| *拼接特例说明符* )
 *compound-requirement*      |*复合规定*     | [expr.prim.req.compound] | `{` *表达式* `}` `noexcept`__?__ *返回类型规定*__?__ `;`
 *return-type-requirement*   |*返回类型规定* | [expr.prim.req.compound] | `->` *返回约束*
 *nested-requirement*        |*嵌套规定*     | [expr.prim.req.nested] | `requires` *约束表达式* `;`
-*postfix-expression*        |*后缀表达式*   | [expr.post.general] | *初等表达式* \|<br> *后缀表达式* `[` *表达式或花括号初始化列表* `]` \|<br> *后缀表达式* `(` *表达式列表*__?__ `)` \|<br> (*简单类型说明符* \| *typename-说明符*) (`(` *表达式列表*__?__ `)` \| *花括号初始化列表*) \|<br> *后缀表达式* (`.`\|`->`) `template`__?__ *标识表达式* \|<br> *后缀表达式* (`++`\|`--`) \|<br> (`dynamic_cast`\|`static_cast`\|`reintepret_cast`\|`const_cast`) `<` *类型标识* `>` \|<br> `typeid` `(` (*表达式*\|*类型标识*) `)`
+*splice-expression*         |*拼接表达式*   | [expr.prim.splice] | *拼接说明符* \| `typename` ( *拼接说明符* \| *拼接特例说明符* )
+*postfix-expression*        |*后缀表达式*   | [expr.post.general] | *初等表达式* \|<br> *后缀表达式* `[` *表达式或花括号初始化列表* `]` \|<br> *后缀表达式* `(` *表达式列表*__?__ `)` \|<br> (*简单类型说明符* \| *typename-说明符*) (`(` *表达式列表*__?__ `)` \| *花括号初始化列表*) \|<br> *后缀表达式* (`.`\|`->`) ( `template`__?__ *标识表达式* \| *拼接表达式* ) \|<br> *后缀表达式* (`++`\|`--`) \|<br> (`dynamic_cast`\|`static_cast`\|`reintepret_cast`\|`const_cast`) `<` *类型标识* `>` \|<br> `typeid` `(` (*表达式*\|*类型标识*) `)`
 *expression-list*           |*表达式列表*   | [expr.post.general] | *初始化式列表*
-*unary-expression*          |*一元表达式*   | [expr.unary.general] | *后缀表达式* \|<br> (*一元运算符*\|`++`\|`--`) *转型表达式* \|<br> *等待表达式* \|<br> `sizeof` (*一元表达式* \| `(` *类型标识* `)` \| `...` `(` *标识符* `)`) \|<br> `alignof` `(` *类型标识* `)` \|<br> *noexcept-表达式* \|<br> *new-表达式* \|<br> *delete-表达式*
+*unary-expression*          |*一元表达式*   | [expr.unary.general] | *后缀表达式* \|<br> (*一元运算符*\|`++`\|`--`) *转型表达式* \|<br> *等待表达式* \|<br> `sizeof` (*一元表达式* \| `(` *类型标识* `)` \| `...` `(` *标识符* `)`) \|<br> `alignof` `(` *类型标识* `)` \|<br> *noexcept-表达式* \|<br> *new-表达式* \|<br> *delete-表达式* \|<br> *反射表达式*
 *unary-operator*            |*一元运算符*   | [expr.unary.general] | `*` \| `&` \| `+` \| `-` \| `!` \| `~`
 *await-expression*          |*等待表达式*   | [expr.await]  | `co_await` *转型表达式*
 *noexcept-expression*       |*noexcept-表达式*| [expr.unary.noexcept] | `noexcept` `(` *表达式* `)`

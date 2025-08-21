@@ -17,7 +17,7 @@
 [%arrow operator[%operator [!class member access]]]
 A postfix expression followed by a dot [`.] or an arrow [`->], optionally
 followed by the keyword [`:key template], and then followed by an
-[~id-expression], is a postfix expression.
+[~id-expression] or a [~splice-expression], is a postfix expression.
 [:zh_CN]
 [%表达式[!类成员访问～]]
 [%访问控制[!类成员]]
@@ -30,13 +30,13 @@ followed by the keyword [`:key template], and then followed by an
 [%[`->][%运算符 [!类成员访问～]]]
 [%箭头运算符[%运算符 [!类成员访问～]]]
 后缀表达式后面跟着点 [`.] 或箭头 [`->]，可选地跟着关键词 [`:key template]，
-再跟着[~标识表达式]，是后缀表达式。
+再跟着[~标识表达式]或[~拼接表达式]，是后缀表达式。
 
 [begin:note]
-[:en] If the keyword [`:key template] is used, the following unqualified name
-is considered to refer to a template ([#temp.names]).
-[:zh_CN] 如果使用了 [`:key template] 关键词，则认为其后的无限定名指代的是模板
-（[#temp.names]）。
+[:en] If the keyword [`:key template] is used and followed by an [~id-expression],
+the unqualified name is considered to refer to a template ([#temp.names]).
+[:zh_CN] 如果使用了 [`:key template] 关键词且其后跟着[~标识表达式]，则认为
+此无限定名指代的是模板（[#temp.names]）。
 
 [:en] If a [~simple-template-id] results and is followed by a [`::],
 the [~id-expression] is a [~qualified-id].
@@ -44,26 +44,22 @@ the [~id-expression] is a [~qualified-id].
 [end:note]
 
 [para]
-[:en]
-[%type[!incomplete]]
-For the first option (dot), if the [~id-expression] names a static member or an
-enumerator, the first expression is a discarded-value expression ([#expr.context]);
-if the [~id-expression] names a non-static data member, the first expression
-shall be a glvalue.
-[:zh_CN]
-[%类型[!不完整～]]
-第一种情况（点）中，如果[~标识表达式]指名的是静态成员或枚举符，则第一个表达式是
-弃置表达式（[#expr.context]）；如果[~标识表达式]指名的是非静态数据成员，则第一个
-表达式应当为泛左值。
+[:en] [%type[!incomplete]]
+For a dot that is followed by an expression that designates a static member or
+an enumerator, the first expression is a discarded-value expression ([#expr.context]);
+if the expression after the dot designates a non-static data member, the first
+expression shall be a glvalue.
+[:zh_CN] [%类型[!不完整～]]
+对于后面跟着指名了静态成员或枚举符的表达式的点，第一个表达式是弃置表达式（[#expr.context]）；
+如果点之后的表达式指名的是非静态数据成员，则第一个表达式应当为泛左值。
 
-[:en] For the second option (arrow), the first expression shall be a prvalue
-having pointer type.
-[:zh_CN] 第二种情况（箭头）中，第一个表达式应当为具有指针类型的纯右值。
+[:en] A postfix expression that is followed by an arrow shall be a prvalue having pointer type.
+[:zh_CN] 后面跟着箭头的后缀表达式应当为具有指针类型的纯右值。
 
 [:en] The expression [`E1->E2] is converted to the equivalent form [`(*(E1)).E2];
-the remainder of [#expr.ref] will address only the first option (dot).[#:fn]
+the remainder of [#expr.ref] will address only the form using a dot.[#:fn]
 [:zh_CN] 表达式 [`E1->E2] 被转换为其等价形式 [`(*(E1)).E2]；[#expr.ref] 的余下
-部分仅仅关注第一种情况（点）[#:fn]。
+部分仅仅关注使用点的形式[#:fn]。
 
 [note:foot]
 [:en] Note that [`(*(E1))] is an lvalue.
@@ -83,179 +79,140 @@ static member.
 后缀表达式的值不是必要的，也会对其进行求值，例如当[~标识表达式]代表静态成员时。
 [note:end]
 
-[:en@~] the result of that evaluation, together with the [~id-expression],
-determines the result of the entire postfix expression.
-[:zh_CN@~] 此求值的结果，和[~标识表达式]一起，决定了整个后缀表达式的结果。
+[:en@~] the result of that evaluation, together with the [~id-expression]
+or [~splice-expression], determines the result of the entire postfix expression.
+[:zh_CN@~] 此求值的结果，和[~标识表达式]或[~拼接表达式]一起，决定了整个后缀表达式的结果。
 
 [para]
-[:en]
-Abbreviating [~postfix-expression][`.][~id-expression] as [`E1.E2], [`E1] is
-called the [+object expression].
+[:en] Abbreviating [~postfix-expression][`.][~id-expression] or
+[~postfix-expression][`.][~splice-expression] as [`E1.E2],
+[`E1] is called the [+object expression].
 [:zh_CN]
-将“[~后缀表达式][`.][~标识表达式]”简记为 [`E1.E2]，[`E1] 称为[+对象表达式]。
+将“[~后缀表达式][`.][~标识表达式]”或者“[~后缀表达式][`.][~拼接表达式]”简记为 [`E1.E2]，
+[`E1] 称为[+对象表达式]。
 
-[:en]
-If the object expression is of scalar type, [`E2] shall name the
+[:en] If the object expression is of scalar type, [`E2] shall name the
 pseudo-destructor of that same type (ignoring cv-qualifications) and [`E1.E2] is
 a prvalue of type [=lq]function of () returning [`:key void][=rq].
-[:zh_CN]
-如果对象表达式为标量类型，则 [`E2] 应当指名相同类型（忽略 cv 限定）的伪析构函数，
-且 [`E1.E2] 为类型“返回 [`:key void] 的 () 函数”的纯右值。
+[:zh_CN] 如果对象表达式为标量类型，则 [`E2] 应当指名相同类型（忽略 cv 限定）的
+伪析构函数，且 [`E1.E2] 为类型“返回 [`:key void] 的 () 函数”的纯右值。
 
 [begin:note]
-[:en]
-This value can only be used for a notional function call ([#expr.prim.id.dtor]).
-[:zh_CN]
-这个值只能用于进行概念上的函数调用（[#expr.prim.id.dtor]）。
+[:en] This value can only be used for a notional function call ([#expr.prim.id.dtor]).
+[:zh_CN] 这个值只能用于进行概念上的函数调用（[#expr.prim.id.dtor]）。
 [end:note]
 
 [para]
-[:en]
-Otherwise, the object expression shall be of class type.
-[:zh_CN]
-否则，对象表达式应当为类类型。
+[:en] Otherwise, the object expression shall be of class type.
+[:zh_CN] 否则，对象表达式应当为类类型。
 
-[:en]
-The class type shall be complete unless the class member access appears in the
-definition of that class.
-[:zh_CN]
-除非类成员访问是出现于该类的定义式之中，否则类类型都应当是完整的。
+[:en] The class type shall be complete unless the class member access appears in
+the definition of that class.
+[:zh_CN] 除非类成员访问是出现于该类的定义式之中，否则类类型都应当是完整的。
 
 [begin:note]
-[:en]
-The program is ill-formed if the result differs from that when the class is
+[:en] The program is ill-formed if the result differs from that when the class is
 complete ([#class.member.lookup]).
-[:zh_CN]
-如果结果与当类完整时的结果不同（[#class.member.lookup]），则程序非良构。
+[:zh_CN] 如果结果与当类完整时的结果不同（[#class.member.lookup]），则程序非良构。
 [end:note]
 
 [begin:note]
-[:en]
-[#basic.lookup.qual] describes how names are looked up after the [`.] and [`->]
-operators.
-[:zh_CN]
-[#basic.lookup.qual] 说明 [`.] 和 [`->] 运算符之后的名字如何进行查找。
+[:en] [#basic.lookup.qual] describes how names are looked up after the [`.] and [`->] operators.
+[:zh_CN] [#basic.lookup.qual] 说明 [`.] 和 [`->] 运算符之后的名字如何进行查找。
 [end:note]
 
 [para]
-[:en]
-If [`E2] is a bit-field, [`E1.E2] is a bit-field. 
-[:zh_CN]
-若 [`E2] 是位字段，[`E1.E2] 就是位字段。
+[:en] If [`E2] is a [~splice-expression], then let [`T1] be the type of [`E1].
+[:zh_CN] 若 [`E2] 是[~拼接表达式]，则令 [`T1] 为 [`E1] 的类型。
 
-[:en]
-The type and value category of [`E1.E2] are determined as follows.
-[:zh_CN]
-[`E1.E2] 的类型和值类别确定如下。
+[:en] [`E2] shall designate either a member of [`T1] or
+a direct base class relationship [$([`T1], [`B])].
+[:zh_CN] [`E2] 应当指名 [`T1] 的某个成员或者某项直接基类关系 [$([`T1], [`B])]。
 
-[:en]
-In the remainder of [#expr.ref], [=cv cq] represents either [`:key const] or the
-absence of [`:key const] and [=cv vq] represents either [`:key volatile] or the
-absence of [`:key volatile].
-[:zh_CN]
-在 [#expr.ref] 的余下部分中，[=cv cq] 表示 [`:key const] 或没有 [`:key const]；
+[para]
+[:en] If [`E2] designates a bit-field, [`E1.E2] is a bit-field. 
+[:zh_CN] 若 [`E2] 指名位字段，[`E1.E2] 就是位字段。
+
+[:en] The type and value category of [`E1.E2] are determined as follows.
+[:zh_CN] [`E1.E2] 的类型和值类别确定如下。
+
+[:en] In the remainder of [#expr.ref], [=cv cq] represents either [`:key const] or
+the absence of [`:key const] and [=cv vq] represents either [`:key volatile] or
+the absence of [`:key volatile].
+[:zh_CN] 在 [#expr.ref] 的余下部分中，[=cv cq] 表示 [`:key const] 或没有 [`:key const]；
 而 [=cv vq] 表示 [`:key volatile] 或没有 [`:key volatile]。
 
-[:en]
-[=cv] represents an arbitrary set of cv-qualifiers, as defined in
-[#basic.type.qualifier].
-[:zh_CN]
-[=cv] 表示 cv 限定符的任意集合，正如 [#basic.type.qualifier] 中的定义。
+[:en] [=cv] represents an arbitrary set of cv-qualifiers, as defined in [#basic.type.qualifier].
+[:zh_CN] [=cv] 表示 cv 限定符的任意集合，正如 [#basic.type.qualifier] 中的定义。
 
 [para]
-[:en]
-If [`E2] is declared to have type [=lq]reference to [`T][=rq], then [`E1.E2] is
-an lvalue of type [`T].
-[:zh_CN]
-若声明 [`E2] 的类型为“[`T] 的引用”，则 [`E1.E2] 是 [`T] 类型的左值。
+[:en] If [`E2] designates an entity that is declared to have type
+[=lq]reference to [`T][=rq], then [`E1.E2] is an lvalue of type [`T].
+[:zh_CN] 若 [`E2] 指名的实体的声明类型为“[`T] 的引用”，则 [`E1.E2] 是 [`T] 类型的左值。
 
-[:en]
-If [`E2] is a static data member, [`E1.E2] designates the object or function to
-which the reference is bound, otherwise [`E1.E2] designates the object or
-function to which the corresponding reference member of [`E1] is bound.
-[:zh_CN]
-若 [`E2] 是静态数据成员，则 [`E1.E2] 代表引用所绑定的对象或函数，否则 [`E1.E2]
-代表 [`E1] 的对应引用成员所绑定的对象或函数。
+[:en] In that case, if [`E2] designates a static data member, [`E1.E2] designates
+the object or function to which the reference is bound, otherwise [`E1.E2] designates
+the object or function to which the corresponding reference member of [`E1] is bound.
+[:zh_CN] 此种情况下，若 [`E2] 指名静态数据成员，则 [`E1.E2] 代表引用所绑定的
+对象或函数，否则 [`E1.E2] 代表 [`E1] 的对应引用成员所绑定的对象或函数。
 
-[:en]
-Otherwise, one of the following rules applies.
-[:zh_CN]
-否则，就采用如下规则之一。
+[:en] Otherwise, one of the following rules applies.
+[:zh_CN] 否则，就采用如下规则之一。
 
 [list]
 [item]
-[:en]
-If [`E2] is a static data member and the type of [`E2] is [`T], then [`E1.E2] is
-an lvalue; the expression designates the named member of the class.
-[:zh_CN]
-若 [`E2] 是静态数据成员，而 [`E2] 的类型为 [`T]，则 [`E1.E2] 是左值；该表达式
-代表该类的被指名的成员。
+[:en] If [`E2] designates a static data member and the type of [`E2] is [`T], then
+[`E1.E2] is an lvalue; the expression designates the named member of the class.
+[:zh_CN] 若 [`E2] 指名静态数据成员，而 [`E2] 的类型为 [`T]，则 [`E1.E2] 是左值；
+该表达式代表该类的被指名的成员。
 
-[:en]
-The type of [`E1.E2] is [`T].
-[:zh_CN]
-[`E1.E2] 的类型是 [`T]。
+[:en] The type of [`E1.E2] is [`T].
+[:zh_CN] [`E1.E2] 的类型是 [`T]。
 
 [item]
-[:en]
-If [`E2] is a non-static data member and the type of [`E1] is [=lq][=cv cq1 vq1]
-[`X][=rq], and the type of [`E2] is [=lq][=cv cq2 vq2] [`T][=rq], the expression
-designates the ocrresponding member subobject of the object designated by the
-first expression.
-[:zh_CN]
-若 [`E2] 是非静态数据成员，而 [`E1] 的类型是“[=cv cq1 vq1] [`X]”，且 [`E2] 的
-类型是“[=cv cq2 vq2] [`T]”，则该表达式代表由第一个表达式所代表的对象的对应成员
-子对象。
+[:en] Otherwise, if [`E2] designates a non-static data member and the type of
+[`E1] is [=lq][=cv cq1 vq1] [`X][=rq], and the type of [`E2] is
+[=lq][=cv cq2 vq2] [`T][=rq], the expression designates the ocrresponding member
+subobject of the object designated by [`E1].
+[:zh_CN] 否则，若 [`E2] 指名非静态数据成员，而 [`E1] 的类型是“[=cv cq1 vq1] [`X]”，
+且 [`E2] 的类型是“[=cv cq2 vq2] [`T]”，则该表达式代表由 [`E1] 所代表的对象
+的对应成员子对象。
 
-[:en]
-If [`E1] is an lvalue, then [`E1.E2] is an lvalue; otherwise [`E1.E2] is an
-xvalue.
-[:zh_CN]
-若 [`E1] 是左值，则 [`E1.E2] 是左值；否则 [`E1.E2] 是临限值。
+[:en] If [`E1] is an lvalue, then [`E1.E2] is an lvalue; otherwise [`E1.E2] is an xvalue.
+[:zh_CN] 若 [`E1] 是左值，则 [`E1.E2] 是左值；否则 [`E1.E2] 是临限值。
 
-[:en]
-Let the notation [=cv vq12] stand for the [=lq]union[=rq] of [=cv vq1] and
-[=cv vq2]; that is, if [=cv vq1] or [=cv vq2] is [`volatile], then [=cv vq12] is
-[`:key volatile].
-[:zh_CN]
-令记号 [=cv vq12] 代表 [=cv vq1] 和 [=cv vq2] 的“并”；就是说，若 [=cv vq1] 或
+[:en] Let the notation [=cv vq12] stand for the [=lq]union[=rq] of [=cv vq1] and [=cv vq2];
+that is, if [=cv vq1] or [=cv vq2] is [`volatile], then [=cv vq12] is [`:key volatile].
+[:zh_CN] 令记号 [=cv vq12] 代表 [=cv vq1] 和 [=cv vq2] 的“并”；就是说，若 [=cv vq1] 或
 [=cv vq2] 是 [`volatile]，则 [=cv vq12] 是 [`:key volatile]。
 
-[:en]
-Similarly, let the notation [=cv cq12] stand for the [=lq]union[=rq] of [=cv cq1]
-and [=cv cq2]; that is, if [=cv cq1] or [=cv cq2] is [`:key const], then
-[=cv cq12] is [`:key const].
-[:zh_CN]
-相似地，令记号 [=cv cq12] 代表 [=cv cq1] 和 [=cv cq2] 的“并”；就是说，若
-[=cv cq1] 或 [=cv cq2] 是 [`:key const]，则 [=cv cq12] 是 [`:key const]。
+[:en] Similarly, let the notation [=cv cq12] stand for the [=lq]union[=rq] of
+[=cv cq1] and [=cv cq2]; that is, if [=cv cq1] or [=cv cq2] is [`:key const],
+then [=cv cq12] is [`:key const].
+[:zh_CN] 相似地，令记号 [=cv cq12] 代表 [=cv cq1] 和 [=cv cq2] 的“并”；就是说，
+若 [=cv cq1] 或 [=cv cq2] 是 [`:key const]，则 [=cv cq12] 是 [`:key const]。
 
-[:en]
-If [`E2] is declared to be a [`:key mutable] member, then the type of [`E1.E2]
-is [=lq][=cv vq12] [`T][=rq].
-[:zh_CN]
-若声明 [`E2] 为 [`:key mutable] 成员，则 [`E1.E2] 的类型为“[=cv vq12] [`T]”。
+[:en] If the entity designated by [`E2] is declared to be a [`:key mutable]
+member, then the type of [`E1.E2] is [=lq][=cv vq12] [`T][=rq].
+[:zh_CN] 若 [`E2] 所指名的实体被声明为 [`:key mutable] 成员，则 [`E1.E2] 的类型为
+“[=cv vq12] [`T]”。
 
-[:en]
-If [`E2] is not declared to be a [`:key mutable] member, then the type of
-[`E1.E2] is [=lq][=cv cq12] [=cv vq12] [`T][=rq].
-[:zh_CN]
-若 [`E2] 未被声明为 [`:key mutable] 成员，则 [`E1.E2] 的类型为
+[:en] If the entity designated by [`E2] is not declared to be a [`:key mutable]
+member, then the type of [`E1.E2] is [=lq][=cv cq12] [=cv vq12] [`T][=rq].
+[:zh_CN] 若 [`E2] 所指名的实体未被声明为 [`:key mutable] 成员，则 [`E1.E2] 的类型为
 “[=cv cq12] [=cv vq12] [`T]”。
 
 [item]
-[:en] If [`E2] is an overload set, the expression shall be the
+[:en] Otherwise, if [`E2] denotes an overload set, the expression shall be the
 (possibly-parenthesized) left-hand operand of a member function call
 ([#expr.call]), and function overload resolution ([#over.match]) is used to
 select the function to which [`E2] refers.
-[:zh_CN] 若 [`E2] 为重载集合，则表达式应当为成员函数调用的（可能带括号的）
-左操作数（[#expr.call]），并使用函数重载决议（[#over.match]）来选择 [`E2] 所代表
-的函数。
+[:zh_CN] 否则，若 [`E2] 代表重载集合，则表达式应当为成员函数调用的（可能带括号的）
+左操作数（[#expr.call]），并使用函数重载决议（[#over.match]）来选择 [`E2] 所代表的函数。
 
-[:en]
-The type of [`E1.E2] is the type of [`E2] and [`E1.E2] refers to the function
-referred to by [`E2].
-[:zh_CN]
-[`E1.E2] 的类型为 [`E2] 的类型，且 [`E1.E2] 代表 [`E2] 所代表的函数。
+[:en] The type of [`E1.E2] is the type of [`E2] and [`E1.E2] refers to the
+function referred to by [`E2].
+[:zh_CN] [`E1.E2] 的类型为 [`E2] 的类型，且 [`E1.E2] 代表 [`E2] 所代表的函数。
 
 [list]
 [item]
@@ -268,57 +225,88 @@ is a prvalue.
 [:zh_CN] 否则（[`E1.E2] 代表非静态成员函数），[`E1.E2] 是纯右值。
 
 [begin:note]
-[:en] Any redundant set of parentheses surrounding the expression is ignored
-([#expr.prim.paren]).
+[:en] Any redundant set of parentheses surrounding the expression is ignored ([#expr.prim.paren]).
 [:zh_CN] 忽略包围该表达式的任何多余括号组（[#expr.prim.paren]）。
 [end:note]
 [list:end]
 
 [item]
-[:en]
-If [`E2] is a nested type, the expression [`E1.E2] is ill-formed.
-[:zh_CN]
-若 [`E2] 为嵌套类型，则表达式 [`E1.E2] 非良构。
+[:en] Otherwise, if [`E2] designates a nested type, the expression [`E1.E2] is ill-formed.
+[:zh_CN] 否则，若 [`E2] 指名嵌套类型，则表达式 [`E1.E2] 非良构。
 
 [item]
-[:en]
-If [`E2] is a member enumerator and the type of [`E2] is [`T], the expression
-[`E1.E2] is a prvalue of type [`T] whose value is the value of the enumerator.
-[:zh_CN]
-若 [`E2] 为成员枚举符，且 [`E2] 的类型为 [`T]，则表达式 [`E1.E2] 是 [`T] 类型的
-纯右值，其值为该枚举符的值。
+[:en] Otherwise, if [`E2] designates a member enumerator and the type of [`E2] is [`T],
+the expression [`E1.E2] is a prvalue of type [`T] whose value is the value of the enumerator.
+[:zh_CN] 否则，若 [`E2] 指名成员枚举符，且 [`E2] 的类型为 [`T]，则表达式 [`E1.E2]
+是 [`T] 类型的纯右值，其值为该枚举符的值。
 
-[:en]
-The type of [`E1.E2] is [`T].
-[:zh_CN]
-[`E1.E2] 的类型为 [`T]。
+[item]
+[:en] Otherwise, if [`E2] designates a direct base class relationship [$(D, B)]
+and the type of [`E1] is [=cv] [`T], the expression designates the
+direct base class subobject of type [$B] of the object designated by [`E1].
+[:zh_CN] 否则，若 [`E2] 指名直接基类关系 [$(D, B)]，且 [`E1] 的类型为 [=cv] [`T]，
+则表达式指名由 [`E1] 指名的对象的 [$B] 类型的直接基类子对象。
+
+[:en] If [`E1] is an lvalue, then [`E1.E2] is an lvalue; otherwise, [`E1.E2] is an xvalue.
+[:zh_CN] 若 [`E1] 是左值，则 [`E1.E2] 是左值；否则 [`E1.E2] 是临限值。
+
+[:en] The type of [`E1.E2] is [=lq][=cv] [$B][=rq].
+[:zh_CN] [`E1.E2] 的类型为“[=cv] [$B]”。
+
+[begin:note]
+[:en] This can only occur in an expression of the form [`e1.`[:e2:`]].
+[:zh_CN] 这金晖发生于形式为 [`e1.`[:e2:`]] 的表达式中。
+[end:note]
+
+[begin:example]
+[codeblock]
+struct B {
+  int b;
+};
+struct C : B {
+  int get() const { return b; }
+};
+struct D : B, C { };
+
+constexpr int f() {
+  D d = {1, {}};
+
+  // [:en] [`b] unambiguously refers to the direct base class of type [`B], \
+  [:zh_CN] [`b] 无歧义指代 [`B] 类型的直接基类，
+  // [:en@~] not the indirect base class of type [`B] \
+  [:zh_CN@~] 而非 [`B] 类型的间接基类
+  B& b = d.[: std::meta::bases_of(^^D, std::meta::access_context::current())[0] :];
+  b.b += 10;
+  return 10 * b.b + d.get();
+}
+static_assert(f() == 110);
+[codeblock:end]
+[end:example]
+
+[item]
+[:en] Otherwise, the program is ill-formed.
+[:zh_CN] 否则，程序非良构。
 [list:end]
 
 [para]
-[:en]
-If [`E2] is a non-static member, the program is ill-formed if the class of which
-[`E2] is directly a member is an ambiguous base ([#class.member.lookup]) of the
-naming class ([#class.access.base]) of [`E2].
-[:zh_CN]
-若 [`E2] 为非静态成员，则当以 [`E2] 作为直接成员的类是指名 [`E2] 的类
-（[#class.access.base]）的有歧义基类（[#class.member.lookup]）时，程序非良构。
+[:en] If [`E2] designates a non-static member (possibly after overload resolution),
+the program is ill-formed if the class of which [`E2] designates a direct member
+is an ambiguous base ([#class.member.lookup]) of the designating class ([#class.access.base]) of [`E2].
+[:zh_CN] 若 [`E2] 指名非静态成员（可能需经重载决议），则当 [`E2] 指名其直接成员的类
+是 [`E2] 的指名类（[#class.access.base]）的有歧义基类（[#class.member.lookup]）时，程序非良构。
 
 [begin:note]
-[:en]
-The program is also ill-formed if the naming class is an ambiguous base of the
-class type of the object expression; see [#class.access.base].
-[:zh_CN]
-如果所指明的类是对象表达式的类类型的一个有歧义基类，程序也是非良构的；参见
-[#class.access.base]。
+[:en] The program is also ill-formed if the naming class is an ambiguous base of
+the class type of the object expression; see [#class.access.base].
+[:zh_CN] 如果所指明的类是对象表达式的类类型的一个有歧义基类，程序也是非良构的；参见 [#class.access.base]。
 [end:note]
 
 [para]
-[:en]
-If [`E2] is a non-static member and the result of [`E1] is an object whose type
-is not similar ([#conv.qual]) to the type of [`E1], the behavior is undefined.
-[:zh_CN]
-若 [`E2] 为非静态成员，且 [`E1] 的结果是类型与 [`E1] 的类型不相似（[#conv.qual]）
-的对象，则其行为未定义。
+[:en] If [`E2] designates a non-static member (possibly after overload resolution)
+and the result of [`E1] is an object whose type is not similar ([#conv.qual]) to
+the type of [`E1], the behavior is undefined.
+[:zh_CN] 若 [`E2] 指名非静态成员（可能需经重载决议），且 [`E1] 的结果是类型与 [`E1]
+的类型不相似（[#conv.qual]）的对象，则其行为未定义。
 
 [begin:example]
 [codeblock]
@@ -329,8 +317,7 @@ void f() {
   D d;
   static_cast<B&>(d).j;             // [:en] OK, object expression designates the [`B] subobject of [`d] \
                                     [:zh_CN] OK，对象表达式代表 [`d] 的 [`B] 子对象
-  reinterpret_cast<B&>(d).j;        // [:en] undefined behavior \
-                                    [:zh_CN] 未定义行为
+  reinterpret_cast<B&>(d).j;        // [:en] undefined behavior [:zh_CN] 未定义行为
 }
 [codeblock:end]
 [end:example]

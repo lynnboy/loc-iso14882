@@ -1,0 +1,200 @@
+[section#expr.prim.splice
+    [:en] Expression splicing
+    [:zh_CN] 表达式拼接
+
+[%  [:en] requirement [!type]
+	[:zh_CN] 规定[!类型～] ]
+]
+
+[syntax]
+[rule splice-expression [:zh_CN] 拼接表达式 ]
+    [| splice-specifier ]
+    [| [`:key typename] splice-specifier ]
+    [| [`:key typename] splice-specialization-specifier ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en] A [~splice-specifier] or [~splice-specialization-specifier]
+immediately followed by [`::] or preceded by [`:key typename]
+is never interpreted as part of a [~splice-expression].
+[:zh_CN] 后面紧跟 [`::] 或者前面紧接 [`:key typename] 的[~拼接说明符]或
+[~拼接特例说明符]，永远不会被解释为[~拼接表达式]的一部分。
+
+[begin:example]
+[codeblock]
+struct S { static constexpr int a = 1; };
+template<typename> struct TCls { static constexpr int b = 2; };
+
+constexpr int c = [:^^S:]::a;                   // [:en] OK, [`[:^^ S:`]] is not an expression \
+                                                [:zh_CN] OK，[`[:^^ S:`]] 不是表达式
+constexpr int d = template [:^^TCls:]<int>::b;  // [:en] OK, [`template `[:^^ TCls:`]<int>] is not an expression \
+                                                [:zh_CN] OK，[`template `[:^^ TCls:`]<int>] 不是表达式
+template<auto V> constexpr int e = [:V:];       // OK
+constexpr int f = template [:^^e:]<^^S::a>;     // OK
+
+constexpr auto g = typename [:^^int:](42);      // [:en] OK, [`typename `[:^^ int:`]] is a [~splice-type-specifier] \
+                                                [:zh_CN] OK，[`typename `[:^^ int:`]] 是[~拼接类型说明符]
+
+constexpr auto h = ^^g;
+constexpr auto i = e<[:^^h:]>;          // [:en] error: unparenthesized [~splice-expression] used as template argument \
+                                        [:zh_CN] 错误：将无括号的[~拼接表达式]用作模板实参
+//constexpr auto j = e<([:^^h:])>;        // OK
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] For a [~splice-expression] of the form [~splice-specifier],
+let [$S] be the construct designated by [~splice-specifier].
+[:zh_CN] 对于形式为“[~拼接说明符]”的[~拼接表达式]，令 [$S] 为[~拼接说明符]所指名的构造。
+
+[list]
+[item]
+[:en] The expression is ill-formed if [$S] is
+[:zh_CN] 如果 [$S] 是
+ [list]
+ [item]
+[:en@~] a constructor,
+[:zh_CN@~] 构造函数，
+ [item]
+[:en@~] a destructor,
+[:zh_CN@~] 析构函数，
+ [item]
+[:en@~] an unnamed bit-field, or
+[:zh_CN@~] 无名位字段，或者
+ [item]
+[:en@~] a local entity ([#basic.pre]) such that
+[:zh_CN@~] 满足以下情况的局部实体（[#basic.pre]）
+  [list]
+  [item]
+[:en@~] there is a lambda scope that intervenes
+between the expression and the point at which [$S] was introduced and
+[:zh_CN@~] 在表达式和引入 [$S] 的位置之间存在介入的 lambda 作用域，并且
+  [item]
+[:en@~] the expression would be potentially evaluated if the effect of any
+enclosing [`:key typeid] expressions ([#expr.typeid]) were ignored.
+[:zh_CN@~] 若忽略任何外围 [`:key typeid] 表达式（[#expr.typeid]）的效果时，
+此表达式会潜在求值，
+  [list:end]
+[:zh_CN@~] 那么表达式非良构。
+ [list:end]
+
+[item]
+[:en] Otherwise, if [$S] is a function [$F], the expression denotes an overload
+set containing all declarations of [$F] that precede either the expression or
+the point immediately following the [~class-specifier] of the outermost class
+for which the expression is in a complete-class context;
+overload resolution is performed ([#over.match], [#over.over]).
+[:zh_CN] 否则，如果 [$S] 为函数 [$F]，那么表达式代表一个重载集合，包含处于
+该表达式之前，或者紧跟使得该表达式处于完整类语境的最外层类的[~类说明符]之后的
+位置之前的，[$F] 的所有声明式；实施重载决议（[#over.match]，[#over.over]）。
+
+[item]
+[:en] Otherwise, if [$S] is an object or a non-static data member,
+the expression is an lvalue designating [$S].
+[:zh_CN] 否则，如果 [$S] 是对象或非静态数据成员，那么表达式是代表 [$S] 的左值。
+
+[:en] The expression has the same type as that of [$S], and
+is a bit-field if and only if [$S] is a bit-field.
+[:zh_CN] 表达式具有与 [$S] 相同的类型，并且当且仅当 [$S] 为位字段时它是位字段。
+
+[begin:note]
+[:en] The implicit transformation whereby an [~id-expression] denoting
+a non-static member becomes a class member access ([#expr.prim.id])
+does not apply to a [~splice-expression].
+[:zh_CN] 使得代表非静态数据成员的[~标识表达式]变成类成员访问的隐式变换（[#expr.prim.id]）
+并不适用于[~拼接表达式]。
+[end:note]
+
+[item]
+[:en] Otherwise, if [$S] is a variable or a structured binding,
+[$S] shall either have static or thread storage duration or
+shall inhabit a scope enclosing the expression.
+[:zh_CN] 否则，如果 [$S] 是变量或结构化绑定，那么 [$S] 要么应当具有静态或线程
+存储期，要么应当居于该表达式的外围作用域中。
+
+[:en] The expression is an lvalue referring to the object or function [$X]
+associated with or referenced by [$S], has the same type as that of [$S], and
+is a bit-field if and only if [$X] is a bit-field.
+[:zh_CN] 该表达式是指代与 [$S] 关联或其所引用的对象或函数 [$X] 的左值，它具有
+与 [$S] 相同的类型，并且当且仅当 [$X] 为位字段时它是位字段。
+
+[begin:note]
+[:en] The type of a [~splice-expression] designating a variable or structured
+binding of reference type will be adjusted to a non-reference type ([#expr.type]).
+[:zh_CN] 指名引用类型的变量或结构化绑定的[~拼接表达式]的类型，会调整为非引用类型（[#expr.type]）。
+[end:note]
+
+[item]
+[:en] Otherwise, if [$S] is a value or an enumerator, the expression is a prvalue
+that computes [$S] and whose type is the same as that of [$S].
+[:zh_CN] 否则，如果 [$S] 是值或枚举符，那么表达式是计算出 [$S] 的纯右值，且其类型与 [$S] 相同。
+
+[item]
+[:en] Otherwise, the expression is ill-formed.
+[:zh_CN] 否则，表达式非良构。
+[list:end]
+
+[para]
+[:en] For a [~splice-expression] of the form [`[`:key template] [~splice-specifier]],
+the [~splice-specifier] shall designate a function template [$T]
+that is not a constructor template.
+[:zh_CN] 对于形式为“[`[`:key template] [~拼接说明符]]”的[~拼接表达式]，其
+[~拼接说明符]应当指名并非构造函数模板的函数模板 [$T]。
+
+[:en] The expression denotes an overload set containing all declarations of [$T]
+that precede either the expression or the point immediately following the
+[~class-specifier] of the outermost class for which the expression is in a
+complete-class context; overload resolution is performed.
+[:zh_CN] 该表达式代表一个重载集合，包含处于该表达式之前，或者紧跟使得该表达式处于
+完整类语境的最外层类的[~类说明符]之后的位置之前的，[$T] 的所有声明式；实施重载决议。
+
+[begin:note]
+[:en] During overload resolution, candidate function templates undergo template argument
+deduction and the resulting specializations are considered as candidate functions.
+[:zh_CN] 重载决议过程中，候选函数模板进行模板实参推断，而所得特例均被当做候选函数。
+[end:note]
+
+[para]
+[:en] For a [~splice-expression] of the form
+[`template [~splice-specialization-specifier]], the [~splice-specifier] of the
+[~splice-specialization-specifier] shall designate a template [$T].
+[:zh_CN] 对于形式为“[`template [~拼接特例说明符]]”的[~拼接表达式]，其
+[~拼接特例说明符]的[~拼接说明符]应当指名模板 [$T]。
+
+[list]
+[item]
+[:en] If [$T] is a function template, the expression denotes an overload set containing
+all declarations of [$T] that precede either the expression or the point immediately
+following the [~class-specifier] of the outermost class for which the expression
+is in a complete-class context; overload resolution is performed ([#over.match], [#over.over]).
+[:zh_CN] 如果 [$T] 是函数模板，那么该表达式代表一个重载集合，包含处于该表达式之前，
+或者紧跟使得该表达式处于完整类语境的最外层类的[~类说明符]之后的位置之前的，
+[$T] 的所有声明式；实施重载决议（[#over.match]，[#over.over]）。
+
+[item]
+[:en] Otherwise, if [$T] is a variable template, let [$S] be the specialization of [$T]
+corresponding to the template argument list of the [~splice-specialization-specifier].
+[:zh_CN] 否则，如果 [$T] 是变量模板，那么令 [$S] 为对应于[~拼接特例说明符]的
+模板实参列表的 [$T] 的特例。
+
+[:en] The expression is an lvalue referring to
+the object associated with [$S] and has the same type as that of [$S].
+[:zh_CN] 该表达式是指代与 [$S] 关联的对象的左值，并具有与 [$S] 相同的类型。
+
+[item]
+[:en] Otherwise, the expression is ill-formed.
+[:zh_CN] 否则，表达式非良构。
+[list:end]
+
+[begin:note]
+[:en] Class members are accessible from any point
+when designated by [~splice-expression]s ([#class.access.base]).
+[:zh_CN] 类成员被[~拼接表达式]指名时，在任何位置都是可访问的（[#class.access.base]）。
+
+[:en] A class member access expression ([#expr.ref]) whose right operand is a
+[~splice-expression] is ill-formed if the left operand (considered as a pointer)
+cannot be implicitly converted to a pointer to the designating class of the right operand.
+[:zh_CN] 右操作数为[~拼接表达式]的类成员访问表达式（[#expr.ref]），如果其左操作数
+（作为指针考虑）不能被隐式转换为指向右操作数的被指名类的指针，那么它非良构。
+[end:note]
