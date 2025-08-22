@@ -150,8 +150,8 @@ tokens is context-dependent.
 [:zh_CN] 将源文件的字符分割成预处理记号的过程是上下文相关的。
 
 [begin:example]
-[:en] See the handling of [`<] within a [`#include] preprocessing directive ([#cpp.include]).
-[:zh_CN] 参见 [`#include] 预处理指令中对 [`<] 的处理（[#cpp.include]）。
+[:en] See the handling of [`<] within a [`#include] preprocessing directive ([#lex.header], [#cpp.include]).
+[:zh_CN] 参见 [`#include] 预处理指令中对 [`<] 的处理（[#lex.header]，[#cpp.include]）。
 [end:example]
 
 [item]
@@ -182,8 +182,10 @@ that common [~encoding-prefix].
 [:zh_CN] 随即认为每个这种[~字符串字面量]预处理记号均具有这个共同[~编码前缀]。
 
 [item]
-[:en] Adjacent [~string-literal] preprocessing tokens are concatenated ([#lex.string]).
-[:zh_CN] 拼接相邻的[~字符串字面量]预处理记号（[#lex.string]）。
+[:en] [%concatenation[!string]]
+Adjacent [~string-literal] preprocessing tokens are concatenated ([#lex.string]).
+[:zh_CN] [%concatenation[!string]]
+拼接相邻的[~字符串字面量]预处理记号（[#lex.string]）。
 
 [item]
 [:en] Each preprocessing token is converted into a token ([#lex.token]).
@@ -223,53 +225,119 @@ between these entities and any external representation.
 [:zh_CN] 这仅是个概念上的描述，而并非对任何特定的实现的说明。
 [end:note]
 
-[item]
-[:en] Translated translation units and instantiation units are combined as follows:
-[:zh_CN] 已翻译过的翻译单元和实例化单元按如下方式合并：
-
 [begin:note]
-[:en] Some or all of these can be supplied from a library.
-[:zh_CN] 其中的某些或全部单元都可以由程序库提供。
+[:en] Previously translated translation units can be preserved individually or in libraries.
+[:zh_CN] 已翻译过的翻译单元可以独立保留，或者保留在程序库中。
+
+[:en] The separate translation units of a program communicate ([#basic.link]) by
+(for example) calls to functions whose identifiers have external or module linkage,
+manipulation of objects whose identifiers have external or module linkage, or
+manipulation of data files.
+[:zh_CN] 程序中分离的翻译单元之间，通过（例如）调用标识符具有外部或模块连接的函数，
+操作标识符具有外部或模块连接的对象，或操作数据文件来进行通信（[#basic.link]）。
 [end:note]
 
-[:en] Each translated translation unit is examined to produce a list of required instantiations.
-[:zh_CN] 检查每个已翻译过的翻译单元以产生其所需的实例化的列表。
+[para:~]
+[:en] While the tokens constituting translation units are being analyzed and
+translated, required instantiations are performed.
+[:zh_CN] 对组成翻译单元的记号进行解析和翻译时，进行必要的实例化。
 
 [begin:note]
 [:en] This can include instantiations which have been explicitly requested ([#temp.explicit]).
 [:zh_CN] 其中可以包括经由显式要求（[#temp.explicit]）的实例化。
 [end:note]
 
-[:en] The definitions of the required templates are located.
-[:zh_CN] 对所需要的模板定义进行定位。
-
-[:en] It is [?impldef whether source of translation units must be available to
-locate template definitions] whether the source of the translation units
-containing these definitions is required to be available.
-[:zh_CN] 包含这些定义的翻译单元的源文件此时是否应当可用是[?impldef 当对模板定义
-进行定位时翻译单元的源文件是否必须可用]。
+[:en] The contexts from which instantiations may be performed
+are determined by their respective points of instantiation ([#temp.point]).
+[:zh_CN] 从中进行实例化的语境，是通过它们的相应实例化点（[#temp.point]）确定的。
 
 [begin:note]
-[:en] An implementation can choose to encode sufficient information into the
-translated translation unit so as to ensure the source is not required here.
-[:zh_CN] 实现可以选择将充分的信息编码进已翻译过的翻译单元，以确保此时不需要源文件。
+[:en] Other requirements in this document can further constrain
+the context from which an instantiation can be performed.
+[:zh_CN] 本文档的其他规定对可以进行实例化的语境有进一步的约束。
+
+[:en] For example, a constexpr function template specialization
+might have a point of instantation at the end of a translation unit,
+but its use in certain constant expressions could require
+that it be instantiated at an earlier point ([#temp.inst]).
+[:zh_CN] 例如，constexpr 函数模板特例可能在翻译单元末尾有一个实例化点，
+但在某些常量表达式中使用它则要求它在更早的位置实例化（[#temp.inst]）。
 [end:note]
 
-[:en] All the required instantiations are performed to produce [+instantiation units].
-[:zh_CN] 实施所有需要的实例化以产生[+实例化单元]。
-
-[begin:note]
-[:en] These are similar to translated translation units, but contain no
-references to uninstantiated templates and no template definitions.
-[:zh_CN] 它们类似于已翻译过的翻译单元，但不包含对任何未实例化的模板的引用和任何模板定义。
-[end:note]
+[para:~]
+[:en] Each instantiation results in new program constructs.
+[:zh_CN] 每次实例化都产生新的程序构造。
 
 [:en] The program is ill-formed if any instantiation fails.
 [:zh_CN] 如果任何实例化失败，则程序是非良构的。
 
+[para:~]
+[:en] During the analysis and translation of tokens,
+certain expressions are evaluated ([#expr.const]).
+[:zh_CN] 对记号进行分析和翻译时过程中，某些表达式会被求值（[#expr.const]）。
+
+[:en] Constructs appearing at a program point [$P] are analyzed
+in a context where each side effect of evaluating an expression [$E]
+as a full-expression is complete if and only if
+[:zh_CN] 对出现于程序位置 [$P] 的语言构造的分析，当且仅当以下情况时，
+是在将表达式 [$E] 当做全表达式求值的每项副作用所完成的语境中进行的：
+ [list]
+ [item]
+[:en] [$E] is the expression corresponding to a [~consteval-block-declaration] ([#dcl.pre]), and
+[:zh_CN] [$E] 是对应于某条 [~consteval-块声明式]（[#dcl.pre]）的表达式，并且
+ [item]
+[:en] either that [~consteval-block-declaration] or the template definition from
+which it is instantiated is reachable from ([#module.reach])
+[:zh_CN] 该 [~consteval-块声明式]或者其所实例化的模板的定义式，从以下位置可达：
+  [list]
+  [item]
+[:en@~] [$P], or
+[:zh_CN@~] [$P]，或
+  [item]
+[:en@~] the point immediately following the [~class-specifier] of the outermost
+class for which [$P] is in a complete-class context ([#class.mem.general]).
+[:zh_CN@~] 紧跟使 [$P] 处于完整类语境的最外层的类的[~类说明符]之后的位置（[#class.mem.general]）。
+  [list:end]
+ [list:end]
+
+[begin:example]
+[codeblock]
+class S {
+  class Incomplete;
+
+  class Inner {
+    void fn() {
+      /* [$p_1] */ Incomplete i;    // OK
+    }
+  }; /* [$p_2] */
+
+  consteval {
+    define_aggregate(^^Incomplete, {});
+  }
+}; /* [$p_3] */
+[codeblock:end]
+
+[:en] Constructs at [$p_1] are analyzed in a context where the side effect of
+the call to [`define_aggregate] is evaluated because
+[:zh_CN] 对 [$p_1] 处的语言构造的分析是在求值对 [`define_aggregate] 调用的副作用
+的语境中进行的，因为
+ [list]
+ [item]
+[:en@~] [$E] is the expression corresponding to a consteval block, and
+[:zh_CN@~] [$E] 是对应于 consteval 块的表达式，并且
+ [item]
+[:en@~] [$p_1] is in a complete-class context of [`S] and
+the consteval block is reachable from [$p_3].
+[:zh_CN@~] [$p_1] 处于 [`S] 的完整类语境中，且此 consteval 块从 [$p_3] 可达。
+ [list:end]
+[end:example]
+
 [item]
-[:en] All external entity references are resolved.
-[:zh_CN] 解决所有对外部实体的引用。
+[:en] [%linking]
+Translated translation units are combined, and
+all external entity references are resolved.
+[:zh_CN] [%连接]
+合并已翻译的翻译单元，并解决所有对外部实体的引用。
 
 [:en] Library components are linked to satisfy external references to entities
 not defined in the current translation.

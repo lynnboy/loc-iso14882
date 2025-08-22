@@ -234,7 +234,7 @@ def CppXX(): return Cpp() + ' 2020'
 def CppXXIII(): return Cpp() + ' 2023'
 def CppXXVI(): return Cpp() + ' 2026'
 def IsoCUndated(): return 'ISO/IEC 9899'
-def IsoC(): return IsoCUndated() + ':2018'
+def IsoC(): return IsoCUndated() + ':2024'
 def IsoFloatUndated(): return 'ISO/IEC 60559'
 def IsoPosixUndated(): return 'ISO/IEC/IEEE 9945'
 def IsoPosix(): return f'{IsoPosixUndated()}:2009'
@@ -266,6 +266,7 @@ def required(_1:str): return Fundesc(text('Required behavior'))
 def requires(_1:str): return Fundesc(text('Requires'))
 def constraints(_1:str): return Fundesc(text('Constraints'))
 def mandates(_1:str): return Fundesc(text('Mandates'))
+def constantwhen(_1:str): return Fundesc(text('Constant When'))
 def expects(_1:str): return Fundesc(text('Preconditions'))
 def hardexpects(_1:str): return Fundesc(text('Hardened preconditions'))
 def effects(_1:str): return Fundesc(text('Effects'))
@@ -316,9 +317,12 @@ def UNSP(_1:str): return f'[.textit[.texttt {_1}]]'
 def unspec(): return UNSP(text('unspecified'))
 def unspecbool(): return UNSP(text('unspecified-bool-type'))
 def seebelow(): return UNSP(text('see below'))
+def seeabove(): return UNSP(text('see above'))
 @applyTo(['?seeref#refid'])
 def seeref(refid:str): return UNSP(text(f'see[=nbsp]{ref(refid)}'))
 def unspecuniqtype(): return UNSP(text('unspecified unique type'))
+
+def reflexpr(_1): return f'^^{_1}'
 
 def unun(): return '__'
 def xname(_1:str): return tcode(f'__{_1}')

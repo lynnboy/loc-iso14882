@@ -230,6 +230,8 @@ Original   |中文   |章节    |定义
 *noptr-new-declarator*      |*非指针-new-声明符*| [expr.new] | `[` *表达式*__?__ `]` *属性说明符序列*__?__ (`[` *常量表达式* `]` *属性说明符序列*__?__)__\*__
 *new-initializer*           |*new-初始化式* | [expr.new]    | `(` *表达式列表*__?__ `)` \| *带花括号初始化列表*
 *delete-expression*         |*delete-表达式*| [expr.delete] | `::`__?__ `delete` (`[` `]`)__?__ *转型表达式*
+*reflect-expression*        |*反射表达式*   | [expr.reflect] | `^^` ( `::` \| 反射名 \| 类型标识 \| 标识表达式 )
+*reflection-name*           |*反射名*       | [expr.reflect] | *嵌套名说明符*__?__ *标识符* \| *嵌套名说明符* `template` *标识符*
 *cast-expression*           |*转型表达式*   | [expr.cast]   | ( `(` *类型标识* `)` )__\*__ *一元表达式*
 *pm-expression*             |*成员指针表达式*| [expr.mptr.oper] | ( *转型表达式* (`.*`\|`->*`) )__\*__ *转型表达式*
 *multiplicative-expression* |*乘性表达式*   | [expr.mul]    | ( *成员指针表达式* (`*`\|`/`\|`%`))__\*__ *成员指针表达式*
@@ -730,6 +732,7 @@ character literal                       |字符字面量     |预处理记号，
 character sequence                      |字符序列       |三种`char`的数组
 character set                           |字符集
 character string literal                |字符字符串字面量 |无前缀的*字符串字面量*
+characteristic sequence                 |特性序列
 checking semantics                      |检查语义       |契约评估语义：observe, enforce, quick-enforce
 child operations                        |子操作         |异步操作启动的异步操作
 class                                   |类
@@ -1074,6 +1077,7 @@ escape character                        |转义字符
 escape sequence                         |转义序列   |简单、数值、有条件转义序列
 evaluate in sequence                    |顺序评估   |评估契约断言的列表
 evaluation                              |求值       |表达式的求值包括值计算和副作用
+evaluation context                      |求值语境   |
 evaluation semantics                    |评估语义   |契约评估语义
 Exact Match                             |精确匹配   |ICS等级，包括恒等Id、左值变换LvTrn、限定调整
 exception                               |异常
@@ -1321,6 +1325,7 @@ initializer list                        |初始化式列表   |带花括号的�
 initializer-list constructor            |初始化式列表构造函数   |仅接受一个initlist的构造函数，在列表初始化中优先<br>模板构造函数为非推断语境而不是初始化式列表构造函数
 initializing declaration                |初始化声明式   |指定变量初始化的声明式，定义式或带MDI的成员声明式
 injected-class-name                     |注入类名   |当做成员名的类名
+injected declaration                    |注入声明式 |反射展开
 inline function                         |内联函数   |优先内联展开，跨UT多定义
 inline namespace                        |内联命名空间   |相当于外围命名空间中`using`指令
 inline specifier                        |inline 说明符  |变量或函数。首个声明式决定是否内联
@@ -1755,6 +1760,7 @@ primary template                        |主模板
 primary token                           |首选记号   |代用记号所等价的记号
 private                                 |私有       |允许类内部及友元访问。`class`的默认访问
 private-module-fragment                 |私有模块分段   |用于支持单TU模块，非导出部分
+produce                                 |产生       |反射展开产生注入声明式
 program                                 |程序       |连接起来的翻译单元
 program-defined specialization          |由程序定义的特化式
 program-defined type                    |由程序定义的类型
@@ -1830,6 +1836,7 @@ reference to T                          |T 的引用，指代 T 的引用
 reference type                          |引用类型，T& 或 T&&
 referenceable type                      |可被引用的类型 |可以创建 T& 的类型 T，包括引用类型
 reflection                              |反射           |`std::meta::info` 值 
+reflection operator                     |反射运算符     |`^^`
 regex                                   |正则表达式
 region                                  |区，区域
 region of RCU protection                |RCU 保护区
@@ -2039,6 +2046,7 @@ synchronize with                        |同步于
 syntactic category                      |语法范畴   |BNF 产生式非终结符
 syntax                                  |语法
 syntax notation                         |语法表示法
+synthesized point                       |合成点         |注入声明式的位置，TU 末尾
 synthesized three-way comparison        |合成三路比较   |`static_cast<R>(a <=> b)`，或`a <=> b`重载决议结果，否则：<br>`R`为`strong_ordering`: `a==b ? equal : a<b ? less : greater`<br>`R`为`weak_ordering`: `a==b ? equivalent : a<b ? less : greater`<br>`R`为`partial_ordering`：`a==b ? equivalent : a<b ? less : a>b ? greater : unordered`<br>其他`R`或无`==`、`<`则无定义
 
 ### T
