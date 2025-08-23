@@ -1,0 +1,195 @@
+[section#exec.task.scheduler
+    [`execution::task_scheduler]
+]
+
+[codeblock:synopsis]
+namespace std::execution {
+  class [[redoc("`:lib>")]]task_scheduler {
+    class [[redoc("*>")]]ts-sender;                    // [=expos]
+
+    template<[[redoc("`:c>")]]receiver R>
+      class [[redoc("*>")]]state;                      // [=expos]
+
+  public:
+    using scheduler_concept = scheduler_t;
+
+    template<class Sch, class Allocator = allocator<void>>
+      requires (![[redoc("`:c>")]]same_as<task_scheduler, remove_cvref_t<Sch>>)
+        && [[redoc("`:c>")]]scheduler<Sch>
+    explicit task_scheduler(Sch&& sch, Allocator alloc = {});
+
+    [[redoc("*>")]]ts-sender schedule();
+
+    friend bool operator==(const task_scheduler& lhs, const task_scheduler& rhs)
+        noexcept;
+    template<class Sch>
+      requires (![[redoc("`:c>")]]same_as<task_scheduler, Sch>)
+      && [[redoc("`:c>")]]scheduler<Sch>
+    friend bool operator==(const task_scheduler& lhs, const Sch& rhs) noexcept;
+
+  private:
+    shared_ptr<void> [[redoc("*>")]]sch_; // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`task_scheduler] is a class that models [`:c scheduler] ([#exec.sched]).
+[:zh_CN] [`task_scheduler] 是构成 [`:c scheduler] 类（[#exec.sched]）。
+
+[:en] Given an object [`s] of type [`task_scheduler], let
+[`[*SCHED](s)] be the object owned by [`s.[*sch_]].
+[:zh_CN] 给定 [`task_scheduler] 类型的对象 [`s]，令 [`[*SCHED](s)] 为
+[`s.[*sch_]] 所拥有的对象。
+
+[%@lib@ctor task_scheduler]
+[codeblock:declaration]
+template<class Sch, class Allocator = allocator<void>>
+  requires(![[redoc("`:c>")]]same_as<task_scheduler, remove_cvref_t<Sch>>) && [[redoc("`:c>")]]scheduler<Sch>
+explicit task_scheduler(Sch&& sch, Allocator alloc = {});
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initialize [*sch_] with
+[`allocate_shared<remove_cvref_t<Sch>>(alloc, std::forward<Sch>(sch))].
+[:zh_CN] 以 [`allocate_shared<remove_cvref_t<Sch>>(alloc, std::forward<Sch>(sch))]
+初始化 [*sch_]。
+
+[para:recommended]
+[:en] Implementations should avoid the use of dynamically
+allocated memory for small scheduler objects.
+[:zh_CN] 实现应避免为小型调度器对象使用动态分配的内存。
+
+[para:remarks]
+[:en] Any allocations performed by construction of [*ts-sender] or [*state]
+objects resulting from calls on [`*this] are performed using a copy of [`alloc].
+[:zh_CN] 由 [`*this] 上的调用产生的 [*ts-sender] 或 [*state] 对象的构造所实施的任何
+分配，都使用 [`alloc] 的副本进行。
+[div:end]
+
+[%@lib@member scheduler[!task_scheduler]]
+[codeblock:declaration]
+[[redoc("*>")]]ts-sender schedule();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Returns an object of type [*ts-sender] containing a sender
+initialized with [`schedule([*SCHED](*this))].
+[:zh_CN] 返回一个类型为 [*ts-sender] 的对象，包含一个以
+[`schedule([*SCHED](*this))] 初始化的发送者。
+[div:end]
+
+[%@lib@member operator==[!task_scheduler]]
+[codeblock:declaration]
+bool operator==(const task_scheduler& lhs, const task_scheduler& rhs) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return lhs == [*SCHED](rhs);]
+[:zh_CN] 等价于：[`return lhs == [*SCHED](rhs);]
+[div:end]
+
+[%@lib@member operator==[!task_scheduler]]
+[codeblock:declaration]
+template<class Sch>
+  requires (![[redoc("`:c>")]]same_as<task_scheduler, Sch>)
+        && [[redoc("`:c>")]]scheduler<Sch>
+bool operator==(const task_scheduler& lhs, const Sch& rhs) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`false] if type of [`[*SCHED](lhs)] is not [`Sch], otherwise
+[`[*SCHED](lhs) == rhs;]
+[:zh_CN] 如果 [`[*SCHED](lhs)] 的类型并非 [`Sch] 则返回 [`false]，否则返回
+[`[*SCHED](lhs) == rhs;]。
+[div:end]
+
+[para]
+[codeblock]
+namespace std::execution {
+  class task_scheduler::[[redoc("*>")]]ts-sender {     // [=expos]
+  public:
+    using sender_concept = sender_t;
+
+    template<[[redoc("`:c>")]]receiver Rcvr>
+      [[redoc("*>")]]state<Rcvr> connect(Rcvr&& rcvr);
+  };
+}
+[codeblock:end]
+[:en] [*ts-sender] is an exposition-only class that models [`:c sender] ([#exec.snd])
+and for which [`completion_signatures_of_t<[*ts-sender]>] denotes:
+[:zh_CN] [*ts-sender] 是构成 [`:c sender]（[#exec.snd]）的仅用于阐释的类，并且
+[`completion_signatures_of_t<[*ts-sender]>] 表示：
+[codeblock]
+completion_signatures<
+  set_value_t(),
+  set_error_t(error_code),
+  set_error_t(exception_ptr),
+  set_stopped_t()>
+[codeblock:end]
+
+[para]
+[:en] Let [^sch] be an object of type [`task_scheduler] and let [`sndr] be an
+object of type [*ts-sender] obtained from [`schedule([^sch])].
+[:zh_CN] 令 [^sch] 为 [`task_scheduler] 类型的对象，并令 [`sndr] 为从
+[`schedule([^sch])] 所得的 [*ts-sender] 类型的对象。
+
+[:en] Then [`get_completion_scheduler<set_value_t>(get_env(sndr)) == [^sch]] is [`true].
+[:zh_CN] 则 [`get_completion_scheduler<set_value_t>(get_env(sndr)) == [^sch]] 为 [`true]。
+
+[:en] The object [`[*SENDER](sndr)] is the sender object contained by
+[`sndr] or an object move constructed from it.
+[:zh_CN] 对象 [`[*SENDER](sndr)] 是 [`sndr] 所包含的发送器对象或从其移动构造的对象。
+
+[%@lib@member connect[!task_scheduler::[*ts-sender]]]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]receiver Rcvr>
+  [[redoc("*>")]]state<Rcvr> connect(Rcvr&& rcvr);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [^r] be an object of a type that models [`:c receiver]
+and whose completion handlers result in invoking the corresponding
+completion handlers of [`rcvr] or copy thereof.
+[:zh_CN] 令 [^r] 为一个构成 [`:c receiver] 的类型的对象，并且其完成处理器会导致调用
+[`rcvr] 或其副本的相应完成处理器。
+
+[:en] Returns an object of type [`[*state]<Rcvr>] containing an operation state
+object initialized with [`connect([*SENDER](*this), std::move([^r]))].
+[:zh_CN] 返回一个 [`[*state]<Rcvr>] 类型的对象，包含一个以
+[`connect([*SENDER](*this), std::move([^r]))] 初始化的操作状态对象。
+[div:end]
+
+[para]
+[codeblock]
+namespace std::execution {
+  template<[[redoc("`:c>")]]receiver R>
+  class task_scheduler::[[redoc("*>")]]state {         // [=expos]
+  public:
+    using operation_state_concept = operation_state_t;
+
+    void start() & noexcept;
+  };
+}
+[codeblock:end]
+
+[:en] [*state] is an exposition-only class template whose
+specializations model [`:c operation_state] ([#exec.opstate]).
+[:zh_CN] [*state] 是仅用于阐释的类模板，其特例构成 [`:c operation_state]（[#exec.opstate]）。
+
+[%@lib@member start[!task_scheduler::[*state]]]
+[codeblock:declaration]
+void start() & noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`start(st)] where [`st] is the operation
+state object contained by [`*this].
+[:zh_CN] 等价于 [`start(st)]，其中 [`st] 是 [`*this] 所包含的操作状态对象。
+[div:end]

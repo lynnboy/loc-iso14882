@@ -1770,6 +1770,7 @@ protection epoch                        |保护纪元   |涉险指针
 prototype                               |原型
 prototype parameter                     |原型形参   |概念的首个模板形参
 provides storage                        |提供存储   |字节数组对象为放置构造对象提供存储
+proxy                                   |代理       |基于某个类的接收器代理，预分配后备存储，批次分段/不分段（bulk chunked/unchunked）
 prvalue                                 |纯右值     |对表达式仅使用其值而不涉及识别性，结果为值
 pseudo-destructor                       |伪析构函数 |标量类型的析构函数
 pseudo destructor call                  |伪析构函数调用 |无操作但结束生存期

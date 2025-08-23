@@ -1,0 +1,105 @@
+[section#exec.sysctxrepl.query
+    [`query_parallel_scheduler_backend]
+]
+
+[%@lib query_parallel_scheduler_backend]
+[codeblock:declaration]
+shared_ptr<parallel_scheduler_backend> query_parallel_scheduler_backend();
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] [`query_parallel_scheduler_backend()] returns
+the implementation object for a parallel scheduler.
+[:zh_CN] [`query_parallel_scheduler_backend()] 返回一个并行调度器的实现对象。
+
+[para:returns]
+[:en] A non-null shared pointer to an object
+that implements the [`parallel_scheduler_backend] interface.
+[:zh_CN] 一个指向实现了 [`parallel_scheduler_backend] 接口的对象的非空共享指针。
+
+[para:remarks]
+[:en] This function is replaceable ([#dcl.fct.def.replace]).
+[:zh_CN] 此函数可替换（[#dcl.fct.def.replace]）。
+[div:end]
+
+[codeblock:synopsis]
+namespace std::execution::system_context_replaceability {
+  struct [[redoc("`:lib>")]]receiver_proxy {
+    virtual ~receiver_proxy() = default;
+
+  protected:
+    virtual bool [[redoc("*>")]]query-env([[redoc("[=unspec]")]]) noexcept = 0;   // [=expos]
+
+  public:
+    virtual void set_value() noexcept = 0;
+    virtual void set_error(exception_ptr) noexcept = 0;
+    virtual void set_stopped() noexcept = 0;
+
+    template<class P, [[redoc("*>")]]class-type Query>
+      optional<P> try_query(Query q) noexcept;
+  };
+
+  struct [[redoc("`:c>")]]bulk_item_receiver_proxy : receiver_proxy {
+    virtual void execute(size_t, size_t) noexcept = 0;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`receiver_proxy] represents a receiver that will be notified
+by the implementations of [`parallel_scheduler_backend]
+to trigger the completion operations.
+[:zh_CN] [`receiver_proxy] 表示一种接收器，它会接收 [`parallel_scheduler_backend]
+的实现的通知以触发完成操作。
+
+[:en] [`bulk_item_receiver_proxy] is derived from [`receiver_proxy] and
+is used for [`bulk_chunked] and [`bulk_unchunked] customizations
+that will also receive notifications from implementations of
+[`parallel_scheduler_backend] corresponding to different iterations.
+[:zh_CN] 派生于 [`receiver_proxy] 的 [`bulk_item_receiver_proxy] 用于
+[`bulk_chunked] 和 [`bulk_unchunked] 的定制，它也会接收来自
+[`parallel_scheduler_backend] 的实现的对应于不同次重复的通知。
+
+[codeblock:declaration]
+template<class P, [[redoc("*:c>")]]class-type Query>
+  optional<P> [[redoc("`:lib>")]]try_query(Query q) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`P] is a cv-unqualified non-array object type.
+[:zh_CN] [`P] 是 cv 未限定的非数组对象类型。
+
+[para:returns]
+[:en] Let [`env] be the environment of the receiver represented by [`*this].
+[:zh_CN] 令 [`env] 为 [`*this] 表示的接收器的环境。
+
+[:en] If
+[:zh_CN] 如果
+[list]
+[item]
+[:en@~] [`Query] is not a member of an implementation-defined set
+of supported queries; or
+[:zh_CN@~] [`Query] 不是某个由实现定义的受支持查询集合的成员；或者
+[item]
+[:en@~] [`P] is not a member of an implementation-defined set
+of supported result types for [`Query]; or
+[:zh_CN@~] [`P] 不是某个由实现定义的受支持的 [`Query] 的结果类型集合的成员；或者
+[item]
+[:en@~] the expression [`q(env)] is not well-formed or does not have type [=cv] [`P],
+[:zh_CN@~] 表达式 [`q(env)] 非良构，或者不具有 [=cv] [`P] 类型，
+[list:end]
+[:en@~] then returns [`nullopt].
+[:zh_CN@~] 则返回 [`nullopt]。
+
+[:en] Otherwise, returns [`q(env)].
+[:zh_CN] 否则，返回 [`q(env)]。
+
+[para:remarks]
+[:en] [`get_stop_token_t] is in the implementation-defined set of supported queries,
+and [`inplace_stop_token] is a member of the implementation-defined set of
+supported result types for [`get_stop_token_t].
+[:zh_CN] [`get_stop_token_t] 属于由实现定义的受支持查询集合，并且 [`inplace_stop_token]
+是由实现定义的受支持的 [`get_stop_token_t] 的结果类型集合的成员。
+[div:end]

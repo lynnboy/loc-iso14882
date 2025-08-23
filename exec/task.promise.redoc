@@ -1,0 +1,356 @@
+[section#task.promise
+    [:en] Class [`task::promise_type]
+    [:zh_CN] 类 [`task::promise_type]
+]
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class T, class Environment>
+  class task<T, Environment>::promise_type {
+  public:
+    template<class... Args>
+      promise_type(const Args&... args);
+
+    task get_return_object() noexcept;
+
+    auto initial_suspend() noexcept;
+    auto final_suspend() noexcept;
+
+    void uncaught_exception();
+    coroutine_handle<> unhandled_stopped();
+
+    void return_void();                 // [:en] present only if [`is_void_v<T>] is [`true]; \
+                                        [:zh_CN] 仅当 [`is_void_v<T>] 为 [`true] 时提供；
+    template<class V>
+      void return_value(V&& value);     // [:en] present only if [`is_void_v<T>] is [`false]; \
+                                        [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时提供；
+
+    template<class E>
+      [[redoc("[=unspec]")]] yield_value(with_error<E> error);
+
+    template<class A>
+      auto await_transform(A&& a);
+    template<class Sch>
+      auto await_transform(change_coroutine_scheduler<Sch> sch);
+
+    [[redoc("[=unspec]")]] get_env() const noexcept;
+
+    template<class... Args>
+      void* operator new(size_t size, Args&&... args);
+
+    void operator delete(void* pointer, size_t size) noexcept;
+
+  private:
+    using [[redoc("*>")]]error-variant = [[redoc("[=seebelow]")]];    // [=expos]
+
+    allocator_type    [[redoc("*>")]]alloc;            // [=expos]
+    stop_source_type  [[redoc("*>")]]source;           // [=expos]
+    stop_token_type   [[redoc("*>")]]token;            // [=expos]
+    optional<T>       [[redoc("*>")]]result;           // [=expos]; [:en] present only if [`is_void_v<T>] is [`false]; \
+                                                                [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时提供；
+    [[redoc("*>")]]error-variant     [[redoc("*>")]]errors;           // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [`[^prom]] be an object of [`promise_type] and let [`[^tsk]] be the
+[`task] object created by [`[^prom].get_return_object()].
+[:zh_CN] 令 [`[^prom]] 为 [`promise_type] 类型的对象，并令 [`[^tsk]] 为
+[`[^prom].get_return_object()] 所创建的 [`task] 对象。
+
+[:en] The description below refers to objects [`[*STATE]([^prom])],
+[`[*RCVR]([^prom])], and [`[*SCHED]([^prom])] associated with [`[^tsk]]
+during evaluation of [`task::[*state]<Rcvr>::start] for some receiver [`Rcvr].
+[:zh_CN] 以下描述中涉及对象 [`[*STATE]([^prom])]、[`[*RCVR]([^prom])] 和
+[`[*SCHED]([^prom])]，它们在针对某个接收器 [`Rcvr] 的 [`task::[*state]<Rcvr>::start]
+的执行期间与 [`[^tsk]] 相关联。
+
+[para]
+[:en] [*error-variant] is a [`variant<monostate, remove_cvref_t<E>...>], with
+duplicate types removed, where [`E...] are template arguments of the specialization of
+[`execution::completion_signatures] denoted by [`error_types].
+[:zh_CN] [*error-variant] 为移除了重复类型的 [`variant<monostate, remove_cvref_t<E>...>]，
+其中 [`E...] 是 [`error_types] 代表的 [`execution::completion_signatures] 特例的各模板实参。
+
+[%@lib@ctor task::promise_type]
+[codeblock:declaration]
+template<class... Args>
+  promise_type(const Args&... args);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] The first parameter of type [`allocator_arg_t] (if any) is not the last parameter.
+[:zh_CN] 第一个 [`allocator_arg_t] 类型的形参（如果有）不是最后一个形参。
+
+[para:effects]
+[:en] If [`Args] contains an element of type [`allocator_arg_t] then [*alloc]
+is initialized with the corresponding next element of [`args].
+[:zh_CN] 如果 [`Args] 包含 [`allocator_arg_t] 类型为元素，则以 [`args] 的下一个
+相应元素初始化 [*alloc]。
+
+[:en] Otherwise, [*alloc] is initialized with [`allocator_type()].
+[:zh_CN] 否则，以 [`allocator_type()] 初始化 [*alloc]。
+[div:end]
+
+[%@lib@member get_return_object[!task::promise_type]]
+[codeblock:declaration]
+task get_return_object() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A [`task] object whose member [*handle] is
+[`coroutine_handle<promise_type>::from_promise(*this)].
+[:zh_CN] 一个 [`task] 对象，其成员 [*handle] 为
+[`coroutine_handle<promise_type>::from_promise(*this)]。
+[div:end]
+
+[%@lib@member initial_suspend[!task::promise_type]]
+[codeblock:declaration]
+auto initial_suspend() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An awaitable object of unspecified type ([#expr.await]) whose
+member functions arrange for
+[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），其成员函数安排对待
+[list]
+[item]
+[:en@~] the calling coroutine to be suspended,
+[:zh_CN@~] 调用方协程的暂停，
+[item]
+[:en@~] the coroutine to be resumed on an execution agent of the
+execution resource associated with [`[*SCHED](*this)].
+[:zh_CN@~] 该协程在与 [`[*SCHED](*this)] 关联的执行资源的执行代理上恢复。
+[list:end]
+[div:end]
+
+[%@lib@member final_suspend[!task::promise_type]]
+[codeblock:declaration]
+auto final_suspend() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An awaitable object of unspecified type ([#expr.await]) whose
+member functions arrange for the completion of the asynchronous
+operation associated with [`[*STATE](*this)] by invoking:
+[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），其成员函数安排
+与 [`[*STATE](*this)] 关联的异步操作的完成：
+[list]
+[item]
+[:en] [`set_error(std::move([*RCVR](*this)), std::move(e))] if [`[*errors].index()]
+is greater than zero and [`e] is the value held by [*errors], otherwise
+[:zh_CN] 如果 [`[*errors].index()] 大于零且 [`e] 为 [*errors] 所持有的值，则调用
+[`set_error(std::move([*RCVR](*this)), std::move(e))]，否则
+[item]
+[:en] [`set_value(std::move([*RCVR](*this)))] if [`is_void<T>] is [`true],
+and otherwise
+[:zh_CN] 如果 [`is_void<T>] 为 [`true]，则调用 [`set_value(std::move([*RCVR](*this)))]，否则
+[item]
+[:en] [`set_value(std::move([*RCVR](*this)), *[*result])].
+[:zh_CN] 调用 [`set_value(std::move([*RCVR](*this)), *[*result])]。
+[list:end]
+[div:end]
+
+[%@lib@member yield_value[!task::promise_type]]
+[codeblock:declaration]
+template<class Err>
+  auto yield_value(with_error<Err> err);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`std::move(err.error)] is convertible to exactly one of the
+[`set_error_t] argument types of [`error_types].
+[:zh_CN] [`std::move(err.error)] 可以转换为 [`error_types] 中的恰好一个
+[`set_error_t] 实参类型。
+
+[:en] Let [`[^Cerr]] be that type.
+[:zh_CN] 令 [`[^Cerr]] 为该类型。
+
+[para:returns]
+[:en] An awaitable object of unspecified type ([#expr.await]) whose member
+functions arrange for the calling coroutine to be suspended and then completes
+the asynchronous operation associated with [`[*STATE](*this)] by invoking
+[`set_error(std::move([*RCVR](*this)), [^Cerr](std::move(err.error)))].
+[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），其成员函数安排调用方协程的暂停，
+然后通过调用 [`set_error(std::move([*RCVR](*this)), [^Cerr](std::move(err.error)))]
+完成与 [`[*STATE](*this)] 关联的异步操作。
+[div:end]
+
+[%@lib@member await_transform[!task::promise_type]]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]sender Sender>
+  auto await_transform(Sender&& sndr) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] If [`[^same_as]<inline_scheduler, scheduler_type>] is [`true]
+returns [`as_awaitable(std::forward<Sender>(sndr), *this)]; otherwise returns
+[`as_awaitable(affine_on(std::forward<Sender>(sndr), [*SCHED](*this)), *this)].
+[:zh_CN] 如果 [`[^same_as]<inline_scheduler, scheduler_type>] 为 [`true]，则返回
+[`as_awaitable(std::forward<Sender>(sndr), *this)]；否则返回
+[`as_awaitable(affine_on(std::forward<Sender>(sndr), [*SCHED](*this)), *this)]。
+[div:end]
+
+[%@lib@member await_transform[!task::promise_type]]
+[codeblock:declaration]
+template<class Sch>
+  auto await_transform(change_coroutine_scheduler<Sch> sch) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock:declaration]
+return await_transform(just(exchange([[redoc("*>")]]SCHED(*this), scheduler_type(sch.scheduler))), *this);
+[codeblock:end]
+[div:end]
+
+[%@lib@member uncaught_exception[!task::promise_type]]
+[codeblock:declaration]
+void uncaught_exception();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If the signature [`set_error_t(exception_ptr)] is not an element
+of [`error_types], calls [`terminate()] ([#except.terminate]).
+[:zh_CN] 如果签名 [`set_error_t(exception_ptr)] 不是 [`error_types] 的元素，
+则调用 [`terminate()]（[#except.terminate]）。
+
+[:en] Otherwise, stores [`current_exception()] into [*errors].
+[:zh_CN] 否则，将 [`current_exception()] 存储入 [*errors]。
+[div:end]
+
+[%@lib@member unhandled_stopped[!task::promise_type]]
+[codeblock:declaration]
+coroutine_handle<> unhandled_stopped();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Completes the asynchronous operation associated with [`[*STATE](*this)]
+by invoking [`set_stopped(std::move([*RCVR](*this)))].
+[:zh_CN] 通过调用 [`set_stopped(std::move([*RCVR](*this)))] 完成与
+[`[*STATE](*this)] 关联的异步操作。
+
+[para:returns]
+[:en] [`noop_coroutine()].
+[:zh_CN] [`noop_coroutine()]。
+[div:end]
+
+[%@lib@member get_env[!task::promise_type]]
+[codeblock:declaration]
+[[redoc("[=unspec]")]] get_env() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An object [`env] such that queries are forwarded as follows:
+[:zh_CN] 一个对象 [`env]，使得按如下转发查询：
+[list]
+[item]
+[:en] [`env.query(get_scheduler)] returns [`scheduler_type([*SCHED](*this))].
+[:zh_CN] [`env.query(get_scheduler)] 返回 [`scheduler_type([*SCHED](*this))]。
+[item]
+[:en] [`env.query(get_allocator)] returns [*alloc].
+[:zh_CN] [`env.query(get_allocator)] 返回 [*alloc]。
+[item]
+[:en] [`env.query(get_stop_token)] returns [*token].
+[:zh_CN] [`env.query(get_stop_token)] 返回 [*token]。
+[item]
+[:en] For any other query [`q] and arguments [`a...] a call to
+[`env.query(q, a...)] returns [`[*STATE](*this)].
+[:zh_CN] 对于任意其他查询 [`q] 和实参 [`a...]，[`env.query(q, a...)] 的调用返回
+[`[*STATE](*this)]。
+
+[:en] [`environment.query(q, a...)] if this expression is well-formed and
+[`forwarding_query(q)] is well-formed and is [`true].
+[:zh_CN] 如果 [`environment.query(q, a...)] 良构，并且 [`forwarding_query(q)]
+良构且为 [`true]，则为该表达式。
+
+[:en] Otherwise [`env.query(q, a...)] is ill-formed.
+[:zh_CN] 否则 [`env.query(q, a...)] 非良构。
+[list:end]
+[div:end]
+
+[%@lib@member operator new[!task::promise_type]]
+[codeblock:declaration]
+template<class... Args>
+  void* operator new(size_t size, const Args&... args);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] If there is no parameter with type [`allocator_arg_t] then let
+[`alloc] be [`allocator_type()].
+[:zh_CN] 若不存在 [`allocator_arg_t] 类型的形参，则令 [`alloc] 为 [`allocator_type()]。
+
+[:en] Otherwise, let [`arg_next] be the parameter following the first
+[`allocator_arg_t] parameter, and let [`alloc] be [`allocator_type(arg_next)].
+[:zh_CN] 否则，令 [`arg_next] 为跟在第一个 [`allocator_arg_t] 形参之后的形参，并令
+[`alloc] 为 [`allocator_type(arg_next)]。
+
+[:en] Let [`PAlloc] be [`allocator_traits<allocator_type>::template rebind_alloc<U>],
+where [`U] is an unspecified type whose size and alignment are both
+[`__STDCPP_DEFAULT_NEW_ALIGNMENT__].
+[:zh_CN] 令 [`PAlloc] 为 [`allocator_traits<allocator_type>::template rebind_alloc<U>]，
+其中 [`U] 为未指明的类型，其大小和对齐均为 [`__STDCPP_DEFAULT_NEW_ALIGNMENT__]。
+
+[para:mandates]
+[list]
+[item]
+[:en] The first parameter of type [`allocator_arg_t] (if any) is not the last parameter.
+[:zh_CN] 第一个 [`allocator_arg_t] 类型的形参（如果有）不是最后一个形参。
+
+[item]
+[:en] [`allocator_type(arg_next)] is a valid expression if there is a parameter
+of type [`allocator_arg_t].
+[:zh_CN] 当存在 [`allocator_arg_t] 类型的形参时，[`allocator_type(arg_next)] 是有效表达式。
+
+[item]
+[:en] [`allocator_traits<PAlloc>::pointer] is a pointer type.
+[:zh_CN] [`allocator_traits<PAlloc>::pointer] 为指针类型。
+[div:end]
+
+[para:effects]
+[:en] Initializes an allocator [`palloc] of type [`PAlloc] with [`alloc].
+[:zh_CN] 以 [`alloc] 初始化 [`PAlloc] 类型的分配器 [`palloc]。
+
+[:en] Uses [`palloc] to allocate storage for the smallest array of [`U]
+sufficient to provide storage for a coroutine state of size [`size], and
+unspecified additional state necessary to ensure that [`operator delete] can later
+deallocate this memory block with an allocator equal to [`palloc].
+[:zh_CN] 使用 [`palloc] 为最小的 [`U] 数组分配存储，其大小足以为 [`size] 大小的
+协程状态，以及未指明的额外状态提供存储，该状态为确保随后 [`operator delete] 可以
+用等于 [`palloc] 的分配器回收这个内存块所必须。
+
+[para:returns]
+[:en] A pointer to the allocated storage.
+[:zh_CN] 指向所分配存储的指针。
+[div:end]
+
+[%@lib@member operator delete[!task::promise_type]]
+[codeblock:declaration]
+void operator delete(void* pointer, size_t size) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`pointer] was returned from an invocation of the above overload
+of [`operator new] with a size argument equal to [`size].
+[:zh_CN] [`pointer] 是从某次对上述的 [`operator new] 重载，以等于 [`size] 的大小实参
+进行的调用返回的。
+
+[para:effects]
+[:en] Deallocates the storage pointed to by [`pointer] using an
+allocator equal to that used to allocate it.
+[:zh_CN] 使用等于分配时所用的分配器，回收 [`pointer] 所指向的存储。
+[div:end]

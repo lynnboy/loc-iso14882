@@ -1,0 +1,78 @@
+[section#exec.inline.scheduler
+    [`execution::inline_scheduler]
+]
+
+[codeblock:synopsis]
+namespace std::execution {
+  class [[redoc("`:lib>")]]inline_scheduler {
+    class [[redoc("*>")]]inline-sender;                // [=expos]
+
+    template<[[redoc("`:c>")]]receiver R>
+      class [[redoc("*>")]]inline-state;               // [=expos]
+
+  public:
+    using scheduler_concept = scheduler_t;
+
+    constexpr [[redoc("*>")]]inline-sender schedule() noexcept { return {}; }
+    constexpr bool operator==(const inline_scheduler&) const noexcept = default;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`inline_scheduler] is a class that models [`:c scheduler] ([#exec.sched]).
+[:zh_CN] [`inline_scheduler] 是构成 [`:c scheduler] 类（[#exec.sched]）。
+
+[:en] All objects of type [`inline_scheduler] are equal.
+[:zh_CN] [`inline_scheduler] 类型的所有对象都相等。
+
+[para]
+[:en] [*inline-sender] is an exposition-only type that satisfies [`:c sender].
+[:zh_CN] [*inline-sender] 是符合 [`:c sender] 的仅用于阐释的类型。
+
+[:en] The type [`completion_signatures_of_t<[*inline-sender]>]
+is [`completion_signatures<set_value_t()>].
+[:zh_CN] 类型 [`completion_signatures_of_t<[*inline-sender]>]
+为 [`completion_signatures<set_value_t()>]。
+
+[para]
+[:en] Let [`sndr] be an expression of type [*inline-sender], let [`rcvr] be an
+expression such that [`[`:c receiver_of]<decltype((rcvr)), CS>] is [`true]
+where [`CS] is [`completion_signatures<set_value_t()>], then:
+[:zh_CN] 令 [`sndr] 为 [*inline-sender] 类型的表达式，令 [`rcvr] 为使得
+[`[`:c receiver_of]<decltype((rcvr)), CS>] 为 [`true] 的表达式，其中 [`CS]
+为 [`completion_signatures<set_value_t()>]，从而：
+[list]
+[item]
+[:en] the expression [`connect(sndr, rcvr)] has type
+[`[*inline-state]<remove_cvref_t<decltype((rcvr))>>]
+and is potentially-throwing if and only if
+[`((void)sndr, auto(rcvr))] is potentially-throwing, and
+[:zh_CN] 表达式 [`connect(sndr, rcvr)] 的类型为
+[`[*inline-state]<remove_cvref_t<decltype((rcvr))>>]，并且当且仅当
+[`((void)sndr, auto(rcvr))] 潜在抛出异常时，它也潜在抛出异常，以及
+[item]
+[:en] the expression [`get_completion_scheduler<set_value_t>(get_env(sndr))] has
+type [`inline_scheduler] and is potentially-throwing
+if and only if [`get_env(sndr)] is potentially-throwing.
+[:zh_CN] 表达式 [`get_completion_scheduler<set_value_t>(get_env(sndr))] 的类型为
+[`inline_scheduler]，并且当且仅当 [`get_env(sndr)] 潜在抛出异常时，它也潜在抛出异常。
+[list:end]
+
+[para]
+[:en] Let [^o] be a non-[`const] lvalue of type [`[*inline-state]<Rcvr>], and
+let [`REC([^o])] be a non-[`const] lvalue reference to an object of type [`Rcvr]
+that was initialized with the expression [`rcvr] passed to an
+invocation of [`connect] that returned [^o], then:
+[:zh_CN] 令 [^o] 为 [`[*inline-state]<Rcvr>] 类型的非 [`const] 左值，并令 [`REC([^o])]
+为指代一个 [`Rcvr] 类型对象的非 [`const] 左值引用，该对象以传递给返回 [^o] 的
+[`connect] 调用的表达式 [`rcvr] 初始化，从而：
+[list]
+[item]
+[:en] the object to which [`REC([^o])] refers remains valid for the lifetime of
+the object to which [^o] refers, and
+[:zh_CN] [`REC([^o])] 指代的对象在 [^o] 指代的对象的生命周期内保持有效，以及
+[item]
+[:en] the expression [`start([^o])] is equivalent to [`set_value(std::move(REC([^o])))].
+[:zh_CN] 表达式 [`start([^o])] 等价于 [`set_value(std::move(REC([^o])))]。
+[list:end]

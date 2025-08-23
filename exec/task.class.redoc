@@ -1,0 +1,105 @@
+[section#task.class
+    [:en] Class template [`task]
+    [:zh_CN] 类模板 [`task]
+]
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class T, class Environment>
+  class [[redoc("`:lib>")]]task {
+    // [#task.state]
+    template<[[redoc("`:c>")]]receiver Rcvr>
+      class [[redoc("*>")]]state;                              // [=expos]
+
+  public:
+    using sender_concept = sender_t;
+    using completion_signatures = [[redoc("[=seebelow]")]];
+    using allocator_type = [[redoc("[=seebelow]")]];
+    using scheduler_type = [[redoc("[=seebelow]")]];
+    using stop_source_type = [[redoc("[=seebelow]")]];
+    using stop_token_type = decltype(declval<stop_source_type>().get_token());
+    using error_types = [[redoc("[=seebelow]")]];
+
+    // [#task.promise]
+    class promise_type;
+
+    task(task&&) noexcept;
+    ~task();
+
+    template<[[redoc("`:c>")]]receiver Rcvr>
+      [[redoc("*>")]]state<Rcvr> connect(Rcvr&& rcvr);
+
+  private:
+    coroutine_handle<promise_type> [[redoc("*>")]]handle;      // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`task<T, E>] models [`:c sender] ([#exec.snd]) if [`T] is [`void],
+a reference type, or a [=cv]-unqualified non-array object type and [`E] is a class type.
+[:zh_CN] 如果 [`T] 是 [`void]、引用类型或无 [=cv] 限定的非数组对象类型，且 [`E] 是类类型，
+那么 [`task<T, E>] 构成 [`:c sender]（[#exec.snd]）。
+
+[:en] Otherwise a program that instantiates the definition of [`task<T, E>] is ill-formed.
+[:zh_CN] 否则，实例化 [`task<T, E>] 的程序非良构。
+
+[para]
+[:en] The nested types of [`task] template specializations
+are determined based on the [`Environment] parameter:
+[:zh_CN] [`task] 模板特例中的各嵌套类型基于 [`Environment] 形参决定：
+
+[list]
+[item]
+[:en] [`allocator_type] is [`Environment::allocator_type] if that [~qualified-id]
+is valid and denotes a type, [`allocator<byte>] otherwise.
+[:zh_CN] 若[~限定标识] [`Environment::allocator_type] 有效且代表类型，则
+[`allocator_type] 为此名字，否则为 [`allocator<byte>]。
+
+[item]
+[:en] [`scheduler_type] is [`Environment::scheduler_type] if that [~qualified-id]
+is valid and denotes a type, [`task_scheduler] otherwise.
+[:zh_CN] 若[~限定标识] [`Environment::scheduler_type] 有效且代表类型，则
+[`scheduler_type] 为此名字，否则为 [`task_scheduler]。
+
+[item]
+[:en] [`stop_source_type] is [`Environment::stop_source_type] if that [~qualified-id]
+is valid and denotes a type, [`inplace_stop_source] otherwise.
+[:zh_CN] 若[~限定标识] [`Environment::stop_source_type] 有效且代表类型，则
+[`stop_source_type] 为此名字，否则为 [`inplace_stop_source]。
+
+[item]
+[:en] [`error_types] is [`Environment::error_types] if that [~qualified-id]
+is valid and denotes a type, [`completion_signatures<set_error_t(exception_ptr)>] otherwise.
+[:zh_CN] 若[~限定标识] [`Environment::error_types] 有效且代表类型，则
+[`error_types] 为此名字，否则为 [`completion_signatures<set_error_t(exception_ptr)>]。
+[list:end]
+
+[para]
+[:en] A program is ill-formed if [`error_types] is not a specialization of
+[`completion_signatures<ErrorSigs...>] or [`ErrorSigs] contains an element which
+is not of the form [`set_error_t(E)] for some type [`E].
+[:zh_CN] 如果 [`error_types] 不是 [`completion_signatures<ErrorSigs...>] 的特例，
+或者 [`ErrorSigs] 包含某个不具有（对于某个类型 [`E]）[`set_error_t(E)] 形式的元素，那么程序非良构。
+
+[para]
+[:en] The type alias [`completion_signatures] is a specialization of
+[`execution::completion_signatures] with the template arguments (in unspecified order):
+[:zh_CN] 类型别名 [`completion_signatures] 是 [`execution::completion_signatures]
+的特例，具有以下模板实参（顺序未指明）：
+[list]
+[item]
+[:en@~] [`set_value_t()] if [`T] is [`void], and [`set_value_t(T)] otherwise;
+[:zh_CN@~] 若 [`T] 是 [`void] 则有 [`set_value_t()]，否则有 [`set_value_t(T)]；
+[item]
+[:en@~] template arguments of the specialization of
+[`execution::completion_signatures] denoted by [`error_types]; and
+[:zh_CN@~] [`error_types] 代表的 [`execution::completion_signatures] 特例的模板实参；以及
+[item]
+[:en@~] [`set_stopped_t()].
+[:zh_CN@~] [`set_stopped_t()]。
+[list:end]
+
+[para]
+[:en] [`allocator_type] shall meet the [^:oc Allocator] requirements.
+[:zh_CN] [`allocator_type] 应当满足 [^:oc Allocator] 的规定。

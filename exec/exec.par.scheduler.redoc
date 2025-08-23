@@ -1,0 +1,201 @@
+[section#exec.par.scheduler
+    [:en] Parallel scheduler
+    [:zh_CN] 并行调度器
+]
+
+[para]
+[:en] [`parallel_scheduler] models [`:c scheduler].
+[:zh_CN] [`parallel_scheduler] 构成 [`:c scheduler]。
+
+[para]
+[:en] Let [`sch] be an object of type [`parallel_scheduler], and
+let [`[*BACKEND-OF](sch)] be [`*ptr], where [`sch] is associated with [`ptr].
+[:zh_CN] 令 [`sch] 为 [`parallel_scheduler] 类型的对象，并令 [`[*BACKEND-OF](sch)]
+为 [`*ptr]，其中 [`sch] 与 [`ptr] 相关联。
+
+[para]
+[:en] The expression [`get_forward_progress_guarantee(sch)] returns
+[`forward_progress_guarantee::parallel].
+[:zh_CN] 表达式 The [`get_forward_progress_guarantee(sch)] 返回
+[`forward_progress_guarantee::parallel]。
+
+[para]
+[:en] Let [`sch2] be an object of type [`parallel_scheduler].
+[:zh_CN] 令 [`sch2] 为 [`parallel_scheduler] 类型的对象。
+
+[:en] Two objects [`sch] and [`sch2] compare equal if and only if
+[`[*BACKEND-OF](sch)] and [`[*BACKEND-OF](sch2)] refer to the same object.
+[:zh_CN] 当且仅当 [`[*BACKEND-OF](sch)] 和 [`[*BACKEND-OF](sch2)] 指代相同对象时，
+对象 [`sch] 和 [`sch2] 比较为相等。
+
+[para]
+[:en] Let [`rcvr] be a receiver.
+[:zh_CN] 令 [`rcvr] 为接收器。
+
+[:en] A [+proxy for [`rcvr] with base [`B][%proxy]] is an lvalue [`r] of type [`B] such that:
+[:zh_CN] [+[`rcvr] 的基于 [`B] 的代理[%代理]]是一个 [`B] 类型的左值 [`r]，使得：
+[list]
+[item]
+[:en] [`r.set_value()] has effects equivalent to [`set_value(std::move(rcvr))].
+[:zh_CN] [`r.set_value()] 的效果等价于 [`set_value(std::move(rcvr))]。
+[item]
+[:en] [`r.set_error(e)], where [`e] is an [`exception_ptr] object,
+has effects equivalent to [`set_error(std::move(rcvr), std::move(e))].
+[:zh_CN] [`r.set_error(e)] 的效果等价于 [`set_error(std::move(rcvr), std::move(e))]，
+其中 [`e] 是一个 [`exception_ptr] 对象。
+[item]
+[:en] [`r.set_stopped()] has effects equivalent to [`set_stopped(std::move(rcvr))].
+[:zh_CN] [`r.set_stopped()] 的效果等价于 [`set_stopped(std::move(rcvr))]。
+[list:end]
+
+[para]
+[:en] A [+preallocated backend storage for a proxy] [`r] is an object [`s] of
+type [`span<byte>] such that the range [`s] remains valid and may be overwritten
+until one of [`set_value], [`set_error], or [`set_stopped] is called on [`r].
+[:zh_CN] [+代理 [`r] 的预分配后端存储]是一个 [`span<byte>] 类型的对象 [`s]，使得
+直到在 [`r] 上调用 [`set_value]、[`set_error] 或 [`set_stopped] 之一之前，范围 [`r]
+持续有效，且可能被覆写。
+
+[begin:note]
+[:en] The storage referenced by [`s] can be used as temporary storage
+for operations launched via calls to [`parallel_scheduler_backend].
+[:zh_CN] [`s] 所指代的存储可被用作由 [`parallel_scheduler_backend] 的调用所启动操作的临时存储。
+[end:note]
+
+[para]
+[:en] A [+bulk chunked proxy for [`rcvr] with callable [`f] and arguments [`args]
+[%proxy[!bulk chunked]]] is a proxy [`r] for [`rcvr] with base
+[`system_context_replaceability::bulk_item_receiver_proxy] such that
+[`r.execute(i, j)] for indices [`i] and [`j] has effects equivalent to [`f(i, j, args...)].
+[:zh_CN] [+[`rcvr] 对于可调用对象 [`f] 和实参 [`args] 的批次分段代理[%代理[!批次分段]]]
+是 [`rcvr] 的基于 [`system_context_replaceability::bulk_item_receiver_proxy] 的代理 [`r]，
+使得对于索引 [`i] 和 [`j]，[`r.execute(i, j)] 的效果等价于 [`f(i, j, args...)]。
+
+[para]
+[:en] A [+bulk unchunked proxy for [`rcvr] with callable [`f] and arguments [`args]
+[%proxy[!bulk unchunked]]] is a proxy [`r] for [`rcvr] with base
+[`system_context_replaceability::bulk_item_receiver_proxy] such that
+[`r.execute(i, i + 1)] for index [`i] has effects equivalent to [`f(i, args...)].
+[:zh_CN] [+[`rcvr] 对于可调用对象 [`f] 和实参 [`args] 的批次不分段代理[%代理[!批次不分段]]]
+是 [`rcvr] 的基于 [`system_context_replaceability::bulk_item_receiver_proxy] 的代理 [`r]，
+使得对于索引 [`i]，[`r.execute(i, i + 1)] 的效果等价于 [`f(i, args...)]。
+
+[para]
+[:en] Let [`b] be [`[*BACKEND-OF](sch)], let [`sndr] be the object returned by
+[`schedule(sch)], and let [`rcvr] be a receiver.
+[:zh_CN] 令 [`b] 为 [`[*BACKEND-OF](sch)]，令 [`sndr] 为 [`schedule(sch)]
+所返回的对象，并令 [`rcvr] 为接收器。
+
+[:en] If [`rcvr] is connected to [`sndr] and the resulting operation state is started, then:
+[:zh_CN] 如果 [`rcvr] 连接到 [`sndr]，并且启动了所得的操作状态，那么：
+
+[list]
+[item]
+[:en] If [`sndr] completes successfully, then [`b.schedule(r, s)] is called, where
+[:zh_CN] 若 [`sndr] 成功完成，则调用 [`b.schedule(r, s)]，其中
+ [list]
+ [item]
+[:en@~] [`r] is a proxy for [`rcvr] with base
+[`system_context_replaceability::receiver_proxy] and
+[:zh_CN@~] [`r] 是 [`rcvr] 的基于 [`system_context_replaceability::receiver_proxy] 的代理，且
+ [item]
+[:en@~] [`s] is a preallocated backend storage for [`r].
+[:zh_CN@~] [`s] 是 [`r] 的预分配后端存储。
+ [list:end]
+
+[item]
+[:en] All other completion operations are forwarded unchanged.
+[:zh_CN] 其他所有完成操作都被无改动地转发。
+[list:end]
+
+[para]
+[:en] [`parallel_scheduler] provides a customized implementation of
+the [`bulk_chunked] algorithm ([#exec.bulk]).
+[:zh_CN] [`parallel_scheduler] 提供 [`bulk_chunked] 算法（[#exec.bulk]）的一种定制实现。
+
+[:en] If a receiver [`rcvr] is connected to the sender
+returned by [`bulk_chunked(sndr, pol, shape, f)] and
+the resulting operation state is started, then:
+[:zh_CN] 如果接收器 [`rcvr] 连接到 [`bulk_chunked(sndr, pol, shape, f)] 所返回的
+发送器，并且启动了所得的操作状态，那么：
+
+[list]
+[item]
+[:en] If [`sndr] completes with values [`vals], let [`args] be a pack of lvalue
+subexpressions designating [`vals], then [`b.schedule_bulk_chunked(shape, r, s)]
+is called, where
+[:zh_CN] 如果 [`sndr] 以值 [`vals] 完成，令 [`args] 为代表 [`vals] 的左值子表达式包组，
+则调用 [`b.schedule_bulk_chunked(shape, r, s)]，其中
+
+ [list]
+ [item]
+[:en@~] [`r] is a bulk chunked proxy for [`rcvr] with callable [`f] and
+arguments [`args] and
+[:zh_CN@~] [`r] 是 [`rcvr] 对于可调用对象 [`f] 和实参 [`args] 的批次分段代理，而
+ [item]
+[:en@~] [`s] is a preallocated backend storage for [`r].
+[:zh_CN@~] [`s] 是 [`r] 的预分配后端存储。
+ [list:end]
+
+[item]
+[:en] All other completion operations are forwarded unchanged.
+[:zh_CN] 其他所有完成操作都被无改动地转发。
+[list:end]
+
+[begin:note]
+[:en] Customizing the behavior of [`bulk_chunked] affects the default implementation of [`bulk].
+[:zh_CN] 定制 [`bulk_chunked] 的行为会影响 [`bulk] 的缺省实现。
+[end:note]
+
+[para]
+[:en] [`parallel_scheduler] provides a customized implementation of
+the [`bulk_unchunked] algorithm ([#exec.bulk]).
+[:zh_CN] [`parallel_scheduler] 提供 [`bulk_chunked] 算法（[#exec.bulk]）的一种定制实现。
+
+[:en] If a receiver [`rcvr] is connected to the sender
+returned by [`bulk_unchunked(sndr, pol, shape, f)] and
+the resulting operation state is started, then:
+[:zh_CN] 如果接收器 [`rcvr] 连接到 [`bulk_unchunked(sndr, pol, shape, f)] 所返回的
+发送器，并且启动了所得的操作状态，那么：
+
+[list]
+[item]
+[:en] If [`sndr] completes with values [`vals], let [`args] be a pack of lvalue
+subexpressions designating [`vals], then [`b.schedule_bulk_unchunked(shape, r, s)]
+is called, where
+[:zh_CN] 如果 [`sndr] 以值 [`vals] 完成，令 [`args] 为代表 [`vals] 的左值子表达式包组，
+则调用 [`b.schedule_bulk_unchunked(shape, r, s)]，其中
+
+ [list]
+ [item]
+[:en@~] [`r] is a bulk unchunked proxy for [`rcvr] with callable [`f] and
+arguments [`args] and
+[:zh_CN@~] [`r] 是 [`rcvr] 对于可调用对象 [`f] 和实参 [`args] 的批次不分段代理，而
+ [item]
+[:en@~] [`s] is a preallocated backend storage for [`r].
+[:zh_CN@~] [`s] 是 [`r] 的预分配后端存储。
+ [list:end]
+
+[item]
+[:en] All other completion operations are forwarded unchanged.
+[:zh_CN] 其他所有完成操作都被无改动地转发。
+[list:end]
+
+[%@lib get_parallel_scheduler]
+[codeblock:declaration]
+parallel_scheduler get_parallel_scheduler();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [`eb] be the result of
+[`system_context_replaceability::query_parallel_scheduler_backend()].
+[:zh_CN] 令 [`eb] 为
+[`system_context_replaceability::query_parallel_scheduler_backend()] 的结果。
+
+[:en] If [`eb == nullptr] is [`true], calls [`terminate] ([#except.terminate]).
+[:zh_CN] 若 [`eb == nullptr] 为 [`true]，则调用 [`terminate]（[#except.terminate]）。
+
+[:en] Otherwise, returns a [`parallel_scheduler] object associated with [`eb].
+[:zh_CN] 否则，返回与 [`eb] 关联的 [`parallel_scheduler] 对象。
+[div:end]

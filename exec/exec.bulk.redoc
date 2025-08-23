@@ -13,8 +13,8 @@ every index in an index space.
 sender adaptor objects.
 [:zh_CN] 名字 [`bulk]、[`bulk_chunked] 和 [`bulk_unchunked] 都代表可连管道的发送器适配器对象。
 
-[:en] Let [^bulk-algo] be either [`bulk], [`bulk_chunked], or [`bulk_unchunked].
-[:zh_CN] 令 [^bulk-algo] 为 [`bulk]、[`bulk_chunked] 或 [`bulk_unchunked]。
+[:en] Let [`[^bulk-algo]] be either [`bulk], [`bulk_chunked], or [`bulk_unchunked].
+[:zh_CN] 令 [`[^bulk-algo]] 为 [`bulk]、[`bulk_chunked] 或 [`bulk_unchunked]。
 
 [:en] For subexpressions [`sndr], [`policy], [`shape], and [`f], let [`Policy]
 be [`remove_cvref_t<decltype(policy)>], [`Shape] be [`decltype(auto(shape))],
@@ -171,28 +171,135 @@ if the expression [`f(auto(shape), args...)] is well-formed.
 [:zh_CN] 以上 lambda 的 [~requires-子句]中的表达式，当且仅当 [`Tag] 代表不是
 [`set_value_t] 的类型，或当表达式 [`f(auto(shape), args...)] 良构时，为 [`true]。
 
+[%@lib [*check-types][![*impls-for]<bulk_t>]]
+[codeblock:declaration]
+template<class Sndr, class... Env>
+  static consteval void @\exposid{check-types}@();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+auto fn = []<class... Ts>(set_value_t(*)(Ts...)) {
+  if constexpr (![[redoc("`:c>")]]invocable<remove_cvref_t<[[redoc("*>")]]data-type<Sndr>>, Ts&...>)
+    throw [[redoc("^>")]]unspecified-exception();
+};
+cs.[[redoc("*>")]]for-each([[redoc("*>")]]overload-set(fn, [](auto){}));
+[codeblock:end]
+[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
+[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
+[div:end]
+
 [para]
 [:en] Let the subexpression [`out_sndr] denote the result of the invocation
-[`bulk(sndr, shape, f)] or an object equal to such, and let the subexpression
-[`rcvr] denote a receiver such that the expression [`connect(out_sndr, rcvr)]
-is well-formed.
-[:zh_CN] 令子表达式 [`out_sndr] 代表调用 [`bulk(sndr, shape, f)] 的结果或等于它的对象，
-并令子表达式 [`rcvr] 代表一个接收器，使得表达式 [`connect(out_sndr, rcvr)] 良构。
+[`[^bulk-algo](sndr, policy, shape, f)] or an object equal to such, and let the
+subexpression [`rcvr] denote a receiver such that the expression
+[`connect(out_sndr, rcvr)] is well-formed.
+[:zh_CN] 令子表达式 [`out_sndr] 代表调用 [`[^bulk-algo](sndr, policy, shape, f)]
+的结果或等于它的对象，并令子表达式 [`rcvr] 代表一个接收器，使得表达式
+[`connect(out_sndr, rcvr)] 良构。
 
-[:en] The expression [`connect(out_sndr, rcvr)] has undefined behavior
-unless it creates an asynchronous operation ([#exec.async.ops]) that, when started:
-[:zh_CN] 表达式 [`connect(out_sndr, rcvr)] 若非其创建了异步操作（[#exec.async.ops]），
-当其启动时：
+[:en] The expression [`connect(out_sndr, rcvr)] has undefined behavior unless
+it creates an asynchronous operation ([#exec.async.ops]) that, when started:
+[:zh_CN] 表达式 [`connect(out_sndr, rcvr)]，若非其创建了异步操作（[#exec.async.ops]），
+当其启动时有如下行为，否则具有未定义行为：
+
 [list]
 [item]
-[:en@~] on a value completion operation, invokes [`f(i, args...)] for every [`i]
-of type [`Shape] in [=range([`0],[`shape])], where [`args] is a pack of lvalue
-subexpressions referring to the value completion result datums of the input
-sender, and
-[:zh_CN@~] 在值完成操作中，对 [`Shape] 类型在 [=range([`0],[`shape])] 中的每个 [`i]，
-调用 [`f(i, args...)]，其中 [`args] 是指代输入发送器的值完成结果数据的左值表达式的包组，并且
+[:en] If [`sndr] has a successful completion, where [`args] is a pack of lvalue
+subexpressions referring to the value completion result datums of [`sndr], or
+decayed copies of those values if they model [`:c copy_constructible], then:
+[:zh_CN] 如果 [`sndr] 有成功完成，其中 [`args] 是左值子表达式的包组，指代 [`sndr] 的
+值完成结果数据，或当它们构成 [`:c copy_constructible] 时为这些值的退化副本，
+
+ [list]
+ [item]
+[:en] If [`out_sndr] also completes successfully, then:
+[:zh_CN] 如果 [`out_sndr] 也成功完成，则：
+
+  [list]
+  [item]
+[:en] for [`bulk], invokes [`f([$i], args...)] for every [$i] of type [`Shape]
+from [`0] to [`shape];
+[:zh_CN] 对于 [`bulk]，对从 [`0] 到 [`shape] 的每个 [`Shape] 类型的 [$i]，
+调用 [`f([$i], args...)]；
+
+  [item]
+[:en] for [`bulk_unchunked], invokes [`f([$i], args...)] for every [$i] of type
+[`Shape] from [`0] to [`shape];
+[:zh_CN] 对于 [`bulk_unchunked]，对从 [`0] 到 [`shape] 的每个 [`Shape] 类型的 [$i]，
+调用 [`f([$i], args...)]；
+
+[para:recommended:~]
+[:en] The underlying scheduler should execute each iteration on a distinct execution agent.
+[:zh_CN] 底层调度器应在独立的执行代理上执行每次迭代。
+
+  [item]
+[:en] for [`bulk_chunked], invokes [`f([$b], [$e], args...)] zero or more times
+with pairs of [$b] and [$e] of type [`Shape] in range [=crange([`0],[`shape])],
+such that [$b < e] and for every [$i] of type [`Shape] from [`0] to [`shape],
+there is exactly one invocation with a pair [$b] and [$e],
+such that [$i] is in the range [=range([$b],[$e])].
+[:zh_CN] 对于 [`bulk_chunked]，对属于范围 [=crange([`0],[`shape])] 的 [`Shape]
+类型的 [$b] 和 [$e] 的对偶调用零或多次 [`f([$b], [$e], args...)]，其中使得 [$b < e]
+且对于从 [`0] 到 [`shape] 的每个 [`Shape] 类型的 [$i]，恰好有一次以对偶 [$b] 和 [$e]
+进行的调用，[$i] 在范围 [=range([$b],[$e])] 中。
+  [list:end]
+
+ [item]
+[:en] If [`out_sndr] completes with [`set_error(rcvr, eptr)], then
+the asynchronous operation may invoke a subset of
+the invocations of [`f] before the error completion handler is called, and
+[`eptr] is an [`exception_ptr] containing either:
+[:zh_CN] 如果 [`out_sndr] 以 [`set_error(rcvr, eptr)] 完成，则异步操作可能在调用
+错误完成处理程序之前调用 [`f] 的子集，并且 [`eptr] 是包含以下内容之一的 [`exception_ptr]：
+
+  [list]
+  [item]
+[:en@~] an exception thrown by an invocation of [`f], or
+[:zh_CN@~] [`f] 的某次调用抛出的异常，或
+  [item]
+[:en@~] a [`bad_alloc] exception if the implementation fails to allocate required
+resources, or
+[:zh_CN@~] 如果实现无法分配所需资源，则为 [`bad_alloc] 异常，或
+  [item]
+[:en@~] an exception derived from [`runtime_error].
+[:zh_CN@~] 派生于 [`runtime_error] 的异常。
+  [list:end]
+
+ [item]
+[:en] If [`out_sndr] completes with [`set_stopped(rcvr)], then the asynchronous
+operation may invoke a subset of the invocations of [`f] before the stopped
+completion handler.
+[:zh_CN] 如果 [`out_sndr] 以 [`set_stopped(rcvr)] 完成，则异步操作可能在调用
+停止完成处理程序之前调用 [`f] 的子集。
+ [list:end]
+
 [item]
-[:en@~] propagates all completion operations sent by [`sndr].
-[:zh_CN@~] 传播 [`sndr] 所发送的所有完成操作，
+[:en] If [`sndr] does not complete with [`set_value], then
+the completion is forwarded to [`recv].
+[:zh_CN] 如果 [`sndr] 不以 [`set_value] 完成，则完成被转发到 [`recv]。
+
+[item]
+[:en] For [`[^bulk-algo]], the parameter [`policy] describes the manner in which
+the execution of the asynchronous operations corresponding to these algorithms
+may be parallelized and the manner in which they apply [`f].
+[:zh_CN] 对于 [`[^bulk-algo]]，形参 [`policy] 描述了对应于这些算法的异步操作的执行方式
+如何并行化，以及它们如何应用 [`f]。
+
+[:en] Permissions and requirements on parallel algorithm element access
+functions ([#algorithms.parallel.exec]) apply to [`f].
+[:zh_CN] 并行算法元素访问函数的权限和要求（[#algorithms.parallel.exec]）适用于 [`f]。
 [list:end]
-[:zh_CN@~] 否则其行为未定义。
+
+[para]
+[begin:note]
+[:en] The asynchronous operation corresponding to
+[`[^bulk-algo](sndr, policy, shape, f)] can complete with [`set_stopped]
+if cancellation is requested or ignore cancellation requests.
+[:zh_CN] 如果请求了取消或忽略取消请求，那么对应于 [`[^bulk-algo](sndr, policy, shape, f)]
+的异步操作可以以 [`set_stopped] 完成。
+[end:note]

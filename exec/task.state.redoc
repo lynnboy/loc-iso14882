@@ -1,0 +1,146 @@
+[section#task.state
+    [:en] Class template [`task::state]
+    [:zh_CN] 类模板 [`task::state]
+]
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class T, class Environment>
+  template<[[redoc("`:c>")]]receiver Rcvr>
+  class task<T, Environment>::[[redoc("*>")]]state {           // [=expos]
+  public:
+    using operation_state_concept = operation_state_t;
+
+    template<class R>
+      [[redoc("*>")]]state(coroutine_handle<promise_type> h, R&& rr);
+
+    ~[[redoc("*>")]]state();
+
+    void start() & noexcept;
+
+  private:
+    using [[redoc("*>")]]own-env-t = [[redoc("[=seebelow]")]];                // [=expos]
+    coroutine_handle<promise_type> [[redoc("*>")]]handle;      // [=expos]
+    remove_cvref_t<Rcvr>           [[redoc("*>")]]rcvr;        // [=expos]
+    [[redoc("*>")]]own-env-t                      [[redoc("*>")]]own-env;     // [=expos]
+    Environment                    [[redoc("*>")]]environment; // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The type [*own-env-t] is
+[`Environment::template env_type<decltype(get_env(declval<Rcvr>()))>] if that
+[~qualified-id] is valid and denotes a type, [`env<>] otherwise.
+[:zh_CN] 若[~限定标识] [`Environment::template env_type<decltype(get_env(declval<Rcvr>()))>]
+有效且代表类型，则类型 [*own-env-t] 为此类型，否则为 [`env<>]。
+
+[%@lib@ctor task::[*state]]
+[codeblock:declaration]
+template<class R>
+  [[redoc("*>")]]state(coroutine_handle<promise_type> h, R&& rr);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes
+[list]
+[item]
+[:en] [*handle] with [`std::move(h)];
+[:zh_CN] 以 [`std::move(h)] 初始化 [*handle]；
+[item]
+[:en] [*rcvr] with [`std::forward<R>(rr)];
+[:zh_CN] 以 [`std::forward<R>(rr)] 初始化 [*rcvr]；
+[item]
+[:en] [*own-env] with [`[*own-env-t](get_env([*rcvr]))] if that expression
+is valid and [`[*own-env-t]()] otherwise.
+[:zh_CN] 若 [`[*own-env-t](get_env([*rcvr]))] 有效则以该表达式，否则以
+[`[*own-env-t]()] 初始化 [*own-env]。
+
+[:en] If neither of these expressions is valid, the program is ill-formed.
+[:zh_CN] 如果这些表达式都无效，则程序非良构。
+[item]
+[:en] [*environment] with [`Environment([*own-env])] if that expression is
+valid, otherwise [`Environment(get_env([*rcvr]))]
+if this expression is valid, otherwise [`Environment()].
+[:zh_CN] 若 [`Environment([*own-env])] 有效则以该表达式，否则
+若 [`Environment(get_env([*rcvr]))] 有效则以该表达式，否则
+以 [`Environment()] 初始化 [*environment]。
+
+[:en] If neither of these expressions is valid, the program is ill-formed.
+[:zh_CN] 如果这些表达式都无效，则程序非良构。
+[list:end]
+[div:end]
+
+[%@lib@dtor task::[*state]]
+[codeblock:declaration]
+~[[redoc("*>")]]state();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if ([[redoc("*>")]]handle)
+  [[redoc("*>")]]handle.destroy();
+[codeblock:end]
+[div:end]
+
+[%@lib@member start[!task::[*state]]]
+[codeblock:declaration]
+void start() & noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Let [`[^prom]] be the object [`[*handle].promise()].
+[:zh_CN] 令 [`[^prom]] 为对象 [`[*handle].promise()]。
+
+[:en] Associates [`[*STATE]([^prom])], [`[*RCVR]([^prom])], and [`[*SCHED]([^prom])]
+with [`*this] as follows:
+[:zh_CN] 按如下将 [`[*STATE]([^prom])]、[`[*RCVR]([^prom])] 和 [`[*SCHED]([^prom])]
+与 [`*this] 关联起来：
+
+[list]
+[item]
+[:en] [`[*STATE]([^prom])] is [`*this].
+[:zh_CN] [`[*STATE]([^prom])] 为 [`*this]。
+[item]
+[:en] [`[*RCVR]([^prom])] is [*rcvr].
+[:zh_CN] [`[*RCVR]([^prom])] 为 [*rcvr]。
+[item]
+[:en] [`[*SCHED]([^prom])] is the object initialized with
+[`scheduler_type(get_scheduler(get_env([*rcvr])))]
+if that expression is valid and [`scheduler_type()] otherwise.
+[:zh_CN] 若 [`scheduler_type(get_scheduler(get_env([*rcvr])))] 有效，则
+[`[*SCHED]([^prom])] 为以该表达式，否则为以 [`scheduler_type()] 初始化的对象。
+
+[:en] If neither of these expressions is valid, the program is ill-formed.
+[:zh_CN] 如果这些表达式均无效，则程序非良构。
+[list:end]
+
+[:en] Let [`[^st]] be [`get_stop_token(get_env([*rcvr]))].
+[:zh_CN] 令 [`[^st]] 为 [`get_stop_token(get_env([*rcvr]))]。
+
+[:en] Initializes [`[^prom].[*token]] and [`[^prom].[*source]] such that
+[:zh_CN] 初始化 [`[^prom].[*token]] 和 [`[^prom].[*source]]，使得
+[list]
+[item]
+[:en@~] [`[^prom].[*token].stop_requested()] returns [`[^st].stop_requested()];
+[:zh_CN@~] [`[^prom].[*token].stop_requested()] 返回 [`[^st].stop_requested()]；
+[item]
+[:en@~] [`[^prom].[*token].stop_possible()] returns [`[^st].stop_possible()]; and
+[:zh_CN@~] [`[^prom].[*token].stop_possible()] 返回 [`[^st].stop_possible()]；并且
+[item]
+[:en@~] for types [`Fn] and [`Init] such that both [`[`:c invocable]<Fn>] and
+[`[`:c constructible_from]<Fn, Init>] are modeled, [`stop_token_type::callback_type<Fn>]
+models [`[*:c stoppable-callback-for]<Fn, stop_token_type, Init>].
+[:zh_CN@~] 对于同时构成 [`[`:c invocable]<Fn>] 和 [`[`:c constructible_from]<Fn, Init>]
+的类型 [`Fn] 和 [`Init]，[`stop_token_type::callback_type<Fn>] 构成
+[`[*:c stoppable-callback-for]<Fn, stop_token_type, Init>]。
+[list:end]
+
+[:en] After that invokes [`[*handle].resume()].
+[:zh_CN] 之后调用 [`[*handle].resume()]。
+[div:end]

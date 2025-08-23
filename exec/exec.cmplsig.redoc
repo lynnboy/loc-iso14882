@@ -1,5 +1,6 @@
-[section#exec.util.cmplsig
-    [`execution::completion_signatures]
+[section#exec.cmplsig
+    [:en] Completion signatures
+    [:zh_CN] 完成签名
 ]
 
 [para]
@@ -113,10 +114,21 @@ templates as [`Variant] and [`Tuple] arguments to [*gather-signatures].
 [end:note]
 
 [para]
+[%@lib execution::completion_signatures]
+[%@lib@member [*for-each][!execution::completion_signatures]]
+[%@lib@member [*count-of][!execution::completion_signatures]]
 [codeblock:synopsis]
 namespace std::execution {
   template<[[redoc("*:c>")]]completion-signature... Fns>
-    struct completion_signatures {};
+    struct completion_signatures {
+      template<class Tag>
+        static constexpr size_t [[redoc("`:c>")]]count-of(Tag) { return [[redoc("[=seebelow]")]]; }
+
+      template<class Fn>
+        static constexpr void [[redoc("`:c>")]]for-each(Fn&& fn) {               // [=expos]
+          (std::forward<Fn>(fn)(static_cast<Fns*>(nullptr)), ...);
+        }
+    };
 
   template<class Sndr, class Env = env<>,
            template<class...> class Tuple = [[redoc("*>")]]decayed-tuple,
@@ -140,3 +152,13 @@ namespace std::execution {
                                  [[redoc("*>")]]type-list, [[redoc("*>")]]type-list>>;
 }
 [codeblock:end]
+
+[para]
+[:en] For a subexpression [`tag], let [`Tag] be the decayed type of [`tag].
+[:zh_CN] 对于子表达式 [`tag]，令 [`Tag] 为 [`tag] 的退化类型。
+
+[:en] [`completion_signatures<Fns...>::[*count-of](tag)] returns the count of
+function types in [`Fns...] that are of the form [`Tag(Ts...)] where [`Ts] is
+a pack of types.
+[:zh_CN] [`completion_signatures<Fns...>::[*count-of](tag)] 返回 [`Fns...] 中
+函数类型的数量，这些函数类型的形式为 [`Tag(Ts...)]，其中 [`Ts] 为类型的包组。

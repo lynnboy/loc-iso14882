@@ -1,0 +1,202 @@
+[section#exec.sysctxrepl.psb
+    [:en] Class [`parallel_scheduler_backend]
+    [:zh_CN] 类 [`parallel_scheduler_backend]
+]
+
+[codeblock:synopsis]
+namespace std::execution::system_context_replaceability {
+  struct [[redoc("`:lib>")]]parallel_scheduler_backend {
+    virtual ~parallel_scheduler_backend() = default;
+
+    virtual void schedule(receiver_proxy&, span<byte>) noexcept = 0;
+    virtual void schedule_bulk_chunked(size_t, bulk_item_receiver_proxy&,
+                                       span<byte>) noexcept = 0;
+    virtual void schedule_bulk_unchunked(size_t, bulk_item_receiver_proxy&,
+                                         span<byte>) noexcept = 0;
+  };
+}
+[codeblock:end]
+
+[%@lib@member schedule[!parallel_scheduler_backend]]
+[codeblock:declaration]
+virtual void schedule(receiver_proxy& r, span<byte> s) noexcept = 0;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The ends of the lifetimes of [`*this], the object referred to by [`r], and
+any storage referenced by [`s] all happen after
+the beginning of the evaluation of one of the expressions below.
+[:zh_CN] [`*this]，[`r] 所指代对象，以及 [`s] 所指代的任意存储，它们生存期的结束均
+发生晚于以下表达式之一的求值开始。
+
+[para:effects]
+[:en] A derived class shall implement this function such that:
+[:zh_CN] 派生类应当这样实现此函数：
+[list]
+[item]
+[:en] One of the following expressions is evaluated:
+[:zh_CN] 求值下列表达式之一：
+ [list]
+ [item]
+[:en@~] [`r.set_value()], if no error occurs, and the work is successful;
+[:zh_CN@~] 如果未发生错误，则求值 [`r.set_value()]，且其工作成功完成；
+ [item]
+[:en@~] [`r.set_error(eptr)], if an error occurs, where [`eptr] is an object of
+type [`exception_ptr];
+[:zh_CN@~] 如果发生了错误，则求值 [`r.set_error(eptr)]，其中 [`eptr] 是
+[`exception_ptr] 类型的对象；
+ [item]
+[:en@~] [`r.set_stopped()], if the work is canceled.
+[:zh_CN@~] 如果工作被取消，则求值 [`r.set_stopped()]。
+ [list:end]
+
+[item]
+[:en] Any call to [`r.set_value()] happens on
+an execution agent of the execution context represented by [`*this].
+[:zh_CN] 对 [`r.set_value()] 的任何调用都应当发生于 [`*this] 所表示的执行上下文的某个执行代理上。
+[list:end]
+
+[para:remarks]
+[:en] The storage referenced by [`s] may be used by [`*this] as temporary storage
+for the duration of the operation launched by this call.
+[:zh_CN] [`s] 所指代的存储可能被 [`*this] 在由这次调用所启动的操作期间用作临时存储。
+[div:end]
+
+[%@lib@member schedule_bulk_chunked[!parallel_scheduler_backend]]
+[codeblock:declaration]
+virtual void schedule_bulk_chunked(size_t n, bulk_item_receiver_proxy& r,
+                                   span<byte> s) noexcept = 0;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The ends of the lifetimes of [`*this], the object referred to by [`r], and
+any storage referenced by [`s] all happen after
+the beginning of the evaluation of one of the expressions below.
+[:zh_CN] [`*this]，[`r] 所指代对象，以及 [`s] 所指代的任意存储，它们生存期的结束均
+发生晚于以下表达式之一的求值开始。
+
+[para:effects]
+[:en] A derived class shall implement this function such that:
+[:zh_CN] 派生类应当这样实现此函数：
+[list]
+[item]
+[:en] Eventually, one of the following expressions is evaluated:
+[:zh_CN] 最终，求值下列表达式之一：
+ [list]
+ [item]
+[:en@~] [`r.set_value()], if no error occurs, and the work is successful;
+[:zh_CN@~] 如果未发生错误，则求值 [`r.set_value()]，且其工作成功完成；
+ [item]
+[:en@~] [`r.set_error(eptr)], if an error occurs, where [`eptr] is an object of
+type [`exception_ptr];
+[:zh_CN@~] 如果发生了错误，则求值 [`r.set_error(eptr)]，其中 [`eptr] 是
+[`exception_ptr] 类型的对象；
+ [item]
+[:en@~] [`r.set_stopped()], if the work is canceled.
+[:zh_CN@~] 如果工作被取消，则求值 [`r.set_stopped()]。
+ [list:end]
+
+[item]
+[:en] If [`r.execute(b, e)] is called, then [`b] and [`e] are in the range
+[=crange(0,n)] and [$[`b] < [`e]].
+[:zh_CN] 如果调用了 [`r.execute(b, e)]，则 [`b] 和 [`e] 都在范围 [=crange(0,n)]
+之内，且 [$[`b] < [`e]]。
+
+[item]
+[:en] For each [$i] in [=range(0,n)], there is at most one call to [`r.execute(b, e)]
+such that [$i] is in the range [=range(b,e)].
+[:zh_CN] 对于 [=range(0,n)] 中的每个 [$i]，最多有一次对 [`r.execute(b, e)] 的调用，
+使得 [$i] 在范围 [=range(b,e)] 之内。
+
+[item]
+[:en] If [`r.set_value()] is called, then for each [$i] in [=range(0,n)], there
+is exactly one call to [`r.execute(b, e)] such that [$i] is in the range [=range(b,e)].
+[:zh_CN] 如果调用了 [`r.set_value()]，则对于 [=range(0,n)] 中的每个 [$i]，恰好有一次
+对 [`r.execute(b, e)] 的调用使得 [$i] 在范围 [=range(b,e)] 之内。
+
+[item]
+[:en] All calls to [`execute] on [`r] happen before the call to either 
+[`set_value], [`set_error], or [`set_stopped] on [`r].
+[:zh_CN] 在 [`r] 上对 [`execute] 的所有调用都发生早于在 [`r] 上对
+[`set_value]、[`set_error] 或 [`set_stopped] 的调用。
+
+[item]
+[:en] All calls to [`execute] and [`set_value] on [`r] are made
+on execution agents of the execution context represented by [`*this].
+[:zh_CN] 在 [`r] 上对 [`execute] 和 [`set_value] 的所有调用都应当在 [`*this]
+所表示的执行上下文的某个执行代理上做出。
+[list:end]
+
+[para:remarks]
+[:en] The storage referenced by [`s] may be used by [`*this] as temporary storage
+for the duration of the operation launched by this call.
+[:zh_CN] [`s] 所指代的存储可能被 [`*this] 在由这次调用所启动的操作期间用作临时存储。
+[div:end]
+
+[%@lib@member schedule_bulk_unchunked[!parallel_scheduler_backend]]
+[codeblock:declaration]
+virtual void schedule_bulk_unchunked(size_t n, bulk_item_receiver_proxy& r,
+                                     span<byte> s) noexcept = 0;
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] The ends of the lifetimes of [`*this], the object referred to by [`r], and
+any storage referenced by [`s] all happen after
+the beginning of the evaluation of one of the expressions below.
+[:zh_CN] [`*this]，[`r] 所指代对象，以及 [`s] 所指代的任意存储，它们生存期的结束均
+发生晚于以下表达式之一的求值开始。
+
+[para:effects]
+[:en] A derived class shall implement this function such that:
+[:zh_CN] 派生类应当这样实现此函数：
+[list]
+[item]
+[:en] Eventually, one of the following expressions is evaluated:
+[:zh_CN] 最终，求值下列表达式之一：
+ [list]
+ [item]
+[:en@~] [`r.set_value()], if no error occurs, and the work is successful;
+[:zh_CN@~] 如果未发生错误，则求值 [`r.set_value()]，且其工作成功完成；
+ [item]
+[:en@~] [`r.set_error(eptr)], if an error occurs, where [`eptr] is an object of
+type [`exception_ptr];
+[:zh_CN@~] 如果发生了错误，则求值 [`r.set_error(eptr)]，其中 [`eptr] 是
+[`exception_ptr] 类型的对象；
+ [item]
+[:en@~] [`r.set_stopped()], if the work is canceled.
+[:zh_CN@~] 如果工作被取消，则求值 [`r.set_stopped()]。
+ [list:end]
+
+[item]
+[:en] If [`r.execute(b, e)] is called, then [`b] is in the range [=range(0,n)]
+[`e] is equal to [`b + 1].
+[:zh_CN] 如果调用了 [`r.execute(b, e)]，则 [`b] 和 [`e] 都在范围 [=range(0,n)]
+之内，且 [`e] 等于 [`b + 1]。
+
+[item]
+[:en] If [`r.set_value()] is called, then for each [$i] in [=range(0,n)], there
+is exactly one call to [`r.execute([$i], [$i] + 1)].
+[:zh_CN] 如果调用了 [`r.set_value()]，则对于 [=range(0,n)] 中的每个 [$i]，恰好有一次
+对 [`r.execute([$i], [$i] + 1)] 的调用。
+
+[item]
+[:en] All calls to [`execute] on [`r] happen before the call to either 
+[`set_value], [`set_error], or [`set_stopped] on [`r].
+[:zh_CN] 在 [`r] 上对 [`execute] 的所有调用都发生早于在 [`r] 上对
+[`set_value]、[`set_error] 或 [`set_stopped] 的调用。
+
+[item]
+[:en] All calls to [`execute] and [`set_value] on [`r] are made
+on execution agents of the execution context represented by [`*this].
+[:zh_CN] 在 [`r] 上对 [`execute] 和 [`set_value] 的所有调用都应当在 [`*this]
+所表示的执行上下文的某个执行代理上做出。
+[list:end]
+
+[para:remarks]
+[:en] The storage referenced by [`s] may be used by [`*this] as temporary storage
+for the duration of the operation launched by this call.
+[:zh_CN] [`s] 所指代的存储可能被 [`*this] 在由这次调用所启动的操作期间用作临时存储。
+[div:end]

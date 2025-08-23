@@ -1,0 +1,60 @@
+[section#exec.scope.concepts
+    [:en] Execution scope concepts
+    [:zh_CN] 执行作用域概念
+]
+
+[para]
+[:en] The [`:c scope_token] concept defines the requirements on a type [`Token]
+that can be used to create associations between senders and an async scope.
+[:zh_CN] [`:c scope_token] 概念定义针对可用于创建发送器和某个异步作用域之间的关联的
+类型 [`Token] 的规定。
+
+[para]
+[:en] Let [`[^test-sender]] and [`[^test-env]] be unspecified types such that
+[`[`:c sender_in]<[^test-sender], [^test-env]>] is modeled.
+[:zh_CN] 令 [`[^test-sender]] 和 [`[^test-env]] 为使得
+[`[`:c sender_in]<[^test-sender], [^test-env]>] 得以构成的未指明类型。
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Token>
+    concept [[redoc("`:c@def>")]]scope_token =
+      [[redoc("`:c>")]]copyable<Token> &&
+      requires(const Token token) {
+        { token.try_associate() } -> [[redoc("`:c>")]]same_as<bool>;
+        { token.disassociate() } noexcept -> [[redoc("`:c>")]]same_as<void>;
+        { token.wrap(declval<@\placeholder{test-sender}@>()) } -> [[redoc("`:c>")]]sender_in<[[redoc("^>")]]test-env>;
+      };
+}
+[codeblock:end]
+
+[para]
+[:en] A type [`Token] models [`:c scope_token] only if:
+[:zh_CN] 仅当符合以下情况时，类型 [`Token] 构成 [`:c scope_token]：
+
+[list]
+[item]
+[:en] no exceptions are thrown from copy construction, move construction,
+copy assignment, or move assignment of objects of type [`Token]; and
+[:zh_CN] [`Token] 类型对象的复制构造、移动构造、复制赋值或者移动赋值中不会抛出任何异常；并且
+
+[item]
+[:en] given an lvalue [`token] of type (possibly const) [`Token],
+for all expressions [`sndr] such that [`decltype((sndr))] models [`:c sender]:
+[:zh_CN] 给定（可能 const 的）[`Token] 类型的左值 [`token]，对于所有使得
+[`decltype((sndr))] 构成 [`:c sender] 的表达式 [`sndr]：
+
+ [list]
+ [item]
+[:en@~] [`token.wrap(sndr)] is a valid expression,
+ [item]
+[:en@~] [`decltype(token.wrap(sndr))] models [`:c sender], and
+ [item]
+[:en@~] [`completion_signatures_of_t<decltype(token.wrap(sndr)), E>] contains
+the same completion signatures as [`completion_signatures_of_t<decltype((sndr)), E>]
+for all types [`E] such that [`[`:c sender_in]<decltype((sndr)), E>] is modeled.
+[:zh_CN@~] 对于所有使得 [`[`:c sender_in]<decltype((sndr)), E>] 得以构成的类型 [`E]，
+[`completion_signatures_of_t<decltype(token.wrap(sndr)), E>] 与
+[`completion_signatures_of_t<decltype((sndr)), E>] 包含相同的完成签名。
+ [list:end]
+[list:end]

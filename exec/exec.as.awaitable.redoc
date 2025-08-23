@@ -21,6 +21,13 @@ namespace std::execution {
         { p.unhandled_stopped() } -> [[redoc("`:c>")]]convertible_to<coroutine_handle<>>;
       };
 
+  template<class Sndr>
+    concept [[redoc("*:c@def>")]]has-queryable-await-completion-adaptor =            // [=expos]
+      [[redoc("`:c>")]]sender<Sndr> &&
+      requires(Sndr&& sender) {
+        get_await_completion_adaptor(get_env(sender));
+      };
+
   template<class Sndr, class Promise>
     class [[redoc("*>")]]sender-awaitable;                                     // [=expos]
 }
@@ -184,6 +191,24 @@ that lacks a member named [`await_transform].
 to the same expression in a coroutine with promise type [`Promise].
 [:zh_CN] [`[*:c is-awaitable]<Expr, Promise>] 为 [`true]，且表达式 [`co_await expr]
 在承诺类型为 [`U] 的协程中时按表达式等价于在承诺类型为 [`Promise] 的协程中的相同表达式。
+
+[item]
+[:en] Otherwise, [`[*sender-awaitable]{[*adapted-expr], p}] if
+[:zh_CN] 否则，若
+[codeblock]
+[[redoc("*>")]]has-queryable-await-completion-adaptor<Expr>
+[codeblock:end]
+[:en@~] and
+[:zh_CN@~] 和
+[codeblock]
+[[redoc("*>")]]awaitable-sender<decltype(([[redoc("*>")]]adapted-expr)), Promise>
+[codeblock:end]
+[:en@~] are both satisfied, where [*adapted-expr] is
+[`get_await_completion_adaptor(get_env(expr))(expr)],
+except that [`expr] is evaluated only once.
+[:zh_CN@~] 均得以满足，则为 [`[*sender-awaitable]{[*adapted-expr], p}]，
+其中 [*adapted-expr] 为 [`get_await_completion_adaptor(get_env(expr))(expr)]，
+但 [`expr] 仅被求值一次。
 
 [item]
 [:en] Otherwise, [`[*sender-awaitable]{expr, p}] if

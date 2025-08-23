@@ -1,0 +1,179 @@
+[section#exec.counting.scopes.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] Scopes of type [`simple_counting_scope] and [`counting_scope]
+maintain counts of associations.
+[:zh_CN] [`simple_counting_scope] 和 [`counting_scope] 类型的作用域维护队关联的计数。
+
+[:en] Let:
+[:zh_CN] 令：
+[list]
+[item]
+[:en@~] [`Scope] be either [`simple_counting_scope] or [`counting_scope],
+[:zh_CN@~] [`Scope] 为 [`simple_counting_scope] 或者 [`counting_scope]，
+[item]
+[:en@~] [`scope] be an object of type [`Scope],
+[:zh_CN@~] [`scope] 为 [`Scope] 类型的对象，
+[item]
+[:en@~] [`tkn] be an object of type [`Scope::token] obtained from [`scope.get_token()],
+[:zh_CN@~] [`tkn] 为从 [`scope.get_token()] 获得的 [`Scope::token] 类型的对象，
+[item]
+[:en@~] [`jsndr] be a sender obtained from [`scope.join()], and
+[:zh_CN@~] [`jsndr] 为从 [`scope.join()] 获得的发送器，以及
+[item]
+[:en@~] [`op] be an operation state obtained from connecting [`jsndr] to a receiver.
+[:zh_CN@~] [`op] 为从把 [`jsndr] 连接到接收器所获得的操作状态。
+[list:end]
+
+[:en] During its lifetime [`scope] goes through different states
+which govern what operations are allowed and the result of these operations:
+[:zh_CN] 在生存期之内，[`scope] 会经历一些不同状态，以管理所允许的操作和这些操作的结果：
+
+[list]
+[item]
+[:en] [*unused]: a newly constructed object starts in the [*unused] state.
+[:zh_CN] [*unused]：新创建的对象从 [*unused] 状态开始。
+
+[item]
+[:en] [*open]: when [`tkn.try_associate()] is called while [`scope] is in the
+[*unused] state, [`scope] moves to the [*open] state.
+[:zh_CN] [*open]：当 [`scope] 处于 [*unused] 状态时，调用 [`tkn.try_associate()]，
+会将 [`scope] 转移到 [*open] 状态。
+
+[item]
+[:en] [*open-and-joining]: when the operation state [`op] is started while [`scope]
+is in the [*unused] or [*open] state, [`scope] moves to the [*open-and-joining] state.
+[:zh_CN] [*open-and-joining]：当 [`scope] 处于 [*unused] 或 [*open] 状态时，启动
+操作状态 [`op]，会将 [`scope] 转移到 [*open-and-joining] 状态。
+
+[item]
+[:en] [*closed]: when [`scope.close()] is called while [`scope] is in the [*open]
+state, [`scope] moves to the [*closed] state.
+[:zh_CN] [*closed]：当 [`scope] 处于 [*open] 状态时，调用 [`scope.close()]，会将
+[`scope] 转移到 [*closed] 状态。
+
+[item]
+[:en] [*unused-and-closed]: when [`scope.close()] is called while [`scope] is in
+the [*unused] state, [`scope] moves to the [*unused-and-closed] state.
+[:zh_CN] [*unused-and-closed]：当 [`scope] 处于 [*unused] 状态时，调用 [`scope.close()]，
+会将 [`scope] 转移到 [*unused-and-closed] 状态。
+
+[item]
+[:en] [*closed-and-joining]: when [`scope.close()] is called while [`scope] is in
+the [*open-and-joining] state or the operation state [`op] is started
+while [`scope] is in the [*closed] or [*unused-and-closed] state,
+[`scope] moves to the [*closed-and-joining] state.
+[:zh_CN] [*closed-and-joining]：当 [`scope] 处于 [*open-and-joining] 状态时，调用
+[`scope.close()]，或者当 [`scope] 处于 [*closed] 或 [*unused-and-closed] 状态时，
+启动操作状态 [`op]，会将 [`scope] 转移到 [*closed-and-joining] 状态。
+
+[item]
+[:en] [*joined]: when the count of assocations drops to zero while [`scope] is in
+the [*open-and-joining] or [*closed-and-joining] state, [`scope] moves to the
+[*joined] state.
+[:zh_CN] [*joined]：当 [`scope] 处于 [*open-and-joining] 或 [*closed-and-joining]
+状态时，关联计数降为零，会将 [`scope] 转移到 [*joined] 状态。
+[list:end]
+
+[para:recommended]
+[:en] For [`simple_counting_scope] and [`counting_scope], implementations should
+store the state and the count of associations in a single member of type [`size_t].
+[:zh_CN] 对于 [`simple_counting_scope] 和 [`counting_scope]，实现应当将其状态和
+关联计数存储与单个 [`size_t] 类型的成员中。
+
+[para]
+[:en] Subclause [#exec.counting.scopes] makes use of the following exposition-only entities:
+[:zh_CN] 子条款 [#exec.counting.scopes] 利用下列仅用于阐释的实体：
+
+[codeblock:synopsis]
+struct [[redoc("*>")]]scope-join-t {};     // [=expos]
+
+enum [[redoc("*>")]]scope-state-type {     // [=expos]
+  [[redoc("*>")]]unused,                   // [=expos]
+  [[redoc("*>")]]open,                     // [=expos]
+  [[redoc("*>")]]closed,                   // [=expos]
+  [[redoc("*>")]]open-and-joining,         // [=expos]
+  [[redoc("*>")]]closed-and-joining,       // [=expos]
+  [[redoc("*>")]]unused-and-closed,        // [=expos]
+  [[redoc("*>")]]joined,                   // [=expos]
+};
+[codeblock:end]
+
+[para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+is specialized for [*scope-join-t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*scope-join-t]
+进行如下特化：
+
+[%@lib execution::[*impls-for]<[*scope-join-t]>]
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<[[redoc("*>")]]scope-join-t> : [[redoc("*>")]]default-impls {
+    template<class Scope, class Rcvr>
+    struct [[redoc("*>")]]state {                          // [=expos]
+      struct [[redoc("*>")]]rcvr-t {                       // [=expos]
+        using receiver_concept = receiver_t;
+
+        Rcvr& [[redoc("*>")]]rcvr;                         // [=expos]
+
+        void set_value() && noexcept {
+          execution::set_value(std::move([[redoc("*>")]]rcvr));
+        }
+
+        template<class E>
+          void set_error(E&& e) && noexcept {
+            execution::set_error(std::move([[redoc("*>")]]rcvr), std::forward<E>(e));
+          }
+
+        void set_stopped() && noexcept {
+          execution::set_stopped(std::move([[redoc("*>")]]rcvr));
+        }
+
+        decltype(auto) get_env() const noexcept {
+          return execution::get_env([[redoc("*>")]]rcvr);
+        }
+      };
+
+      using [[redoc("*>")]]sched-sender =                  // [=expos]
+        decltype(schedule(get_scheduler(get_env(declval<Rcvr&>()))));
+      using [[redoc("*>")]]op-t =                          // [=expos]
+        connect_result_t<[[redoc("*>")]]sched-sender, [[redoc("*>")]]rcvr-t>;
+
+      Scope* [[redoc("*>")]]scope;                         // [=expos]
+      Rcvr& [[redoc("*>")]]receiver;                       // [=expos]
+      [[redoc("*>")]]op-t [[redoc("*>")]]op;                              // [=expos]
+
+      [[redoc("*>")]]state(Scope* scope, Rcvr& rcvr)       // [=expos]
+        noexcept([[redoc("*:c>")]]nothrow-callable<connect_t, [[redoc("*>")]]sched-sender, [[redoc("*>")]]rcvr-t>)
+        : [[redoc("*>")]]scope(scope),
+          [[redoc("*>")]]receiver(rcvr),
+          [[redoc("*>")]]op(connect(schedule(get_scheduler(get_env(rcvr))), [[redoc("*>")]]rcvr-t(rcvr))) {}
+
+      void [[redoc("*>")]]complete() noexcept {            // [=expos]
+        start([[redoc("*>")]]op);
+      }
+
+      void [[redoc("*>")]]complete-inline() noexcept {     // [=expos]
+        set_value(std::move([[redoc("*>")]]receiver));
+      }
+    };
+
+    static constexpr auto [[redoc("*>")]]get-state =       // [=expos]
+      []<class Rcvr>(auto&& sender, Rcvr& receiver)
+        noexcept(is_nothrow_constructible_v<[[redoc("*>")]]state<Rcvr>, [[redoc("*>")]]data-type<decltype(sender)>, Rcvr&>) {
+        auto[_, self] = sender;
+        return [[redoc("*>")]]state(self, receiver);
+      };
+
+    static constexpr auto [[redoc("*>")]]start =           // [=expos]
+      [](auto& s, auto&) noexcept {
+        if (s.[[redoc("*>")]]scope->[[redoc("*>")]]start-join-sender(s))
+          s.[[redoc("*>")]]complete-inline();
+      };
+  };
+}
+[codeblock:end]

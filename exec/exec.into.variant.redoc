@@ -33,12 +33,20 @@ transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-send
 specialized for [`into_variant] as follows:
 [:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [`into_variant]
 进行如下特化：
+[%@lib [*impls-for]<into_variant_t>]
+[%@lib@member [*check-types][![*impls-for]<into_variant_t>]]
 [codeblock]
 namespace std::execution {
   template<>
   struct [[redoc("*>")]]impls-for<into_variant_t> : [[redoc("*>")]]default-impls {
     static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types() {
+        auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+        [[redoc("*>")]]decay-copyable-result-datums(cs);   // [:en] see [#exec.snd.expos] [:zh_CN] 见 [#exec.snd.expos]
+      }
   };
 }
 [codeblock:end]
@@ -50,7 +58,7 @@ is initialized with a callable object equivalent to the following lambda:
 可调用对象初始化：
 [codeblock]
 []<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept
-  -> type_identity<value_types_of_t<[[redoc("*>")]]child-type<Sndr>, env_of_t<Rcvr>>> {
+  -> type_identity<value_types_of_t<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(env_of_t<Rcvr>)>> {
   return {};
 }
 [codeblock:end]

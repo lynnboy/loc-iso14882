@@ -32,25 +32,58 @@ transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-send
 [:zh_CN@~] 但 [`sndr] 仅被求值一次。
 
 [para]
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+is specialized for [`stopped_as_optional_t] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
+[`stopped_as_optional_t] 进行如下特化：
+
+[%@lib [*impls-for]<stopped_as_optional_t>]
+[%@lib@member [*check-types][![*impls-for]<stopped_as_optional_t>]]
+[codeblock]
+namespace std::execution {
+  template<>
+  struct [[redoc("*>")]]impls-for<stopped_as_optional_t> : [[redoc("*>")]]default-impls {
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types() {
+        [[redoc("*>")]]default-impls::[[redoc("*>")]]check-types<Sndr, Env...>();
+        if constexpr (!requires {
+          requires (![[redoc("`:c>")]]same_as<void, [[redoc("*>")]]single-sender-value-type<[[redoc("*>")]]child-type<Sndr>,
+                                                            [[redoc("*>")]]FWD-ENV-T(Env)...>>); })
+          throw [[redoc("^>")]]unspecified-exception();
+      }
+  };
+}
+[codeblock:end]
+[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
+[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
+
+[para]
 [:en] Let [`sndr] and [`env] be subexpressions such that [`Sndr] is
 [`decltype((sndr))] and [`Env] is [`decltype((env))].
 [:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]，
 [`Env] 为 [`decltype((env))]。
 
-[:en] If [`[*:c sender-for]<Sndr, stopped_as_optional_t>] is [`false], or
-if the type [`[*single-sender-value-type]<Sndr, Env>] is ill-formed or [`void],
-then the expression [`stopped_as_optional.transform_sender(sndr, env)]
-is ill-formed; otherwise, it is equivalent to:
-[:zh_CN] 如果 [`[*:c sender-for]<Sndr, stopped_as_optional_t>] 为 [`false]，或者
-类型 [`[*single-sender-value-type]<Sndr, Env>] 非良构或为 [`void]，则表达式
-[`stopped_as_optional.transform_sender(sndr, env)] 非良构，否则，它等价于：
+[:en] If [`[*:c sender-for]<Sndr, stopped_as_optional_t>] is [`false] then the
+expression [`stopped_as_optional.transform_sender(sndr, env)] is ill-formed;
+[:zh_CN] 如果 [`[*:c sender-for]<Sndr, stopped_as_optional_t>] 为 [`false]，则
+表达式 [`stopped_as_optional.transform_sender(sndr, env)] 非良构；
+
+[:en@~] otherwise, if [`[`:c sender_in]<[*child-type]<Sndr>, [*FWD-ENV-T](Env)>]
+is [`false], the expression [`stopped_as_optional.transform_sender(sndr, env)]
+is equivalent to [`[*not-a-sender]()];
+[:zh_CN@~] 否则，如果 [`[`:c sender_in]<[*child-type]<Sndr>, [*FWD-ENV-T](Env)>]
+为 [`false]，则表达式 [`stopped_as_optional.transform_sender(sndr, env)] 等价于
+[`[*not-a-sender]()]；
+
+[:en@~] otherwise, it is equivalent to:
+[:zh_CN@~] 否则，它等价于：
 [codeblock]
 auto&& [_, _, child] = sndr;
-using V = [[redoc("*>")]]single-sender-value-type<Sndr, Env>;
+using V = [[redoc("*>")]]single-sender-value-type<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)>;
 return let_stopped(
-    then(std::forward_like<Sndr>(child),
-         []<class... Ts>(Ts&&... ts) noexcept(is_nothrow_constructible_v<V, Ts...>) {
-           return optional<V>(in_place, std::forward<Ts>(ts)...);
-         }),
-    []() noexcept { return just(optional<V>()); });
+  then(std::forward_like<Sndr>(child),
+        []<class... Ts>(Ts&&... ts) noexcept(is_nothrow_constructible_v<V, Ts...>) {
+          return optional<V>(in_place, std::forward<Ts>(ts)...);
+        }),
+  []() noexcept { return just(optional<V>()); });
 [codeblock:end]

@@ -1,0 +1,99 @@
+[section#exec.scope.counting
+    [:en] Counting Scope
+    [:zh_CN] 计数作用域
+]
+
+[%@lib execution::counting_scope]
+[%@lib@member token[!execution::counting_scope]]
+[codeblock:synopsis]
+namespace std::execution {
+  class counting_scope {
+  public:
+    struct token {
+      template<[[redoc("`:c>")]]sender Sender>
+        [[redoc("`:c>")]]sender auto wrap(Sender&& snd) const noexcept(@\seebelow@);
+      bool try_associate() const noexcept;
+      void disassociate() const noexcept;
+
+    private:
+      counting_scope* [[redoc("*>")]]scope;                            // [=expos]
+    };
+
+    static constexpr size_t max_associations = [[redoc("[?impldef"
+          " [:en] value of [`std::execution::counting_scope::max_associations]"
+        "[:zh_CN] [`std::execution::counting_scope::max_associations] 的值]")]];
+
+    counting_scope() noexcept;
+    counting_scope(counting_scope&&) = delete;
+    ~counting_scope();
+
+    token get_token() noexcept;
+    void close() noexcept;
+    [[redoc("`:c>")]]sender auto join() noexcept;
+    void request_stop() noexcept;
+
+  private:
+    size_t [[redoc("*>")]]count;                                       // [=expos]
+    [[redoc("*>")]]scope-state-type [[redoc("*>")]]state;                             // [=expos]
+    inplace_stop_source [[redoc("*>")]]s_source;                       // [=expos]
+
+    bool [[redoc("*>")]]try-associate() noexcept;                      // [=expos]
+    void [[redoc("*>")]]disassociate() noexcept;                       // [=expos]
+
+    template<class State>
+      bool [[redoc("*>")]]start-join-sender(State& state) noexcept;    // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`counting_scope] differs from [`simple_counting_scope] by
+adding support for cancellation.
+[:zh_CN] [`counting_scope] 与 [`simple_counting_scope] 的不同在于添加了取消支持。
+
+[:en] Unless specified below, the semantics of members of [`counting_scope]
+are the same as the corresponding members of [`simple_counting_scope].
+[:zh_CN] 除非下文有规定，否则 [`counting_scope] 各成员的语义与 [`simple_counting_scope]
+的相应成员相同。
+
+[%@lib@member get_token[!execution::counting_scope]]
+[codeblock:declaration]
+token get_token() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An object [`t] of type [`counting_scope::token] such that [`t.[*scope] == this] is [`true].
+[:zh_CN] 一个 [`counting_scope::token] 类型的对象 [`t]，使得 [`t.[*scope] == this] 为 [`true]。
+[div:end]
+
+[%@lib@member request_stop[!execution::counting_scope]]
+[codeblock:declaration]
+void request_stop() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`[*s_source].request_stop()].
+[:zh_CN] 等价于 [`[*s_source].request_stop()]。
+
+[para:remarks]
+[:en] Calls to [`request_stop] do not introduce data races.
+[:zh_CN] 对 [`request_stop] 的调用不会引入数据竞争。
+[div:end]
+
+[%@lib@member wrap[!execution::counting_scope]]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]sender Sender>
+  [[redoc("`:c>")]]sender auto counting_scope::token::wrap(Sender&& snd) const
+    noexcept(is_nothrow_constructible_v<remove_cvref_t<Sender>, Sender>);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return [[redoc("*>")]]stop-when(std::forward<Sender>(snd), [[redoc("*>")]]scope->[[redoc("*>")]]s_source.get_token());
+[codeblock:end]
+[div:end]

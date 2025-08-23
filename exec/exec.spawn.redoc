@@ -1,0 +1,207 @@
+[section#exec.spawn
+    [`std::execution::spawn]
+]
+
+[para]
+[:en] [`spawn] attempts to associate the given input sender with the given
+token[=']s async scope and, on success, eagerly starts the input sender.
+[:zh_CN] [`spawn] 尝试将给定的输入发送器与给定的令牌的异步作用域关联起来，
+并在成功时急切启动输入发送器。
+
+[para]
+[:en] The name [`spawn] denotes a customization point object.
+[:zh_CN] 名字 [`spawn] 代表一个定制化点对象。
+
+[:en] For subexpressions [`sndr], [`token], and [`env],
+[:zh_CN] 对于子表达式 [`sndr]、[`token] 和 [`env]，
+[list]
+[item]
+[:en@~] let [`Sndr] be [`decltype((sndr))],
+[:zh_CN@~] 令 [`Sndr] 为 [`decltype((sndr))]，
+[item]
+[:en@~] let [`Token] be [`remove_cvref_t<decltype((token))>], and
+[:zh_CN@~] 令 [`Token] 为 [`remove_cvref_t<decltype((token))>]，并且
+[item]
+[:en@~] let [`Env] be [`remove_cvref_t<decltype((env))>].
+[:zh_CN@~] 令 [`Env] 为 [`remove_cvref_t<decltype((env))>]。
+[list:end]
+
+[:en] If any of [`[`:c sender]<Sndr>], [`[`:c scope_token]<Token>], or
+[`[*:c queryable]<Env>] are not satisfied,
+the expression [`spawn(sndr, token, env)] is ill-formed.
+[:zh_CN] 如果 [`[`:c sender]<Sndr>]、[`[`:c scope_token]<Token>] 或
+[`[*:c queryable]<Env>] 中有任何不满足的情况，那么表达式 [`spawn(sndr, token, env)] 非良构。
+
+[para]
+[:en] Let [*spawn-state-base] be the exposition-only class:
+[:zh_CN] 令 [`spawn-state-base] 为仅用于阐释的类：
+
+[%@lib execution::[*spawn-state-base]]
+[codeblock:synopsis]
+namespace std::execution {
+  struct [[redoc("*>")]]spawn-state-base {                                 // [=expos]
+    virtual void [[redoc("*>")]]complete() noexcept = 0;                   // [=expos]
+  };
+}
+[codeblock:end]
+
+
+[para]
+[:en] Let [*spawn-receiver] be the exposition-only class:
+[:zh_CN] 令 [`spawn-receiver] 为仅用于阐释的类：
+
+[%@lib execution::[*spawn-receiver]]
+[codeblock:synopsis]
+namespace std::execution {
+  struct [[redoc("*>")]]spawn-receiver {                                   // [=expos]
+    using receiver_concept = receiver_t;
+
+    [[redoc("*>")]]spawn-state-base* [[redoc("*>")]]state;                                // [=expos]
+    void set_value() && noexcept { [[redoc("*>")]]state->[[redoc("*>")]]complete(); }
+    void set_stopped() && noexcept { [[redoc("*>")]]state->[[redoc("*>")]]complete(); }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] Let [*spawn-state] be the exposition-only class template:
+[:zh_CN] 令 [`spawn-state] 为仅用于阐释的类模板：
+
+[%@lib execution::[*spawn-state]]
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Alloc, [[redoc("`:c>")]]scope_token Token, [[redoc("`:c>")]]sender Sender>
+  struct [[redoc("*>")]]spawn-state : [[redoc("*>")]]spawn-state-base {                   // [=expos]
+    using [[redoc("*>")]]op-t = connect_result_t<Sender, [[redoc("*>")]]spawn-receiver>;  // [=expos]
+
+    [[redoc("*>")]]spawn-state(Alloc alloc, Sender&& sndr, Token token);   // [=expos]
+    void [[redoc("*>")]]complete() noexcept override;                      // [=expos]
+    void [[redoc("*>")]]run();                                             // [=expos]
+
+  private:
+    using [[redoc("*>")]]alloc-t =                                         // [=expos]
+      typename allocator_traits<Alloc>::template rebind_alloc<[[redoc("*>")]]spawn-state>;
+
+    [[redoc("*>")]]alloc-t [[redoc("*>")]]alloc;                                          // [=expos]
+    [[redoc("*>")]]op-t [[redoc("*>")]]op;                                                // [=expos]
+    Token [[redoc("*>")]]token;                                            // [=expos]
+
+    void [[redoc("*>")]]destroy() noexcept;                                // [=expos]
+  };
+}
+[codeblock:end]
+
+[%@lib@ctor execution::[*spawn-state]]
+[codeblock:declaration]
+[[redoc("*>")]]spawn-state(Alloc alloc, Sender&& sndr, Token token);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*alloc] with [`alloc], [*token] with [`token], and [*op] with:
+[:zh_CN] 以 [`alloc] 初始化 [*alloc]，以 [`token] 初始化 [*token]，并将 [*op] 初始化为：
+[codeblock]
+connect(std::move(sndr), [[redoc("*>")]]spawn-receiver(this))
+[codeblock:end]
+[div:end]
+
+[%@lib@member [*run][!execution::[*spawn-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]run();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if ([[redoc("*>")]]token.try_associate())
+  start([[redoc("*>")]]op);
+else
+  [[redoc("*>")]]destroy();
+[codeblock:end]
+[div:end]
+
+[%@lib@member [*complete][!execution::[*spawn-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]complete() noexcept override;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto token = std::move(this->[[redoc("*>")]]token);
+
+[[redoc("*>")]]destroy();
+token.disassociate();
+[codeblock:end]
+[div:end]
+
+[%@lib@member [*destroy][!execution::[*spawn-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]destroy() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto alloc = std::move(this->[[redoc("*>")]]alloc);
+
+allocator_traits<[[redoc("*>")]]alloc-t>::destroy(alloc, this);
+allocator_traits<[[redoc("*>")]]alloc-t>::deallocate(alloc, this, 1);
+[codeblock:end]
+[div:end]
+
+[para]
+[:en] For the expression [`spawn(sndr, token, env)]
+let [`new_sender] be the expression [`token.wrap(sndr)] and
+let [`alloc] and [`senv] be defined as follows:
+[:zh_CN] 对于表达式 [`spawn(sndr, token, env)]，令 [`new_sender] 为表达式
+[`token.wrap(sndr)]，并令 [`alloc] 和 [`senv] 定义如下：
+
+[list]
+[item]
+[:en] if the expression [`get_allocator(env)] is well-formed, then [`alloc] is
+the result of [`get_allocator(env)] and [`senv] is the expression [`env],
+[:zh_CN] 如果表达式 [`get_allocator(env)] 良构，则 [`alloc] 为
+[`get_allocator(env)] 的结果，而 [`senv] 为表达式 [`env]，
+[item]
+[:en] otherwise, if the expression [`get_allocator(get_env(new_sender))] is
+well-formed, then [`alloc] is the result of [`get_allocator(get_env(new_sender))]
+and [`senv] is the expression [`[*JOIN-ENV](prop(get_allocator, alloc), env)];
+[:zh_CN] 否则，如果表达式 [`get_allocator(get_env(new_sender))] 良构，则 [`alloc]
+为 [`get_allocator(get_env(new_sender))] 的结果，而 [`senv] 为表达式
+[`[*JOIN-ENV](prop(get_allocator, alloc), env)]。
+[item]
+[:en] otherwise, [`alloc] is [`allocator<void>()] and [`senv] is the expression [`env].
+[:zh_CN] 否则，[`alloc] 为 [`allocator<void>()]，而 [`senv] 为表达式 [`env]。
+[list:end]
+
+[para]
+[:en] The expression [`spawn_(sndr, token, env)] is of type [`void] has the
+following effects:
+[:zh_CN] 表达式 [`spawn(sndr, token, env)] 类型为 [`void] 并具有以下效果：
+
+[list]
+[item]
+[:en] Uses [`alloc] to allocate and construct an object [`s] of a type that is
+a specialization of [*spawn-state] from [`alloc], [`write_env(token.wrap(sndr), senv)],
+and [`token] and then invokes [`o.[*run]()].
+[:zh_CN] 使用 [`alloc] 分配并构造一个对象 [`s]，其类型为以 [`alloc]、
+[`write_env(token.wrap(sndr), senv)] 和 [`token] 指定的 [*spawn-state] 特例，
+然后调用 [`o.[*run]()]。
+
+[:en] If an exception is thrown then any constructed objects are destroyed and
+any allocated memory is deallocated.
+[:zh_CN] 如果抛出异常，则销毁任何已构造的对象，回收任何已分配的内存。
+[list:end]
+
+[para]
+[:en] The expression [`spawn(sndr, token)] is expression-equivalent to
+[`spawn(sndr, token, execution::env<>())].
+[:zh_CN] 表达式 [`spawn(sndr, token)] 按表达式等价于
+[`spawn(sndr, token, execution::env<>())]。
