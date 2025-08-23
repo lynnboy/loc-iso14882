@@ -560,6 +560,12 @@ would throw an exception where no definition of the exception type is reachable;
 且没有可达的异常类型的定义式；
 
 [item]
+[:en] an expression that would produce an injected declaration (see below),
+unless [$E] is the corresponding expression of a [~consteval-block-declaration] ([#dcl.pre]);
+[:zh_CN] 可能产生注入声明式（见下文）的表达式，但 [$E] 不能是
+[~consteval-块声明式]（[#dcl.pre]）的相应表达式。
+
+[item]
 [:en] an [~asm-declaration] ([#dcl.asm]);
 [:zh_CN] [~asm-声明式]（[#dcl.asm]）；
 
@@ -730,15 +736,15 @@ void f(std::tuple<S&> t) {
 
 [para]
 [:en] During the evaluation of an expression [$E] as a core constant expression,
-all [~id-expression]s and uses of [`*[`:key this]] that refer to an object or
-reference whose lifetime did not begin with the evaluation of [$E] are treated
-as referring to a specific instance of that object or reference whose lifetime
-and that of all subobjects (including all union members) includes the entire
-constant evaluation.
-[:zh_CN] 将表达式 [$E] 作为核心常量表达式的求值过程中，所有[~标识表达式]和对
-[`*[`:key this]] 的使用，若其所代表的对象或引用的生存期并非开始于 [$E] 的求值，
-则均被当做代表该对象或引用的一个特定实例，其生存期和其所有子对象（包括所有联合体
-成员）的生存期均包含整个常量求值。
+all [~id-expression]s, [~splice-expression]s, and uses of [`*[`:key this]] that
+refer to an object or reference whose lifetime did not begin with the evaluation
+of [$E] are treated as referring to a specific instance of that object or
+reference whose lifetime and that of all subobjects (including all union members)
+includes the entire constant evaluation.
+[:zh_CN] 将表达式 [$E] 作为核心常量表达式的求值过程中，所有[~标识表达式]、
+[~拼接表达式]和对 [`*[`:key this]] 的使用，若其所代表的对象或引用的生存期并非
+开始于 [$E] 的求值，则均被当做代表该对象或引用的一个特定实例，其生存期和其
+所有子对象（包括所有联合体成员）的生存期均包含整个常量求值。
 
 [:en] For such an object that is not usable in constant expressions, the dynamic
 type of the object is [+constexpr-unknown].
@@ -784,32 +790,24 @@ void splash(Swim& swam) {
   static_assert((&swam)->phelps() == 28);       // OK
 
   Swim* pswam = &swam;
-  static_assert(pswam->phelps() == 28);         // [:en] error: lvalue-to-rvalue conversion on a pointer \
-                                                [:zh_CN] 错误：对不能用与常量表达式的指针
-                                                // [:en@~] not usable in constant expressions \
-                                                [:zh_CN] 进行左值向右值转换
+  static_assert(pswam->phelps() == 28);         // [:en] error: lvalue-to-rvalue conversion on a pointer [:zh_CN] 错误：对不能用与常量表达式的指针
+                                                // [:en@~] not usable in constant expressions [:zh_CN] 进行左值向右值转换
 
   static_assert(how_many(swam) == 28);          // OK
   static_assert(Swim().lochte() == 12);         // OK
 
-  static_assert(swam.lochte() == 12);           // [:en] error: invoking virtual function on reference \
-                                                [:zh_CN] 错误：在具有 constexpr 未知动态类型的引用上
-                                                // [:en@~] with constexpr-unknown dynamic type \
-                                                [:zh_CN@~] 调用虚函数
+  static_assert(swam.lochte() == 12);           // [:en] error: invoking virtual function on reference [:zh_CN] 错误：在具有 constexpr 未知动态类型的引用上
+                                                // [:en@~] with constexpr-unknown dynamic type [:zh_CN@~] 调用虚函数
 
-  static_assert(swam.coughlin == 12);           // [:en] error: lvalue-to-rvalue conversion on an object \
-                                                [:zh_CN] 错误：对不能用与常量表达式的对象
-                                                // [:en@~] not usable in constant expressions \
-                                                [:zh_CN] 进行左值向右值转换
+  static_assert(swam.coughlin == 12);           // [:en] error: lvalue-to-rvalue conversion on an object [:zh_CN] 错误：对不能用与常量表达式的对象
+                                                // [:en@~] not usable in constant expressions [:zh_CN] 进行左值向右值转换
 }
 
 extern Swim dc;
 extern Swim& trident;
 
-constexpr auto& sandeno   = typeid(dc);         // [:en] OK, can only be [`typeid(Swim)] \
-                                                [:zh_CN] OK，只能是 [`typeid(Swim)]
-constexpr auto& gallagher = typeid(trident);    // [:en] error: constexpr-unknown dynamic type \
-                                                [:zh_CN] 错误：constexpr 未知的动态类型
+constexpr auto& sandeno   = typeid(dc);         // [:en] OK, can only be [`typeid(Swim)] [:zh_CN] OK，只能是 [`typeid(Swim)]
+constexpr auto& gallagher = typeid(trident);    // [:en] error: constexpr-unknown dynamic type [:zh_CN] 错误：constexpr 未知的动态类型
 [codeblock:end]
 [end:example]
 
@@ -823,12 +821,12 @@ constexpr auto& gallagher = typeid(trident);    // [:en] error: constexpr-unknow
 [:zh_CN] 它不为类类型或其（可能多维的）数组，或者
 [item]
 [:en] it is of class type or (possibly multidimensional) array thereof, that
-class type has a constexpr destructor, and for a hypothetical expression [$E]
-whose only effect is to destroy [`a], [$E] would be a core constant expression
-if the lifetime of [`a] and its non-mutable subobjects (but not its mutable
-subobjects) were considered to start within [$E].
-[:zh_CN] 它为类类型或其（可能多维的）数组，此类类型具有 constexpr 析构函数，并且
-对于仅有效果为销毁 [`a] 的虚构的表达式 [$E]，如果 [`a] 及其非 mutable 子对象
+class type has a constexpr destructor ([#dcl.constexpr]), and for a hypothetical
+expression [$E] whose only effect is to destroy [`a], [$E] would be a
+core constant expression if the lifetime of [`a] and its non-mutable subobjects
+(but not its mutable subobjects) were considered to start within [$E].
+[:zh_CN] 它为类类型或其（可能多维的）数组，此类类型具有 constexpr 析构函数（[#dcl.constexpr]），
+并且对于仅有效果为销毁 [`a] 的虚构的表达式 [$E]，如果 [`a] 及其非 mutable 子对象
 （但不包括其 mutable 子对象）的生存期被当做开始于 [$E] 之内，则 [$E] 可为核心常量表达式。
 [list:end]
 
@@ -946,29 +944,79 @@ contains only the conversions above.
 的表达式，所转换的表达式是常量表达式，且其转换序列中仅包含上述转换。
 
 [para]
-[:en] A [+:adj constant[!expression]] is either a glvalue core constant expression
-that refers to an object or a non-immediate function, or a prvalue core constant
-expression whose result object ([#basic.lval]) satisfies the following constraints:
-[:zh_CN] [+:adj 常量[!表达式]]是泛左值核心常量表达式，其值所指代的是对象或非立即函数，
-或者是纯右值核心常量表达式，其结果对象（[#basic.lval]）满足如下约束条件：
-
+[:en] A [+:adj constant[!expression]] is either
+[:zh_CN] [+:adj 常量[!表达式]]是
 [list]
 [item]
-[:en] each constituent reference refers to an object or a non-immediate function,
-[:zh_CN] 每个成分引用都指代对象或非立即函数，
+[:en@~] a glvalue core constant expression [$E] for which
+[:zh_CN@~] 泛左值核心常量表达式 [$E]，使得
+ [list]
+ [item]
+[:en@~] [$E] refers to a non-immediate function,
+[:zh_CN@~] [$E] 指代的是非直接函数，
+ [item]
+[:en@~] [$E] designates an object [`o], and if the complete object of [`o] is of
+consteval-only type then so is [$E],
+[:zh_CN@~] [$E] 指名某个对象 [`o]，并且若 [`o] 的完整对象具有仅 consteval 类型则 [$E] 亦如此，
+[begin:example]
+[codeblock]
+struct Base { };
+struct Derived : Base { std::meta::info r; };
 
+consteval const Base& fn(const Derived& derived) { return derived; }
+
+constexpr Derived obj{.r=^^::};     // OK
+constexpr const Derived& d = obj;   // OK
+constexpr const Base& b = fn(obj);  // [:en] error: not a constant expression because [`Derived] [:zh_CN] 错误：由于 [`Derived] 是仅 consteval 类型
+                                    // [:en@~] is a consteval-only type but [`Base] is not. [:zh_CN@~] 但 [`Base] 不是，所以并非常量表达式
+[codeblock:end]
+[end:example]
+ [list:end]
+[:en@~] or
+[:zh_CN@~] 或者是
 [item]
+[:en@~] a prvalue core constant expression whose result object ([#basic.lval])
+satisfies the following constraints:
+[:zh_CN] 纯右值核心常量表达式，其结果对象（[#basic.lval]）满足如下约束条件：
+
+ [list]
+ [item]
+[:en] each constituent reference refers to an object or a non-immediate function,
+[:zh_CN] 每个成分引用都指代对象或非直接函数，
+
+ [item]
 [:en] no constituent value of scalar type is an indeterminate or erroneous value ([#basic.indet]),
 [:zh_CN] 没有标量类型成分值具有不确定或错误值（[#basic.indet]），
 
-[item]
+ [item]
 [:en] no constituent value of pointer type is a pointer to an immediate function
-or an invalid pointer value ([#basic.compound]), and
-[:zh_CN] 没有指针类型的成分值指向立即函数的指针或无效指针值（[#basic.compound]），并且
+or an invalid pointer value ([#basic.compound]),
+[:zh_CN] 没有指针类型的成分值指向直接函数的指针或无效指针值（[#basic.compound]），
 
-[item]
-[:en] no constituent value of pointer-to-member type designates an immediate function.
-[:zh_CN] 没有成员指针类型的成分值指代立即函数。
+ [item]
+[:en] no constituent value of pointer-to-member type designates an immediate function, and
+[:zh_CN] 没有成员指针类型的成分值指代直接函数，并且
+
+ [item]
+[:en] unless the value is of consteval-only type,
+[:zh_CN] 除非值具有仅 consteval 类型，否则
+
+  [list]
+  [item]
+[:en] no constituent value of pointer-to-member type points to
+a direct member of a consteval-only class type,
+[:zh_CN] 没有成员指针类型的成分值指向仅 consteval 类类型的直接成员，
+
+  [item]
+[:en] no constituent value of pointer type points to or past an object
+whose complete object is of consteval-only type, and
+[:zh_CN] 没有指针类型的成分值指向的对象的完整对象具有仅 consteval 类型，或指向其之后，并且
+  [item]
+[:en] no constituent reference refers to an object
+whose complete object is of consteval-only type.
+[:zh_CN] 没有成分引用指代的对象的完整对象具有仅 consteval 类型。
+  [list:end]
+ [list:end]
 [list:end]
 
 [begin:note]
@@ -1018,10 +1066,8 @@ during program execution.
 [begin:example]
 [codeblock]
 bool f() {
-    char array[1 + int(1 + 0.2 - 0.1 - 0.1)];   // [:en] Must be evaluated during translation \
-                                                [:zh_CN] 必须在翻译过程中求值
-    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);    // [:en] May be evaluated at runtime \
-                                                [:zh_CN] 可以在运行时求值
+    char array[1 + int(1 + 0.2 - 0.1 - 0.1)];   // [:en] Must be evaluated during translation [:zh_CN] 必须在翻译过程中求值
+    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);    // [:en] May be evaluated at runtime [:zh_CN] 可以在运行时求值
     return sizeof(array) == size;
 }
 [codeblock:end]
@@ -1067,23 +1113,27 @@ that has a subexpression that is an immediate-escalating expression.
 [%@defn conversion[!immediate-escalating]]
 [%@defn immediate-escalating[!expression][%expression[!immediate-escalating]]]
 [%@defn immediate-escalating[!conversion][%conversion[!immediate-escalating]]]
-An expression or conversion is [+immediate-escalating] if it is not initially in
-an immediate function context and it is either
+A potentially-evaluated expression or conversion is [+immediate-escalating] if
+it is neither initially in an immediate function context nor a
+subexpression of an immediate invocation, and
 [:zh_CN]
 [%@defn 表达式[!直接性扩散]]
 [%@defn 转换[!直接性扩散]]
 [%@defn 直接性扩散[!表达式][%表达式[!直接性扩散]]]
 [%@defn 直接性扩散[!转换][%转换[!直接性扩散]]]
-如果表达式或转换并非起初处于直接函数语境中，且其为以下之一，则它是[+直接性扩散]的：
+如果潜在求值的表达式或转换即不是起初处于直接函数语境中，也不是直接调用的子表达式，
+且其为以下之一，则它是[+直接性扩散]的：
 [list]
 [item]
-[:en] a potentially-evaluated [~id-expression] that denotes an immediate
-function that is not a subexpression of an immediate invocation, or
-[:zh_CN] 代表某个直接函数的潜在求值的[~标识表达式]，它不是某个直接调用的子表达式，或者
+[:en] it is an [~id-expression] or [~splice-expression] that designates an
+immediate function,
+[:zh_CN] 它是指名某个直接函数的[~标识表达式]或[~拼接表达式]，
 [item]
-[:en] an immediate invocation that is not a constant expression and is not a
-subexpression of an immediate invocation.
-[:zh_CN] 并非常量表达式且并非直接调用的子表达式的直接调用。
+[:en] it is an immediate invocation that is not a constant expression, or
+[:zh_CN] 它是并非常量表达式的直接调用，或者
+[item]
+[:en] it is of consteval-only type ([#basic.types.general]).
+[:zh_CN] 它具有仅 consteval 类型（[#basic.types.general]）。
 [list:end]
 
 [para]
@@ -1111,18 +1161,25 @@ immediate-escalating function.
 [:zh_CN] 直接性扩散表达式只能出现于直接性扩散函数之中。
 
 [para]
-[:en] An [+:adj immediate[!function]] is a function or constructor that is
-[:zh_CN] [+:adj 直接[!函数]]是以下函数或构造函数：
+[:en] An [+:adj immediate[!function]] is a function or constructor that is either
+[:zh_CN] [+:adj 直接[!函数]]是符合以下条件的函数或构造函数：
 [list]
 [item]
 [:en] declared with the [`:key consteval] specifier, or
 [:zh_CN] 以 [`:key consteval] 声明，或者
 [item]
-[:en] an immediate-escalating function [`[^F]] whose function body contains an
-immediate-escalating expression [`[^E]] such that [`[^E]][=']s innermost
-enclosing non-block scope is [`[^F]][=']s function parameter scope.
-[:zh_CN] 直接性扩散函数 [`[^F]]，其函数体包含某个直接性扩散表达式 [`[^E]]，
-使得 [`[^E]] 的最内层外围非块作用域是 [`[^F]] 的函数形参作用域。
+[:en] an immediate-escalating function [`[^F]] whose function body contains either
+[:zh_CN] 直接性扩散函数 [`[^F]]，其函数体包含：
+ [list]
+ [item]
+[:en@~] an immediate-escalating expression or
+[:zh_CN@~] 某个直接性扩散表达式，或者
+ [item]
+[:en@~] a definition of a non-constexpr variable with consteval-only type
+[:zh_CN@~] 某个具有仅 consteval 类型的非 constexpr 变量的定义式，
+ [list:end]
+[:en@~] whose innermost enclosing non-block scope is [`[^F]][=']s function parameter scope.
+[:zh_CN] 且其最内层外围非块作用域是 [`[^F]] 的函数形参作用域。
 
 [begin:note@tail]
 [:en] Default member initializers used to initialize a base or member subobject
@@ -1142,10 +1199,8 @@ constexpr int f(T t) {
   return t + id(t);
 }
 
-auto a = &f<char>;              // [:en] OK, [`f<char>] is not an immediate function \
-                                [:zh_CN] OK，[`f<char>] 不是直接函数
-auto b = &f<int>;               // [:en] error: [`f<int>] is an immediate function \
-                                [:zh_CN] 初吻：[`f<int>] 是直接函数
+auto a = &f<char>;              // [:en] OK, [`f<char>] is not an immediate function [:zh_CN] OK，[`f<char>] 不是直接函数
+auto b = &f<int>;               // [:en] error: [`f<int>] is an immediate function [:zh_CN] 初吻：[`f<int>] 是直接函数
 
 static_assert(f(3) == 6);       // OK
 
@@ -1275,6 +1330,181 @@ expression is evaluated even in an unevaluated operand ([#term.unevaluated.opera
 [:zh_CN] 除了 [~static_assert-消息]，显然常量求值表达式即便在免求值操作数中仍被
 求值（[#term.unevaluated.operand]）。
 [end:note]
+
+[para]
+[:en] The evaluation of an expression can introduce
+one or more [+:adj injected[!declarations[%declaration]]].
+[:zh_CN] 一个表达式的求值，可以引入一条或多条[+:adj 注入[!声明式]]。
+
+[:en] The evaluation is said to [+produce] the declarations.
+[:zh_CN] 其求值被称为[+产生]这些表达式。
+
+[begin:note]
+[:en] An invocation of the library function template [`std::meta::define_aggregate]
+produces an injected declaration ([#meta.reflection.define.aggregate]).
+[:zh_CN] 对库函数模板 [`std::meta::define_aggregate] 的调用产生一条注入声明式
+（[#meta.reflection.define.aggregate]）。
+[end:note]
+
+[:en] Each such declaration has
+[:zh_CN] 每个这种声明式都具有
+[list]
+[item]
+[:en@~] an associated [+:adj synthesized[!point]], which follows the last
+non-synthesized program point in the translation unit containing that declaration, and
+[:zh_CN] 一个关联的[+:adj 合成[!点]]，它在包含这条声明式的翻译单元中，跟随最后
+一条非合成的程序位置之后，以及
+[item]
+[:en@~] an associated [+:adj characteristic[!sequence]] of values.
+[:zh_CN@~] 一个关联的[+:adj 特性序列]。
+[list:end]
+
+[begin:note]
+[:en] Special rules concerning reachability apply to synthesized points ([#module.reach]).
+[:zh_CN] 有一些关注可达性的特殊规则适用于合成点（[#module.reach]）。
+[end:note]
+
+[begin:note]
+[:en] The program is ill-formed if injected declarations with different
+characteristic sequences define the same entity in different translation units ([#basic.def.odr]).
+[:zh_CN] 如果具有不同特性序列的注入声明式在不同翻译单元中定义了相同实体（[#basic.def.odr]），
+那么程序非良构。
+[end:note]
+
+[para]
+[:en] A member of an entity defined by an injected declaration shall not have
+a name reserved to the implementation ([#lex.name]); no diagnostic is required.
+[:zh_CN] 由注入声明式所定义的实体的成员，不能具有被实现保留的名字（[#lex.name]）；无须诊断。
+
+[para]
+[:en] Let [$C] be a [~consteval-block-declaration], the evaluation of whose
+corresponding expression produces an injected declaration for an entity [$E].
+[:zh_CN] 令 [$C] 为 [~consteval-块声明式]，其对应表达式的求值产生某个实体 [$E] 的注入声明式。
+
+[:en] The program is ill-formed if either
+[:zh_CN] 以下情况下，程序非良构
+[list]
+[item]
+[:en] [$C] is enclosed by a scope associated with [$E] or
+[:zh_CN] [$C] 被与 [$E] 关联的作用域包围，或者
+[item]
+[:en] letting [$P] be a point whose immediate scope is that to which [$E] belongs,
+there is a function parameter scope or class scope that encloses exactly one of [$C] or [$P].
+[:zh_CN] 令 [$P] 为以 [$E] 所属作用域为直接作用域的位置，则存在一个函数形参作用域
+或类作用域恰好包围 [$C] 或 [$P] 之一。
+[list:end]
+
+[begin:example]
+[codeblock]
+struct S0 {
+  consteval {
+    std::meta::define_aggregate(^^S0, {});  // [:en] error: scope associated with [`S0] encloses the consteval block \
+                                            [:zh_CN] 错误：与 [`S0] 关联的作用域包围 consteval 块
+  }
+};
+
+struct S1;
+consteval { std::meta::define_aggregate(^^S1, {}); }    // OK
+
+template <std::meta::info R> consteval void tfn1() {
+  std::meta::define_aggregate(R, {});
+}
+
+struct S2;
+consteval { tfn1<^^S2>(); }                             // OK
+
+template <std::meta::info R> consteval void tfn2() {
+  consteval { std::meta::define_aggregate(R, {}); }
+}
+
+struct S3;
+consteval { tfn2<^^S3>(); }
+  // [:en] error: function parameter scope of [`tfn2<^^ S3>] intervenes between the declaration of [`S3] \
+  [:zh_CN] 错误：[`tfn2<^^ S3>] 的函数形参作用域介入了 [`S3] 的声明式和
+  // [:en@~] and the consteval block that produces the injected declaration \
+  [:zh_CN@~] 产生该注入声明式的 consteval 块之间
+
+template <typename> struct TCls {
+  struct S4;
+  static void sfn() requires ([] {
+    consteval { std::meta::define_aggregate(^^S4, {}); }
+    return true;
+  }()) { }
+};
+
+consteval { TCls<void>::sfn(); }    // [:en] error: [`TCls<void>::S4] is not enclosed by [~requires-clause] lambda \
+                                    [:zh_CN] 错误：[`TCls<void>::S4] 未被[~requires-子句] lambda 所包围
+
+struct S5;
+struct Cls {
+  consteval { std::meta::define_aggregate(^^S5, {}); }  // [:en] error: [`S5] is not enclosed by class [`Cls] [:zh_CN] 错误：[`S5] 为被类 [`Cls] 包围
+};
+
+struct S6;
+consteval {                                 // #1
+  struct S7;                                // [:en] local class [:zh_CN] 局部类
+
+  std::meta::define_aggregate(^^S7, {});    // [:en] error: consteval block #1 does not enclose itself, [:zh_CN] 错误：consteval 块 #1 并不包围
+                                            // [:en@~] but encloses [`S7] [:zh_CN@~] 其自身，但包围 [`S7]
+
+  consteval {                               // #2
+    std::meta::define_aggregate(^^S6, {});  // [:en] error: consteval block #1 encloses [:zh_CN] 错误：consteval 块 #1 包围
+                                            // [:en@~] consteval block #2 but not [`S6] [:zh_CN@~] consteval 块 #2 但不包围 [`S6]
+
+    std::meta::define_aggregate(^^S7, {});  // [:en] OK, consteval block #1 encloses both #2 and [`S7] [:zh_CN] OK，consteval 块 #1 同时包围 #2 和 [`S7]
+  }
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] The [+evaluation context] is a set of program points that determines the
+behavior of certain functions used for reflection ([#meta.reflection]).
+[:zh_CN] [+求值语境]是一组程序位置，确定用于反射的一些特定函数的行为（[#meta.reflection]）。
+
+[:en] During the evaluation [$V] of an expression [$E] as a core constant expression,
+the evaluation context of an evaluation [$X] ([#intro.execution])
+consists of the following points:
+[:zh_CN] 在表达式 [$E] 作为核心常量表达式的求值 [$V] 过程中，某个求值 [$x]
+的求值语境（[#intro.execution]）由以下位置组成：
+
+[list]
+[item]
+[:en] The program point [$EVAL-PT(L)], where [$L] is the point at which [$E] appears,
+and where [$EVAL-PT(P)], for a point [$P], is a point [$R] determined as follows:
+[:zh_CN] 程序位置 [$EVAL-PT(L)]，其中 [$L] 是出现 [$E] 的位置，以及对于某个位置 [$P]，
+[$EVAL-PT(P)] 是如下确定的位置 [$R]：
+
+[list]
+[item]
+[:en] If a potentially-evaluated subexpression ([#intro.execution]) of a default
+member initializer [$I] appears at [$P], and a (possibly aggregate) initialization
+during [$V] is using [$I], then [$R] is [$EVAL-PT(Q)]
+where [$Q] is the point at which that initialization appears.
+[:zh_CN] 如果一个默认成员初始化式 [$I] 的潜在求值子表达式（[#intro.execution]）
+出现于 [$P]，而 [$V] 中某次（可能为聚合的）初始化使用了 [$I]，那么 [$R] 为
+[$EVAL-PT(Q)]，其中 [$Q] 为出现这次初始化的位置。
+
+[item]
+[:en] Otherwise, if a potentially-evaluated subexpression of a default argument ([#dcl.fct.default])
+appears at [$P], and an invocation of a function ([#expr.call]) during [$V]
+is using that default argument, then [$R] is [$EVAL-PT(Q)]
+where [$Q] is the point at which that invocation appears.
+[:zh_CN] 否则，如果一个默认实参的潜在求值子表达式（[#dcl.fct.default]）出现于 [$P]，
+而 [$V] 中某次函数调用（[#expr.call]）使用了该默认实参，那么 [$R] 为 [$EVAL-PT(Q)]，
+其中 [$Q] 为出现这次调用的位置。
+
+[item]
+[:en] Otherwise, [$R] is [$P].
+[:zh_CN] 否则，[$R] 为 [$P]。
+[list:end]
+
+[item]
+[:en] Each synthesized point corresponding to an injected declaration produced by
+any evaluation sequenced before [$X] ([#intro.execution]).
+[:zh_CN] 由按顺序早于 [$X]（[#intro.execution]）的任何求值所产生的注入声明式
+的每个对应合成点。
+[list:end]
 
 [para]
 [:en] [%expression[!potentially constant evaluated]]

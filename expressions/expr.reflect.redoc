@@ -1,0 +1,286 @@
+[section#expr.reflect
+    [:en] The reflection operator
+    [:zh_CN] 反射运算符
+]
+
+[syntax]
+[rule reflect-expression [:zh_CN] 反射表达式 ]
+    [| [`^^] [`::] ]
+    [| [`^^] reflection-name ]
+    [| [`^^] type-id ]
+    [| [`^^] id-expression ]
+[rule:end]
+
+[rule reflection-name [:zh_CN] 反射名 ]
+    [| [~:opt nested-name-specifier] identifier ]
+    [| nested-name-specifier [`:key template] identifier ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en] The unary [`^^] operator, called the [+:adj reflection[!operator]],
+yields a prvalue of type [`std::meta::info] ([#basic.fundamental]).
+[:zh_CN] 一元 [`^^] 运算符，称为[+:adj 反射[!运算符]]，产生 [`std::meta::info]
+类型的纯右值（[#basic.fundamental]）。
+
+[begin:note]
+[:en] This document places no restriction on representing, by reflections,
+constructs not described by this document or using the names of such constructs
+as operands of [~reflect-expression]s.
+[:zh_CN] 对于未由本文档描述的语言构造，本文档对于通过反射对于它们的表示，或者
+将这种语言构造的名字用作[~反射表达式]的操作数不做任何限制。
+[end:note]
+
+[para]
+[:en] The component names of a [~reflection-name] are those of its
+[~nested-name-specifier] (if any) and its [~identifier].
+[:zh_CN] [~反射名]的成分名是其[~嵌套名说明符]（如果有）以及其[~标识符]的成分名。
+
+[:en] The terminal name of a [~reflection-name] of the form
+[~nested-name-specifier] [`:key template] [~identifier] shall denote a template.
+[:zh_CN] 形式为“[~嵌套名说明符] [`:key template] [~标识符]”的[~反射名]的终端名应当代表某个模板。
+
+[para]
+[:en] A [~reflect-expression] is parsed as the longest possible sequence of tokens
+that could syntactically form a [~reflect-expression].
+[:zh_CN] [~反射表达式]应当按照语法上可以形成[~反射表达式]的最长可能的记号序列进行解析。
+
+[:en] An unparenthesized [~reflect-expression] that represents a template shall
+not be followed by [`<].
+[:zh_CN] 表示模板的没有括号的[~反射表达式]不能跟着 [`<]。
+
+[begin:example]
+[codeblock]
+static_assert(std::meta::is_type(^^int()));     // [:en] [`^^] applies to the [~type-id] [`int()] [:zh_CN] 对[~类型标识] [`int()] 使用 [`^^]
+
+template<bool> struct X {};
+consteval bool operator<(std::meta::info, X<false>) { return false; }
+consteval void g(std::meta::info r, X<false> xv) {
+  r == ^^int && true;       // [:en] error: [`^^] applies to the [~type-id] [`int&&] [:zh_CN] 错误：对[~类型标识] [`int&&] 应用 [`^^]
+  r == ^^int & true;        // [:en] error: [`^^] applies to the [~type-id] [`int&] [:zh_CN] 错误：对[~类型标识] [`int&] 应用 [`^^]
+  r == (^^int) && true;     // OK
+  r == ^^int &&&& true;     // [:en] error: [`int &&&&] is not a valid [~type-id] [:zh_CN] 错误：[`int &&&&] 不是有效[~类型标识]
+  ^^X < xv;                 // [:en] error: [~reflect-expression] that represents a template is followed by [`<] [:zh_CN] 错误：表示模板的[~反射表达式]之后跟着 [`<]
+  (^^X) < xv;               // OK
+  ^^X<true> < xv;           // OK
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] A [~reflect-expression] of the form [`^^] represents the global namespace.
+[:zh_CN] 形式为“[`^^]”的[~反射表达式]表示全局命名空间。
+[:zh_CN] 
+
+[para]
+[:en] If a [~reflect-expression] [$R] matches the form [`^^ [~reflection-name]],
+it is interpreted as such; the [~identifier] is looked up and
+the representation of [$R] is determined as follows:
+[:zh_CN] 如果[~反射表达式] [$R] 符合形式“[`^^ [~reflection-name]]”，那么它就按此解析；
+对其[~标识符]进行查找并按如下确定 [$R] 的表示：
+
+[list]
+[item]
+[:en] If lookup finds a declaration that replaced a [~using-declarator] during a
+single search ([#basic.lookup.general], [#namespace.udecl]), [$R] is ill-formed.
+[:zh_CN] 如果在单次查找中找到了一条替换了 [~using-声明符]的声明式（[#basic.lookup.general]，[#namespace.udecl]），
+那么 [$R] 非良构。
+
+[begin:example]
+[codeblock]
+struct A { struct S {}; };
+struct B : A { using A::S; };
+constexpr std::meta::info r1 = ^^B::S;  // [:en] error: [`A::S] found through [~using-declarator] [:zh_CN] 错误：通过 [~using-声明符]找到 [`A::S]
+
+struct C : virtual B { struct S {}; };
+struct D : virtual B, C {};
+D::S s;                                 // [:en] OK, names [`C::S] per [#class.member.lookup] [:zh_CN] OK，根据 [#class.member.lookup] 指名 [`C::S]
+constexpr std::meta::info r2 = ^^D::S;  // OK, result [`C::S] not found through [~using-declarator] [:zh_CN] OK，结果 [`C::S] 并非通过 [~using-声明符]找到
+[codeblock:end]
+[end:example]
+
+[item]
+[:en] Otherwise, if lookup finds a namespace alias ([#namespace.alias]),
+[$R] represents that namespace alias.
+[:zh_CN] 否则，如果查找找到了命名空间别名（[#namespace.alias]），
+那么 [$R] 表示这个命名空间别名。
+
+[:en] For any other [~namespace-name], [$R] represents the denoted namespace.
+[:zh_CN] 对于任何其他[~命名空间名]，[$R] 表示其所代表的命名空间。
+
+[item]
+[:en] Otherwise, if lookup finds a namespace ([#basic.namespace]),
+[$R] represents that namespace.
+[:zh_CN] 否则，如果查找找到了命名空间（[#basic.namespace]），
+那么 [$R] 表示该命名空间。
+
+[item]
+[:en] Otherwise, if lookup finds a concept ([#temp.concept]),
+[$R] represents the denoted concept.
+[:zh_CN] 否则，如果查找找到了概念（[#temp.concept]），那么 [$R] 表示该概念。
+
+[item]
+[:en] Otherwise, if lookup finds a template ([#temp.names]),
+the representation of [$R] is determined as follows:
+[:zh_CN] 否则，如果查找找到了模板（[#temp.names]），那么按如下确定 [$R] 的表示：
+
+ [list]
+ [item]
+[:en] If lookup finds an injected-class-name ([#class.pre]), then:
+[:zh_CN] 如果查找找到了注入类名（[#class.pre]），那么：
+
+  [list]
+  [item]
+[:en] If the [~reflection-name] is of the form
+[`[~nested-name-specifier] [`:key template] [~identifier]],
+then [$R] represents the class template named by the injected-class-name.
+[:zh_CN] 如果该[~反射名]的形式为“[`[~嵌套名说明符] [`:key template] [~标识符]]”，
+那么 [$R] 表示这个注入类名所指名的类模板。
+
+  [item]
+[:en] Otherwise, the injected-class-name shall be unambiguous when considered as
+a [~type-name] and [$R] represents the class template specialization so named.
+[:zh_CN] 否则，该注入类名被当做[~类型名]时应当无歧义，而 [$R] 表示其所指名的类模板特例。
+  [list:end]
+
+ [item]
+[:en] Otherwise, if lookup finds an overload set, that overload set shall contain
+only declarations of a unique function template [$F]; [$R] represents [$F].
+[:zh_CN] 否则，如果查找找到了重载集合，那么该重载集合应当仅包含唯一的函数模板 [$F]
+的声明式；[$R] 即表示 [$F]。
+
+ [item]
+[:en] Otherwise, if lookup finds a class template, variable template, or
+alias template, [$R] represents that template.
+[:zh_CN] 否则，如果查找找到了类模板、变量模板或者别名模板，那么 [$R] 表示该模板。
+
+[begin:note]
+[:en] Lookup never finds a partial or explicit specialization.
+[:zh_CN] 该查找永远不会找到部分或显式特化式。
+[end:note]
+[list:end]
+
+[item]
+[:en] Otherwise, if lookup finds a type alias [$A], [$R] represents the underlying
+entity of [$A] if [$A] was introduced by the declaration of a template parameter;
+otherwise, [$R] represents [$A].
+[:zh_CN] 否则，如果查找找到了类型别名 [$A]，那么当 [$A] 是由模板形参的声明式所
+引入时，[$R] 表示 [$A] 的底层实体，否则 [$R] 表示 [$A]。
+
+[item]
+[:en] Otherwise, if lookup finds a class or an enumeration, [$R] represents the denoted type.
+[:zh_CN] 否则，如果查找找到了类或枚举，那么 [$R] 代表该类型。
+
+[item]
+[:en] Otherwise, if lookup finds a class member of an anonymous union ([#class.union.anon]),
+[$R] represents that class member.
+[:zh_CN] 否则，如果查找找到了匿名联合体（[#class.union.anon]）的类成员，
+那么 [$R] 表示该类成员。
+
+[item]
+[:en] Otherwise, the [~reflection-name] shall be an [~id-expression] [`I]
+and [$R] is [`^^ I] (see below).
+[:zh_CN] 否则，该[~反射名]应当是一个[~标识表达式] [`I]，并且 [$R] 应当为 [`^^ I]（见下文）。
+[list:end]
+
+[para]
+[:en] A [~reflect-expression] [$R] of the form [`^^ [~type-id]]
+represents an entity determined as follows:
+[:zh_CN] 形式为“[`^^ [~类型标识]]”的[~反射表达式] [$R] 表示按如下确定的实体：
+
+[list]
+[item]
+[:en] If the [~type-id] designates a placeholder type ([#dcl.spec.auto.general]), [$R] is ill-formed.
+[:zh_CN] 如果[~类型标识]指名某个占位符类型（[#dcl.spec.auto.general]），那么 [$R] 非良构。
+
+[item]
+[:en] Otherwise, if the [~type-id] names a type alias that is a specialization
+of an alias template ([#temp.alias]), [$R] represents that type alias.
+[:zh_CN] 否则，如果[~类型标识]指名某个类型别名且为某个别名模板的特例（[#temp.alias]），
+那么 [$R] 表示这个类型别名。
+
+[item]
+[:en] Otherwise, [$R] represents the type denoted by the [~type-id].
+[:zh_CN] 否则，[$R] 表示[~类型标识]所代表的类型。
+[list:end]
+
+[para]
+[:en] A [~reflect-expression] [$R] of the form [`^^ [~id-expression]]
+represents an entity determined as follows:
+[:zh_CN] 形式为“[`^^ [~标识表达式]]”的[~反射表达式] [$R] 表示按如下确定的实体：
+
+[list]
+[item]
+[:en] If the [~id-expression] denotes
+[:zh_CN] 如果[~标识表达式]代表的是
+[list]
+[item]
+[:en@~] a variable declared by an [~init-capture] ([#expr.prim.lambda.capture]),
+[:zh_CN@~] 由某个[~带初始化俘获符]所声明的变量（[#expr.prim.lambda.capture]），
+[item]
+[:en@~] a function-local predefined variable ([#dcl.fct.def.general]),
+[:zh_CN@~] 函数局部预定义变量（[#dcl.fct.def.general]），
+[item]
+[:en@~] a local parameter introduced by a [~requires-expression] ([#expr.prim.req]), or
+[:zh_CN@~] 由 [~requires-表达式]引入的局部形参（[#expr.prim.req]），或者
+[item]
+[:en@~] a local entity [$E] ([#basic.pre]) for which a lambda scope intervenes
+between the point at which [$E] was introduced and [$R],
+[:zh_CN@~] 局部实体 [$E]（[#basic.pre]），有某个 lambda 作用域介入引入 [$E] 的位置和 [$R] 之间，
+[list:end]
+[:en@~] then [$R] is ill-formed.
+[:zh_CN@~] 那么 [$R] 非良构。
+
+[item]
+[:en] Otherwise, if the [~id-expression] denotes an overload set [$S],
+overload resolution for the expression [`&S] with no target
+shall select a unique function ([#over.over]); [$R] represents that function.
+[:zh_CN] 否则，如果[~标识表达式]代表重载集合 [$S]，那么针对表达式 [`&S] 进行的
+没有目标的重载决议应当选中唯一函数（[#over.over]）；[$R] 即表示该函数。
+
+[item]
+[:en] Otherwise, if the [~id-expression] denotes a variable, structured binding,
+enumerator, or non-static data member, [$R] represents that entity.
+[:zh_CN] 否则，如果[~标识表达式]代表的是变量、结构化绑定、枚举符或者非静态数据成员，
+那么 [$R] 表示该实体。
+
+[item]
+[:en] Otherwise, [$R] is ill-formed.
+[:zh_CN] 否则，[$R] 非良构。
+
+[begin:note]
+[:en] This includes [~unqualified-id]s that name a constant template parameter and
+[~pack-index-expression]s.
+[:zh_CN] 其中包括指名常量模板形参的[~无限定标识]和[~包组索引表达式]。
+[end:note]
+[list:end]
+
+[:en] The [~id-expression] of a [~reflect-expression] is an unevaluated operand ([#expr.context]).
+[:zh_CN] [~反射表达式]的[~标识表达式]是免求值操作数（[#expr.context]）。
+
+[begin:example]
+[codeblock]
+template<typename T> void fn() requires (^^T != ^^int);
+template<typename T> void fn() requires (^^T == ^^int);
+template<typename T> void fn() requires (sizeof(T) == sizeof(int));
+
+constexpr std::meta::info a = ^^fn<char>;       // OK
+constexpr std::meta::info b = ^^fn<int>;        // [:en] error: ambiguous [:zh_CN] 错误：有歧义
+
+constexpr std::meta::info c = ^^std::vector;    // OK
+
+template<typename T>
+struct S {
+  static constexpr std::meta::info r = ^^T;
+  using type = T;
+};
+static_assert(S<int>::r == ^^int);
+static_assert(^^S<int>::type != ^^int);
+
+typedef struct X {} Y;
+typedef struct Z {} Z;
+constexpr std::meta::info e = ^^Y;              // [:en] OK, represents the type alias [`Y] [:zh_CN] OK，表示类型别名 [`Y]
+constexpr std::meta::info f = ^^Z;              // [:en] OK, represents the type alias [`Z], not the type ([#basic.lookup.general]) \
+                                                [:zh_CN] OK，表示类型别名 [`Z]，而非类型（[#basic.lookup.general]）
+[codeblock:end]
+[end:example]
