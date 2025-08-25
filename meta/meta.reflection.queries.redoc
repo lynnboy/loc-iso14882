@@ -1,0 +1,1232 @@
+[section#ratio.reflection.queries
+    [:en] Reflection queries
+    [:zh_CN] 反射查询
+]
+
+[codeblock:declaration]
+consteval bool [[redoc("*>")]]has-type(info r);  // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a value, annotation, object, variable, function
+whose type does not contain an undeduced placeholder type and that is not
+a constructor or destructor, enumerator, non-static data member, unnamed bit-field,
+direct base class relationship, data member description, or function parameter.
+[:zh_CN] 如果 [`r] 代表一个值、标注、对象、变量、返回值不包含未推断占位符类型且并非
+构造函数或析构函数的函数、枚举符、非静态数据成员、无名位字段、直接基类关系、数据成员描述
+或者函数形参，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib type_of]
+[codeblock:declaration]
+consteval bool type_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents the [$i^\text{th}] parameter of a function [$F],
+then the [$i^\text{th}] type in the parameter-type-list of [$F] ([#dcl.fct]).
+[:zh_CN] 如果 [`r] 代表某个函数 [$F] 的第 [$i] 个形参，则返回 [$F] 的形参类型列表（[#dcl.fct]）
+的第 [$i] 个类型。
+
+[item]
+[:en] Otherwise, if [`r] represents a value, object, variable, function,
+non-static data member, or unnamed bit-field, then the type of what is represented by [`r].
+[:zh_CN] 否则，如果 [`r] 代表某个值、对象、变量、函数、非静态数据成员或者无名位字段，
+则返回 [`r] 所代表的类型。
+
+[item]
+[:en] Otherwise, if [`r] represents an annotation, then [`type_of(constant_of(r))].
+[:zh_CN] 否则，如果 [`r] 代表一个标注，则返回 [`type_of(constant_of(r))]。
+
+[item]
+[:en] Otherwise, if [`r] represents an enumerator [$N] of an enumeration [$E], then:
+[:zh_CN] 否则，如果 [`r] 代表某个枚举 [$E] 的枚举符 [$N]，则：
+
+ [list]
+ [item]
+[:en] If [$E] is defined by a declaration [$D] that precedes a point [$P] in the
+evaluation context and [$P] does not occur within an [~enum-specifier] of [$D],
+then a reflection of [$E].
+[:zh_CN] 如果 [$E] 是由求值语境中某个位置 [$P] 之前的某条声明式 [$D] 所声明，且 [$P]
+并非出现于 [$D] 的[~枚举说明符]之内，则返回 [$E] 的反射。
+
+ [item]
+[:en] Otherwise, a reflection of the type of [$N] prior to the closing brace of
+the [~enum-specifier] as specified in [#dcl.enum].
+[:zh_CN] 否则，返回如 [#dcl.enum] 所规定于[~枚举说明符]的闭花括号之前的 [$N] 的类型的反射。
+ [list:end]
+
+[item]
+[:en] Otherwise, if [`r] represents a direct base class relationship [$(D, B)],
+then a reflection of [$B].
+[:zh_CN] 否则，如果 [`r] 代表一个直接基类关系 [$(D, B)]，则返回 [$B] 的反射。
+
+[item]
+[:en] Otherwise, for a data member description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general]),
+a reflection of the type [$T].
+[:zh_CN] 否则，对于数据成员描述 [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general])，
+返回类型 [$T] 的反射。
+[list:end]
+
+[para:throws]
+[:en] [`meta::exception] unless [`[*has-type](r)] is [`true].
+[:zh_CN] 除非 [`[*has-type](r)] 为 [`true]，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib object_of]
+[codeblock:declaration]
+consteval info object_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents an object, then [`r].
+[:zh_CN] 如果 [`r] 表示一个对象，则返回 [`r]。
+
+[item]
+[:en] Otherwise, if [`r] represents a reference, then a reflection of the object
+referred to by that reference.
+[:zh_CN] 否则，如果 [`r] 表示一个引用、则返回该引用所指代的对象的反射。
+
+[item]
+[:en] Otherwise, [`r] represents a variable; a reflection of the object declared
+by that variable.
+[:zh_CN] 否则，[`r] 表示一个变量；返回该变量所声明的对象的反射。
+[list:end]
+
+[begin:example]
+[codeblock]
+int x;
+int& y = x;
+
+static_assert(^^x != ^^y);                          // [:en] OK, [`r] and [`y] are different variables so their [:zh_CN] OK，[`r] 和 [`y] 是不同的变量，
+                                                    // [:en@~] reflections compare different [:zh_CN@~] 因而它们的反射比较时不同
+static_assert(object_of((^^x) == object_of(^^y)));  // [:en] OK, because [`y] is a reference [:zh_CN] OK，因为 [`y] 是对 [`x] 的引用，
+                                                    // [:en@~] to [`x], their underlying objects are the same [:zh_CN@~] 所以它们的底层对象相同
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] unless [`r] is a reflection representing either
+[:zh_CN] 除非 [`r] 是表示以下各项的反射，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en@~] an object with static storage duration ([#basic.stc.general]), or
+[:zh_CN@~] 具有静态存储期的对象（[#basic.stc.general]），或者
+[item]
+[:en@~] a variable that either declares or refers to such an object,
+and if that variable is a reference [$R], then either
+[:zh_CN@~] 声明或者指代这种对象的变量，且当该变量是引用 [$R] 时，则
+ [list]
+ [item]
+[:en@~] [$R] is usable in constant expressions ([#expr.const]), or
+[:zh_CN@~] [$R] 可用在常量表达式中（[#expr.const]），或者
+ [item]
+[:en@~] the lifetime of [$R] began within the core constant expression
+currently under evaluation.
+[:zh_CN@~] [$R] 的生存期开始于当前求值的核心常量表达式之内。
+ [list:end]
+[list:end]
+[div:end]
+
+[%@lib constant_of]
+[codeblock:declaration]
+consteval info constant_of(info r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$R] be a constant expression of type [`info] such that [`[$R] == r] is [`true].
+[:zh_CN] 令 [$R] 为 [`info] 类型的常量表达式，使得 [`[$R] == r] 为 [`true]。
+
+[:en] If [`r] represents an annotation, then let [$C] be its underlying constant.
+[:zh_CN] 如果 [`r] 代表一个标注，则令 [$C] 为其底层常量。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr (is_annotation([[redoc("$>")]]R)) {
+  return [[redoc("$>")]]C;
+} else {
+  return reflect_constant([: [[redoc("$>")]]R :]);
+}
+[codeblock:end]
+
+[begin:example]
+[codeblock]
+constexpr int x = 0;
+constexpr int y = 0;
+
+static_assert(^^x != ^^y);                      // [:en] OK, [`x] and [`y] are different variables, [:zh_CN] OK，[`x] 和 [`y] 是不同变量，
+                                                // [:en@~] so their reflections compare different [:zh_CN@~] 因而它们的反射比较为不同
+static_assert(constant_of(^^x) ==
+              constant_of(^^y));                // [:en] OK, both [`constant_of(x)] and [:zh_CN] OK，[`constant_of(x)] 和
+                                                // [:en@~] [`constant_of(^^y)] represent the value [`0] [:zh_CN@~] [`constant_of(^^y)] 表示值 [`0]
+static_assert(constant_of(^^x) ==
+              reflect_constant(0));             // [:en] OK, likewise [:zh_CN] OK，类似
+
+struct S { int m; };
+constexpr S s {42};
+static_assert(is_object(constant_of(^^s)) &&
+              is_object(reflect_object(s)));
+static_assert(constant_of(^^s) !=       // [:en] OK, template parameter object that is template-argument- [:zh_CN] OK，按模板实参等价于 [`s] 的
+              reflect_object(s));       // [:en@~] equivalent to [`s] is a different object than [`s] [:zh_CN@~] 模板形参对象，是与 [`s] 不同的对象
+static_assert(constant_of(^^s) ==
+              constant_of(reflect_object(s)));  // OK
+
+consteval info fn() {
+  constexpr int x = 42;
+  return ^^x;
+}
+constexpr info r = constant_of(fn());           // [:en] error: [`x] is outside its lifetime [:zh_CN] 错误：[`x] 处于其生存期之外
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] unless either [`r] represents an annotation or
+[``[: [$R] :`]] is a valid [~splice-expression] ([#expr.prim.splice]).
+[:zh_CN] 除非 [`r] 代表一个标注，或者 [``[: [$R] :`]] 是有效的[~拼接表达式]（[#expr.prim.splice]），
+否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib is_public]
+[%@lib is_protected]
+[%@lib is_private]
+[codeblock:declaration]
+consteval bool is_public(info r);
+consteval bool is_protected(info r);
+consteval bool is_private(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents either
+[:zh_CN] 如果 [`r] 表示以下各项，则返回 [`true]：
+[list]
+[item]
+[:en@~] a class member or unnamed bit-field that is public, protected,
+or private, respectively, or
+[:zh_CN@~] 分别为公开、受保护或私有的类成员或无名位字段，或者
+[item]
+[:en@~] a direct base class relationship [$(D, B)] for which [$B] is, respectively,
+a public, protected, or private base class of [$D].
+[:zh_CN@~] 直接基类关系 [$(D, B)]，其中 [$B] 分别为 [$D] 的公开、受保护或私有基类。
+[list:end]
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_virtual]
+[codeblock:declaration]
+consteval bool is_virtual(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents either a virtual member function or a direct
+base class relationship [$(D, B)] for which [$B] is a virtual base class of [$D].
+[:zh_CN] 如果 [`r] 代表一个虚成员函数，或者一个直接基类关系 [$(D, B)]，其中 [$B] 是
+[$D] 的虚基类，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_pure_virtual]
+[%@lib is_override]
+[codeblock:declaration]
+consteval bool is_pure_virtual(info r);
+consteval bool is_override(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a member function that is pure virtual
+or overrides another member function, respectively.
+[:zh_CN] 如果 [`r] 分别代表一个纯虚成员函数或者覆盖另一个成员函数的成员函数，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_final]
+[codeblock:declaration]
+consteval bool is_final(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a final class or a final member function.
+[:zh_CN] 如果 [`r] 代表一个最终类或最终成员函数，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_deleted]
+[%@lib is_defaulted]
+[codeblock:declaration]
+consteval bool is_deleted(info r);
+consteval bool is_defaulted(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function that is a deleted function ([#dcl.fct.def.delete])
+or defaulted function ([#dcl.fct.def.default]), respectively.
+[:zh_CN] 如果 [`r] 分别代表一个弃置函数（[#dcl.fct.def.delete]）或者
+预置函数（[#dcl.fct.def.default]），则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_user_provided]
+[%@lib is_user_declared]
+[codeblock:declaration]
+consteval bool is_user_provided(info r);
+consteval bool is_user_declared(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function that is
+user-provided or user-declared ([#dcl.fct.def.default]), respectively.
+[:zh_CN] 如果 [`r] 表示一个用户提供或者用户声明的函数（[#dcl.fct.def.default]），则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_explicit]
+[codeblock:declaration]
+consteval bool is_explicit(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a member function that is declared explicit.
+[:zh_CN] 如果 [`r] 表示一个声明为显式的成员函数，则返回 [`true]
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[begin:note]
+[:en] If [`r] represents a member function template that is declared explicit,
+[`is_explicit(r)] is still [`false] because in general,
+such queries for templates cannot be answered.
+[:zh_CN] 如果 [`r] 表示一个声明为显式的成员函数模板，那么 [`is_explicit(r)] 仍然返回
+[`false]，因为一般来说这种针对模板的查询是无法作答的。
+[end:note]
+[div:end]
+
+[%@lib is_noexcept]
+[codeblock:declaration]
+consteval bool is_noexcept(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a [`noexcept] function type or a function with
+a non-throwing exception specification ([#except.spec]).
+[:zh_CN] 如果 [`r] 表示一个 [`noexcept] 函数类型或者带有无抛出异常说明的函数（[#except.spec]），
+则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[begin:note]
+[:en] If [`r] represents a function template that is declared [`noexcept],
+[`is_noexcept(r)] is still [`false] because in general,
+such queries for templates cannot be answered.
+[:zh_CN] 如果 [`r] 表示一个声明为 [`noexcept] 的函数模板，那么 [`is_noexcept(r)]
+仍然返回 [`false]，因为一般来说这种针对模板的查询是无法作答的。
+[end:note]
+[div:end]
+
+[%@lib is_bit_field]
+[codeblock:declaration]
+consteval bool is_bit_field(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a bit-field, or if [`r] represents a data member
+description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general])
+for which [$W] is not [$\bot].
+[:zh_CN] 如果 [`r] 表示一个位字段，或者如果 [`r] 表示一个数据成员描述
+[$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]），其中 [$W] 不是 [$\bot]，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_enumerator]
+[%@lib is_annotation]
+[codeblock:declaration]
+consteval bool is_enumerator(info r);
+consteval bool is_annotation(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents an enumerator or annotation, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个枚举符或标注，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_const]
+[%@lib is_volatile]
+[codeblock:declaration]
+consteval bool is_const(info r);
+consteval bool is_volatile(info r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$T] be [`type_of(r)] if [`[*has-type](r)] is [`true].
+[:zh_CN] 令 [$T] 在 [`[*has-type](r)] 为 [`true] 时为 [`type_of(r)]。
+
+[:en] Otherwise, let [$T] be [`dealias(r)].
+[:zh_CN] 否则，令 [$T] 为 [`dealias(r)]。
+
+[para:returns]
+[:en] [`true] if [`T] represents a const or volatile type, respectively,
+or a const- or volatile-qualified function type, respectively.
+[:zh_CN] 如果 [`T] 分别代表一个 const 或 volatile 类型，或者分别代表一个
+const 或 volatile 限定的函数类型，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_mutable_member]
+[codeblock:declaration]
+consteval bool is_mutable_member(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a [`mutable] non-static data member.
+[:zh_CN] 如果 [`r] 表示一个 [`mutable] 的非静态数据成员，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_lvalue_reference_qualified]
+[%@lib is_rvalue_reference_qualified]
+[codeblock:declaration]
+consteval bool is_lvalue_reference_qualified(info r);
+consteval bool is_rvalue_reference_qualified(info r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$T] be [`type_of(r)] if [`[*has-type](r)] is [`true].
+[:zh_CN] 令 [$T] 在 [`[*has-type](r)] 为 [`true] 时为 [`type_of(r)]。
+
+[:en] Otherwise, let [$T] be [`dealias(r)].
+[:zh_CN] 否则，令 [$T] 为 [`dealias(r)]。
+
+[para:returns]
+[:en] [`true] if [$T] represents an lvalue- or rvalue-qualified function type, respectively.
+[:zh_CN] 如果 [$T] 分别表示一个左值或者右值限定的函数类型，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib has_static_storage_duration]
+[%@lib has_thread_storage_duration]
+[%@lib has_automatic_storage_duration]
+[codeblock:declaration]
+consteval bool has_static_storage_duration(info r);
+consteval bool has_thread_storage_duration(info r);
+consteval bool has_automatic_storage_duration(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents an object or variable that has
+static, thread, or automatic storage duration, respectively ([#basic.stc]).
+[:zh_CN] 如果 [`r] 分别表示一个具有静态、线程或自动存储期的对象或变量（[#basic.stc]），
+则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[begin:note]
+[:en] It is not possible to have a reflection
+representing an object or variable having dynamic storage duration.
+[:zh_CN] 不可能使反射表示具有动态存储期的对象或变量。
+[end:note]
+[div:end]
+
+[%@lib has_internal_linkage]
+[%@lib has_module_linkage]
+[%@lib has_external_linkage]
+[%@lib has_c_language_linkage]
+[%@lib has_linkage]
+[codeblock:declaration]
+consteval bool has_internal_linkage(info r);
+consteval bool has_module_linkage(info r);
+consteval bool has_external_linkage(info r);
+consteval bool has_c_language_linkage(info r);
+consteval bool has_linkage(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a variable, function, type, template, or
+namespace whose name has internal linkage, module linkage, C language linkage, or
+any linkage, respectively ([#basic.link]).
+[:zh_CN] 如果 [`r] 分别表示名字具有内部连接、模块连接、C 语言连接或任意连接的变量、函数、
+类型、模板或命名空间，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_copmlete_type]
+[codeblock:declaration]
+consteval bool is_complete_type(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`is_type(r)] is [`true] and there is some point in the
+evaluation context from which the type represented by [`dealias(r)]
+is not an incomplete type ([#basic.types]).
+[:zh_CN] 如果 [`is_type(r)] 为 [`true]，并且存在求值语境中的某个位置，该处
+[`dealias(r)] 所表示的类型不是不完整类型（[#basic.types]），则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_enumerable_type]
+[codeblock:declaration]
+consteval bool is_enumerable_type(info r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] A type [$T] is [+:% enumerable] from a point [$P] if either
+[:zh_CN] 符合以下情况的类型 [$T] 是从位置 [$P] [+:% 可列举]的：
+[list]
+[item]
+[:en@~] [$T] is a class type complete at point [$P] or
+[:zh_CN@~] [$T] 作为类类型在 [$P] 处是完整的，或者
+[item]
+[:en@~] [$T] is an enumeration type defined by a declaration [$D] such that [$D] is
+reachable from [$P] but [$P] does not occur within an [~enum-specifier] of [$D] ([#dcl.enum]).
+[:zh_CN@~] [$T] 是由某条声明式 [$D] 所定义的枚举类型，并使得 [$D] 从 [$P] 可达，
+但 [$P] 并不处于 [$D] 的[~枚举说明符]（[#dcl.enum]）之内。
+[list:end]
+
+[para:returns]
+[:en] [`true] if [`dealias(r)] represents a type that is enumerable
+from some point in the evaluation context.
+[:zh_CN] 如果 [`dealias(r)] 表示一个从求值语境中的某点可列举的类型，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[begin:example]
+[codeblock]
+class S;
+enum class E;
+static_assert(!is_enumerable_type(^^S));
+static_assert(!is_enumerable_type(^^E));
+
+class S {
+  void mfn() {
+    static_assert(is_enumerable_type(^^S));
+  }
+  static_assert(!is_enumerable_type(^^S));
+};
+static_assert(is_enumerable_type(^^S));
+
+enum class E {
+  A = is_enumerable_type(^^E) ? 1 : 2
+};
+static_assert(is_enumerable_type(^^E));
+static_assert(static_cast<int>(E::A) == 2);
+[codeblock:end]
+[end:example]
+[div:end]
+
+[%@lib is_variable]
+[codeblock:declaration]
+consteval bool is_variable(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a variable.
+[:zh_CN] 如果 [`r] 表示一个变量，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_type]
+[%@lib is_namespace]
+[codeblock:declaration]
+consteval bool is_type(info r);
+consteval bool is_namespace(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents an entity
+whose underlying entity is a type or namespace, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个底层实体为类型或命名空间的实体，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_type_alias]
+[%@lib is_namespace_alias]
+[codeblock:declaration]
+consteval bool is_type_alias(info r);
+consteval bool is_namespace_alias(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a type alias or namespace alias, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个类型别名或者命名空间别名，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[begin:note]
+[:en] A specialization of an alias template is a type alias.
+[:zh_CN] 别名模板的特例是类型别名。
+[end:note]
+[div:end]
+
+[%@lib is_function]
+[codeblock:declaration]
+consteval bool is_function(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function.
+[:zh_CN] 如果 [`r] 表示一个函数，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_conversion_function]
+[%@lib is_operator_function]
+[%@lib is_literal_operator]
+[codeblock:declaration]
+consteval bool is_conversion_function(info r);
+consteval bool is_operator_function(info r);
+consteval bool is_literal_operator(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function that is a conversion function ([#class.conv.fct]),
+operator function ([#over.oper]), or literal operator ([#over.literal]), respectively.
+[:zh_CN] 如果 [`r] 分别表示一个转换函数（[#class.conv.fct]）、运算符函数（[#over.oper]）
+或者字面量运算符（[#over.literal]），则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_special_member_function]
+[%@lib is_constructor]
+[%@lib is_default_constructor]
+[%@lib is_copy_constructor]
+[%@lib is_move_constructor]
+[%@lib is_assignment]
+[%@lib is_copy_assignment]
+[%@lib is_move_assignment]
+[%@lib is_destructor]
+[codeblock:declaration]
+consteval bool is_special_member_function(info r);
+consteval bool is_constructor(info r);
+consteval bool is_default_constructor(info r);
+consteval bool is_copy_constructor(info r);
+consteval bool is_move_constructor(info r);
+consteval bool is_assignment(info r);
+consteval bool is_copy_assignment(info r);
+consteval bool is_move_assignment(info r);
+consteval bool is_destructor(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function that is a special member function ([#special]),
+a constructor, a default constructor, a copy constructor, a move constructor,
+an assignment operator, a copy assignment operator, a move assignment operator, or
+a destructor, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个特殊成员函数（[#special]）、构造函数、默认构造函数、
+复制构造函数、移动构造函数、赋值运算符、复制赋值运算符、移动赋值运算符或析构函数，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_function_parameter]
+[codeblock:declaration]
+consteval bool is_function_parameter(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function parameter.
+[:zh_CN] 如果 [`r] 表示一个函数形参，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_explicit_object_parameter]
+[codeblock:declaration]
+consteval bool is_explicit_object_parameter(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function parameter
+that is an explicit object parameter ([#dcl.fct]).
+[:zh_CN] 如果 [`r] 表示一个函数形参且为显式对象形参（[#dcl.fct]），则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib has_default_argument]
+[codeblock:declaration]
+consteval bool has_default_argument(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] If [`r] represents a parameter [$P] of a function [$F], then:
+[:zh_CN] 如果 [`r] 代表某个函数 [$F] 的形参 [$P]，则：
+
+[list]
+[item]
+[:en] If [$F] is a specialization of a templated function [$T], then [`true] if
+there exists a declaration [$D] of [$T] that precedes some point in the
+evaluation context and [$D] specifies a default argument for the parameter of
+[$T] corresponding to [$P].
+[:zh_CN] 如果 [$F] 是某个模板化函数 [$T] 的特例，那么若存在求值语境中的某点之前的 [$T]
+的声明式 [$D]，并且 [$D] 为 [$T] 的对应于 [$P] 的形参指定了默认实参，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[item]
+[:en] Otherwise, if there exists a declaration [$D] of [$F] that precedes some point
+in the evaluation context and [$D] specifies a default argument for [$P], then [`true].
+[:zh_CN] 否则，如果存在求值语境中的某点之前的 [$F] 的声明式 [$D]，并且 [$D] 为 [$P]
+指定了默认实参，则返回 [`true]。
+[list:end]
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib has_ellipsis_parameter]
+[codeblock:declaration]
+consteval bool has_ellipsis_parameter(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function or function type
+that has an ellipsis in its parameter-type-list ([#dcl.fct]).
+[:zh_CN] 如果 [`r] 表示一个形参类型列表中带有省略号的函数或函数模板（[#dcl.fct]），则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_template]
+[codeblock:declaration]
+consteval bool is_template(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function template, class template,
+variable template, alias template, or concept.
+[:zh_CN] 如果 [`r] 表示一个函数模板、类模板、变量模板、别名模板或者概念，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[para]
+[begin:note]
+[:en] A template specialization is not a template.
+[:zh_CN] 模板特例不是模板。
+
+[:en] For example, [`is_template(^^std::vector)] is [`true]
+but [`is_template(^^std::vector<int>)] is [`false].
+[:zh_CN] 例如，[`is_template(^^std::vector)] 为 [`true]，但
+[`is_template(^^std::vector<int>)] 则为 [`false]。
+[end:note]
+[div:end]
+
+[%@lib is_function_template]
+[%@lib is_variable_template]
+[%@lib is_class_template]
+[%@lib is_alias_template]
+[%@lib is_conversion_function_template]
+[%@lib is_operator_function_template]
+[%@lib is_literal_operator_template]
+[%@lib is_constructor_template]
+[%@lib is_concept]
+[codeblock:declaration]
+consteval bool is_function_template(info r);
+consteval bool is_variable_template(info r);
+consteval bool is_class_template(info r);
+consteval bool is_alias_template(info r);
+consteval bool is_conversion_function_template(info r);
+consteval bool is_operator_function_template(info r);
+consteval bool is_literal_operator_template(info r);
+consteval bool is_constructor_template(info r);
+consteval bool is_concept(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a function template, variable template, class
+template, alias template, conversion function template, operator function template,
+literal operator template, constructor template, or concept, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个函数模板、变量模板、类模板、别名模板、转换函数模板、
+运算符函数模板、字面量运算符模板、构造函数模板或者概念，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_value]
+[%@lib is_object]
+[codeblock:declaration]
+consteval bool is_value(info r);
+consteval bool is_object(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a value or object, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个值或对象，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_structured_binding]
+[codeblock:declaration]
+consteval bool is_structured_binding(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a structured binding.
+[:zh_CN] 如果 [`r] 表示一个结构化绑定，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_class_member]
+[%@lib is_namespace_member]
+[%@lib is_nonstatic_data_member]
+[%@lib is_static_member]
+[%@lib is_base]
+[codeblock:declaration]
+consteval bool is_class_member(info r);
+consteval bool is_namespace_member(info r);
+consteval bool is_nonstatic_data_member(info r);
+consteval bool is_static_member(info r);
+consteval bool is_base(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a class member, namespace member, non-static
+data member, static member, or direct base class relationship, respectively.
+[:zh_CN] 如果 [`r] 分别表示一个类成员、命名空间成员、非静态数据成员、静态成员或者
+直接基类关系，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib has_default_member_initializer]
+[codeblock:declaration]
+consteval bool has_default_member_initializer(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a non-static data member that has a
+default member initializer.
+[:zh_CN] 如果 [`r] 表示一个带有默认成员初始化式的非静态数据成员，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib has_parent]
+[codeblock:declaration]
+consteval bool has_parent(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents the global namespace, then [`false].
+[:zh_CN] 如果 [`r] 表示全局命名空间，则返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents an entity that has C language linkage ([#dcl.link]),
+then [`false].
+[:zh_CN] 否则，如果 [`r] 表示一个具有 C 语言连接（[#dcl.link]）的实体，则返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents an entity that has a language linkage other
+than [=Cpp] language linkage, then an [?impldef the result of
+[`std::meta::has_parent] for entities with neither C nor [=Cpp] language linkage] value.
+[:zh_CN] 否则，如果 [`r] 表示一个具有 [=Cpp] 语言连接之外的语言连接，则返回一个
+[?impldef [`std::meta::has_parent] 针对具有不是 C 或 [=Cpp] 语言连接的实体的结果]值。
+
+[item]
+[:en] Otherwise, if [`r] represents a type that is neither a class nor enumeration
+type, then [`false].
+[:zh_CN] 否则，如果 [`r] 表示一个并非类或枚举类型的类型，则返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents an entity or direct base class relationship, then [`true].
+[:zh_CN] 否则，如果 [`r] 表示一个实体或直接基类关系，则返回 [`true]。
+
+[item]
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[list:end]
+[div:end]
+
+[%@lib parent_of]
+[codeblock:declaration]
+consteval info parent_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents a non-static data member that is a direct member of
+an anonymous union, or an unnamed bit-field declared within the
+[~member-specification] of such a union,
+then a reflection representing the innermost enclosing anonymous union.
+[:zh_CN] 如果 [`r] 表示一个非静态数据成员，且它是匿名联合体的直接成员，或者一个声明于
+这种联合体的[~成员说明]之内的无名位字段，则返回表示其最内层外围匿名联合体的反射。
+
+[item]
+[:en] Otherwise, if [`r] represents an enumerator,
+then a reflection representing the corresponding enumeration type.
+[:zh_CN] 否则，如果 [`r] 表示一个枚举符，则返回表示相应枚举类型的反射。
+
+[item]
+[:en] Otherwise, if [`r] represents a direct base class relationship [$(D, B)],
+then a reflection representing [$D].
+[:zh_CN] 否则，如果 [`r] 表示一个直接基类关系 [$(D, B)]，则返回代表 [$D] 的反射。
+
+[item]
+[:en] Otherwise, let [$E] be a class, function, or namespace whose class scope,
+function parameter scope, or namespace scope, respectively, is the innermost
+such scope that either is, or encloses, the target scope of a declaration of
+what is represented by [`r].
+[:zh_CN] 否则，令 [$E] 为类、函数或者命名空间，其类作用域、函数形参作用域或者命名空间作用域
+分别是 [`r] 所代表的声明式的目标作用域或其外围作用域中最内层的这种作用域。
+
+ [list]
+ [item]
+[:en] If [$E] is the function call operator of a closure type for a
+[~consteval-block-declaration] ([#dcl.pre]), then [`parent_of(parent_of(^^[$E]))].
+[:zh_CN] 如果 [$E] 是某个[~consteval-块声明式]（[#dcl.pre]）的闭包类型的函数调用运算符，
+则返回 [`parent_of(parent_of(^^[$E]))]。
+
+[begin:note]
+[:en] In this case, the first [`parent_of] will be the closure type,
+so the second [`parent_of] is necessary to give the parent of that closure type.
+[:zh_CN] 这种情况下，第一个 [`parent_of] 将为闭包类型，因而需要第二个 [`parent_of]
+来给出该闭包类型的父级。
+[end:note]
+
+ [item]
+[:en] Otherwise, [`^^[$E$]].
+[:zh_CN] 否则，返回 [`^^[$E$]]。
+ [list:end]
+[list:end]
+
+[begin:example]
+[codeblock]
+struct I { };
+
+struct F : I {
+  union {
+    int o;
+  };
+
+  enum N {
+    A
+  };
+};
+
+constexpr auto ctx = std::meta::access_context::current();
+
+static_assert(parent_of(^^F) == ^^::);
+static_assert(parent_of(bases_of(^^F, ctx)[0]) == ^^F);
+static_assert(is_union_type(parent_of(^^F::o)));
+static_assert(parent_of(^^F::N) == ^^F);
+static_assert(parent_of(^^F::A) == ^^F::N);
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] unless [`has_parent(r)] is [`true].
+[:zh_CN] 除非 [`has_parent(r)] 为 [`true]，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib dealias]
+[codeblock:declaration]
+consteval info dealias(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A reflection representing the underlying entity of what [`r] represents.
+[:zh_CN] 表示 [`r] 所表示实体的底层实体的反射。
+
+[begin:example]
+[codeblock]
+using X = int;
+using Y = X;
+static_assert(dealias(^^int) == ^^int);
+static_assert(dealias(^^X) == ^^int);
+static_assert(dealias(^^Y) == ^^int);
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] unless [`r] represents an entity.
+[:zh_CN] 除非 [`r] 表示一个实体，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib has_template_arguments]
+[codeblock:declaration]
+consteval bool has_template_arguments(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a specialization of a function template,
+variable template, class template, or an alias template.
+[:zh_CN] 如果 [`r] 表示某个函数模板、变量模板、类模板或别名模板的特例，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib template_of]
+[codeblock:declaration]
+consteval info template_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A reflection of the template of the specialization represented by [`r].
+[:zh_CN] [`r] 所表示的特例的模板的反射。
+
+[para:throws]
+[:en] [`meta::exception] unless [`has_template_arguments(r)] is [`true].
+[:zh_CN] 除非 [`has_template_arguments(r)] 为 [`true]，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib template_arguments_of]
+[codeblock:declaration]
+consteval vector<info> template_arguments_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A [`vector] containing reflections of the template arguments
+of the template specialization represented by [`r],
+in the order in which they appear in the corresponding template argument list.
+[:zh_CN] 一个包含 [`r] 所代表的模板特例的各模板实参的反射的 [`vector]，依循它们
+在相应模板实参列表中的出现顺序。
+
+[:en] For a given template argument [$A],
+its corresponding reflection [$R] is determined as follows:
+[:zh_CN] 对于给定的模板实参 [$A]，其对应反射 [$R] 按以下方式确定：
+
+[list]
+[item]
+[:en] If [$A] denotes a type or type alias, then [$R] is a reflection
+representing the underlying entity of [$A].
+[:zh_CN] 如果 [$A] 代表一个类型或类型别名，则 [$R] 是表示 [$A] 的底层实体的反射。
+
+[begin:note]
+[:en] [$R] always represents a type, never a type alias.
+[:zh_CN] [$R] 总是表示类型，从不表示类型别名。
+[end:note]
+
+[item]
+[:en] Otherwise, if [$A] denotes a class template, variable template, concept,
+or alias template, then [$R] is a reflection representing [$A].
+[:zh_CN] 否则，如果 [$A] 代表一个类模板、变量模板、概念或别名模板，则 [$R] 是表示 [$A] 的反射。
+
+[item]
+[:en] Otherwise, [$A] is a constant template argument ([#temp.arg.nontype]).
+[:zh_CN] 否则，[$A] 是常量模板实参（[#temp.arg.nontype]）。
+
+[:en] Let [$P] be the corresponding template parameter.
+[:zh_CN] 令 [$P] 为对应的模板形参。
+
+ [list]
+ [item]
+[:en] If [$P] has reference type, then [$R] is a reflection representing the
+object or function referred to by [$A].
+[:zh_CN] 如果 [$P] 具有引用类型，则 [$R] 是表示 [$A] 所指代的对象或函数的反射。
+
+ [item]
+[:en] Otherwise, if [$P] has class type, then [$R] represents the corresponding
+template parameter object.
+[:zh_CN] 否则，如果 [$P] 具有类类型，则 [$R] 表示对应的模板形参对象。
+
+ [item]
+[:en] Otherwise, [$R] is a reflection representing the value of [$A].
+[:zh_CN] 否则，[$R] 是表示 [$A] 的值的反射。
+ [list:end]
+[list:end]
+
+[begin:example]
+[codeblock]
+template<class T, class U = T> struct Pair { };
+template<class T> struct Pair<char, T> { };
+template<class T> using PairPtr = Pair<T*>;
+
+static_assert(template_of(^^Pair<int>) == ^^Pair);
+static_assert(template_of(^^Pair<char, char>) == ^^Pair);
+static_assert(template_arguments_of(^^Pair<int>).size() == 2);
+static_assert(template_arguments_of(^^Pair<int>)[0] == ^^int);
+
+static_assert(template_of(^^PairPtr<int>) == ^^PairPtr);
+static_assert(template_arguments_of(^^PairPtr<int>).size() == 1);
+
+struct S { };
+int i;
+template<int, int&, S, template<class> class>
+  struct X { };
+constexpr auto T = ^^X<1, i, S{}, PairPtr>;
+static_assert(is_value(template_arguments_of(T)[0]));
+static_assert(is_object(template_arguments_of(T)[1]));
+static_assert(is_object(template_arguments_of(T)[2]));
+static_assert(template_arguments_of(T)[3] == ^^PairPtr);
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] unless [`has_template_arguments(r)] is [`true].
+[:zh_CN] 除非 [`has_template_arguments(r)] 为 [`true]，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib parameters_of]
+[codeblock:declaration]
+consteval vector<info> parameters_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents a function [$F], then a [`vector] containing reflections
+of the parameters of [$F], in the order in which they appear in a declaration of [$F].
+[:zh_CN] 如果 [`r] 表示一个函数 [$F]，则返回一个包含 [$F] 的各形参的反射的 [`vector]，
+依循它们在 [$F] 的声明式中的出现顺序。
+
+[item]
+[:en] Otherwise, [`r] represents a function type [$T]; a [`vector] containing
+reflections of the types in parameter-type-list ([#dcl.fct]) of [$T],
+in the order in which they appear in the parameter-type-list.
+[:zh_CN] 否则，[`r] 表示一个函数类型 [$T]；返回一个包含 [$T] 的形参类型列表（[#dcl.fct]）
+中的各类型的反射的 [`vector]，依循它们在形参类型列表中的出现顺序。
+[list:end]
+
+[para:throws]
+[:en] [`meta::exception] unless [`r] represents a function or a function type.
+[:zh_CN] 除非 [`r] 表示函数或函数类型，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib variable_of]
+[codeblock:declaration]
+consteval info variable_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The reflection of the parameter variable corresponding to [`r].
+[:zh_CN] 对应于 [`r] 的形参变量的反射。
+
+[para:throws]
+[:en] [`meta::exception] unless
+[:zh_CN] 除非以下情况，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en@~] [`r] represents a parameter of a function [$F] and
+[:zh_CN@~] [`r] 表示某个函数 [$F] 的形参，且
+[item]
+[:en@~] there is a point [$P] in the evaluation context for which the innermost
+non-block scope enclosing [$P] is the function parameter scope ([#basic.scope.param])
+associated with [$F].
+[:zh_CN@~] 存在求值语境中的位置 [$P]，使得包围 [$P] 的最内层非块作用域是与 [$F] 关联
+的函数形参作用域（[#basic.scope.param]）。
+[list:end]
+[div:end]
+
+[%@lib return_type_of]
+[codeblock:declaration]
+consteval info return_type_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The reflection of the return type
+of the function or function type represented by [`r].
+[:zh_CN] [`r] 所表示的函数或函数类型的返回类型的反射。
+
+[para:throws]
+[:en] [`meta::exception] unless either [`r] represents a function and
+[`[*has-type](r)] is [`true] or [`r] represents a function type.
+[:zh_CN] 除非 [`r] 表示函数且 [`[*has-type](r)] 为 [`true]，或者 [`r] 表示函数类型，
+否则抛出 [`meta::exception]。
+[div:end]

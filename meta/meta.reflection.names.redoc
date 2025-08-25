@@ -1,0 +1,243 @@
+[section#ratio.reflection.names
+    [:en] Reflection names and locations
+    [:zh_CN] 反射的名称与位置
+]
+
+[%@lib has_identifier]
+[codeblock:declaration]
+consteval bool has_identifier(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents an entity that has a typedef name for linkage purposes ([#dcl.typedef]),
+then [`true].
+[:zh_CN] 如果 [`r] 代表一个具有用于连接目的的 typedef 名（[#dcl.typedef]）的实体，则返回 [`true]。
+
+[item]
+[:en] Otherwise, if [`r] represents an unnamed entity, then [`false].
+[:zh_CN] 否则，如果 [`r] 代表一个无名实体，则返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents a class type, then [`!has_template_arguments(r)].
+[:zh_CN] 否则，如果 [`r] 代表一个类类型，则返回 [`!has_template_arguments(r)]。
+
+[item]
+[:en] Otherwise, if [`r] represents a function, then [`true] if
+[`has_template_arguments(r)] is [`false] and the function is not a constructor,
+destructor, operator function, or conversion function.
+[:zh_CN] 否则，如果 [`r] 代表一个函数，则当 [`has_template_arguments(r)] 为 [`false]
+且函数不是构造函数、析构函数、运算符函数或转换函数时，返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents a template, then [`true] if [`r] does not represent
+a constructor template, operator function template, or conversion function template.
+[:zh_CN] 否则，如果 [`r] 代表一个模板，则当 [`r] 并不表示构造函数模板、运算符函数模板
+或转换函数模板时返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents the [$i^\text{th}] parameter of a function [$F]
+that is an (implicit or explicit) specialization of a templated function [$T]
+and the [$i^\text{th}] parameter of the instantiated declaration of [$T] whose
+template arguments are those of [$F] would be instantiated from a pack, then [`false].
+[:zh_CN] 否则，如果 [`r] 代表某个函数 [$F] 的第 [$i] 个形参，该函数是某个函数模板 [$T]
+的（隐式或显式）特例，且所实例化的 [$T] 的以 [$F] 的模板实参为模板实参的声明式的第 [$i]
+个形参可能从包组实例化而得，则返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`r] represents the parameter [$P] of a function [$F], then
+let [$S] be the set of declarations, ignoring any explicit instantiations,
+that precede some point in the evaluation context and that declare either [$F]
+or a templated function of which [$F] is a specialization; [`true] if
+[:zh_CN] 否则，如果 [`r] 代表某个函数 [$F] 的形参 [$P]，则令 [$S] 为求值语境中某点之前
+的声明 [$F] 或者 [$F] 作为特例的模板化函数的声明式的集合，其中忽略任何显式实例化；
+以下情况下返回 [`true]：
+
+ [list]
+ [item]
+[:en@~] there is a declaration [$D] in [$S] that introduces a name [$N] for
+either [$P] or the parameter corresponding to [$P] in the templated function
+that [$D] declares and
+[:zh_CN@~] [$S] 中有声明式 [$D]，它为 [$P] 或者 [$D] 所声明的模板化函数中对应于 [$P]
+的形参引入了名字 [$N]，并且
+ [item]
+[:en@~] no declaration in [$S] does so using any name other than [$N].
+[:zh_CN@~] [$S] 中没有其他声明式使用任何 [$N] 之外的名字这样做。
+ [list:end]
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[begin:example]
+[codeblock]
+void fun(int);
+constexpr std::meta::info r = parameters_of(^^fun)[0];
+static_assert(!has_identifier(r));
+
+void fun(int x);
+static_assert(has_identifier(r));
+
+void fun(int x);
+static_assert(has_identifier(r));
+
+void poison() {
+  void fun(int y);
+}
+static_assert(!has_identifier(r));
+[codeblock:end]
+[end:example]
+
+[item]
+[:en] Otherwise, if [`r] represents a variable, then [`false] if the declaration
+of that variable was instantiated from a function parameter pack.
+[:zh_CN] 否则，如果 [`r] 代表一个变量，则当该变量的声明式是从函数形参包组实例化时，返回 [`false]。
+
+[:en] Otherwise, [`!has_template_arguments(r)].
+[:zh_CN] 否则，返回 [`!has_template_arguments(r)]。
+
+[item]
+[:en] Otherwise, if [`r] represents a structured binding, then [`false] if the
+declaration of that structured binding was instantiated from a structured binding pack.
+[:zh_CN] 否则，如果 [`r] 代表一个结构化绑定，则当该结构化绑定是从结构化绑定包组实例化时，返回 [`false]。
+
+[:en] Otherwise, [`true].
+[:zh_CN] 否则，返回 [`true]。
+
+[item]
+[:en] Otherwise, if [`r] represents a type alias, then [`!has_template_arguments(s)].
+[:zh_CN] 否则，如果 [`r] 代表一个类型别名，则返回 [`!has_template_arguments(s)]。
+
+[item]
+[:en] Otherwise, if [`r] represents an enumerator, non-static-data member,
+namespace, or namespace alias, then [`true].
+[:zh_CN] 否则，如果 [`r] 代表一个枚举符、非静态数据成员、命名空间或命名空间别名，则返回 [`true]。
+
+[item]
+[:en] Otherwise, if [`r] represents a direct base class relationship,
+then [`has_identifier(type_of(r))].
+[:zh_CN] 否则，如果 [`r] 代表一个直接基类关系，则返回 [`has_identifier(type_of(r))]。
+
+[item]
+[:en] Otherwise, [`r] represents a data member description
+[$(T, N, A, W, \mathit{NUA})] ([#class.mem.general]); [`true] if [$N] is not [$\bot].
+[:en] 否则，[`r] 代表一个数据成员描述 [$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]）；
+当 [$N] 不是 [$\bot] 时返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[list:end]
+[div:end]
+
+[%@lib identifier_of]
+[%@lib u8identifier_of]
+[codeblock:declaration]
+consteval string_view identifier_of(info r);
+consteval u8string_view u8identifier_of(info r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$E] be UTF-8 for [`u8identifier_of], and otherwise the ordinary literal encoding.
+[:zh_CN] 令 [$E] 对于 [`u8identifier_of] 为 UTF-8，否则为普通字面编码。
+
+[para:returns]
+[:en] An [=ntmbs], encoded with [$E], determined as follows:
+[:zh_CN] 一个以 [$E] 编码的 [=ntmbs]，以如下方式确定：
+
+[list]
+[item]
+[:en] If [`r] represents an entity with a typedef name for linkage purposes, then that name.
+[:zh_CN] 如果 [`r] 代表一个具有用于连接目的的 typedef 名的实体，则返回该名字。
+
+[item]
+[:en] Otherwise, if [`r] represents a literal operator or literal operator template,
+then the [~ud-suffix] of the operator or operator template.
+[:zh_CN] 否则，如果 [`r] 代表一个字面量运算符或字面量运算符模板，则返回该运算符或
+运算符模板的 [~ud-后缀]。
+
+[item]
+[:en] Otherwise, if [`r] represents the parameter [$P] of a function [$F], then
+let [$S] be the set of declarations, ignoring any explicit instantiations, that
+precede some point in the evaluation context and that declare either [$F] or
+a templated function of which [$F] is a specialization; the name that was
+introduced by a declaration in [$S] for the parameter corresponding to [$P].
+[:zh_CN] 否则，如果 [`r] 代表某个函数 [$F] 的形参 [$P]，则令 [$S] 为求值语境中某点之前
+的声明 [$F] 或者 [$F] 作为特例的模板化函数的声明式的集合，其中忽略任何显式实例化；
+则返回由 [$S] 中的声明式为对应于 [$P] 的形参所引入的名字。
+
+[item]
+[:en] Otherwise, if [`r] represents an entity, then the identifier introduced by
+the declaration of that entity.
+[:zh_CN] 否则，如果 [`r] 代表一个实体，则返回该实体的声明式。
+
+[item]
+[:en] Otherwise, if [`r] represents a direct base class relationship, then
+[`identifier_of(type_of(r))] or [`u8identifier_of(type_of(r))], respectively.
+[:zh_CN] 否则，如果 [`r] 代表一个直接基类关系，则分别返回
+[`identifier_of(type_of(r))] 或 [`u8identifier_of(type_of(r))]。
+
+[item]
+[:en] Otherwise, [`r] represents a data member description
+[$(T, N, A, W, \mathit{NUA})] ([#class.mem.general]); a [`string_view] or
+[`u8string_view], respectively, containing the identifier [`[^N]].
+[:en] 否则，[`r] 代表一个数据成员描述 [$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]）；
+则分别返回包含标识符 [`[^N]] 的 [`string_view] 或 [`u8string_view]。
+[list:end]
+
+[para:throws]
+[:en] [`meta::exception] unless [`has_identifier(r)] is [`true] and the
+identifier that would be returned (see above) is representable by [$E].
+[:zh_CN] 除非 [`has_identifier(r)] 为 [`true] 并且本应返回的表达式（见上文）
+可以由 [$E] 表示，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib display_string_of]
+[%@lib u8display_string_of]
+[codeblock:declaration]
+consteval string_view display_string_of(info r);
+consteval u8string_view u8display_string_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An [?impldef the result of [`display_string_of] and [`u8display_string_of]]
+[`string_view] or [`u8string_view], respectively.
+[:zh_CN] 分别返回一个[?impldef [`display_string_of] 和 [`u8display_string_of] 的结果]
+[`string_view] 或 [`u8string_view]。
+
+[para:recommended]
+[:en] Where possible, implementations should return a string
+suitable for identifying the represented construct.
+[:zh_CN] 只要可能，实现就应当返回一个适于标识所表示语言构造的字符串。
+[div:end]
+
+[%@lib source_location_of]
+[codeblock:declaration]
+consteval source_location source_location_of(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] If [`r] represents a value, a type other than a class type or an enumeration type,
+the global namespace, or a data member description, then [`source_location{}].
+[:zh_CN] 如果 [`r] 代表一个值，不是类类型或枚举类型的类型，全局命名空间，或者数据成员描述，
+则返回 [`source_location{}]。
+
+[:en] Otherwise, an [?impldef the value returned by [`std::meta::source_location_of]]
+[`source_location] value.
+[:zh_CN] 否则，返回一个[?impldef [`std::meta::source_location_of] 的返回值]
+[`source_location] 值。
+
+[para:recommended]
+[:en] If [`r] represents an entity with a definition that is reachable from the
+evaluation context, a value corresponding to a definition should be returned.
+[:zh_CN] 如果 [`r] 代表一个实体，且具有一个从执行语境可达的定义式，则应当返回对应于雌定义式的值。
+[div:end]

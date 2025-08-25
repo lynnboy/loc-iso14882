@@ -13,9 +13,25 @@ namespace std {
   template<class T, T v> struct integral_constant;
 
   template<bool B>
-    using [[redoc("`:lib")]]bool_constant = integral_constant<bool, B>;
-  using [[redoc("`:lib")]]true_type  = bool_constant<true>;
-  using [[redoc("`:lib")]]false_type = bool_constant<false>;
+    using [[redoc("`:lib>")]]bool_constant = integral_constant<bool, B>;
+  using [[redoc("`:lib>")]]true_type  = bool_constant<true>;
+  using [[redoc("`:lib>")]]false_type = bool_constant<false>;
+
+  // [:en] [#const.wrap.class], class template [`constant_wrapper] [:zh_CN] [#const.wrap.class]，类模板 [`constant_wrapper]
+  template<class T>
+    struct [[redoc("*>")]]cw-fixed-value;                                      // [=expos]
+
+  template<[[redoc("*>")]]cw-fixed-value X, class = typename decltype([[redoc("*>")]]cw-fixed-value(X))::[[redoc("*>")]]type>
+    struct constant_wrapper;
+
+  template<class T>
+    concept [[redoc("*:c@def>")]]constexpr-param =                                   // [=expos]
+      requires { typename constant_wrapper<T::value>; };
+
+  struct [[redoc("*>")]]cw-operators;                                          // [=expos]
+
+  template<[[redoc("*>")]]cw-fixed-value X>
+    constexpr auto [[redoc("`:lib>")]]cw = constant_wrapper<X>{};
 
   // [:en] [#meta.unary.cat], primary type categories \
   [:zh_CN] [#meta.unary.cat]，基本类型分类
@@ -33,6 +49,7 @@ namespace std {
   template<class T> struct is_union;
   template<class T> struct is_class;
   template<class T> struct is_function;
+  template<class T> struct is_reflection;
 
   // [:en] [#meta.unary.comp], composite type categories \
   [:zh_CN] [#meta.unary.comp]，组合类型分类
@@ -57,6 +74,7 @@ namespace std {
   template<class T> struct is_abstract;
   template<class T> struct is_final;
   template<class T> struct is_aggregate;
+  template<class T> struct is_consteval_only;
 
   template<class T> struct is_signed;
   template<class T> struct is_unsigned;
@@ -133,6 +151,9 @@ namespace std {
 
   template<class Fn, class... ArgTypes> struct is_nothrow_invocable;
   template<class R, class Fn, class... ArgTypes> struct is_nothrow_invocable_r;
+
+  template<class Fn, class Tuple> struct is_applicable;
+  template<class Fn, class Tuple> struct is_nothrow_applicable;
 
   // [:en] [#meta.trans.cv], const-volatile modifications \
   [:zh_CN] [#meta.trans.cv]，const-volatile 改造
@@ -212,6 +233,7 @@ namespace std {
   template<class... T> struct common_reference;
   template<class T> struct underlying_type;
   template<class Fn, class... ArgTypes> struct invoke_result;
+  template<class Fn, class Tuple> struct apply_result;
   template<class T> struct unwrap_reference;
   template<class T> struct unwrap_ref_decay;
 
@@ -233,6 +255,8 @@ namespace std {
     using [[redoc("`:lib>")]]underlying_type_t  = typename underlying_type<T>::type;
   template<class Fn, class... ArgTypes>
     using [[redoc("`:lib>")]]invoke_result_t    = typename invoke_result<Fn, ArgTypes...>::type;
+  template<class Fn, class Tuple>
+    using [[redoc("`:lib>")]]apply_result_t     = typename apply_result<Fn, Tuple>::type;
   template<class T>
     using unwrap_reference_t = typename unwrap_reference<T>::type;
   template<class T>
@@ -276,6 +300,8 @@ namespace std {
     constexpr bool [[redoc("`:lib>")]]is_class_v = is_class<T>::value;
   template<class T>
     constexpr bool [[redoc("`:lib>")]]is_function_v = is_function<T>::value;
+  template<class T>
+    constexpr bool [[redoc("`:lib>")]]is_reflection_v = is_reflection<T>::value;
 
   // [:en] [#meta.unary.comp], composite type categories \
   [:zh_CN] [#meta.unary.comp]，组合类型分类
@@ -317,6 +343,8 @@ namespace std {
   template<class T>
     constexpr bool [[redoc("`:lib>")]]is_aggregate_v = is_aggregate<T>::value;
   template<class T>
+    constexpr bool [[redoc("`:lib>")]]is_consteval_only_v = is_consteval_only<T>::value;
+  template<class T>
     constexpr bool [[redoc("`:lib>")]]is_signed_v = is_signed<T>::value;
   template<class T>
     constexpr bool [[redoc("`:lib>")]]is_unsigned_v = is_unsigned<T>::value;
@@ -347,39 +375,31 @@ namespace std {
   template<class T>
     constexpr bool [[redoc("`:lib>")]]is_destructible_v = is_destructible<T>::value;
   template<class T, class... Args>
-    constexpr bool is_trivially_constructible_v
-      = is_trivially_constructible<T, Args...>::value;
+    constexpr bool is_trivially_constructible_v = is_trivially_constructible<T, Args...>::value;
   template<class T>
     constexpr bool is_trivially_default_constructible_v
       = is_trivially_default_constructible<T>::value;
   template<class T>
-    constexpr bool is_trivially_copy_constructible_v
-      = is_trivially_copy_constructible<T>::value;
+    constexpr bool is_trivially_copy_constructible_v = is_trivially_copy_constructible<T>::value;
   template<class T>
-    constexpr bool is_trivially_move_constructible_v
-      = is_trivially_move_constructible<T>::value;
+    constexpr bool is_trivially_move_constructible_v = is_trivially_move_constructible<T>::value;
   template<class T, class U>
     constexpr bool [[redoc("`:lib>")]]is_trivially_assignable_v = is_trivially_assignable<T, U>::value;
   template<class T>
-    constexpr bool is_trivially_copy_assignable_v
-      = is_trivially_copy_assignable<T>::value;
+    constexpr bool is_trivially_copy_assignable_v = is_trivially_copy_assignable<T>::value;
   template<class T>
-    constexpr bool is_trivially_move_assignable_v
-      = is_trivially_move_assignable<T>::value;
+    constexpr bool is_trivially_move_assignable_v = is_trivially_move_assignable<T>::value;
   template<class T>
     constexpr bool [[redoc("`:lib>")]]is_trivially_destructible_v = is_trivially_destructible<T>::value;
   template<class T, class... Args>
-    constexpr bool is_nothrow_constructible_v
-      = is_nothrow_constructible<T, Args...>::value;
+    constexpr bool is_nothrow_constructible_v = is_nothrow_constructible<T, Args...>::value;
   template<class T>
     constexpr bool is_nothrow_default_constructible_v
       = is_nothrow_default_constructible<T>::value;
   template<class T>
-    constexpr bool is_nothrow_copy_constructible_v
-      = is_nothrow_copy_constructible<T>::value;
+    constexpr bool is_nothrow_copy_constructible_v = is_nothrow_copy_constructible<T>::value;
   template<class T>
-    constexpr bool is_nothrow_move_constructible_v
-      = is_nothrow_move_constructible<T>::value;
+    constexpr bool is_nothrow_move_constructible_v = is_nothrow_move_constructible<T>::value;
   template<class T, class U>
     constexpr bool [[redoc("`:lib>")]]is_nothrow_assignable_v = is_nothrow_assignable<T, U>::value;
   template<class T>
@@ -443,8 +463,11 @@ namespace std {
   template<class Fn, class... ArgTypes>
     constexpr bool [[redoc("`:lib>")]]is_nothrow_invocable_v = is_nothrow_invocable<Fn, ArgTypes...>::value;
   template<class R, class Fn, class... ArgTypes>
-    constexpr bool is_nothrow_invocable_r_v
-      = is_nothrow_invocable_r<R, Fn, ArgTypes...>::value;
+    constexpr bool is_nothrow_invocable_r_v = is_nothrow_invocable_r<R, Fn, ArgTypes...>::value;
+  template<class Fn, class Tuple>
+    constexpr bool [[redoc("`:lib>")]]is_applicable_v = is_applicable<Fn, Tuple>::value;
+  template<class Fn, class Tuple>
+    constexpr bool [[redoc("`:lib>")]]is_nothrow_applicable_v = is_nothrow_applicable<Fn, Tuple>::value;
 
   // [:en] [#meta.logical], logical operator traits \
   [:zh_CN] [#meta.logical]，逻辑运算符特征

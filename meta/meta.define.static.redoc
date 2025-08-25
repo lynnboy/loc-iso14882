@@ -1,0 +1,72 @@
+[section#ratio.define.static
+    [:en] Promoting to static storage strings
+    [:zh_CN] 提升为静态存储字符串
+]
+
+[para]
+[:en] The functions in this subclause promote compile-time storage into static storage.
+[:zh_CN] 本子条款中的各函数将编译时存储提升为静态存储。
+
+[%@lib define_static_string]
+[codeblock:declaration]
+template<ranges::[[redoc("`:c>")]]input_range R>
+  consteval const ranges::range_value_t<R>* define_static_string(R&& r);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return extract<const ranges::range_value_t<R>*>(meta::reflect_constant_string(r));
+[codeblock:end]
+[div:end]
+
+[%@lib define_static_array]
+[codeblock:declaration]
+template<ranges::[[redoc("`:c>")]]input_range R>
+  consteval span<const ranges::range_value_t<R>> define_static_array(R&& r);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using T = ranges::range_value_t<R>;
+meta::info array = meta::reflect_constant_array(r);
+if (is_array_type(type_of(array))) {
+  return span<const T>(extract<const T*>(array), extent(type_of(array)));
+} else {
+  return span<const T>();
+}
+[codeblock:end]
+[div:end]
+
+[%@lib define_static_object]
+[codeblock:declaration]
+template<class T>
+  consteval const remove_cvref_t<T>* define_static_object(T&& t);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+using U = remove_cvref_t<T>;
+if constexpr (is_class_type(^^U)) {
+  return addressof(extract<const U&>(meta::reflect_constant(std::forward<T>(t))));
+} else {
+  return define_static_array(span(addressof(t), 1)).data();
+}
+[codeblock:end]
+
+[para]
+[begin:note]
+[:en] For class types, [`define_static_object] provides the address of the template
+parameter object ([#temp.param]) that is template-argument equivalent to [`t].
+[:zh_CN] 对于类类型，[`define_static_object] 提供的是按模板实参等价于 [`t] 的
+模板形参对象（[#temp.param]）的地址。
+[end:note]
+[div:end]
