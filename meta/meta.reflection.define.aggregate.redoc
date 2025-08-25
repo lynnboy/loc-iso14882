@@ -1,0 +1,341 @@
+[section#ratio.reflection.define.aggregate
+    [:en] Reflection class definition generation
+    [:zh_CN] 反射类定义式的生成
+]
+
+[%@lib data_member_options]
+[codeblock:synopsis]
+namespace std::meta {
+  struct data_member_options {
+    struct [[redoc("*>")]]name-type {                          // [=expos]
+      template<class T>
+        requires [[redoc("`:c>")]]constructible_from<u8string, T>
+        consteval [[redoc("*>")]]name-type(T&&);
+
+      template<class T>
+        requires [[redoc("`:c>")]]constructible_from<string, T>
+        consteval [[redoc("*>")]]name-type(T&&);
+
+    private:
+      variant<u8string, string> [[redoc("*>")]]contents;       // [=expos]
+    };
+
+    optional<[[redoc("*>")]]name-type> name;
+    optional<int> alignment;
+    optional<int> bit_width;
+    bool no_unique_address = false;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The classes [`data_member_options] and [`data_member_options::[*name-type]]
+are consteval-only types ([#basic.types.general]), and are not structural types ([#temp.param]).
+[:zh_CN] 类 [`data_member_options] 和 [`data_member_options::[*name-type]]
+都是仅 consteval 类型（[#basic.types.general]），且都不是结构化类型（[#temp.param]）。
+
+[codeblock:declaration]
+template<class T>
+  requires [[redoc("`:c>")]]constructible_from<u8string, T>
+  consteval data_member_options::[[redoc("*>")]]name-type(T&& value);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*contents] with [`u8string(std::forward<T>(value))].
+[:zh_CN] 以 [`u8string(std::forward<T>(value))] 初始化 [*contents]。
+[div:end]
+
+[codeblock:declaration]
+template<class T>
+  requires [[redoc("`:c>")]]constructible_from<string, T>
+  consteval data_member_options::[[redoc("*>")]]name-type(T&& value);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*contents] with [`string(std::forward<T>(value))].
+[:zh_CN] 以 [`string(std::forward<T>(value))] 初始化 [*contents]。
+
+[begin:note]
+[:en] The class [*name-type] allows the function [`data_member_spec] to accept
+an ordinary string literal (or [`string_view], [`string], etc.)
+or a UTF-8 string literal (or [`u8string_view], [`u8string], etc.) equally well.
+[:zh_CN] 类 [*name-type] 允许函数 [`data_member_spec] 可以同等接受普通字符串字面量
+（或 [`string_view]、[`string] 等）或者 UTF-8 字符串字面量（或 [`u8string_view]、
+[`u8string] 等）。
+
+[begin:example]
+[codeblock]
+consteval void fn() {
+  data_member_options o1 = {.name = "ordinary_literal_encoding"};
+  data_member_options o2 = {.name = u8"utf8_encoding"};
+}
+[codeblock:end]
+[end:example]
+[end:note]
+[div:end]
+
+[%@lib data_member_spec]
+[codeblock:declaration]
+consteval info data_member_spec(info type, data_member_options options);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A reflection of a data member description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general]) where
+[:zh_CN] 某个数据成员描述 [$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]）的反射，其中
+[list]
+[item]
+[:en] [$T] is the type represented by [`dealias(type)],
+[:zh_CN] [$T] 是 [`dealias(type)] 所代表的类型，
+[item]
+[:en] [$N] is either the identifier encoded by [`options.name] or [$\bot]
+if [`options.name] does not contain a value,
+[:zh_CN] [$N] 为 [`options.name] 所编码的标识符，或当 [`options.name] 不含值时为 [$\bot]，
+[item]
+[:en] [$A] is either the alignment value held by [`options.alignment] or [$\bot]
+if [`options.alignment] does not contain a value,
+[:zh_CN] [$A] 为 [`options.alignment] 所持有的对齐值，或当 [`options.alignment]
+不含值时为 [$\bot]，
+[item]
+[:en] [$W] is either the value held by [`options.bit_width] or [$\bot] if
+[`options.bit_width] does not contain a value, and
+[:zh_CN] [$W] 为 [`options.bit_width] 所持有的值，或当 [`options.bit_width]
+不含值时为 [$\bot]，而
+[item]
+[:en] [$\mathit{NUA}] is the value held by [`options.no_unique_address].
+[:zh_CN] [$\mathit{NUA}] 是 [`options.no_unique_address] 所持有的值。
+[list:end]
+
+[begin:note]
+[:en] The returned reflection value is primarily useful in conjunction with
+[`define_aggregate]; it can also be queried by certain other functions in
+[`std::meta] (e.g., [`type_of], [`identifier_of]).
+[:zh_CN] 所返回的反射值和 [`define_aggregate] 一同工作时非常有用；也可以通过
+[`std::meta] 中的一些其他函数查询到它（比如 [`type_of]、[`identifier_of] 等）。
+[end:note]
+
+[para:throws]
+[:en] [`meta::exception] unless the following conditions are met:
+[:zh_CN] 除非满足下列条件，否则抛出 [`meta::exception]：
+
+[list]
+[item]
+[:en] [`dealias(type)] represents either an object type or a reference type;
+[:zh_CN] [`dealias(type)] 表示对象类型或者引用类型；
+
+[item]
+[:en] if [`options.name] contains a value, then:
+[:zh_CN] 如果 [`options.name] 含有值，则：
+
+ [list]
+ [item]
+[:en] [`holds_alternative<u8string>(options.name->[*contents])] is [`true]
+and [`get<u8string>(options.name->[*contents])] contains a valid identifier ([#lex.name])
+that is not a keyword ([#lex.key]) when interpreted with UTF-8, or
+[:zh_CN] [`holds_alternative<u8string>(options.name->[*contents])] 为 [`true]，
+并且 [`get<u8string>(options.name->[*contents])] 包含一个当按 UTF-8 判读时
+不是关键词（[#lex.key]）的合法标识符（[#lex.name]），或者
+
+ [item]
+[:en] [`holds_alternative<string>(options.name->[*contents])] is [`true]
+and [`get<string>(options.name->[*contents])] contains a valid identifier ([#lex.name])
+that is not a keyword ([#lex.key]) when interpreted with the ordinary literal encoding;
+[:zh_CN] [`holds_alternative<string>(options.name->[*contents])] 为 [`true]，
+并且 [`get<string>(options.name->[*contents])] 包含一个当按普通字面编码判读时
+不是关键词（[#lex.key]）的合法标识符（[#lex.name]）；
+ [list:end]
+
+[begin:note]
+[:en] The name corresponds to the spelling of an identifier token
+after phase 6 of translation ([#lex.phases]).
+[:zh_CN] 该名字对应于翻译阶段 6（[#lex.phases]）之后的标识符记号的拼写。
+
+[:en] Lexical constructs like [~universal-character-name]s ([#lex.universal.char])
+are not processed and will cause evaluation to fail.
+[:zh_CN] 如[~通用字符名]（[#lex.universal.char]）这样的词法构造不会被处理，并会导致求值失败。
+
+[:en] For example, [`R"(\u03B1)"] is an invalid identifier and is not interpreted as [`"[$\alpha]"].
+[:zh_CN] 例如， [`R"(\u03B1)"] 是无效标识符且不会被判读为 [`"[$\alpha]"]。
+[end:note]
+
+[item]
+[:en] if [`options.name] does not contain a value, then [`options.bit_width] contains a value;
+[:zh_CN] 当 [`options.name] 不含值时，[`options.bit_width] 含有值；
+
+[item]
+[:en] if [`options.bit_width] contains a value [$V], then
+[:zh_CN] 当 [`options.bit_width] 含有值 [$V] 时：
+ [list]
+ [item]
+[:en@~] [`is_integral_type(type) || is_enumeration_type(type)] is [`true],
+[:zh_CN@~] [`is_integral_type(type) || is_enumeration_type(type)] 为 [`true]，
+ [item]
+[:en@~] [`options.alignment] does not contain a value,
+[:zh_CN@~] [`options.alignment] 不含值，
+ [item]
+[:en@~] [`options.no_unique_address] is [`false], and
+[:zh_CN@~] [`options.no_unique_address] 为 [`false]，并且
+ [item]
+[:en@~] if [$V] equals [`0], then [`options.name] does not contain a value; and
+[:zh_CN@~] 若 [$V] 等于 [`0]，则 [`options.name] 不含有值；以及
+ [list:end]
+
+[item]
+[:en] if [`options.alignment] contains a value, it is an alignment value ([#basic.align])
+not less than [`alignment_of(type)].
+[:zh_CN] 当 [`options.alignment] 含有值时，它是不小于 [`alignment_of(type)] 的对齐值（[#basic.align]）。
+[list:end]
+[div:end]
+
+[%@lib is_data_member_spec]
+[codeblock:declaration]
+consteval bool is_data_member_spec(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a data member description.
+[:zh_CN] 如果 [`r] 表示数据成员描述，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib define_aggregate]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]reflection_range R = initializer_list<info>>
+  consteval info define_aggregate(info class_type, R&& mdescrs);
+[codeblock:end]
+
+[div:description]
+[:en] Let [$C] be the class represented by [`class_type]
+and [$r_K] be the [$K^\text{th}] reflection value in [`mdescrs].
+[:zh_CN] 令 [$C] 为 [`class_type] 表示的类，并令 [$r_K] 为 [`mdescrs] 中的第 [$K] 个反射值。
+
+[:en] For every [$r_K] in [`mdescrs], let [$(T_K, N_K, A_K, W_K, \mathit{NUA}_K)] be
+the corresponding data member description represented by [$r_K].
+[:zh_CN] 对于 [`mdescrs] 中的每个 [$r_K]，令
+[$(T_K, N_K, A_K, W_K, \mathit{NUA}_K)] 为 [$r_K] 所表示的对应数据成员描述。
+
+[para:constantwhen]
+[list]
+[item]
+[:en] [$C] is incomplete from every point in the evaluation context;
+[:zh_CN] [$C] 在求值语境中的每个位置都是不完整的；
+
+[begin:note]
+[:en] [$C] can be a class template specialization
+for which there is a reachable definition of the class template.
+[:zh_CN] [$C] 可以是类模板特例，且存在其类模板的可达定义式。
+
+[:en] In this case, the injected declaration is an explicit specialization.
+[:zh_CN] 这种情况下，注入的声明式是显式特化式。
+[end:note]
+
+[item]
+[:en] [`is_data_member_spec([$r_K])] is [`true] for every [$r_K];
+[:zh_CN] [`is_data_member_spec([$r_K])] 对于每个 [$r_K] 均为 [`true]；
+
+[item]
+[:en] [`is_complete_type([$T_K])] is [`true] for every [$r_K]; and
+[:zh_CN] [`is_complete_type([$T_K])] 对于每个 [$r_K] 均为 [`true]；
+
+[item]
+[:en] for every pair [$(r_K, r_L)] where [$K < L],
+if [$N_K] is not [$\bot] and [$N_L] is not [$\bot], then either:
+[:zh_CN] 对于满足 [$K < L] 的每一对 [$(r_K, r_L)]，如果
+[$N_K] 不是 [$\bot] 且 [$N_L] 不是 [$\bot]，则有：
+ [list]
+ [item]
+[:en@~] [`[$N_K] != [$N_L]] is [`true] or
+[:zh_CN@~] [`[$N_K] != [$N_L]] 为 [`true] 或者
+ [item]
+[:en@~] [`[$N_K] == u8"_"] is [`true].
+[:zh_CN@~] [`[$N_K] == u8"_"] 为 [`true]。
+
+[begin:note]
+[:en] Every provided identifier is unique or [`"_"].
+[:zh_CN] 所提供的每个标识符都唯一或为 [`"_"]。
+[end:note]
+ [list:end]
+[list:end]
+
+[para:effects]
+[:en] Produces an injected declaration [$D] ([#expr.const])
+that defines [$C] and has properties as follows:
+[:zh_CN] 阐释一个定义 [$C] 的注入声明式 [$D]（[#expr.const]），并具有下性质：
+
+[list]
+[item]
+[:en] The target scope of [$D] is the scope to which [$C] belongs ([#basic.scope.scope]).
+[:zh_CN] [$D] 的目标作用域是 [$C] 的所属作用域（[#basic.scope.scope]）
+
+[item]
+[:en] The locus of [$D] follows immediately after the core constant expression
+currently under evaluation.
+[:zh_CN] [$D] 的位点紧跟当前求值的核心常量表达式之后。
+
+[item]
+[:en] The characteristic sequence of [$D] ([#expr.const])
+is the sequence of reflection values [$r_K].
+[:zh_CN] [$D] 的特性序列（[#expr.const]）为反射值 [$r_K] 的序列。
+
+[item]
+[:en] If [$C] is a specialization of a templated class [$T],
+and [$C] is not a local class, then [$D] is an explicit specialization of [$T].
+[:zh_CN] 如果 [$C] 是某个模板化类 [$T] 的特例，且 [$C] 不是局部类，则 [$D]
+是 [$T] 的显式特化式。
+
+[item]
+[:en] For each [$r_K], there is a corresponding entity [$M_K]
+belonging to the class scope of [$D] with the following properties:
+[:zh_CN] 对于每个 [$r_K]，存在一个属于 [$D] 的类作用域的对应实体 [$M_K] 并具有下列性质：
+
+ [list]
+ [item]
+[:en] If [$N_K] is [$\bot], [$M_K] is an unnamed bit-field.
+[:zh_CN] 如果 [$N_K] 为 [$\bot]，则 [$M_K] 是无名位字段。
+
+[:en] Otherwise, [$M_K] is a non-static data member whose name is the identifier
+determined by the character sequence encoded by [$N_K] in UTF-8.
+[:zh_CN] 否则，[$M_K] 是非静态数据成员，其名称是 [$N_K] 按 UTF-8 编码的字符序列
+所确定的标识符。
+
+ [item]
+[:en] The type of [$M_K] is [$T_K].
+[:zh_CN] [$M_K] 的类型为 [$T_K]。
+
+ [item]
+[:en] [$M_K] is declared with the attribute [``[`[no_unique_address`]`]]
+if and only if [$\mathit{NUA}_K] is [`true].
+[:zh_CN] 当且仅当 [$\mathit{NUA}_K] 为 [`true] 时，[$M_K] 被声明为具有
+[``[`[no_unique_address`]`]] 属性。
+
+ [item]
+[:en] If [$W_K] is not [$\bot], [$M_K] is a bit-field whose width is that value.
+[:zh_CN] 如果 [$W_K] 不是 [$\bot]，则 [$M_K] 是宽度为该值的位字段。
+
+[:en] Otherwise, [$M_K] is not a bit-field.
+[:zh_CN] 否则，[$M_K] 不是位字段。
+
+ [item]
+[:en] If [$A_K] is not [$\bot], [$M_K] has the [~alignment-specifier] [`alignas([$A_K])].
+[:zh_CN] 如果 [$A_K] 不是 [$\bot]，则 [$M_K] 具有[~对齐说明符] [`alignas([$A_K])]。
+
+[:en] Otherwise, [$M_K] has no [~alignment-specifier].
+[:zh_CN] 否则，[$M_K] 没有[~对齐说明符]。
+ [list:end]
+
+[item]
+[:en] For every [$r_L] in [`mdescrs] such that [$K < L], the declaration
+corresponding to [$r_K] precedes the declaration corresponding to [$r_L].
+[:zh_CN] 对于 [`mdescrs] 中满足 [$K < L] 的每个 [$r_L]，对应于 [$r_K] 的声明式
+先于对应于 [$r_L] 的声明式。
+[list:end]
+
+[para:returns]
+[:en] [`class_type].
+[:zh_CN] [`class_type]。
+[div:end]

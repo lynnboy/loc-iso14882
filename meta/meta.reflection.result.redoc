@@ -1,0 +1,115 @@
+[section#ratio.reflection.result
+    [:en] Expression result reflection
+    [:zh_CN] 表达式结果的反射
+]
+
+[%@lib reflect_constant]
+[codeblock:declaration]
+template<class T>
+  consteval info reflect_constant(T expr);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`is_copy_constructible_v<T>] is [`true] and [`T] is a cv-unqualified
+structural type ([#temp.param]) that is not a reference type.
+[:zh_CN] [`is_copy_constructible_v<T>] 为 [`true]，且 [`T] 为并非引用类型的
+无 cv 限定的结构化类型（[#temp.param]）。
+
+[para]
+[:en] Let [$V] be:
+[:zh_CN] 令 [$V] 为：
+[list]
+[item]
+[:en@~] if [`T] is a class type,
+then an object that is template-argument-equivalent to the value of [`expr];
+[:zh_CN@~] 当 [`T] 是类类型时，为按模板实参等价与 [`expr] 的值的对象；
+[item]
+[:en@~] otherwise, the value of [`expr].
+[:zh_CN@~] 否则，为 [`expr] 的值。
+[list:end]
+
+[para:returns]
+[:en] [`template_arguments_of(^^TCls<[$V]>)`[0`]], with [`TCls] as defined below.
+[:zh_CN] [`template_arguments_of(^^TCls<[$V]>)`[0`]]，其中的 [`TCls] 定义如下。
+
+[begin:note]
+[:en] This is a reflection of an object for class types, and a reflection of a value otherwise.
+[:zh_CN] 这是对类类型对象的反射，否则是对值的反射。
+[end:note]
+
+[para:throws]
+[:en] [`meta::exception] unless the [~template-id] [`TCls<[$V]>] would be valid
+given the invented template
+[:zh_CN] 除非[~模板标识] [`TCls<[$V]>] 在给定以下虚构模板时有效，否则抛出 [`meta::exception]：
+[codeblock]
+template<T P> struct TCls;
+[codeblock:end]
+
+[para]
+[begin:example]
+[codeblock]
+template<auto D>
+  struct A { };
+
+struct N { int x; };
+struct K { char const* p; };
+
+constexpr info r1 = reflect_constant(42);
+static_assert(is_value(r1));
+static_assert(r1 == template_arguments_of(^^A<42>)[0]);
+
+constexpr info r2 = reflect_constant(N{42});
+static_assert(is_object(r2));
+static_assert(r2 == template_arguments_of(^^A<N{42}>)[0]);
+
+constexpr info r3 = reflect_constant(K{nullptr});   // OK
+constexpr info r4 = reflect_constant(K{"ebab"});    // [:en] error: constituent pointer [:zh_CN] 错误：成分指针
+                                                    // [:en@~] points to string literal [:zh_CN@~] 指向字符串字面量
+[codeblock:end]
+[end:example]
+[div:end]
+
+[%@lib reflect_object]
+[codeblock:declaration]
+template<class T>
+  consteval info reflect_object(T& expr);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is an object type.
+[:zh_CN] [`T] 为对象类型。
+
+[para:returns]
+[:en] A reflection of the object designated by [`expr].
+[:zh_CN] 对 [`expr] 所指名的对象的反射。
+
+[para:throws]
+[:en] [`meta::exception] unless [`expr] is suitable for use as a constant
+template argument for a constant template parameter of type [`T&] ([#temp.arg.nontype]).
+[:zh_CN] 除非 [`expr] 适于用作 [`T&] 类型的常量模板形参的常量模板实参（[#temp.arg.nontype]），
+否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib reflect_function]
+[codeblock:declaration]
+template<class T>
+  consteval info reflect_function(T& fn);
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`T] is a function type.
+[:zh_CN] [`T] 为函数类型。
+
+[para:returns]
+[:en] A reflection of the function designated by [`expr].
+[:zh_CN] 对 [`expr] 所指名的函数的反射。
+
+[para:throws]
+[:en] [`meta::exception] unless [`fn] is suitable for use as a constant
+template argument for a constant template parameter of type [`T&] ([#temp.arg.nontype]).
+[:zh_CN] 除非 [`fn] 适于用作 [`T&] 类型的常量模板形参的常量模板实参（[#temp.arg.nontype]），
+否则抛出 [`meta::exception]。
+[div:end]

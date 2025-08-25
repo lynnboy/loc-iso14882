@@ -1,0 +1,108 @@
+[section#ratio.reflection.substitute
+    [:en] Reflection substitution
+    [:zh_CN] 反射代换
+]
+
+[codeblock:declaration]
+template<class R>
+concept [[redoc("`:c@def>")]]reflection_range =
+  ranges::[[redoc("`:c>")]]input_range<R> &&
+  [[redoc("`:c>")]]same_as<ranges::range_value_t<R>, info> &&
+  [[redoc("`:c>")]]same_as<remove_cvref_t<ranges::range_reference_t<R>>, info>;
+
+template<[[redoc("`:c>")]]reflection_range R = initializer_list<info>>
+consteval bool [[redoc("`:lib>")]]can_substitute(info templ, R&& arguments);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`Z] be the template represented by [`templ]
+and let [`Args...] be a sequence of prvalue constant expressions
+that compute the reflections held by the elements of [`arguments].
+[:zh_CN] 令 [`Z] 为 [`templ] 所代表的模板，并令 [`Args...] 为计算出 [`arguments]
+所持有各元素的纯右值常量表达式的序列。
+
+[para:returns]
+[:en] [`true] if [`Z<`[:Args:`]...>] is a valid [~template-id] ([#temp.names])
+that does not name a function whose type contains an undeduced placeholder type.
+[:zh_CN] 如果 [`Z<`[:Args:`]...>] 是有效[~模板标识]（[#temp.names]）且它并不指名
+在类型中包含未推断占位符类型的函数，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[para:throws]
+[:en] [`meta::exception] unless [`templ] represents a template, and every reflection
+in [`arguments] represents a construct usable as a template argument ([#temp.arg]).
+[:zh_CN] 除非 [`templ] 表示某个模板，并且 [`arguments] 中的每个反射都表示一个
+可用作模板实参的语言构造（[#temp.arg]），否则抛出 [`meta::exception]。
+
+[para]
+[begin:note]
+[:en] If forming [`Z<`[:Args:`]...>] leads to a failure
+outside of the immediate context, the program is ill-formed.
+[:zh_CN] 如果构成 [`Z<`[:Args:`]...>] 会导致直接语境之外发生失败，则程序非良构。
+[end:note]
+[div:end]
+
+[%@lib substitute]
+[codeblock:declaration]
+template<[[redoc("`:c>")]]reflection_range R = initializer_list<info>>
+  consteval info substitute(info templ, R&& arguments);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`Z] be the template represented by [`templ]
+and let [`Args...] be a sequence of prvalue constant expressions
+that compute the reflections held by the elements of [`arguments].
+[:zh_CN] 令 [`Z] 为 [`templ] 所代表的模板，并令 [`Args...] 为计算出 [`arguments]
+所持有各元素的纯右值常量表达式的序列。
+
+[para:returns]
+[:en] [`^^Z<`[:Args:`]...>].
+[:zh_CN] [`^^Z<`[:Args:`]...>]。
+
+[para:throws]
+[:en] [`meta::exception] unless [`can_substitute(templ, arguments)] is [`true].
+[:zh_CN] 除非 [`can_substitute(templ, arguments)] 为 [`true]，否则抛出 [`meta::exception]。
+
+[para]
+[begin:note]
+[:en] If forming [`Z<`[:Args:`]...>] leads to a failure
+outside of the immediate context, the program is ill-formed.
+[:zh_CN] 如果构成 [`Z<`[:Args:`]...>] 会导致直接语境之外发生失败，则程序非良构。
+[end:note]
+
+[para]
+[begin:example]
+[codeblock]
+template<class T>
+  auto fn1();
+
+static_assert(!can_substitute(^^fn1, {^^int}));         // OK
+constexpr info r1 = substitute(^^fn1, {^^int});         // [:en] error: [`fn<int>] contains an undeduced [:zh_CN] 错误：[`fn<int>] 含有一个
+                                                        // [:en@~] placeholder type [:zh_CN] 未推断的占位符类型
+
+template<class T>
+  auto fn2() {
+    static_assert(^^T != ^^int);    // [:en] static assertion failed during instantiation of [`fn<int>] [:zh_CN] [`fn<int>] 的实例化中静态断言失败
+    return 0;
+  }
+
+constexpr bool r2 = can_substitute(^^fn2, {^^int});     // [:en] error: instantiation of body of [`fn<int>] [:zh_CN] 错误：为推断返回类型需要
+                                                        // [:en@~] is needed to deduce return type [:zh_CN@~] 实例化 [`fn<int>] 的函数体
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:example]
+[codeblock]
+consteval info to_integral_constant(unsigned i) {
+  return substitute(^^integral_constant, {^^unsigned, reflect_constant(i)});
+}
+constexpr info r = to_integral_constant(2);     // [:en] OK, [`r] represents the type [:zh_CN] OK，[`r] 表示类型
+                                                // [:] [integral_constant<unsigned, 2>]
+[codeblock:end]
+[end:example]
+[div:end]

@@ -1,0 +1,208 @@
+[section#ratio.reflection.access.queries
+    [:en] Member accessibility queries
+    [:zh_CN] 成员可访问性查询
+]
+
+[%@lib is_accessible]
+[codeblock:declaration]
+consteval bool is_accessible(info r, access_context ctx);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`[*PARENT-CLS](r)] be:
+[:zh_CN] 令 [`[*PARENT-CLS](r)] 为：
+[list]
+[item]
+[:en] If [`parent_of(r)] represents a class [$C], then [$C].
+[:zh_CN] 当 [`parent_of(r)] 表示某个类 [$C] 时为 [$C]。
+[item]
+[:en] Otherwise, [`[*PARENT-CLS](parent_of(r))].
+[:zh_CN] 否则为 [`[*PARENT-CLS](parent_of(r))]。
+[list:end]
+
+[para]
+[:en] Let [`[*DESIGNATING-CLS](r, ctx)] be:
+[:zh_CN] 令 [`[*DESIGNATING-CLS](r, ctx)] 为：
+[list]
+[item]
+[:en] If [`ctx.designating_class()] represents a class [$C], then [$C].
+[:zh_CN] 当 [`ctx.designating_class()] 表示某个类 [$C] 时为 [$C]。
+[item]
+[:en] Otherwise, [`[*PARENT-CLS](r)].
+[:zh_CN] 否则为 [`[*PARENT-CLS](r)]。
+[list:end]
+
+[para:returns]
+[list]
+[item]
+[:en] If [`r] represents an unnamed bit-field [$F], then [`is_accessible([$[`r]_H], ctx)],
+where [$[`r]_H] represents a hypothetical non-static data member
+of the class represented by [`[*PARENT-CLS](r)] with the same access as [$F].
+[:zh_CN] 如果 [`r] 表示某个无名位字段 [$F]，则返回 [`is_accessible([$[`r]_H], ctx)]，
+其中 [$[`r]_H] 表示 [`[*PARENT-CLS](r)] 所表示的类的与 [$F] 具有相同访问的一个
+虚构的非静态数据成员。
+
+[begin:note]
+[:en] Unnamed bit-fields are treated as class members for the purpose of [`is_accessible].
+[:zh_CN] 对于 [`is_accessible]，无名位字段被当做类成员处理。
+[end:note]
+
+[item]
+[:en] Otherwise, if [`r] does not represent a class member
+or a direct base class relationship, then [`true].
+[:zh_CN] 否则，如果 [`r] 不表示类成员或直接基类关系，则返回 [`true]。
+
+[item]
+[:en] Otherwise, if [`r] represents
+[:zh_CN] 否则，如果 [`r] 表示
+ [list]
+ [item]
+[:en@~] a class member that is not a (possibly indirect or variant)
+member of [`[*DESIGNATING-CLS](r, ctx)] or
+[:zh_CN@~] 并非 [`[*DESIGNATING-CLS](r, ctx)] 的（可能间接或变体）成员的类成员，或者
+ [item]
+[:en@~] a direct base class relationship such that [`parent_of(r)] does not
+represent [`[*DESIGNATING-CLS](r, ctx)] or a (direct or indirect) base class thereof,
+[:zh_CN@~] 直接基类关系，但 [`parent_of(r)] 不表示 [`[*DESIGNATING-CLS](r, ctx)]
+或其（直接或间接）基类，
+ [list:end]
+[:en@~] then [`false].
+[:zh_CN@~] 则返回 [`false]。
+
+[item]
+[:en] Otherwise, if [`ctx.scope()] is the null reflection, then [`true].
+[:zh_CN] 否则，如果 [`ctx.scope()] 是空反射，则返回 [`true]。
+
+[item]
+[:en] Otherwise, letting [$P] be a program point whose immediate scope is the
+function parameter scope, class scope, or namespace scope corresponding to the
+function, class, or namespace represented by [`ctx.scope()]:
+[:zh_CN] 否则，令 [$P] 为分别以 [`ctx.scope()] 所表示的函数、类或命名空间的对应
+函数形参作用域、类作用域或命名空间作用域为直接作用域的程序位置：
+
+ [list]
+ [item]
+[:en] If [`r] represents a direct base class relationship [$(D, B)], then [`true]
+if base class [$B] of [`[*DESIGNATING-CLS](r, ctx)] is accessible at [$P] ([#class.access.base]);
+otherwise [`false].
+[:zh_CN] 如果 [`r] 表示一项直接基类关系 [$(D, B)]，则当 [`[*DESIGNATING-CLS](r, ctx)]
+的基类 [$B] 从 [$P] 可以访问（[#class.access.base]）时，返回 [`true]；否则返回 [`false]。
+
+ [item]
+[:en] Otherwise, [`r] represents a class member [$M]; [`true] if [$M] would be
+accessible at [$P] with the designating class ([#class.access.base]) as
+[`[*DESIGNATING-CLS](r, ctx)] if the effect of any [~using-declaration]s ([#namespace.udecl])
+were ignored.
+[:zh_CN] 否则，[`r] 表示一个类成员 [$M]；在忽略任何 [~using-声明式]（[#namespace.udecl]）
+的效果时，如果在 [$P] 处以 [`[*DESIGNATING-CLS](r, ctx)] 为指明类（[#class.access.base]）
+可以访问 [$M]，则返回 [`true].
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+ [list:end]
+[list:end]
+
+[begin:note]
+[:en] The definitions of when a class member or base class is accessible from a point [$P]
+do not consider whether a declaration of that entity is reachable from [$P].
+[:zh_CN] 关于何时从位置 [$P] 可以访问某个类成员或基类的定义，并不考虑
+该实体的声明式是否可从 [$P] 可达。
+[end:note]
+
+[begin:example]
+[codeblock]
+consteval access_context fn() {
+  return access_context::current();
+}
+
+class Cls {
+  int mem;
+  friend consteval access_context fn();
+public:
+  static constexpr auto r = ^^mem;
+};
+
+static_assert(is_accessible(Cls::r, fn()));                             // OK
+static_assert(!is_accessible(Cls::r, access_context::current()));       // OK
+static_assert(is_accessible(Cls::r, access_context::unchecked()));      // OK
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] if
+[:zh_CN] 以下情况下，抛出 [`meta::exception]：
+[list]
+[item]
+[:en@~] [`r] represents a class member for which [`[*PARENT-CLS](r)] is an
+incomplete class or
+[:zh_CN@~] [`r] 表示一个类成员，[`[*PARENT-CLS](r)] 是不完整类，或者
+[item]
+[:en@~] [`r] represents a direct base class relationship [$(D, B)]
+for which [$D] is incomplete.
+[:zh_CN@~] [`r] 表示一项直接基类关系 [$(D, B)]，[$D] 不完整。
+[list:end]
+[div:end]
+
+[%@lib has_inaccessible_nonstatic_data_members]
+[codeblock:declaration]
+consteval bool has_inaccessible_nonstatic_data_members(info r, access_context ctx);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`is_accessible([$R], ctx)] is [`false] for any [$R] in
+[`nonstatic_data_members_of(r, access_context::unchecked())].
+[:zh_CN] 如果对于 [`nonstatic_data_members_of(r, access_context::unchecked())]
+中的任何 [$R]，[`is_accessible([$R], ctx)] 均为 [`false]，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[para:throws]
+[:en] [`meta::exception] unless
+[:zh_CN] 除非符合以下情况，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en@~] [`nonstatic_data_members_of(r, access_context::unchecked())]
+is a constant subexpression and
+[:zh_CN@~] [`nonstatic_data_members_of(r, access_context::unchecked())] 是常量子表达式，并且
+[item]
+[:en@~] [`r] does not represent a closure type.
+[:zh_CN@~] [`r] 不表示闭包类型。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+consteval bool has_inaccessible_bases(info r, access_context ctx);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`is_accessible([$R], ctx)] is [`false] for any [$R] in
+[`bases_of(r, access_context::unchecked())].
+[:zh_CN] 如果对于 [`bases_of(r, access_context::unchecked())] 中的任何 [$R]，
+[`is_accessible([$R], ctx)] 均为 [`false]，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+
+[para:throws]
+[:en] [`meta::exception] unless [`bases_of(r, access:context::unchecked())] is
+a constant subexpression.
+[:zh_CN] 除非 [`bases_of(r, access:context::unchecked())] 是常量子表达式，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib has_inaccessible_subobjects]
+[codeblock:declaration]
+consteval bool has_inaccessible_subobjects(info r, access_context ctx);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return has_inaccessible_bases(r, ctx) || has_inaccessible_nonstatic_data_members(r, ctx);
+[codeblock:end]
+[div:end]

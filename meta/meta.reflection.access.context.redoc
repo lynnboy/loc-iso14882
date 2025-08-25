@@ -1,0 +1,268 @@
+[section#ratio.reflection.access.context
+    [:en] Access control context
+    [:zh_CN] 访问控制上下文
+]
+
+[para]
+[:en] The [`access_context] class is a non-aggregate type that represents
+a namespace, class, or function from which queries pertaining to access rules
+may be performed, as well as the designating class ([#class.access.base]), if any.
+[:zh_CN] [`access_context] 类是一个非聚合类型，它表示一个命名空间、类或函数，
+可以从中执行与访问规则相关的查询，以及其指名类（[#class.access.base]）（如果有）。
+
+[%@lib access_context]
+[para]
+[:en] An [`access_context] has an associated scope and designating class.
+[:zh_CN] [`access_context] 具有一个关联的作用域和指名类。
+
+[%@lib access_context]
+[codeblock:synopsis]
+namespace std::meta {
+  struct access_context {
+    access_context() = delete;
+
+    consteval info scope() const;
+    consteval info designating_class() const;
+
+    static consteval access_context current() noexcept;
+    static consteval access_context unprivileged() noexcept;
+    static consteval access_context unchecked() noexcept;
+    consteval access_context via(info cls) const;
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] [`access_context] is a structural type.
+[:zh_CN] [`access_context] 是一个结构式类型。
+
+[:en] Two values [`ac1] and [`ac2] of type [`access_context] are
+template-argument-equivalent ([#temp.type]) if [`ac1.scope()] and [`ac2.scope()]
+are template-argument-equivalent and [`ac1.designating_class()] and
+[`ac2.designating_class()] are template-argument-equivalent.
+[:zh_CN] 对于 [`access_context] 类型的两个值 [`ac1] 和 [`ac2]，如果 [`ac1.scope()]
+和 [`ac2.scope()] 按模板实参等价（[#temp.type]）并且 [`ac1.designating_class()]
+和 [`ac2.designating_class()] 按模板实参等价，则它们按模板实参等价。
+
+[codeblock:declaration]
+consteval info [[redoc("[%@lib@member scope[access_context]]")]]scope() const;
+consteval info [[redoc("[%@lib@member designating_class[access_context]]")]]designating_class() const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] The [`access_context][=']s associated scope and designating class, respectively.
+[:zh_CN] 分别返回 [`access_context] 的关联作用域和指名类。
+[div:end]
+
+[codeblock:declaration]
+static consteval access_context [[redoc("[%@lib@member current[access_context]]")]]current() noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Given a program point [$P], let [`[*eval-point]([$P])] be the following program point:
+[:zh_CN] 给定一个程序位置 [$P]，令 [`[*eval-point]([$P])] 为以下程序位置：
+
+[list]
+[item]
+[:en] If a potentially-evaluated subexpression ([#intro.execution]) of a default
+member initializer [$I] for a member of class [$C] ([#class.mem.general]) appears
+at [$P], then a point determined as follows:
+[:zh_CN] 如果 [$P] 处出现某个类 [$C] 的成员的默认成员初始化式（[#class.mem.general]）
+的某个潜在求值子表达式（[#intro.execution]），则按如下确定位置：
+
+ [list]
+ [item]
+[:en] If an aggregate initialization is using [$I], [`[*eval-point]([$Q])],
+where [$Q] is the point at which that aggregate initialization appears.
+[:zh_CN] 如果一个聚合初始化使用了 [$I]，则为 [`[*eval-point]([$Q])]，其中 [$Q]
+为出现该聚合初始化的位置。
+
+ [item]
+[:en] Otherwise, if an initialization by an inherited constructor ([#class.inhctor.init])
+is using [$I], a point whose immediate scope is the class scope corresponding to [$C].
+[:zh_CN] 否则，如果一个继承构造函数进行的初始化（[#class.inhctor.init]）使用了 [$I]，
+则为一个以对应于 [$C] 的类作用域为其直接作用域的位置。
+
+ [item]
+[:en] Otherwise, a point whose immediate scope is the function parameter scope
+corresponding to the constructor definition that is using [$I].
+[:zh_CN] 否则，为一个以对应于使用了 [$I] 的构造函数定义式的函数形参作用域为其
+直接作用域的位置。
+ [list:end]
+
+[item]
+[:en] Otherwise, if a potentially-evaluated subexpression of a default argument ([#dcl.fct.default])
+appears at [$P], [`[*eval-point]([$Q])], where [$Q] is the point at which the
+invocation of the function ([#expr.call]) using that default argument appears.
+[:zh_CN] 否则，如果 [$P] 处出现某个默认实参（[#dcl.fct.default]）的潜在求值子表达式，则为
+[`[*eval-point]([$Q])]，其中 [$Q] 为使用该默认实参的函数调用（[#expr.call]）出现的位置。
+
+[item]
+[:en] Otherwise, if the immediate scope of [$P] is a function parameter scope
+introduced by a declaration [$D], and [$P] appears either before the locus of [$D]
+or within the trailing [~requires-clause] of [$D], a point whose immediate scope
+is the innermost scope enclosing the locus of [$D] that is not a template parameter scope.
+[:zh_CN] 否则，如果 [$P] 的直接作用域是由声明式 [$D] 所引入的函数形参作用域，
+并且 [$P] 出现于 [$D] 的位点之前或者 [$D] 的尾部 [~requires-子句]之内，则为
+以包围 [$D] 的位点的最内层并非模板形参作用域的作用域为直接作用域的位置。
+
+[item]
+[:en] Otherwise, if the immediate scope of [$P] is a function parameter scope
+introduced by a [~lambda-expression] [$L] whose [~lambda-introducer] appears at
+point [$Q], and [$P] appears either within the [~trailing-return-type]
+or the trailing [~requires-clause] of [$L], [`[*eval-point]([$Q])].
+[:zh_CN] 否则，如果 [$P] 的直接作用域是由 [~lambda-表达式] [$L] 所引入的
+函数形参作用域，其 [~lambda-引导符]出现于位置 [$Q]，并且 [$P] 出现于 [$L] 的
+[~尾部返回类型]或者尾部 [~requires-子句]之内，则为 [`[*eval-point]([$Q])]。
+
+[item]
+[:en] Otherwise, if the innermost non-block scope enclosing [$P] is the function
+parameter scope introduced by a [~consteval-block-declaration] ([#dcl.pre]),
+a point whose immediate scope is that inhabited by the outermost
+[~consteval-block-declaration] [$D] containing [$P] such that each scope (if any)
+that intervenes between [$P] and the function parameter scope introduced by [$D] is either
+[:zh_CN] 否则，如果包围 [$P] 的最内层非块作用域是由 [~consteval-块声明式]（[#dcl.pre]）
+所引入的函数形参作用域，则为以包含 [$P] 的最外层 [~consteval-块声明式] [$D]
+所居的作用域为直接作用域的位置，使得介入 [$P] 和 [$D] 所引入的函数形参作用域之间
+的每个作用域（如果有）均为：
+ [list]
+ [item]
+[:en@~] a block scope or
+[:zh_CN@~] 块作用域，或者
+ [item]
+[:en@~] a function parameter scope or lambda scope introduced by a
+[~consteval-block-declaration].
+[:zh_CN@~] 由某条 [~consteval-块声明式] 引入的函数形参作用域或 lambda 作用域。
+ [list:end]
+
+[item]
+[:en] Otherwise, [$P].
+[:zh_CN] 否则，为 [$P]。
+[list:end]
+
+[para]
+[:en] Given a scope [$S], let [`[*ctx-scope]([$S])] be the following scope:
+[:zh_CN] 给定作用域 [$S]，令 [`[*ctx-scope]([$S])] 为以下作用域：
+
+[list]
+[item]
+[:en] If [$S] is a class scope or namespace scope, [$S].
+[:zh_CN] 如果 [$S] 是类作用域或命名空间作用域，则为 [$S]。
+
+[item]
+[:en] Otherwise, if [$S] is a function parameter scope introduced by the
+declaration of a function, [$S].
+[:zh_CN] 否则，如果 [$S] 是由某个函数的声明式所引入的函数形参作用域，则为 [$S]。
+
+[item]
+[:en] Otherwise, if [$S] is a lambda scope introduced by a [~lambda-expression] [$L],
+the function parameter scope corresponding to the call operator of the closure type of [$L].
+[:zh_CN] 否则，如果 [$S] 是 [~lambda-表达式] [$L] 所引入的 lambda 作用域，则为
+[$L] 的闭包类型的调用运算符的对应函数形参作用域。
+
+[item]
+[:en] Otherwise, [`[*ctx-scope]([S'])], where [$S'] is the parent scope of [$S].
+[:zh_CN] 否则，为 [`[*ctx-scope]([S'])]，其中 [$S'] 是 [$S] 的父作用域。
+[list:end]
+
+[para:returns]
+[:en] An [`access_context] whose designating class is the null reflection and
+whose scope represents the function, class, or namespace whose corresponding
+function parameter scope, class scope, or namespace scope, respectively,
+is [`[*ctx-scope]([$S])], where [$S] is the immediate scope of [`[*eval-point]([$P])]
+and [$P] is the point at which the invocation of [`current] lexically appears.
+[:zh_CN] 一个 [`access_context]，其指名类为空反射，而其作用域则分别代表以
+[`[*ctx-scope]([$S])] 分别为对应函数形参作用域、类作用域或命名空间作用域的函数、
+类或命名空间，其中 [$S] 为 [`[*eval-point]([$P])] 的直接作用域，而 [$P] 为
+词法上出现对 [`current] 的调用的位置。
+
+[begin:example]
+[codeblock]
+struct A {
+  int a = 0;
+  consteval A(int p) : a(p) {}
+};
+struct B : A {
+  using A::A;
+  consteval B(int p, int q) : A(p * q) {}
+  info s = access_context::current().scope();
+};
+struct C : B { using B::B; };
+
+struct Agg {
+  consteval bool eq(info rhs = access_context::current().scope()) {
+    return s == rhs;
+  }
+  info s = access_context::current().scope();
+};
+
+namespace NS {
+  static_assert(Agg{}.s == access_context::current().scope());              // OK
+  static_assert(Agg{}.eq());                                                // OK
+  static_assert(B(1).s == ^^B);                                             // OK
+  static_assert(is_constructor(B{1, 2}.s) && parent_of(B{1, 2}.s) == ^^B);  // OK
+  static_assert(is_constructor(C{1, 2}.s) && parent_of(C{1, 2}.s) == ^^B);  // OK
+
+  auto fn() -> [:is_namespace(access_context::current().scope()) ? ^^int : ^^bool:];
+  static_assert(type_of(^^fn) == ^^auto()->int);                            // OK
+
+  template<auto R>
+    struct TCls {
+      consteval bool fn()
+        requires (is_type(access_context::current().scope())) {
+          return true;                  // [:en] OK, scope is [`TCls<R>]. [:zh_CN] OK，作用域为 [`TCls<R>]。
+        }
+    };
+  static_assert(TCls<0>{}.fn());        // OK
+}
+[codeblock:end]
+[end:example]
+
+[para:remarks]
+[:en] [`current] is not an addressable function ([#namespace.std]).
+[:zh_CN] [`current] 不是可取地址函数（[#namespace.std]）。
+
+[:en] An invocation of [`current] that appears at a program point [$P]
+is value-dependent ([#temp.dep.constexpr]) if [`[*eval-point]([$P])] is enclosed
+by a scope corresponding to a templated entity.
+[:zh_CN] 对于出现于程序位置 [$P] 的 [`current] 调用，如果 [`[*eval-point]([$P])]
+被对应于模板化实体的作用域所包围，则它是值待决的（[#temp.dep.constexpr]）。
+[div:end]
+
+[codeblock:declaration]
+static consteval access_context [[redoc("[%@lib@member unprivileged[access_context]]")]]unprivileged() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An [`access_context] whose designating class is the null reflection
+and whose scope is the global namespace.
+[:zh_CN] 一个 [`access_context]，其指名类为空反射，而其作用域为全局命名空间。
+[div:end]
+
+[codeblock:declaration]
+static consteval access_context [[redoc("[%@lib@member unchecked[access_context]]")]]unchecked() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An [`access_context] whose designating class and scope are both the null reflection.
+[:zh_CN] 一个 [`access_context]，其指名类和作用域均为空反射。
+[div:end]
+
+[codeblock:declaration]
+static consteval access_context [[redoc("[%@lib@member via[access_context]]")]]via(info cls) const;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] An [`access_context] whose scope is [`this->scope()] and whose designating class is [`cls].
+[:zh_CN] 一个 [`access_context]，其作用域为 [`this->scope()]，而其指明类为 [`cls]。
+
+[para:throws]
+[:en] [`meta::exception] unless [`cls] is either the null reflection
+or a reflection of a complete class type.
+[:zh_CN] 除非 [`cls] 是空反射或者完整类类型的反射，否则抛出 [`meta::exception]。
+[div:end]

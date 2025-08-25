@@ -1,0 +1,119 @@
+[section#ratio.reflection.annotation
+    [:en] Annotation reflection
+    [:zh_CN] 标注的反射
+]
+
+[%@lib annotations_of]
+[codeblock:declaration]
+consteval vector<info> annotations_of(info item);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$E] be
+[:zh_CN] 令 [$E] 为
+[list]
+[item]
+[:en@~] the corresponding [~base-specifier] if [`item] represents a direct base
+class relationship,
+[:zh_CN@~] 当 [`item] 表示直接基类关系时，为相应的[~基说明符]，
+[item]
+[:en@~] otherwise, the entity represented by [`item].
+[:zh_CN@~] 否则，为 [`item] 所表示的实体。
+[list:end]
+
+[para:returns]
+[:en] A [`vector] containing all of the reflections [$R] representing each annotation
+applying to each declaration of [$E] that precedes either some point in the
+evaluation context ([#expr.const]) or a point immediately following the [~class-specifier]
+of the outermost class for which such a point is in a complete-class context.
+[:zh_CN] 对于先于求值语境（[#expr.const]）中某个位置，或先于紧跟使其位置处于
+完整类语境的最外层类的[~类说明符]之后的位置的 [$E] 的每条声明式，一个包含了
+表示应用于它们之上的每项标注的所有反射的 [`vector]。
+
+[:en] For any two reflections [$R_1] and [$R_2] in the returned [`vector],
+if the annotation represented by [$R_1] precedes the annotation represented by [$R_2],
+then [$R_1] appears before [$R_2].
+[:zh_CN] 对于所返回 [`vector] 中的任意两个反射 [$R_1] 和 [$R_2]，如果 [$R_1]
+所表示的标注先于 [$R_2] 所表示的标注，那么 [$R_1] 出现于 [$R_2] 之前。
+
+[:en] If [$R_1] and [$R_2] represent annotations from the same translation unit [$T],
+any element in the returned [`vector] between [$R_1] and [$R_2] represents an annotation from [$T].
+[:zh_CN] 如果 [$R_1] 和 [$R_2] 表示的是相同翻译单元 [$T] 中的标注，那么所返回的
+[`vector] 中的任何处于 [$R_1] 和 [$R_2] 之间的元素都表示 [$T] 中的标注。
+
+[begin:note]
+[:en] The order in which two annotations appear is otherwise unspecified.
+[:zh_CN] 除此之外对两个标注的出现顺序没有规定。
+[end:note]
+
+[begin:example]
+[codeblock]
+[[=1]] void f();
+[[=2, =3]] void g();
+void g [[=4]] ();
+
+static_assert(annotations_of(^^f).size() == 1);
+static_assert(annotations_of(^^g).size() == 3);
+static_assert([: constant_of(annotations_of(^^g)[0]) :] == 2);
+static_assert(extract<int>(annotations_of(^^g)[1]) == 3);
+static_assert(extract<int>(annotations_of(^^g)[2]) == 4);
+
+struct Option { bool value; };
+
+struct C {
+  [[=Option{true}]] int a;
+  [[=Option{false}]] int b;
+};
+
+static_assert(extract<Option>(annotations_of(^^C::a)[0]).value);
+static_assert(!extract<Option>(annotations_of(^^C::b)[0]).value);
+
+template<class T>
+  struct [[=42]] D { };
+
+constexpr std::meta::info a1 = annotations_of(^^D<int>)[0];
+constexpr std::meta::info a2 = annotations_of(^^D<char>)[0];
+static_assert(a1 != a2);
+static_assert(constant_of(a1) == constant_of(a2));
+
+[[=1]] int x, y;
+static_assert(annotations_of(^^x)[0] == annotations_of(^^y)[0]);
+[codeblock:end]
+[end:example]
+
+[para:throws]
+[:en] [`meta::exception] unless [`item] represents a type, type alias, variable,
+function, namespace, enumerator, direct base class relationship, or non-static data member.
+[:zh_CN] 除非 [`item] 表示的是类型、类型别名、变量、函数、命名空间、枚举符、
+直接基类关系或者非静态数据成员，否则抛出 [`meta::exception]。
+[div:end]
+
+[%@lib annotations_of_with_type]
+[codeblock:declaration]
+consteval vector<info> annotations_of_with_type(info item, info type);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A [`vector] containing each element [`e] of [`annotations_of(item)] where
+[:zh_CN] 包含 [`annotations_of(item)] 的每个使得
+[codeblock]
+remove_const(type_of(e)) == remove_const(type)
+[codeblock:end]
+[:en@~] is [`true], preserving their order.
+[:zh_CN@~] 为 [`true] 的元素 [`e] 的 [`vector]，保留顺序。
+
+[para:throws]
+[:en] [`meta::exception] unless
+[:zh_CN] 除非符合以下情况，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en@~] [`annotations_of(item)] is a constant expression and
+[:zh_CN@~] [`annotations_of(item)] 是常量表达式，且
+[item]
+[:en@~] [`dealias(type)] represents a type that is complete
+from some point in the evaluation context.
+[:zh_CN@~] [`dealias(type)] 表示一个类型且在求值语境的某点是完整的。
+[list:end]
+[div:end]

@@ -1,0 +1,162 @@
+[section#ratio.reflection.extract
+    [:en] Value extraction
+    [:zh_CN] 值的提取
+]
+
+[para]
+[:en] The [`extract] function template may be used
+to extract a value out of a reflection when its type is known.
+[:zh_CN] [`extract] 函数模板可以用于在类型已知时从反射中提取其值。
+
+[para]
+[:en] The following are defined for exposition only to aid in the specification of [`extract].
+[:zh_CN] 以下仅用于阐释而定义的函数，辅助 [`extract] 的规定。
+
+[codeblock:declaration]
+template<class T>
+  consteval T [[redoc("*>")]]extract-ref(info r);      // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[begin:note]
+[:en] [`T] is a reference type.
+[:zh_CN] [`T] 为引用类型。
+[end:note]
+
+[para:returns]
+[:en] If [`r] represents an object [$O], then a reference to [$O].
+[:zh_CN] 如果 [`r] 代表一个对象 [$O]，则返回到 [$O] 的引用。
+
+[:en] Otherwise, a reference to the object declared, or referred to,
+by the variable represented by [`r].
+[:zh_CN] 否则，返回由 [`r] 所代表的变量所声明或指代的对象的引用。
+
+[para:throws]
+[:en] [`meta::exception] unless
+[:zh_CN] 除非满足以下情况，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en@~] [`r] represents a variable or object of type [`U],
+[:zh_CN@~] [`r] 表示 [`U] 类型的变量或对象，
+[item]
+[:en@~] [`is_convertible_v<remove_reference_t<U>(*)`[`], remove_reference_t<T>(*)`[`]>]
+is [`true], [br] and
+[:zh_CN@~] [`is_convertible_v<remove_reference_t<U>(*)`[`], remove_reference_t<T>(*)`[`]>]
+为 [`true]，并且
+[begin:note]
+[:en] The intent is to allow only qualification conversion from [`U] to [`T].
+[:zh_CN] 其意图是仅允许从 [`U] 向 [`T] 的限定性转换。
+[end:note]
+[item]
+[:en] If [`r] represents a variable, then either that variable is usable in
+constant expressions or its lifetime began within the core constant expression
+currently under evaluation.
+[:zh_CN] 如果 [`r] 表示一个变量，则该变量要么可用在常量表达式中，要么其生存期
+开始于当前求值中的核心常量表达式之内。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class T>
+  consteval T [[redoc("*>")]]extract-member-or-function(info r);       // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[list]
+[item]
+[:en] If [`T] is a pointer type, then a pointer value pointing to the function represented by [`r].
+[:zh_CN] 如果 [`T] 是指针类型，则返回指向 [`r] 所代表的函数的指针值。
+[item]
+[:en] Otherwise, a pointer-to-member value
+designating the non-static data member or function represented by [`r].
+[:zh_CN] 否则，返回指向 [`r] 所代表的非静态数据成员或函数的成员指针值。
+[list:end]
+
+[para:throws]
+[:en] [`meta::exception] unless
+[:zh_CN] 除非满足以下情况，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en] [`r] represents a non-static data member with type [$X], that is not a bit-field,
+that is a direct member of class [`C], [`T] and [`X C::*] are similar types ([#conv.qual]),
+and [`T] is [`is_convertible_v<X C::*, T>] is [`true];
+[:zh_CN] [`r] 表示类型为 [$X] 的非静态数据成员，其并非位字段且为类 [`C] 的直接成员，
+[`T] 和 [`X C::*] 是相似类型（[#conv.qual]），并且 [`T] [`is_convertible_v<X C::*, T>] 为 [`true]；
+[item]
+[:en@~] [`r] represents an implicit object member function with type [`F] or
+[`F noexcept] that is a direct member of a class [`C], and [`T] is [`F C::*]; or
+[:zh_CN@~] [`r] 表示类型为 [`F] 或 [`F noexcept] 的隐式对象成员函数，且为类 [`C]
+的直接成员，并且 [`T] 为 [`F C::*]；或者
+[item]
+[:en] [`r] represents a non-member function, static member function, or
+explicit object member function of function type [`F] or [`F noexcept], and [`T] is [`F*].
+[:zh_CN] [`r] 表示函数类型为 [`F] 或 [`F noexcept] 的非成员函数、静态成员函数
+或显式对象成员函数，并且 [`T] 为 [`F*]。
+[list:end]
+[div:end]
+
+[codeblock:declaration]
+template<class T>
+  consteval T [[redoc("*>")]]extract-value(info r);    // [=expos]
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [$U] be the type of the value or object that [`r] represents.
+[:zh_CN] 令 [$U] 为 [`r] 所代表的值或对象的类型。
+
+[para:returns]
+[:en] [`static_cast<T>(`[:[$R]:`])], where [$R] is a constant expression of type
+[`info] such that [`[$R] == r] is [`true].
+[:zh_CN] [`static_cast<T>(`[:[$R]:`])]，其中 [$R] 是 [`info] 类型的常量表达式
+并满足 [`[$R] == r] 为 [`true]。
+
+[para:throws]
+[:en] [`meta::exception] unless
+[:zh_CN] 除非满足以下情况，否则抛出 [`meta::exception]：
+[list]
+[item]
+[:en] [`U] is a pointer type, [`T] and [`U] are either similar ([#conv.qual])
+or both function pointer types, and [`is_convertible_v<U, T>] is [`true],
+[:zh_CN] [`U] 是指针类型，[`T] 和 [`U] 要么相似（[#conv.qual]）要么都是
+函数指针类型，并且 [`is_convertible_v<U, T>] 为 [`true]，
+[item]
+[:en] [`U] is not a pointer type and the cv-unqualified types of [`T] and [`U] are the same,
+[:zh_CN] [`U] 不是指针类型，且 [`T] 和 [`U] 的无 cv 限定类型相同，
+[item]
+[:en] [`U] is an array type, [`T] is a pointer type, and the value [`r]
+represents is convertible to [`T], or
+[:zh_CN] [`U] 是数组类型，[`T] 是指针类型，并且 [`r] 所代表的值可以转换为 [`T]，或者
+[item]
+[:en] [`U] is a closure type, [`T] is a function pointer type, and
+the value that [`r] represents is convertible to [`T].
+[:zh_CN] [`U] 是闭包类型，[`T] 是函数指针类型，并且 [`r] 所代表的值可以转换为 [`T]。
+[list:end]
+[div:end]
+
+[%@lib extract]
+[codeblock:declaration]
+template<class T>
+  consteval T extract(info r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`U] be [`remove_cv_t<T>].
+[:zh_CN] 令 [`U] 为 [`remove_cv_t<T>]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr (is_reference_type(^^T)) {
+  return [[redoc("*>")]]extract-ref<T>(r);
+} else if constexpr (is_nonstatic_data_member(r) || is_function(r)) {
+  return [[redoc("*>")]]extract-member-or-function<U>(r);
+} else {
+  return [[redoc("*>")]]extract-value<U>(constant_of(r));
+}
+[codeblock:end]
+[div:end]
