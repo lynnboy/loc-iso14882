@@ -14,50 +14,73 @@
 ]
 
 [para]
-[:en] A [`#include] directive shall identify a header or source file that can be
-processed by the implementation.
-[:zh_CN] [`#include] 指令应当标识某个可被实现处理的头或源文件。
+[:en] A [+:adj header[!search]] for a sequence of characters searches a sequence
+of places for a header identified uniquely by that sequence of characters.
+[:zh_CN] 针对一个字符序列进行[+:adj 头文件[!搜索]]，在一系列位置中搜索一个
+由这个字符序列所唯一标定的头文件。
+
+[:en] How the places are determined or the header identified is [?impldef
+determination of places and identification of headers during header search].
+[:zh_CN] 如何确定这些位置及如何标定头文件，是[?impldef 头文件搜索中位置的确定和头文件的标定]。
+
+[para]
+[:en] A [+:adj source file[!search]] for a sequence of characters attempts to
+identify a source file that is named by the sequence of characters.
+[:zh_CN] 针对一个字符序列进行[+:adj 源文件[!搜索]]，尝试标定一个
+由这个字符序列所指名的源文件。
+
+[:en] The named source file is searched for in an [?impldef search for source
+files during source file search] manner.
+[:zh_CN] 对所指名源文件的搜索以[?impldef 源文件搜索中如何搜索源文件]方式进行。
+
+[:en] If the implementation does not support a source file search for that
+sequence of characters, or if the search fails, the result of the source file
+search is the result of a header search for the same sequence of characters.
+[:zh_CN] 如果不支持针对该字符序列的源文件搜索，或者如果搜索失败，则源文件搜索
+的结果为针对相同字符序列的头文件搜索的结果。
 
 [para]
 [:en] A preprocessing directive of the form
 [:zh_CN] 如下形式的预处理指令
 [syntax:explanation]
-[`#] [`include] [`<] [~h-char-sequence] [`>] [~new-line]
+[`#] [`include] [~header-name] [~new-line]
 [syntax:end]
-[:en@~] searches a sequence of [?impldef sequence of places searched for a header]
-places for a header identified uniquely by the specified sequence between the
-[`<] and [`>] delimiters, and causes the replacement of that directive by the
-entire contents of the header.
-[:zh_CN@~] 在[?impldef 搜索头文件的位置序列]位置序列中搜索由分隔符 [`<] 和 [`>]
-之间指定的序列所唯一标识的头文件，并造成该指令被该头文件的整个内容所替换。
-
-[:en] How the places are specified or the header identified is [?impldef search
-locations for [`<>] header].
-[:zh_CN] 如何指定这些位置或标识头文件是[?impldef [`<>] 头文件的搜索位置]。
+[:en@~] causes the replacement of that directive by the entire contents of
+the header or source file identified by [~header-name].
+[:zh_CN@~] 造成该指令被替换为[~头文件名]所标定的头文件或源文件的整个内容。
 
 [para]
-[:en] A preprocessing directive of the form
-[:zh_CN] 如下形式的预处理指令
+[:en] If the [~header-name] is of the form
+[:zh_CN] 如果[~头文件名]的形式为
 [syntax:explanation]
-[`#] [`include] [`"] [~q-char-sequence] [`"] [~new-line]
+[`<] [~h-char-sequence] [`>]
 [syntax:end]
-[:en@~] causes the replacement of that directive by the entire contents of the
-source file identified by the specified sequence between the [`"] delimiters.
-[:zh_CN@~] 导致该指令被由分隔符 [`"] 之间指定的序列所标识的源文件的整个内容所替换。
+[:en@~] a header is identified by a header search for the sequence of characters
+of the [~h-char-sequence].
+[:zh_CN@~] 则由针对 [~h-字符序列]的字符序列进行头文件搜索来标定一个头文件。
 
-[:en] The named source file is searched for in an [?impldef manner of search for
-included source file] manner.
-[:zh_CN] 以[?impldef 搜索被包含的源文件的方式]方式对所指名的源文件进行搜索。
-
-[:en] If this search is not supported, or if the search fails, the directive is
-reprocessed as if it read
-[:zh_CN] 若不支持这项搜索，或者若搜索失败，则该指令如同读到如下指令而进行再次处理
+[para]
+[:en] If the [~header-name] is of the form
+[:zh_CN] 如果[~头文件名]的形式为
 [syntax:explanation]
-[`#] [`include] [`<] [~h-char-sequence] [`>] [~new-line]
+[`"] [~q-char-sequence] [`"]
 [syntax:end]
-[:en@~] with the identical contained sequence (including [`>] characters, if any)
-from the original directive.
-[:zh_CN@~] 其中包含与原指令中相同的序列（包括 [`>] 字符，如果有）。
+[:en@~] the source file or header is identified by a source file search
+for the sequence of characters of the [~q-char-sequence].
+[:zh_CN@~] 则由针对 [~q-字符序列]的字符序列进行源文件搜索来标定一个源文件或头文件。
+
+[para]
+[:en] If a header search fails, or if a source file search or header search
+identifies a header or source file that cannot be processed by the implementation,
+the program is ill-formed.
+[:zh_CN] 如果头文件搜索失败，或者如果源文件搜索或头文件搜索标定了某个无法被实现
+处理的头文件或源文件，则程序非良构。
+
+[begin:note]
+[:en] If the header or source file cannot be processed,
+the program is ill-formed even when evaluating [`__has_include].
+[:zh_CN] 如果头文件或源文件无法被处理，则即便求值的是 [`__has_include] 程序也非良构。
+[end:note]
 
 [para]
 [:en] A preprocessing directive of the form
@@ -65,8 +88,8 @@ from the original directive.
 [syntax:explanation]
 [`#] [`include] [~pp-tokens] [~new-line]
 [syntax:end]
-[:en@~] (that does not match one of the two previous forms) is permitted.
-[:zh_CN@~] （这并不匹配上述两种形式之一）是允许的。
+[:en@~] (that does not match the previous form) is permitted.
+[:zh_CN@~] （这并不匹配上述形式）是允许的。
 
 [:en] The preprocessing tokens after [`include] in the directive are processed
 just as in normal text (i.e., each identifier currently defined as a macro name
@@ -74,9 +97,19 @@ is replaced by its replacement list of preprocessing tokens).
 [:zh_CN] 对指令中 [`include] 之后的预处理指令如同普通文本中那样进行处理（将每个
 当前定义为宏名的标识符替换为它的预处理记号的替换列表）。
 
-[:en] If the directive resulting after all replacements does not match one of the
-two previous forms, the behavior is undefined.
-[:zh_CN] 若进行全部替换之后所产生的指令并不匹配上述两种形式之一，则其行为是未定义的。
+[:en] Then, an attempt is made to form a [~header-name] preprocessing
+token ([#lex.header]) from the whitespace and the characters of the spellings of
+the resulting sequence of preprocessing tokens; the treatment of whitespace
+is [?impldef treatment of whitespace when processing a [`#include] directive].
+[:zh_CN] 然后，尝试由空白和所产生的预处理记号序列的拼写的字符来构成[~头文件名]
+预处理记号（[#lex.header]）；如何对待空白是[?impldef 处理 [`#include] 指令时如何对待空白]。
+
+[:en] If the attempt succeeds, the directive with the so-formed [~header-name]
+is processed as specified for the previous form.
+[:zh_CN] 如果尝试成功，则按之前指令形式的规定来处理使用就此构成[~头文件名]的指令。
+
+[:en] Otherwise, the program is ill-formed, no diagnostic required.
+[:zh_CN] 否则，程序非良构，无须诊断。
 
 [begin:note]
 [:en] Adjacent [~string-literal]s are not concatenated into a single
@@ -85,12 +118,6 @@ an expansion that results in two [~string-literal]s is an invalid directive.
 [:zh_CN] 相邻的[~字符串字面量]并不被拼接为一个[~字符串字面量]（参见
 [#lex.phases] 中的翻译阶段）；因此，造成两个[~字符串字面量]的扩展是无效指令。
 [end:note]
-
-[:en] The method by which a sequence of preprocessing tokens between a [`<] and a [`>]
-preprocessing token pair or a pair of [`"] characters is combined into a single
-header name preprocessing token is [?impldef search locations for [`""] header].
-[:zh_CN] 如何将预处理记号对 [`<] 和 [`>] 之间或一对 [`"] 字符之间的预处理记号序列
-合并为一个头文件名预处理记号的方式是[?impldef [`""] 头文件的搜索位置]。
 
 [para]
 [:en] The implementation shall provide unique mappings for sequences consisting of
@@ -121,7 +148,7 @@ directive is instead replaced by the [`import] directive ([#cpp.import]) of the 
 [`#include] 预处理指令是否被替换如下形式的 [`import] 指令（[#cpp.import]）是
 [?impldef 是否将可导入头文件的源文件包含替换为 [`import] 指令]：
 [syntax:explanation]
-[`import] [~header-name] [`;] [~new-line]
+[`:key import] [~header-name] [`;] [~new-line]
 [syntax:end]
 [para]
 [begin:note]

@@ -1,0 +1,225 @@
+[section#stmt.expand
+    [:en] Expansion statements
+    [:zh_CN] 展开语句
+[%:begin#statement.expansion
+    [:en] statement[!expansion]
+    [:zh_CN] 语句[!展开～] ]
+]
+
+[para]
+[:en] Expansion statements specify repeated instantiations ([#temp.decls.general])
+of their substatement.
+[:zh_CN] 展开语句指定其子语句的重复实例化（[#temp.decls.general]）。
+
+[syntax]
+[rule expansion-statement [:zh_CN] 展开语句 ]
+    [| [`:key template] [`:key for] [`(] [~:opt init-statement]
+        for-range-declaration [`:] expansion-initializer [`)] compound-statement ]
+[rule:end]
+
+[rule expansion-initializer [:zh_CN] 展开初始化式 ]
+    [| expression ]
+    [| expansion-init-list ]
+[rule:end]
+
+[rule expansion-init-list [:zh_CN] 展开初始化列表 ]
+    [| [`(] [~:opt expression-list] [`}] ]
+[rule:end]
+[syntax:end]
+
+[para]
+[:en] The [~compound-statement] of an [~expansion-statement]
+is a control-flow-limited statement ([#stmt.label]).
+[:zh_CN] [~展开语句]的[~复合语句]是控制流受限语句（[#stmt.label]）。
+
+[para]
+[:en] For an expression [`E], let the expressions [*begin-expr] and [*end-expr]
+be determined as specified in [#stmt.ranged].
+[:zh_CN] 对于表达式 [`E]，令表达式 [*begin-expr] 和 [*end-expr] 如 [#stmt.ranged] 所规定。
+
+[:en] An expression is [+expansion-iterable] if it does not have array type and either
+[:zh_CN] 如果一个表达式不为数组类型，且符合以下条件，则它[+可展开迭代]：
+
+[list]
+[item]
+[:en] [*begin-expr] and [*end-expr] are of the form [`E.begin()] and [`E.end()], or
+[:zh_CN] [*begin-expr] 和 [*end-expr] 的形式为 [`E.begin()] 和 [`E.end()]，或者
+
+[item]
+[:en] argument-dependent lookups for [`begin(E)] and for [`end(E)]
+each find at least one function or function template.
+[:zh_CN] 针对 [`begin(E)] 和 [`end(E)] 进行的实参依赖查找各自找到至少一个函数或函数模板。
+[list:end]
+
+[para]
+[:en] An expansion statement is
+[:zh_CN] 展开语句，
+[list]
+[item]
+[:en] an [+:adj enumerating[!expansion statement]] if its [~expansion-initializer]
+is of the form [~expansion-init-list];
+[:zh_CN] 若其[~展开初始化式]具有[~展开初始化列表]的形式，则它是[+:adj 列举[!展开语句]]；
+
+[item]
+[:en] otherwise, an [+:adj iterating[!expansion statement]] if its
+[~expansion-initializer] is an expansion-iterable expression;
+[:zh_CN] 否则，若其[~展开初始化式]为可展开迭代表达式，则它是[+:adj 迭代[!展开语句]]；
+
+[item]
+[:en] otherwise, a [+:adj destructuring[!expansion statement]].
+[:zh_CN] 否则，它是[+:adj 解构[!展开语句]]。
+[list:end]
+
+[para]
+[:en] An expansion statement [$S] is equivalent to a [~compound-statement]
+containing instantiations of the [~for-range-declaration]
+(including its implied initialization),
+together with the compound-statement of [$S], as follows:
+[:zh_CN] 展开语句 [$S] 等价于一个[~复合语句]，其中包含 [~for-范围声明式]
+（包括其蕴含的初始化）和 [$S] 的复合语句一同的各次实例化，如下：
+
+[list]
+[item]
+[:en] If [$S] is an enumerating expansion statement, [$S] is equivalent to:
+[:zh_CN] 如果 [$S] 为列举展开语句，则 [$S] 等价于：
+[codeblock]
+{
+  [[redoc("~>")]]init-statement
+  [[redoc("[$S_0]")]]
+  [[redoc("[$\vdots]")]]
+  [[redoc("[$S_{N-1}]")]]
+}
+[codeblock:end]
+[:en@~] where [$N] is the number of elements in the [~expression-list], [$S_i] is
+[:zh_CN@~] 其中 [$N] 为[~表达式列表]中的元素数量，[$S_i] 为
+[codeblock]
+{
+  [[redoc("~>")]]for-range-declaration = [[redoc("[$E_i]")]];
+  [[redoc("~>")]]compound-statement
+}
+[codeblock:end]
+[:en@~] and [$E_i] is the [$i^\text{th}] element of the [~expression-list].
+[:zh_CN@~] 而 [$E_i] 为[~表达式列表]的第 [$i] 个元素。
+
+[item]
+[:en] Otherwise, if [$S] is an iterating expansion statement, [$S] is equivalent to:
+[:zh_CN] 否则，如果 [$S] 是迭代展开语句，则 [$S] 等价于：
+[codeblock]
+{
+  [[redoc("~>")]]init-statement
+  static constexpr auto&& [[redoc("*>")]]range = [[redoc("~>")]]expansion-initializer;
+  static constexpr auto [[redoc("*>")]]begin = [[redoc("*>")]]begin-expr;     // [=see stmt.ranged]
+  static constexpr auto [[redoc("*>")]]end = [[redoc("*>")]]end-expr;         // [=see stmt.ranged]
+
+  [[redoc("[$S_0]")]]
+  [[redoc("[$\vdots]")]]
+  [[redoc("[$S_{N-1}]")]]
+}
+[codeblock:end]
+[:en@~] where [$N] is the result of evaluating the expression
+[:zh_CN@~] 其中 [$S] 是表达式
+[codeblock]
+[] consteval {
+  std::ptrdiff_t result = 0;
+  for (auto i = [[redoc("*>")]]begin; i != [[redoc("*>")]]end; ++i, ++result);
+  return result;                                // [:en] distance from [*begin] to [*end] [:zh_CN] 从 [*begin] 到 [*end] 的距离
+}()
+[codeblock:end]
+[:en@~] and [$S_i] is
+[:zh_CN@~] 的求值结果，而 [$S_i] 为
+[codeblock]
+{
+  static constexpr auto [[redoc("*>")]]iter = [[redoc("*>")]]begin + i;
+  [[redoc("~>")]]for-range-declaration = *[[redoc("*>")]]iter;
+  [[redoc("~>")]]compound-statement
+}
+[codeblock:end]
+
+[:en] The variables [*range], [*begin], [*end], and [*iter] are defined for exposition only.
+[:zh_CN] 变量 [*range]、[*begin]、[*end] 和 [*iter] 仅为阐释而定义。
+
+[begin:note]
+[:en] The instantiation is ill-formed if [*range] is not a constant expression ([#expr.const]).
+[:zh_CN] 如果 [*range] 不是常量表达式（[#expr.const]），则此实例化非良构。
+[end:note]
+
+[item]
+[:en] Otherwise, [$S] is a destructuring expansion statement and [$S] is equivalent to:
+[:zh_CN] 否则，[$S] 为解构展开语句，且 [$S] 等价于：
+[codeblock]
+{
+  [[redoc("~>")]]init-statement
+  [[redoc("`:key:opt>")]]constexpr auto&& [[[redoc("[$u_0]")]], [[redoc("[$u_1]")]], [[redoc("[$\\dotsc]")]], [[redoc("[$u_{N-1}]")]]] = [[redoc("~>")]]expansion-initializer;
+  [[redoc("[$S_0]")]]
+  [[redoc("[$\vdots]")]]
+  [[redoc("[$S_{N-1}]")]]
+}
+[codeblock:end]
+[:en@~] where [$N] is the structured binding size of the type
+of the [~expansion-initializer] and [$S_i] is
+[:zh_CN@~] 其中 [$N] 为[~展开初始化式]的类型的结构化绑定大小，而 [$S_i] 为
+[codeblock]
+{
+  [[redoc("~>")]]for-range-declaration = [[redoc("[$u_i]")]];
+  [[redoc("~>")]]compound-statement
+}
+[codeblock:end]
+
+[:en] The keyword [`:key constexpr] is present in the declaration
+of [$u_0, u_1, \dotsc, u_{N-1}] if and only if [`:key constexpr] is one of the
+[~decl-specifier]s of the [~decl-specifier-seq] of the [~for-range-declaration].
+[:zh_CN] 当且仅当关键词 [`:key constexpr] 是 [~for-范围声明式]的[~声明说明符序列]
+中的[~声明说明符]之一时，[`:key constexpr] 在 [$u_0, u_1, \dotsc, u_{N-1}] 的声明式中出现。
+[list:end]
+
+[para]
+[begin:example]
+[codeblock]
+consteval int f(auto const&... Containers) {
+  int result = 0;
+  template for (auto const& c : {Containers...}) {      // [:en] OK, enumerating expansion statement [:zh_CN] OK，列举展开语句
+    result += c[0];
+  }
+  return result;
+}
+constexpr int c1[] = {1, 2, 3};
+constexpr int c2[] = {4, 3, 2, 1};
+static_assert(f(c1, c2) == 5);
+\end{codeblock}
+\end{example}
+
+\pnum
+\begin{example}
+\begin{codeblock}
+consteval int f() {
+  constexpr std::array<int, 3> arr {1, 2, 3};
+  int result = 0;
+  template for (constexpr int s : arr) {                // [:en] OK, iterating expansion statement [:zh_CN] OK，迭代展开语句
+    result += sizeof(char[s]);
+  }
+  return result;
+}
+static_assert(f() == 6);
+\end{codeblock}
+\end{example}
+
+\pnum
+\begin{example}
+\begin{codeblock}
+struct S {
+  int i;
+  short s;
+};
+
+consteval long f(S s) {
+  long result = 0;
+  template for (auto x : s) {                           // [:en] OK, destructuring expansion statement [:zh_CN]，解构展开语句
+    result += sizeof(x);
+  }
+  return result;
+}
+static_assert(f(S{}) == sizeof(int) + sizeof(short));
+[codeblock:end]
+[end:example]
+
+[%:end#statement.expansion]

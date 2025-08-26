@@ -1,14 +1,14 @@
 [section#over.call.func
-    [:en] Call to named function
-    [:zh_CN] 调用具名函数
+    [:en] Call to designated function
+    [:zh_CN] 调用被指名函数
 ]
 
 [para]
 [:en] Of interest in [#over.call.func] are only those function calls in which the
-[~postfix-expression] ultimately contains an [~id-expression] that denotes one
-or more functions.
-[:zh_CN] [#over.call.func] 只关心其[~后缀表达式]最终包含代表了一个或多个函数的
-[~标识表达式]的函数调用。
+[~postfix-expression] ultimately contains an [~id-expression] or
+[~splice-expression] that designates one or more functions.
+[:zh_CN] [#over.call.func] 只关心其[~后缀表达式]最终包含指名了一个或多个函数的
+[~标识表达式]或[~拼接表达式]的函数调用。
 
 [:en] Such a [~postfix-expression], perhaps nested arbitrarily deep in parentheses,
 has one of the following forms:
@@ -17,8 +17,11 @@ has one of the following forms:
 [syntax:explanation]
 [rule [~postfix-expression] ]
     [| [~postfix-expression] [`.] [~id-expression] ]
+    [| [~postfix-expression] [`.] [~splice-expression] ]
     [| [~postfix-expression] [`->] [~id-expression] ]
-    [| [~primary-expression] ]
+    [| [~postfix-expression] [`->] [~splice-expression] ]
+    [| [~id-expression] ]
+    [| [~splice-expression] ]
 [rule:end]
 [syntax:end]
 
@@ -27,9 +30,10 @@ function calls and unqualified function calls.
 [:zh_CN] 此处表示了函数调用的两个语法子范畴：限定的函数调用和无限定的函数调用。
 
 [para]
-[:en] In qualified function calls, the function is named by an [~id-expression]
-preceded by an [`->] or [`.] operator.
-[:zh_CN] 在限定的函数调用中，函数是由前面带有 [`->] 或 [`.] 运算符的[~标识表达式]所指名的。
+[:en] In qualified function calls, the function is designated by an
+[~id-expression] or [~splice-expression] [$E] preceded by an [`->] or [`.] operator.
+[:zh_CN] 在限定的函数调用中，函数是由前面带有 [`->] 或 [`.] 运算符的[~标识表达式]
+或[~拼接表达式] [$E] 所指名的。
 
 [:en] Since the construct [`A->B] is generally equivalent to [`(*A).B], the rest of
 [#over] assumes, without loss of generality, that all member function calls have
@@ -48,9 +52,11 @@ resolution for both glvalue and class prvalue objects.
 [:zh_CN] 注意，对象的类型中的 cv 限定符在对泛左值和类的纯右值对象进行重载决议时都是有意义的。
 [note:end]
 
-[:en] The function declarations found by name lookup ([#class.member.lookup])
-constitute the set of candidate functions.
-[:zh_CN] 由名字查找（[#class.member.lookup]）所找到的函数声明式构成了候选函数的集合。
+[:en] The set of candidate functions either is the set found by name lookup ([#class.member.lookup])
+if [$E] is an [~id-expression] or is the set determined as specified in [#expr.prim.splice]
+if [$E] is a [~splice-expression].
+[:zh_CN] 候选函数的集合，当 [$E] 是[~标识表达式]时是由名字查找（[#class.member.lookup]）
+所找到的集合，当 [$E] 是[~拼接表达式]时是按 [#expr.prim.splice] 中的规定所确定的集合。
 
 [:en] The argument list is the [~expression-list] in the call augmented by the
 addition of the left operand of the [`.] operator in the normalized member
@@ -59,22 +65,24 @@ function call as the implied object argument ([#over.match.funcs]).
 中的 [`.] 运算符的左操作数，作为隐含对象实参（[#over.match.funcs]）而添加进来。
 
 [para]
-[:en] In unqualified function calls, the function is named by a [~primary-expression].
-[:zh_CN] 在无限定的函数调用中，函数由[~初等表达式]指名。
+[:en] In unqualified function calls, the function is designated by an
+[~id-expression] or a [~splice-expression] [$E].
+[:zh_CN] 在无限定的函数调用中，函数由某个[~标识表达式]或[~拼接表达式] [$E] 指名。
 
-[:en] The function declarations found by name lookup ([#basic.lookup]) constitute the
-set of candidate functions.
-[:zh_CN] 由名字查找（[#basic.lookup]）所找到的函数声明式构成了候选函数的集合。
+[:en] The set of candidate functions either is the set found by name lookup ([#basic.lookup])
+if [$E] is an [~id-expression] or is the set determined as specified in [#expr.prim.splice]
+if [$E] is a [~splice-expression].
+[:zh_CN] 候选函数的集合，当 [$E] 是[~标识表达式]时是由名字查找（[#basic.lookup]）
+所找到的集合，当 [$E] 是[~拼接表达式]时是按 [#expr.prim.splice] 中的规定所确定的集合。
 
-[:en] Because of the rules for name lookup, the set of candidate functions consists
-either entirely of non-member functions or entirely of member functions of some class [`T].
-[:zh_CN] 根据名字查找的规则，候选函数的集合或者完全由非成员函数构成，或者完全由某个类 [`T]
-的成员函数构成。
+[:en] The set of candidate functions consists either entirely of
+non-member functions or entirely of member functions of some class [`T].
+[:zh_CN] 候选函数的集合或者完全由非成员函数构成，或者完全由某个类 [`T] 的成员函数构成。
 
-[:en] In the former case or if the [~primary-expression] is the address of an overload
-set, the argument list is the same as the [~expression-list] in the call.
-[:zh_CN] 在前一种情况中或当[~初等表达式]是重载集合的地址时，实参列表与该调用中的
-[~表达式列表]相同。
+[:en] In the former case or if [$E] is either a [~splice-expression] or the address
+of an overload set, the argument list is the same as the [~expression-list] in the call.
+[:zh_CN] 在前一种情况中，或者当 [$E] 是[~拼接表达式]或重载集合的地址时，实参列表
+与该调用中的[~表达式列表]相同。
 
 [:en] Otherwise, the argument list is the [~expression-list] in the call augmented
 by the addition of an implied object argument as in a qualified function call.

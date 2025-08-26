@@ -41,7 +41,8 @@
 
 [%[`__has_embed]]
 [rule has-embed-expression [:zh_CN] 嵌入查询表达式 ]
-    [| [`__has_embed] [`(] pp-balanced-token-seq [`)] ]
+    [| [`__has_embed] [`(] header-name [~:opt pp-balanced-token-seq] [`)] ]
+    [| [`__has_embed] [`(] header-name-tokens [~:opt pp-balanced-token-seq] [`)] ]
 [rule:end]
 
 [%[`__has_cpp_attribute]]
@@ -68,6 +69,10 @@ are no keywords, enumeration constants, etc.
 ——其中没有关键词，枚举常量等事物。
 [note:end]
 
+[:en] A [~defined-macro-expression] shall not appear within a
+[~has-include-expression] or [~has-embed-expression].
+[:zh_CN] [~已定义宏表达式]不能出现在[~包含查询表达式]或[~嵌入查询表达式]之内。
+
 [para]
 [:en] A [~defined-macro-expression] evaluates to [`1] if the identifier is currently
 defined as a macro name (that is, if it is predefined or if it has one or more
@@ -80,39 +85,32 @@ directive with the same subject identifier), [`0] if it is not.
 则求值为 [`1]，否则为 [`0]。
 
 [para]
-[:en] The second form of [~has-include-expression] is considered only if the
-first form does not match, in which case the preprocessing tokens are processed
-just as in normal text.
-[:zh_CN] [~包含查询表达式]的第二种形式，只有当第一种形式无法匹配时才会考虑，
-这种情况下其中的预处理记号被当做普通的文本来处理。
-
-[para]
 [:en] The header or source file identified by the parenthesized preprocessing
 token sequence in each contained [~has-include-expression] is searched for as if
-that preprocessing token sequence were the [~pp-tokens] in a [`#include] directive,
+that preprocessing token sequence were the [~pp-tokens] of a [`#include] directive,
 except that no further macro expansion is performed.
 [:zh_CN] 各个[~包含查询表达式]中的带括号的预处理记号序列所指定的头文件或源文件，
-是将这个预处理记号序列当成是一个 [`#include] 指令中的[~预处理记号序列]来搜索的，
+是将这个预处理记号序列当成是一个 [`#include] 指令的[~预处理记号序列]来搜索的，
 但不会进行进一步的宏展开。
 
-[:en] If such a directive would not satisfy the syntactic requirements of a
-[`#include] directive, the program is ill-formed.
-[:zh_CN] 如果这个指令不符合 [`#include] 指令的语法要求，则程序非良构。
+[:en] If the preprocessing token sequence does not consist solely of a
+[~header-name] or cannot be combined ([#cpp.include]) into a single
+[~header-name] preprocessing token, the program is ill-formed.
+[:zh_CN] 如果这个预处理记号序列并非仅由某个[~头文件名]构成，或其无法被合并（[#cpp.include]）
+为单个[~头文件名]预处理记号，则程序非良构。
 
 [:en] The [~has-include-expression] evaluates to [`1] if the search for the
 source file succeeds, and to [`0] if the search fails.
 [:zh_CN] 如果对源文件的搜索成功，则[~包含查询表达式]求值为 [`1]，如果搜索失败则为 [`0]。
 
 [para]
-[:en] The parenthesized [~pp-balanced-token-seq] in each contained
-[~has-embed-expression] is processed as if that [~pp-balanced-token-seq] were the
-[~pp-tokens] in the third form of a [`#embed] directive ([#cpp.embed]).
-[:zh_CN] 各个[~嵌入查询表达式]中包含的带括号[~预处理平衡记号序列]，如同按照该
-[~预处理平衡记号序列]是 [`#embed] 指令的第三种形式中的[~预处理记号序列]一样处理（[#cpp.embed]）。
-
-[:en] If such a directive would not satisfy the syntactic requirements of a
-[`#embed] directive, the program is ill-formed.
-[:zh_CN] 若这种指令不能满足 [`#embed] 指令的语法规定，则程序非良构。
+[:en] The parenthesized preprocessing token sequence of each contained
+[~has-embed-expression] is processed as if that preprocessing token sequence
+were the [~pp-tokens] of a [`#embed] directive ([#cpp.embed]),
+except that no further macro expansion is performed.
+[:zh_CN] 对所包含的各个[~嵌入查询表达式]的带括号预处理记号序列，如同按照该
+预处理记号序列是一个 [`#embed] 指令的[~预处理记号序列]（[#cpp.embed]）一样处理，
+但不会进行进一步的宏展开。
 
 [:en] The [~has-embed-expression] evaluates to:
 [:zh_CN] 此[~嵌入查询表达式]
@@ -183,6 +181,7 @@ any non-zero result.
 [|] assume              [|] 202207L [-]
 [|] deprecated          [|] 201309L [-]
 [|] fallthrough         [|] 201603L [-]
+[|] indeterminate       [|] 202403L [-]
 [|] likely              [|] 201803L [-]
 [|] maybe_unused        [|] 201603L [-]
 [|] no_unique_address   [|] 201803L [-]
@@ -232,11 +231,21 @@ macro names modified by the [`defined] unary operator), just as in normal text.
 [:zh_CN] 在求值之前，在将要成为控制常量表达式的预处理记号的列表中（除了被一元运算符
 [`defined] 修饰的宏名之外）的宏调用，将如同普通文本中一样进行替换。
 
+[:en] If replacement of macros in the preprocessing tokens following the sequence
+[`__has_embed (] and before a matching [`)] (possibly produced by macro expansion)
+encounters a preprocessing token that is one of the [~identifier]s [`limit],
+[`prefix], [`suffix], or [`if_empty] and that [~identifier] is defined
+as a macro ([#cpp.replace.general]), the program is ill-formed.
+[:zh_CN] 如果对跟在序列 [`__has_embed (] 之后和匹配的 [`)] 之前的预处理记号进行
+宏替换时，遇到了某个预处理记号是[~标识符] [`limit]、[`prefix]、[`suffix] 或
+[`if_empty]，且该[~标识符]被定义为宏（[#cpp.replace.general]），则程序非良构。
+
 [:en] If the preprocessing token [`defined] is generated as a result of this
 replacement process or use of the [`defined] unary operator does not match one
-of the two specified forms prior to macro replacement, the behavior is undefined.
+of the two specified forms prior to macro replacement, the program is ill-formed,
+no diagnostic required.
 [:zh_CN] 若此替换过程的结果产生了预处理记号 [`defined]，或者其所使用的一元运算符
-[`defined] 在宏替换之前并不与所指定的两种形式相匹配，则其行为是未定义的。
+[`defined] 在宏替换之前并不与所指定的两种形式相匹配，则程序非良构，无须诊断。
 
 [para]
 [:en] After all replacements due to macro expansion and evaluation of
