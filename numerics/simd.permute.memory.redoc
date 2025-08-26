@@ -1,0 +1,204 @@
+[section#simd.permute.memory
+    [:en] [`vec] memory permute
+    [:zh_CN] [`vec] 的内存排列
+]
+
+[%@lib@member unchecked_gather_from[!simd]]
+[codeblock:declaration]
+template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr V unchecked_gather_from(R&& in, const I& indices, flags<Flags...> f = {});
+template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr V unchecked_gather_from(R&& in, const typename I::mask_type& mask,
+                                    const I& indices, flags<Flags...> f = {});
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`mask] be [`typename I::mask_type(true)] for the overload with
+no [`mask] parameter.
+[:zh_CN] 令 [`mask] 对于没有 [`mask] 形参的重载为 [`typename I::mask_type(true)]。
+
+[para:expects]
+[:en] All values in [`select(mask, indices, typename I::value_type())] are in
+the range [=range(0,ranges::size(in))].
+[:zh_CN] [`select(mask, indices, typename I::value_type())] 中的每个值都属于范围
+[=range(0,ranges::size(in))]。
+
+[para:effects]
+[:en] Equivalent to: [`return partial_gather_from<V>(in, mask, indices, f);]
+[:zh_CN] 等价于：[`return partial_gather_from<V>(in, mask, indices, f);]
+
+[para:remarks]
+[:en] The default argument for template parameter [`V] is
+[`vec<ranges::range_value_t<R>, I::size()>].
+[:zh_CN] 模板形参 [`V] 的默认实参为 [`vec<ranges::range_value_t<R>, I::size()>]。
+[div:end]
+
+[%@lib@member partial_gather_from[!simd]]
+[codeblock:declaration]
+template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr V partial_gather_from(R&& in, const I& indices, flags<Flags...> f = {});
+template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr V partial_gather_from(R&& in, const typename I::mask_type& mask,
+                                  const I& indices, flags<Flags...> f = {});
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let
+[:zh_CN] 令
+[list]
+[item]
+[:en@~] [`mask] be [`typename I::mask_type(true)] for the overload with
+no [`mask] parameter.
+[:zh_CN@~] [`mask] 对于没有 [`mask] 形参的重载为 [`typename I::mask_type(true)]。
+[item]
+[:en@~] [`T] be [`typename V::value_type].
+[:zh_CN@~] [`T] 为 [`typename V::value_type]。
+[list:end]
+
+[para:mandates]
+[list]
+[item]
+[:en] [`ranges::range_value_t<R>] is a vectorizable type,
+[:zh_CN] [`ranges::range_value_t<R>] 是可向量化类型，
+[item]
+[:en] [`same_as<remove_cvref_t<V>, V>] is [`true],
+[:zh_CN] [`same_as<remove_cvref_t<V>, V>] 为 [`true]，
+[item]
+[:en] [`V] is an enabled specialization of [`basic_vec],
+[:zh_CN] [`V] 是 [`basic_vec] 的已启用特例，
+[item]
+[:en] [`V::size() == I::size()] is [`true], and
+[:zh_CN] [`V::size() == I::size()] 为 [`true]，并且
+[item]
+[:en] if the template parameter pack [`Flags] does not contain [*convert-flag],
+then the conversion from [`ranges::range_value_t<R>] to [`T] is value-preserving.
+[:zh_CN] 如果模板形参包组 [`Flags] 中不包含 [*convert-flag]，则
+从 [`ranges::range_value_t<R>] 到 [`T] 的转换是保留值的。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] If the template parameter pack [`Flags] contains [*aligned-flag],
+[`ranges::data(in)] points to storage aligned by [`alignment_v<V, ranges::range_value_t<R>>].
+[:zh_CN] 如果模板形参包组 [`Flags] 中包含 [*aligned-flag]，则 [`ranges::data(in)]
+指向按 [`alignment_v<V, ranges::range_value_t<R>>] 对齐的存储。
+[item]
+[:en] If the template parameter pack [`Flags] contains [`[*overaligned-flag]<N>],
+[`ranges::data(in)] points to storage aligned by [`N].
+[:zh_CN] 如果模板形参包组 [`Flags] 中包含 [`[*overaligned-flag]<N>]，则
+[`ranges::data(in)] 指向按 [`N] 对齐的存储。
+[list:end]
+
+[para:returns]
+[:en] A [`basic_vec] object where the [$i^\text{th}] element is initialized to
+the result of
+[:zh_CN] 一个数据并行对象，对于范围 [=range(0,I::size())] 中的所有 [$i]，其第 [$i] 个
+元素初始化为
+[codeblock]
+mask[[[redoc("$>")]]i] && indices[[[redoc("$>")]]i] < ranges::size(in) ? static_cast<T>(ranges::data(in)[indices[[[redoc("$>")]]i]]) : T()
+[codeblock:end]
+[:en@~] for all [$i] in the range [=range(0,I::size())].
+[:zh_CN@~] 的结果。
+
+[para:remarks]
+[:en] The default argument for template parameter [`V] is
+[`vec<ranges::range_value_t<R>, I::size()>].
+[:zh_CN] 模板形参 [`V] 的默认实参为 [`vec<ranges::range_value_t<R>, I::size()>]。
+[div:end]
+
+[%@lib@member unchecked_scatter_to[!simd]]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr void unchecked_scatter_to(const V& v, R&& out, const I& indices,
+                                      flags<Flags...> f = {});
+template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr void unchecked_scatter_to(const V& v, R&& out, const typename I::mask_type& mask,
+                                      const I& indices, flags<Flags...> f = {});
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`mask] be [`typename I::mask_type(true)] for the overload with
+no [`mask] parameter.
+[:zh_CN] 令 [`mask] 对于没有 [`mask] 形参的重载为 [`typename I::mask_type(true)]。
+
+[para:expects]
+[:en] All values in [`select(mask, indices, typename I::value_type())] are in
+the range [=range(0,ranges::size(in))].
+[:zh_CN] [`select(mask, indices, typename I::value_type())] 中的每个值都属于范围
+[=range(0,ranges::size(in))]。
+
+[para:effects]
+[:en] Equivalent to: [`partial_scatter_to(v, out, mask, indices, f);]
+[:zh_CN] 等价于：[`partial_scatter_to(v, out, mask, indices, f);]
+[div:end]
+
+[%@lib@member partial_scatter_to[!simd]]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr void
+  partial_scatter_to(const V& v, R&& out, const I& indices, flags<Flags...> f = {});
+template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
+  constexpr void partial_scatter_to(const V& v, R&& out, const typename I::mask_type& mask,
+                                    const I& indices, flags<Flags...> f = {});
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`mask] be [`typename I::mask_type(true)] for the overload with
+no [`mask] parameter.
+[:zh_CN] 令 [`mask] 对于没有 [`mask] 形参的重载为 [`typename I::mask_type(true)]。
+
+[para:constraints]
+[:en] [`V::size() == I::size()] is [`true].
+[:zh_CN] [`V::size() == I::size()] 为 [`true]。
+
+[para:mandates]
+[list]
+[item]
+[:en] [`ranges::range_value_t<R>] is a vectorizable type, and
+[:zh_CN] [`ranges::range_value_t<R>] 是可向量化类型，并且
+[item]
+[:en] if the template parameter pack [`Flags] does not contain [*convert-flag],
+then the conversion from [`typename V::value_type] to [`ranges::range_value_t<R>]
+value-preserving.
+[:zh_CN] 如果模板形参包组 [`Flags] 中不包含 [*convert-flag]，则
+从 [`typename V::value_type] 到 [`ranges::range_value_t<R>] 的转换是保留值的。
+[list:end]
+
+[para:expects]
+[list]
+[item]
+[:en] For all selected indices [$i] the values [`indices`[[$i]`]] are unique.
+[:zh_CN] 对于所有选中的索引 [$i]，值 [`indices`[[$i]`]] 均唯一。
+[item]
+[:en] If the template parameter pack [`Flags] contains [*aligned-flag],
+[`ranges::data(out)] points to storage aligned by [`alignment_v<V, ranges::range_value_t<R>>].
+[:zh_CN] 如果模板形参包组 [`Flags] 中包含 [*aligned-flag]，则 [`ranges::data(out)]
+指向按 [`alignment_v<V, ranges::range_value_t<R>>] 对齐的存储。
+[item]
+[:en] If the template parameter pack [`Flags] contains [`[*overaligned-flag]<N>],
+[`ranges::data(out)] points to storage aligned by [`N].
+[:zh_CN] 如果模板形参包组 [`Flags] 中包含 [`[*overaligned-flag]<N>]，则
+[`ranges::data(out)] 指向按 [`N] 对齐的存储。
+[list:end]
+
+[para:effects]
+[:en] For all [$i] in the range [=range(0,I::size())], if
+[`mask`[[$i]`] && (indices`[[$i]`] < ranges::size(out))] is [`true], evaluates
+[`ranges::data(out)`[indices`[[$i]`]`] = v`[[$i]`]].
+[:zh_CN] 对于范围 [=range(0,I::size())] 中的所有 [$i]，如果
+[`mask`[[$i]`] && (indices`[[$i]`] < ranges::size(out))] 为 [`true]，则求值
+[`ranges::data(out)`[indices`[[$i]`]`] = v`[[$i]`]]。
+[div:end]

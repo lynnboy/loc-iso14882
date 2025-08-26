@@ -1,0 +1,262 @@
+[section#simd.iterator
+    [:en] Class template [*simd-iterator]
+    [:zh_CN] 类模板 [*simd-iterator]
+]
+
+[%@lib@member iterator[!basic_vec]]
+[%@lib@member iterator[!basic_mask]]
+[%@lib@member const_iterator[!basic_vec]]
+[%@lib@member const_iterator[!basic_mask]]
+[codeblock:synopsis]
+namespace std::simd {
+  template<class V>
+  class [[redoc("*>")]]simd-iterator {                                                 // [=expos]]
+    V* [[redoc("*>")]]data_ = nullptr;                                                 // [=expos]]
+    [[redoc("*>")]]simd-size-type [[redoc("*>")]]offset_ = 0;                                         // [=expos]
+
+    constexpr [[redoc("*>")]]simd-iterator(V& d, [[redoc("*>")]]simd-size-type off) noexcept;         // [=expos]
+
+  public:
+    using value_type = typename V::value_type;
+    using iterator_category = input_iterator_tag;
+    using iterator_concept = random_access_iterator_tag;
+    using difference_type = [[redoc("*>")]]simd-size-type;
+
+    constexpr [[redoc("*>")]]simd-iterator() = default;
+
+    constexpr [[redoc("*>")]]simd-iterator(const [[redoc("*>")]]simd-iterator&) = default;
+    constexpr [[redoc("*>")]]simd-iterator& operator=(const [[redoc("*>")]]simd-iterator&) = default;
+
+    constexpr [[redoc("*>")]]simd-iterator(const [[redoc("*>")]]simd-iterator<remove_const_t<V>>&) requires is_const_v<V>;
+
+    constexpr value_type operator*() const;
+
+    constexpr [[redoc("*>")]]simd-iterator& operator++();
+    constexpr [[redoc("*>")]]simd-iterator operator++(int);
+    constexpr [[redoc("*>")]]simd-iterator& operator--();
+    constexpr [[redoc("*>")]]simd-iterator operator--(int);
+
+    constexpr [[redoc("*>")]]simd-iterator& operator+=(difference_type n);
+    constexpr [[redoc("*>")]]simd-iterator& operator-=(difference_type n);
+
+    constexpr value_type operator[](difference_type n) const;
+
+    friend constexpr bool operator==([[redoc("*>")]]simd-iterator a, [[redoc("*>")]]simd-iterator b) = default;
+    friend constexpr bool operator==([[redoc("*>")]]simd-iterator a, default_sentinel_t) noexcept;
+    friend constexpr auto operator<=>([[redoc("*>")]]simd-iterator a, [[redoc("*>")]]simd-iterator b);
+
+    friend constexpr [[redoc("*>")]]simd-iterator operator+([[redoc("*>")]]simd-iterator i, difference_type n);
+    friend constexpr [[redoc("*>")]]simd-iterator operator+(difference_type n, [[redoc("*>")]]simd-iterator i);
+    friend constexpr [[redoc("*>")]]simd-iterator operator-([[redoc("*>")]]simd-iterator i, difference_type n);
+
+    friend constexpr difference_type operator-([[redoc("*>")]]simd-iterator a, [[redoc("*>")]]simd-iterator b);
+    friend constexpr difference_type operator-([[redoc("*>")]]simd-iterator i, default_sentinel_t) noexcept;
+    friend constexpr difference_type operator-(default_sentinel_t, [[redoc("*>")]]simd-iterator i) noexcept;
+  };
+}
+[codeblock:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator(V& d, [[redoc("*>")]]simd-size-type off) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*data_] with [`addressof(d)] and [*offset_] with [`off].
+[:zh_CN] 以 [`addressof(d)] 初始化 [*data_]，并以 [`off] 初始化 [*offset_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator(const [[redoc("*>")]]simd-iterator<remove_const_t<V>>& i) requires is_const_v<V>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*data_] with [`i.[*data_]] and [*offset_] with [`i.[*offset_]].
+[:zh_CN] 以 [`i.[*data_]] 初始化 [*data_]，并以 [`i.[*offset_]] 初始化 [*offset_]。
+[div:end]
+
+[codeblock:declaration]
+constexpr value_type operator*() const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return (*[*data_])`[[*offset_]`];]
+[:zh_CN] 等价于：[`return (*[*data_])`[[*offset_]`];]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator& operator++();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return *this += 1;]
+[:zh_CN] 等价于：[`return *this += 1;]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator operator++(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]simd-iterator tmp = *this;
+*this += 1;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator& operator--();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return *this -= 1;]
+[:zh_CN] 等价于：[`return *this -= 1;]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator operator--(int);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]simd-iterator tmp = *this;
+*this -= 1;
+return tmp;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator& operator+=(difference_type n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*offset_] + n] is in the range [=crange(0,V::size())].
+[:zh_CN] [`[*offset_] + n] 处于范围 [=crange(0,V::size())] 之内。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]offset_ += n;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr [[redoc("*>")]]simd-iterator& operator-=(difference_type n);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*offset_] - n] is in the range [=crange(0,V::size())].
+[:zh_CN] [`[*offset_] - n] 处于范围 [=crange(0,V::size())] 之内。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+[[redoc("*>")]]offset_ -= n;
+return *this;
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+constexpr value_type operator[](difference_type n) const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return (*[*data_])`[[*offset_] + n`];]
+[:zh_CN] 等价于：[`return (*[*data_])`[[*offset_] + n`];]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr bool operator==([[redoc("*>")]]simd-iterator i, default_sentinel_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return i.[*offset_] == V::size();]
+[:zh_CN] 等价于：[`return i.[*offset_] == V::size();]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr auto operator<=>([[redoc("*>")]]simd-iterator a, [[redoc("*>")]]simd-iterator b);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`a.[*data_] == b.[*data_]] is [`true].
+[:zh_CN] [`a.[*data_] == b.[*data_]] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return a.[*offset_] <=> b.[*offset_];]
+[:zh_CN] 等价于：[`return a.[*offset_] <=> b.[*offset_];]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]simd-iterator operator+([[redoc("*>")]]simd-iterator i, difference_type n);
+friend constexpr [[redoc("*>")]]simd-iterator operator+(difference_type n, [[redoc("*>")]]simd-iterator i);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return i += n;]
+[:zh_CN] 等价于：[`return i += n;]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr [[redoc("*>")]]simd-iterator operator-([[redoc("*>")]]simd-iterator i, difference_type n);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return i -= n;]
+[:zh_CN] 等价于：[`return i -= n;]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-([[redoc("*>")]]simd-iterator a, [[redoc("*>")]]simd-iterator b);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`a.[*data_] == b.[*data_]] is [`true].
+[:zh_CN] [`a.[*data_] == b.[*data_]] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to: [`return a.[*offset_] - b.[*offset_];]
+[:zh_CN] 等价于：[`return a.[*offset_] - b.[*offset_];]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-([[redoc("*>")]]simd-iterator i, default_sentinel_t) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return i.[*offset_] - V::size();]
+[:zh_CN] 等价于：[`return i.[*offset_] - V::size();]
+[div:end]
+
+[codeblock:declaration]
+friend constexpr difference_type operator-(default_sentinel_t, [[redoc("*>")]]simd-iterator i) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return V::size() - i.[*offset_];]
+[:zh_CN] 等价于：[`return V::size() - i.[*offset_];]
+[div:end]

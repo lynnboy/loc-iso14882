@@ -1,0 +1,61 @@
+[section#simd.permute.static
+    [:en] [`vec] static permute
+    [:zh_CN] [`vec] 的静态排列
+]
+
+[%@lib@member permute[!simd]]
+[codeblock:declaration]
+template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-vec-type V, class IdxMap>
+  constexpr resize_t<N, V> permute(const V& v, IdxMap&& idxmap);
+template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-mask-type M, class IdxMap>
+  constexpr resize_t<N, M> permute(const M& v, IdxMap&& idxmap);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let
+[:zh_CN] 令
+[list]
+[item]
+[:en@~] [`[*gen-fn](i)] be [`idxmap(i, V::size())]
+if that expression is well-formed, and [`idxmap(i)] otherwise.
+[:zh_CN@~] [`[*gen-fn](i)] 在 [`idxmap(i, V::size())] 良构时为该表达式，否则为 [`idxmap(i)]。
+[item]
+[:en@~] [*perm-fn] be the following exposition-only function template:
+[:zh_CN@~] [*perm-fn] 为以下仅用于阐释的函数模板：
+[codeblock]
+template<[[redoc("*>")]]simd-size-type I>
+typename V::value_type [[redoc("*>")]]perm-fn() {
+  constexpr auto src_index = [[redoc("*>")]]gen-fn(I);
+  if constexpr (src_index == zero_element) {
+    return typename V::value_type();
+  } else if constexpr (src_index == uninit_element) {
+    return [[redoc("*>")]]unspecified-value;
+  } else {
+    return v[src_index];
+  }
+}
+[codeblock:end]
+[list:end]
+
+[para:constraints]
+[:en] [`integral<invoke_result_t<IdxMap&, [*simd-size-type]>> || integral<invoke_result_t<IdxMap&, [*simd-size-type], [*simd-size-type]>>] is [`true].
+[:zh_CN] [`integral<invoke_result_t<IdxMap&, [*simd-size-type]>> || integral<invoke_result_t<IdxMap&, [*simd-size-type], [*simd-size-type]>>] 为 [`true]。
+
+[para:mandates]
+[:en] [`[*gen-fn]([$i])] is a constant expression whose value is
+[`zero_element], [`uninit_element], or in the range
+[=range(0,V::size())], for all [$i] in the range [=range(0,N)].
+[:zh_CN] 对于范围 [=range(0,N)] 中的所有 [$i]，[`[*gen-fn]([$i])] 均为常量表达式，
+其值为 [`zero_element]，[`uninit_element]，或者属于范围 [=range(0,V::size())]。
+
+[para:returns]
+[:en] A data-parallel object where the [$i^\text{th}] element is initialized to
+the result of [`[*perm-fn]<[$i]>()] for all [$i] in the range [=range(0,N)].
+[:zh_CN] 一个数据并行对象，对于范围 [=range(0,N)] 中的所有 [$i]，其第 [$i] 个元素
+初始化为 [`[*perm-fn]<[$i]>()] 的结果。
+
+[para:remarks]
+[:en] The default argument for template parameter [`N] is [`V::size()].
+[:zh_CN] 模板形参 [`N] 的默认实参为 [`V::size()]。
+[div:end]

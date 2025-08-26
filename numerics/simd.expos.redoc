@@ -18,29 +18,38 @@ template<class T>
     bool_constant<T() == T::value>::value &&
     bool_constant<static_cast<decltype(T::value)>(T()) == T::value>::value;
 
-template<class T> using [[redoc("*>")]]deduced-simd-t = [[redoc("[=seebelow]")]];                  // [=expos]
+template<class T> using [[redoc("*>")]]deduced-vec-t = [[redoc("[=seebelow]")]];                  // [=expos]
 
 template<class V, class T> using [[redoc("*>")]]make-compatible-simd-t = [[redoc("[=seebelow]")]]; // [=expos]
 
 template<class V>
-  concept [[redoc("*:c@def>")]]simd-type =                                                // [=expos]
-    [[redoc("`:c>")]]same_as<V, basic_simd<typename V::value_type, typename V::abi_type>> &&
+  concept [[redoc("*:c@def>")]]simd-vec-type =                                            // [=expos]
+    [[redoc("`:c>")]]same_as<V, basic_vec<typename V::value_type, typename V::abi_type>> &&
+    is_default_constructible_v<V>;
+
+template<class V>
+  concept [[redoc("*:c@def>")]]simd-mask-type =                                           // [=expos]
+    [[redoc("`:c>")]]same_as<V, basic_mask<[[redoc("*>")]]mask-element-size<V>, typename V::abi_type>> &&
     is_default_constructible_v<V>;
 
 template<class V>
   concept [[redoc("*:c@def>")]]simd-floating-point =                                      // [=expos]
-    [[redoc("*:c>")]]simd-type<V> && [[redoc("`:c>")]]floating_point<typename V::value_type>;
+    [[redoc("*:c>")]]simd-vec-type<V> && [[redoc("`:c>")]]floating_point<typename V::value_type>;
+
+template<class V>
+  concept [[redoc("*:c@def>")]]simd-integral =                                            // [=expos]
+    [[redoc("*:c>")]]simd-vec-type<V> && [[redoc("`:c>")]]integral<typename V::value_type>;
 
 template<class V>
   using [[redoc("*>")]]simd-complex-value-type = typename V::value_type::value_type; // [=expos]
 
 template<class V>
   concept [[redoc("*:c@def>")]]simd-complex =                                             // [=expos]
-    [[redoc("*:c>")]]simd-type<V> && [[redoc("`:c>")]]same_as<typename V::value_type, complex<[[redoc("*>")]]simd-complex-value-type<V>>>;
+    [[redoc("*:c>")]]simd-vec-type<V> && [[redoc("`:c>")]]same_as<typename V::value_type, complex<[[redoc("*>")]]simd-complex-value-type<V>>>;
 
 template<class... Ts>
   concept [[redoc("*:c@def>")]]math-floating-point =                                      // [=expos]
-    ([[redoc("*:c>")]]simd-floating-point<[[redoc("*>")]]deduced-simd-t<Ts>> || ...);
+    ([[redoc("*:c>")]]simd-floating-point<[[redoc("*>")]]deduced-vec-t<Ts>> || ...);
 
 template<class... Ts>
   requires [[redoc("*:c>")]]math-floating-point<Ts...>
