@@ -35,8 +35,7 @@ enumeration, or pointer type.
 
 [para]
 [begin:note]
-[:en] An implementation can use a reference-counted smart pointer as
-[`exception_ptr].
+[:en] An implementation can use a reference-counted smart pointer as [`exception_ptr].
 [:zh_CN] 实现可以用引用计数的智能指针来作为 [`exception_ptr]。
 [end:note]
 
@@ -47,15 +46,14 @@ objects themselves and not the exceptions they refer to.
 [:zh_CN] 确定数据竞争是否存在时，对 [`exception_ptr] 对象的操作应当只访问和改动
 [`exception_ptr] 对象自身而不是其所指代的异常。
 
-[:en] Use of [`rethrow_exception] on [`exception_ptr] objects that refer to the
-same exception object shall not introduce a data race.
-[:zh_CN] 对指代相同异常对象的 [`exception_ptr] 对象使用 [`rethrow_exception]，
-不应当引入数据竞争。
+[:en] Use of [`rethrow_exception] or [`exception_ptr_cast] on [`exception_ptr]
+objects that refer to the same exception object shall not introduce a data race.
+[:zh_CN] 对指代相同异常对象的 [`exception_ptr] 对象使用 [`rethrow_exception] 或
+[`exception_ptr_cast]，不应当引入数据竞争。
 
 [begin:note]
-[:en] If [`rethrow_exception] rethrows the same exception object (rather than
-a copy), concurrent access to that rethrown exception object can introduce a
-data race.
+[:en] If [`rethrow_exception] rethrows the same exception object (rather than a copy),
+concurrent access to that rethrown exception object can introduce a data race.
 [:zh_CN] 若 [`rethrow_exception] 重新抛出相同异常对象（而不是其副本），则对所
 重新抛出的异常对象的并发访问会引入数据竞争。
 
@@ -171,4 +169,35 @@ try {
 [:en] This function is provided for convenience and efficiency reasons.
 [:zh_CN] 为方便和效率原因提供此函数。
 [end:note]
+[div:end]
+
+[%@lib exception_ptr_cast]
+[codeblock:declaration]
+template<class E> constexpr const E* exception_ptr_cast(const exception_ptr& p) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:mandates]
+[:en] [`E] is a cv-unqualified complete object type.
+[:zh_CN] [`E] 为无 cv 限定的完整对象类型。
+
+[:en] [`E] is not an array type.
+[:zh_CN] [`E] 不是数组类型。
+
+[:en] [`E] is not a pointer or pointer-to-member type.
+[:zh_CN] [`E] 不是指针或成员指针类型。
+
+[begin:note]
+[:en] When [`E] is a pointer or pointer-to-member type, a handler of type
+[`const E&] can match without binding to the exception object itself.
+[:zh_CN] 当 [`E] 是指针或成员指针类型时，[`const E&] 类型的处理器即可与之匹配却
+并不绑定到异常对象自身。
+[end:note]
+
+[para:returns]
+[:en] A pointer to the exception object referred to by [`p], if [`p] is not null
+and a handler of type [`const E&] would be a match ([#except.handle]) for that
+exception object.
+[:zh_CN] 如果 [`p] 非空且 [`const E&] 类型的处理器可以与由 [`p] 所指代的异常对象匹配（[#except.handle]），
+则返回指向该异常对象的指针。
 [div:end]
