@@ -1,0 +1,86 @@
+[section#optional.ref.monadic
+    [:en] Monadic operations
+    [:zh_CN] Monad 式操作
+]
+
+[codeblock:declaration]
+template<class F> constexpr auto and_then(F&& f) const;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`U] be [`invoke_result_t<F, T&>].
+[:zh_CN] 令 [`U] 为 [`invoke_result_t<F, T&>]。
+
+[para:mandates]
+[:en] [`remove_cvref_t<U>] is a specialization of [`optional].
+[:zh_CN] [`remove_cvref_t<U>] 是 [`optional] 的特例。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (has_value()) {
+  return invoke(std::forward<F>(f), *[[redoc("*>")]]val);
+} else {
+  return remove_cvref_t<U>();
+}
+[codeblock:end]
+[div:end]
+
+[codeblock:declaration]
+template<class F>
+  constexpr optional<remove_cv_t<invoke_result_t<F, T&>>> transform(F&& f) const;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`U] be [`remove_cv_t<invoke_result_t<F, T&>>].
+[:zh_CN] 令 [`U] 为 [`remove_cv_t<invoke_result_t<F, T&>>]。
+
+[para:mandates]
+[:en] The declaration
+[:zh_CN] 声明式
+[codeblock]
+U u(invoke(std::forward<F>(f), *[[redoc("*>")]]val));
+[codeblock:end]
+[:en@~] is well-formed for some invented variable [`u].
+[:zh_CN@~] 对于某个虚构变量 [`u] 良构。
+
+[begin:note]
+[:en] There is no requirement that [`U] is movable ([#dcl.init.general]).
+[:zh_CN] 并没有规定 [`U] 可移动（[#dcl.init.general]）。
+[end:note]
+
+[para:returns]
+[:en] If [`*this] contains a value, an [`optional<U>] object whose contained
+value is direct-non-list-initialized with [`invoke(std::forward<F>(f), *[*val])];
+otherwise, [`optional<U>()].
+[:zh_CN] 若 [`*this] 包含值，则为一个 [`optional<U>] 对象，并以
+[`invoke(std::forward<F>(f), *[*val])] 对其所包含的值进行直接非列表初始化。
+[div:end]
+
+[codeblock:declaration]
+template<class F> constexpr optional or_else(F&& f) const;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`F] models [`:c invocable].
+[:zh_CN] [`F] 构成 [`:c invocable]。
+
+[para:mandates]
+[:en] [`is_same_v<remove_cvref_t<invoke_result_t<F>>, optional>] is [`true].
+[:zh_CN] [`is_same_v<remove_cvref_t<invoke_result_t<F>>, optional>] 为 [`true]。
+
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (has_value()) {
+  return *[[redoc("*>")]]val;
+} else {
+  return std::forward<F>(f)();
+}
+[codeblock:end]
+[div:end]
