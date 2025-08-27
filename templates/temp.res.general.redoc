@@ -106,7 +106,7 @@ no diagnostic required.
 [syntax]
 [rule typename-specifier [:zh_CN] typename-说明符 ]
     [| [`:key typename] nested-name-specifier identifier ]
-    [| [`:key typename] nested-name-specifier [`:opt template] simple-template-id ]
+    [| [`:key typename] nested-name-specifier [`:opt:key template] simple-template-id ]
 [rule:end]
 [syntax:end]
 
@@ -154,17 +154,20 @@ void foo() {
 
 [para]
 [:en] [%type-only[!context][%context[!type-only]]]
-A qualified or unqualified name is said to be in a [+type-only context[%context
-[!type-only]]] if it is the terminal name of
+A [+type-only context[%context[!type-only]]] is defined as follows:
 [:zh_CN] [%仅限类型[!语境][%语境[!仅限类型]]]
-如果某个限定或无限定的名字是以下各项的终端名，则称它处于[+仅限类型语境[%语境[!仅限类型]]]中。
+[+仅限类型语境[%语境[!仅限类型]]]定义如下：
+
+[:en] A qualified or unqualified name is said to be in a type-only context if
+it is the terminal name of
+[:zh_CN] 如果某个限定或无限定的名字是以下各项的终端名，则称它处于仅限类型语境中：
 
 [list]
 [item]
 [:en] a [~typename-specifier], [~type-requirement], [~nested-name-specifier],
-[~elaborated-type-specifier], [~class-or-decltype], or
+[~elaborated-type-specifier], [~class-or-decltype], [~using-enum-declarator], or
 [:zh_CN] [~typename-说明符]，[~类型规定]，[~嵌套名说明符]，[~详述类型说明符]，
-[~类或-decltype]，或者
+[~类或-decltype]，[~using-枚举声明符]，或者
 
 [item]
 [:en] a [~simple-type-specifier] of a [~friend-type-specifier], or
@@ -173,67 +176,70 @@ A qualified or unqualified name is said to be in a [+type-only context[%context
 [item]
 [:en] a [~type-specifier] of a
 [:zh_CN] 以下各项的[~类型说明符]：
-[list]
-[item]
+ [list]
+ [item]
 [:en@~] [~new-type-id],
 [:zh_CN@~] [~new-类型标识]，
-[item]
+ [item]
 [:en@~] [~defining-type-id],
 [:zh_CN@~] [~定义类型标识]，
-[item]
+ [item]
 [:en@~] [~conversion-type-id],
 [:zh_CN@~] [~转换类型标识]，
-[item]
+ [item]
 [:en@~] [~trailing-return-type],
 [:zh_CN@~] [~尾部返回类型]，
-[item]
+ [item]
 [:en@~] default argument of a [~type-parameter], or
 [:zh_CN@~] [~类型形参]的默认实参，或
-[item]
+ [item]
 [:en@~] [~type-id] of a [`:key static_cast], [`:key const_cast],
 [`:key reinterpret_cast], or [`:key dynamic_cast], or
 [:zh_CN@~] [`:key static_cast]、[`:key const_cast]、[`:key reinterpret_cast] 或
 [`:key dynamic_cast] 的[~类型标识]，或者
-[list:end]
+ [list:end]
 
 [item]
 [:en] a [~decl-specifier] of the [~decl-specifier-seq] of a
 [:zh_CN] 以下各项的[~声明说明符序列]中的[~声明说明符]:
-[list]
-[item]
+ [list]
+ [item]
 [:en@~] [~simple-declaration] or [~function-definition] in namespace scope,
 [:zh_CN@~] 命名空间作用域中的[~简单声明式]或[~函数定义式]，
-[item]
+ [item]
 [:en@~] [~member-declaration],
 [:zh_CN@~] [~成员声明式]，
-[item]
+ [item]
 [:en@~] [~parameter-declaration] in a [~member-declaration],[#:fn] unless that
 [~parameter-declaration] appears in a default argument,
 [:zh_CN@~] [~成员声明式][#:fn]中的[~形参声明式]，除非该[~形参声明式]出现于默认实参之中，
-[item]
+[note:foot]
+[:en] This includes friend function declarations.
+[:zh_CN] 包括友元函数声明式。
+[note:end]
+ [item]
 [:en@~] [~parameter-declaration] in a [~declarator] of a function or function
 template declaration whose [~declarator-id] is qualified, unless that
 [~parameter-declaration] appears in a default argument,
 [:zh_CN@~] [~声明符标识]有限定的函数或函数模板的[~声明符]中的[~形参声明式]，除非
 该[~形参声明式]出现于默认实参之中，
-[item]
+ [item]
 [:en@~] [~parameter-declaration] in a [~lambda-declarator] or [~requirement-parameter-list],
 unless that [~parameter-declaration] appears in a default argument, or
 [:zh_CN@~] [~lambda-声明符]或[~规定形参列表]中的[~形参声明式]，除非该
 [~形参声明式]出现于默认实参之中，或者
-[item]
+ [item]
 [:en@~] [~parameter-declaration] of a [~template-parameter] (which necessarily
 declares a constant template parameter).
 [:zh_CN@~] （生命常量模板形参的）[~模板形参]的[~形参声明式]。
-[list:end]
+ [list:end]
 [list:end]
 
-[note:foot]
-[:en]
-This includes friend function declarations.
-[:zh_CN]
-包括友元函数声明式。
-[note:end]
+[:en] A [~splice-specifier] or [~splice-specialization-specifier] ([#basic.splice])
+is said to be in a type-only context if a hypothetical qualified name appearing
+in the same position would be in a type-only context.
+[:zh_CN] 对于[~拼接说明符]或[~拼接特例说明符]（[#basic.splice]），如果出现在
+同一位置的虚构的限定名处于仅限类型语境中，则称它处于仅限类型语境中。
 
 [begin:example]
 [codeblock]
@@ -243,13 +249,17 @@ template<class T> void f(T::R);         // [:en] ill-formed, no diagnostic requi
                                         [:zh_CN] 非良构，无须诊断：试图声明
                                         // [:en@~] a [`:key void] variable template \
                                         [:zh_CN@~] [`:key void] 变量模板
+enum class Enum { A, B, C };
 template<class T> struct S {
   using Ptr = PtrTraits<T>::Ptr;        // [:en] OK, in a [~defining-type-id] [:zh_CN] OK，在[~定义类型标识]中
+  using Alias = [:^^int:];              // [:en] OK, in a [~defining-type-id] [:zh_CN] OK，在[~定义类型标识]中
   T::R f(T::P p) {                      // [:en] OK, class scope [:zh_CN] OK，类作用域
     return static_cast<T::R>(p);        // [:en] OK, [~type-id] of a [`:key static_cast] \
                                         [:zh_CN] OK，[`:key static_cast] 的[~类型标识]
   }
   auto g() -> S<T*>::Ptr;               // [:en] OK, [~trailing-return-type] [:zh_CN] OK，[~尾部返回类型]
+  auto h() -> [:^^S:]<T*>;              // [:en] OK, [~trailing-return-type] [:zh_CN] OK，[~尾部返回类型]
+  using enum [:^^Enum:];                // [:en] OK, [~using-enum-declarator] [:zh_CN] OK，[~using-枚举声明符]
 };
 template<typename T> void f() {
   void (*pf)(T::X);                     // [:en] variable [`pf] of type [`[`:key void]*] initialized with [`T::X] \
@@ -322,9 +332,16 @@ enclosing template is not instantiated, or
 
 [item]
 [:en] no valid specialization, ignoring [~static_assert-declaration]s that fail,
+can be generated for the [~compound-statement] of an expansion statement
+and there is no instantiation of it, or
+[:zh_CN] 忽略失败的 [~static_assert-声明式]后，无法为展开语句的[~复合语句]
+生成任何有效特例，且不存在它的实例化，或者
+
+[item]
+[:en] no valid specialization, ignoring [~static_assert-declaration]s that fail,
 can be generated for a default [~template-argument] and the default
 [~template-argument] is not used in any instantiation, or
-[:zh_CN] 忽略失败的 [~static_assert-声明式]（[#dcl.pre]）后，无法为默认
+[:zh_CN] 忽略失败的 [~static_assert-声明式]后，无法为默认
 [~模板实参]生成任何有效特例，且该默认[~模板实参]并未用于任何实例化，或者
 
 [item]
@@ -366,8 +383,7 @@ actual instantiation of the templated entity.
 [list]
 [item]
 [:en] a type used in a non-dependent name is incomplete at the point at which a
-template is defined but is complete at the point at which an instantiation is
-performed, or
+template is defined but is complete at the point at which an instantiation is performed, or
 [:zh_CN] 非待决名中所使用的类型在模板的定义点是不完整的，但在进行实例化之处是完整的，或者
 
 [item]

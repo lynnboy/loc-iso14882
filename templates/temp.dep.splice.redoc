@@ -1,0 +1,54 @@
+[section#temp.dep.splice
+    [:en] Dependent splice specifiers
+    [:zh_CN] 待决的拼接说明符
+]
+
+[para]
+[:en] A [~splice-specifier] is dependent if its converted [~constant-expression]
+is value-dependent.
+[:zh_CN] 如果[~拼接说明符]的经转换[~常量表达式]是值待决的，则它是待决的。
+
+[:en] A [~splice-specialization-specifier] is dependent if its [~splice-specifier]
+is dependent or if any of its template arguments are dependent.
+[:zh_CN] 如果[~拼接特例说明符]的[~拼接说明符]是值待决的，或者其任何模板实参是
+待决的，则它是待决的。
+
+[:en] A [~splice-scope-specifier] is dependent if its [~splice-specifier] or
+[~splice-specialization-specifier] is dependent.
+[:zh_CN] 如果[~拼接作用域说明符]的[~拼接说明符]或[~拼接特例说明符]是待决的，则它是待决的。
+
+[para]
+[begin:example]
+[codeblock]
+template<auto T, auto NS>
+void fn() {
+  using a = [:T:]<1>;                           // [:en] [``[:T:`]<1>] is dependent because [``[:T:`]] is dependent \
+                                                [:zh_CN] 由于 [``[:T:`]] 待决，[``[:T:`]<1>] 待决
+  static_assert([:NS:]::template TCls<1>::v == a::v);   // [:en] [``[:NS:`]] is dependent [:zh_CN] [``[:NS:`]] 待决
+}
+
+namespace N {
+  template <auto V> struct TCls { static constexpr int v = V; };
+}
+
+int main() {
+  fn<^^N::TCls, ^^N>();
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:example]
+[codeblock]
+template<template<class> class X>
+struct S {
+  [:^^X:]<int, float> m;
+};
+
+template<class> struct V1 {};
+template<class, class = int> struct V2 {};
+
+S<V1> s1;                       // [:en] error: [`V1<int, float>] has too many template arguments [:zh_CN] 错误：[`V1<int, float>] 模板实参过多
+S<V2> s2;                       // OK
+[codeblock:end]
+[end:example]

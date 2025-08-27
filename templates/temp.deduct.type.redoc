@@ -94,7 +94,7 @@ in deduced contexts, no deduction is done, so [`P] and [`A] need not have the sa
 [:en] [%context[!non-deduced]]
 The non-deduced contexts are:
 [:zh_CN] [%语境[!非推断～]]
-非推断的语境为：
+非推断的语境有：
 
 [list]
 [item]
@@ -106,8 +106,16 @@ The non-deduced contexts are:
 [:zh_CN] [~包组索引说明符]或[~包组索引表达式]。
 
 [item]
+[:en] A [~type-constraint].
+[:zh_CN] [~类型约束]。
+
+[item]
 [:en] The [~expression] of a [~decltype-specifier].
 [:zh_CN] [~decltype-说明符]的[~表达式]。
+
+[item]
+[:en] The [~constant-expression] of a [~splice-specifier].
+[:zh_CN] [~拼接说明符]的[~常量表达式]。
 
 [item]
 [:en] A constant template argument or an array bound in which a subexpression
@@ -198,10 +206,8 @@ template<class T> void f(T x, T y) { /* ... */ }
 struct A { /* ... */ };
 struct B : A { /* ... */ };
 void g(A a, B b) {
-  f(a,b);           // [:en] error: [`T] deduced as both [`A] and [`B] \
-                    [:zh_CN] 错误：[`T] 同时被推断为 [`A] 和 [`B]
-  f(b,a);           // [:en] error: [`T] deduced as both [`A] and [`B] \
-                    [:zh_CN] 错误：[`T] 同时被推断为 [`A] 和 [`B]
+  f(a,b);           // [:en] error: [`T] deduced as both [`A] and [`B] [:zh_CN] 错误：[`T] 同时被推断为 [`A] 和 [`B]
+  f(b,a);           // [:en] error: [`T] deduced as both [`A] and [`B] [:zh_CN] 错误：[`T] 同时被推断为 [`A] 和 [`B]
   f(a,a);           // [:en] OK, [`T] is [`A] [:zh_CN] OK，[`T] 为 [`A]
   f(b,b);           // [:en] OK, [`T] is [`B] [:zh_CN] OK，[`T] 为 [`B]
 }
@@ -222,12 +228,9 @@ char g2(int, float, float);
 int g3(int, char, float);
 
 void r() {
-  f(g1);            // [:en] OK, [`T] is [`int] and [`U] is [`float] \
-                    [:zh_CN] OK，[`T] 为 [`int] 而 [`U] 为 [`float]
-  f(g2);            // [:en] error: [`T] deduced as both [`char] and [`int] \
-                    [:zh_CN] 错误：[`T] 同时被推断为 [`char] 和 [`int]
-  f(g3);            // [:en] error: [`U] deduced as both [`char] and [`float] \
-                    [:zh_CN] 错误：[`T] 同时被推断为 [`char] 和 [`float]
+  f(g1);            // [:en] OK, [`T] is [`int] and [`U] is [`float] [:zh_CN] OK，[`T] 为 [`int] 而 [`U] 为 [`float]
+  f(g2);            // [:en] error: [`T] deduced as both [`char] and [`int] [:zh_CN] 错误：[`T] 同时被推断为 [`char] 和 [`int]
+  f(g3);            // [:en] error: [`U] deduced as both [`char] and [`float] [:zh_CN] 错误：[`T] 同时被推断为 [`char] 和 [`float]
 }
 [codeblock:end]
 
@@ -283,13 +286,13 @@ void t() {
 [end:example]
 
 [para]
-[:en] A type template argument [`T], a template template argument [`TT] denoting
-a class template or an alias template, a template template argument [`VV] denoting
-a variable template or a concept, or a constant template argument [`i] can be
-deduced if [`P] and [`A] have one of the following forms:
-[:zh_CN] 若 [`P] 和 [`A] 具有如下之一的形式，则类型模板实参 [`T]，代表类模板或
-别名模板的模板模板实参 [`TT]，代表变量模板或概念的模板模板实参 [`VV]，或
-常量模板实参 [`i] 可以被推断出来：
+[:en] A type template argument [`T], a constant template argument [`i],
+a template template argument [`TT] denoting a class template or an alias template,
+or a template template argument [`VV] denoting a variable template or a concept,
+can be deduced if [`P] and [`A] have one of the following forms:
+[:zh_CN] 若 [`P] 和 [`A] 具有如下之一的形式，则类型模板实参 [`T]，常量模板实参 [`i]，
+代表类模板或别名模板的模板模板实参 [`TT]，或者代表变量模板或概念的模板模板实参 [`VV]，
+可以被推断出来：
 
 [syntax:explanation]
 [| [`[`:opt[=cv]] T] ]
@@ -315,17 +318,17 @@ deduced if [`P] and [`A] have one of the following forms:
 these rules recursively, is a non-deduced context in [`P] or [`A], or is the
 same non-dependent type in [`P] and [`A],
 [:zh_CN] 其中 [`:opt T] 一个类型或形参类型列表，其要么递归地满足这些规则，要么
-是 [`P] 或 [`A] 中的非推断语境，要么是 [`P] 和 [`A] 中的相同非待决类型。
-
-[item]
-[:en] [`:opt TT] represents either a class template or a template template parameter,
-[:zh_CN] [`:opt TT] 要么表示类模板，要么表示模板模板形参，
+是 [`P] 或 [`A] 中的非推断语境，要么是 [`P] 和 [`A] 中的相同非待决类型，
 
 [item]
 [:en] [`:opt i] represents an expression that either is an [`i], is value-dependent
-in [`P] or [`A], or has the same constant value in [`P] and [`A], and
+in [`P] or [`A], or has the same constant value in [`P] and [`A],
 [:zh_CN] [`:opt i] 表示一个表达式，要么为 [`i]，在 [`P] 或 [`A] 中值待决，要么
-是 [`P] 和 [`A] 中的相同常量值，以及
+是 [`P] 和 [`A] 中的相同常量值，
+
+[item]
+[:en] [`:opt TT] represents either a class template or a template template parameter, and
+[:zh_CN] [`:opt TT] 要么表示类模板，要么表示模板模板形参，以及
 
 [item]
 [:en] [`[`:key noexcept]([`:opt i])] represents an exception specification
@@ -588,8 +591,7 @@ void g() {
   int v[10][20];
   f1(v);                        // [:en] OK, [`i] deduced as [`20] [:zh_CN] OK，[`i] 被推断为 [`20]
   f1<20>(v);                    // OK
-  f2(v);                        // [:en] error: cannot deduce [~template-argument] [`i] \
-                                [:zh_CN] 错误：无法推断[~模板实参] [`i]
+  f2(v);                        // [:en] error: cannot deduce [~template-argument] [`i] [:zh_CN] 错误：无法推断[~模板实参] [`i]
   f2<10>(v);                    // OK
   f3(v);                        // [:en] OK, [`i] deduced as [`10] [:zh_CN] OK，[`i] 被推断为 [`10]
 }
@@ -612,8 +614,7 @@ template <int i> void f(A<i>, A<i+1>);
 void k() {
   A<1> a1;
   A<2> a2;
-  g(a1);                        // [:en] error: deduction fails for expression [`i+1] \
-                                [:zh_CN] 错误：对表达式 [`i+1] 的推断失败
+  g(a1);                        // [:en] error: deduction fails for expression [`i+1] [:zh_CN] 错误：对表达式 [`i+1] 的推断失败
   g<0>(a1);                     // OK
   f(a1, a2);                    // OK
 }
@@ -647,11 +648,11 @@ int    x = deduce<77>(a.xm, 62, b.ym);
 [end:note]
 
 [para]
-[:en] If [`P] has a form that contains [`<i>], and if the type of [`i] differs
-from the type of the corresponding template parameter of the template named by
-the enclosing [~simple-template-id], deduction fails.
+[:en] If [`P] has a form that contains [`<i>], and if the type of [`i] differs from
+the type of the corresponding template parameter of the template named by the enclosing
+[~simple-template-id] or [~splice-specialization-specifier], deduction fails.
 [:zh_CN] 若 [`P] 的形式中包含 [`<i>]，且若 [`i] 的类型与其在外围[~简单模板标识]
-所指名的模板的对应模板形参的类型不同，则推断失败。
+或[~拼接特例说明符]所指名的模板的对应模板形参的类型不同，则推断失败。
 
 [:en] If [`P] has a form that contains [``[i`]], and if the type of [`i] is not
 an integral type, deduction fails.[#:fn]
@@ -768,13 +769,11 @@ X<int> x1;                      // [:en] uses primary template [:zh_CN] 使用�
 X<int(int, float, double)> x2;  // [:en] uses partial specialization; [`ArgTypes] contains [`float], [`double] \
                                 [:zh_CN] 使用了部分特化式；[`ArgTypes] 包含 [`float]，[`double]
 X<int(float, int)> x3;          // [:en] uses primary template [:zh_CN] 使用了主模板
-Y<> y1;                         // [:en] uses primary template; [`Types] is empty \
-                                [:zh_CN] 使用了主模板；[`Types] 为空
+Y<> y1;                         // [:en] uses primary template; [`Types] is empty [:zh_CN] 使用了主模板；[`Types] 为空
 Y<int&, float&, double&> y2;    // [:en] uses partial specialization; [`T] is [`int&], [`Types] contains [`float], [`double] \
                                 [:zh_CN] 使用了部分特化式；[`T] 为 [`int&]，[`Types] 包含 [`float]，[`double]
 Y<int, float, double> y3;       // [:en] uses primary template; [`Types] contains [`int], [`float], [`double] \
                                 [:zh_CN] 使用了主模板；[`Types] 包含 [`int]，[`float]，[`double]
-int fv = f(g);                  // [:en] OK; [`Types] contains [`int], [`float] \
-                                [:zh_CN] OK；[`Types] 包含 [`int]，[`float]
+int fv = f(g);                  // [:en] OK; [`Types] contains [`int], [`float] [:zh_CN] OK；[`Types] 包含 [`int]，[`float]
 [codeblock:end]
 [end:example]

@@ -21,6 +21,18 @@ template<class F>
 [codeblock:end]
 
 [div:description]
+[para:effects]
+[:en] Equivalent to [`packaged_task(allocator_arg, allocator<int>(), std::forward<F>(f))].
+[:zh_CN] 等价于 [`packaged_task(allocator_arg, allocator<int>(), std::forward<F>(f))]。
+[div:end]
+
+[%@lib@ctor packaged_task]
+[codeblock:declaration]
+template<class F, class Allocator>
+  explicit packaged_task(allocator_arg_t, const Allocator& a, F&& f);
+[codeblock:end]
+
+[div:description]
 [para:constraints]
 [:en] [`remove_cvref_t<F>] is not the same type as [`packaged_task<R(ArgTypes...)>].
 [:zh_CN] [`remove_cvref_t<F>] 与 [`packaged_task<R(ArgTypes...)>] 不是相同类型。
@@ -30,10 +42,15 @@ template<class F>
 [:zh_CN] [`is_invocable_r_v<R, decay_t<F>&, ArgTypes...>] 为 [`true]。
 
 [para:expects]
-[:en] Invoking a copy of [`f] behaves the same as invoking [`f].
-[:zh_CN] 调用 [`f] 的副本的行为与调用 [`f] 相同。
+[:en] [`Allocator] meets the [^:oc Allocator] requirements ([#allocator.requirements.general]).
+[:zh_CN] [`Allocator] 符合 [^:oc Allocator] 的规定（[#allocator.requirements.general]）。
 
 [para:effects]
+[:en] Let [`A2] be [`allocator_traits<Allocator>::rebind_alloc<[=unspec]>]
+and let [`a2] be an object of type [`A2] initialized with [`A2(a)].
+[:zh_CN] 令 [`A2] 为 [`allocator_traits<Allocator>::rebind_alloc<[=unspec]>]，
+并令 [`a2] 为以 [`A2(a)] 初始化的 [`A2] 类型的对象。
+
 [:en] Constructs a new [`packaged_task] object with a stored task of type
 [`decay_t<F>] and a shared state.
 [:zh_CN] 构造带有一个存储的 [`decay_t<F>] 类型的任务和一个共享状态的新的
@@ -42,11 +59,16 @@ template<class F>
 [:en] Initializes the object[=']s stored task with [`std::forward<F>(f)].
 [:zh_CN] 以 [`std::forward<F>(f)] 初始化该对象所存储的任务。
 
+[:en] Uses [`a2] to allocate storage for the shared state and stores a copy
+of [`a2] in the shared state.
+[:zh_CN] 使用 [`a2] 为共享状态分配存储，并将 [`a2] 的一个副本存储共享状态。
+
 [para:throws]
-[:en] Any exceptions thrown by the copy or move constructor of [`f], or
-[`bad_alloc] if memory for the internal data structures cannot be allocated.
-[:zh_CN] 由 [`f] 的复制或移动构造函数所抛出的任何异常，或者当无法为内部数据结构
-分配内存时抛出 [`bad_alloc]。
+[:en] Any exceptions thrown by the Initialization of the stored task.
+[:zh_CN] 由所存储任务的初始化所抛出的任何异常。
+
+[:en] If storage for the shared state cannot be allocated, any exception thrown by [`A2::allocate].
+[:zh_CN] 如果无法为共享状态分配存储，则抛出由 [`A2::allocate] 抛出的任何异常。
 [div:end]
 
 [%@lib@ctor packaged_task]
@@ -291,10 +313,17 @@ void reset();
 
 [div:description]
 [para:effects]
-[:en] As if [`*this = packaged_task(std::move(f))], where [`f] is the task
-stored in [`*this].
-[:zh_CN] 如同执行 [`*this = packaged_task(std::move(f))]，其中 [`f] 为 [`*this]
-中所存储的任务。
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if (!valid()) {
+  throw future_error(future_errc::no_state);
+}
+*this = packaged_task(allocator_arg, a, std::move(f));
+[codeblock:end]
+[:en@~] where [`f] is the task stored in [`*this] and [`a] is the allocator
+stored in the shared state.
+[:zh_CN@~] 其中 [`f] 是 [`*this] 中所存储的任务，而 [`a] 为共享状态所存储的分配器。
 
 [begin:note]
 [:en] This constructs a new shared state for [`*this].
@@ -307,15 +336,10 @@ stored in [`*this].
 [para:throws]
 [list]
 [item]
-[:en] [`bad_alloc] if memory for the new shared state cannot be allocated.
-[:zh_CN] 当无法为新共享状态分配内存时抛出 [`bad_alloc]。
+[:en] Any exceptions thrown by the [`packaged_task] constructor.
+[:zh_CN] 由 [`packaged_task] 的构造函数所抛出的任何异常。
 [item]
-[:en] Any exceptions thrown by the move constructor of the task stored in the
-shared state.
-[:zh_CN] 由共享状态中所存储的任务的移动构造函数所抛出的任何异常。
-[item]
-[:en] [`future_error] with an error condition of [`no_state] if [`*this] has no
-shared state.
+[:en] [`future_error] with an error condition of [`no_state] if [`*this] has no shared state.
 [:zh_CN] 如果 [`*this] 没有共享状态则抛出具有 [`no_state] 错误条件的 [`future_error]。
 [list:end]
 [div:end]

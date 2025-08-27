@@ -634,7 +634,9 @@ asynchronous provider                   |异步提供者     |`future`对应的`
 asynchronous return object              |异步返回对象   |存于`future`的共享状态中
 atomic                                  |原子性
 atomic constraint                       |原子约束       |表达式`E`+形参映射。由约束规范化过程形成<br>模板形参代换后表达式有效且求值为`true`时满足
+atomic modify-write operation           |原子性改-写操作
 atomic notifying operation              |原子性通知操作
+atomic read-modify-write operation      |原子性读-改-写操作
 atomic waiting operation                |原子性等待操作
 attach to module                        |附属于模块     |可替换全局`new`/`delete`函数、命名空间、带语言连接说明的声明式等附属全局模块；一些指定目标的友元声明式归属目标所在模块；否则归属当前视野的模块
 attribute                               |属性标注，属性 |`[[]]`语法，支持名字空间。支持包组展开。支持`()[]{}`不同参数语法<br>位置：声明式之前影响所有实体，类型说明符之后影响类型，标识之后影响实体<br>`alignas`也是属性。允许关键词标识符
@@ -2241,6 +2243,7 @@ UTF-32 string literal                   |UTF-32 字符串字面量    |前缀为
 vacuous initialization                  |无为初始化 |无实际动作（平凡）的默认初始化
 valid                                   |有效，合法
 valid but unspecified state             |有效但未指明的状态 |被移动后的状态
+valid contained type                    |有效包含类型|`optional`可包含的类型，左值引用或非数组完整对象类型，排除 `in_place_t` 和 `nullopt_t`
 valid range                             |有效范围   |`[i,s)`，从`i`可达`s`，即`++i`的序列可达`i==s`<br>`[i,i+c)`，`c=0`，或`c>0`且每个`i`可解引用
 valid *template-id*                     |有效的*模板标识*   |合适的模板实参列表，形参列表的实参代换成功，非待决时满足约束<br>非函数模板的模板标识必须有效
 value                                   |值         |一种实体，对象的状态
