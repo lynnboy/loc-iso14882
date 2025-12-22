@@ -78,23 +78,15 @@ the overloads with no parameters by those names;
 [:zh_CN@~] 对于没有名为 [`comp] 和 [`proj1] 和 [`proj2] 的形参的重载，令 [`comp]
 为 [`less()]，以及 [`proj1] 和 [`proj2] 为 [`identity{}]；
 [item]
-[:en@~] [$K] be the number of elements in [=range(first1,last1)] that are
-present in [=range(first2,last2)];
-[:zh_CN@~] 令 [$K] 为出现在 [=range(first2,last2)] 中的 [=range(first1,last1)]
-中的元素的数量；
+[:en@~] [$M] be the number of elements in the sorted symmetric difference (see below);
+[:zh_CN@~] 令 [$M] 为有序对称差集中的元素个数（见下文）；
 [item]
-[:en@~] [$M] be the number of elements in [=range(first2,last2)] that are
-present in [=range(first1,last1)];
-[:zh_CN@~] 令 [$M] 为出现在 [=range(first1,last1)] 中的 [=range(first2,last2)]
-中的元素的数量；
-[item]
-[:en@~] [`result_last] be [`result + [$M] + [$K]] for the overloads with no
+[:en@~] [`result_last] be [`result + [$M]] for the overloads with no
 parameter [`result_last] or [`result_r];
-[:zh_CN@~] 对于没有形参 [`result_last] 或 [`result_r] 的重载，令 [`result_last] 为
-[`result + [$M] + [$K]]；
+[:zh_CN@~] 对于没有形参 [`result_last] 或 [`result_r] 的重载，令 [`result_last] 为 [`result + [$M]]；
 [item]
-[:en@~] [$N] be [$\min(K + M, \ [`result_last - result])].
-[:zh_CN@~] [$N] 为 [$\min(K + M, \ [`result_last - result])]。
+[:en@~] [$N] be [$\min(K, \ [`result_last - result])].
+[:zh_CN@~] [$N] 为 [$\min(K, \ [`result_last - result])]。
 [list:end]
 
 [para:expects]
@@ -107,16 +99,31 @@ with respect to [`comp] and [`proj1] or [`proj2], respectively.
 [:zh_CN] 结果范围不与任何一个源范围有重叠。
 
 [para:effects]
-[:en] Copies the elements of the range [=range(first1,last1)] that are not
-present in the range [=range(first2,last2)], and the elements of the range
-[=range(first2,last2)] that are not present in the range [=range(first1,last1)]
-to the range [=range(result,result + [$N])].
-[:zh_CN] 将范围 [=range(first1,last1)] 中不存在于范围 [=range(first2,last2)] 中
-的元素，以及范围 [=range(first2,last2)] 中不存在于范围 [=range(first1,last1)] 中
-的元素，复制到范围 [=range(result,result + [$N])] 中。
+[:en] Constructs a sorted symmetric difference of the elements from the two ranges;
+that is, the set of elements that are present in exactly one of [=range(first1,last1)]
+and [=range(first2,last2)].
+[:zh_CN] 构造两个范围中各元素的有序对称差集；就是说，由恰好出现于 [=range(first1,last1)]
+和 [=range(first2,last2)] 之一的元素所构成的集合。
 
-[:en] The elements in the constructed range are sorted.
-[:zh_CN] 所构造的范围中的元素是有序的。
+[:en] If [=range(first1,last1)] contains [$m] elements that are equivalent to
+each other and [=range(first2,last2)] contains [$n] elements that are equivalent
+to them, then [$|m - n|] of those elements are included in the symmetric difference:
+the last [$m - n] of these elements from [=range(first1,last1)], in order, if [$m > n], and
+the last [$n - m] of these elements from [=range(first2,last2)], in order, if [$m < n].
+[:zh_CN] 如果 [=range(first1,last1)] 包含 [$m] 个互相等价的元素，而 [=range(first2,last2)]
+包含 [$n] 个与其等价的元素，则有序对称差集中包含 [$|m - n|] 个这些元素：
+如果 [$m > n] 则依序包含 [=range(first1,last1)] 中的后 [$m - n] 个这些元素，而
+如果 [$m < n] 则依序包含 [=range(first2,last2)] 中的后 [$n - m] 个这些元素。
+
+[:en] If [$N < M], a non-copied element is considered [+:% skipped] if it compares
+less than or equivalent to the [$(N + 1)^\text{th}] element of the sorted symmetric
+difference, unless it is from the same range as that element and does not precede it.
+[:zh_CN] 如果 [$N < M]，则当未复制元素小于或等价于有序对称差集的第 [$(N + 1)] 个元素时，
+若非它来自该元素的相同范围且不先于它，则将其看做被[+:% 跳过]。
+
+[:en] Copies the first [$N] elements of the sorted symmetric difference
+to the range [=range(result,result + [$N])].
+[:zh_CN] 将有序对称差集的前 [$N] 个元素复制到范围 [=range(result,result + [$N])] 中。
 
 [para:returns]
 [list]
@@ -145,17 +152,4 @@ applications of each projection.
 [para:remarks]
 [:en] Stable ([#algorithm.stable]).
 [:zh_CN] 稳定的（[#algorithm.stable]）。
-
-[:en] If [=range(first1,last1)] contains [$m] elements that are equivalent to
-each other and [=range(first2,last2)] contains [$n] elements that are equivalent
-to them, then [$|m - n|] of those elements shall be copied to the output range:
-the last [$m - n] of these elements from [=range(first1,last1)] if [$m > n], and
-the last [$n - m] of these elements from [=range(first2,last2)] if [$m < n].
-[:zh_CN] 如果 [=range(first1,last1)] 包含 [$m] 个互相等价的元素，而
-[=range(first2,last2)] 包含 [$n] 个与其等价的元素，则这些元素中的 [$|m - n|] 个
-应当被复制到输出范围中：如果 [$m > n] 则为 [=range(first1,last1)] 中这些元素的
-后 [$m - n] 个，而如果 [$m < n] 则为 [=range(first2,last2)] 中这些元素的后 [$n - m] 个。
-
-[:en] In either case, the elements are copied in order.
-[:zh_CN] 所有情况中，各元素都是依序复制的。
 [div:end]

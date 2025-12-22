@@ -42,9 +42,12 @@ template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-acc
 [div:description]
 [para]
 [:en] Let [`pred] be [`equal_to{}] for the overloads with no parameter [`pred],
-and let [$E] be
-[:zh_CN] 令 [`pred] 对于没有形参 [`pred] 的各重载为 [`equal_to{}]，并令 [$E]：
+and let [$E([`i])] be
+[:zh_CN] 令 [`pred] 对于没有形参 [`pred] 的各重载为 [`equal_to{}]，并令 [$E([`i])]：
 [list]
+[item]
+[:en@~] [`false] if [`i] is equal to [`first]; otherwise
+[:zh_CN@~] 当 [`i] 等于 [`first] 时为 [`false]；否则，
 [item]
 [:en@~] [`bool(pred(*(i - 1), *i))] for the overloads in namespace [`std];
 [:zh_CN@~] 对于命名空间 [`std] 中的各重载为 [`bool(pred(*(i - 1), *i))]；
@@ -63,11 +66,10 @@ and the type of [`*first] meets the [^:oc MoveAssignable] requirements
 的类型满足 [^:oc MoveAssignable] 的规定（[#:tab#cpp17.moveassignable]）。
 
 [para:effects]
-[:en] For a nonempty range, eliminates all but the first element from every
-consecutive group of equivalent elements referred to by the iterator [`i] in the
-range [=range(first + 1,last)] for which [$E] is [`true].
-[:zh_CN] 对于非空范围，清除每个等价元素的连续组中除第一个元素外的所有元素，其中
-元素为由范围 [=range(first + 1,last)] 中的迭代器 [`i] 所指代的，且使得 [$E] 为 [`true]。
+[:en] Eliminates all element referred to by the iterator [`i] in the
+range [=range(first,last)] for which [$E([`i])] is [`true].
+[:zh_CN] 清除由范围 [=range(first,last)] 中使得 [$E([`i])] 为 [`true] 的迭代器
+[`i] 所指代的所有元素。
 
 [para:returns]
 [:en] Let [$j] be the end of the resulting range.
@@ -155,13 +157,16 @@ parameter [`pred], and let [$E([`i])] be
 [`equal_to{}]，并令 [$E([`i])]：
 [list]
 [item]
-[:en@~] [`bool(pred(*i, *(i - 1)))] for the overloads in namespace [`std].
-[:zh_CN@~] 对于命名空间 [`std] 中的各重载为 [`bool(pred(*i, *(i - 1)))]。
+[:en@~] [`false] if [`i] is equal to [`first]; otherwise
+[:zh_CN] 当 [`i] 等于 [`first] 时为 [`false]；否则，
 [item]
-[:en@~] [`bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))] for the
+[:en@~] [`bool(pred(*(i - 1), *i))] for the overloads in namespace [`std].
+[:zh_CN@~] 对于命名空间 [`std] 中的各重载为 [`bool(pred(*(i - 1), *i))]。
+[item]
+[:en@~] [`bool(invoke(comp, invoke(proj, *(i - 1)), invoke(proj, *i)))] for the
 overloads in namespace [`ranges].
 [:zh_CN@~] 对于命名空间 [`ranges] 中的各重载为
-[`bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))]。
+[`bool(invoke(comp, invoke(proj, *(i - 1)), invoke(proj, *i)))]。
 [list:end]
 
 [para]
@@ -169,18 +174,17 @@ overloads in namespace [`ranges].
 [:zh_CN] 令：
 [list]
 [item]
-[:en@~] [$M] be the number of iterators [`i] in the range [=range(first + 1,last)]
+[:en@~] [$M] be the number of iterators [`i] in the range [=range(first,last)]
 for which [$E([`i])] is [`false];
-[:zh_CN@~] [$M] 为范围 [=range(first + 1,last)] 中使得 [$E([`i])] 为 [`false] 的迭代器
-[`i] 的数量；
+[:zh_CN@~] [$M] 为范围 [=range(first,last)] 中使得 [$E([`i])] 为 [`false] 的迭代器 [`i] 的数量；
 [item]
-[:en@~] [`result_last] be [`result + [$M] + 1] for the overloads with no
+[:en@~] [`result_last] be [`result + [$M]] for the overloads with no
 parameter [`result_last] or [`result_r];
 [:zh_CN@~] 对于没有形参 [`result_last] 或 [`result_r] 的各重载，令 [`result_last]
-为 [`result + [$M] + 1]；
+为 [`result + [$M]]；
 [item]
-[:en@~] [$N] be [$\min(M + 1, \ [`result_last - result])].
-[:zh_CN@~] 令 [$N] 为 [$\min(M + 1, \ [`result_last - result])]。
+[:en@~] [$N] be [$\min(M, \ [`result_last - result])].
+[:zh_CN@~] 令 [$N] 为 [$\min(M, \ [`result_last - result])]。
 [list:end]
 
 [para:mandates]
@@ -239,12 +243,11 @@ performance cost if [`iter_value_t<I>] does not model [`:c copyable].
 [end:note]
 
 [para:effects]
-[:en] Copies only the first element from [$N] consecutive groups of equivalent
-elements referred to by the iterator [`i] in the range [=range(first + 1,last)]
-for which [$E([`i])] holds into the range [=range(result, result + [$N])].
-[:zh_CN] 将范围 [=range(first + 1,last)] 中的迭代器 [`i] 所指代的
-使得 [$E([`i`])] 成立的 [$N] 个等价元素的连续组中的第一个元素，复制到范围
-[=range(result, result + [$N])] 中。
+[:en] Copies only the first [$N] elements referred to by the iterator [`i] in the
+range [=range(first,last)] for which [$E([`i])] holds into the range
+[=range(result, result + [$N])].
+[:zh_CN] 将范围 [=range(first,last)] 中使得 [$E([`i])] 成立的迭代器 [`i] 所指代的
+前 [$N] 个元素复制到范围 [=range(result, result + [$N])] 中。
 
 [para:returns]
 [list]
@@ -253,16 +256,16 @@ for which [$E([`i])] holds into the range [=range(result, result + [$N])].
 [:zh_CN] 对于命名空间 [`std] 中的各重载，返回 [`result + [$N]]。
 [item]
 [:en] [`{last, result + [$N]}], for the overloads in namespace [`ranges],
-if [$N] is equal to [$M + 1].
-[:zh_CN] 对于命名空间 [`ranges] 中的各重载，若 [$N] 等于 [$M + 1]，则返回 [`{last, result + [$N]}]。
+if [$N] is equal to [$M].
+[:zh_CN] 对于命名空间 [`ranges] 中的各重载，若 [$N] 等于 [$M]，则返回 [`{last, result + [$N]}]。
 [item]
 [:en] Otherwise, [`{j, result_last}] for the overloads in namespace [`ranges],
-where [`j] is the iterator in [=range(first + 1,last)] for which [$E([`j])]
-is [`false] and there are exactly [$N - 1] iterators [`i] in
-[=range(first + 1,j)] for which [$E([`i])] is [`false].
+where [`j] is the iterator in [=range(first,last)] for which [$E([`j])]
+is [`false] and there are exactly [$N] iterators [`i] in
+[=range(first,j)] for which [$E([`i])] is [`false].
 [:zh_CN] 否则，对于命名空间 [`ranges] 中的各重载，返回 [`{j, result_last}]，其中
-[`j] 为 [=range(first + 1,last)] 中使得 [$E([`j])] 为 [`false] 的迭代器，且在
-[=range(first + 1,j)] 中恰好有 [$N - 1] 个迭代器 [`i] 使得 [$E([`i])] 为 [`false]。
+[`j] 为 [=range(first,last)] 中使得 [$E([`j])] 为 [`false] 的迭代器，且在
+[=range(first,j)] 中恰好有 [$N] 个迭代器 [`i] 使得 [$E([`i])] 为 [`false]。
 [list:end]
 
 [para:complexity]

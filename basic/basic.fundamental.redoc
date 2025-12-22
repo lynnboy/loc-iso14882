@@ -30,9 +30,9 @@ preceding it in the list.
 [:zh_CN] 标准和扩充有符号整数类型统称为[+:adj 有符号整数[!类型]]。
 
 [:en] The range of representable values for a signed integer type is [$-2^{N-1}]
-to [$2^{N-1}-1] (inclusive), where [^N] is called the [+wide] of the type.
+to [$2^{N-1}-1] (inclusive), where [$N] is called the [+wide] of the type.
 [:zh_CN] 有符号整数类型的可表示值的范围是从 [$-2^{N-1}] 到 [$2^{N-1}-1]（内含），
-其中 [^N] 被称为该类型的[+宽度]。
+其中 [$N] 被称为该类型的[+宽度]。
 
 [:en] [%integral type[!implementation-defined [`sizeof]]]
 [:zh_CN] [%整型类型[!由实现定义的 [`sizeof] ～]]
@@ -162,8 +162,8 @@ the value representation.
 
 [begin:note]
 [:en] The signed and unsigned integer types satisfy the constraints given in
-[=IsoC] 5.2.4.2.1.
-[:zh_CN] 有符号和无符号整数类型符合 [=IsoC] 5.2.4.2.1 中所给出的约束条件。
+[=IsoC] 5.3.5.3.2.
+[:zh_CN] 有符号和无符号整数类型符合 [=IsoC] 5.3.5.3.2 中所给出的约束条件。
 [end:note]
 
 [:en] Except as specified above, the width of a signed or unsigned integer type
@@ -261,10 +261,10 @@ type of [`wchar_t]] signed or unsigned integer type as its underlying type.
 [%类型[![`char16_t]]] [%类型[![`char32_t]]]
 [%类型[!底层～[![`char16_t]]]] [%类型[!底层～[![`char32_t]]]]
 [:en] Types [`:key char16_t] and [`:key char32_t] denote distinct types whose
-underlying types are [`uint_least16_t] and [`uint_least32_t], respectively, in
+underlying types are [`std::uint_least16_t] and [`std::uint_least32_t], respectively, in
 [?libheader@ref cstdint].
 [:zh_CN] [`:key char16_t] 和 [`:key char32_t] 类型分别代表以 [?libheader@ref cstdint]
-中的 [`uint_least16_t] 和 [`uint_least32_t] 为底层类型的独立类型。
+中的 [`std::uint_least16_t] 和 [`std::uint_least32_t] 为底层类型的独立类型。
 
 [para]
 [:en] [%Boolean type] [%type[!Boolean]]
@@ -412,8 +412,9 @@ type has an empty set of values.
 [:en] It is used as the return type for functions that do not return a value.
 [:zh_CN] 它被用于不返回值的函数的返回类型。
 
-[:en] An expression of type [=cv] [`:key void] shall be used only as
-[:zh_CN] [=cv] [`:key void] 类型的表达式只能用作
+[begin:note]
+[:en] An expression of type [=cv] [`:key void] can be used as
+[:zh_CN] [=cv] [`:key void] 类型的表达式可以用作
 [list]
 [item]
 [:en@~] an expression statement ([#stmt.expr]),
@@ -426,6 +427,12 @@ function with the return type [=cv] [`:key void],
 [item]
 [:en@~] an operand of a comma expression ([#expr.comma]),
 [:zh_CN@~] 逗号表达式的操作数（[#expr.comma]），
+[item]
+[:en@~] the operand of a parenthesized expression ([#expr.prim.paren]),
+[:zh_CN@~] 括号表达式的操作数（[#expr.prim.paren]），
+[item]
+[:en@~] a requirement in a [~requires-expression] ([#expr.prim.req.general]),
+[:zh_CN@~] [~requires-表达式] 中的一项规定（[#expr.prim.req.general]），
 [item]
 [:en@~] the second or third operand of [`?:] ([#expr.cond]),
 [:zh_CN@~] [`?:] 的第二或第三操作数（[#expr.cond]），
@@ -444,6 +451,7 @@ function with the return type [=cv] [`:key void],
 [:zh_CN@~] 向类型 [=cv] [`:key void] 的显式转换的操作数（[#expr.type.conv]，
 [#expr.static.cast]，[#expr.cast]）。
 [list:end]
+[end:note]
 
 [para]
 [:en] The types denoted by [=cv] [`std::nullptr_t] are distinct types.
@@ -456,10 +464,8 @@ function with the return type [=cv] [`:key void],
 conversions ([#conv.ptr], [#conv.mem]).
 [:zh_CN] 这种值参与指针转换和成员指针转换（[#conv.ptr]，[#conv.mem]）。
 
-[:en]
-[`[`:key sizeof](std::nullptr_t)] shall be equal to [`[`:key sizeof]([`:key void]*)].
-[:zh_CN]
-[`[`:key sizeof](std::nullptr_t)] 应当等于 [`[`:key sizeof]([`:key void]*)]。
+[:en] [`[`:key sizeof](std::nullptr_t)] shall be equal to [`[`:key sizeof]([`:key void]*)].
+[:zh_CN] [`[`:key sizeof](std::nullptr_t)] 应当等于 [`[`:key sizeof]([`:key void]*)]。
 
 [para]
 [:en] A value of type [`std::meta::info] is called a [+reflection].
@@ -550,7 +556,7 @@ conversions ([#conv.ptr], [#conv.mem]).
 [codeblock]
 int arr[] = {1, 2, 3};
 auto [a1, a2, a3] = arr;
-void fn();
+[[=1]] void fn(int n);
 enum Enum { A };
 using Alias = int;
 struct B {};
@@ -561,6 +567,7 @@ struct S : B {
 template<auto> struct TCls {};
 template<auto> void TFn();
 template<auto> int TVar;
+template<auto N> using TAlias = TCls<N>;
 template<auto> concept Concept = requires { true; };
 namespace NS {};
 namespace NSAlias = NS;
@@ -572,19 +579,22 @@ constexpr auto r2 = std::meta::reflect_object(arr[1]);      // [:en] represents 
 constexpr auto r3 = ^^arr;                                  // [:en] represents a variable [:zh_CN] 代表变量
 constexpr auto r4 = ^^a3;                                   // [:en] represents a structured binding [:zh_CN] 代表结构化绑定
 constexpr auto r5 = ^^fn;                                   // [:en] represents a function [:zh_CN] 代表函数
-constexpr auto r6 = ^^Enum::A;                              // [:en] represents an enumerator [:zh_CN] 代表枚举符
-constexpr auto r7 = ^^Alias;                                // [:en] represents a type alias [:zh_CN] 代表类型别名
-constexpr auto r8 = ^^S;                                    // [:en] represents a type [:zh_CN] 代表类型
-constexpr auto r9 = ^^S::mem;                               // [:en] represents a class member [:zh_CN] 代表类成员
-constexpr auto r10 = std::meta::members_of(^^S, ctx)[1];    // [:en] represents an unnamed bit-field [:zh_CN] 代表无名位字段
-constexpr auto r11 = ^^TCls;                                // [:en] represents a class template [:zh_CN] 代表类模板
-constexpr auto r12 = ^^TFn;                                 // [:en] represents a function template [:zh_CN] 代表函数模板
-constexpr auto r13 = ^^TVar;                                // [:en] represents a variable template [:zh_CN] 代表变量模板
-constexpr auto r14 = ^^Concept;                             // [:en] represents a concept [:zh_CN] 代表概念
-constexpr auto r15 = ^^NSAlias;                             // [:en] represents a namespace alias [:zh_CN] 代表命名空间别名
-constexpr auto r16 = ^^NS;                                  // [:en] represents a namespace [:zh_CN] 代表命名空间
-constexpr auto r17 = std::meta::bases_of(^^S, ctx)[0];      // [:en] represents a direct base class relationship [:zh_CN] 代表直接基类关系
-constexpr auto r18 =
+constexpr auto r6 = std::meta::parameters_of(^^fn)[0];      // [:en] represents a function parameter [:zh_CN] 代表函数形参
+constexpr auto r7 = ^^Enum::A;                              // [:en] represents an enumerator [:zh_CN] 代表枚举符
+constexpr auto r8 = std::meta::annotations_of(^^fn)[0];     // [:en] represents an annotation [:zh_CN] 代表标注
+constexpr auto r9 = ^^Alias;                                // [:en] represents a type alias [:zh_CN] 代表类型别名
+constexpr auto r10 = ^^S;                                   // [:en] represents a type [:zh_CN] 代表类型
+constexpr auto r11 = ^^S::mem;                              // [:en] represents a class member [:zh_CN] 代表类成员
+constexpr auto r12 = std::meta::members_of(^^S, ctx)[1];    // [:en] represents an unnamed bit-field [:zh_CN] 代表无名位字段
+constexpr auto r13 = ^^TCls;                                // [:en] represents a class template [:zh_CN] 代表类模板
+constexpr auto r14 = ^^TFn;                                 // [:en] represents a function template [:zh_CN] 代表函数模板
+constexpr auto r15 = ^^TVar;                                // [:en] represents a variable template [:zh_CN] 代表变量模板
+constexpr auto r16 = ^^TAlias;                              // [:en] represents an alias template [:zh_CN] 代表别名模板
+constexpr auto r17 = ^^Concept;                             // [:en] represents a concept [:zh_CN] 代表概念
+constexpr auto r18 = ^^NSAlias;                             // [:en] represents a namespace alias [:zh_CN] 代表命名空间别名
+constexpr auto r19 = ^^NS;                                  // [:en] represents a namespace [:zh_CN] 代表命名空间
+constexpr auto r20 = std::meta::bases_of(^^S, ctx)[0];      // [:en] represents a direct base class relationship [:zh_CN] 代表直接基类关系
+constexpr auto r21 =
   std::meta::data_member_spec(^^int, {.name="member"});     // [:en] represents a data member description [:zh_CN] 代表数据成员描述
 [codeblock:end]
 [end:example]

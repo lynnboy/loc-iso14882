@@ -4,17 +4,11 @@
 ]
 
 [para]
-[:en]
-[%temporary]
-[%optimization of temporary[%temporary[!elimination of]]]
-[%temporary[!elimination of]]
-[%temporary[!implementation-defined generation of]]
+[:en] [%temporary] [%optimization of temporary[%temporary[!elimination of]]]
+[%temporary[!elimination of]] [%temporary[!implementation-defined generation of]]
 A [+:adj temporary[!object]] is an object created
-[:zh_CN]
-[%临时对象]
-[%临时对象的优化[%临时对象[!～的消除]]]
-[%临时对象[!～的消除]]
-[%临时对象[!由实现定义的～生成]]
+[:zh_CN] [%临时对象] [%临时对象的优化[%临时对象[!～的消除]]]
+[%临时对象[!～的消除]] [%临时对象[!由实现定义的～生成]]
 以下情况下会创建[+:adj 临时[!对象]]：
 
 [list]
@@ -135,9 +129,9 @@ result of [`f(a)], which is materalized so that the reference parameter of
 [end:example]
 
 [para]
-[:en] When an object of class type [`X] is passed to or returned from a
+[:en] When an object of type [`X] is passed to or returned from a
 potentially-evaluated function call, if [`X] is
-[:zh_CN] 当将类类型 [`X] 的对象传递给或从潜在求值的函数调用返回时，若 [`X]
+[:zh_CN] 当将类型 [`X] 的对象传递给或从潜在求值的函数调用返回时，若 [`X]
 [list]
 [item]
 [:en@~] a scalar type or
@@ -206,10 +200,10 @@ full-expression, not with any specific subexpression.
 
 [para]
 [:en] [%initializer[!temporary and declarator]] [%temporary[!order of destruction of]]
-There are several contexts in which temporaries are destroyed at a different point
-than the end of the full-expression.
+Temporary objects are destroyed at a different point than the end of the
+full-expression in the following contexts:
 [:zh_CN] [%初始化式[!临时对象和声明符]] [%临时对象[!～的销毁顺序]]
-有几种语境，其中临时对象并不在全表达式的结尾处销毁。
+在以下语境中，临时对象并不在全表达式的结尾处销毁：
 
 [:en] The first context is when a default constructor is called to initialize an
 element of an array with no corresponding initializer ([#dcl.init]).
@@ -260,9 +254,11 @@ these expressions,
 [item]
 [:en] a class member access ([#expr.ref]) using the [`.] operator where the left
 operand is one of these expressions and the right operand designates a
-non-static data member of non-reference type,
+non-static data member ([#class.mem.general]) of non-reference type or
+a direct base class relationship ([#class.derived.general]),
 [:zh_CN] 使用 [`.] 运算符的类成员访问（[#expr.ref]），其中的左操作数为这里的表达式之一，
-且其右操作数代表具有非引用类型的非静态数据成员，
+且其右操作数代表某个具有非引用类型的非静态数据成员（[#class.mem.general]）或者某个
+直接基类关系（[#class.derived.general]），
 
 [item]
 [:en] a pointer-to-member operation ([#expr.mptr.oper]) using the [`.*] operator
@@ -295,6 +291,21 @@ one of these expressions to a glvalue that refers to the object designated by th
 operand, or to its complete object or a subobject thereof,
 [:zh_CN@~] 实施的转换，不进行用户定义的转换，将这里的表达式之一的泛左值操作数转换为指代由
 该操作数所代表的对象，或指代其完整对象或子对象的泛左值，
+
+[item]
+[:en] an explicit type conversion (functional notation) ([#expr.type.conv]) to
+a reference type whose initializer is a [~braced-init-list] where the reference is
+[:zh_CN] 转换为引用类型的显式类型转换（函数式写法）（[#expr.type.conv]），其初始化式
+是[~花括号初始化列表]，其中的引用：
+ [list]
+ [item]
+[:en@~] bound directly to the glvalue result of one of these expressions
+(necessarily the sole element of the [~braced-init-list]) or
+[:zh_CN@~] 直接绑定到这些表达式之一（必须为[~花括号初始化列表]的唯一元素）的泛左值结果上，或者
+ [item]
+[:en@~] bound to the result of a temporary materialization conversion,
+[:zh_CN@~] 绑定到一次临时对象实质化转换的结果，
+ [list:end]
 
 [item]
 [:en] a conditional expression ([#expr.cond]) that is a glvalue where the second or
@@ -389,10 +400,8 @@ S* p = new S{ 1, {2,3} };       // [:en] Creates dangling reference [:zh_CN] 创
 
 [para]
 [:en] The fourth context is when a temporary object is created in the
-[~for-range-initializer] of either a range-based [`:key for] statement or an
-enumerating expansion statement ([#stmt.expand]).
-[:zh_CN] 第四种语境是当在基于范围的 [`:key for] 语句或者枚举展开语句（[#stmt.expand]）
-的 [~for-范围初始化式]中创建临时对象时。
+[~for-range-initializer] of a range-based [`:key for] statement.
+[:zh_CN] 第四种语境是当在基于范围的 [`:key for] 语句的 [~for-范围初始化式]中创建临时对象时。
 
 [:en] If such a temporary object would otherwise be destroyed at the end of the
 [~for-range-initializer] full-expression, the object persists for the lifetime
@@ -401,9 +410,21 @@ of the reference initialized by the [~for-range-initializer].
 该 [~for-范围初始化式]所产生的引用的生存期。
 
 [para]
-[:en] The fifth context is when a temporary object is created in the
-[~expansion-initializer] of an iterating or destructuring expansion statement..
-[:zh_CN] 第五种语境是当在迭代或解构展开语句的[~展开始化式]中创建临时对象时。
+[:en] The fifth context is when a temporary object is created in an element [$E]
+of the [~expansion-init-list] of an enumerating expansion statement ([#stmt.expand]).
+[:zh_CN] 第五种语境是当在列举展开语句（[#stmt.expand]）的[~展开初始化列表]的某个元素 [$E]
+中创建临时对象时。
+
+[:en] If such a temporary object would otherwise be destroyed at the end of the
+full-expression of [$E], the object persists for the lifetime of the
+[~for-range-declaration] initialized from [$E].
+[:zh_CN] 如果这种临时对象本会在 [$E] 的全表达式的末尾被销毁，则该对象将持续到由 [$E]
+所初始化的[~for-范围声明式]的生存期。
+
+[para]
+[:en] The sixth context is when a temporary object is created in the
+[~expansion-initializer] of a destructuring expansion statement..
+[:zh_CN] 第六种语境是当在解构展开语句的[~展开始化式]中创建临时对象时。
 
 [:en] If such a temporary object would otherwise be destroyed at the end of that
 [~expansion-initializer], the object persists for the lifetime
@@ -412,9 +433,9 @@ of the reference initialized by the [~expansion-initializer].
 该[~展开始化式]所产生的引用的生存期。
 
 [para]
-[:en] The sixth context is when a temporary object is created in a structured
+[:en] The seventh context is when a temporary object is created in a structured
 binding declaration ([#dcl.struct.bind]).
-[:zh_CN] 第六种语境是当在结构化绑定声明式中创建临时对象时（[#dcl.struct.bind]）。
+[:zh_CN] 第七种语境是当在结构化绑定声明式中创建临时对象时（[#dcl.struct.bind]）。
 
 [:en] Any temporary objects introduced by the [~initializer]s for the variables
 with unique names are destroyed at the end of the structured binding declaration.
