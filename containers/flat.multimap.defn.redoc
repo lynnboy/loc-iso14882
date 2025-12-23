@@ -48,6 +48,11 @@ namespace std {
     [:zh_CN] [#flat.multimap.cons]，构造函数
     constexpr flat_multimap() : flat_multimap(key_compare()) { }
 
+    constexpr flat_multimap(const flat_multimap&);
+    constexpr flat_multimap(flat_multimap&&);
+    constexpr flat_multimap& operator=(const flat_multimap&);
+    constexpr flat_multimap& operator=(flat_multimap&&);
+
     constexpr explicit flat_multimap(const key_compare& comp)
       : [[redoc("*>")]]c(), [[redoc("*>")]]compare(comp) { }
 
@@ -185,6 +190,8 @@ namespace std {
       constexpr void insert(sorted_equivalent_t, InputIterator first, InputIterator last);
     template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
       constexpr void insert_range(R&& rg);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      constexpr void insert_range(sorted_equivalent_t, R&& rg);
 
     constexpr void insert(initializer_list<value_type> il)
       { insert(il.begin(), il.end()); }
@@ -200,7 +207,10 @@ namespace std {
     template<class K> constexpr size_type erase(K&& x);
     constexpr iterator erase(const_iterator first, const_iterator last);
 
-    constexpr void swap(flat_multimap&) noexcept;
+    constexpr void swap(flat_multimap&)
+      noexcept(is_nothrow_swappable_v<key_container_type> &&
+               is_nothrow_swappable_v<mapped_container_type> &&
+               is_nothrow_swappable_v<key_compare>);
     constexpr void clear() noexcept;
 
     // [:en] observers \
@@ -246,7 +256,8 @@ namespace std {
     friend constexpr [[redoc("*>")]]synth-three-way-result<value_type>
       operator<=>(const flat_multimap& x, const flat_multimap& y);
 
-    friend constexpr void swap(flat_multimap& x, flat_multimap& y) noexcept
+    friend constexpr void swap(flat_multimap& x, flat_multimap& y)
+      noexcept(noexcept(x.swap(y)))
       { x.swap(y); }
 
   private:
@@ -327,8 +338,7 @@ namespace std {
 [codeblock:end]
 
 [para]
-[:en] The member type [`containers] has the data members and special members
-specified above.
+[:en] The member type [`containers] has the data members and special members specified above.
 [:zh_CN] 成员类型 [`containers] 具有上面规定的数据成员和特殊成员。
 
 [:en] It has no base classes or members other than those specified.

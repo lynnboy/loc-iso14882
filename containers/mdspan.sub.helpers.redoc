@@ -3,132 +3,97 @@
     [:zh_CN] 仅用于阐释的辅助函数
 ]
 
-[%@lib [*de-ice]]
-[%@lib [*first_]]
-[codeblock:synopsis]
-template<class T>
-  constexpr T [[redoc("*>")]]de-ice(T val) { return val; }
-template<[[redoc("*:c>")]]integral-constant-like T>
-  constexpr auto [[redoc("*>")]]de-ice(T) { return T::value; }
+[para]
+[%@lib [*MAP_RANK]]
+[:en] For a pack [`p] and an integer [$i], let [`[^MAP_RANK](p, [$i])] be the number
+of elements [`p...`[[$j]`]] for [$0 \le j < i] whose types are not collapsing slice types.
+[:zh_CN] 对于一个包组 [`p] 和一个整数 [$i]，令 [`[^MAP_RANK](p, [$i])] 为
+[$0 \le j < i] 范围内类型不是折叠切片类型的元素数量 [`p...`[[$j]`]]。
 
-template<class IndexType, size_t k, class... SliceSpecifiers>
-  constexpr IndexType [[redoc("*>")]]first_(SliceSpecifiers... slices);
+[codeblock:synopsis]
+  concept [[redoc("*:c@def>")]]is-strided-slice = [[redoc("[=seebelow]")]];
 [codeblock:end]
 
 [div:description]
-[para:mandates]
-[:en] [`IndexType] is a signed or unsigned integer type.
-[:zh_CN] [`IndexType] 为有符号或无符号整数类型。
-
-[para]
-[:en] Let [$\phi{}_k] denote the following value:
-[:zh_CN] 令 [$\phi{}_k] 代表以下值：
-[list]
-[item]
-[:en] [$s_k] if [$S_k] models [`[`:c convertible_to]<IndexType>];
-[:zh_CN] 当 [$S_k] 构成 [`[`:c convertible_to]<IndexType>] 时为 [$s_k]；
-[item]
-[:en] otherwise, [`get<0>([$s_k])] if [$S_k] models
-[`[*:c index-pair-like]<IndexType>];
-[:zh_CN] 否则，当 [$S_k] 构成 [`[*:c index-pair-like]<IndexType>] 时为
-[`get<0>([$s_k])]；
-[item]
-[:en] otherwise, [`[*de-ice]([$s_k].offset)] if [$S_k] is a specialization of
-[`strided_slice];
-[:zh_CN] 否则，当 [$S_k] 是 [`strided_slice] 的特例时为
-[`[*de-ice]([$s_k].offset)]；
-[item]
-[:en] otherwise, [`0].
-[:zh_CN] 否则为 [`0]。
-[list:end]
-
-[para:expects]
-[:en] [$\phi{}_k] is representable as a value of type [`IndexType].
-[:zh_CN] [$\phi{}_k] 为类型 [`IndexType] 的可表示值。
-
-[para:returns]
-[:en] [`extents<IndexType>::[*index-cast]([$\phi{}_k])].
-[:zh_CN] [`extents<IndexType>::[*index-cast]([$\phi{}_k])]。
+[:en] The concept [`[*:c is-strided-slice]<T>] is satisfied and modeled if and only
+if [`T] is a specialization of [`strided_slice].
+[:zh_CN] 当且仅当 [`T] 是 [`strided_slice] 的特例时，概念 [`[*:c is-strided-slice]<T>] 得以满足并构成。
 [div:end]
 
-[%@lib [*last_]]
+[%@lib [*canonical-index]]
 [codeblock:synopsis]
-template<size_t k, class Extents, class... SliceSpecifiers>
-  constexpr auto [[redoc("*>")]]last_(const Extents& src, SliceSpecifiers... slices);
+template<class IndexType, class S>
+  constexpr auto [[redoc("*>")]]canonical-index(S s);
 [codeblock:end]
 
 [div:description]
 [para:mandates]
-[:en] [`Extents] is a specialization of [`extents].
-[:zh_CN] [`Extents] 为 [`extents] 的特例。
-
-[para]
-[:en] Let [`index_type] be [`typename Extents::index_type].
-[:zh_CN] 令 [`index_type] 为 [`typename Extents::index_type]。
-
-[para]
-[:en] Let [$\lambda{}_k] denote the following value:
-[:zh_CN] 令 [$\lambda{}_k] 代表以下值：
-[list]
-[item]
-[:en] [`[*de-ice]([$s_k]) + 1] if [$S_k] models
-[`[`:c convertible_to]<index_type>]; otherwise
-[:zh_CN] 当 [$S_k] 构成 [`[`:c convertible_to]<index_type>] 时为
-[`[*de-ice]([$s_k]) + 1]；否则
-[item]
-[:en] [`get<1>([$s_k])] if [$S_k] models
-[`[*:c index-pair-like]<index_type>]; otherwise
-[:zh_CN] 当 [$S_k] 构成 [`[*:c index-pair-like]<index_type>] 时为
-[`get<0>([$s_k])]；否则
-[item]
-[:en] [`[*de-ice]([$s_k].offset)] [`+] [`[*de-ice]([$s_k].extend)] if [$S_k] is
-a specialization of [`strided_slice]; otherwise
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时为 [`[*de-ice]([$s_k].offset)]
-[`+] [`[*de-ice]([$s_k].extend)]；否则
-[item]
-[:en] [`src.extent(k)].
-[:zh_CN] [`src.extent(k)]。
-[list:end]
+[:en] If [`S] models [*:c integral-constant-like], then
+[`extents<IndexType>::[*index-cast](S::value)] is representable as a value of type [`IndexType].
+[:zh_CN] 如果 [`S] 构成 [*:c integral-constant-like]，则
+[`extents<IndexType>::[*index-cast](S::value)] 为类型 [`IndexType] 的可表示值。
 
 [para:expects]
-[:en] [$\lambda{}_k] is representable as a value of type [`index_type].
-[:zh_CN] [$\lambda{}_k] 为类型 [`index_type] 的可表示值。
+[:en] [`extents<IndexType>::[*index-cast](std::move(s))] is representable as a value of type [`IndexType].
+[:zh_CN] [`extents<IndexType>::[*index-cast](std::move(s))] 为类型 [`IndexType] 的可表示值。
 
-[para:returns]
-[:en] [`Extents::[*index-cast]([$\lambda{}_k])].
-[:zh_CN] [`Extents::[*index-cast]([$\lambda{}_k])]。
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[list]
+[item]
+[:en] [`return cw<IndexType(S::value)>;] if [`S] models [*:c integral-constant-like];
+[:zh_CN] 如果 [`S] 构成 [*:c integral-constant-like]，则 [`return cw<IndexType(S::value)>;]；
+[item]
+[:en] [`return IndexType(std::move(s));] otherwise.
+[:zh_CN] 否则，[`return IndexType(std::move(s));]。
+[list:end]
 [div:end]
 
-[%@lib [*src-indices]]
+[%@lib [*canonical-slice]]
 [codeblock:synopsis]
-template<class IndexType, size_t N, class... SliceSpecifiers>
-  constexpr array<IndexType, sizeof...(SliceSpecifiers)>
-    [[redoc("*>")]]src-indices(const array<IndexType, N>& indices, SliceSpecifiers... slices);
+template<class IndexType, class S>
+  constexpr auto [[redoc("*>")]]canonical-slice(S s);
 [codeblock:end]
 
 [div:description]
 [para:mandates]
-[:en] [`IndexType] is a signed or unsigned integer type.
-[:zh_CN] [`IndexType] 为有符号或无符号整数类型。
+[:en] [`S] is a [`submdspan] slice type for [`IndexType].
+[:zh_CN] [`S] 是对 [`IndexType] 的 [`submdspan] 切片类型。
 
-[para:returns]
-[:en] An [`array<IndexType, sizeof...(SliceSpecifiers)> src_idx] such that
-for each [$k] in the range [=range(0,sizeof...(SliceSpecifiers)],
-[`src_idx`[[$k]`]] equals
-[:zh_CN] 一个 [`array<IndexType, sizeof...(SliceSpecifiers)> src_idx]，使得对于
-范围 [=range(0,sizeof...(SliceSpecifiers)] 中的每个 [$k]，[`src_idx`[[$k]`]]
-
-[list]
-[item]
-[:en] [`[*first_]<IndexType, [$k]>(slices...)] for each [$k] where
-[`[^map-rank]`[[$k]`]] equals [`dynamic_extent],
-[:zh_CN] 对于每个使得 [`[^map-rank]`[[$k]`]] 等于 [`dynamic_extent] 的 [$k]，
-等于 [`[*first_]<IndexType, [$k]>(slices...)]，
-
-[item]
-[:en] otherwise, [`[*first_]<IndexType, [$k]>(slices...)] [`+]
-[`indices`[[^map-rank]`[[$k]`]`]].
-[:zh_CN] 否则，等于 [`[*first_]<IndexType, [$k]>(slices...)] [`+]
-[`indices`[[^map-rank]`[[$k]`]`]]。
-[list:end]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+if constexpr (is_convertible_v<S, full_extent_t>) {
+  return static_cast<full_extent_t>(std::move(s));
+} else if constexpr (is_convertible_v<S, IndexType>) {
+  return [[redoc("*>")]]canonical-slice<IndexType>(std::move(s));
+} else if constexpr ([[redoc("*:c>")]]is-strided-slice<S>) {
+  auto c_extent = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s.extent));
+  auto c_offset = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s.offset));
+  if constexpr (is_same_v<decltype(c_extent), constant_wrapper<IndexType(0)>>) {
+    return strided_slice{
+      .offset = c_offset,
+      .extent = c_extent,
+      .stride = cw<IndexType(1)>
+    };
+  } else {
+    return strided_slice{
+      .offset = c_offset,
+      .extent = c_extent,
+      .stride = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s.stride))
+    };
+  }
+} else {
+  auto [s_first, s_last] = std::move(s);
+  auto c_first = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s_first));
+  auto c_last  = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s_last));
+  return strided_slice{
+    .offset = c_first,
+    .extent = [[redoc("*>")]]canonical-slice<IndexType>(c_last - c_first),
+    .stride = cw<IndexType(1)>
+  };
+}
+[codeblock:end]
 [div:end]

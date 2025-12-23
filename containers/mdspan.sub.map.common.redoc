@@ -8,42 +8,17 @@
 [:zh_CN] 以下各项适用于 [#mdspan.sub.map] 中的所有函数。
 
 [para:constraints]
-[:en] [`sizeof...(slices)] equals [`extents_type::rank()].
-[:zh_CN] [`sizeof...(slices)] 等于 [`extents_type::rank()]。
-
-[para:mandates]
-[:en] For each rank index [$k] of [`extents()], exactly one of the following
-is true:
-[:zh_CN] 对于 [`extents()] 的每个秩索引，以下恰有一项为真：
-[list]
-[item]
-[:en] [$S_k] models [`[`:c convertible_to]<index_type>],
-[:zh_CN] [$S_k] 构成 [`[`:c convertible_to]<index_type>]，
-[item]
-[:en] [$S_k] models [`[*:c index-pair-like]<index_type>],
-[:zh_CN] [$S_k] 构成 [`[*:c index-pair-like]<index_type>]，
-[item]
-[:en] [`is_convertible_v<[$S_k], full_extent_t>] is [`true], or
-[:zh_CN] [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]，或者
-[item]
-[:en] [$S_k] is a specialization of [`strided_slice].
-[:zh_CN] [$S_k] 是 [`strided_slice] 的特例。
-[list:end]
+[:en] [`sizeof...(SpliceSpecifiers)] equals [`extents_type::rank()],
+[`SliceSpecifiers...`[[$k]`]] is a valid [`submdspan] slice type
+for the [$k^\text{th}] extent of [`Extents].
+[:zh_CN] [`sizeof...(SpliceSpecifiers)] 等于 [`extents_type::rank()]，
+[`SliceSpecifiers...`[[$k]`]] 是 [`Extents] 的第 [$k] 个尺度的有效 [`submdspan] 分片类型。
 
 [para:expects]
-[:en] For each rank index [$k] of [`extents()], all of the following are [`true]:
-[:zh_CN] 对于 [`extents()] 的每个秩索引，以下各项均为 [`true]：
-[list]
-[item]
-[:en] if [$S_k] is a specialization of [`strided_slice],
-[`[$s_k].extent] is equal to zero or [`[$s_k].stride] is greater than zero; and
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，
-[`[$s_k].extent] 等于零或 [`[$s_k].stride] 大于零；并且
-[item]
-[$0 \leq [`[*first_]<index_type, [$k]>(slices...)]] [br]
-[$0 \leq [`[*last_]<[$k]>(extents(), slices...)]] [br]
-[$0 \leq [`extents().extent([$k])]]
-[list:end]
+[:en] For each rank index [$k] of [`extents()],
+[`slices...`[[$k]`]] is a valid slice for the [$k^\text{th}] extent of [`extents()].
+[:zh_CN] 对于 [`extents()] 的每个秩索引，[`slices...`[[$k]`]] 是 [`extents()] 的
+第 [$k] 个尺度的有效分片。
 
 [para]
 [:en] Let [`sub_ext] be the result of [`submdspan_extents(extents(), slices...)]
@@ -51,20 +26,20 @@ and let [`SubExtents] be [`decltype(sub_ext)].
 [:zh_CN] 令 [`sub_ext] 为 [`submdspan_extents(extents(), slices...)] 的结果，
 并令 [`SubExtents] 为 [`decltype(sub_ext)]。
 
+[para]
 [:en] Let [`sub_strides] be an [`array<SubExtents::index_type, SubExtents::rank()>]
-such that for each rank index [$k] of [`extents()] for which [`[*map-rank]`[[$k]`]]
-is not [`dynamic_extent], [`sub_strides[[*map-rank]`[[$k]`]`]] equals:
-[:zh_CN] 令 [`sub_strides] 为某个
-[`array<SubExtents::index_type, SubExtents::rank()>]，使得对于 [`extents()] 中
-每个使 [`[*map-rank]`[[$k]`]] 不是 [`dynamic_extent] 的 [$k]，
-[`sub_strides[[*map-rank]`[[$k]`]`]]：
+such that for each rank index [$k] of [`extents()] for which the type of
+[`slices...`[[$k]`]] is not a collapsing slice type, [`sub_strides`[[^MAP_RANK](slices,[$k])`]] equals:
+[:zh_CN] 令 [`sub_strides] 为某个 [`array<SubExtents::index_type, SubExtents::rank()>]，
+使得对于 [`extents()] 中每个使 [`slices...`[[$k]`]] 的类型不是折叠分片类型的秩索引 [$k]，
+[`sub_strides`[[^MAP_RANK](slices,[$k])`]]：
 
 [list]
 [item]
-[:en] [`stride(k) * [*de-ice]([$s_k].stride)] if [$S_k] is a specialization
-of [`strided_slice] and [`[$s_k].stride < [$s_k].extent] is [`true];
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例且 [`[$s_k].stride < [$s_k].extent]
-为 [`true] 时，等于 [`stride(k) * [*de-ice]([$s_k].stride)]；
+[:en] [`stride(k) * s.stride] if the type of [`s] is a specialization of [`strided_slice]
+and [`s.stride < s.extent] is [`true], where [`s] is [`slices...`[[$k]`]];
+[:zh_CN] 当 [`s] 的类型是 [`strided_slice] 的特例且 [`s.stride < s.extent] 为 [`true] 时，
+等于 [`stride(k) * s.stride]，其中 [`s] 为 [`slices...`[[$k]`]]；
 
 [item]
 [:en] otherwise, [`stride([$k])].
@@ -72,39 +47,17 @@ of [`strided_slice] and [`[$s_k].stride < [$s_k].extent] is [`true];
 [list:end]
 
 [para]
-[:en] Let [`P] be a parameter pack such that
-[`is_same_v<make_index_sequence<rank()>, index_sequence<P...>>] is [`true].
-[:zh_CN] 令 [`P] 为使得
-[`is_same_v<make_index_sequence<rank()>, index_sequence<P...>>] 为 [`true] 的
-形参包组。
+[:en] Let [`ls] be a pack of values of [`index_type], where the [$\rho^\text{th}]
+element equals the lower bound of the [`submdspan] slice range of [`slices...`[[$\rho$]`]]
+for extent [$\rho] of [`extents()].
+[:zh_CN] 令 [`ls] 为 [`index_type] 的一组值，其中第 [$\rho] 个元素等于
+[`extents()] 的尺度 [$\rho] 的 [`slices...`[[$\rho$]`]] 的 [`submdspan] 分片范围的下界。
 
 [para]
-[:en] If [`[*first_]<index_type, [$k]>(slices...)] equals [`extents().extent([$k])]
-for any rank index [$k] of [`extents()], then let [`offset] be a value of type
-[`size_t] equal to [`(*this).required_span_size()].
-[:zh_CN] 如果对于 [`extents()] 的任何秩索引 [$k]，
-[`[*first_]<index_type, [$k]>(slices...)] 都等于 [`extents().extent([$k])]，
-则令 [`offset] 为等于 [`(*this).required_span_size()] 的 [`size_t] 类型的值。
+[:en] If [`ls...`[[$k]`]] equals [`extents().extent([$k])] for any rank index [$k] of [`extents()],
+then let [`offset] be a value of type [`size_t] equal to [`required_span_size()].
+[:zh_CN] 如果对于 [`extents()] 的任何秩索引 [$k]，[`ls...`[[$k]`]] 都等于
+[`extents().extent([$k])]，则令 [`offset] 为等于 [`required_span_size()] 的 [`size_t] 类型的值。
 
-[:en] Otherwise, let [`offset] be a value of type [`size_t] equal to
-[`(*this)([*first_]<index_type, P>(slices...)...)].
-[:zh_CN] 否则，令 [`offset] 为等于 [`(*this)([*first_]<index_type, P>(slices...)...)]
-的 [`size_t] 类型的值。
-
-[para]
-[:en] Given a layout mapping type [`M], a type [`S] is a
-[+:adj unit-stride[!slice for [`M][%slice]]] if
-[:zh_CN] 给定布局映射类型 [`M]，以下情况下，类型 [`S] 是 [`M] 的[+:adj 单位跨步[!分片]]：
-[list]
-[item]
-[:en] [`S] is a specialization of [`strided_slice] where [`S::stride_type]
-models [*:c integral-constant-like] and [`S::stride_type::value] equals [`1],
-[:zh_CN] [`S] 是 [`strided_slice] 的特例，其中 [`S::stride_type] 构成
-[*:c integral-constant-like] 而 [`S::stride_type::value] 等于 [`1]，
-[item]
-[:en] [`S] models [`[*:c index-pair-like]<M::index_type>], or
-[:zh_CN] [`S] 构成 [`[*:c index-pair-like]<M::index_type>]，或者
-[item]
-[:en] [`is_convertible_v<S, full_extent_t>] is [`true].
-[:zh_CN] [`is_convertible_v<S, full_extent_t>] 为 [`true]。
-[list:end]
+[:en] Otherwise, let [`offset] be a value of type [`size_t] equal to [`operator()(ls...)].
+[:zh_CN] 否则，令 [`offset] 为等于 [`operator()(ls...)] 的 [`size_t] 类型的值。

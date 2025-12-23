@@ -5,56 +5,42 @@
 
 [%@lib submdspan_extents]
 [codeblock:synopsis]
-template<class IndexType, class... Extents, class... SliceSpecifiers>
+template<class IndexType, size_t... Extents, class... SliceSpecifiers>
   constexpr auto submdspan_extents(const extents<IndexType, Extents...>& src,
-                                   SliceSpecifiers... slices);
+                                   SliceSpecifiers... raw_slices);
 [codeblock:end]
 
 [div:description]
+[para]
+[:en] Let [`slices] be the pack introduced by the following declaration:
+[:zh_CN] 令 [`slices] 为以下声明式引入的包组：
+[codeblock]
+auto [...slices] = submdspan_canonicalize_slices(src, raw_slices...);
+[codeblock:end]
+
 [para:constraints]
-[:en] [`sizeof...(slices)] equals [`Extents::rank()].
-[:zh_CN] [`sizeof...(slices)] 等于 [`Extents::rank()]。
+[:en] [`sizeof...(SliceSpecifiers)] equals [`sizeof...(Extents)].
+[:zh_CN] [`sizeof...(SliceSpecifiers)] 等于 [`sizeof...(Extents)]。
 
 [para:mandates]
-[:en] For each rank index [$k] of [`src.extents()], exactly one of the following
-is true:
-[:zh_CN] 对于 [`src.extents()] 的每个秩索引，以下恰有一项为真：
+[:en] For each rank index [$k] of [`src]:
+[:zh_CN] 对于 [`src] 的每个秩索引：
 [list]
 [item]
-[:en] [$S_k] models [`[`:c convertible_to]<IndexType>],
-[:zh_CN] [$S_k] 构成 [`[`:c convertible_to]<IndexType>]，
+[:en] [`SliceSpecifiers...`[[$k]`]] is a [`submdspan] slice type for [`IndexType], and
+[:zh_CN] [`SliceSpecifiers...`[[$k]`]] 为对 [`IndexType] 的 [`submdspan] 切片类型，且
 [item]
-[:en] [$S_k] models [`[*:c index-pair-like]<IndexType>],
-[:zh_CN] [$S_k] 构成 [`[*:c index-pair-like]<IndexType>]，
-[item]
-[:en] [`is_convertible_v<[$S_k], full_extent_t>] is [`true], or
-[:zh_CN] [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]，或者
-[item]
-[:en] [$S_k] is a specialization of [`strided_slice].
-[:zh_CN] [$S_k] 是 [`strided_slice] 的特例。
+[:en] [`decltype(slices...`[[$k]`])] is a valid [`submdspan] slice type for the
+[$k^\text{th}] extent of [`extents<IndexType, Extents...>].
+[:zh_CN] [`decltype(slices...`[[$k]`])] 为 [`extents<IndexType, Extents...>] 的
+第 [$k^\text{th}] 个秩的有效 [`submdspan] 切片类型。
 [list:end]
 
 [para:expects]
-[:en] For each rank index [$k] of [`src.extents()], all of the following are
-[`true]:
-[:zh_CN] 对于 [`src.extents()] 的每个秩索引，以下各项均为 [`true]：
-[list]
-[item]
-[:en] if [$S_k] is a specialization of [`strided_slice]
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，
-[list]
-[item]
-[:en@~] [$[`[$s_k].extent] = 0], or
-[:zh_CN@~] [$[`[$s_k].extent] = 0]，或者
-[item]
-[:en@~] [$[`[$s_k].stride] > 0]
-[:zh_CN@~] [$[`[$s_k].stride] > 0]
-[list:end]
-[item]
-[$0 \le [`[*first_]<IndexType, [$k]>(slices...)]]
-[$\le [`[*last_]<[$k]>(src, slices...)]]
-[$\le [`src.extent([$k])]]
-[list:end]
+[:en] For each rank index [$k] of [`src], [`slices...`[k`]] is a
+valid [`submdspan] slice for the [$k^\text{th}] extent of [`src].
+[:zh_CN] 对于 [`src] 的每个秩索引 [$k]，[`slices...`[k`]] 为对 [`src] 的
+第 [$k^\text{th}] 个秩的有效 [`submdspan] 切片。
 
 [para]
 [:en] Let [`SubExtents] be a specialization of [`extents] such that:
@@ -62,79 +48,61 @@ is true:
 
 [list]
 [item]
-[:en] [`SubExtents::rank()] equals the number of [$k] such that [$S_k] does not
-model [`[`:c convertible_to]<IndexType>]; and
-[:zh_CN] [`SubExtents::rank()] 等于 [$S_k] 并不构成
-[`[`:c convertible_to]<IndexType>] 的 [$k] 的数量；以及
+[:en] [`SubExtents::rank()] equals [`[^MAP_RANK](slices, Extents::rank())]; and
+[:zh_CN] [`SubExtents::rank()] 等于 [`[^MAP_RANK](slices, Extents::rank())]；以及
 
 [item]
-[:en] for each rank index [$k] of [`Extents] such that
-[`[^map-rank]`[[$k]`] != dynamic_extent] is [`true],
-[`SubExtents::static_extent([^map-rank]`[[$k]`])] equals:
-[:zh_CN] 对于 [`Extents] 中使得 [`[^map-rank]`[[$k]`] != dynamic_extent] 为
-[`true] 的每个秩索引 [$k]，[`SubExtents::static_extent([^map-rank]`[[$k]`])]：
+[:en] for each rank index [$k] of [`Extents] such that the type of [`slices...`[[$k]`]]
+is not a collapsing slice type, [`SubExtents::static_extent([^MAP_RANK](slices, [$k]))]
+equals the following, where [$\Sigma_k] denotes the type of [`slices...`[[$k]`]]:
+[:zh_CN] 对于 [`Extents] 的每个秩索引 [$k]，使得 [`slices...`[[$k]`]] 的类型
+不是折叠切片类型时，[`SubExtents::static_extent([^MAP_RANK](slices, [$k]))]
+等于下列值，其中 [$\Sigma_k] 代表 [`slices...`[[$k]`]] 的类型：
+ [list]
+ [item]
+[:en] [`Extents::static_extent([$k])] if [$\Sigma_k] denotes the [`full_extent_t]; otherwise
+[:zh_CN] 若 [$\Sigma_k] 代表 [`full_extent_t] 则为 [`Extents::static_extent([$k])]；否则
 
-[list]
-[item]
-[:en] [`Extents::static_extent([$k])] if
-[`is_convertible_v<[$S_k], full_extent_t>] is [`true]; otherwise
-[:zh_CN] 当 [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true] 时，为
-[`Extents::static_extent([$k])]；否则
+ [item]
+[:en] [`0], if [$\Sigma_k] is a specialization of [`strided_slice] and
+[`[$\Sigma_k]::extent_type] denotes [`constant_wrapper<IndexType(0)>]; otherwise
+[:zh_CN] 若 [$\Sigma_k] 是 [`strided_slice] 的特例，且
+[`[$\Sigma_k]::extent_type] 代表 [`constant_wrapper<IndexType(0)>]，则为 [`0]；否则
 
-[item]
-[:en]
-[`[*de-ice](tuple_element_t<1, [$S_k]>()) - [*de-ice](tuple_element_t<0, [$S_k]>())]
-if [$S_k] models [`[*:c index-pair-like]<IndexType>], and both
-[`tuple_element_t<0, [$S_k]>] and [`tuple_element_t<1, [$S_k]>] model
-[*:c integral-constant-like]; otherwise
-[:zh_CN] 当 [$S_k] 构成 [`[*:c index-pair-like]<IndexType>] 并且
-[`tuple_element_t<0, [$S_k]>] 和 [`tuple_element_t<1, [$S_k]>] 均构成
-[*:c integral-constant-like] 时，为
-[`[*de-ice](tuple_element_t<1, [$S_k]>()) - [*de-ice](tuple_element_t<0, [$S_k]>())]；
-否则
+ [item]
+[:en] [`1 + (([$\Sigma_k]::extent_type::value - 1) / [$\Sigma_k]::stride_type::value)],
+if [$\Sigma_k] is a specialization of [`strided_slice] whose [`extent_type] and
+[`stride_type] denote specializations of [`constant_wrapper];
+[:zh_CN] 若 [$\Sigma_k] 是 [`strided_slice] 的特例，且其 [`extent_type] 和
+[`stride_type] 代表 [`constant_wrapper] 的特例，则为
+[`1 + (([$\Sigma_k]::extent_type::value - 1) / [$\Sigma_k]::stride_type::value)]；
 
-[item]
-[:en] [`0], if [$S_k] is a specialization of [`strided_slice], whose
-[`extent_type] models [*:c integral-constant-like], for which [`extent_type()]
-equals zero; otherwise
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例，其 [`extent_type] 构成
-[*:c integral-constant-like]，且其 [`extent_type()] 等于零时，为 [`0]；否则
-
-[item]
-[:en]
-[`1 + ([*de-ice]([$S_k]::extent_type()) - 1) / [*de-ice]([$S_k]::stride_type())],
-if [$S_k] is a specialization of [`strided_slice] whose [`extent_type] and
-[`stride_type] model [*:c integral-constant-like];
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例，其 [`extent_type] 和
-[`stride_type] 构成 [*:c integral-constant-like]时，为
-[`1 + ([*de-ice]([$S_k]::extent_type()) - 1) / [*de-ice]([$S_k]::stride_type())]；
-
-[item]
+ [item]
 [:en] otherwise, [`dynamic_extent].
 [:zh_CN] 否则，为 [`dynamic_extent]。
-[list:end]
+ [list:end]
 [list:end]
 
 [para:returns]
-[:en] A value [`ext] of type [`SubExtents] such that for each [$k] for which
-[`[^map-rank]`[[$k]`] != dynamic_extent] is [`true],
-[`ext.extent([^map-rank]`[[$k]`])] equals:
-[:zh_CN] 一个 [`SubExtents] 类型的值 [`ext]，使得对于时
-[`[^map-rank]`[[$k]`] != dynamic_extent] 为 [`true] 的每个 [$k],
-[`ext.extent([^map-rank]`[[$k]`])]：
+[:en] A value [`ext] of type [`SubExtents] such that for each rank index [$k]
+of [`extents<IndexType, Extents...>], where the type of [`slices...`[[$k]`]]
+is not a collapsing slice type, [`ext.extent([^MAP_RANK](slices, [$k]))]
+equals the following, where [$\sigma_k] denotes [`slices...`[[$k]`]]:
+[:zh_CN] 一个 [`SubExtents] 类型的值 [`ext]，使得对于 [`extents<IndexType, Extents...>]
+的每个秩索引 [$k]，其中 [`slices...`[[$k]`]] 的类型不是折叠切片类型，
+[`ext.extent([^MAP_RANK](slices, [$k]))] 等于下列值，其中 [$\sigma_k] 代表 [`slices...`[[$k]`]]：
 
 [list]
 [item]
-[:en]
-[`[$s_k].extent == 0 ? 0 : 1 + ([*de-ice]([$s_k].extent) - 1) / [*de-ice]([$s_k].stride)]
-if [$S_k] is a specialization of [`strided_slice],
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，等于
-[`[$s_k].extent == 0 ? 0 : 1 + ([*de-ice]([$s_k].extent) - 1) / [*de-ice]([$s_k].stride)]，
+[:en] [`[$\sigma_k].extent == 0 ? 0 : 1 + ([$\sigma_k].extent - 1) / [$\sigma_k].stride]
+if the type of [$\sigma_k] is a specialization of [`strided_slice],
+[:zh_CN] 若 [$\sigma_k] 的类型是 [`strided_slice] 的特例，则为
+[`[$\sigma_k].extent == 0 ? 0 : 1 + ([$\sigma_k].extent - 1) / [$\sigma_k].stride]；
 
 [item]
-[:en] otherwise,
-[`[*last_]<[$k]>(src, slices...) - [*first_]<IndexType, [$k]>(slices...)].
-[:zh_CN] 否则，等于
-[`[*last_]<[$k]>(src, slices...) - [*first_]<IndexType, [$k]>(slices...)]。
+[:en] otherwise, [$U - L], where [=range([$L],[$U])] is the [`submdspan] slice range
+of [$\sigma_k] for the [$k^\text{th}] extent of [`src].
+[:zh_CN] 否则，为 [$U - L]，其中 [=range([$L],[$U])] 为对 [`src] 的
+第 [$k^\text{th}] 个秩的 [`submdspan] 切片范围。
 [list:end]
 [div:end]

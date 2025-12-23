@@ -53,10 +53,8 @@ template<class P> constexpr iterator insert(const_iterator position, P&& x);
 [:en] The first form is equivalent to [`return emplace(std::forward<P>(x));].
 [:zh_CN] 第一种形式等价于 [`return emplace(std::forward<P>(x));]。
 
-[:en] The second form is equivalent to
-[`return emplace_hint(position, std::forward<P>(x));].
-[:zh_CN] 第二种形式等价于
-[`return emplace_hint(position, std::forward<P>(x));]。
+[:en] The second form is equivalent to [`return emplace_hint(position, std::forward<P>(x));].
+[:zh_CN] 第二种形式等价于 [`return emplace_hint(position, std::forward<P>(x));]。
 [div:end]
 
 [%@lib@member insert[!flat_map]]
@@ -94,8 +92,7 @@ auto dist = distance(zv.begin(), it);
 [para:complexity]
 [:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M]
 is [`distance(first, last)].
-[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为
-[`distance(first, last)]。
+[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为 [`distance(first, last)]。
 
 [para:remarks]
 [:en] Since this operation performs an in-place merge, it may allocate memory.
@@ -110,36 +107,12 @@ template<class InputIterator>
 
 [div:description]
 [para:effects]
-[:en] Adds elements to [*c] as if by:
-[:zh_CN] 如同以如下代码向 [*c] 添加元素：
-[codeblock]
-for (; first != last; ++first) {
-  value_type value = *first;
-  [[redoc("*>")]]c.keys.insert([[redoc("*>")]]c.keys.end(), std::move(value.first));
-  [[redoc("*>")]]c.values.insert([[redoc("*>")]]c.values.end(), std::move(value.second));
-}
-[codeblock:end]
-
-[:en] Then, merges the sorted range of newly added elements and the sorted range
-of pre-existing elements into a single sorted range; and finally erases the
-duplicate elements as if by:
-[:zh_CN] 然后，将新插入元素的有序范围和已存在元素的有序范围归并为单个有序范围；
-最后如同以如下代码来擦除重复元素：
-[codeblock]
-auto zv = views::zip([[redoc("*>")]]c.keys, [[redoc("*>")]]c.values);
-auto it = ranges::unique(zv, [[redoc("*>")]]key-equiv([[redoc("*>")]]compare)).begin();
-auto dist = distance(zv.begin(), it);
-[[redoc("*>")]]c.keys.erase([[redoc("*>")]]c.keys.begin() + dist, [[redoc("*>")]]c.keys.end());
-[[redoc("*>")]]c.values.erase([[redoc("*>")]]c.values.begin() + dist, [[redoc("*>")]]c.values.end());
-[codeblock:end]
+[:en] Equivalent to [`insert(first, last)].
+[:zh_CN] 等价于 [`insert(first, last)]。
 
 [para:complexity]
 [:en] Linear in [$N], where [$N] is [`size()] after the operation.
 [:zh_CN] 对于 [$N] 为线性，其中 [$N] 为操作后的 [`size()]。
-
-[para:remarks]
-[:en] Since this operation performs an in-place merge, it may allocate memory.
-[:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
 [div:end]
 
 [%@lib@member insert_range[!flat_map]]
@@ -153,10 +126,10 @@ template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
 [:en] Adds elements to [*c] as if by:
 [:zh_CN] 如同以如下代码向 [*c] 添加元素：
 [codeblock]
-for (const auto& e : rg) {
-  [[redoc("*>")]]c.keys.insert([[redoc("*>")]]c.keys.end(), e.first);
-  [[redoc("*>")]]c.values.insert([[redoc("*>")]]c.values.end(), e.second);
-}
+ranges::for_each(rg, [&](value_type e) {
+  [[redoc("*>")]]c.keys.insert([[redoc("*>")]]c.keys.end(), std::move(e.first));
+  [[redoc("*>")]]c.values.insert([[redoc("*>")]]c.values.end(), std::move(e.second));
+});
 [codeblock:end]
 
 [:en] Then, sorts the range of newly inserted elements with respect to
@@ -174,14 +147,28 @@ auto dist = distance(zv.begin(), it);
 [codeblock:end]
 
 [para:complexity]
-[:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M]
-is [`ranges::distance(rg)].
-[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为
-[`ranges::distance(rg)]。
+[:en] [$N] + [$M \log M], where [$N] is [`size()] before the operation and [$M] is [`ranges::distance(rg)].
+[:zh_CN] [$N] + [$M \log M]，其中 [$N] 为操作前的 [`size()] 而 [$M] 为 [`ranges::distance(rg)]。
 
 [para:remarks]
 [:en] Since this operation performs an in-place merge, it may allocate memory.
 [:zh_CN] 由于本操作实施就地归并，因而其可能进行内存分配。
+[div:end]
+
+[%@lib@member insert_range[!flat_map]]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+  constexpr void insert_range(sorted_unique_t, R&& rg);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`insert_range(rg)].
+[:zh_CN] 等价于 [`insert_range(rg)]。
+
+[para:complexity]
+[:en] Linear in [$N], where [$N] is [`size()] after the operation.
+[:zh_CN] 对于 [$N] 为线性，其中 [$N] 为操作后的 [`size()]。
 [div:end]
 
 [%@lib@member try_emplace[!flat_map]]
@@ -259,8 +246,7 @@ template<class K, class... Args>
 [para:expects]
 [:en] The conversion from [`k] into [`key_type] constructs an object [`u],
 for which [`find(k) == find(u)] is [`true].
-[:zh_CN] 从 [`k] 转换为 [`key_type] 会构造一个对象 [`u]，使得
-[`find(k) == find(u)] 为 [`true]。
+[:zh_CN] 从 [`k] 转换为 [`key_type] 会构造一个对象 [`u]，使得 [`find(k) == find(u)] 为 [`true]。
 
 [para:effects]
 [:en] If the map already contains an element whose key is equivalent to [`k],
@@ -303,10 +289,8 @@ template<class M>
 
 [div:description]
 [para:mandates]
-[:en] [`is_assignable_v<mapped_type&, M>] is [`true] and
-[`is_constructible_v<mapped_type, M>] is [`true].
-[:zh_CN] [`is_assignable_v<mapped_type&, M>] 为 [`true] 并且
-[`is_constructible_v<mapped_type, M>] 为 [`true]。
+[:en] [`is_assignable_v<mapped_type&, M>] is [`true] and [`is_constructible_v<mapped_type, M>] is [`true].
+[:zh_CN] [`is_assignable_v<mapped_type&, M>] 为 [`true] 并且 [`is_constructible_v<mapped_type, M>] 为 [`true]。
 
 [para:effects]
 [:en] If the map already contains an element [`e] whose key is equivalent to [`k],
@@ -406,7 +390,10 @@ try_emplace(hint, std::forward<K>(k), std::forward<M>(obj))
 
 [%@lib@member swap[!flat_map]]
 [codeblock:declaration]
-constexpr void swap(flat_map& y) noexcept;
+constexpr void swap(flat_map& y)
+  noexcept(is_nothrow_swappable_v<key_container_type> &&
+           is_nothrow_swappable_v<mapped_container_type> &&
+           is_nothrow_swappable_v<key_compare>);
 [codeblock:end]
 
 [div:description]
@@ -442,9 +429,8 @@ constexpr void replace(key_container_type&& key_cont, mapped_container_type&& ma
 
 [div:description]
 [para:expects]
-[:en] [`key_cont.size() == mapped_cont.size()] is [`true], the elements of
-[`key_cont] are sorted with respect to [*compare], and [`key_cont] contains no
-equal elements.
+[:en] [`key_cont.size() == mapped_cont.size()] is [`true], the elements of [`key_cont]
+are sorted with respect to [*compare], and [`key_cont] contains no equal elements.
 [:zh_CN] [`key_cont.size() == mapped_cont.size()] 为 [`true]，[`key_cont] 的元素
 根据 [*compare] 有序，并且 [`key_cont] 不包含相等元素。
 

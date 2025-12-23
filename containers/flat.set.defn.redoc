@@ -16,8 +16,8 @@ namespace std {
     using value_compare             = Compare;
     using reference                 = value_type&;
     using const_reference           = const value_type&;
-    using size_type                 = typename KeyContainer::size_type;
-    using difference_type           = typename KeyContainer::difference_type;
+    using size_type                 = KeyContainer::size_type;
+    using difference_type           = KeyContainer::difference_type;
     using iterator               = [[redoc("[?impdefx [:en] type of [`flat_set::iterator]"
         "[:zh_CN] [`flat_set::iterator] 的类型]")]];  // [:en] See [#container.requirements] [:zh_CN] 参见 [#container.requirements]
     using const_iterator         = [[redoc("[?impdefx [:en] type of [`flat_set::const_iterator]"
@@ -29,6 +29,11 @@ namespace std {
     // [:en] [#flat.set.cons], constructors \
     [:zh_CN] [#flat.set.cons]，构造函数
     constexpr flat_set() : flat_set(key_compare()) { }
+
+    constexpr flat_set(const flat_set&);
+    constexpr flat_set(flat_set&&);
+    constexpr flat_set& operator=(const flat_set&);
+    constexpr flat_set& operator=(flat_set&&);
 
     constexpr explicit flat_set(const key_compare& comp)
       : [[redoc("*>")]]c(), [[redoc("*>")]]compare(comp) { }
@@ -159,6 +164,8 @@ namespace std {
       constexpr void insert(sorted_unique_t, InputIterator first, InputIterator last);
     template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
       constexpr void insert_range(R&& rg);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      constexpr void insert_range(sorted_unique_t, R&& rg);
 
     constexpr void insert(initializer_list<value_type> il)
       { insert(il.begin(), il.end()); }
@@ -168,13 +175,13 @@ namespace std {
     constexpr container_type extract() &&;
     constexpr void replace(container_type&&);
 
-    constexpr iterator erase(iterator position);
+    constexpr iterator erase(iterator position) requires (![[redoc("`:c>")]]same_as<iterator, const_iterator>);
     constexpr iterator erase(const_iterator position);
     constexpr size_type erase(const key_type& x);
     template<class K> constexpr size_type erase(K&& x);
     constexpr iterator erase(const_iterator first, const_iterator last);
 
-    constexpr void swap(flat_set& y) noexcept;
+    constexpr void swap(flat_set& y) noexcept([[redoc("[=seebelow]")]]);
     constexpr void clear() noexcept;
 
     // [:en] observers \
@@ -214,10 +221,11 @@ namespace std {
 
     friend constexpr bool operator==(const flat_set& x, const flat_set& y);
 
-    friend constexpr [[redoc("^>")]]synth-three-way-result<value_type>
+    friend constexpr [[redoc("*>")]]synth-three-way-result<value_type>
       operator<=>(const flat_set& x, const flat_set& y);
 
-    friend constexpr void swap(flat_set& x, flat_set& y) noexcept { x.swap(y); }
+    friend constexpr void swap(flat_set& x, flat_set& y) noexcept(noexcept(x.swap(y)))
+      { x.swap(y); }
 
   private:
     container_type [[redoc("*>")]]c;           // [=expos]

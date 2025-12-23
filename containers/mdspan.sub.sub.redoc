@@ -18,10 +18,15 @@ template<class ElementType, class Extents, class LayoutPolicy,
 [:zh_CN] 令 [`index_type] 为 [`typename Extents::index_type]。
 
 [para]
-[:en] Let [`sub_map_offset] be the result of
-[`submdspan_mapping(src.mapping(), slices...)].
-[:zh_CN] 令 [`sub_map_offset] 为 [`submdspan_mapping(src.mapping(), slices...)]
-的结果。
+[:en] Let [`slices] be the pack introduced by the following declaration:
+[:zh_CN] 令 [`slices] 为由下列声明式引入的包组：
+[codeblock]
+auto [...slices] = submdspan_canonicalize_slices(src, raw_slices...);
+[codeblock:end]
+
+[para]
+[:en] Let [`sub_map_offset] be the result of [`submdspan_mapping(src.mapping(), slices...)].
+[:zh_CN] 令 [`sub_map_offset] 为 [`submdspan_mapping(src.mapping(), slices...)] 的结果。
 
 [begin:note]
 [:en] This invocation of [`submdspan_mapping] selects a function call via
@@ -37,106 +42,37 @@ argument-dependent lookup ([#basic.lookup.argdep]).
 [:en] [`sizeof...(slices)] equals [`Extents::rank()], and
 [:zh_CN] [`sizeof...(slices)] 等于 [`Extents::rank()]，并且
 [item]
-[:en] the expression [`submdspan_mapping(src.mapping(), slices...)]
-is well-formed when treated as an unevaluated operand.
-[:zh_CN] 表达式 [`submdspan_mapping(src.mapping(), slices...)] 被当做免求值
-操作数时良构。
+[:en] [`LayoutPolicy::mapping<Extents>] models [*:c sliceable-mapping].
+[:zh_CN] [`LayoutPolicy::mapping<Extents>] 构成 [*:c sliceable-mapping]。
 [list:end]
 
 [para:mandates]
+[:en] For each rank index [$k] of [`src]:
+[:zh_CN] 对于 [`src] 的每个秩索引 [$k]：
 [list]
 [item]
-[:en] [`decltype(submdspan_mapping(src.mapping(), slices...))]
-is a specialization of [`submdspan_mapping_result].
-[:zh_CN] [`decltype(submdspan_mapping(src.mapping(), slices...))]
-是 [`submdspan_mapping_result] 的特例。
+[:en] [`SliceSpecifiers...`[[$k]`]] is a [`submdspan] slice type for [`index_type], and
+[:zh_CN] [`SliceSpecifiers...`[[$k]`]] 是对 [`index_type] 的 [`submdspan] 切片类型，且
 [item]
-[:en]
-[`is_same_v<remove_cvref_t<decltype(sub_map_offset.mapping.extents())>, decltype(submdspan_extents(src.mapping(), slices...))>]
-is [`true].
-[:zh_CN] [`is_same_v<remove_cvref_t<decltype(sub_map_offset.mapping.extents())>, decltype(submdspan_extents(src.mapping(), slices...))>]
-为 [`true]。
-[item]
-[:en] For each rank index [$k] of [`src.extents()], exactly one of the following
-is true:
-[:zh_CN] 对于 [`src.extents()] 中的每个秩索引 [$k]，以下恰有一项为真：
-[list]
-[item]
-[:en] [$S_k] models [`[`:c convertible_to]<index_type>],
-[:zh_CN] [$S_k] 构成 [`[`:c convertible_to]<index_type>]，
-[item]
-[:en] [$S_k] models [`[*:c index-pair-like]<index_type>],
-[:zh_CN] [$S_k] 构成 [`[*:c index-pair-like]<index_type>]，
-[item]
-[:en] [`is_convertible_v<[$S_k], full_extent_t>] is [`true], or
-[:zh_CN] [`is_convertible_v<[$S_k], full_extent_t>] 为 [`true]，或者
-[item]
-[:en] [$S_k] is a specialization of [`strided_slice].
-[:zh_CN] [$S_k] 是 [`strided_slice] 的特例。
-[list:end]
+[:en] [`decltype(slices...`[[$k]`])] is a valid [`submdspan] slice type
+for the [$k^\text{th}] extent of [`Extents].
+[:zh_CN] [`decltype(slices...`[[$k]`])] 是对 [`Extents] 的第 [$k] 个尺度的有效 [`submdspan] 切片类型。
 [list:end]
 
 [para:expects]
-[list]
-[item]
-[:en] For each rank index [$k] of [`src.extents()], all of the following are
-[`true]:
-[:zh_CN] 对于 [`src.extents()] 的每个秩索引，以下各项均为 [`true]：
-
-[list]
-[item]
-[:en] if [$S_k] is a specialization of [`strided_slice]
-[:zh_CN] 当 [$S_k] 是 [`strided_slice] 的特例时，
-[list]
-[item]
-[:en@~] [`[$s_k].extent = 0], or
-[:zh_CN@~] [`[$s_k].extent = 0]，或者
-[item]
-[:en@~] [`[$s_k].stride > 0]
-[:zh_CN@~] [`[$s_k].stride > 0]
-[list:end]
-[item]
-[$0 \le [`[*first_]<index_type, [$k]>(slices...)]]
-[$\le [`[*last_]<[$k]>(src.extents(), slices...)]]
-[$\le [`src.extent([$k])]]
-[list:end]
-
-[item]
-[:en]
-[`sub_map_offset.mapping.extents() == submdspan_extents(src.mapping(), slices...)]
-is [`true]; and
-[:zh_CN]
-[`sub_map_offset.mapping.extents() == submdspan_extents(src.mapping(), slices...)]
-为 [`true]；以及
-
-[item]
-[:en] for each integer pack [`I] which is a multidimensional index
-in [`sub_map_offset.mapping.extents()],
-[:zh_CN] 对于每个作为 [`sub_map_offset.mapping.extents()] 中的多维索引的整数包组
-[`I]，
-[codeblock]
-sub_map_offset.mapping(I...) + sub_map_offset.offset ==
-  src.mapping()([[redoc("*>")]]src-indices(array{I...}, slices...))
-[codeblock:end]
-[:en@~] is [`true].
-[:zh_CN@~] 均为 [`true]。
-[list:end]
-
-[begin:note]
-[:en] These conditions ensure that the mapping returned by [`submdspan_mapping]
-matches the algorithmically expected index-mapping given the slice specifiers.
-[:zh_CN] 这些条件确保了，由 [`submdspan_mapping] 返回的映射与给定切片说明符按
-算法所预期的索引映射是匹配的。
-[end:note]
+[:en] For each rank index [$k] of [`src.extents()], [`slices...`[[$k]`]] is
+a valid [`submdspan] slice for the [$k^\text{th}] extent of [`src.extents()].
+[:zh_CN] 对于 [`src.extents()] 的每个秩索引 [$k]，[`slices...`[[$k]`]] 是对
+[`src.extents()] 的第 [$k] 个尺度的有效 [`submdspan] 切片。
 
 [para:effects]
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
 auto sub_map_result = submdspan_mapping(src.mapping(), slices...);
-return mdspan(src.accessor().offset(src.data(), sub_map_result.offset),
+return mdspan(src.accessor().offset(src.data_handle(), sub_map_result.offset),
               sub_map_result.mapping,
-              AccessorPolicy::offset_policy(src.accessor()));
+              typename AccessorPolicy::offset_policy(src.accessor()));
 [codeblock:end]
 
 [para]
@@ -151,8 +87,7 @@ sets all elements on the surface of the 3-dimensional shape to zero.
 [:zh_CN] 它通过重用接受秩为 2 的 [`mdspan] 的函数 [`zero_2d] 来做到这点。
 
 [codeblock]
-// [:en] zero out all elements in an [`mdspan] \
-[:zh_CN] 清零一个 [`mdspan] 中的所有元素
+// [:en] zero out all elements in an [`mdspan] [:zh_CN] 清零一个 [`mdspan] 中的所有元素
 template<class T, class E, class L, class A>
 void zero_2d(mdspan<T, E, L, A> a) {
   static_assert(a.rank() == 2);
@@ -161,8 +96,7 @@ void zero_2d(mdspan<T, E, L, A> a) {
       a[i, j] = 0;
 }
 
-// [:en] zero out just the surface \
-[:zh_CN] 仅清零表面
+// [:en] zero out just the surface [:zh_CN] 仅清零表面
 template<class T, class E, class L, class A>
 void zero_surface(mdspan<T, E, L, A> grid3d) {
   static_assert(grid3d.rank() == 3);

@@ -16,8 +16,8 @@ namespace std {
     using value_compare             = Compare;
     using reference                 = value_type&;
     using const_reference           = const value_type&;
-    using size_type                 = typename KeyContainer::size_type;
-    using difference_type           = typename KeyContainer::difference_type;
+    using size_type                 = KeyContainer::size_type;
+    using difference_type           = KeyContainer::difference_type;
     using iterator                  = [[redoc("[?impdefx [:en] type of [`flat_multiset::iterator]"
         "[:zh_CN] [`flat_multiset::iterator] 的类型]")]];  // [:en] See [#container.requirements] [:zh_CN] 参见 [#container.requirements]
     using const_iterator            = [[redoc("[?impdefx [:en] type of [`flat_multiset::const_iterator]"
@@ -29,6 +29,11 @@ namespace std {
     // [:en] [#flat.multiset.cons], constructors \
     [:zh_CN] [#flat.multiset.cons]，构造函数
     constexpr flat_multiset() : flat_multiset(key_compare()) { }
+
+    constexpr flat_multiset(const flat_multiset&);
+    constexpr flat_multiset(flat_multiset&&);
+    constexpr flat_multiset& operator=(const flat_multiset&);
+    constexpr flat_multiset& operator=(flat_multiset&&);
 
     constexpr explicit flat_multiset(const key_compare& comp)
       : [[redoc("*>")]]c(), [[redoc("*>")]]compare(comp) { }
@@ -161,6 +166,8 @@ namespace std {
       constexpr void insert(sorted_equivalent_t, InputIterator first, InputIterator last);
     template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
       constexpr void insert_range(R&& rg);
+    template<[[redoc("*:c>")]]container-compatible-range<value_type> R>
+      constexpr void insert_range(sorted_equivalent_t, R&& rg);
 
     constexpr void insert(initializer_list<value_type> il)
       { insert(il.begin(), il.end()); }
@@ -170,13 +177,13 @@ namespace std {
     constexpr container_type extract() &&;
     constexpr void replace(container_type&&);
 
-    constexpr iterator erase(iterator position);
+    constexpr iterator erase(iterator position) requires (![[redoc("`:c>")]]same_as<iterator, const_iterator>);
     constexpr iterator erase(const_iterator position);
     constexpr size_type erase(const key_type& x);
     template<class K> constexpr size_type erase(K&& x);
     constexpr iterator erase(const_iterator first, const_iterator last);
 
-    constexpr void swap(flat_multiset& y) noexcept;
+    constexpr void swap(flat_multiset& y) noexcept([[redoc("[=seebelow]")]]);
     constexpr void clear() noexcept;
 
     // [:en] observers \
@@ -216,10 +223,11 @@ namespace std {
 
     friend constexpr bool operator==(const flat_multiset& x, const flat_multiset& y);
 
-    friend constexpr [[redoc("^>")]]synth-three-way-result<value_type>
+    friend constexpr [[redoc("*>")]]synth-three-way-result<value_type>
       operator<=>(const flat_multiset& x, const flat_multiset& y);
 
-    friend constexpr void swap(flat_multiset& x, flat_multiset& y) noexcept
+    friend constexpr void swap(flat_multiset& x, flat_multiset& y)
+      noexcept(noexcept(x.swap(y)))
       { x.swap(y); }
 
   private:
