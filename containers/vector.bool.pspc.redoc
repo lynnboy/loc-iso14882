@@ -46,14 +46,17 @@ namespace std {
     [:zh_CN] 位的引用
     class [[redoc("[%@lib@member reference[!vector<bool>]]")]]reference {
     public:
-      constexpr reference(const reference&) = default;
+      constexpr reference(const reference& x) noexcept;
       constexpr ~reference();
-      constexpr operator bool() const noexcept;
       constexpr reference& operator=(bool x) noexcept;
       constexpr reference& operator=(const reference& x) noexcept;
       constexpr const reference& operator=(bool x) const noexcept;
-      constexpr void flip() noexcept;   // [:en] flips the bit \
-                                        [:zh_CN] 翻转位
+      constexpr operator bool() const noexcept;
+      constexpr void flip() noexcept;   // [:en] flips the bit [:zh_CN] 翻转位
+
+      friend constexpr void swap(reference x, reference y) noexcept;
+      friend constexpr void swap(reference x, bool& y) noexcept;
+      friend constexpr void swap(bool& x, reference y) noexcept;
     };
 
     // [:en] construct/copy/destroy \
@@ -144,7 +147,6 @@ namespace std {
     constexpr void swap(vector&)
       noexcept(allocator_traits<Allocator>::propagate_on_container_swap::value ||
                allocator_traits<Allocator>::is_always_equal::value);
-    static constexpr void swap(reference x, reference y) noexcept;
     constexpr void flip() noexcept;     // [:en] flips all bits \
                                         [:zh_CN] 翻转全部的位
     constexpr void clear() noexcept;
@@ -154,11 +156,11 @@ namespace std {
 
 [para]
 [:en] Unless described below, all operations have the same requirements and
-semantics as the primary [`vector] template, except that operations dealing with
+semantics as the [`vector] primary template, except that operations dealing with
 the [`bool] value type map to bit values in the container storage and
 [`allocator_traits::construct] ([#allocator.traits.members]) is not used to
 construct these values.
-[:zh_CN] 出非在下文中进行说明，其所有操作均与主 [`vector] 模板具有相同的规定和
+[:zh_CN] 出非在下文中进行说明，其所有操作均与 [`vector] 主模板具有相同的规定和
 语义，但是处理 [`bool] 值的操作被映射到容器存储中的位值，并且不使用
 [`allocator_traits::construct]（[#allocator.traits.members]）来构造这些值。
 
@@ -171,20 +173,78 @@ of [`bool] values.
 [:zh_CN] 改为推荐采用一种空间优化的位表示。
 
 [para]
-[:en] [`reference] is a class that simulates the behavior of references of a
-single bit in [`veictor<bool>].
-[:zh_CN] [`reference] 是一种模拟指代 [`veictor<bool>] 中的单个位的行为的类。
+[:en] [`reference] is a class that simulates a references to a single bit in the sequence.
+[:zh_CN] [`reference] 是一种模拟指代序列中单个位的引用的行为的类。
 
-[:en] The conversion function returns [`true] when the bit is set, and [`false]
-otherwise.
-[:zh_CN] 当位被设置时其转函数返回 [`true]，否则返回 [`false]。
+[%@lib@ctor vector<bool>::reference]
+[codeblock:declaration]
+constexpr reference::reference(const reference& x) noexcept;
+[codeblock:end]
 
-[:en] The assignment operator set the bit when the argument is (convertible to)
-[`true] and clear it otherwise.
-[:zh_CN] 当赋值运算符的实参（可以转换）为 [`true] 时将对位进行置位，否则就将其清除。
+[div:description]
+[para:effects]
+[:en] Initializes [`*this] to refer to the same bit as [`x].
+[:zh_CN] 初始化 [`*this] 以指代与 [`x] 相同的位。
+[div:end]
 
-[:en] [`flip] reverses the state of the bit.
-[:zh_CN] [`flip] 翻转位的状态。
+[%@lib@dtor vector<bool>::reference]
+[codeblock:declaration]
+constexpr reference::~reference();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] None.
+[:zh_CN] 无。
+[div:end]
+
+[%@lib@member operator=[!vector<bool>::reference]]
+[codeblock:declaration]
+constexpr reference& reference::operator=(bool x) noexcept;
+constexpr reference& reference::operator=(const reference& x) noexcept;
+constexpr const reference& reference::operator=(bool x) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Sets the bit referred to by [`*this] when [`bool(x)] is [`true],
+and clears it otherwise.
+[:zh_CN] 若 [`bool(x)] 为 [`true] 则设置 [`*this] 指代的位，否则清除该位。
+
+[para:returns]
+[:en] [`*this].
+[:zh_CN] [`*this]。
+[div:end]
+
+[%@lib@member flip[!vector<bool>::reference]]
+[codeblock:declaration]
+constexpr void reference::flip() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`*this = !*this].
+[:zh_CN] 等同于 [`*this = !*this]。
+[div:end]
+
+[%@lib@member swap[!vector<bool>::reference]]
+[codeblock:declaration]
+constexpr void swap(reference x, reference y) noexcept;
+constexpr void swap(reference x, bool& y) noexcept;
+constexpr void swap(bool& x, reference y) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Exchanges the values denoted by [`x] and [`y] as if by:
+[:zh_CN] 交换 [`x] 和 [`y] 所指代的值，如同执行：
+
+[codeblock]
+bool b = x;
+x = y;
+y = b;
+[codeblock:end]
+[div:end]
 
 [%@lib@member flip[!vector<bool>]]
 [codeblock:declaration]

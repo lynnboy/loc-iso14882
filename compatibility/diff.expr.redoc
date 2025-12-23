@@ -5,8 +5,9 @@
 
 [para:diff] [#conv.ptr]
 [?change]
-[:en] Converting [`[`:key void]*] to a pointer-to-object type requires casting.
-[:zh_CN] 将 [`[`:key void]*] 转换为对象指针类型需要转型。
+[:en] Converting a prvalue of type [=lq]pointer to [=cv] [`void][=rq]
+to a pointer-to-object type requires casting.
+[:zh_CN] 将“[=cv] [`void] 的指针”类型的纯右值转换为对象指针类型需要进行转型。
 
 [begin:example]
 [codeblock]
@@ -17,9 +18,9 @@ void foo() {
 }
 [codeblock:end]
 
-[:en] C accepts this usage of pointer to [`:key void] being assigned to a
+[:en] C accepts this usage of [=lq]pointer to [`:key void][=rq] being assigned to a
 pointer to object type.
-[:zh_CN] C 可以接受这种将 [`:key void] 指针赋值给指向对象类型的指针的用法。
+[:zh_CN] C 可以接受这种将“[`:key void] 指针”赋值给指向对象类型的指针的用法。
 
 [:en] [=Cpp] does not.
 [:zh_CN] [=Cpp] 则不会。
@@ -50,13 +51,8 @@ char* c = (char*) b;
 [end:example]
 
 [?howwide]
-[:en] This is fairly widely used but it is good programming practice to add the
-cast when assigning pointer-to-void to pointer-to-object.
-[:zh_CN] 这是相当广泛的用法，但在进行 [`void] 指针向对象指针进行赋值时添加转型
-是一种良好的编程实践。
-
-[:en] Some C translators will give a warning if the cast is not used.
-[:zh_CN] 一些 C 翻译器在没有使用转型时会给出警告。
+[:en] Common.
+[:zh_CN] 常见。
 
 [para:diff] [#expr.arith.conv]
 [?change]
@@ -116,6 +112,43 @@ int k = +f - e;
 (for instance, via the C typedef in [?libheader@ref stdbool.h]) is ill-formed in [=Cpp].
 [:zh_CN] 在 [`:key bool] 左值（比如，通过 C 在 [?libheader@ref stdbool.h] 中的
 typedef）上使用了减量运算符的有效的 C 表达式，在 [=Cpp] 中是非良构的。
+
+[para:diff] [#expr.unary.op]
+[?change]
+[:en] In certain contexts, taking the address of a dereferenced null or
+past-the-end pointer value is well-defined in C (and yields the original
+pointer value), but results in undefined behavior in [=Cpp].
+[:zh_CN] 在某些语境下，对解引用的空指针或越界指针值取地址在 C 中是良定义的（并且产生原指针值），
+但在 [=Cpp] 中会导致未定义行为。
+
+[begin:example]
+[codeblock]
+void f() {
+  char *p = nullptr;
+  char *p2 = &*p;       // [:en] well-defined in C, undefined behavior in [=Cpp] [:zh_CN] C 中良定义，但在 [=Cpp] 中未定义行为
+  char *p3 = &p[0];     // [:en] well-defined in C, undefined behavior in [=Cpp] [:zh_CN] C 中良定义，但在 [=Cpp] 中未定义行为
+  int a[5];
+  int *q = &a[5];       // [:en] well-defined in C, undefined behavior in [=Cpp] [:zh_CN] C 中良定义，但在 [=Cpp] 中未定义行为
+}
+[codeblock:end]
+[end:example]
+
+[?rationale]
+[:en] Consistent treatment of lvalues in [=Cpp].
+[:zh_CN] [=Cpp] 中对左值进行一致处理。
+
+[?effect]
+[:en] Well-formed and well-defined C code exhibits undefined behavior in [=Cpp].
+[:zh_CN] 良构且良定义的 C 代码在 [=Cpp] 中表现为未定义行为。
+
+[?difficulty]
+[:en] Syntactic transformation to pointer arithmetic
+and possible addition of a check for null pointer values.
+[:zh_CN] 语法变换为指针算术运算，并可能添加对空指针值的检查。
+
+[?howwide]
+[:en] Occasionally.
+[:zh_CN] 偶尔。
 
 [para:diff] [#expr.sizeof], [#expr.cast]
 [?change]
