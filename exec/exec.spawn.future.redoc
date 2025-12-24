@@ -1,5 +1,5 @@
 [section#exec.spawn.future
-    [`std::execution::spawn_future]
+    [`execution::spawn_future]
 ]
 
 [para]
@@ -136,9 +136,13 @@ namespace std::execution {
 
 [para]
 [:en] Let [`[^ssource-t]] be an unspecified type that models [*:c stoppable-source]
-and let [`ssource] be an lvalue of type [`[^ssource-t]].
-[:zh_CN] 令 [`[^ssource-t]] 为构成 [*:c stoppable-source] 的未指明类型，并令
-[`ssource] 为 [`[^ssource-t]] 类型的左值。
+and [`:c default_initializable], such that a default-initialized object of type
+[`[^source-t]] has an associated stop state.
+[:zh_CN] 令 [`[^ssource-t]] 为构成 [*:c stoppable-source] 和 [`:c default_initializable]
+的未指明类型，使得默认初始化的 [`[^ssource-t]] 类型对象具有关联的停止状态。
+
+[:en] Let [`ssource] be an lvalue of type [`[^ssource-t]].
+[:zh_CN] 令 [`ssource] 为 [`[^ssource-t]] 类型的左值。
 
 [:en] Let [`[^stoken-t]] be [`decltype(ssource.get_token())].
 [:zh_CN] 令 [`[^stoken-t]] 为 [`decltype(ssource.get_token())]。
@@ -174,9 +178,8 @@ namespace std::execution {
         [[redoc("*>")]]op(connect(
           write_env([[redoc("*>")]]stop-when(std::forward<Sender>(sndr), [[redoc("*>")]]ssource.get_token()), std::move(env)),
           [[redoc("*>")]]receiver-t(this))),
-        [[redoc("*>")]]token(std::move(token)),
-        [[redoc("*>")]]associated(token.try_associate()) {
-          if (associated)
+        [[redoc("*>")]]assoc(token.try_associate()) {
+          if ([[redoc("*>")]]assoc)
             start([[redoc("*>")]]op);
           else
             set_stopped([[redoc("*>")]]receiver-t(this));
@@ -187,17 +190,20 @@ namespace std::execution {
     void [[redoc("*>")]]abandon() noexcept;                                                // [=expos]
 
   private:
-    using [[redoc("*>")]]alloc-t =                                                         // [=expos]
-      typename allocator_traits<Alloc>::template rebind_alloc<[[redoc("*>")]]spawn-future-state>;
+    using [[redoc("*>")]]assoc-t =                                                         // [=expos]
+      remove_cvref_t<decltype(declval<Token&>().try_associate())>;
 
-    [[redoc("*>")]]alloc-t [[redoc("*>")]]alloc;                                                          // [=expos]
+    Alloc [[redoc("*>")]]alloc;                                                            // [=expos]
     [[redoc("*>")]]ssource-t [[redoc("*>")]]ssource;                                                      // [=expos]
     [[redoc("*>")]]op-t [[redoc("*>")]]op;                                                                // [=expos]
-    Token [[redoc("*>")]]token;                                                            // [=expos]
-    bool [[redoc("*>")]]associated;                                                        // [=expos]
+    [[redoc("*>")]]assoc-t [[redoc("*>")]]assoc;                                                          // [=expos]
 
     void [[redoc("*>")]]destroy() noexcept;                                                // [=expos]
   };
+
+  template<class Alloc, [[redoc("`:c>")]]scope_token Token, [[redoc("`:c>")]]sender Sender, class Env>        // [=expos]
+    [[redoc("*>")]]spawn-future-state(Alloc alloc, Sender&& sndr, Token token, Env env)
+      -> [[redoc("*>")]]spawn-future-state<Alloc, Token, Sender, Env>;
 }
 [codeblock:end]
 
@@ -229,9 +235,8 @@ an invocation of [*consume] or [*abandon] on [`*this];
 [:en@~] otherwise, if an invocation of [*consume] on [`*this] happens before
 this invocation of [*complete] then there is a receiver, [`rcvr], registered and
 that receiver is completed as if by [`[*consume](rcvr)];
-[:zh_CN@~] 否则，如果对 [`*this] 的 [*consume] 的某次调用发生早于
-[*complete] 的本次调用，那么有一个接收器 [`rcvr] 被注册，并且该接收器如同以
-[`[*consume](rcvr)] 完成；
+[:zh_CN@~] 否则，如果对 [`*this] 的 [*consume] 的某次调用发生早于 [*complete] 的本次调用，
+那么有一个接收器 [`rcvr] 被注册，并且该接收器如同以 [`[*consume](rcvr)] 完成；
 [item]
 [:en@~] otherwise, [*destroy] is invoked.
 [:zh_CN@~] 否则，调用 [*destroy]。
@@ -280,8 +285,7 @@ void [[redoc("*>")]]abandon() noexcept;
 [item]
 [:en] If this invocation of [*abandon] happens before an invocation of [*complete]
 on [`*this] then equivalent to:
-[:zh_CN] 如果对 [*abandon] 的本次调用发生早于对 [`*this] 的 [*complete] 的某次调用，
-那么其等价于：
+[:zh_CN] 如果对 [*abandon] 的本次调用发生早于对 [`*this] 的 [*complete] 的某次调用，那么其等价于：
 [codeblock]
 [[redoc("*>")]]ssource.request_stop();
 [codeblock:end]
@@ -302,26 +306,20 @@ void [[redoc("*>")]]destroy() noexcept;
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-auto token = std::move(this->[[redoc("*>")]]token);
-bool associated = this->[[redoc("*>")]]associated;
-
+bool associated = std::move(this->[[redoc("*>")]]associated);
 {
-  auto alloc = std::move(this->[[redoc("*>")]]alloc);
-
-  allocator_traits<[[redoc("*>")]]alloc-t>::destroy(alloc, this);
-  allocator_traits<[[redoc("*>")]]alloc-t>::deallocate(alloc, this, 1);
+  using traits = allocator_traits<Alloc>::template rebind_traits<[[redoc("*>")]]spawn-future-state>;
+  typename traits::allocator_type alloc(std::move(this->[[redoc("*>")]]alloc));
+  traits::destroy(alloc, this);
+  traits::deallocate(alloc, this, 1);
 }
-
-if (associated)
-  token.disassociate();
 [codeblock:end]
 [div:end]
 
 [para]
-[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.expos])
 is specialized for [`spawn_future_t] as follows:
-[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
-[`spawn_future_t] 进行如下特化：
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [`spawn_future_t] 进行如下特化：
 
 [%@lib execution::[*impls-for]<spawn_future_t>]
 [codeblock]
@@ -345,9 +343,8 @@ is initialized with a callable object equivalent to the following lambda:
 [codeblock:end]
 
 [para]
-[:en] For the expression [`spawn_future(sndr, token, env)]
-let [`new_sender] be the expression [`token.wrap(sndr)] and
-let [`alloc] and [`senv] be defined as follows:
+[:en] For the expression [`spawn_future(sndr, token, env)] let [`new_sender] be
+the expression [`token.wrap(sndr)] and let [`alloc] and [`senv] be defined as follows:
 [:zh_CN] 对于表达式 [`spawn_future(sndr, token, env)]，令 [`new_sender] 为表达式
 [`token.wrap(sndr)]，并令 [`alloc] 和 [`senv] 定义如下：
 
@@ -375,11 +372,11 @@ and [`senv] is the expression [`[*JOIN-ENV](prop(get_allocator, alloc), env)];
 
 [list]
 [item]
-[:en] Uses [`alloc] to allocate and construct an object [`s] of a type that is
-a specialization of [*spawn-future-state] from [`alloc], [`token.wrap(sndr)],
-[`token], and [`senv].
-[:zh_CN] 使用 [`alloc] 分配并构造一个对象 [`s]，其类型为以 [`alloc]、
-[`token.wrap(sndr)]、[`token] 和 [`senv] 指定的 [*spawn-future-state] 特例。
+[:en] Uses [`alloc] to allocate and construct an object [`s] of type
+[`decltype([*spawn-future-state](alloc, token.wrap(sndr), token, senv))]
+from [`alloc], [`token.wrap(sndr)], [`token], and [`senv].
+[:zh_CN] 使用 [`alloc] 以 [`alloc]、[`token.wrap(sndr)]、[`token] 和 [`senv] 分配并构造
+一个 [`decltype([*spawn-future-state](alloc, token.wrap(sndr), token, senv))] 类型的对象。
 
 [:en] If an exception is thrown then any constructed objects are destroyed and
 any allocated memory is deallocated.

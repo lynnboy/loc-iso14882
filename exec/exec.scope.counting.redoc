@@ -9,11 +9,12 @@
 namespace std::execution {
   class counting_scope {
   public:
+    using [[redoc("*>")]]assoc-t = [[redoc("*>")]]association-t<counting_scope>;      // [=expos]
+
     struct token {
       template<[[redoc("`:c>")]]sender Sender>
-        [[redoc("`:c>")]]sender auto wrap(Sender&& snd) const noexcept(@\seebelow@);
-      bool try_associate() const noexcept;
-      void disassociate() const noexcept;
+        [[redoc("`:c>")]]sender auto wrap(Sender&& snd) const noexcept([[redoc("[=seebelow]")]]);
+      [[redoc("*>")]]assoc-t try_associate() const noexcept;
 
     private:
       counting_scope* [[redoc("*>")]]scope;                            // [=expos]
@@ -37,7 +38,7 @@ namespace std::execution {
     [[redoc("*>")]]scope-state-type [[redoc("*>")]]state;                             // [=expos]
     inplace_stop_source [[redoc("*>")]]s_source;                       // [=expos]
 
-    bool [[redoc("*>")]]try-associate() noexcept;                      // [=expos]
+    [[redoc("*>")]]assoc-t [[redoc("*>")]]try-associate() noexcept;                   // [=expos]
     void [[redoc("*>")]]disassociate() noexcept;                       // [=expos]
 
     template<class State>
@@ -82,7 +83,38 @@ void request_stop() noexcept;
 [:zh_CN] 对 [`request_stop] 的调用不会引入数据竞争。
 [div:end]
 
-[%@lib@member wrap[!execution::counting_scope]]
+[%@lib@member [*try-associate][!execution::counting_scope]]
+[codeblock:declaration]
+[[redoc("*>")]]assoc-t [[redoc("*>")]]try-associate() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If [*count] is equal to [`max_associations], then no effects.
+[:zh_CN] 如果 [*count] 等于 [`max_associations]，则无效果。
+
+[:en] Otherwise, if [`state] is
+[:zh_CN] 否则，如果 [`state] 是
+[list]
+[item]
+[:en@~] [*unused], then increments [*count] and changes [*state] to [*open];
+[:zh_CN@~] [*unused]，则增加 [*count] 并将 [*state] 改为 [*open]；
+[item]
+[:en@~] [*open] or [*open-and-joining], then increments [*count];
+[:zh_CN@~] [*open] 或 [*open-and-joining]，则增加 [*count]；
+[item]
+[:en@~] otherwise, no effects.
+[:zh_CN@~] 否则，无效果。
+[list:end]
+
+[para:returns]
+[:en] If [*count] was incremented, an object of type [*assoc-t] that is engaged
+and associated with [`*this], and [`[*assoc-t]()] otherwise.
+[:zh_CN] 如果增加了 [*count]，则返回一个已订约并与 [`*this] 关联的 [*assoc-t]
+类型的对象，否则返回 [`[*assoc-t]()]。
+[div:end]
+
+[%@lib@member wrap[!execution::counting_scope::token]]
 [codeblock:declaration]
 template<[[redoc("`:c>")]]sender Sender>
   [[redoc("`:c>")]]sender auto counting_scope::token::wrap(Sender&& snd) const
@@ -96,4 +128,15 @@ template<[[redoc("`:c>")]]sender Sender>
 [codeblock]
 return [[redoc("*>")]]stop-when(std::forward<Sender>(snd), [[redoc("*>")]]scope->[[redoc("*>")]]s_source.get_token());
 [codeblock:end]
+[div:end]
+
+[%@lib@member try_associate[!execution::counting_scope::token]]
+[codeblock:declaration]
+[[redoc("*>")]]assoc-t counting_scope::token::try_associate() const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to: [`return [*scope]->[*try-associate]();]
+[:zh_CN] 等价于：[`return [*scope]->[*try-associate]();]
 [div:end]

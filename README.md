@@ -626,6 +626,7 @@ associated class                        |关联类
 associated constraints                  |关联约束       |声明式受到的约束，按范式合取：模板形参的类型约束，模板形参后的requires子句，函数形参中的类型约束，函数尾部requires子句
 associated entities                     |关联实体       |依赖于实参查找中为实参类型确定的实体集合：<br>- 类或枚举：自身，外围类，基类<br>- 类模板特例：模板类型实参的关联实体，模板模板实参的模板及其外围类<br>- 指针、数组、函数、成员指针：目标类型，被指类，形参和返回类型的关联实体<br>- 实参为重载集合：取并集，+模板类型实参的关联实体
 associated namespace                    |关联命名空间   |依赖于实参查找中确定的查找范围：每个关联实体的所在内层（非内联）命名空间（及其所有内联）
+associated scope                        |关联作用域     |`scope_association`
 assumption                              |假设
 async lifetime                          |异步生存期
 async result                            |异步结果       |异步操作的安置态和结果数据集合
@@ -1056,6 +1057,7 @@ encoding prefix                         |编码前缀   |`L`, `u`, `u8`, `U`
 end-of-line indicator                   |行结束指示符   |`\n`，`\r\n`，等
 endian                                  |端序
 enforce                                 |强制       |契约评估语义之一，属于检查语义，属于终止语义。违例时执行契约违例处理器，执行“契约终止”
+engaged                                 |已订约     |`scope_association`
 entity                                  |实体       |变量、结构化绑定、结果绑定、函数、枚举符、类型（别名）、非静态数据成员、位字段、模板、命名空间（别名）、模板/函数形参、带初始化俘获符
 entry                                   |入口       |函数，catch，代码块
 enumerated element                      |列举元素   |列举类型中的具名常量`Cn`

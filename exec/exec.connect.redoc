@@ -18,8 +18,7 @@ and [`Rcvr] be [`decltype((rcvr))], let [`new_sndr] be the expression
 transform_sender(decltype([[redoc("*>")]]get-domain-late(sndr, get_env(rcvr))){}, sndr, get_env(rcvr))
 [codeblock:end]
 
-[:en@~] and let [`DS] and [`DR] be [`decay_t<decltype((new_sndr))>] and
-[`decay_t<Rcvr>], respectively.
+[:en@~] and let [`DS] and [`DR] be [`decay_t<decltype((new_sndr))>] and [`decay_t<Rcvr>], respectively.
 [:zh_CN] 并令 [`DS] 和 [`DR] 分别为 [`decay_t<decltype((new_sndr))>] 和 [`decay_t<Rcvr>]。
 
 [para]
@@ -102,13 +101,13 @@ namespace std::execution {
     auto fn = [&, fun]() noexcept { fun(std::forward<Ts>(as)...); };
 
     struct awaiter {
-      decltype([[redoc("*>")]]fn) [[redoc("*>")]]fn;                                     // [=expos]
+      decltype(fn) [[redoc("*>")]]fn;                                     // [=expos]
 
       static constexpr bool await_ready() noexcept { return false; }
       void await_suspend(coroutine_handle<>) noexcept { [[redoc("*>")]]fn(); }
       [[noreturn]] void await_resume() noexcept { unreachable(); }
     };
-    return awaiter{[[redoc("*>")]]fn};
+    return awaiter{fn};
   }
 
   [[redoc("*>")]]operation-state-task [[redoc("*>")]]connect-awaitable[[redoc("*>")]](DS sndr, DR rcvr) requires [[redoc("`:c>")]]receiver_of<DR, Sigs> {
@@ -145,12 +144,39 @@ namespace std::execution {
 [:en] Except that [`rcvr] is evaluated only once.
 [:zh_CN] 但 [`rcvr] 仅求值一次。
 
+[:en] The program is ill-formed, no diagnostic required,
+if there exists an rvalue expression [`rcvr2] such that:
+[:zh_CN] 若存在满足下列条件的右值表达式 [`rcvr2]，则程序非良构，无须诊断：
+[list]
+[item]
+[item]
+[:en@~] [`decltype(rcvr2)] models [`:c receiver],
+[:zh_CN@~] [`decltype(rcvr2)] 构成 [`:c receiver]，
+[item]
+[:en@~] [`noexcept(rcvr2)] is [`true],
+[:zh_CN@~] [`noexcept(rcvr2)] 为 [`true]，
+[item]
+[:en@~] [`is_same_v<decltype(get_env(rcvr2)), decltype(get_env(rcvr))>] is [`true],
+[:zh_CN@~] [`is_same_v<decltype(get_env(rcvr2)), decltype(get_env(rcvr))>] 为 [`true]，
+[item]
+[:en@~] [`noexcept(execution::connect(sndr, rcvr))] is [`true], and
+[:zh_CN@~] [`noexcept(execution::connect(sndr, rcvr))] 为 [`true]，且
+[item]
+[:en@~] [`noexcept(execution::connect(sndr, rcvr2))] is well-formed and evaluates to [`false].
+[:zh_CN@~] [`noexcept(execution::connect(sndr, rcvr2))] 良构且求值为 [`false]。
+[list:end]
+
+[begin:note]
+[:en] This allows determination of whether [`connect] throws with only the
+context of the environment, such as within [`get_completion_signatures].
+[:zh_CN] 这允许仅通过环境的上下文（例如在 [`get_completion_signatures] 内）
+来确定 [`connect] 是否会抛出。
+[end:note]
+
 [para:mandates@~]
 [:en] The following are [`true]:
 [:zh_CN] 以下各项为 [`true]：
 [list]
-[item]
-[`[`:c sender_in]<Sndr, env_of_t<Rcvr>>]
-[item]
-[`[`:c receiver_of]<Rcvr, completion_signatures_of_t<Sndr, env_of_t<Rcvr>>>]
+[item] [`[`:c sender_in]<Sndr, env_of_t<Rcvr>>]
+[item] [`[`:c receiver_of]<Rcvr, completion_signatures_of_t<Sndr, env_of_t<Rcvr>>>]
 [list:end]

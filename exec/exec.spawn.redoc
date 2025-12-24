@@ -1,5 +1,5 @@
 [section#exec.spawn
-    [`std::execution::spawn]
+    [`execution::spawn]
 ]
 
 [para]
@@ -76,17 +76,15 @@ namespace std::execution {
 
     [[redoc("*>")]]spawn-state(Alloc alloc, Sender&& sndr, Token token);   // [=expos]
     void [[redoc("*>")]]complete() noexcept override;                      // [=expos]
-    void [[redoc("*>")]]run();                                             // [=expos]
+    void [[redoc("*>")]]run() noexcept;                                    // [=expos]
 
   private:
-    using [[redoc("*>")]]alloc-t =                                         // [=expos]
-      typename allocator_traits<Alloc>::template rebind_alloc<[[redoc("*>")]]spawn-state>;
+    using [[redoc("*>")]]assoc-t =                                         // [=expos]
+      remove_cvref_t<decltype(declval<Token&>().try_associate())>;
 
-    [[redoc("*>")]]alloc-t [[redoc("*>")]]alloc;                                          // [=expos]
+    Alloc [[redoc("*>")]]alloc;                                            // [=expos]
     [[redoc("*>")]]op-t [[redoc("*>")]]op;                                                // [=expos]
-    Token [[redoc("*>")]]token;                                            // [=expos]
-
-    void [[redoc("*>")]]destroy() noexcept;                                // [=expos]
+    [[redoc("*>")]]assoc-t [[redoc("*>")]]assoc;                                          // [=expos]
   };
 }
 [codeblock:end]
@@ -98,16 +96,16 @@ namespace std::execution {
 
 [div:description]
 [para:effects]
-[:en] Initializes [*alloc] with [`alloc], [*token] with [`token], and [*op] with:
-[:zh_CN] 以 [`alloc] 初始化 [*alloc]，以 [`token] 初始化 [*token]，并将 [*op] 初始化为：
-[codeblock]
-connect(std::move(sndr), [[redoc("*>")]]spawn-receiver(this))
-[codeblock:end]
+[:en] Initializes [*alloc] with [`std::move(alloc)], [*op] with
+[`connect(std::move(sndr), [*spawn-receiver](this))], and [*assoc] with [`token.try_associate()].
+[:zh_CN] 以 [`std::move(alloc)] 初始化 [*alloc]，以
+[`connect(std::move(sndr), [*spawn-receiver](this))] 初始化 [*op]，并以
+[`token.try_associate()] 初始化 [*assoc]。
 [div:end]
 
 [%@lib@member [*run][!execution::[*spawn-state]]]
 [codeblock:declaration]
-void [[redoc("*>")]]run();
+void [[redoc("*>")]]run() noexcept;
 [codeblock:end]
 
 [div:description]
@@ -115,10 +113,10 @@ void [[redoc("*>")]]run();
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-if ([[redoc("*>")]]token.try_associate())
+if ([[redoc("*>")]]assoc)
   start([[redoc("*>")]]op);
 else
-  [[redoc("*>")]]destroy();
+  [[redoc("*>")]]complete();
 [codeblock:end]
 [div:end]
 
@@ -132,27 +130,13 @@ void [[redoc("*>")]]complete() noexcept override;
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-auto token = std::move(this->[[redoc("*>")]]token);
-
-[[redoc("*>")]]destroy();
-token.disassociate();
-[codeblock:end]
-[div:end]
-
-[%@lib@member [*destroy][!execution::[*spawn-state]]]
-[codeblock:declaration]
-void [[redoc("*>")]]destroy() noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Equivalent to:
-[:zh_CN] 等价于：
-[codeblock]
-auto alloc = std::move(this->[[redoc("*>")]]alloc);
-
-allocator_traits<[[redoc("*>")]]alloc-t>::destroy(alloc, this);
-allocator_traits<[[redoc("*>")]]alloc-t>::deallocate(alloc, this, 1);
+auto assoc = std::move(this->[[redoc("*>")]]assoc);
+{
+  using traits = allocator_traits<Alloc>::template rebind_traits<[[redoc("*>")]]spawn-state>;
+  typename traits::allocator_type alloc(this->[[redoc("*>")]]alloc);
+  traits::destroy(alloc, this);
+  traits::deallocate(alloc, this, 1);
+}
 [codeblock:end]
 [div:end]
 
@@ -182,15 +166,17 @@ and [`senv] is the expression [`[*JOIN-ENV](prop(get_allocator, alloc), env)];
 [list:end]
 
 [para]
-[:en] The expression [`spawn_(sndr, token, env)] is of type [`void] has the
-following effects:
+[:en] The expression [`spawn_(sndr, token, env)] is of type [`void] has the following effects:
 [:zh_CN] 表达式 [`spawn(sndr, token, env)] 类型为 [`void] 并具有以下效果：
 
 [list]
 [item]
-[:en] Uses [`alloc] to allocate and construct an object [`s] of a type that is
-a specialization of [*spawn-state] from [`alloc], [`write_env(token.wrap(sndr), senv)],
-and [`token] and then invokes [`o.[*run]()].
+[:en] Uses [`alloc] to allocate and construct an object [`s] of type
+[`decltype([*spawn-state](alloc, write_env(token.wrap(sndr), senv), token))]
+from [`alloc], [`write_env(token.wrap(sndr), senv)], and [`token] and then invokes [`o.[*run]()].
+[:zh_CN] 使用 [`alloc] 以 [`alloc]、[`write_env(token.wrap(sndr), senv)] 和 [`token] 分配并
+构造一个 [`decltype([*spawn-state](alloc, write_env(token.wrap(sndr), senv), token))] 类型的对象。
+
 [:zh_CN] 使用 [`alloc] 分配并构造一个对象 [`s]，其类型为以 [`alloc]、
 [`write_env(token.wrap(sndr), senv)] 和 [`token] 指定的 [*spawn-state] 特例，
 然后调用 [`o.[*run]()]。

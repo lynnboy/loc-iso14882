@@ -9,8 +9,7 @@ every index in an index space.
 [:zh_CN] [`bulk]、[`bulk_chunked] 和 [`bulk_unchunked] 对索引空间中的每个索引重复执行一项任务。
 
 [para]
-[:en] The names [`bulk], [`bulk_chunked], and [`bulk_unchunked] denote pipeable
-sender adaptor objects.
+[:en] The names [`bulk], [`bulk_chunked], and [`bulk_unchunked] denote pipeable sender adaptor objects.
 [:zh_CN] 名字 [`bulk]、[`bulk_chunked] 和 [`bulk_unchunked] 都代表可连管道的发送器适配器对象。
 
 [:en] Let [`[^bulk-algo]] be either [`bulk], [`bulk_chunked], or [`bulk_unchunked].
@@ -43,8 +42,7 @@ and [`Func] be [`decay_t<decltype((f))>].
 [:zh_CN@~] 那么 [`[^bulk-algo](sndr, policy, shape, f)] 非良构。
 
 [para]
-[:en] Otherwise, the expression [`[^bulk-algo](sndr, policy, shape, f)] is
-expression-equivalent to:
+[:en] Otherwise, the expression [`[^bulk-algo](sndr, policy, shape, f)] is expression-equivalent to:
 [:zh_CN] 否则，表达式 [`[^bulk-algo](sndr, policy, shape, f)] 按表达式等价于：
 [codeblock]
 transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(
@@ -83,10 +81,9 @@ it is connected to a receiver whose execution domain does not customize [`bulk].
 [end:note]
 
 [para]
-[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.expos]) is
 specialized for [`bulk_chunked_t] as follows:
-[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对
-[`bulk_chunked_t] 进行如下特化：
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [`bulk_chunked_t] 进行如下特化：
 [%@lib [*impls-for]<bulk_chunked_t>]
 [codeblock]
 namespace std::execution {
@@ -127,6 +124,27 @@ if the expression [`f(auto(shape), auto(shape), args...)] is well-formed.
 [:zh_CN] 以上 lambda 的 [~requires-子句]中的表达式，当且仅当 [`Tag] 代表不是
 [`set_value_t] 的类型，或当表达式 [`f(auto(shape), auto(shape), args...)] 良构时，为 [`true]。
 
+[codeblock:declaration]
+template<class Sndr, class... Env>
+  static consteval void [[redoc("*:c>")]]check-types();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+auto fn = []<class... Ts>(set_value_t(*)(Ts...)) {
+  using data_type = [[redoc("*>")]]data-type<Sndr>;
+  if constexpr (![[redoc("`:c>")]]invocable<remove_cvref_t<[[redoc("*>")]]child-type<data_type>&,
+                           remove_cvref_t<[[redoc("*>")]]data-type<data_type>>, Ts&...>)
+    throw [[redoc("^>")]]unspecified-exception();
+};
+cs.[[redoc("*>")]]for-each([[redoc("*>")]]overload-set(fn, [](auto){}));
+[codeblock:end]
+[div:end]
+
 [para]
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
 specialized for [`bulk_unchunked_t] as follows:
@@ -138,6 +156,9 @@ namespace std::execution {
   template<>
   struct [[redoc("*>")]]impls-for<bulk_unchunked_t> : [[redoc("*>")]]default-impls {
     static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types();
   };
 }
 [codeblock:end]
@@ -151,7 +172,7 @@ is initialized with a callable object equivalent to the following lambda:
   (Index, State& state, Rcvr& rcvr, Tag, Args&&... args) noexcept
   -> void requires [[redoc("[=seebelow]")]] {
     if constexpr ([[redoc("`:c>")]]same_as<Tag, set_value_t>) {
-      auto& [shape, f] = state;
+      auto& [policy, shape, f] = state;
       constexpr bool nothrow = noexcept(f(auto(shape), args...));
       [[redoc("*>")]]TRY-EVAL(rcvr, [&]() noexcept(nothrow) {
         for (decltype(auto(shape)) i = 0; i < shape; ++i) {
@@ -184,13 +205,13 @@ template<class Sndr, class... Env>
 [codeblock]
 auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
 auto fn = []<class... Ts>(set_value_t(*)(Ts...)) {
-  if constexpr (![[redoc("`:c>")]]invocable<remove_cvref_t<[[redoc("*>")]]data-type<Sndr>>, Ts&...>)
+  using data_type = [[redoc("*>")]]data-type<Sndr>;
+  if constexpr (![[redoc("^:c>")]]invocable<remove_cvref_t<[[redoc("*>")]]child-type<data_type>&,
+                           remove_cvref_t<[[redoc("*>")]]data-type<data_type>>, Ts&...>)
     throw [[redoc("^>")]]unspecified-exception();
 };
 cs.[[redoc("*>")]]for-each([[redoc("*>")]]overload-set(fn, [](auto){}));
 [codeblock:end]
-[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
-[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
 [div:end]
 
 [para]

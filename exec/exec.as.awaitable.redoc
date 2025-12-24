@@ -7,8 +7,7 @@
 that is awaitable within a particular coroutine.
 [:zh_CN] [`as_awaitable] 将一个对象变换为一个可以在特定协程之内等待的对象。
 
-[:en] Subclause [#exec.coro.util] makes use of the following exposition-only
-entities:
+[:en] Subclause [#exec.coro.util] makes use of the following exposition-only entities:
 [:zh_CN] 子条款 [#exec.coro.util] 利用了下列仅用于阐释的实体：
 
 [codeblock:synopsis]
@@ -16,7 +15,8 @@ namespace std::execution {
   template<class Sndr, class Promise>
     concept [[redoc("*:c@def>")]]awaitable-sender =
       [[redoc("*:c>")]]single-sender<Sndr, env_of_t<Promise>> &&
-      [[redoc("`:c>")]]sender_to<Sndr, [[redoc("*>")]]awaitable-receiver> &&    // [=seebelow]
+      [[redoc("`:c>")]]sender_to<Sndr,
+                typename [[redoc("*>")]]sender-awaitable<Sndr, Promise>::[[redoc("*>")]]awaitable-receiver> &&    // [=seebelow]
       requires (Promise& p) {
         { p.unhandled_stopped() } -> [[redoc("`:c>")]]convertible_to<coroutine_handle<>>;
       };
@@ -179,18 +179,10 @@ the expression above.
 [:zh_CN] [`[*:c is-awaitable]<A, Promise>] 为 [`true]，其中 [`A] 为上述表达式的类型。
 
 [item]
-[:en] Otherwise, [`(void(p), expr)] if [`[*:c is-awaitable]<Expr, U>] is [`true],
-where [`U] is an unspecified class type that is not [`Promise] and
-that lacks a member named [`await_transform].
-[:zh_CN] 否则，若 [`[*:c is-awaitable]<Expr, U>] 为 [`true] 则为 [`(void(p), expr)]，
-其中 [`U] 为某个不是 [`Promise] 且没有名为 [`await_transform] 的成员的未指明的类类型。
-
-[para:expects@~]
-[:en] [`[*:c is-awaitable]<Expr, Promise>] is [`true] and the expression
-[`co_await expr] in a coroutine with promise type [`U] is expression-equivalent
-to the same expression in a coroutine with promise type [`Promise].
-[:zh_CN] [`[*:c is-awaitable]<Expr, Promise>] 为 [`true]，且表达式 [`co_await expr]
-在承诺类型为 [`U] 的协程中时按表达式等价于在承诺类型为 [`Promise] 的协程中的相同表达式。
+[:en] Otherwise, [`(void(p), expr)] if [`decltype([*GET-AWAITER](expr))]
+satisfies [`[*:c is-awaiter]<Promise>].
+[:zh_CN] 否则，若 [`decltype([*GET-AWAITER](expr))] 满足
+[`[*:c is-awaiter]<Promise>]，则为 [`(void(p), expr)]。
 
 [item]
 [:en] Otherwise, [`[*sender-awaitable]{[*adapted-expr], p}] if

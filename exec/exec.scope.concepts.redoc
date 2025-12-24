@@ -4,10 +4,81 @@
 ]
 
 [para]
+[:en] The [`:c scope_association] concept defines the requirements on a type [`Assoc].
+[:zh_CN] [`:c scope_association] 概念定义针对类型 [`Assoc] 的规定。
+
+[:en] An object of type [`Assoc] is [+engaged] if and only if it owns an
+association with an async scope, referred to as its [+:adj associated[!scope]].
+[:zh_CN] 当且仅当 [`Assoc] 类型的对象拥有与某个异步作用域的关联时，该对象被称为
+[+已订约]，该异步作用域称为其[+:adj 关联[!作用域]]。
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Assoc>
+    concept [[redoc("`:c@def>")]]scope_association =
+      [[redoc("`:c>")]]movable<Assoc> &&
+      is_nothrow_move_constructible_v<Assoc> &&
+      is_nothrow_move_assignable_v<Assoc> &&
+      [[redoc("`:c>")]]default_initializable<Assoc> &&
+      requires(const Assoc assoc) {
+        { static_cast<bool>(assoc) } noexcept;
+        { assoc.try_associate() } -> [[redoc("`:c>")]]same_as<Assoc>;
+      };
+}
+[codeblock:end]
+
+[para]
+[:en] A type [`Assoc] models [`:c scope_association] only if:
+[:zh_CN] 仅当符合以下情况时，类型 [`Assoc] 构成 [`:c scope_association]：
+
+[list]
+[item]
+[:en] a default constructed object of type [`Assoc] is not engaged;
+[:zh_CN] 默认构造的 [`Assoc] 类型的对象未订约；
+[item]
+[:en] for an object [*assoc] of type [`Assoc], [`static_cast<bool>(assoc)] is [`true]
+if and only if [`assoc] is engaged;
+[:zh_CN] 对于 [`Assoc] 类型的对象 [*assoc]，当且仅当 [`assoc] 已订约时，
+[`static_cast<bool>(assoc)] 为 [`true]；
+[item]
+[:en] no two distinct objects of type [`Assoc] own the same assocation;
+[:zh_CN] 两个不同的 [`Assoc] 类型对象不会拥有相同的关联；
+[item]
+[:en] for an object [`assoc] of type [`Assoc],
+destroying [`assoc] releases the assocation owned by [`assoc], if any;
+[:zh_CN] 对于 [`Assoc] 类型的对象 [`assoc]，销毁 [`assoc] 会释放其拥有的关联（如果有）；
+[item]
+[:en] for an object [`assoc] of type [`Assoc], after it is used as the source
+operand of a move constructor, the [`assoc] is not engaged;
+[:zh_CN] 对于 [`Assoc] 类型的对象 [`assoc]，在其被用作移动构造函数的源操作数之后，[`assoc] 未订约；
+[item]
+[:en] for distinct objects [`assoc1] and [`assoc2] of type [`Assoc],
+after evaluating [`assoc1 = std::move(assoc2)], the association owned by [`assoc1],
+if any, is released and [`assoc2] is not engaged;
+[:zh_CN] 对于不同的 [`Assoc] 类型对象 [`assoc1] 和 [`assoc2]，在求值
+[`assoc1 = std::move(assoc2)] 之后，[`assoc1] 拥有的关联（如果有）被释放，并且 [`assoc2] 未订约；
+[item]
+[:en] for an object [`assoc] of type [`Assoc] that is engaged,
+[`assoc.try_associate()] either returns an object that is not engaged or
+acquires a new association with [`assoc][=']s associated scope and
+returns an engaged object that owns that association;
+[:zh_CN] 对于已订约的 [`Assoc] 类型对象 [`assoc]，[`assoc.try_associate()] 要么返回
+未订约对象，要么获取与 [`assoc][=']s 关联作用域的新关联并返回拥有该关联的已订约对象；
+[item]
+[:en] for an object [`assoc] of type [`Assoc] that is not engaged,
+[`assoc.try_associate()] returns an object that is not engaged.
+[:zh_CN] 对于未订约的 [`Assoc] 类型对象 [`assoc]，[`assoc.try_associate()] 返回未订约的对象。
+[list:end]
+
+[para]
 [:en] The [`:c scope_token] concept defines the requirements on a type [`Token]
 that can be used to create associations between senders and an async scope.
 [:zh_CN] [`:c scope_token] 概念定义针对可用于创建发送器和某个异步作用域之间的关联的
 类型 [`Token] 的规定。
+
+[:en] Every object of type [`Token] is associated with an async scope
+that is referred to as its [+:% associated scope].
+[:zh_CN] [`Token] 类型的每个对象都与某个异步作用域关联，该异步作用域称为其[+:% 关联作用域]。
 
 [para]
 [:en] Let [`[^test-sender]] and [`[^test-env]] be unspecified types such that
@@ -21,8 +92,7 @@ namespace std::execution {
     concept [[redoc("`:c@def>")]]scope_token =
       [[redoc("`:c>")]]copyable<Token> &&
       requires(const Token token) {
-        { token.try_associate() } -> [[redoc("`:c>")]]same_as<bool>;
-        { token.disassociate() } noexcept -> [[redoc("`:c>")]]same_as<void>;
+        { token.try_associate() } -> [[redoc("`:c>")]]scope_association<bool>;
         { token.wrap(declval<@\placeholder{test-sender}@>()) } -> [[redoc("`:c>")]]sender_in<[[redoc("^>")]]test-env>;
       };
 }
@@ -35,8 +105,15 @@ namespace std::execution {
 [list]
 [item]
 [:en] no exceptions are thrown from copy construction, move construction,
-copy assignment, or move assignment of objects of type [`Token]; and
-[:zh_CN] [`Token] 类型对象的复制构造、移动构造、复制赋值或者移动赋值中不会抛出任何异常；并且
+copy assignment, or move assignment of objects of type [`Token];
+[:zh_CN] [`Token] 类型对象的复制构造、移动构造、复制赋值或者移动赋值中不会抛出任何异常；
+
+[item]
+[:en] for an object [`token] of type [`Token], [`token.try_associate()] either
+returns an object that is not engaged or acquires a new association with [`token][=']s
+associated scope and returns an engaged object that owns that association; and
+[:zh_CN] 对于 [`Token] 类型的对象 [`token]，[`token.try_associate()] 要么返回未订约对象，
+要么获取与 [`token] 的关联作用域的新关联并返回拥有该关联的已订约对象；以及
 
 [item]
 [:en] given an lvalue [`token] of type (possibly const) [`Token],

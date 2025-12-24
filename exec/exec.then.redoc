@@ -14,17 +14,14 @@ sending the result of the invocable as a value completion.
 将可调用体的结果以值完成来发送。
 
 [para]
-[:en] The names [`then], [`upon_error], and [`upon_stopped] denote pipeable
-sender adaptor objects.
+[:en] The names [`then], [`upon_error], and [`upon_stopped] denote pipeable sender adaptor objects.
 [:zh_CN] 名字 [`then]，[`upon_error] 和 [`upon_stopped] 都代表可连管道的发送器适配器对象。
 
-[:en] Let the expression [*then-cpo] be one of
-[`then], [`upon_error], or [`upon_stopped].
+[:en] Let the expression [*then-cpo] be one of [`then], [`upon_error], or [`upon_stopped].
 [:zh_CN] 令表达式 [*then-cpo] 为 [`then]，[`upon_error] 或 [`upon_stopped] 之一。
 
-[:en] For subexpressions [`sndr] and [`f], if [`decltype((sndr))] does not
-satisfy [`:c sender], or [`decltype((f))] does not satisfy [*:c movable-value],
-[`[*then-cpo](sndr, f)] is ill-formed.
+[:en] For subexpressions [`sndr] and [`f], if [`decltype((sndr))] does not satisfy [`:c sender],
+or [`decltype((f))] does not satisfy [*:c movable-value], [`[*then-cpo](sndr, f)] is ill-formed.
 [:zh_CN] 对于子表达式 [`sndr] 和 [`f]，如果 [`decltype((sndr))] 不满足 [`:c sender]，
 或者 [`decltype((f))] 不满足 [*:c movable-value]，那么 [`[*then-cpo](sndr, f)] 非良构。
 
@@ -43,10 +40,9 @@ transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-send
 [:zh_CN] 对于 [`then]，[`upon_error] 和 [`upon_stopped]，令 [*set-cpo] 分别为
 [`set_value]，[`set_error] 和 [`set_stopped]。
 
-[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.expos]) is
 specialized for [*then-cpo] as follows:
-[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*then-cpo]
-进行如下特化：
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [*then-cpo] 进行如下特化：
 [%@lib [*impls-for]<[*decayed-typeof]<[*then-cpo]>>]
 [codeblock]
 namespace std::execution {
@@ -55,7 +51,7 @@ namespace std::execution {
     static constexpr auto [[redoc("*>")]]complete =
       []<class Tag, class... Args>
         (auto, auto& fn, auto& rcvr, Tag, Args&&... args) noexcept -> void {
-          if constexpr ([[redoc("`:c>")]]same_as<Tag, [[redoc("*>")]]decayed-typeof<set-cpo>>) {
+          if constexpr ([[redoc("`:c>")]]same_as<Tag, [[redoc("*>")]]decayed-typeof<[[redoc("*>")]]set-cpo>>) {
             [[redoc("*>")]]TRY-SET-VALUE(rcvr,
                           invoke(std::move(fn), std::forward<Args>(args)...));
           } else {
@@ -81,14 +77,12 @@ template<class Sndr, class... Env>
 [:zh_CN] 等价于：
 [codeblock]
 auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
-auto fn = []<class... Ts>(set_value_t(*)(Ts...)) {
+auto fn = []<class... Ts>([[redoc("*>")]]decayed-typeof<[[redoc("*>")]]set-cpo>(*)(Ts...)) {
   if constexpr (![[redoc("`:c>")]]invocable<remove_cvref_t<[[redoc("*>")]]data-type<Sndr>>, Ts...>)
     throw [[redoc("^>")]]unspecified-exception();
 };
 cs.[[redoc("*>")]]for-each([[redoc("*>")]]overload-set{fn, [](auto){}});
 [codeblock:end]
-[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
-[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生自 [`exception] 的类型。
 [div:end]
 
 [para]

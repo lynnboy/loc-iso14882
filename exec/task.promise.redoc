@@ -13,17 +13,15 @@ namespace std::execution {
 
     task get_return_object() noexcept;
 
-    auto initial_suspend() noexcept;
+    static constexpr suspend_always [[redoc("[%@lib@member initial_suspend[!task::promise_type]]")]]initial_suspend() noexcept { return {}; }
     auto final_suspend() noexcept;
 
-    void uncaught_exception();
-    coroutine_handle<> unhandled_stopped();
+    void unhandled_exception();
+    coroutine_handle<> unhandled_stopped() noexcept;
 
-    void return_void();                 // [:en] present only if [`is_void_v<T>] is [`true]; \
-                                        [:zh_CN] 仅当 [`is_void_v<T>] 为 [`true] 时提供；
-    template<class V>
-      void return_value(V&& value);     // [:en] present only if [`is_void_v<T>] is [`false]; \
-                                        [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时提供；
+    void return_void();                 // [:en] present only if [`is_void_v<T>] is [`true]; [:zh_CN] 仅当 [`is_void_v<T>] 为 [`true] 时提供；
+    template<class V = T>
+      void return_value(V&& value);     // [:en] present only if [`is_void_v<T>] is [`false]; [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时提供；
 
     template<class E>
       [[redoc("[=unspec]")]] yield_value(with_error<E> error);
@@ -46,8 +44,8 @@ namespace std::execution {
     allocator_type    [[redoc("*>")]]alloc;            // [=expos]
     stop_source_type  [[redoc("*>")]]source;           // [=expos]
     stop_token_type   [[redoc("*>")]]token;            // [=expos]
-    optional<T>       [[redoc("*>")]]result;           // [=expos]; [:en] present only if [`is_void_v<T>] is [`false]; \
-                                                                [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时提供；
+    optional<T>       [[redoc("*>")]]result;           // [=expos]; [:en] present only if [`is_void_v<T>] is [`false] \
+                                                                [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时提供
     [[redoc("*>")]]error-variant     [[redoc("*>")]]errors;           // [=expos]
   };
 }
@@ -68,10 +66,11 @@ during evaluation of [`task::[*state]<Rcvr>::start] for some receiver [`Rcvr].
 
 [para]
 [:en] [*error-variant] is a [`variant<monostate, remove_cvref_t<E>...>], with
-duplicate types removed, where [`E...] are template arguments of the specialization of
-[`execution::completion_signatures] denoted by [`error_types].
+duplicate types removed, where [`E...] are the parameter types of the template arguments
+of the specialization of [`execution::completion_signatures] denoted by [`error_types].
 [:zh_CN] [*error-variant] 为移除了重复类型的 [`variant<monostate, remove_cvref_t<E>...>]，
-其中 [`E...] 是 [`error_types] 代表的 [`execution::completion_signatures] 特例的各模板实参。
+其中 [`E...] 是 [`error_types] 代表的 [`execution::completion_signatures] 特例的
+各模板实参的形参类型。
 
 [%@lib@ctor task::promise_type]
 [codeblock:declaration]
@@ -107,27 +106,6 @@ task get_return_object() noexcept;
 [`coroutine_handle<promise_type>::from_promise(*this)]。
 [div:end]
 
-[%@lib@member initial_suspend[!task::promise_type]]
-[codeblock:declaration]
-auto initial_suspend() noexcept;
-[codeblock:end]
-
-[div:description]
-[para:returns]
-[:en] An awaitable object of unspecified type ([#expr.await]) whose
-member functions arrange for
-[:zh_CN] 一个未指明类型的可等待对象（[#expr.await]），其成员函数安排对待
-[list]
-[item]
-[:en@~] the calling coroutine to be suspended,
-[:zh_CN@~] 调用方协程的暂停，
-[item]
-[:en@~] the coroutine to be resumed on an execution agent of the
-execution resource associated with [`[*SCHED](*this)].
-[:zh_CN@~] 该协程在与 [`[*SCHED](*this)] 关联的执行资源的执行代理上恢复。
-[list:end]
-[div:end]
-
 [%@lib@member final_suspend[!task::promise_type]]
 [codeblock:declaration]
 auto final_suspend() noexcept;
@@ -147,8 +125,7 @@ is greater than zero and [`e] is the value held by [*errors], otherwise
 [:zh_CN] 如果 [`[*errors].index()] 大于零且 [`e] 为 [*errors] 所持有的值，则调用
 [`set_error(std::move([*RCVR](*this)), std::move(e))]，否则
 [item]
-[:en] [`set_value(std::move([*RCVR](*this)))] if [`is_void<T>] is [`true],
-and otherwise
+[:en] [`set_value(std::move([*RCVR](*this)))] if [`is_void<T>] is [`true], and otherwise
 [:zh_CN] 如果 [`is_void<T>] 为 [`true]，则调用 [`set_value(std::move([*RCVR](*this)))]，否则
 [item]
 [:en] [`set_value(std::move([*RCVR](*this)), *[*result])].
@@ -166,8 +143,7 @@ template<class Err>
 [para:mandates]
 [:en] [`std::move(err.error)] is convertible to exactly one of the
 [`set_error_t] argument types of [`error_types].
-[:zh_CN] [`std::move(err.error)] 可以转换为 [`error_types] 中的恰好一个
-[`set_error_t] 实参类型。
+[:zh_CN] [`std::move(err.error)] 可以转换为 [`error_types] 中的恰好一个 [`set_error_t] 实参类型。
 
 [:en] Let [`[^Cerr]] be that type.
 [:zh_CN] 令 [`[^Cerr]] 为该类型。
@@ -213,9 +189,9 @@ return await_transform(just(exchange([[redoc("*>")]]SCHED(*this), scheduler_type
 [codeblock:end]
 [div:end]
 
-[%@lib@member uncaught_exception[!task::promise_type]]
+[%@lib@member unhandled_exception[!task::promise_type]]
 [codeblock:declaration]
-void uncaught_exception();
+void unhandled_exception();
 [codeblock:end]
 
 [div:description]
@@ -231,7 +207,7 @@ of [`error_types], calls [`terminate()] ([#except.terminate]).
 
 [%@lib@member unhandled_stopped[!task::promise_type]]
 [codeblock:declaration]
-coroutine_handle<> unhandled_stopped();
+coroutine_handle<> unhandled_stopped() noexcept;
 [codeblock:end]
 
 [div:description]
@@ -244,6 +220,29 @@ by invoking [`set_stopped(std::move([*RCVR](*this)))].
 [para:returns]
 [:en] [`noop_coroutine()].
 [:zh_CN] [`noop_coroutine()]。
+[div:end]
+
+[%@lib@member return_void[!task::promise_type]]
+[codeblock:declaration]
+void return_void();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Does nothing.
+[:zh_CN] 不执行任何操作。
+[div:end]
+
+[%@lib@member return_value[!task::promise_type]]
+[codeblock:declaration]
+template<class V>
+  void return_value(V&& v);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to [`[*result].emplace(std::forward<V>(v))].
+[:zh_CN] 等价于 [`[*result].emplace(std::forward<V>(v))]。
 [div:end]
 
 [%@lib@member get_env[!task::promise_type]]
@@ -268,8 +267,7 @@ by invoking [`set_stopped(std::move([*RCVR](*this)))].
 [item]
 [:en] For any other query [`q] and arguments [`a...] a call to
 [`env.query(q, a...)] returns [`[*STATE](*this)].
-[:zh_CN] 对于任意其他查询 [`q] 和实参 [`a...]，[`env.query(q, a...)] 的调用返回
-[`[*STATE](*this)]。
+[:zh_CN] 对于任意其他查询 [`q] 和实参 [`a...]，[`env.query(q, a...)] 的调用返回 [`[*STATE](*this)]。
 
 [:en] [`environment.query(q, a...)] if this expression is well-formed and
 [`forwarding_query(q)] is well-formed and is [`true].
@@ -289,8 +287,7 @@ template<class... Args>
 
 [div:description]
 [para]
-[:en] If there is no parameter with type [`allocator_arg_t] then let
-[`alloc] be [`allocator_type()].
+[:en] If there is no parameter with type [`allocator_arg_t] then let [`alloc] be [`allocator_type()].
 [:zh_CN] 若不存在 [`allocator_arg_t] 类型的形参，则令 [`alloc] 为 [`allocator_type()]。
 
 [:en] Otherwise, let [`arg_next] be the parameter following the first

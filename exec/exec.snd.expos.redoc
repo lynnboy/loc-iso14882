@@ -64,11 +64,10 @@ and value categories in different contexts for the same arguments.
 
 [para]
 [:en] For a scheduler [`sch], [`[*SCHED-ATTRS](sch)] is an expression [`o1]
-whose type satisfies [*:c queryable] such that
-[`o1.query(get_completion_scheduler<Tag>)] is an expression with the same type
-and value as [`sch] where [`Tag] is one of [`set_value_t] or [`set_stopped_t],
-and such that [`o1.query(get_domain)] is expression-equivalent to
-[`sch.query(get_domain)].
+whose type satisfies [*:c queryable] such that [`o1.query(get_completion_scheduler<Tag>)]
+is an expression with the same type and value as [`sch] where [`Tag] is one of
+[`set_value_t] or [`set_stopped_t], and such that [`o1.query(get_domain)] is
+expression-equivalent to [`sch.query(get_domain)].
 [:zh_CN] 对于调度器 [`sch]，[`[*SCHED-ATTRS](sch)] 为类型满足 [*:c queryable]
 的表达式 [`o1]，使得 [`o1.query(get_completion_scheduler<Tag>)] 是具有与 [`sch]
 相同类型和值的表达式，其中 [`Tag] 是 [`set_value_t] 或 [`set_stopped_t] 之一，
@@ -313,8 +312,7 @@ that can be used as the initializer of a structured binding declaration.
 [begin:note]
 [:en] An expression of type [*product-type] is usable as
 the initializer of a structured binding declaration ([#dcl.struct.bind]).
-[:zh_CN] [*product-type] 类型的表达式可以用作结构化绑定声明式（[#dcl.struct.bind]）
-的初始化式。
+[:zh_CN] [*product-type] 类型的表达式可以用作结构化绑定声明式（[#dcl.struct.bind]）的初始化式。
 [end:note]
 
 [codeblock:declaration]
@@ -353,8 +351,7 @@ return std::forward<Fn>(fn)(std::forward_like<Self>(ts)...);
 [para:remarks]
 [:en] The expression in the [`noexcept] clause is [`true] if the [`return]
 statement above is not potentially throwing; otherwise, [`false].
-[:zh_CN] [`noexcept] 子句中的表达式当上文 [`return] 语句非潜在抛出时为 [`true]；
-否则为 [`false]。
+[:zh_CN] [`noexcept] 子句中的表达式当上文 [`return] 语句非潜在抛出时为 [`true]；否则为 [`false]。
 [div:end]
 
 [para]
@@ -384,9 +381,9 @@ template<class Tag, class Data = [[redoc("[=seebelow]")]], class... Child>
 [item] [`([`:c sender]<Child> && ...)]
 [item]
 [:en] [`[`:c dependent_sender]<Sndr> || [`:c sender_in]<Sndr>], where [`Sndr] is
-[`[*basic-sender]<Tag, Data, Child...>] as defined below.
+[`[*basic-sender]<Tag, decay_t<Data>, decay_t<Child>...>] as defined below.
 [:zh_CN] [`[`:c dependent_sender]<Sndr> || [`:c sender_in]<Sndr>]，其中 [`Sndr] 为
-[`[*basic-sender]<Tag, Data, Child...>]，如下所定义。
+[`[*basic-sender]<Tag, decay_t<Data>, decay_t<Child>...>]，如下所定义。
 [list:end]
 
 [para:~:recommended]
@@ -403,6 +400,12 @@ that has been direct-list-initialized with the forwarded arguments, where
 [:zh_CN] 已由转发实参进行直接列表初始化的
 [`[*basic-sender]<Tag, decay_t<Data>, decay_t<Child>...>] 类型的纯右值，其中
 [*basic-sender] 是如下仅用于阐释的类模板，但见下文注解。
+
+[para:remarks]
+[:en] The default template argument for the [`Data] template parameter denotes
+an unspecified empty trivially copyable class type that models [`:c semiregular].
+[:zh_CN] [`Data] 模板形参的默认模板实参代表某个构成 [`:c semiregular] 的未指明的
+空平凡可复制类类型。
 [div:end]
 
 [codeblock:synopsis]
@@ -465,22 +468,22 @@ namespace std::execution {
     template<class... Args>
       requires [[redoc("*:c>")]]callable<decltype([[redoc("*>")]]complete), Index, [[redoc("*>")]]state-t&, Rcvr&, set_value_t, Args...>
     void set_value(Args&&... args) && noexcept {
-      [[redoc("*>")]]complete(Index(), op->[[redoc("*>")]]state, op->[[redoc("*>")]]rcvr, set_value_t(), std::forward<Args>(args)...);
+      [[redoc("*>")]]complete(Index(), [[redoc("*>")]]op->[[redoc("*>")]]state, [[redoc("*>")]]op->[[redoc("*>")]]rcvr, set_value_t(), std::forward<Args>(args)...);
     }
 
     template<class Error>
       requires [[redoc("*:c>")]]callable<decltype([[redoc("*>")]]complete), Index, [[redoc("*>")]]state-t&, Rcvr&, set_error_t, Error>
     void set_error(Error&& err) && noexcept {
-      [[redoc("*>")]]complete(Index(), op->[[redoc("*>")]]state, op->[[redoc("*>")]]rcvr, set_error_t(), std::forward<Error>(err));
+      [[redoc("*>")]]complete(Index(), [[redoc("*>")]]op->[[redoc("*>")]]state, [[redoc("*>")]]op->[[redoc("*>")]]rcvr, set_error_t(), std::forward<Error>(err));
     }
 
     void set_stopped() && noexcept
       requires [[redoc("*:c>")]]callable<decltype([[redoc("*>")]]complete), Index, [[redoc("*>")]]state-t&, Rcvr&, set_stopped_t> {
-      [[redoc("*>")]]complete(Index(), op->[[redoc("*>")]]state, op->[[redoc("*>")]]rcvr, set_stopped_t());
+      [[redoc("*>")]]complete(Index(), [[redoc("*>")]]op->[[redoc("*>")]]state, [[redoc("*>")]]op->[[redoc("*>")]]rcvr, set_stopped_t());
     }
 
     auto get_env() const noexcept -> [[redoc("*>")]]env-type<Index, Sndr, Rcvr> {
-      return [[redoc("*>")]]impls-for<tag-t>::[[redoc("*>")]]get-env(Index(), op->[[redoc("*>")]]state, op->[[redoc("*>")]]rcvr);
+      return [[redoc("*>")]]impls-for<[[redoc("*>")]]tag-t>::[[redoc("*>")]]get-env(Index(), [[redoc("*>")]]op->[[redoc("*>")]]state, [[redoc("*>")]]op->[[redoc("*>")]]rcvr);
     }
 
     [[redoc("*>")]]basic-state<Sndr, Rcvr>* [[redoc("*>")]]op;                                // [=expos]
@@ -508,7 +511,7 @@ namespace std::execution {
 
     void start() & noexcept {
       auto& [...ops] = [[redoc("*>")]]inner-ops;
-      [[redoc("*>")]]impls-for<tag-t>::[[redoc("*>")]]start(this->[[redoc("*>")]]state, this->[[redoc("*>")]]rcvr, ops...);
+      [[redoc("*>")]]impls-for<[[redoc("*>")]]tag-t>::[[redoc("*>")]]start(this->[[redoc("*>")]]state, this->[[redoc("*>")]]rcvr, ops...);
     }
   };
 
@@ -535,20 +538,13 @@ namespace std::execution {
 [codeblock:end]
 
 [para]
-[:en] The default template argument for the [`Data] template parameter denotes
-an unspecified empty trivially copyable class type that models [`:c semiregular].
-[:zh_CN] [`Data] 模板形参的默认模板实参代表某个未指明的构成 [`:c semiregular] 的
-空的平凡可复制类类型。
-
-[para]
 [:en] It is unspecified whether a specialization of [*basic-sender] is an aggregate.
 [:zh_CN] 未指明 [*basic-sender] 的特例是否是聚合体。
 
 [para]
 [:en] An expression of type [*basic-sender] is usable as
 the initializer of a structured binding declaration ([#dcl.struct.bind]).
-[:zh_CN] [*basic-sender] 类型的表达式可以用作结构化绑定声明式（[#dcl.struct.bind]）
-的初始化式。
+[:zh_CN] [*basic-sender] 类型的表达式可以用作结构化绑定声明式（[#dcl.struct.bind]）的初始化式。
 
 [para]
 [:en] The expression in the [`noexcept] clause of the constructor of [*basic-state] is
@@ -611,8 +607,7 @@ is_nothrow_constructible_v<[[redoc("*>")]]basic-operation<Self, Rcvr>, Self, Rcv
 [para]
 [:en] The member [`[*default-impls]::[*get-attrs]]
 is initialized with a callable object equivalent to the following lambda:
-[:zh_CN] 成员 [`[*default-impls]::[*get-attrs]] 以一个等价于以下 lambda 的
-可调用对象初始化：
+[:zh_CN] 成员 [`[*default-impls]::[*get-attrs]] 以一个等价于以下 lambda 的可调用对象初始化：
 [codeblock]
 [](const auto&, const auto&... child) noexcept -> decltype(auto) {
   if constexpr (sizeof...(child) == 1)
@@ -683,7 +678,7 @@ the [`integer_sequence] specialization denoted by [`[*indices-for]<Sndr>].
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-(get_completion_signatures<[[redoc("*>")]]child-type<Sndr, Is>, [[redoc("*>")]]FWD-ENV-T(Env)...>(), ...);
+(（void)get_completion_signatures<[[redoc("*>")]]child-type<Sndr, Is>, [[redoc("*>")]]FWD-ENV-T(Env)...>(), ...);
 [codeblock:end]
 
 [para]
@@ -717,7 +712,7 @@ the pack [`S, E...] uniquely determines a set of completion signatures.
 [%@lib@member get_completion_signatures[![*basic-sender]]]
 [codeblock:declaration]
 template<class Tag, class Data, class... Child>
-  template<class Sndr, class... Env>
+  template<[[redoc("*:c>")]]decays-to<[[redoc("*>")]]basic-sender> Sndr, class... Env>
     constexpr auto [[redoc("*>")]]basic-sender<Tag, Data, Child...>::get_completion_signatures();
 [codeblock:end]
 
@@ -787,8 +782,6 @@ struct [[redoc("*>")]]not-a-sender {
   }
 };
 [codeblock:end]
-[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
-[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
 
 [para]
 [%@lib [*decay-copyable-result-datums]]
@@ -800,8 +793,6 @@ constexpr void [[redoc("*>")]]decay-copyable-result-datums(auto cs) {
   });
 }
 [codeblock:end]
-[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
-[:zh_CN@~] 其中 [`[^unspecified-exception]] 是派生于 [`exception] 的类型。
 
 [codeblock:declaration]
 template<class T, class Context>
@@ -810,11 +801,11 @@ template<class T, class Context>
 
 [div:description]
 [para]
-[:en] [*allocator-aware-forward] is an exposition-only function used to
-either create a new object of type [`T] from [`obj]
+[:en] [*allocator-aware-forward] is an exposition-only function template used to
+either create a new object of type [`remove_cvref_t<T>] from [`obj]
 or forward [`obj] depending on whether an allocator is available.
-[:zh_CN] [*allocator-aware-forward] 是仅用于阐释的函数，取决于是否有可用的分配器，
-用于从 [`obj] 创建 [`T] 类型的新对象，或者转发 [`obj]。
+[:zh_CN] [*allocator-aware-forward] 是仅用于阐释的函数模板，取决于是否有可用的分配器，
+用于从 [`obj] 创建 [`remove_cvref_t<T>] 类型的新对象，或者转发 [`obj]。
 
 [:en] If the environment associated with [`context] provides an allocator
 (i.e., the expression [`get_allocator(get_env(context))] is valid),

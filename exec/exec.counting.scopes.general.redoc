@@ -71,9 +71,8 @@ while [`scope] is in the [*closed] or [*unused-and-closed] state,
 启动操作状态 [`op]，会将 [`scope] 转移到 [*closed-and-joining] 状态。
 
 [item]
-[:en] [*joined]: when the count of assocations drops to zero while [`scope] is in
-the [*open-and-joining] or [*closed-and-joining] state, [`scope] moves to the
-[*joined] state.
+[:en] [*joined]: when the count of associations drops to zero while [`scope] is in the
+[*open-and-joining] or [*closed-and-joining] state, [`scope] moves to the [*joined] state.
 [:zh_CN] [*joined]：当 [`scope] 处于 [*open-and-joining] 或 [*closed-and-joining]
 状态时，关联计数降为零，会将 [`scope] 转移到 [*joined] 状态。
 [list:end]
@@ -100,13 +99,15 @@ enum [[redoc("*>")]]scope-state-type {     // [=expos]
   [[redoc("*>")]]unused-and-closed,        // [=expos]
   [[redoc("*>")]]joined,                   // [=expos]
 };
+
+template<class Scope>
+  struct [[redoc("*>")]]association-t;     // [=expos]
 [codeblock:end]
 
 [para]
-[:en] The exposition-only class template [*impls-for] ([#exec.snd.general])
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.expos])
 is specialized for [*scope-join-t] as follows:
-[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [*scope-join-t]
-进行如下特化：
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [*scope-join-t] 进行如下特化：
 
 [%@lib execution::[*impls-for]<[*scope-join-t]>]
 [codeblock]
@@ -177,3 +178,28 @@ namespace std::execution {
   };
 }
 [codeblock:end]
+
+[para]
+[:en] [*association-t] is a class template, specializations of which model
+[`:c scope_association] and contain an exposition-only member [*scope] of type [`Scope*].
+[:zh_CN] [*association-t] 是一个类模板，其特例构成 [`:c scope_association]，
+并且包含一个仅用于阐释的 [`Scope*] 类型的成员 [*scope]。
+
+[:en] For a class type [`Scope] and an object [`assoc] of type [`[*association-t]<Scope>]:
+[:zh_CN] 对于类类型 [`Scope] 和类型为 [`[*association-t]<Scope>] 的对象 [`assoc]：
+[list]
+[item]
+[:en] [`assoc.[*scope]] points to its associated scope,
+[:zh_CN] [`assoc.[*scope]] 指向其关联的作用域，
+[item]
+[:en] [`assoc] is engaged when [`assoc.[*scope] != nullptr] is [`true],
+[:zh_CN] 当 [`assoc.[*scope] != nullptr] 为 [`true] 时，[`assoc] 处于已订约状态，
+[item]
+[:en] if [`assoc] is engaged, then [`assoc.try_associate()] is equivalent to
+[`assoc.[*scope]->[*try-associate]()], and
+[:zh_CN] 如果 [`assoc] 处于已订约状态，则 [`assoc.try_associate()] 等价于
+[`assoc.[*scope]->[*try-associate]()]，以及
+[item]
+[:en] the association owned by [`assoc] is released by invoking [`assoc.[*scope]->[*disassociate]()].
+[:zh_CN] 通过调用 [`assoc.[*scope]->[*disassociate]()] 来释放 [`assoc] 所拥有的关联。
+[list:end]

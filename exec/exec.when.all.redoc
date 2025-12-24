@@ -17,13 +17,11 @@ into its own value completion operation.
 [:en] [`when_all_with_variant(sndrs...)] is semantically equivalent to
 [`when_all(into_variant(sndrs)...)], where [`sndrs] is a pack of subexpressions
 whose types model [`:c sender].
-[:zh_CN] [`when_all_with_variant(sndrs...)] 语义上等价于
-[`when_all(into_variant(sndrs)...)]，其中 [`sndrs] 是构成 [`:c sender] 的类型的
-子表达式的包组。
+[:zh_CN] [`when_all_with_variant(sndrs...)] 语义上等价于 [`when_all(into_variant(sndrs)...)]，
+其中 [`sndrs] 是构成 [`:c sender] 的类型的子表达式的包组。
 
 [para]
-[:en] The names [`when_all] and [`when_all_with_variant] denote customization
-point objects.
+[:en] The names [`when_all] and [`when_all_with_variant] denote customization point objects.
 [:zh_CN] 名字 [`when_all] 和 [`when_all_with_variant] 都代表定制化点对象。
 
 [:en] Let [`sndrs] be a pack of subexpressions, let [`Sndrs] be a pack of the
@@ -56,10 +54,9 @@ transform_sender(CD2(), [[redoc("*>")]]make-sender(when_all, {}, sndrs...))
 [codeblock:end]
 
 [para]
-[:en] The exposition-only class template [*impls-for] ([#exec.snd.general]) is
+[:en] The exposition-only class template [*impls-for] ([#exec.snd.expos]) is
 specialized for [`when_all_t] as follows:
-[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.general]）针对 [`when_all_t]
-进行如下特化：
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [`when_all_t] 进行如下特化：
 [%@lib [*impls-for]<when_all_t>]
 [codeblock]
 namespace std::execution {
@@ -84,33 +81,29 @@ namespace std::execution {
 [codeblock]
 template<class Env>
   constexpr auto [[redoc("*>")]]make-when-all-env(inplace_stop_source& stop_src,               // \expos
-                                   Env&& env) noexcept {
-  return [[redoc("[=seebelow]")]];
-}
+                                   Env&& env) noexcept;
 [codeblock:end]
 
-[:en] Returns an object [`e] such that
-[:zh_CN] 返回一个对象 [`e]，使得
+[para:returns]
+[:en] An object [`e] such that
+[:zh_CN] 一个对象 [`e]，使得
 [list]
 [item]
 [:en] [`decltype(e)] models [*:c queryable], and
 [:zh_CN] [`decltype(e)] 构成 [*:c queryable]，并且
 [item]
-[:en] [`e.query(get_stop_token)] is expression-equivalent to
-[`state.[*stop-src].get_token()], and
-[:zh_CN] [`e.query(get_stop_token)] 按表达式等价于
-[`state.[*stop-src].get_token()]，并且
+[:en] [`e.query(get_stop_token)] is expression-equivalent to [`stop_src.get_token()], and
+[:zh_CN] [`e.query(get_stop_token)] 按表达式等价于 [`stop_src.get_token()]，并且
 [item]
-[:en] given a query object [`q] with type other than [=cv] [`stop_token_t] and
-whose type satisfies [*:c forwarding-query], [`e.query(q)] is
-expression-equivalent to [`get_env(rcvr).query(q)].
-[:zh_CN] 给定类型并非 [=cv] [`stop_token_t] 的查询对象 [`q]，且其类型满足
-[*:c forwarding-query]，则 [`e.query(q)] 按表达式等价于 [`get_env(rcvr).query(q)]。
+[:en] given a query object [`q] with type other than [=cv] [`get_stop_token_t],
+[`e.query(q)] is expression-equivalent to [`env.query(q)] if the type of [`q]
+satisfies [*:c forwarding-query], and ill-formed otherwise.
+[:zh_CN] 给定类型并非 [=cv] [`get_stop_token_t] 的查询对象 [`q]，若 [`q] 的类型满足
+[*:c forwarding-query]，则 [`e.query(q)] 按表达式等价于 [`env.query(q)]，否则非良构。
 [list:end]
 
 [para]
-[:en] Let [`[^when-all-env]] be an alias template such that [`[^when-all-env]<Env>]
-denotes the type
+[:en] Let [`[^when-all-env]] be an alias template such that [`[^when-all-env]<Env>] denotes the type
 [`decltype([*make-when-all-env](declval<inplace_stop_source&>(), declval<Env>()))].
 [:zh_CN] 令 [`[^when-all-env]] 为别名模板，使得 [`[^when-all-env]<Env>] 代表类型
 [`decltype([*make-when-all-env](declval<inplace_stop_source&>(), declval<Env>()))]。
@@ -140,14 +133,12 @@ auto fn = []<class Child>() {
 };
 (fn.template operator()<[[redoc("*>")]]child-type<Sndr, Is>>(), ...);
 [codeblock:end]
-[:en@~] where [`[^unspecified-exception]] is a type derived from [`exception].
-[:zh_CN@~] 其中 [`[^unspecified-exception]] 为从 [`exception] 派生的类型。
 
 [para:throws]
-[:en] Any exception thrown as a result of evaluating the [=Effects], or
-an exception of an unspecified type derived from [`exception] when [`CD] is ill-formed.
-[:zh_CN] 任何因求值 [=Effects] 而抛出的异常，或者当 [`CD] 非良构时抛出的从
-[`exception] 派生的未指明类型的异常。
+[:en] Any exception thrown as a result of evaluating the [=Effects], or an exception
+of type [`[^unspecified-exception]] ([#exec.snd.general]) when [`CD] is ill-formed.
+[:zh_CN] 任何因求值 [=Effects] 而抛出的异常，或者当 [`CD] 非良构时抛出的
+[`[^unspecified-exception]]（[#exec.snd.general]）类型的异常。
 [div:end]
 
 [para]
@@ -189,7 +180,7 @@ a callable object equivalent to the following lambda expression:
 [:en@~] where [$e] is the expression
 [:zh_CN@~] 其中 [$e] 为表达式
 [codeblock]
-std::forward<Sndr>(sndr).apply([[redoc("*>")]]make-state<Rcvr>())
+std::forward<Sndr>(sndr).[[redoc("*>")]]apply([[redoc("*>")]]make-state<Rcvr>())
 [codeblock:end]
 [:en@~] and where [$make-state] is the following exposition-only class template:
 [:zh_CN@~] 且 [$make-state] 为以下仅用于阐释的类模板：
@@ -243,17 +234,15 @@ tuple<value_types_of_t<Sndrs, [[redoc("*>")]]FWD-ENV-T(env_of_t<Rcvr>), [[redoc(
 [:zh_CN@~] 若该类型良构；否则代表 [`tuple<>]。
 
 [para]
-[:en] The alias [`errors_variant] denotes the type
-[`variant<[^none-such], [^copy-fail], Es...>] with duplicate types removed,
-where [`Es] is the pack of the decayed types
+[:en] The alias [`errors_variant] denotes the type [`variant<[^none-such], [^copy-fail], Es...>]
+with duplicate types removed, where [`Es] is the pack of the decayed types
 of all the child senders[='] possible error result datums.
 [:zh_CN] 别名 [`errors_variant] 代表移除了重复类型的类型
 [`variant<[^none-such], [^copy-fail], Es...>]，其中 [`Es] 为所有子发送器的可能
 错误结果数据的衰退类型的包组。
 
 [para]
-[:en] The member [`void [*state-type]::[*complete](Rcvr& rcvr) noexcept]
-behaves as follows:
+[:en] The member [`void [*state-type]::[*complete](Rcvr& rcvr) noexcept] behaves as follows:
 [:zh_CN] 成员 [`void [*state-type]::[*complete](Rcvr& rcvr) noexcept] 具有如下行为：
 
 [list]
@@ -290,9 +279,17 @@ visit(
 [:en] Otherwise, evaluates:
 [:zh_CN] 否则，求值：
 [codeblock]
-[[redoc("*>")]]on_stop.reset();
-set_stopped(std::move(rcvr));
+if constexpr ([[redoc("^>")]]sends-stopped) {
+  [[redoc("*>")]]on_stop.reset();
+  set_stopped(std::move(rcvr));
+}
 [codeblock:end]
+[:en@~] where [`[^sends-stopped]] equals [`true] if and only if there exists an
+element [`S] of [`Sndrs] such that [`completion_signatures_of_t<S, [*when-all-env]<Env>>]
+contains [`set_stopped_t()].
+[:zh_CN@~] 其中当且仅当 [`Sndrs] 中存在某个元素 [`S] 使得
+[`completion_signatures_of_t<S, [*when-all-env]<Env>>] 包含 [`set_stopped_t()]，
+则 [`[^sends-stopped]] 等于 [`true]。
 [list:end]
 
 [para]
@@ -306,12 +303,7 @@ a callable object equivalent to the following lambda expression:
   state.[[redoc("*>")]]on_stop.emplace(
     get_stop_token(get_env(rcvr)),
     [[redoc("*>")]]on-stop-request{state.[[redoc("*>")]]stop_src});
-  if (state.[[redoc("*>")]]stop_src.stop_requested()) {
-    state.[[redoc("*>")]]on_stop.reset();
-    set_stopped(std::move(rcvr));
-  } else {
-    (start(ops), ...);
-  }
+  (start(ops), ...);
 }
 [codeblock:end]
 
@@ -342,8 +334,7 @@ a callable object equivalent to the following lambda expression:
   state.[[redoc("*>")]]arrive(rcvr);
 }
 [codeblock:end]
-[:en@~] where [`[*TRY-EMPLACE-ERROR](v, e)], for subexpressions [`v] and [`e],
-is equivalent to:
+[:en@~] where [`[*TRY-EMPLACE-ERROR](v, e)], for subexpressions [`v] and [`e], is equivalent to:
 [:zh_CN@~] 其中 [`[*TRY-EMPLACE-ERROR](v, e)] 对于子表达式 [`v] 和 [`e]，
 如果 [`decltype(auto(e))(e)] 潜在抛出，则等价于：
 [codeblock]
@@ -375,8 +366,7 @@ is potentially throwing; otherwise, [`o.emplace(as...)].
 [:zh_CN@~] 否则，等价于 [`o.emplace(as...)]。
 
 [para]
-[:en] The expression [`when_all_with_variant(sndrs...)]
-is expression-equivalent to:
+[:en] The expression [`when_all_with_variant(sndrs...)] is expression-equivalent to:
 [:zh_CN] 表达式 [`when_all_with_variant(sndrs...)] 按表达式等价于：
 [codeblock]
 transform_sender(CD2(), [[redoc("*>")]]make-sender(when_all_with_variant, {}, sndrs...));
