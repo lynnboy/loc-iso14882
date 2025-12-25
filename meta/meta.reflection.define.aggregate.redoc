@@ -1,4 +1,4 @@
-[section#ratio.reflection.define.aggregate
+[section#meta.reflection.define.aggregate
     [:en] Reflection class definition generation
     [:zh_CN] 反射类定义式的生成
 ]
@@ -37,7 +37,7 @@ are consteval-only types ([#basic.types.general]), and are not structural types 
 [codeblock:declaration]
 template<class T>
   requires [[redoc("`:c>")]]constructible_from<u8string, T>
-  consteval data_member_options::[[redoc("*>")]]name-type(T&& value);
+  consteval [[redoc("*>")]]name-type(T&& value);
 [codeblock:end]
 
 [div:description]
@@ -49,7 +49,7 @@ template<class T>
 [codeblock:declaration]
 template<class T>
   requires [[redoc("`:c>")]]constructible_from<string, T>
-  consteval data_member_options::[[redoc("*>")]]name-type(T&& value);
+  consteval [[redoc("*>")]]name-type(T&& value);
 [codeblock:end]
 
 [div:description]
@@ -62,8 +62,7 @@ template<class T>
 an ordinary string literal (or [`string_view], [`string], etc.)
 or a UTF-8 string literal (or [`u8string_view], [`u8string], etc.) equally well.
 [:zh_CN] 类 [*name-type] 允许函数 [`data_member_spec] 可以同等接受普通字符串字面量
-（或 [`string_view]、[`string] 等）或者 UTF-8 字符串字面量（或 [`u8string_view]、
-[`u8string] 等）。
+（或 [`string_view]、[`string] 等）或者 UTF-8 字符串字面量（或 [`u8string_view]、[`u8string] 等）。
 
 [begin:example]
 [codeblock]
@@ -132,29 +131,25 @@ if [`options.alignment] does not contain a value,
  [list]
  [item]
 [:en] [`holds_alternative<u8string>(options.name->[*contents])] is [`true]
-and [`get<u8string>(options.name->[*contents])] contains a valid identifier ([#lex.name])
-that is not a keyword ([#lex.key]) when interpreted with UTF-8, or
+and [`get<u8string>(options.name->[*contents])] contains the spelling of a valid
+[~token] that is an [~identifier] ([#lex.name]) when interpreted with UTF-8, or
 [:zh_CN] [`holds_alternative<u8string>(options.name->[*contents])] 为 [`true]，
 并且 [`get<u8string>(options.name->[*contents])] 包含一个当按 UTF-8 判读时
-不是关键词（[#lex.key]）的合法标识符（[#lex.name]），或者
+是一个[~标识符]的合法[~记号]（[#lex.name]）的拼写，或者
 
  [item]
 [:en] [`holds_alternative<string>(options.name->[*contents])] is [`true]
-and [`get<string>(options.name->[*contents])] contains a valid identifier ([#lex.name])
-that is not a keyword ([#lex.key]) when interpreted with the ordinary literal encoding;
+and [`get<string>(options.name->[*contents])] contains the spelling of a valid
+[~token] that is an [~identifier] ([#lex.name]) when interpreted with the
+ordinary literal encoding;
 [:zh_CN] [`holds_alternative<string>(options.name->[*contents])] 为 [`true]，
 并且 [`get<string>(options.name->[*contents])] 包含一个当按普通字面编码判读时
-不是关键词（[#lex.key]）的合法标识符（[#lex.name]）；
+是一个[~标识符]的合法[~记号]（[#lex.name]）的拼写；
  [list:end]
 
 [begin:note]
-[:en] The name corresponds to the spelling of an identifier token
-after phase 6 of translation ([#lex.phases]).
-[:zh_CN] 该名字对应于翻译阶段 6（[#lex.phases]）之后的标识符记号的拼写。
-
-[:en] Lexical constructs like [~universal-character-name]s ([#lex.universal.char])
-are not processed and will cause evaluation to fail.
-[:zh_CN] 如[~通用字符名]（[#lex.universal.char]）这样的词法构造不会被处理，并会导致求值失败。
+[:en] Lexical constructs like [~universal-character-name]s ([#lex.universal.char]) are not processed.
+[:zh_CN] 如[~通用字符名]（[#lex.universal.char]）这样的词法构造不会被处理。
 
 [:en] For example, [`R"(\u03B1)"] is an invalid identifier and is not interpreted as [`"[$\alpha]"].
 [:zh_CN] 例如， [`R"(\u03B1)"] 是无效标识符且不会被判读为 [`"[$\alpha]"]。
@@ -169,14 +164,17 @@ are not processed and will cause evaluation to fail.
 [:zh_CN] 当 [`options.bit_width] 含有值 [$V] 时：
  [list]
  [item]
-[:en@~] [`is_integral_type(type) || is_enumeration_type(type)] is [`true],
-[:zh_CN@~] [`is_integral_type(type) || is_enumeration_type(type)] 为 [`true]，
+[:en@~] [`is_integral_type(type) || is_enum_type(type)] is [`true],
+[:zh_CN@~] [`is_integral_type(type) || is_enum_type(type)] 为 [`true]，
  [item]
 [:en@~] [`options.alignment] does not contain a value,
 [:zh_CN@~] [`options.alignment] 不含值，
  [item]
 [:en@~] [`options.no_unique_address] is [`false], and
 [:zh_CN@~] [`options.no_unique_address] 为 [`false]，并且
+ [item]
+[:en@~] [$V] is not negative, and
+[:zh_CN@~] [$V] 非负，并且
  [item]
 [:en@~] if [$V] equals [`0], then [`options.name] does not contain a value; and
 [:zh_CN@~] 若 [$V] 等于 [`0]，则 [`options.name] 不含有值；以及
@@ -210,9 +208,9 @@ template<[[redoc("`:c>")]]reflection_range R = initializer_list<info>>
 [codeblock:end]
 
 [div:description]
-[:en] Let [$C] be the class represented by [`class_type]
+[:en] Let [$C] be the type represented by [`class_type]
 and [$r_K] be the [$K^\text{th}] reflection value in [`mdescrs].
-[:zh_CN] 令 [$C] 为 [`class_type] 表示的类，并令 [$r_K] 为 [`mdescrs] 中的第 [$K] 个反射值。
+[:zh_CN] 令 [$C] 为 [`class_type] 表示的类型，并令 [$r_K] 为 [`mdescrs] 中的第 [$K] 个反射值。
 
 [:en] For every [$r_K] in [`mdescrs], let [$(T_K, N_K, A_K, W_K, \mathit{NUA}_K)] be
 the corresponding data member description represented by [$r_K].
@@ -221,6 +219,10 @@ the corresponding data member description represented by [$r_K].
 
 [para:constantwhen]
 [list]
+[item]
+[:en] [`class_type] represents a cv-unqualified class type;
+[:zh_CN] [`class_type] 表示 cv 无限定的类类型；
+
 [item]
 [:en] [$C] is incomplete from every point in the evaluation context;
 [:zh_CN] [$C] 在求值语境中的每个位置都是不完整的；
@@ -249,11 +251,11 @@ if [$N_K] is not [$\bot] and [$N_L] is not [$\bot], then either:
 [$N_K] 不是 [$\bot] 且 [$N_L] 不是 [$\bot]，则有：
  [list]
  [item]
-[:en@~] [`[$N_K] != [$N_L]] is [`true] or
-[:zh_CN@~] [`[$N_K] != [$N_L]] 为 [`true] 或者
+[:en@~] [$N_K] is not the same identifier as [$N_L] or
+[:zh_CN@~] [$N_K] 与 [$N_L] 不是相同标识符，或者
  [item]
-[:en@~] [`[$N_K] == u8"_"] is [`true].
-[:zh_CN@~] [`[$N_K] == u8"_"] 为 [`true]。
+[:en@~] [$N_K] is the identifier [`_] ([=unicode(005f,low line)]).
+[:zh_CN@~] [$N_K] 为标识符 [`_]（[=unicode(005f,low line)]）。
 
 [begin:note]
 [:en] Every provided identifier is unique or [`"_"].
@@ -289,19 +291,17 @@ and [$C] is not a local class, then [$D] is an explicit specialization of [$T].
 是 [$T] 的显式特化式。
 
 [item]
-[:en] For each [$r_K], there is a corresponding entity [$M_K]
+[:en] For each [$r_K], there is a corresponding entity [$M_K] with public access
 belonging to the class scope of [$D] with the following properties:
-[:zh_CN] 对于每个 [$r_K]，存在一个属于 [$D] 的类作用域的对应实体 [$M_K] 并具有下列性质：
+[:zh_CN] 对于每个 [$r_K]，存在一个属于 [$D] 的类作用域的对应公开实体 [$M_K] 并具有下列性质：
 
  [list]
  [item]
 [:en] If [$N_K] is [$\bot], [$M_K] is an unnamed bit-field.
 [:zh_CN] 如果 [$N_K] 为 [$\bot]，则 [$M_K] 是无名位字段。
 
-[:en] Otherwise, [$M_K] is a non-static data member whose name is the identifier
-determined by the character sequence encoded by [$N_K] in UTF-8.
-[:zh_CN] 否则，[$M_K] 是非静态数据成员，其名称是 [$N_K] 按 UTF-8 编码的字符序列
-所确定的标识符。
+[:en] Otherwise, [$M_K] is a non-static data member whose name is the identifier [$N_K].
+[:zh_CN] 否则，[$M_K] 是非静态数据成员，其名称是标识符 [$N_K]。
 
  [item]
 [:en] The type of [$M_K] is [$T_K].
@@ -338,4 +338,9 @@ corresponding to [$r_K] precedes the declaration corresponding to [$r_L].
 [para:returns]
 [:en] [`class_type].
 [:zh_CN] [`class_type]。
+
+[para:remarks]
+[:en] If [$C] is a specialization of a templated class and it has not been
+instantiated, [$C] is treated as an explicit specialization.
+[:zh_CN] 如果 [$C] 是某个模板化类的特化式，且尚未被实例化，那么将 [$C] 作为显式特化式对待。
 [div:end]

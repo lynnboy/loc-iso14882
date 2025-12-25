@@ -1,4 +1,4 @@
-[section#ratio.reflection.traits
+[section#meta.reflection.traits
     [:en] Reflection type traits
     [:zh_CN] 反射的类型特征
 ]
@@ -66,8 +66,6 @@ consteval bool [[redoc("`:lib>")]]is_member_pointer_type(info type);
 consteval bool [[redoc("`:lib>")]]is_const_type(info type);
 consteval bool [[redoc("`:lib>")]]is_volatile_type(info type);
 consteval bool [[redoc("`:lib>")]]is_trivially_copyable_type(info type);
-consteval bool [[redoc("`:lib>")]]is_trivially_relocatable_type(info type);
-consteval bool [[redoc("`:lib>")]]is_replaceable_type(info type);
 consteval bool [[redoc("`:lib>")]]is_standard_layout_type(info type);
 consteval bool [[redoc("`:lib>")]]is_empty_type(info type);
 consteval bool [[redoc("`:lib>")]]is_polymorphic_type(info type);
@@ -121,7 +119,6 @@ consteval bool [[redoc("`:lib>")]]is_nothrow_swappable_with_type(info type1, inf
 consteval bool [[redoc("`:lib>")]]is_nothrow_swappable_type(info type);
 
 consteval bool [[redoc("`:lib>")]]is_nothrow_destructible_type(info type);
-consteval bool [[redoc("`:lib>")]]is_nothrow_relocatable_type(info type);
 
 consteval bool [[redoc("`:lib>")]]is_implicit_lifetime_type(info type);
 
@@ -198,6 +195,59 @@ consteval info [[redoc("`:lib>")]]unwrap_ref_decay(info type);
 [codeblock:end]
 
 [para]
+[:en] For a function or function template [$F] defined in this subclause,
+let [$C] be its associated class template.
+[:zh_CN] 对于本子条款中定义的函数或函数模板 [$F]，令 [$C] 为其关联类模板。
+
+[:en] For the evaluation of a call to [$F], let [$S] be the specialization of [$C]
+in terms of which the call is specified.
+[:zh_CN] 对于一次对 [$F] 调用的求值，令 [$S] 为依据此调用所指定的 [$C] 的特例。
+
+[list]
+[item]
+[:en] If
+[:zh_CN] 如果
+ [list]
+ [item]
+[:en@~] the template arguments of [$S] violate a condition specified
+in a [=Mandates] element in the specification of [$C];
+[:zh_CN@~] [$S] 的各模板实参违反了 [$C] 的规范中某项[=Mandates]元素中规定的条件；
+ [item]
+[:en@~] the call is specified to produce a reflection of a type,
+but [$S] would have no member named [`type]; or
+[:zh_CN@~] 此调用被指定为产生一个类型的反射，但 [$S] 没有名为 [`type] 的成员；但
+ [item]
+[:en@~] the call is specified to return [`[$S]::value], but that expression
+would not be a valid converted constant expression of type [`R], where [`R] is
+the return type of [$F];
+[:zh_CN@~] 此调用被指定为返回 [`[$S]::value]，但该表达式不是有效的 [`R] 类型的
+经转换常量表达式，其中 [`R] 为 [$F] 的返回类型；
+ [list:end]
+[:en@~] then an exception of type [`meta::exception] is thrown.
+[:zh_CN@~] 则抛出 [`meta::exception] 类型的异常。
+
+[begin:note]
+[:en] For the first case, [$S] is not instantiated.
+[:zh_CN] 第一种情况，不实例化 [$S]。
+[end:note]
+
+[item]
+[:en] Otherwise, if the instantiation of [$S] would result in undefined behavior
+due to dependence on an incomplete type ([#meta.rqmts]), then the call is not
+a constant subexpression.
+[:zh_CN] 否则，如果 [$S] 的实例化会因依赖于某个不完整类型而导致未定义行为（[#meta.rqmts]），
+则此调用不是常量子表达式。
+
+[item]
+[:en] Otherwise, if the template arguments of [$S] do not meet the preconditions of [$C],
+then it is unspecified whether the call is a constant subexpression.
+[:zh_CN] 否则，如果 [$S] 的各模板实参不满足 [$C] 的前条件，则未指明此调用是否是常量子表达式。
+
+[:en] If it is, the call produces the result that would be produced if [$C] had no preconditions.
+[:zh_CN] 如果它是，则此调用产生当 [$C] 没有前条件时会产生的结果。
+[list:end]
+
+[para]
 [:en] Each function or function template declared above has the following behavior
 based on the signature and return type of that function or function template.
 [:zh_CN] 以上声明的每个函数或函数模板，基于该函数或函数模板的签名和返回类型，具有下列行为。
@@ -214,56 +264,56 @@ based on the signature and return type of that function or function template.
     [| [=returns] ]
 ]
 [|] [`bool meta::[^UNARY](info type);]
-[|] [:en] [`std::[^UNARY]_v<[$T]>], where [$T] is the type or type alias represented by [`type]
-    [:zh_CN] [`std::[^UNARY]_v<[$T]>]，其中 [$T] 为 [`type] 所表示的类型或类型别名
+[|] [:en] [`std::[^UNARY]<[$T]>::value], where [$T] is the type or type alias represented by [`type]
+    [:zh_CN] [`std::[^UNARY]<[$T]>::value]，其中 [$T] 为 [`type] 所表示的类型或类型别名
 [-]
 
 [|] [`bool meta::[^BINARY](info t1, info t2);] [br] [`bool meta::[^BINARY]_type(info t1, info t2);]
-[|] [:en] [`std::[^BINARY]_v<[$T_1], [$T_2]>], where [$T_1] and [$T_2] are the
+[|] [:en] [`std::[^BINARY]<[$T_1], [$T_2]>::value], where [$T_1] and [$T_2] are the
     types or type aliases represented by [`t1] and [`t2], respectively
-    [:zh_CN] [`std::[^BINARY]_v<[$T_1], [$T_2]>]，其中 [$T_1] 和 [$T_2] 分别为
+    [:zh_CN] [`std::[^BINARY]<[$T_1], [$T_2]>::value]，其中 [$T_1] 和 [$T_2] 分别为
     [`t1] 和 [`t2] 所表示的类型或类型别名
 [-]
 
 [|] [`template<reflection_range R>] [br] [`bool meta::[^VARIADIC]_type(info type, R&& args);]
-[|] [:en] [`std::[^VARIADIC]_v<[$T], [$U]...>], where [$T] is the type or type
+[|] [:en] [`std::[^VARIADIC]<[$T], [$U]...>::value], where [$T] is the type or type
     alias represented by [`type] and [`U...] is the pack of types or type aliases
     whose elements are represented by the corresponding elements of [`args]
-    [:zh_CN] [`std::[^VARIADIC]_v<[$T], [$U]...>]，其中 [$T] 为 [`type] 所表示的
+    [:zh_CN] [`std::[^VARIADIC]<[$T], [$U]...>::value]，其中 [$T] 为 [`type] 所表示的
     类型或类型别名，而 [`U...] 为类型或类型别名的包组，其各元素由 [`args] 的对应元素所表示
 [-]
 
 [|] [`template<reflection_range R>] [br] [`bool meta::[^VARIADIC]_type(info t1, info t2, R&& args);]
-[|] [:en] [`std::[^VARIADIC]_v<[$T_1], [$T_2], [$U]...>], where [$T_1] and [$T_2]
+[|] [:en] [`std::[^VARIADIC]<[$T_1], [$T_2], [$U]...>::value], where [$T_1] and [$T_2]
     are the types or type aliases represented by [`t1] and [`t2], respectively,
     and [`[$U]...] is the pack of types or type aliases whose elements are
     represented by the corresponding elements of [`args]
-    [:zh_CN] [`std::[^VARIADIC]_v<[$T_1], [$T_2], [$U]...>]，其中 [$T_1] 和 [$T_2]
+    [:zh_CN] [`std::[^VARIADIC]<[$T_1], [$T_2], [$U]...>::value]，其中 [$T_1] 和 [$T_2]
     分别为 [`t1] 和 [`t2] 所表示的类型或类型别名，而 [`[$U]...] 为类型或类型别名的包组，
     其各元素由 [`args] 的对应元素所表示
 [-]
 
 [|] [`info meta::[^UNARY](info type);]
-[|] [:en] A reflection representing the type denoted by [`std::[^UNARY]_t<[$T]>],
+[|] [:en] A reflection representing the type denoted by [`std::[^UNARY]<[$T]>::type],
     where [$T] is the type or type alias represented by [`type]
-    [:zh_CN] 表示 [`std::[^UNARY]_t<[$T]>] 所代表的类型的反射，
+    [:zh_CN] 表示 [`std::[^UNARY]<[$T]>::type] 所代表的类型的反射，
     其中 [$T] 为 [`type] 所表示的类型或类型别名
 [-]
 
 [|] [`template<reflection_range R>] [br] [`info meta::[^VARIADIC](R&& args);]
-[|] [:en] A reflection representing the type denoted by [`std::[^VARIADIC]_t<[$T]...>],
+[|] [:en] A reflection representing the type denoted by [`std::[^VARIADIC]<[$T]...>::type],
     where [`[$T]...] is the pack of types or type aliases whose elements are
     represented by the corresponding elements of [`args]
-    [:zh_CN] 表示 [`std::[^VARIADIC]_t<[$T]...>] 所代表的类型的反射，其中
+    [:zh_CN] 表示 [`std::[^VARIADIC]<[$T]...>::type] 所代表的类型的反射，其中
     [`[$T]...] 为类型或类型别名的包组，其各元素由 [`args] 的对应元素所表示
 [-]
 
 [|] [`template<reflection_range R>] [br] [`info meta::[^VARIADIC](info type, R&& args);]
-[|] [:en] A reflection representing the type denoted by [`std::[^VARIADIC]_t<[$T], [$U]...>],
+[|] [:en] A reflection representing the type denoted by [`std::[^VARIADIC]<[$T], [$U]...>::type],
     where [$T] is the type or type alias represented by [`type] and
     [`[$U]...] is the pack of types or type aliases whose elements are
     represented by the corresponding elements of [`args]
-    [:zh_CN] 表示 [`std::[^VARIADIC]_t<[$T], [$U]...>] 所代表的类型的反射，其中
+    [:zh_CN] 表示 [`std::[^VARIADIC]<[$T], [$U]...>::type] 所代表的类型的反射，其中
     [$T] 为 [`type] 所表示的类型或类型别名，而
     [`[$U]...] 为类型或类型别名的包组，其各元素由 [`args] 的对应元素所表示
 [-]
@@ -294,8 +344,8 @@ consteval size_t rank(info type);
 
 [div:description]
 [para:returns]
-[:en] [`rank_v<[$T]>], where [$T] is the type represented by [`dealias(type)].
-[:zh_CN] [`rank_v<[$T]>]，其中 [$T] 为 [`dealias(type)] 所表示的类型。
+[:en] [`std::rank<[$T]>::value], where [$T] is the type represented by [`dealias(type)].
+[:zh_CN] [`std::rank<[$T]>::value]，其中 [$T] 为 [`dealias(type)] 所表示的类型。
 [div:end]
 
 [%@lib extent]
@@ -305,9 +355,9 @@ consteval size_t extent(info type, unsigned i = 0);
 
 [div:description]
 [para:returns]
-[:en] [`extent_v<[$T], [$I]>], where [$T] is the type represented by [`dealias(type)]
+[:en] [`std::extent<[$T], [$I]>::value], where [$T] is the type represented by [`dealias(type)]
 and [$I] is a constant equal to [`i].
-[:zh_CN] [`extent_v<[$T], [$I]>]，其中 [$T] 为 [`dealias(type)] 所表示的类型，
+[:zh_CN] [`std::extent<[$T], [$I]>::value]，其中 [$T] 为 [`dealias(type)] 所表示的类型，
 而 [$I] 为等于 [`i] 的常量。
 [div:end]
 
@@ -318,8 +368,8 @@ consteval size_t tuple_size(info type);
 
 [div:description]
 [para:returns]
-[:en] [`tuple_size_v<[$T]>], where [$T] is the type represented by [`dealias(type)].
-[:zh_CN] [`tuple_size_v<[$T]>]，其中 [$T] 为 [`dealias(type)] 所表示的类型。
+[:en] [`std::tuple_size<[$T]>::value], where [$T] is the type represented by [`dealias(type)].
+[:zh_CN] [`std::tuple_size<[$T]>::value]，其中 [$T] 为 [`dealias(type)] 所表示的类型。
 [div:end]
 
 [%@lib tuple_element]
@@ -329,10 +379,10 @@ consteval info tuple_element(size_t index, info type);
 
 [div:description]
 [para:returns]
-[:en] A reflection representing the type denoted by [`tuple_element_t<[$I], [$T]>],
+[:en] A reflection representing the type denoted by [`std::tuple_element<[$I], [$T]>::type],
 where [$T] is the type represented by [`dealias(type)] and [$I] is a constant equal to [`index].
-[:zh_CN] 表示 [`tuple_element_t<[$I], [$T]>] 所代表的类型的反射，其中 [$T] 为
-[`dealias(type)] 所表示的类型，而 [$I] 为等于 [`index] 的常量。
+[:zh_CN] 表示 [`std::tuple_element<[$I], [$T]>::type] 所代表的类型的反射，
+其中 [$T] 为 [`dealias(type)] 所表示的类型，而 [$I] 为等于 [`index] 的常量。
 [div:end]
 
 [%@lib variant_size]
@@ -342,8 +392,8 @@ consteval size_t variant_size(info type);
 
 [div:description]
 [para:returns]
-[:en] [`variant_size_v<[$T]>], where [$T] is the type represented by [`dealias(type)].
-[:zh_CN] [`variant_size_v<[$T]>]，其中 [$T] 为 [`dealias(type)] 所表示的类型。
+[:en] [`std::variant_size<[$T]>::value], where [$T] is the type represented by [`dealias(type)].
+[:zh_CN] [`std::variant_size<[$T]>::value]，其中 [$T] 为 [`dealias(type)] 所表示的类型。
 [div:end]
 
 [%@lib variant_alternative]
@@ -353,10 +403,10 @@ consteval info variant_alternative(size_t index, info type);
 
 [div:description]
 [para:returns]
-[:en] A reflection representing the type denoted by [`variant_alternative_t<[$I], [$T]>],
+[:en] A reflection representing the type denoted by [`std::variant_alternative<[$I], [$T]>::type],
 where [$T] is the type represented by [`dealias(type)] and [$I] is a constant equal to [`index].
-[:zh_CN] 表示 [`variant_alternative_t<[$I], [$T]>] 所代表的类型的反射，其中 [$T] 为
-[`dealias(type)] 所表示的类型，而 [$I] 为等于 [`index] 的常量。
+[:zh_CN] 表示 [`std::variant_alternative<[$I], [$T]>::type] 所代表的类型的反射，
+其中 [$T] 为 [`dealias(type)] 所表示的类型，而 [$I] 为等于 [`index] 的常量。
 [div:end]
 
 [%@lib type_order]
@@ -366,8 +416,8 @@ consteval strong_ordering type_order(info t1, info t2);
 
 [div:description]
 [para:returns]
-[:en] [`type_order_v<[$T_1], [$T_2]>], where [$T_1] and [$T_2] are the types
+[:en] [`std::type_order<[$T_1], [$T_2]>::value], where [$T_1] and [$T_2] are the types
 represented by [`dealias(t1)] and [`dealias(t2)], respectively.
-[:zh_CN] [`type_order_v<[$T_1], [$T_2]>]，其中 [$T] 和 [$T_2] 分别为
+[:zh_CN] [`std::type_order<[$T_1], [$T_2]>::value]，其中 [$T] 和 [$T_2] 分别为
 [`dealias(t1)] 和 [`dealias(t2)] 所表示的类型。
 [div:end]

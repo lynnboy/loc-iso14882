@@ -1,4 +1,4 @@
-[section#ratio.reflection.queries
+[section#meta.reflection.queries
     [:en] Reflection queries
     [:zh_CN] 反射查询
 ]
@@ -14,8 +14,8 @@ whose type does not contain an undeduced placeholder type and that is not
 a constructor or destructor, enumerator, non-static data member, unnamed bit-field,
 direct base class relationship, data member description, or function parameter.
 [:zh_CN] 如果 [`r] 代表一个值、标注、对象、变量、返回值不包含未推断占位符类型且并非
-构造函数或析构函数的函数、枚举符、非静态数据成员、无名位字段、直接基类关系、数据成员描述
-或者函数形参，则返回 [`true]。
+构造函数或析构函数的函数、枚举符、非静态数据成员、无名位字段、直接基类关系、
+数据成员描述或者函数形参，则返回 [`true]。
 
 [:en] Otherwise, [`false].
 [:zh_CN] 否则，返回 [`false]。
@@ -23,7 +23,7 @@ direct base class relationship, data member description, or function parameter.
 
 [%@lib type_of]
 [codeblock:declaration]
-consteval bool type_of(info r);
+consteval info type_of(info r);
 [codeblock:end]
 
 [div:description]
@@ -103,18 +103,6 @@ by that variable.
 [:zh_CN] 否则，[`r] 表示一个变量；返回该变量所声明的对象的反射。
 [list:end]
 
-[begin:example]
-[codeblock]
-int x;
-int& y = x;
-
-static_assert(^^x != ^^y);                          // [:en] OK, [`r] and [`y] are different variables so their [:zh_CN] OK，[`r] 和 [`y] 是不同的变量，
-                                                    // [:en@~] reflections compare different [:zh_CN@~] 因而它们的反射比较时不同
-static_assert(object_of((^^x) == object_of(^^y)));  // [:en] OK, because [`y] is a reference [:zh_CN] OK，因为 [`y] 是对 [`x] 的引用，
-                                                    // [:en@~] to [`x], their underlying objects are the same [:zh_CN@~] 所以它们的底层对象相同
-[codeblock:end]
-[end:example]
-
 [para:throws]
 [:en] [`meta::exception] unless [`r] is a reflection representing either
 [:zh_CN] 除非 [`r] 是表示以下各项的反射，否则抛出 [`meta::exception]：
@@ -136,6 +124,18 @@ currently under evaluation.
 [:zh_CN@~] [$R] 的生存期开始于当前求值的核心常量表达式之内。
  [list:end]
 [list:end]
+
+[begin:example]
+[codeblock]
+int x;
+int& y = x;
+
+static_assert(^^x != ^^y);                          // [:en] OK, [`r] and [`y] are different variables so their [:zh_CN] OK，[`r] 和 [`y] 是不同的变量，
+                                                    // [:en@~] reflections compare different [:zh_CN@~] 因而它们的反射比较时不同
+static_assert(object_of((^^x) == object_of(^^y)));  // [:en] OK, because [`y] is a reference [:zh_CN] OK，因为 [`y] 是对 [`x] 的引用，
+                                                    // [:en@~] to [`x], their underlying objects are the same [:zh_CN@~] 所以它们的底层对象相同
+[codeblock:end]
+[end:example]
 [div:end]
 
 [%@lib constant_of]
@@ -157,10 +157,20 @@ consteval info constant_of(info r);
 [codeblock]
 if constexpr (is_annotation([[redoc("$>")]]R)) {
   return [[redoc("$>")]]C;
+} else if constexpr (is_array_type(type_of([[redoc("$>")]]R))) {
+  return reflect_constant_array([: [[redoc("$>")]]R :]);
+} else if constexpr (is_function_type(type_of([[redoc("$>")]]R))) {
+  return reflect_function([: [[redoc("$>")]]R :]);
 } else {
   return reflect_constant([: [[redoc("$>")]]R :]);
 }
 [codeblock:end]
+
+[para:throws]
+[:en] [`meta::exception] unless either [`r] represents an annotation or
+[``[: [$R] :`]] is a valid [~splice-expression] ([#expr.prim.splice]).
+[:zh_CN] 若非 [`r] 代表标注，或者 [``[: [$R] :`]] 是有效的[~拼接表达式]（[#expr.prim.splice]），
+则抛出 [`meta::exception]。
 
 [begin:example]
 [codeblock]
@@ -170,7 +180,7 @@ constexpr int y = 0;
 static_assert(^^x != ^^y);                      // [:en] OK, [`x] and [`y] are different variables, [:zh_CN] OK，[`x] 和 [`y] 是不同变量，
                                                 // [:en@~] so their reflections compare different [:zh_CN@~] 因而它们的反射比较为不同
 static_assert(constant_of(^^x) ==
-              constant_of(^^y));                // [:en] OK, both [`constant_of(x)] and [:zh_CN] OK，[`constant_of(x)] 和
+              constant_of(^^y));                // [:en] OK, both [`constant_of(^^x)] and [:zh_CN] OK，[`constant_of(^^x)] 和
                                                 // [:en@~] [`constant_of(^^y)] represent the value [`0] [:zh_CN@~] [`constant_of(^^y)] 表示值 [`0]
 static_assert(constant_of(^^x) ==
               reflect_constant(0));             // [:en] OK, likewise [:zh_CN] OK，类似
@@ -191,12 +201,6 @@ consteval info fn() {
 constexpr info r = constant_of(fn());           // [:en] error: [`x] is outside its lifetime [:zh_CN] 错误：[`x] 处于其生存期之外
 [codeblock:end]
 [end:example]
-
-[para:throws]
-[:en] [`meta::exception] unless either [`r] represents an annotation or
-[``[: [$R] :`]] is a valid [~splice-expression] ([#expr.prim.splice]).
-[:zh_CN] 除非 [`r] 代表一个标注，或者 [``[: [$R] :`]] 是有效的[~拼接表达式]（[#expr.prim.splice]），
-否则抛出 [`meta::exception]。
 [div:end]
 
 [%@lib is_public]
@@ -479,29 +483,41 @@ representing an object or variable having dynamic storage duration.
 [%@lib has_internal_linkage]
 [%@lib has_module_linkage]
 [%@lib has_external_linkage]
-[%@lib has_c_language_linkage]
 [%@lib has_linkage]
 [codeblock:declaration]
 consteval bool has_internal_linkage(info r);
 consteval bool has_module_linkage(info r);
 consteval bool has_external_linkage(info r);
-consteval bool has_c_language_linkage(info r);
 consteval bool has_linkage(info r);
 [codeblock:end]
 
 [div:description]
 [para:returns]
 [:en] [`true] if [`r] represents a variable, function, type, template, or
-namespace whose name has internal linkage, module linkage, C language linkage, or
+namespace whose name has internal linkage, module linkage, external linkage, or
 any linkage, respectively ([#basic.link]).
-[:zh_CN] 如果 [`r] 分别表示名字具有内部连接、模块连接、C 语言连接或任意连接的变量、函数、
+[:zh_CN] 如果 [`r] 分别表示名字具有内部连接、模块连接、外部连接或任意连接的变量、函数、
 类型、模板或命名空间，则返回 [`true]。
 
 [:en] Otherwise, [`false].
 [:zh_CN] 否则，返回 [`false]。
 [div:end]
 
-[%@lib is_copmlete_type]
+[%@lib has_c_language_linkage]
+[codeblock:declaration]
+consteval bool has_c_language_linkage(info r);
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`true] if [`r] represents a variable, function, or function type with C language linkage.
+[:zh_CN] 如果 [`r] 表示具有 C 语言连接的变量、函数或函数类型，则返回 [`true]。
+
+[:en] Otherwise, [`false].
+[:zh_CN] 否则，返回 [`false]。
+[div:end]
+
+[%@lib is_complete_type]
 [codeblock:declaration]
 consteval bool is_complete_type(info r);
 [codeblock:end]
@@ -546,6 +562,7 @@ from some point in the evaluation context.
 [:en] Otherwise, [`false].
 [:zh_CN] 否则，返回 [`false]。
 
+[para]
 [begin:example]
 [codeblock]
 class S;
@@ -887,8 +904,7 @@ consteval bool has_default_member_initializer(info r);
 
 [div:description]
 [para:returns]
-[:en] [`true] if [`r] represents a non-static data member that has a
-default member initializer.
+[:en] [`true] if [`r] represents a non-static data member that has a default member initializer.
 [:zh_CN] 如果 [`r] 表示一个带有默认成员初始化式的非静态数据成员，则返回 [`true]。
 
 [:en] Otherwise, [`false].
@@ -920,8 +936,7 @@ than [=Cpp] language linkage, then an [?impldef the result of
 [?impldef [`std::meta::has_parent] 针对具有不是 C 或 [=Cpp] 语言连接的实体的结果]值。
 
 [item]
-[:en] Otherwise, if [`r] represents a type that is neither a class nor enumeration
-type, then [`false].
+[:en] Otherwise, if [`r] represents a type that is neither a class nor enumeration type, then [`false].
 [:zh_CN] 否则，如果 [`r] 表示一个并非类或枚举类型的类型，则返回 [`false]。
 
 [item]
@@ -988,6 +1003,10 @@ so the second [`parent_of] is necessary to give the parent of that closure type.
  [list:end]
 [list:end]
 
+[para:throws]
+[:en] [`meta::exception] unless [`has_parent(r)] is [`true].
+[:zh_CN] 若非 [`has_parent(r)] 为 [`true]，则抛出 [`meta::exception]。
+
 [begin:example]
 [codeblock]
 struct I { };
@@ -1011,10 +1030,6 @@ static_assert(parent_of(^^F::N) == ^^F);
 static_assert(parent_of(^^F::A) == ^^F::N);
 [codeblock:end]
 [end:example]
-
-[para:throws]
-[:en] [`meta::exception] unless [`has_parent(r)] is [`true].
-[:zh_CN] 除非 [`has_parent(r)] 为 [`true]，否则抛出 [`meta::exception]。
 [div:end]
 
 [%@lib dealias]
@@ -1024,9 +1039,14 @@ consteval info dealias(info r);
 
 [div:description]
 [para:returns]
-[:en] A reflection representing the underlying entity of what [`r] represents.
-[:zh_CN] 表示 [`r] 所表示实体的底层实体的反射。
+[:en] If [`r] represents an entity, then a reflection representing the underlying
+entity of what [`r] represents.
+[:zh_CN] 如果 [`r] 表示一个实体，则返回表示 [`r] 所表示实体的底层实体的反射。
 
+[:en] Otherwise, [`r].
+[:zh_CN] 否则，返回 [`r]。
+
+[para]
 [begin:example]
 [codeblock]
 using X = int;
@@ -1036,10 +1056,6 @@ static_assert(dealias(^^X) == ^^int);
 static_assert(dealias(^^Y) == ^^int);
 [codeblock:end]
 [end:example]
-
-[para:throws]
-[:en] [`meta::exception] unless [`r] represents an entity.
-[:zh_CN] 除非 [`r] 表示一个实体，否则抛出 [`meta::exception]。
 [div:end]
 
 [%@lib has_template_arguments]
@@ -1129,6 +1145,10 @@ template parameter object.
  [list:end]
 [list:end]
 
+[para:throws]
+[:en] [`meta::exception] unless [`has_template_arguments(r)] is [`true].
+[:zh_CN] 若非 [`has_template_arguments(r)] 为 [`true]，则抛出 [`meta::exception]。
+
 [begin:example]
 [codeblock]
 template<class T, class U = T> struct Pair { };
@@ -1154,10 +1174,6 @@ static_assert(is_object(template_arguments_of(T)[2]));
 static_assert(template_arguments_of(T)[3] == ^^PairPtr);
 [codeblock:end]
 [end:example]
-
-[para:throws]
-[:en] [`meta::exception] unless [`has_template_arguments(r)] is [`true].
-[:zh_CN] 除非 [`has_template_arguments(r)] 为 [`true]，否则抛出 [`meta::exception]。
 [div:end]
 
 [%@lib parameters_of]
@@ -1220,8 +1236,7 @@ consteval info return_type_of(info r);
 
 [div:description]
 [para:returns]
-[:en] The reflection of the return type
-of the function or function type represented by [`r].
+[:en] The reflection of the return type of the function or function type represented by [`r].
 [:zh_CN] [`r] 所表示的函数或函数类型的返回类型的反射。
 
 [para:throws]

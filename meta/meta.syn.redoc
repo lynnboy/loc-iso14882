@@ -1,11 +1,12 @@
-[section#ratio.syn
+[section#meta.syn
     [:en] Header [`<meta>] synopsis
     [:zh_CN] 头文件 [`<meta>] 纲要
 ]
 
 [%@hdr@def meta]
 [codeblock:synopsis]
-#include <initializer_list>     // [:en] see [#initializer.list.syn] [:zh_CN] 参见 [#initializer.list.syn]
+#include <compare>              // [?see [#compare.syn]]
+#include <initializer_list>     // [?see [#initializer.list.syn]]
 
 namespace std {
   // [:en] [#meta.string.literal], checking string literals \
@@ -16,8 +17,14 @@ namespace std {
   consteval bool is_string_literal(const char16_t* p);
   consteval bool is_string_literal(const char32_t* p);
 
-  // [:en] [#meta.define.static], promoting to static storage strings \
-  [:zh_CN] [#meta.define.static]，提升为静态存储字符串
+  // [:en] [#meta.define.static], promoting to static storage \
+  [:zh_CN] [#meta.define.static]，提升为静态存储
+  namespace meta {
+    template<ranges::[[redoc("`:c>")]]input_range R>
+      consteval info reflect_constant_string(R&& r);
+    template<ranges::[[redoc("`:c>")]]input_range R>
+      consteval info reflect_constant_array(R&& r);
+  }
   template<ranges::[[redoc("`:c>")]]input_range R>
     consteval const ranges::range_value_t<R>* define_static_string(R&& r);
   template<ranges::[[redoc("`:c>")]]input_range R>
@@ -189,6 +196,11 @@ namespace std::meta {
   consteval size_t alignment_of(info r);
   consteval size_t bit_size_of(info r);
 
+  // [:en] [#meta.reflection.annotation], annotation reflection \
+  [:zh_CN] [#meta.reflection.annotation]，标注的反射
+  consteval vector<info> annotations_of(info item);
+  consteval vector<info> annotations_of_with_type(info item, info type);
+
   // [:en] [#meta.reflection.extract], value extraction \
   [:zh_CN] [#meta.reflection.extract]，值的提取
   template<class T>
@@ -207,19 +219,11 @@ namespace std::meta {
   // [:en] [#meta.reflection.result], expression result reflection \
   [:zh_CN] [#meta.reflection.result]，表达式结果的反射
   template<class T>
-    consteval info reflect_constant(const T& value);
+    consteval info reflect_constant(T expr);
   template<class T>
-    consteval info reflect_object(T& object);
+    consteval info reflect_object(T& expr);
   template<class T>
     consteval info reflect_function(T& fn);
-
-  // [:en] [#meta.reflection.array], promoting to static storage arrays \
-  [:zh_CN] [#meta.reflection.array]，提升为静态存储数组
-  template<ranges::[[redoc("`:c>")]]input_range R>
-    consteval info reflect_constant_string(R&& r);
-
-  template<ranges::[[redoc("`:c>")]]input_range R>
-    consteval info reflect_constant_array(R&& r);
 
   // [:en] [#meta.reflection.define.aggregate], class definition generation \
   [:zh_CN] [#meta.reflection.define.aggregate]，类定义式的生成
@@ -262,8 +266,6 @@ namespace std::meta {
   consteval bool is_const_type(info type);
   consteval bool is_volatile_type(info type);
   consteval bool is_trivially_copyable_type(info type);
-  consteval bool is_trivially_relocatable_type(info type);
-  consteval bool is_replaceable_type(info type);
   consteval bool is_standard_layout_type(info type);
   consteval bool is_empty_type(info type);
   consteval bool is_polymorphic_type(info type);
@@ -317,7 +319,6 @@ namespace std::meta {
   consteval bool is_nothrow_swappable_type(info type);
 
   consteval bool is_nothrow_destructible_type(info type);
-  consteval bool is_nothrow_relocatable_type(info type);
 
   consteval bool is_implicit_lifetime_type(info type);
 
@@ -404,11 +405,6 @@ namespace std::meta {
   consteval info variant_alternative(size_t index, info type);
 
   consteval strong_ordering type_order(info type_a, info type_b);
-
-  // [:en] [#meta.reflection.annotation], annotation reflection \
-  [:zh_CN] [#meta.reflection.annotation]，标注的反射
-  consteval vector<info> annotations_of(info item);
-  consteval vector<info> annotations_of_with_type(info item, info type);
 }
 [codeblock:end]
 
@@ -427,16 +423,14 @@ document is provided as an argument.
 作为实参时，其行为是[?impldef [`std::meta] 中任何函数针对实现特有语言构造的行为]。
 
 [begin:note]
-[:en] Values of type [`std::meta::info] can represent implementation-specific
-constructs ([#basic.fundamental]).
+[:en] Values of type [`std::meta::info] can represent implementation-specific constructs ([#basic.fundamental]).
 [:zh_CN] [`std::meta::info] 类型的值可以表示实现特有的语言构造（[#basic.fundamental]）。
 [end:note]
 
 [begin:note]
-[:en] The behavior of many of the functions specified in namespace [`std::meta]
-have semantics that can be affected by the completeness of class types
-represented by reflection values.
-[:zh_CN] 命名空间 [`std::meta] 中规定的许多函数的行为，可能受到反射值表示的类类型完整性的影响。
+[:en] Many of the functions specified in namespace [`std::meta] have semantics
+that can be affected by the completeness of class types represented by reflection values.
+[:zh_CN] 命名空间 [`std::meta] 中规定的许多函数，可能受到反射值表示的类类型完整性的影响。
 
 [:en] For such functions, for any reflection [`r] such that [`dealias(r)]
 represents a specialization of a templated class with a reachable definition,

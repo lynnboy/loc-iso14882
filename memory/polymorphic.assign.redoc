@@ -65,10 +65,10 @@ constexpr polymorphic& operator=(polymorphic&& other)
 
 [div:description]
 [para:mandates]
-[:en] If [`allocator_traits<Allocator>::is_always_equal::value] is [`false],
-[`T] is a complete type.
-[:zh_CN] 如果 [`allocator_traits<Allocator>::is_always_equal::value] 为 [`false]，
-则 [`T] 为完整类型。
+[:en] If [`allocator_traits<Allocator>::propagate_on_container_move_assignment::value] is [`false]
+and [`allocator_traits<Allocator>::is_always_equal::value] is [`false], [`T] is a complete type.
+[:zh_CN] 如果 [`allocator_traits<Allocator>::propagate_on_container_move_assignment::value] 为 [`false]
+且 [`allocator_traits<Allocator>::is_always_equal::value] 为 [`false]，则 [`T] 为完整类型。
 
 [para:effects]
 [:en] If [`addressof(other) == this] is [`true], there are no effects.
@@ -84,23 +84,19 @@ constexpr polymorphic& operator=(polymorphic&& other)
 为 [`true] 则需要更新分配器。
 
 [item]
-[:en] If [`[*alloc] == other.[*alloc]] is [`true], swaps the owned objects
-in [`*this] and [`other]; the owned object in [`other], if any, is then destroyed
-using [`allocator_traits<Allocator>::destroy] and then the storage is deallocated.
-[:zh_CN] 如果 [`[*alloc] == other.[*alloc]] 为 [`true]，则交换 [`*this] 和 [`other]
-所拥有的对象；然后使用 [`allocator_traits<Allocator>::destroy] 销毁 [`other] 中拥有的
-对象（如果有），再回收其存储。
+[:en] If [`other] is valueless, [`*this] becomes valueless.
+[:zh_CN] 如果 [`other] 无值，则 [`*this] 变为无值。
 
 [item]
-[:en] Otherwise, if [`[*alloc] != other.[*alloc]] is [`true]; if [`other] is not
-valueless, a new owned object is constructed in [`*this] using 
-[`allocator_traits<Allocator>::construct] with the owned object from [`other] as
-the argument as an rvalue, using either the allocator in [`*this] or
-the allocator in [`other] if the allocator needs updating.
-[:zh_CN] 否则，如果 [`[*alloc] != other.[*alloc]] 为 [`true]；若 [`other] 并非无值，
-则使用 [`allocator_traits<Allocator>::construct]，以 [`other] 中所拥有
-的对象为实参右值，构造 [`*this] 中新拥有的对象，或者使用 [`*this] 中的分配器，或者当分配器
-需要更新时使用 [`other] 中的分配器。
+[:en] Otherwise, if the allocator needs updating or [`[*alloc] == other.[*alloc]]
+is [`true], [`*this] takes ownership of the owned object of [`other].
+[:zh_CN] 否则，如果需要更新分配器或者 [`[*alloc] == other.[*alloc]] 为 [`true]，
+则 [`*this] 接过 [`other] 所拥有对象的所有权。
+
+[item]
+[:en] Otherwise, constructs a new owned object with the owned object of [`other]
+as the argument as an rvalue, using the allocator in [`*this].
+[:zh_CN] 否则，以 [`other] 所拥有对象为实参右值构造一个新的被拥有对象，使用 [`*this] 中的分配器。
 
 [item]
 [:en] The previously owned object in [`*this], if any, is destroyed using

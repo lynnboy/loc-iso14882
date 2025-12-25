@@ -1,11 +1,108 @@
-[section#ratio.define.static
-    [:en] Promoting to static storage strings
-    [:zh_CN] 提升为静态存储字符串
+[section#meta.define.static
+    [:en] Promoting to static storage
+    [:zh_CN] 提升为静态存储
 ]
 
 [para]
 [:en] The functions in this subclause promote compile-time storage into static storage.
 [:zh_CN] 本子条款中的各函数将编译时存储提升为静态存储。
+
+[%@lib reflect_constant_string]
+[codeblock:declaration]
+template<ranges::[[redoc("`:c>")]]input_range R>
+  consteval info reflect_constant_string(R&& r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`CharT] be [`ranges::range_value_t<R>].
+[:zh_CN] 令 [`CharT] 为 [`ranges::range_value_t<R>]。
+
+[para:mandates]
+[:en] [`CharT] is one of [`char], [`wchar_t], [`char8_t], [`char16_t], [`char32_t].
+[:zh_CN] [`CharT] 为 [`char]、[`wchar_t]、[`char8_t]、[`char16_t] 或 [`char32_t] 之一。
+
+[para]
+[:en] Let [$V] be the pack of values of type [`CharT] whose elements are the
+corresponding elements of [`r], except that if [`r] refers to a string literal object,
+then [$V] does not include the terminating [=unicode(0000,null)] character of [`r].
+[:zh_CN] 令 [$V] 为 [`CharT] 类型的值的包组，其各元素为 [`r] 的对应元素，但当
+[`r] 指代字符串字面量对象时，[$V] 不包含 [`r] 的终结 [=unicode(0000,null)] 字符。
+
+[para]
+[:en] Let [$P] be the template parameter object ([#temp.param])
+of type [`const CharT`[sizeof...(V) + 1`]] initialized with [`{[$V]..., CharT()}].
+[:zh_CN] 令 [$P] 为以 [`{[$V]..., CharT()}] 初始化的
+[`const CharT`[sizeof...(V) + 1`]] 类型的模板形参对象（[#temp.param]）。
+
+[para:returns]
+[:en] [`^^[$P]].
+[:zh_CN] [`^^[$P]]。
+
+[para]
+[begin:note]
+[:en] [$P] is a potentially non-unique object ([#intro.object]).
+[:zh_CN] [$P] 是潜在非独有对象（[#intro.object]）。
+[end:note]
+[div:end]
+
+[%@lib reflect_constant_array]
+[codeblock:declaration]
+template<ranges::[[redoc("`:c>")]]input_range R>
+  consteval info reflect_constant_array(R&& r);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`T] be [`ranges::range_value_t<R>] and [$[`[^e]]_i] be [`static_cast<T>(*[$[`[^it]]_i])],
+where [$[`[^it]]_i] is an iterator to the [$i^\text{th}] element of [`r].
+[:zh_CN] 令 [`T] 为 [`ranges::range_value_t<R>]，[$[`[^e]]_i] 为 [`static_cast<T>(*[$[`[^it]]_i])]，
+其中 [$[`[^it]]_i] 为指向 [`r] 的第 [$i] 个元素的迭代器。
+
+[para:mandates]
+[:en] [`T] is a structural type ([#temp.param]),
+[`is_constructible_v<T, ranges::range_reference_t<R>>] is [`true], and
+[`T] satisfies [`:c copy_constructible].
+[:zh_CN] [`T] 是结构化类型（[#temp.param]），
+[`is_constructible_v<T, ranges::range_reference_t<R>>] 为 [`true]，并且
+[`T] 符合 [`:c copy_constructible]。
+
+[para]
+[:en] Let [$V] be the pack of values of type [`info] of the same size as [`r],
+where the [$i^\text{th}] element is [`reflect_constant([$[`[^e]]_i])].
+[:zh_CN] 令 [$V] 为大小与 [`r] 相同的 [`info] 类型的值的包组，其中第 [$i] 个元素
+为 [`reflect_constant([$[`[^e]]_i])]。
+
+[para]
+[:en] Let [$P] be
+[:zh_CN] 令 [$P] 为：
+[list]
+[item]
+[:en] the template parameter object ([#temp.param]) of type [`const T`[sizeof...([$V])`]]
+initialized with [`{`[:[$V]:`]...}] if [`sizeof...([$V]) > 0] is [`true], otherwise
+[:zh_CN] 如果 [`sizeof...([$V]) > 0] 为 [`true]，则为以 [`{`[:[$V]:`]...}]
+初始化的 [`const T`[sizeof...([$V])`]] 类型的模板形参对象（[#temp.param]），否则
+[item]
+[:en] the template parameter object of type [`const array<T, 0>] initialized with [`{}].
+[:zh_CN] 为以 [`{}] 初始化的 [`const array<T, 0>] 类型的模板形参对象。
+[list:end]
+
+[para:returns]
+[:en] [`^^[$P]].
+[:zh_CN] [`^^[$P]]。
+
+[para:throws]
+[:en] Any exception thrown by the evaluation of any [$[`[^e]]_i], or [`meta::exception]
+if evaluation of any [`reflect_constant([$[`[^e]]_i])] would exit via an exception.
+[:zh_CN] 任何 [$[`[^e]]_i] 的求值所抛出的异常，或当任何 [`reflect_constant([$[`[^e]]_i])]
+的求值会以异常退出时抛出 [`meta::exception]。
+
+[para]
+[begin:note]
+[:en] [$P] is a potentially non-unique object ([#intro.object]).
+[:zh_CN] [$P] 是潜在非独有对象（[#intro.object]）。
+[end:note]
+[div:end]
 
 [%@lib define_static_string]
 [codeblock:declaration]
@@ -18,7 +115,7 @@ template<ranges::[[redoc("`:c>")]]input_range R>
 [:en] Equivalent to:
 [:zh_CN] 等价于：
 [codeblock]
-return extract<const ranges::range_value_t<R>*>(meta::reflect_constant_string(r));
+return meta::extract<const ranges::range_value_t<R>*>(meta::reflect_constant_string(r));
 [codeblock:end]
 [div:end]
 
@@ -35,8 +132,8 @@ template<ranges::[[redoc("`:c>")]]input_range R>
 [codeblock]
 using T = ranges::range_value_t<R>;
 meta::info array = meta::reflect_constant_array(r);
-if (is_array_type(type_of(array))) {
-  return span<const T>(extract<const T*>(array), extent(type_of(array)));
+if (meta::is_array_type(meta::type_of(array))) {
+  return span<const T>(meta::extract<const T*>(array), meta::extent(meta::type_of(array)));
 } else {
   return span<const T>();
 }
@@ -55,8 +152,8 @@ template<class T>
 [:zh_CN] 等价于：
 [codeblock]
 using U = remove_cvref_t<T>;
-if constexpr (is_class_type(^^U)) {
-  return addressof(extract<const U&>(meta::reflect_constant(std::forward<T>(t))));
+if constexpr (meta::is_class_type(^^U)) {
+  return addressof(meta::extract<const U&>(meta::reflect_constant(std::forward<T>(t))));
 } else {
   return define_static_array(span(addressof(t), 1)).data();
 }
