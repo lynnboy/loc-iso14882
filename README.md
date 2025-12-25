@@ -156,6 +156,7 @@ Original   |中文   |章节    |定义
 *digit-sequence*            |*数字序列*     | [lex.fcon]    | *数字* (`'`__?__ *数字*)__*__
 *floating-point-suffix*     |*浮点后缀*     | [lex.fcon]    | [`flFL`] \| `fF` (`16`\|`32`\|`64`\|`128`) \| (`bf`\|`BF`) `16`
 *string-literal*            |*字符串字面量* | [lex.string]  | *编码前缀*__?__ (`"` *s-字符序列*__?__ `"` \| `R` *原始字符串*)
+*plain-string-literal*      |*普通字符串字面量* | [lex.string]  | `"` *s-字符序列*__?__ `"`
 *s-char-sequence*           |*s-字符序列*   | [lex.string]  | *s-字符*__+__
 *s-char*                    |*s-字符*       | [lex.string]  | *基本-s-字符* \| *转义序列* \| *通用字符名*
 *basic-s-char*              |*基本-s-字符*  | [lex.string]  | **基本源字符集** - (`"` \| `\` \| 换行)
@@ -212,7 +213,7 @@ Original   |中文   |章节    |定义
 *requirement-seq*           |*规定序列*     | [expr.prim.req.general] | *规定*__+__
 *requirement*               |*规定*         | [expr.prim.req.general] | *简单规定* \| *类型规定* \| *复合规定* \| *嵌套规定*
 *simple-requirement*        |*简单规定*     | [expr.prim.req.simple] | *表达式* `;`
-*type-requirement*          |*类型规定*     | [expr.prim.req.type] | `typename` *嵌套名说明符*__?__ *类型名* `;` \| `typename` ( *拼接说明符* \| *拼接特例说明符* )
+*type-requirement*          |*类型规定*     | [expr.prim.req.type] | `typename` *嵌套名说明符*__?__ *类型名* `;` \| `typename` ( *拼接说明符* \| *拼接特例说明符* ) `;`
 *compound-requirement*      |*复合规定*     | [expr.prim.req.compound] | `{` *表达式* `}` `noexcept`__?__ *返回类型规定*__?__ `;`
 *return-type-requirement*   |*返回类型规定* | [expr.prim.req.compound] | `->` *返回约束*
 *nested-requirement*        |*嵌套规定*     | [expr.prim.req.nested] | `requires` *约束表达式* `;`

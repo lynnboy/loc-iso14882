@@ -102,6 +102,39 @@ an identifier will typically be [`:key const] qualified.
 [:zh_CN] 如果 [$E] 并未声明为 [`:key mutable]，则这个标识符的类型通常是 [`:key const] 限定的。
 [end:note]
 
+[begin:example]
+[codeblock]
+void f() {
+  float x, &r = x;
+
+  [=]() -> decltype((x)) {      // [:en] lambda returns [`float const&] because this lambda is not [`mutable] and \
+                                [:zh_CN] lambda 返回 [`float const&]，因为此 lambda 并非 [`mutable] 且
+                                // [:en@~] [`x] is an lvalue [:zh_CN@~] [`x] 是左值
+    decltype(x) y1;             // [:en] [`y1] has type [`float] [:zh_CN] [`y1] 类型为 [`float]
+    decltype((x)) y2 = y1;      // [:en] [`y2] has type [`float const&] [:zh_CN] [`y2] 类型为 [`float const&]
+    decltype(r) r1 = y1;        // [:en] [`r1] has type [`float&] [:zh_CN] [`r1] 类型为 [`float&]
+    decltype((r)) r2 = y2;      // [:en] [`r2] has type [`float const&] [:zh_CN] [`r2] 类型为 [`float const&]
+    return y2;
+  };
+
+  [=](decltype((x)) y) {
+    decltype((x)) z = x;        // [:en] OK, [`y] has type [`float&], [`z] has type [`float const&] \
+                                [:zh_CN] OK，[`y] 的类型为 [`float&]，[`z] 的类型为 [`float const&]
+  };
+
+  [=] {
+    [](decltype((x)) y) {};     // [:en] OK, lambda takes a parameter of type [`float const&] \
+                                [:zh_CN] OK，lambda 接受一个 [`float const&] 类型的形参
+
+    [x=1](decltype((x)) y) {
+      decltype((x)) z = x;      // [:en] OK, [`y] has type [`int&], [`z] has type [`int const&] \
+                                [:zh_CN] OK，[`y] 的类型为 [`int&]，[`z] 的类型为 [`int const&]
+    };
+  };
+}
+[codeblock:end]
+[end:example]
+
 [para]
 [:en] Otherwise, if the [~unqualified-id] names a coroutine parameter,
 the type of the expression is that of the copy of the parameter ([#dcl.fct.def.coroutine]),
@@ -111,9 +144,8 @@ and the result is that copy.
 
 [para]
 [:en] Otherwise, if the [~unqualified-id] names a result binding ([#dcl.contract.res])
-attached to a function [^f] with return type [`U],
-[:zh_CN] 否则，如果[~无限定标识]指名了附属于返回类型为 [`U] 的函数 [^f] 的
-某个结果绑定（[#dcl.contract.res]），那么
+attached to a function with return type [`U],
+[:zh_CN] 否则，如果[~无限定标识]指名了附属于返回类型为 [`U] 的函数的某个结果绑定（[#dcl.contract.res]），那么
 [list]
 [item]
 [:en@~] if [`U] is [=lq]reference to [`T][=rq], then the type of the expression is [`const T];
@@ -126,8 +158,7 @@ attached to a function [^f] with return type [`U],
 [para]
 [:en] Otherwise, if the [~unqualified-id] appears in the predicate of a contract
 assertion [$C] ([#basic.contract]) and the entity is
-[:zh_CN] 否则，如果[~无限定标识]出现于契约断言 [$C] 的谓词中（[#basic.contract]），
-且该实体是
+[:zh_CN] 否则，如果[~无限定标识]出现于契约断言 [$C] 的谓词中（[#basic.contract]），且该实体是
 [list]
 [item]
 [:en@~] a variable declared outside of [$C] of object type [`T],
@@ -219,26 +250,24 @@ if the entity is a function, variable, structured binding ([#dcl.struct.bind]),
 result binding ([#dcl.contract.res]), data member, or template parameter object
 and a prvalue otherwise ([#basic.lval]);
 it is a bit-field if the identifier designates a bit-field.
-[:zh_CN] 如果该表达式有移动资格（见下文）则其为临限值；如果该实体是函数、变量、
-结构化绑定（[#dcl.struct.bind]）、结果绑定（[#dcl.contract.res]）、数据成员或
-模板形参对象，则表达式是左值，否则是纯右值（[#basic.lval]）；如果该标识符代表的是
-位字段则它也是位字段。
+[:zh_CN] 如果该表达式有移动资格（见下文）则其为临限值；如果该实体是函数、变量、结构化绑定
+（[#dcl.struct.bind]）、结果绑定（[#dcl.contract.res]）、数据成员或模板形参对象，
+则表达式是左值，否则是纯右值（[#basic.lval]）；如果该标识符代表的是位字段则它也是位字段。
 
 [para]
 [:en] If an [~id-expression] [$E] appears in the predicate of a function
 contract assertion attached to a function [^f] and denotes a function parameter
 of [^f] and the implementation introduces any temporary objects
 to hold the value of that parameter as specified in [#class.temporary],
-[:zh_CN] 如果出现于附属于函数 [^f] 的函数契约断言的谓词中的[~标识表达式] [$E]
-指名 [^f] 的某个函数形参，并且实现如 [#class.temporary] 的规定引入了任何临时对象
-来保存该形参的值，那么
+[:zh_CN] 如果出现于附属于函数 [^f] 的函数契约断言的谓词中的[~标识表达式] [$E] 指名 [^f]
+的某个函数形参，并且实现如 [#class.temporary] 的规定引入了任何临时对象来保存该形参的值，那么
 [list]
 [item]
 [:en@~] if the contract assertion is a precondition assertion and the evaluation
 of the precondition assertion is sequenced before the initialization of the parameter
 object, [$E] refers to the most recently initialized such temporary object, and
-[:zh_CN@~] 若该契约断言是前条件断言，并且前条件断言的评估按顺序早于形参对象的
-初始化，则 [$E] 指代最近初始化的这种临时对象，并且
+[:zh_CN@~] 若该契约断言是前条件断言，并且前条件断言的评估按顺序早于形参对象的初始化，
+则 [$E] 指代最近初始化的这种临时对象，并且
 [item]
 [:en@~] if the contract assertion is a postcondition assertion, it is unspecified
 whether [$E] refers to one of the temporary objects or the parameter object;
@@ -257,39 +286,6 @@ is sequenced before the initialization of the result object ([#expr.call]),
 [#class.temporary] 的规定引入了任何临时对象来保存结果对象，并且后条件断言
 按顺序早于结果对象的初始化（[#expr.call]），那么 [$E] 指代最近初始化的这种临时对象。
 
-[begin:example]
-[codeblock]
-void f() {
-  float x, &r = x;
-
-  [=]() -> decltype((x)) {      // [:en] lambda returns [`float const&] because this lambda is not [`mutable] and \
-                                [:zh_CN] lambda 返回 [`float const&]，因为这个 lambda 并非 [`mutable] 且
-                                // [:en@~] [`x] is an lvalue [:zh_CN@~] [`x] 是左值
-    decltype(x) y1;             // [:en] [`y1] has type [`float] [:zh_CN] [`y1] 类型为 [`float]
-    decltype((x)) y2 = y1;      // [:en] [`y1] has type [`float const&] [:zh_CN] [`y1] 类型为 [`float const&]
-    decltype(r) r1 = y1;        // [:en] [`r1] has type [`float&] [:zh_CN] [`r1] 类型为 [`float&]
-    decltype((r)) r2 = y2;      // [:en] [`r2] has type [`float const&] [:zh_CN] [`r2] 类型为 [`float const&]
-    return y2;
-  };
-
-  [=](decltype((x)) y) {
-    decltype((x)) z = x;        // [:en] OK, [`y] has type [`float&], [`z] has type [`float const&] \
-                                [:zh_CN] OK，[`y] 的类型为 [`float&]，[`z] 的类型为 [`float const&]
-  };
-
-  [=] {
-    [](decltype((x)) y) {};     // [:en] OK, lambda takes a parameter of type [`float const&] \
-                                [:zh_CN] OK，lambda 接受一个 [`float const&] 类型的形参
-
-    [x=1](decltype((x)) y) {
-      decltype((x)) z = x;      // [:en] OK, [`y] has type [`int&], [z] has type [`int const&] \
-                                [:zh_CN] OK，[`y] 的类型为 [`int&]，[`z] 的类型为 [`int const&]
-    };
-  };
-}
-[codeblock:end]
-[end:example]
-
 [para]
 [:en] An [+:adj implicitly movable[!entity]] is a variable with automatic storage
 duration that is either a non-volatile object or an rvalue reference to a
@@ -297,8 +293,7 @@ non-volatile object type.
 [:zh_CN] [+:adj 隐式可移动[!实体]]是具有自动存储期的变量，或者是非 volatile 对象，
 或者是到非 volatile 对象类型的右值引用。
 
-[:en] An [~id-expression] or [~splice-expression] ([#expr.prim.splice]) is
-[+move-eligible] if
+[:en] An [~id-expression] or [~splice-expression] ([#expr.prim.splice]) is [+move-eligible] if
 [:zh_CN] 以下情况下，[~标识表达式]或[~拼接表达式]（[#expr.prim.splice]）[+有移动资格]：
 [list]
 [item]
