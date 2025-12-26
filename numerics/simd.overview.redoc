@@ -1,12 +1,13 @@
 [section#simd.overview
-    [:en] Class template [`basic_vec] overview
-    [:zh_CN] 类模板 [`basic_vec] 概述
+    [:en] Overview
+    [:zh_CN] 概述
 ]
 
 [%@lib basic_vec]
 [codeblock:synopsis]
 namespace std::simd {
   template<class T, class Abi> class basic_vec {
+    using [[redoc("*:c>")]]real-type = [[redoc("[=seebelow]")]];                // [=expos]
   public:
     using [[redoc("[%@lib@member value_type[!basic_vec]]")]]value_type = T;
     using [[redoc("[%@lib@member mask_type[!basic_vec]]")]]mask_type = basic_mask<sizeof(T), Abi>;
@@ -31,19 +32,25 @@ namespace std::simd {
     template<class U, class UAbi>
       constexpr explicit([[redoc("[=seebelow]")]]) basic_vec(const basic_vec<U, UAbi>&) noexcept;
     template<class G>
-      constexpr explicit basic_vec(G&& gen) noexcept;
+      constexpr explicit basic_vec(G&& gen);
     template<class R, class... Flags>
       constexpr basic_vec(R&& range, flags<Flags...> = {});
     template<class R, class... Flags>
       constexpr basic_vec(R&& range, const mask_type& mask, flags<Flags...> = {});
-    template<[[redoc("*:c>")]]simd-floating-point V>
-      constexpr explicit([[redoc("[=seebelow]")]]) basic_vec(const V& reals, const V& imags = {}) noexcept;
+    constexpr basic_vec(const [[redoc("*:c>")]]real-type& reals, const [[redoc("*:c>")]]real-type& imags = {}) noexcept;
 
     // [:en] [#simd.subscr], [`basic_vec] subscript operators \
     [:zh_CN] [#simd.subscr]，[`basic_vec] 下标运算符
     constexpr value_type operator[]([[redoc("*>")]]simd-size-type) const;
     template<[[redoc("*:c>")]]simd-integral I>
       constexpr resize_t<I::size(), basic_vec> operator[](const I& indices) const;
+
+    // [:en] [#simd.complex.access], [`basic_vec] complex accessors \
+    [:zh_CN] [#simd.complex.access]，[`basic_vec] 复数访问函数
+    constexpr @\exposid{real-type}@ real() const noexcept;
+    constexpr @\exposid{real-type}@ imag() const noexcept;
+    constexpr void real(const @\exposid{real-type}@& v) noexcept;
+    constexpr void imag(const @\exposid{real-type}@& v) noexcept;
 
     // [:en] [#simd.unary], [`basic_vec] unary operators \
     [:zh_CN] [#simd.unary]，[`basic_vec] 一元运算符
@@ -95,15 +102,6 @@ namespace std::simd {
     friend constexpr mask_type operator>(const basic_vec&, const basic_vec&) noexcept;
     friend constexpr mask_type operator<(const basic_vec&, const basic_vec&) noexcept;
 
-    // [:en] [#simd.complex.access], [`basic_vec] complex-value accessors \
-    [:zh_CN] [#simd.complex.access]，[`basic_vec] 复数值访问函数
-    constexpr auto real() const noexcept;
-    constexpr auto imag() const noexcept;
-    template<[[redoc("*:c>")]]simd-floating-point V>
-      constexpr void real(const V& v) noexcept;
-    template<[[redoc("*:c>")]]simd-floating-point V>
-      constexpr void imag(const V& v) noexcept;
-
     // [:en] [#simd.cond], [`basic_vec] exposition only conditional operators \
     [:zh_CN] [#simd.cond]，[`basic_vec] 仅用于阐释的条件运算符
     friend constexpr basic_vec [[redoc("*>")]]simd-select-impl( // [=expos]
@@ -112,6 +110,9 @@ namespace std::simd {
 
   template<class R, class... Ts>
     basic_vec(R&& r, Ts...) -> [[redoc("[=seebelow]")]];
+
+  template<size_t Bytes, class Abi>
+    basic_vec(basic_mask<Bytes, Abi>) -> [[redoc("[=seebelow]")]];
 }
 [codeblock:end]
 
@@ -161,7 +162,13 @@ from/to implementation-specific vector types] types.
 特定于实现的向量类型之间的转换]类型之间的隐式转换。
 
 [begin:note]
-[:en] Appropriate types are non-standard vector types which are available in the
-implementation.
+[:en] Appropriate types are non-standard vector types which are available in the implementation.
 [:zh_CN] 这些适当类型是实现中可用的非标准的向量类型。
 [end:note]
+
+[para]
+[:en] If [`T] is a specialization of [`complex], [*real-type] denotes the same
+type as [`rebind_t<typename T::value_type, basic_vec<T, Abi>>], otherwise an
+unspecified non-array object type.
+[:zh_CN] 如果 [`T] 是 [`complex] 的特例，[*real-type] 代表与
+[`rebind_t<typename T::value_type, basic_vec<T, Abi>>] 相同的类型，否则代表未指明的非数组对象类型。

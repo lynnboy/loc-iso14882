@@ -5,8 +5,7 @@
 
 [para]
 [begin:note]
-[:en] These functions correspond to the BLAS functions [`xSYR2K] and [`xHER2K]
-[#:cite@super#blas3].
+[:en] These functions correspond to the BLAS functions [`xSYR2K] and [`xHER2K][#:cite@super#blas3].
 [:zh_CN] 这些函数对应于 BLAS 函数 [`xSYR2K] 和 [`xHER2K][#:cite@super#blas3]。
 [end:note]
 
@@ -14,74 +13,149 @@
 [:en] The following elements apply to all functions in [#linalg.algs.blas3.rank2k].
 [:zh_CN] 下列要素适用于 [#linalg.algs.blas3.rank2k] 中的所有函数。
 
+[para]
+[:en] For any function [`F] in this subclause with a parameter named [`t],
+an [`InMat3] template parameter, and a function parameter [`InMat3 E],
+[`t] applies to accesses done through the parameter [`E].
+[:zh_CN] 对于本子条款中任何带有名为 [`t] 的形参，模板形参 [`InMat3]，以及函数形参
+[`InMat3 E] 的函数 [`F]，[`t] 适用于通过形参 [`E] 所进行的访问。
+
+[:en] [`F] only accesses the triangle of [`E] specified by [`t].
+[:zh_CN] [`F] 仅访问 [`t] 所指定的 [`E] 的三角部分。
+
+[:en] For accesses of diagonal elements [`E`[i, i`]], [`F] only uses the value
+[`[*real-if-needed](E`[i, i`])] if the name of [`F] starts with [`hermitian].
+[:zh_CN] 对于对角线元素 [`E`[i, i`]] 的访问，如果 [`F] 的名字以 [`hermitian] 开始，
+则仅使用值 [`[*real-if-needed](E`[i, i`])]。
+
+[:en] For accesses [`E`[i, j`]] outside the triangle specified by [`t], [`F] only uses the value
+[:zh_CN] 对于 [`t] 所指定三角部分之外的访问 [`E`[i, j`]]，[`F] 仅使用以下值：
+[list]
+[item]
+[:en] [`[*conj-if-needed](E`[j, i`])] if the name of [`F] starts with [`hermitian], or
+[:zh_CN] 如果 [`F] 的名字以 [`hermitian] 开始，则使用 [`[*conj-if-needed](E`[j, i`])]，或者
+[item]
+[:en] [`E`[j, i`]] if the name of [`F] starts with [`symmetric].
+[:zh_CN] 如果 [`F] 的名字以 [`symmetric] 开始，则使用 [`E`[j, i`]]。
+[list:end]
+
 [para:mandates]
 [list]
 [item]
-[:en] If [`InOutMat] has [`layout_blas_packed] layout, then the layout[=']s
-[`Triangle] template argument has the same type as the function[=']s [`Triangle]
-template argument;
-[:zh_CN] 如果 [`InOutMat] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
+[:en] If [`OutMat] has [`layout_blas_packed] layout, then the layout[=']s [`Triangle]
+template argument has the same type as the function[=']s [`Triangle] template argument;
+[:zh_CN] 如果 [`OutMat] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
 模板实参与函数的 [`Triangle] 模板实参为相同类型；
 [item]
-[:en] [`[*possibly-multipliable]<decltype(A), decltype(B), decltype(C)>(0, 1)]
-is [`true]; and
-[:zh_CN] [`[*possibly-multipliable]<decltype(A), decltype(B), decltype(C)>(0, 1)]
-为 [`true]；并且
+[:en] If the function has an [`InMat3] template parameter and if [`InMat3] has
+[`layout_blas_packed] layout, then the layout[=']s [`Triangle] template argument
+has the same type as the function[=']s [`Triangle] template argument;
+[:zh_CN] 如果函数带有模板形参 [`InMat3] 且 [`InMat3] 具有 [`layout_blas_packed]
+布局，则该布局的 [`Triangle] 模板实参与函数的 [`Triangle] 模板实参为相同类型；
 [item]
-[:en] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)] is [`true].
-[:zh_CN] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)] 为
-[`true]。
+[:en] [`[*possibly-multipliable]<decltype(A), decltype(transposed(B)), decltype(C)>()] is [`true];
+[:zh_CN] [`[*possibly-multipliable]<decltype(A), decltype(transposed(B)), decltype(C)>()] 为 [`true]；
+[item]
+[:en] [`[*possibly-multipliable]<decltype(B), decltype(transposed(A)), decltype(C)>()] is [`true]; and
+[:zh_CN] [`[*possibly-multipliable]<decltype(B), decltype(transposed(A)), decltype(C)>()] 为 [`true]；并且
+[item]
+[:en] [`[*possibly-addable]<decltype(C), decltype(E), decltype(C)>()] is [`true]
+for those overloads with an [`E] parameter.
+[:zh_CN] 对于带有形参 [`E] 的重载，[`[*possibly-addable]<decltype(C), decltype(E), decltype(C)>()] 为 [`true]。
 [list:end]
 
 [para:expects]
 [list]
 [item]
-[:en@~] [`[*addable](A, B, C)] is [`true], and
-[:zh_CN@~] [`[*addable](A, B, C)] 等于 [`true]，并且
+[:en] [`[*multipliable](A, transposed(B), C)] is [`true],
+[:zh_CN] [`[*multipliable](A, transposed(B), C)] 等于 [`true]，
 [item]
-[:en@~] [`A.extent(0)] equals [`A.extent(1)].
-[:zh_CN@~] [`A.extent(0)] 等于 [`A.extent(1)]。
+[:en] [`[*multipliable](B, transposed(A), C)] is [`true]; and
+[:zh_CN] [`[*multipliable](B, transposed(A), C)] 为 [`true]；并且
+[begin:note]
+[:en] This and the previous imply that [`C] is square.
+[:zh_CN] 本条和上一条意味着 [`C] 是方阵。
+[end:note]
+[item]
+[:en] [`[*addable](C, E, C)] is [`true] for those overloads with an [`E] parameter.
+[:zh_CN] 对于带有形参 [`E] 的重载，[`[*addable](C, E, C)] 为 [`true]。
 [list:end]
 
 [para:complexity]
-[:en] [?bigoh [`A.extent(0)] \times [`A.extent(1)] \times [`C.extent(0)]].
-[:zh_CN] [?bigoh [`A.extent(0)] \times [`A.extent(1)] \times [`C.extent(0)]]。
+[:en] [?bigoh [`A.extent(0)] \times [`A.extent(1)] \times [`B.extent(0)]].
+[:zh_CN] [?bigoh [`A.extent(0)] \times [`A.extent(1)] \times [`B.extent(0)]]。
 
-[%@lib symmetric_matrix_rank_2k_update]
-[codeblock:declaration]
-template<[[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
-  void symmetric_matrix_rank_2k_update(InMat1 A, InMat2 B, InOutMat C, Triangle t);
-template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
-  void symmetric_matrix_rank_2k_update(ExecutionPolicy&& exec,
-                                       InMat1 A, InMat2 B, InOutMat C, Triangle t);
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Computes a matrix [$C'] such that [$C' = C + A B^T + B A^T], and
-assigns each element of [$C'] to the corresponding element of [$C].
-[:zh_CN] 计算矩阵 [$C'] 使得 [$C' = C + A B^T + B A^T]，并将 [$C'] 的各个元素
-赋值给 [$C] 的对应元素。
+[para:remarks]
+[:en] [`C] may alias [`E] for those overloads with an [`E] parameter.
+[:zh_CN] 对于带有形参 [`E] 的重载，[`C] 可能为 [`E] 的别名。
 [div:end]
 
 [%@lib symmetric_matrix_rank_2k_update]
 [codeblock:declaration]
 template<[[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
-  void hermitian_matrix_rank_2k_update(InMat1 A, InMat2 B, InOutMat C, Triangle t);
-template<class ExecutionPolicy,
-         [[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
-  void hermitian_matrix_rank_2k_update(ExecutionPolicy&& exec,
-                                       InMat1 A, InMat2 B, InOutMat C, Triangle t);
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void symmetric_matrix_rank_2k_update(InMat1 A, InMat2 B, OutMat C, Triangle t);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void symmetric_matrix_rank_2k_update(ExecutionPolicy&& exec,
+                                       InMat1 A, InMat2 B, OutMat C, Triangle t);
 [codeblock:end]
 
 [div:description]
 [para:effects]
-[:en] Computes a matrix [$C'] such that [$C' = C + A B^H + B A^H], and
-assigns each element of [$C'] to the corresponding element of [$C].
-[:zh_CN] 计算矩阵 [$C'] 使得 [$C' = C + A B^H + B A^H]，并将 [$C'] 的各个元素
-赋值给 [$C] 的对应元素。
+[:en] Computes [$C = A B^T + B A^T].
+[:zh_CN] 计算 [$C = A B^T + B A^T]。
+[div:end]
+
+[%@lib hermitian_matrix_rank_2k_update]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void hermitian_matrix_rank_2k_update(InMat1 A, InMat2 B, OutMat C, Triangle t);
+template<class ExecutionPolicy,
+         [[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void hermitian_matrix_rank_2k_update(ExecutionPolicy&& exec,
+                                       InMat1 A, InMat2 B, OutMat C, Triangle t);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Computes [$C = A B^H + B A^H].
+[:zh_CN] 计算 [$C = A B^H + B A^H]。
+[div:end]
+
+[%@lib symmetric_matrix_rank_2k_update]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]in-matrix InMat3,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+void symmetric_matrix_rank_2k_update(InMat1 A, InMat2 B, InMat3 E, OutMat C, Triangle t);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]in-matrix InMat3,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+void symmetric_matrix_rank_2k_update(ExecutionPolicy&& exec,
+                                     InMat1 A, InMat2 B, InMat3 E, OutMat C, Triangle t);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Computes [$C = E + A B^T + B A^T].
+[:zh_CN] 计算 [$C = E + A B^T + B A^T]。
+[div:end]
+
+[%@lib hermitian_matrix_rank_2k_update]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]in-matrix InMat3, [[redoc("*:c>")]]possibly-packed-out-matrix OutMat,
+         class Triangle>
+void hermitian_matrix_rank_2k_update(InMat1 A, InMat2 B, InMat3 E, OutMat C, Triangle t);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-matrix InMat1, [[redoc("*:c>")]]in-matrix InMat2, [[redoc("*:c>")]]in-matrix InMat3,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat,
+         class Triangle>
+void hermitian_matrix_rank_2k_update(ExecutionPolicy&& exec, InMat1 A, InMat2 B, InMat3 E,
+                                     OutMat C, Triangle t);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Computes [$C = E + A B^H + B A^H].
+[:zh_CN] 计算 [$C = E + A B^H + B A^H]。
 [div:end]

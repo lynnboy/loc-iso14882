@@ -7,42 +7,75 @@
 [begin:note]
 [:en] These functions correspond to the BLAS functions [`xSYR2], [`xSPR2],
 [`xHER2], and [`xHPR2][#:cite@super#blas2].
-[:zh_CN] 这些函数对应于 BLAS 函数 [`xSYR2]、[`xSPR2]、[`xHER2] 和 [`xHPR2]
-[#:cite@super#blas2]。
+[:zh_CN] 这些函数对应于 BLAS 函数 [`xSYR2]、[`xSPR2]、[`xHER2] 和 [`xHPR2][#:cite@super#blas2]。
 [end:note]
 
 [para]
 [:en] The following elements apply to all functions in [#linalg.algs.blas2.rank2].
 [:zh_CN] 下列要素适用于 [#linalg.algs.blas2.rank2] 中的所有函数。
 
+[para]
+[:en] For any function [`F] in this subclause with a parameter named [`t],
+an [`InMat] template parameter, and a function parameter [`InMat E],
+[`t] applies to accesses done through the parameter [`E].
+[:zh_CN] 对于本子条款中任何带有名为 [`t] 的形参，模板形参 [`InMat]，以及函数形参
+[`InMat E] 的函数 [`F]，[`t] 适用于通过形参 [`E] 所进行的访问。
+
+[:en] [`F] only accesses the triangle of [`E] specified by [`t].
+[:zh_CN] [`F] 仅访问 [`t] 所指定的 [`E] 的三角部分。
+
+[:en] For accesses of diagonal elements [`E`[i, i`]], [`F] only uses the value
+[`[*real-if-needed](E`[i, i`])] if the name of [`F] starts with [`hermitian].
+[:zh_CN] 对于对角线元素 [`E`[i, i`]] 的访问，如果 [`F] 的名字以 [`hermitian] 开始，
+则仅使用值 [`[*real-if-needed](E`[i, i`])]。
+
+[:en] For accesses [`E`[i, j`]] outside the triangle specified by [`t], [`F] only uses the value
+[:zh_CN] 对于 [`t] 所指定三角部分之外的访问 [`E`[i, j`]]，[`F] 仅使用以下值：
+[list]
+[item]
+[:en] [`[*conj-if-needed](E`[j, i`])] if the name of [`F] starts with [`hermitian], or
+[:zh_CN] 如果 [`F] 的名字以 [`hermitian] 开始，则使用 [`[*conj-if-needed](E`[j, i`])]，或者
+[item]
+[:en] [`E`[j, i`]] if the name of [`F] starts with [`symmetric].
+[:zh_CN] 如果 [`F] 的名字以 [`symmetric] 开始，则使用 [`E`[j, i`]]。
+[list:end]
+
 [para:mandates]
 [list]
 [item]
-[:en] If [`InOutMat] has [`layout_blas_packed] layout, then the layout[=']s
-[`Triangle] template argument has the same type as the function[=']s [`Triangle]
-template argument;
-[:zh_CN] 如果 [`InOutMat] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
+[:en] If [`OutMat] has [`layout_blas_packed] layout, then the layout[=']s [`Triangle]
+template argument has the same type as the function[=']s [`Triangle] template argument;
+[:zh_CN] 如果 [`OutMat] 具有 [`layout_blas_packed] 布局，则该布局的 [`Triangle]
 模板实参与函数的 [`Triangle] 模板实参为相同类型。
 [item]
-[:en] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)]
-is [`true]; and
-[:zh_CN] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)]
-为 [`true]；并且
+[:en] If the function has an [`InMat] template parameter and [`InMat] has
+[`layout_blas_packed] layout, then the layout[=']s [`Triangle] template argument
+has the same type as the function[=']s [`Triangle] template argument;
+[:zh_CN] 如果函数带有模板形参 [`InMat] 且 [`InMat] 具有 [`layout_blas_packed] 布局，
+则该布局的 [`Triangle] 模板实参与函数的 [`Triangle] 模板实参为相同类型。
 [item]
-[:en] [`[*possibly-multipliable]<decltype(A), decltype(x), decltype(y)>()]
-is [`true].
-[:zh_CN] [`[*possibly-multipliable]<decltype(A), decltype(x), decltype(y)>()]
-为 [`true]。
+[:en] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)] is [`true];
+[:zh_CN] [`[*compatible-static-extents]<decltype(A), decltype(A)>(0, 1)] 为 [`true]；
+[item]
+[:en] [`[*possibly-multipliable]<decltype(A), decltype(x), decltype(y)>()] is [`true]; and
+[:zh_CN] [`[*possibly-multipliable]<decltype(A), decltype(x), decltype(y)>()] 为 [`true]；并且
+[item]
+[:en] [`[*possibly-addable]<decltype(A), decltype(E), decltype(A)>()] is [`true]
+for those overloads with an [`E] parameter.
+[:zh_CN] 对于带有形参 [`E] 的重载，[`[*possibly-addable]<decltype(A), decltype(E), decltype(A)>()] 为 [`true]。
 [list:end]
 
 [para:expects]
 [list]
 [item]
-[:en@~] [`A.extent(0)] equals [`A.extent(1)], and
-[:zh_CN@~] [`A.extent(0)] 等于 [`A.extent(1)]，并且
+[:en@~] [`A.extent(0)] equals [`A.extent(1)],
+[:zh_CN@~] [`A.extent(0)] 等于 [`A.extent(1)]，
 [item]
-[:en@~] [`[*multipliable](A, x, y)] is [`true].
-[:zh_CN@~] [`[*multipliable](A, x, y)] 等于 [`true]。
+[:en@~] [`[*multipliable](A, x, y)] is [`true], and
+[:zh_CN@~] [`[*multipliable](A, x, y)] 等于 [`true]，并且
+[item]
+[:en@~] [`[*addable](A, E, A)] is [`true] for those overloads with an [`E] parameter.
+[:zh_CN@~] 对于带有形参 [`E] 的重载，[`[*addable](A, E, A)] 为 [`true]。
 [list:end]
 
 [para:complexity]
@@ -52,51 +85,101 @@ is [`true].
 [%@lib symmetric_matrix_rank_2_update]
 [codeblock:declaration]
 template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
-  void symmetric_matrix_rank_2_update(InVec1 x, InVec2 y, InOutMat A, Triangle t);
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void symmetric_matrix_rank_2_update(InVec1 x, InVec2 y, OutMat A, Triangle t);
 template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
   void symmetric_matrix_rank_2_update(ExecutionPolicy&& exec,
-                                      InVec1 x, InVec2 y, InOutMat A, Triangle t);
+                                      InVec1 x, InVec2 y, OutMat A, Triangle t);
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] These functions perform a symmetric rank-2 update of the symmetric matrix
-[`A], taking into account the [`Triangle] parameter that applies to [`A]
-([#linalg.general]).
-[:zh_CN] 这些函数实施对称矩阵 [`A] 的对称秩-2 更新，其中考虑在 [`A] 上应用的
+[:en] These functions perform an overwriting symmetric rank-2 update of the symmetric matrix [`A],
+taking into account the [`Triangle] parameter that applies to [`A] ([#linalg.general]).
+[:zh_CN] 这些函数实施对称矩阵 [`A] 的覆写的对称秩-2 更新，其中考虑对 [`A] 运用
 [`Triangle] 形参（[#linalg.general]）。
 
 [para:effects]
-[:en] Computes [$A'] such that [$A' = A + x y^T + y x^T] and assigns
-each element of [$A'] to the corresponding element of [$A].
-[:zh_CN] 计算 [$A'] 使得 [$A' = A + x y^T + y x^T]，并将 [$A'] 的各个元素赋值
-给 [$A] 的对应元素。
+[:en] Computes [$A = x y^T + y x^T].
+[:zh_CN] 计算 [$A = x y^T + y x^T]。
+[div:end]
+
+[%@lib symmetric_matrix_rank_2_update]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, [[redoc("*:c>")]]in-matrix InMat,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void symmetric_matrix_rank_2_update(InVec1 x, InVec2 y, InMat E, OutMat A, Triangle t);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, [[redoc("*:c>")]]in-matrix InMat,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void symmetric_matrix_rank_2_update(ExecutionPolicy&& exec,
+                                      InVec1 x, InVec2 y, InMat E, OutMat A, Triangle t);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform an updating symmetric rank-2 update of the symmetric matrix [`A]
+using the symmetric matrix [`E], taking into account the [`Triangle] parameter
+that applies to [`A] and [`E] ([#linalg.general]).
+[:zh_CN] 这些函数实施使用对称矩阵 [`E] 对对称矩阵 [`A] 的更新的对称秩-2 更新，
+其中考虑对 [`A] 和 [`E] 运用 [`Triangle] 形参（[#linalg.general]）。
+
+[para:effects]
+[:en] Computes [$A = E + x y^T + y x^T].
+[:zh_CN] 计算 [$A = E + x y^T + y x^T]。
+
+[para:remarks]
+[:en] [`A] may alias [`E].
+[:zh_CN] [`A] 可能为 [`E] 的别名。
 [div:end]
 
 [%@lib symmetric_matrix_rank_2_update]
 [codeblock:declaration]
 template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
-  void hermitian_matrix_rank_2_update(InVec1 x, InVec2 y, InOutMat A, Triangle t);
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void hermitian_matrix_rank_2_update(InVec1 x, InVec2 y, OutMat A, Triangle t);
 template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2,
-         [[redoc("*:c>")]]possibly-packed-inout-matrix InOutMat, class Triangle>
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
   void hermitian_matrix_rank_2_update(ExecutionPolicy&& exec,
-                                      InVec1 x, InVec2 y, InOutMat A, Triangle t);
+                                      InVec1 x, InVec2 y, OutMat A, Triangle t);
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] These functions perform a Hermitian rank-2 update of the Hermitian matrix
-[`A], taking into account the [`Triangle] parameter that applies to [`A]
-([#linalg.general]).
-[:zh_CN] 这些函数实施厄米共轭矩阵 [`A] 的厄米共轭秩-2 更新，其中考虑在 [`A] 上
-应用的 [`Triangle] 形参（[#linalg.general]）。
+[:en] These functions perform an overwriting Hermitian rank-2 update of the Hermitian matrix [`A],
+taking into account the [`Triangle] parameter that applies to [`A] ([#linalg.general]).
+[:zh_CN] 这些函数实施厄米共轭矩阵 [`A] 的覆写的厄米共轭秩-2 更新，其中考虑对 [`A]
+运用 [`Triangle] 形参（[#linalg.general]）。
 
 [para:effects]
-[:en] Computes [$A'] such that [$A' = A + x y^H + y x^H] and assigns
-each element of [$A'] to the corresponding element of [$A].
-[:zh_CN] 计算矩阵 [$A'] 使得 [$A' = A + x y^H + y x^H]，并将 [$A'] 的各个元素
-赋值给 [$A] 的对应元素。
+[:en] Computes [$A = x y^H + y x^H].
+[:zh_CN] 计算 [$A = x y^H + y x^H]。
+[div:end]
+
+[%@lib symmetric_matrix_rank_2_update]
+[codeblock:declaration]
+template<[[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, [[redoc("*:c>")]]in-matrix InMat,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void hermitian_matrix_rank_2_update(InVec1 x, InVec2 y, InMat E, OutMat A, Triangle t);
+template<class ExecutionPolicy, [[redoc("*:c>")]]in-vector InVec1, [[redoc("*:c>")]]in-vector InVec2, [[redoc("*:c>")]]in-matrix InMat,
+         [[redoc("*:c>")]]possibly-packed-out-matrix OutMat, class Triangle>
+  void hermitian_matrix_rank_2_update(ExecutionPolicy&& exec,
+                                      InVec1 x, InVec2 y, InMat E, OutMat A, Triangle t);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] These functions perform an updating Hermitian rank-2 update of the Hermitian matrix [`A]
+using the Hermitian matrix [`E], taking into account the [`Triangle] parameter
+that applies to [`A] and [`E] ([#linalg.general]).
+[:zh_CN] 这些函数实施使用厄米共轭矩阵 [`E] 对厄米共轭矩阵 [`A] 的更新的厄米共轭秩-2 更新，
+其中考虑对 [`A] 和 [`E] 运用 [`Triangle] 形参（[#linalg.general]）。
+
+[para:effects]
+[:en] Computes [$A = E + x y^H + y x^H].
+[:zh_CN] 计算 [$A = E + x y^H + y x^H]。
+
+[para:remarks]
+[:en] [`A] may alias [`E].
+[:zh_CN] [`A] 可能为 [`E] 的别名。
 [div:end]

@@ -1,6 +1,6 @@
 [section#simd.loadstore
-    [:en] [`basic_vec] load and store functions
-    [:zh_CN] [`basic_vec] 加载与存储函数
+    [:en] Load and store functions
+    [:zh_CN] 加载与存储函数
 ]
 
 [%@lib@member unchecked_load[!simd]]
@@ -32,8 +32,7 @@ template<class V = [[redoc("[=seebelow]")]], [[redoc("`:c>")]]contiguous_iterato
 [:en@~] [`mask] be [`V::mask_type(true)] for the overloads with no [`mask] parameter;
 [:zh_CN@~] [`mask] 对于没有形参 [`mask] 的重载为 [`V::mask_type(true)]；
 [item]
-[:en@~] [`R] be [`span<const iter_value_t<I>>] for the overloads with no
-template parameter [`R];
+[:en@~] [`R] be [`span<const iter_value_t<I>>] for the overloads with no template parameter [`R];
 [:zh_CN@~] [`R] 对于没有形参 [`R] 的重载为 [`span<const iter_value_t<I>>]；
 [item]
 [:en@~] [`r] be [`R(first, n)] for the overloads with an [`n] parameter and
@@ -102,19 +101,23 @@ template parameter [`R];
 [:zh_CN@~] [`R] 对于没有形参 [`R] 的重载为 [`span<const iter_value_t<I>>]；
 [item]
 [:en@~] [`r] be [`R(first, n)] for the overloads with an [`n] parameter and
-[`R(first, last)] for the overloads with a [`last] parameter.
+[`R(first, last)] for the overloads with a [`last] parameter;
 [:zh_CN@~] [`r] 对于带有形参 [`n] 的重载为 [`R(first, n)]，而对于带有形参 [`last]
-的重载为 [`R(first, last)]。
+的重载为 [`R(first, last)]；
+[item]
+[:en@~] [`T] be [`typename V::value_type].
+[:zh_CN@~] [`T] 为 [`typename V::value_type]。
 [list:end]
 
 [para:mandates]
 [list]
 [item]
-[:en] [`ranges::range_value_t<R>] is a vectorizable type,
-[:zh_CN] [`ranges::range_value_t<R>] 是可向量化类型，
+[:en] [`ranges::range_value_t<R>] is a vectorizable type and satisfies
+[`[*explicitly-convertible-to]<T>],
+[:zh_CN] [`ranges::range_value_t<R>] 是可向量化类型且满足 [`[*explicitly-convertible-to]<T>]，
 [item]
-[:en] [`same_as<remove_cvref_t<V>, V>] is [`true],
-[:zh_CN] [`same_as<remove_cvref_t<V>, V>] 为 [`true]，
+[:en] [`[*same_as]<remove_cvref_t<V>, V>] is [`true],
+[:zh_CN] [`[*same_as]<remove_cvref_t<V>, V>] 为 [`true]，
 [item]
 [:en] [`V] is an enabled specialization of [`basic_vec], and
 [:zh_CN] [`V] 为 [`basic_vec] 的被启用特例，并且
@@ -145,45 +148,43 @@ the conversion from [`ranges::range_value_t<R>] to [`V::value_type] is value-pre
 [`ranges::data(r)] 指向按 [`N] 对齐的存储。
 [list:end]
 
-[para:effects]
-[:en] Initializes the [$i^\text{th}] element with
+[para:returns]
+[:en] A [`basic_vec] object whose [$i^\text{th}] element is initialized with
 [`mask`[[$i]`] && [$i] < ranges::size(r) ? static_cast<T>(ranges::data(r)`[[$i]`]) : T()]
-for all [$i] in the range of [=range(0,V::size())].
-[:zh_CN] 对于范围 [=range(0,V::size())] 中的所有 [$i]，以
+for all [$i] in the range of [=range(0,V::size())], where [`T] is [`V::value_type].
+[:zh_CN] 一个 [`basic_vec] 对象，对于范围 [=range(0,V::size())] 中的所有 [$i]，以
 [`mask`[[$i]`] && [$i] < ranges::size(r) ? static_cast<T>(ranges::data(r)`[[$i]`]) : T()]
-初始化第 [$i] 个元素。
+初始化第 [$i] 个元素，其中 [`T] 为 [`V::value_type]。
 
 [para:remarks]
-[:en] The default argument for template parameter [`V] is
-[`basic_vec<ranges::range_value_t<R>>].
+[:en] The default argument for template parameter [`V] is [`basic_vec<ranges::range_value_t<R>>].
 [:zh_CN] 模板形参 [`V] 的默认实参为 [`basic_vec<ranges::range_value_t<R>>]。
 [div:end]
 
 [%@lib@member unchecked_store[!simd]]
 [codeblock:declaration]
 template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-  requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
   constexpr void unchecked_store(const basic_vec<T, Abi>& v, R&& r, flags<Flags...> f = {});
 template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-  requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
   constexpr void unchecked_store(const basic_vec<T, Abi>& v, R&& r,
-    const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                 const typename basic_vec<T, Abi>::mask_type& mask,
+                                 flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first, iter_difference_t<I> n,
                                  flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first, iter_difference_t<I> n,
-    const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                 const typename basic_vec<T, Abi>::mask_type& mask,
+                                 flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first, S last,
                                  flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first, S last,
-    const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                 const typename basic_vec<T, Abi>::mask_type& mask,
+                                 flags<Flags...> f = {});
 [codeblock:end]
 
 [div:description]
@@ -192,8 +193,7 @@ template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:
 [:zh_CN] 令
 [list]
 [item]
-[:en@~] [`mask] be [`basic_vec<T, Abi>::mask_type(true)] for the overloads with
-no [`mask] parameter;
+[:en@~] [`mask] be [`basic_vec<T, Abi>::mask_type(true)] for the overloads with no [`mask] parameter;
 [:zh_CN@~] [`mask] 对于没有形参 [`mask] 的重载为 [`basic_vec<T, Abi>::mask_type(true)]；
 [item]
 [:en@~] [`R] be [`span<iter_value_t<I>>] for the overloads with no template parameter [`R];
@@ -231,28 +231,27 @@ no [`mask] parameter;
 [%@lib@member partial_store[!simd]]
 [codeblock:declaration]
 template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-  requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
   constexpr void partial_store(const basic_vec<T, Abi>& v, R&& r, flags<Flags...> f = {});
 template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-  requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+  requires ranges::[[redoc("`:c>")]]sized_range<R>
   constexpr void partial_store(const basic_vec<T, Abi>& v, R&& r,
-    const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                               const typename basic_vec<T, Abi>::mask_type& mask,
+                               flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void partial_store(const basic_vec<T, Abi>& v, I first, iter_difference_t<I> n,
                                flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void partial_store(const basic_vec<T, Abi>& v, I first, iter_difference_t<I> n,
-    const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                               const typename basic_vec<T, Abi>::mask_type& mask,
+                               flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void partial_store(const basic_vec<T, Abi>& v, I first, S last,
                                flags<Flags...> f = {});
 template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-  requires [[redoc("`:c>")]]indirectly_writable<I, T>
   constexpr void partial_store(const basic_vec<T, Abi>& v, I first, S last,
-    const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                               const typename basic_vec<T, Abi>::mask_type& mask,
+                               flags<Flags...> f = {});
 [codeblock:end]
 
 [div:description]
@@ -261,8 +260,7 @@ template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:
 [:zh_CN] 令
 [list]
 [item]
-[:en@~] [`mask] be [`basic_vec<T, Abi>::mask_type(true)] for the overloads with
-no [`mask] parameter;
+[:en@~] [`mask] be [`basic_vec<T, Abi>::mask_type(true)] for the overloads with no [`mask] parameter;
 [:zh_CN@~] [`mask] 对于没有形参 [`mask] 的重载为 [`basic_vec<T, Abi>::mask_type(true)]；
 [item]
 [:en@~] [`R] be [`span<iter_value_t<I>>] for the overloads with no template parameter [`R];
@@ -272,6 +270,16 @@ no [`mask] parameter;
 [`R(first, last)] for the overloads with a [`last] parameter.
 [:zh_CN@~] [`r] 对于带有形参 [`n] 的重载为 [`R(first, n)]，而对于带有形参 [`last]
 的重载为 [`R(first, last)]。
+[list:end]
+
+[para:constraints]
+[list]
+[item]
+[:en] [`ranges::iterator_t<R>] models [`[`:c indirectly_writable]<ranges::range_value_t<R>>], and
+[:zh_CN] [`ranges::iterator_t<R>] 构成 [`[`:c indirectly_writable]<ranges::range_value_t<R>>]，并且
+[item]
+[:en] [`T] satisfies [`[*:c explicitly-convertible-to]<ranges::range_value_t<R>>].
+[:zh_CN] [`T] 满足 [`[*:c explicitly-convertible-to]<ranges::range_value_t<R>>]。
 [list:end]
 
 [para:mandates]
@@ -310,8 +318,8 @@ then the conversion from [`T] to [`ranges::range_value_t<R>] is value-preserving
 [para:effects]
 [:en] For all [$i] in the range of [=range(0,basic_vec<T, Abi>::size())], if
 [`mask`[[$i]`] && [$i] < ranges::size(r)] is [`true], evaluates
-[`ranges::data(r)`[[$i]`] = v`[[$i]`]].
+[`ranges::data(r)`[[$i]`] = static_cast<ranges::range_value_t<R>>(`[[$i]`])].
 [:zh_CN] 对于范围 [=range(0,basic_vec<T, Abi>::size())] 中的所有 [$i]，如果
 [`mask`[[$i]`] && [$i] < ranges::size(r)] 为 [`true]，则求值
-[`ranges::data(r)`[[$i]`] = v`[[$i]`]]。
+[`ranges::data(r)`[[$i]`] = static_cast<ranges::range_value_t<R>>(`[[$i]`])]。
 [div:end]

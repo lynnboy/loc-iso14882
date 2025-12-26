@@ -1,6 +1,6 @@
 [section#simd.mask.overview
-    [:en] Class template [`basic_mask] overview
-    [:zh_CN] 类模板 [`basic_mask] 概述
+    [:en] Overview
+    [:zh_CN] 概述
 ]
 
 [codeblock:synopsis]
@@ -25,13 +25,16 @@ namespace std::simd {
 
     // [:en] [#simd.mask.ctor], [`basic_mask] constructors \
     [:zh_CN] [#simd.mask.ctor]，[`basic_mask] 构造函数
-    constexpr explicit basic_mask(value_type) noexcept;
+    constexpr explicit basic_mask([[redoc("`:c>")]]same_as<value_type> auto) noexcept;
     template<size_t UBytes, class UAbi>
       constexpr explicit basic_mask(const basic_mask<UBytes, UAbi>&) noexcept;
     template<class G>
-      constexpr explicit basic_mask(G&& gen) noexcept;
-    constexpr basic_mask(const bitset<size()>& b) noexcept;
-    constexpr explicit basic_mask([[redoc("`:c>")]]unsigned_integral auto val) noexcept;
+      constexpr explicit basic_mask(G&& gen);
+    template<[[redoc("`:c>")]]same_as<bitset<size()>> T>
+      constexpr basic_mask(const T& b) noexcept;
+    template<[[redoc("`:c>")]]unsigned_integral T>
+      requires (![[redoc("`:c>")]]same_as<T, value_type>)
+      constexpr explicit basic_mask(T val) noexcept;
 
     // [:en] [#simd.mask.subscr], [`basic_mask] subscript operators \
     [:zh_CN] [#simd.mask.subscr]，[`basic_mask] 下标运算符
@@ -42,17 +45,15 @@ namespace std::simd {
     // [:en] [#simd.mask.unary], [`basic_mask] unary operators \
     [:zh_CN] [#simd.mask.unary]，[`basic_mask] 一元运算符
     constexpr basic_mask operator!() const noexcept;
-    constexpr basic_vec<[[redoc("*>")]]integer-from<Bytes>, Abi> operator+() const noexcept;
-    constexpr basic_vec<[[redoc("*>")]]integer-from<Bytes>, Abi> operator-() const noexcept;
-    constexpr basic_vec<[[redoc("*>")]]integer-from<Bytes>, Abi> operator~() const noexcept;
+    constexpr [[redoc("[=seebelow]")]] operator+() const noexcept;
+    constexpr [[redoc("[=seebelow]")]] operator-() const noexcept;
+    constexpr [[redoc("[=seebelow]")]] operator~() const noexcept;
 
-    // [:en] [#simd.mask.conv], [`basic_mask] conversion operators \
-    [:zh_CN] [#simd.mask.conv]，[`basic_mask] 转换运算符
+    // [:en] [#simd.mask.conv], [`basic_mask] conversions \
+    [:zh_CN] [#simd.mask.conv]，[`basic_mask] 转换
     template<class U, class A>
       constexpr explicit(sizeof(U) != Bytes) operator basic_vec<U, A>() const noexcept;
 
-    // [:en] [#simd.mask.namedconv], [`basic_mask] named type convertors \
-    [:zh_CN] [#simd.mask.namedconv]，[`basic_mask] 具名类型转换函数
     constexpr bitset<size()> to_bitset() const noexcept;
     constexpr unsigned long long to_ullong() const;
 
@@ -114,8 +115,7 @@ namespace std::simd {
 [:zh_CN] 特例 [`basic_mask<Bytes, Abi>]
 [list]
 [item]
-[:en@~] disabled, if there is no vectorizable type [`T] such that [`Bytes]
-is equal to [`sizeof(T)],
+[:en@~] disabled, if there is no vectorizable type [`T] such that [`Bytes] is equal to [`sizeof(T)],
 [:zh_CN@~] 若不存在使得 [`Bytes] 等于 [`sizeof(T)] 的可向量化类型，则它被禁用，
 [item]
 [:en@~] otherwise, enabled, if there exists a vectorizable type [`T] and a
@@ -129,9 +129,8 @@ specializations] if such a specialization is enabled.
 [:zh_CN@~] 否则，这个特例是否被启用是[?impldef 启用的 [`basic_mask<Bytes, Abi>] 特例的集合]。
 [list:end]
 
-[:en] If [`basic_mask<Bytes, Abi>] is disabled, the specialization has a
-deleted default constructor, deleted destructor, deleted copy constructor, and
-deleted copy assignment.
+[:en] If [`basic_mask<Bytes, Abi>] is disabled, the specialization has a deleted
+default constructor, deleted destructor, deleted copy constructor, and deleted copy assignment.
 [:zh_CN] 如果 [`basic_mask<Bytes, Abi>] 被禁用，那么该特例具有弃置的默认构造函数、
 弃置的析构函数、弃置的复制构造函数和弃置的复制赋值。
 
@@ -151,7 +150,6 @@ from/to implementation-specific vector types] types.
 特定于实现的向量类型之间的转换]类型之间的隐式转换。
 
 [begin:note]
-[:en] Appropriate types are non-standard vector types which are available in the
-implementation.
+[:en] Appropriate types are non-standard vector types which are available in the implementation.
 [:zh_CN] 这些适当类型是实现中可用的非标准的向量类型。
 [end:note]

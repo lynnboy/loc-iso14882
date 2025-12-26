@@ -6,16 +6,16 @@
 [%@hdr@def simd]
 [codeblock:synopsis]
 namespace std::simd {
-  // [:en] [#simd.traits], [`simd] type traits \
-  [:zh_CN] [#simd.traits]，[`simd] 类型特征
+  // [:en] [#simd.traits], type traits \
+  [:zh_CN] [#simd.traits]，类型特征
   template<class T, class U = typename T::value_type> struct alignment;
   template<class T, class U = typename T::value_type>
     constexpr size_t [[redoc("[%@lib@member alignment_v[!simd]]")]]alignment_v = alignment<T, U>::value;
 
   template<class T, class V> struct rebind { using type = [[redoc("[=seebelow]", "_")]]_; };
-  template<class T, class V> using [[redoc("[%@lib@member rebind_t[!simd]]")]]rebind_t = typename rebind<T, V>::type;
+  template<class T, class V> using [[redoc("[%@lib@member rebind_t[!simd]]")]]rebind_t = rebind<T, V>::type;
   template<[[redoc("*>")]]simd-size-type N, class V> struct rebind { using type = [[redoc("[=seebelow]", "_")]]_; };
-  template<[[redoc("*>")]]simd-size-type N, class V> using [[redoc("[%@lib@member resize_t[!simd]]")]]rebind_t = typename resize_simd<N, V>::type;
+  template<[[redoc("*>")]]simd-size-type N, class V> using [[redoc("[%@lib@member resize_t[!simd]]")]]rebind_t = resize_simd<N, V>::type;
 
   // [:en] [#simd.flags], load and store flags \
   [:zh_CN] [#simd.flags]，加载与存储标志
@@ -37,14 +37,28 @@ namespace std::simd {
   template<class T, [[redoc("*>")]]simd-size-type N = [[redoc("*>")]]simd-size-v<T, [[redoc("*>")]]native-abi<T>>>
     using [[redoc("[%@lib@member vec[!simd]]")]]vec = basic_vec<T, [[redoc("*>")]]deduce-abi-t<T, N>>;
 
-  // [:en] [#simd.mask.class], class template [`basic_mask] \
-  [:zh_CN] [#simd.mask.class]，类模板 [`basic_mask]
-  template<size_t Bytes, class Abi = [[redoc("*>")]]native-abi<[[redoc("*>")]]integer-from<Bytes>>> class basic_mask;
-  template<class T, [[redoc("*>")]]simd-size-type N = [[redoc("*>")]]simd-size-v<T, [[redoc("*>")]]native-abi<T>>>
-    using [[redoc("[%@lib@member mask[!simd]]")]]mask = basic_mask<sizeof(T), [[redoc("*>")]]deduce-abi-t<T, N>>;
+  // [:en] [#simd.reductions], reductions \
+  [:zh_CN] [#simd.reductions]，归约
+  template<class T, class Abi, class BinaryOperation = plus<>>
+    constexpr T reduce(const basic_vec<T, Abi>&, BinaryOperation = {});
+  template<class T, class Abi, class BinaryOperation = plus<>>
+    constexpr T reduce(
+      const basic_vec<T, Abi>& x, const typename basic_vec<T, Abi>::mask_type& mask,
+      BinaryOperation binary_op = {}, type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
 
-  // [:en] [#simd.loadstore], [`basic_vec] load and store functions \
-  [:zh_CN] [#simd.loadstore]，[`basic_vec] 加载与存储函数
+  template<class T, class Abi>
+    constexpr T reduce_min(const basic_vec<T, Abi>&) noexcept;
+  template<class T, class Abi>
+    constexpr T reduce_min(const basic_vec<T, Abi>&,
+                           const typename basic_vec<T, Abi>::mask_type&) noexcept;
+  template<class T, class Abi>
+    constexpr T reduce_max(const basic_vec<T, Abi>&) noexcept;
+  template<class T, class Abi>
+    constexpr T reduce_max(const basic_vec<T, Abi>&,
+                           const typename basic_vec<T, Abi>::mask_type&) noexcept;
+
+  // [:en] [#simd.loadstore], load and store functions \
+  [:zh_CN] [#simd.loadstore]，加载与存储函数
   template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
     constexpr V unchecked_load(R&& r, flags<Flags...> f = {});
@@ -83,76 +97,72 @@ namespace std::simd {
                              flags<Flags...> f = {});
 
   template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-    requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+    requires ranges::[[redoc("`:c>")]]sized_range<R>
     constexpr void unchecked_store(const basic_vec<T, Abi>& v, R&& r,
                                    flags<Flags...> f = {});
   template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-    requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+    requires ranges::[[redoc("`:c>")]]sized_range<R>
     constexpr void _unchecked_store(const basic_vec<T, Abi>& v, R&& r,
-      const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                    const typename basic_vec<T, Abi>::mask_type& mask,
+                                    flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first,
                                    iter_difference_t<I> n, flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first,
       iter_difference_t<I> n, const typename basic_vec<T, Abi>::mask_type& mask,
       flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first, S last,
                                    flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void unchecked_store(const basic_vec<T, Abi>& v, I first, S last,
-      const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                   const typename basic_vec<T, Abi>::mask_type& mask,
+                                   flags<Flags...> f = {});
 
   template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-    requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+    requires ranges::[[redoc("`:c>")]]sized_range<R>
     constexpr void partial_store(const basic_vec<T, Abi>& v, R&& r,
                                  flags<Flags...> f = {});
   template<class T, class Abi, ranges::[[redoc("`:c>")]]contiguous_range R, class... Flags>
-    requires ranges::[[redoc("`:c>")]]sized_range<R> && [[redoc("`:c>")]]indirectly_writable<ranges::iterator_t<R>, T>
+    requires ranges::[[redoc("`:c>")]]sized_range<R>
     constexpr void partial_store(const basic_vec<T, Abi>& v, R&& r,
-      const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                 const typename basic_vec<T, Abi>::mask_type& mask,
+                                 flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void partial_store(
       const basic_vec<T, Abi>& v, I first, iter_difference_t<I> n, flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void partial_store(
       const basic_vec<T, Abi>& v, I first, iter_difference_t<I> n,
       const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void partial_store(const basic_vec<T, Abi>& v, I first, S last,
                                  flags<Flags...> f = {});
   template<class T, class Abi, [[redoc("`:c>")]]contiguous_iterator I, [[redoc("`:c>")]]sized_sentinel_for<I> S, class... Flags>
-    requires [[redoc("`:c>")]]indirectly_writable<I, T>
     constexpr void partial_store(const basic_vec<T, Abi>& v, I first, S last,
-      const typename basic_vec<T, Abi>::mask_type& mask, flags<Flags...> f = {});
+                                 const typename basic_vec<T, Abi>::mask_type& mask,
+                                 flags<Flags...> f = {});
 
-  // [:en] [#simd.permute.static], permute by static index generator \
-  [:zh_CN] [#simd.permute.static]，以静态索引生成器排列
-  static constexpr [[redoc("*>")]]simd-size-type [[redoc("[%@lib@member zero_element[!simd]]")]]zero_element   = [[redoc("[?impdefx [:en] value of [`simd::zero_element] [:zh_CN] [`simd::zero_element] 的值]")]];
-  static constexpr [[redoc("*>")]]simd-size-type [[redoc("[%@lib@member uninit_element[!simd]]")]]uninit_element = [[redoc("[?impdefx [:en] value of [`simd::uninit_element] [:zh_CN] [`simd::uninit_element] 的值]")]];
+  // [:en] [#simd.permute.static], static permute \
+  [:zh_CN] [#simd.permute.static]，静态排列
+  inline constexpr [[redoc("*>")]]simd-size-type [[redoc("[%@lib@member zero_element[!simd]]")]]zero_element   = [[redoc("[?impdefx [:en] value of [`simd::zero_element] [:zh_CN] [`simd::zero_element] 的值]")]];
+  inline constexpr [[redoc("*>")]]simd-size-type [[redoc("[%@lib@member uninit_element[!simd]]")]]uninit_element = [[redoc("[?impdefx [:en] value of [`simd::uninit_element] [:zh_CN] [`simd::uninit_element] 的值]")]];
 
   template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-vec-type V, class IdxMap>
     constexpr resize_t<N, V> permute(const V& v, IdxMap&& idxmap);
   template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-mask-type M, class IdxMap>
     constexpr resize_t<N, M> permute(const M& v, IdxMap&& idxmap);
 
-  // [:en] [#simd.permute.dynamic], permute by dynamic index \
-  [:zh_CN] [#simd.permute.dynamic]，以动态索引排列
+  // [:en] [#simd.permute.dynamic], dynamic permute \
+  [:zh_CN] [#simd.permute.dynamic]，动态排列
   template<[[redoc("*:c>")]]simd-vec-type V, [[redoc("*:c>")]]simd-integral I>
     constexpr resize_t<I::size(), V> permute(const V& v, const I& indices);
   template<[[redoc("*:c>")]]simd-mask-type M, [[redoc("*:c>")]]simd-integral I>
     constexpr resize_t<I::size(), M> permute(const M& v, const I& indices);
 
-  // [:en] [#simd.permute.mask], permute by active mask bits \
-  [:zh_CN] [#simd.permute.mask]，以活跃掩模位排列
+  // [:en] [#simd.permute.mask], mask permute \
+  [:zh_CN] [#simd.permute.mask]，掩模排列
   template<[[redoc("*:c>")]]simd-vec-type V>
     constexpr V compress(const V& v, const typename V::mask_type& selector);
   template<[[redoc("*:c>")]]simd-mask-type M>
@@ -162,7 +172,7 @@ namespace std::simd {
                          const typename V::value_type& fill_value);
   template<[[redoc("*:c>")]]simd-mask-type M>
     constexpr M compress(const M& v, const type_identity_t<M>& selector,
-                         const typename V::value_type& fill_value);
+                         const typename M::value_type& fill_value);
 
   template<[[redoc("*:c>")]]simd-vec-type V>
     constexpr V expand(const V& v, const typename V::mask_type& selector,
@@ -171,58 +181,44 @@ namespace std::simd {
     constexpr M expand(const M& v, const type_identity_t<M>& selector,
                        const M& original = {});
 
-  // [:en] [#simd.permute.memory], permute to and from memory \
-  [:zh_CN] [#simd.permute.memory]，与内存之间的排列
-  template<class V = [[redoc("[=seebelow]")]],
-           ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  // [:en] [#simd.permute.memory], memory permute \
+  [:zh_CN] [#simd.permute.memory]，内存排列
+  template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr V
-      unchecked_gather_from(R&& in,
-                            const I& indices, flags<Flags...> f = {});
-  template<class V = [[redoc("[=seebelow]")]],
-           ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+    constexpr V unchecked_gather_from(R&& in, const I& indices, flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr V
-      unchecked_gather_from(R&& in, const typename I::mask_type& mask,
-                            const I& indices, flags<Flags...> f = {});
+    constexpr V unchecked_gather_from(R&& in, const typename I::mask_type& mask,
+                                      const I& indices, flags<Flags...> f = {});
 
-  template<class V = [[redoc("[=seebelow]")]],
-     ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+  template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr V
-      partial_gather_from(R&& in,
-                          const I& indices, flags<Flags...> f = {});
-  template<class V = [[redoc("[=seebelow]")]],
-             ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
+    constexpr V partial_gather_from(R&& in, const I& indices, flags<Flags...> f = {});
+  template<class V = [[redoc("[=seebelow]")]], ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr V
-      partial_gather_from(R&& in, const typename I::mask_type& mask,
-                          const I& indices, flags<Flags...> f = {});
+    constexpr V partial_gather_from(R&& in, const typename I::mask_type& mask,
+                                    const I& indices, flags<Flags...> f = {});
 
   template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr void
-      unchecked_scatter_to(const V& v, R&& out,
-                           const I& indices, flags<Flags...> f = {});
+    constexpr void unchecked_scatter_to(const V& v, R&& out,
+                                        const I& indices, flags<Flags...> f = {});
   template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr void
-      unchecked_scatter_to(const V& v, R&& out, const typename I::mask_type& mask,
-                           const I& indices, flags<Flags...> f = {});
+    constexpr void unchecked_scatter_to(const V& v, R&& out, const typename I::mask_type& mask,
+                                        const I& indices, flags<Flags...> f = {});
 
   template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr void
-      partial_scatter_to(const V& v, R&& out,
-                         const I& indices, flags<Flags...> f = {});
+    constexpr void partial_scatter_to(const V& v, R&& out,
+                                      const I& indices, flags<Flags...> f = {});
   template<[[redoc("*:c>")]]simd-vec-type V, ranges::[[redoc("`:c>")]]contiguous_range R, [[redoc("*:c>")]]simd-integral I, class... Flags>
     requires ranges::[[redoc("`:c>")]]sized_range<R>
-    constexpr void
-      partial_scatter_to(const V& v, R&& out, const typename I::mask_type& mask,
-                         const I& indices, flags<Flags...> f = {});
+    constexpr void partial_scatter_to(const V& v, R&& out, const typename I::mask_type& mask,
+                                      const I& indices, flags<Flags...> f = {});
 
-  // [:en] [#simd.creation], [`basic_vec] and [`basic_mask] creation \
-  [:zh_CN] [#simd.creation]，[`basic_vec] 与 [`basic_mask] 的创建
+  // [:en] [#simd.creation], creation \
+  [:zh_CN] [#simd.creation]，创建
   template<class T, class Abi>
     constexpr auto chunk(const basic_vec<typename T::value_type, Abi>& x) noexcept;
   template<class T, class Abi>
@@ -240,48 +236,6 @@ namespace std::simd {
     constexpr basic_mask<Bytes, [[redoc("*>")]]deduce-abi-t<[[redoc("*>")]]integer-from<Bytes>,
                               (basic_mask<Bytes, Abis>::size() + ...)>>
       cat(const basic_mask<Bytes, Abis>&...) noexcept;
-
-  // [:en] [#simd.mask.reductions], [`basic_mask] reductions \
-  [:zh_CN] [#simd.mask.reductions]，[`basic_mask] 归约
-  template<size_t Bytes, class Abi>
-    constexpr bool all_of(const basic_mask<Bytes, Abi>&) noexcept;
-  template<size_t Bytes, class Abi>
-    constexpr bool any_of(const basic_mask<Bytes, Abi>&) noexcept;
-  template<size_t Bytes, class Abi>
-    constexpr bool none_of(const basic_mask<Bytes, Abi>&) noexcept;
-  template<size_t Bytes, class Abi>
-    constexpr [[redoc("*>")]]simd-size-type reduce_count(const basic_mask<Bytes, Abi>&) noexcept;
-  template<size_t Bytes, class Abi>
-    constexpr [[redoc("*>")]]simd-size-type reduce_min_index(const basic_mask<Bytes, Abi>&);
-  template<size_t Bytes, class Abi>
-    constexpr [[redoc("*>")]]simd-size-type reduce_max_index(const basic_mask<Bytes, Abi>&);
-
-  constexpr bool all_of([[redoc("`:c>")]]same_as<bool> auto) noexcept;
-  constexpr bool any_of([[redoc("`:c>")]]same_as<bool> auto) noexcept;
-  constexpr bool none_of([[redoc("`:c>")]]same_as<bool> auto) noexcept;
-  constexpr [[redoc("*>")]]simd-size-type reduce_count([[redoc("`:c>")]]same_as<bool> auto) noexcept;
-  constexpr [[redoc("*>")]]simd-size-type reduce_min_index([[redoc("`:c>")]]same_as<bool> auto);
-  constexpr [[redoc("*>")]]simd-size-type reduce_max_index([[redoc("`:c>")]]same_as<bool> auto);
-
-  // [:en] [#simd.reductions], [`basic_vec] reductions \
-  [:zh_CN] [#simd.reductions]，[`basic_vec] 归约
-  template<class T, class Abi, class BinaryOperation = plus<>>
-    constexpr T reduce(const basic_vec<T, Abi>&, BinaryOperation = {});
-  template<class T, class Abi, class BinaryOperation = plus<>>
-    constexpr T reduce(
-      const basic_vec<T, Abi>& x, const typename basic_vec<T, Abi>::mask_type& mask,
-      BinaryOperation binary_op = {}, type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
-
-  template<class T, class Abi>
-    constexpr T reduce_min(const basic_vec<T, Abi>&) noexcept;
-  template<class T, class Abi>
-    constexpr T reduce_min(const basic_vec<T, Abi>&,
-                           const typename basic_vec<T, Abi>::mask_type&) noexcept;
-  template<class T, class Abi>
-    constexpr T reduce_max(const basic_vec<T, Abi>&) noexcept;
-  template<class T, class Abi>
-    constexpr T reduce_max(const basic_vec<T, Abi>&,
-                           const typename basic_vec<T, Abi>::mask_type&) noexcept;
 
   // [:en] [#simd.alg], algorithms \
   [:zh_CN] [#simd.alg]，算法
@@ -477,7 +431,7 @@ namespace std::simd {
   // [:en] [#simd.bit], bit manipulation \
   [:zh_CN] [#simd.bit]，位操纵
   template<[[redoc("*:c>")]]simd-vec-type V> constexpr V byteswap(const V& v) noexcept;
-  template<[[redoc("*:c>")]]simd-vec-type V> constexpr V bit_ceil(const V& v) noexcept;
+  template<[[redoc("*:c>")]]simd-vec-type V> constexpr V bit_ceil(const V& v);
   template<[[redoc("*:c>")]]simd-vec-type V> constexpr V bit_floor(const V& v) noexcept;
 
   template<[[redoc("*:c>")]]simd-vec-type V>
@@ -512,8 +466,8 @@ namespace std::simd {
     constexpr rebind_t<make_signed_t<typename V::value_type>, V>
       popcount(const V& v) noexcept;
 
-  // [:en] [#simd.complex.math], [`vec] complex math \
-  [:zh_CN] [#simd.complex.math]，[`vec] 复数数学函数
+  // [:en] [#simd.complex.math], complex math \
+  [:zh_CN] [#simd.complex.math]，复数数学函数
   template<[[redoc("*:c>")]]simd-complex V>
     constexpr rebind_t<[[redoc("*>")]]simd-complex-value-type<V>, V> real(const V&) noexcept;
 
@@ -553,6 +507,34 @@ namespace std::simd {
     rebind_t<complex<typename V::value_type>, V> polar(const V& x, const V& y = {});
 
   template<[[redoc("*:c>")]]simd-complex V> constexpr V pow(const V& x, const V& y);
+
+  // [:en] [#simd.mask.class], class template [`basic_mask] \
+  [:zh_CN] [#simd.mask.class]，类模板 [`basic_mask]
+  template<size_t Bytes, class Abi = [[redoc("*:c>")]]native-abi<[[redoc("*:c>")]]integer-from<Bytes>>> class basic_mask;
+  template<class T, [[redoc("*:c>")]]simd-size-type N = [[redoc("*:c>")]]simd-size-v<T, [[redoc("*:c>")]]native-abi<T>>>
+    using [[redoc("[%@lib@member mask[!simd]]")]]mask = basic_mask<sizeof(T), [[redoc("*:c>")]]deduce-abi-t<T, N>>;
+
+  // [:en] [#simd.mask.reductions], reductions \
+  [:zh_CN] [#simd.mask.reductions]，归约
+  template<size_t Bytes, class Abi>
+    constexpr bool all_of(const basic_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr bool any_of(const basic_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr bool none_of(const basic_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr [[redoc("*:c>")]]simd-size-type reduce_count(const basic_mask<Bytes, Abi>&) noexcept;
+  template<size_t Bytes, class Abi>
+    constexpr [[redoc("*:c>")]]simd-size-type reduce_min_index(const basic_mask<Bytes, Abi>&);
+  template<size_t Bytes, class Abi>
+    constexpr [[redoc("*:c>")]]simd-size-type reduce_max_index(const basic_mask<Bytes, Abi>&);
+
+  constexpr bool all_of([[redoc("`:c>")]]same_as<bool> auto) noexcept;
+  constexpr bool any_of([[redoc("`:c>")]]same_as<bool> auto) noexcept;
+  constexpr bool none_of([[redoc("`:c>")]]same_as<bool> auto) noexcept;
+  constexpr [[redoc("*:c>")]]simd-size-type reduce_count([[redoc("`:c>")]]same_as<bool> auto) noexcept;
+  constexpr [[redoc("*:c>")]]simd-size-type reduce_min_index([[redoc("`:c>")]]same_as<bool> auto);
+  constexpr [[redoc("*:c>")]]simd-size-type reduce_max_index([[redoc("`:c>")]]same_as<bool> auto);
 }
 
 namespace std {
@@ -591,7 +573,6 @@ namespace std {
   using simd::scalbn;
   using simd::scalbln;
   using simd::cbrt;
-  using simd::abs;
   using simd::abs;
   using simd::fabs;
   using simd::hypot;
