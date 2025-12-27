@@ -76,8 +76,7 @@ consistent with the values determined elsewhere.
 [:en] In certain contexts, however, the value does not participate in type
 deduction, but instead uses the values of template arguments that were either
 deduced elsewhere or explicitly specified.
-[:zh_CN] 然而，在特定的语境中，这个值并不参与类型推断，而是使用在别处推断出或被
-显式指定的模板实参的值。
+[:zh_CN] 然而，在特定的语境中，这个值并不参与类型推断，而是使用在别处推断出或被显式指定的模板实参的值。
 
 [:en] If a template parameter is used only in non-deduced contexts and is not
 explicitly specified, template argument deduction fails.
@@ -291,8 +290,7 @@ a template template argument [`TT] denoting a class template or an alias templat
 or a template template argument [`VV] denoting a variable template or a concept,
 can be deduced if [`P] and [`A] have one of the following forms:
 [:zh_CN] 若 [`P] 和 [`A] 具有如下之一的形式，则类型模板实参 [`T]，常量模板实参 [`i]，
-代表类模板或别名模板的模板模板实参 [`TT]，或者代表变量模板或概念的模板模板实参 [`VV]，
-可以被推断出来：
+代表类模板或别名模板的模板模板实参 [`TT]，或者代表变量模板或概念的模板模板实参 [`VV]，可以被推断出来：
 
 [syntax:explanation]
 [| [`[`:opt[=cv]] T] ]
@@ -331,9 +329,9 @@ in [`P] or [`A], or has the same constant value in [`P] and [`A],
 [:zh_CN] [`:opt TT] 要么表示类模板，要么表示模板模板形参，以及
 
 [item]
-[:en] [`[`:key noexcept]([`:opt i])] represents an exception specification
-([#except.spec]) in which the (possibly-implicit, see [#dcl.fct])
-[~noexcept-specifier][=']s operand satisfies the rules for an [`:opt i] above.
+[:en] [`[`:key noexcept]([`:opt i])] represents an exception specification ([#except.spec])
+in which the (possibly-implicit, see [#dcl.fct]) [~noexcept-specifier][=']s
+operand satisfies the rules for an [`:opt i] above.
 [:zh_CN] [`[`:key noexcept]([`:opt i])] 表示一个异常说明（[#except.spec]），其中
 （可能为隐式，见 [#dcl.fct]）[~noexcept-说明符]的操作数满足以上 [`:opt i] 的规则。
 [list:end]
@@ -648,11 +646,17 @@ int    x = deduce<77>(a.xm, 62, b.ym);
 [end:note]
 
 [para]
-[:en] If [`P] has a form that contains [`<i>], and if the type of [`i] differs from
-the type of the corresponding template parameter of the template named by the enclosing
-[~simple-template-id] or [~splice-specialization-specifier], deduction fails.
-[:zh_CN] 若 [`P] 的形式中包含 [`<i>]，且若 [`i] 的类型与其在外围[~简单模板标识]
-或[~拼接特例说明符]所指名的模板的对应模板形参的类型不同，则推断失败。
+[:en] If [`P] has a form that contains [`<i>], deduction fails unless the type
+of [`i] is the same as that of the corresponding template parameter [`p] in the
+specialization (from [`A]) of the template named by the enclosing
+[~simple-template-id] or [~splice-specialization-specifier];
+if the declared type of [`i] contains a placeholder type, the corresponding
+template argument for the purposes of placeholder type deduction ([#dcl.type.auto.deduct])
+is an [~id-expression] for [`p].
+[:zh_CN] 若 [`P] 的形式中包含 [`<i>]，则除非 [`i] 的类型与其在外围[~简单模板标识]或
+[~拼接特例说明符]所指名的模板的特例的（来自 [`A] 的）对应模板形参 [`p] 的类型不同，否则推断失败；
+如果 [`i] 的声明类型包含占位符类型，则用于占位符类型推断（[#dcl.type.auto.deduct]）
+的对应模板实参是对于 [`p] 的一个[~标识表达式]。
 
 [:en] If [`P] has a form that contains [``[i`]], and if the type of [`i] is not
 an integral type, deduction fails.[#:fn]
@@ -676,17 +680,59 @@ template<int i> class A { /* ... */ };
 template<short s> void f(A<s>);
 void k1() {
   A<1> a;
-  f(a);             // [:en] error: deduction fails for conversion from [`int] to [`short] \
-                    [:zh_CN] 错误：对从 [`int] 到 [`short] 的转换的推断失败
-  f<1>(a);          // OK
+  f(a);                 // [:en] error: deduction fails for conversion from [`int] to [`short] \
+                        [:zh_CN] 错误：对从 [`int] 到 [`short] 的转换的推断失败
+  f<1>(a);              // OK
 }
 
 template<const short cs> class B { };
 template<short s> void g(B<s>);
 void k2() {
   B<1> b;
-  g(b);             // [:en] OK, [~cv-qualifier]s are ignored on template parameter types \
-                    [:zh_CN] OK，模板形参类型上的 [~cv-限定符]被忽略
+  g(b);                 // [:en] OK, [~cv-qualifier]s are ignored on template parameter types \
+                        [:zh_CN] OK，模板形参类型上的 [~cv-限定符]被忽略
+}
+
+template<auto> struct C;
+template<long long x> void f(C<x> *);
+void g(C<0LL> *ap) {
+  f(ap);                // [:en] OK, deduces [`long long] value from [`0LL] [:zh_CN] OK，从 [`0LL] 推断 [`long long] 值
+}
+
+template<int> struct D;
+template<auto x> void f(D<x> *);
+void g(D<0LL> *ap) {
+  f(ap);                // [:en] OK, deduces [`x] as an [`int] value [:zh_CN] OK，将 [`x] 推断为 [`int] 值
+}
+
+template<int &> struct E;
+template<auto x> void f(E<x> *);
+int v;
+void g(E<v> *bp) {
+  f(bp);                // [:en] error: type [`int] of [`x] does not match the [`int &] type \
+                        [:zh_CN] 错误：[`x] 的类型 [`int] 与 [`E] 的特例 [`E<v>]
+}                       // [:en@~] of the template parameter in the [`E<v>] specialization of [`E] \
+                        [:zh_CN@~] 中的模板形参的类型 [`int &] 不匹配
+
+template<const int &> struct F;
+template<decltype(auto) x> void f(F<x> *);
+int i;
+void g(F<i> *ap) {
+  f(ap);                // [:en] OK, deduces [`x] as a constant template parameter of type [`const int &] \
+                        [:zh_CN] OK，将 [`x] 推断为 [`const int &] 类型的常量模板形参
+}
+
+template <decltype(auto) q> struct G;
+template <auto x> long *f(G<x> *);              // #1
+template <decltype(auto) x> short *f(G<x> *);   // #2
+
+const int j = 0;
+short *g(G<(j)> *ap) {  // [:en] OK, [`q] has type [`const int &] [:zh_CN] OK，[`q] 的类型为 [`const int &]
+  return f(ap);         // [:en] OK, only #2 matches [:zh_CN] OK，仅 #2 匹配
+}
+
+long *g(G<j> *ap) {     // [:en] OK, [`q] has type [`int] [:zh_CN] OK，[`q] 的类型为 [`int]
+  return f(ap);         // [:en] OK, #1 is more specialized [:zh_CN] OK，#1 更特殊
 }
 [codeblock:end]
 [end:example]

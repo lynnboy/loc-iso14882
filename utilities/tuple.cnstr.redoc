@@ -15,8 +15,7 @@ named [`UTypes], where indexing is zero-based.
 [para]
 [:en] For each [`tuple] constructor, an exception is thrown only if the
 construction of one of the types in [`Types] throws an exception.
-[:zh_CN] 对于各个 [`tuple] 构造函数，仅当 [`Types] 中的类型之一的构造抛出异常时，
-它才抛出异常。
+[:zh_CN] 对于各个 [`tuple] 构造函数，仅当 [`Types] 中的类型之一的构造抛出异常时，它才抛出异常。
 
 [para]
 [:en] The defaulted move and copy constructor, respectively, of [`tuple] is a
@@ -68,7 +67,8 @@ constexpr explicit([[redoc("[=seebelow]")]]) tuple();
 
 [%@lib@ctor tuple]
 [codeblock:declaration]
-constexpr explicit([[redoc("[=seebelow]")]]) tuple(const Types&...);
+constexpr explicit([[redoc("[=seebelow]")]]) tuple(const Types&...)
+  noexcept((is_nothrow_copy_constructible_v<Types> && ...));
 [codeblock:end]
 
 [div:description]
@@ -92,7 +92,8 @@ constexpr explicit([[redoc("[=seebelow]")]]) tuple(const Types&...);
 
 [%@lib@ctor tuple]
 [codeblock:declaration]
-template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(UTypes&&... u);
+template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(UTypes&&... u)
+  noexcept((is_nothrow_constructible_v<Types, UTypes> && ...));
 [codeblock:end]
 
 [div:description]
@@ -101,10 +102,8 @@ template<class... UTypes> constexpr explicit([[redoc("[=seebelow]")]]) tuple(UTy
 [:zh_CN] 令 [*disambiguating-constraint]：
 [list]
 [item]
-[:en] [`negation<is_same<remove_cvref_t<[$[`U]_0]>, tuple>>]
-if [`sizeof...(Types)] is 1;
-[:zh_CN] 若 [`sizeof...(Types)] 为 1，则为
-[`negation<is_same<remove_cvref_t<[$[`U]_0]>, tuple>>]；
+[:en] [`negation<is_same<remove_cvref_t<[$[`U]_0]>, tuple>>] if [`sizeof...(Types)] is 1;
+[:zh_CN] 若 [`sizeof...(Types)] 为 1，则为 [`negation<is_same<remove_cvref_t<[$[`U]_0]>, tuple>>]；
 [item]
 [:en] otherwise,
 [`bool_constant<!is_same_v<remove_cvref_t<[$[`U]_0]>, allocator_arg_t> || is_same_v<remove_cvref_t<[$[`T]_0]>, allocator_arg_t>>]
@@ -125,15 +124,12 @@ if [`sizeof...(Types)] is 2 or 3;
 [:en] [$[`sizeof...(Types)] \geq 1], and
 [:zh_CN] [$[`sizeof...(Types)] \geq 1]，并且
 [item]
-[:en] [`conjunction_v<[*disambiguating-constraint], is_constructible<Types, UTypes>...>]
-is [`true].
-[:zh_CN] [`conjunction_v<[*disambiguating-constraint], is_constructible<Types, UTypes>...>]
-为 [`true]。
+[:en] [`conjunction_v<[*disambiguating-constraint], is_constructible<Types, UTypes>...>] is [`true].
+[:zh_CN] [`conjunction_v<[*disambiguating-constraint], is_constructible<Types, UTypes>...>] 为 [`true]。
 [list:end]
 
 [para:effects]
-[:en] Initializes the elements in the tuple with the corresponding value in
-[`std::forward<UTypes>(u)].
+[:en] Initializes the elements in the tuple with the corresponding value in [`std::forward<UTypes>(u)].
 [:zh_CN] 以 [`std::forward<UTypes>(u)] 中的对应值初始化元组中的各个元素。
 
 [para:remarks]
@@ -180,8 +176,7 @@ tuple(tuple&& u) = default;
 [para:effects]
 [:en] For all [$i], initializes the [$i^\text{th}] element of [`*this] with
 [`std::forward<T[$_i]>(get<[$i]>(u))].
-[:zh_CN] 对于所有 [$i]，以 [`std::forward<T[$_i]>(get<[$i]>(u))] 初始化 [`*this]
-的第 [$i] 个元素。
+[:zh_CN] 对于所有 [$i]，以 [`std::forward<T[$_i]>(get<[$i]>(u))] 初始化 [`*this] 的第 [$i] 个元素。
 [div:end]
 
 [%@lib@ctor tuple]
@@ -218,8 +213,7 @@ and [`UTypes...] expands to [`U]) [`is_convertible_v<decltype(u), T>],
 [list:end]
 
 [para:effects]
-[:en] For all [$i], initializes the [$i^\textrm{th}] element of [`*this] with
-[`get<[$i]>([*FWD](u))].
+[:en] For all [$i], initializes the [$i^\textrm{th}] element of [`*this] with [`get<[$i]>([*FWD](u))].
 [:zh_CN] 对于所有 [$i]，以 [`get<[$i]>([*FWD](u))] 初始化 [`*this] 的第 [$i] 个元素。
 
 [para:remarks]
@@ -266,8 +260,7 @@ template<class U1, class U2> constexpr explicit([[redoc("[=seebelow]")]]) tuple(
 [para:effects]
 [:en] Initializes the first element with [`get<0>([*FWD](u))] and the second
 element with [`get<1>([*FWD](u))].
-[:zh_CN] 以 [`get<0>([*FWD](u))] 初始化第一个元素，并以 [`get<1>([*FWD](u))]
-初始化第二个元素。
+[:zh_CN] 以 [`get<0>([*FWD](u))] 初始化第一个元素，并以 [`get<1>([*FWD](u))] 初始化第二个元素。
 
 [para:remarks]
 [:en] The expression inside [`explicit] is equivalent to:
@@ -312,12 +305,8 @@ template<[[redoc("*:c>")]]tuple-like UTuple>
 [:zh_CN] [`sizeof...(Types)] 等于 [`tuple_size_v<remove_cvref_t<UTuple>>]，
 
 [item]
-[:en]
-[`(is_constructible_v<Types, decltype(get<I>(std::forward<UTuple>(u)))> && ...)]
-is [`true], and
-[:zh_CN]
-[`(is_constructible_v<Types, decltype(get<I>(std::forward<UTuple>(u)))> && ...)]
-为 [`true]，并且
+[:en] [`(is_constructible_v<Types, decltype(get<I>(std::forward<UTuple>(u)))> && ...)] is [`true], and
+[:zh_CN] [`(is_constructible_v<Types, decltype(get<I>(std::forward<UTuple>(u)))> && ...)] 为 [`true]，并且
 
 [item]
 [:en] either [`sizeof...(Types)] is not 1, or (when [`Types...] expands to [`T])
@@ -401,6 +390,5 @@ template<class Alloc, [[redoc("*:c>")]]tuple-like UTuple>
 [para:effects]
 [:en] Equivalent to the preceding constructors except that each element is
 constructed with uses-allocator construction ([#allocator.uses.construction]).
-[:zh_CN] 等价于之前的各构造函数，但其各个元素的构造均为应用分配器的构造
-（[#allocator.uses.construction]）。
+[:zh_CN] 等价于之前的各构造函数，但其各个元素的构造均为应用分配器的构造（[#allocator.uses.construction]）。
 [div:end]

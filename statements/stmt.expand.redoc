@@ -23,7 +23,8 @@ of their substatement.
 [rule:end]
 
 [rule expansion-init-list [:zh_CN] 展开初始化列表 ]
-    [| [`(] [~:opt expression-list] [`}] ]
+    [| [`{] expression-list [`:opt ,] [`}] ]
+    [| [`{] [`}] ]
 [rule:end]
 [syntax:end]
 
@@ -107,9 +108,9 @@ together with the compound-statement of [$S], as follows:
 [codeblock]
 {
   [[redoc("~>")]]init-statement
-  static constexpr auto&& [[redoc("*>")]]range = [[redoc("~>")]]expansion-initializer;
-  static constexpr auto [[redoc("*>")]]begin = [[redoc("*>")]]begin-expr;     // [=see stmt.ranged]
-  static constexpr auto [[redoc("*>")]]end = [[redoc("*>")]]end-expr;         // [=see stmt.ranged]
+  constexpr auto&& [[redoc("*>")]]range = [[redoc("~>")]]expansion-initializer;
+  constexpr auto [[redoc("*>")]]begin = [[redoc("*>")]]begin-expr;            // [?see [#stmt.ranged]]
+  constexpr auto [[redoc("*>")]]end = [[redoc("*>")]]end-expr;                // [?see [#stmt.ranged]]
 
   [[redoc("[$S_0]")]]
   [[redoc("[$\vdots]")]]
@@ -121,7 +122,7 @@ together with the compound-statement of [$S], as follows:
 [codeblock]
 [] consteval {
   std::ptrdiff_t result = 0;
-  for (auto i = [[redoc("*>")]]begin; i != [[redoc("*>")]]end; ++i, ++result);
+  for (auto i = [[redoc("*>")]]begin; i != [[redoc("*>")]]end; ++i), ++result;
   return result;                                // [:en] distance from [*begin] to [*end] [:zh_CN] 从 [*begin] 到 [*end] 的距离
 }()
 [codeblock:end]
@@ -129,7 +130,7 @@ together with the compound-statement of [$S], as follows:
 [:zh_CN@~] 的求值结果，而 [$S_i] 为
 [codeblock]
 {
-  static constexpr auto [[redoc("*>")]]iter = [[redoc("*>")]]begin + i;
+  constexpr auto [[redoc("*>")]]iter = [[redoc("*>")]]begin + decltype(begin - begin){[[redoc("^>")]]i};
   [[redoc("~>")]]for-range-declaration = *[[redoc("*>")]]iter;
   [[redoc("~>")]]compound-statement
 }
@@ -138,14 +139,26 @@ together with the compound-statement of [$S], as follows:
 [:en] The variables [*range], [*begin], [*end], and [*iter] are defined for exposition only.
 [:zh_CN] 变量 [*range]、[*begin]、[*end] 和 [*iter] 仅为阐释而定义。
 
+[:en] The identifier [`[^i]] is considered to be a prvalue of type [`std::ptrdiff_t];
+the program is ill-formed if [`[^i]] is not representable as such a value.
+[:zh_CN] 标识符 [`[^i]] 被当作 [`std::ptrdiff_t] 类型的纯右值；若 [`[^i]] 不能表示为这种值则程序非良构。
+
 [begin:note]
 [:en] The instantiation is ill-formed if [*range] is not a constant expression ([#expr.const]).
 [:zh_CN] 如果 [*range] 不是常量表达式（[#expr.const]），则此实例化非良构。
 [end:note]
 
 [item]
-[:en] Otherwise, [$S] is a destructuring expansion statement and [$S] is equivalent to:
-[:zh_CN] 否则，[$S] 为解构展开语句，且 [$S] 等价于：
+[:en] Otherwise, [$S] is a destructuring expansion statement and, if [$N] is [$0], [$S] is equivalent to:
+[:zh_CN] 否则，[$S] 为解构展开语句，且当 [$N] 为 0 时，[$S] 等价于：
+[codeblock]
+{
+  [[redoc("~>")]]init-statement
+  [[redoc("`:key:opt>")]]constexpr auto&& [[redoc("*>")]]range = [[redoc("~>")]]expansion-initializer;
+}
+[codeblock:end]
+[:en@~] otherwise, [$S] is equivalent to:
+[:zh_CN@~] 否则，[$S] 等价于：
 [codeblock]
 {
   [[redoc("~>")]]init-statement

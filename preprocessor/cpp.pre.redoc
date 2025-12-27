@@ -10,7 +10,7 @@
 [rule:end]
 
 [rule module-file [:zh_CN] 模块文件 ]
-    [| [~:opt pp-global-module-fragment] pp-module [~:opt group] [~:opt pp-private-module-fragment] ]
+    [| [~:opt line-directives] [~:opt pp-global-module-fragment] pp-module [~:opt group] [~:opt pp-private-module-fragment] ]
 [rule:end]
 
 [rule pp-global-module-fragment [:zh_CN] 预处理全局模块分段 ]
@@ -42,11 +42,15 @@
     [| [`#] [`define]   identifier lparen [`...] [`)] replacement-list new-line ]
     [| [`#] [`define]   identifier lparen identifier-list [`,] [`...] [`)] replacement-list new-line ]
     [| [`#] [`undef]    identifier new-line ]
-    [| [`#] [`line]     pp-tokens new-line ]
+    [| line-directive ]
     [| [`#] [`error]    [~:opt pp-tokens] new-line ]
     [| [`#] [`warning]  [~:opt pp-tokens] new-line ]
     [| [`#] [`pragma]   [~:opt pp-tokens] new-line ]
     [| [`#] new-line ]
+[rule:end]
+
+[rule line-directives [:zh_CN] 行指令序列 ]
+    [| line-directive [~:opt line-directives] ]
 [rule:end]
 
 [rule if-section [:zh_CN] if-节 ]
@@ -155,6 +159,16 @@
 [syntax:end]
 
 [para]
+[:en] The implementation can process and skip sections of source files conditionally,
+include other source files, import macros from header units, and replace macros.
+[:zh_CN] 实现可以处理并有条件地处理并跳过源文件中的段落，包含其他源文件，从
+头文件单元导入宏，以及对宏进行替换。
+
+[:en] These capabilities are called [+preprocessing], because conceptually they
+occur before translation of the resulting translation unit.
+[:zh_CN] 这些能力被称为[+预处理]，这是由于在概念上它们发生于对所产生的翻译单元进行翻译之前。
+
+[para]
 [:en] A [+preprocessing directive] consists of a sequence of preprocessing
 tokens that satisfies the following constraints:
 [:zh_CN] [+预处理指令]由预处理记号的序列构成，并满足如下约束条件：
@@ -173,11 +187,10 @@ characters) or follows whitespace containing at least one new-line character, an
 [:zh_CN] 是一个预处理记号 [`#]，或者
 
 [item]
-[:en] an [`:key import] preprocessing token immediately followed on the same
-logical source line by a [~header-name], [`<], [~identifier], [~string-literal],
-or [`:] preprocessing token, or
+[:en] an [`:key import] preprocessing token immediately followed on the same logical
+source line by a [~header-name], [`<], [~identifier], or [`:] preprocessing token, or
 [:zh_CN] 是一个预处理记号 [`:key import] 且紧跟其后的是同一个逻辑源文本行中的
-预处理记号[~头文件名]，[`<]，[~标识符]，[~字符串字面量]，或 [`:]，或者
+预处理记号[~头文件名]，[`<]，[~标识符]，或 [`:]，或者
 
 [item]
 [:en] an [`:key module] preprocessing token immediately followed on the same
@@ -297,25 +310,14 @@ directive name and the following new-line character.
 之间出现任意预处理记号序列。
 
 [para]
-[:en] The only whitespace characters that shall appear between preprocessing
-tokens within a preprocessing directive (from just after the
-directive-introducing token through just before the terminating new-line
-character) are space and horizontal-tab (including spaces that have replaced
+[:en] The only whitespace characters that shall appear between preprocessing tokens
+within a preprocessing directive (from just after the directive-introducing token
+through just before the terminating new-line character) are [=unicode(0020,space)]
+and [=unicode(0009,character tabulation)] (including spaces that have replaced
 comments or possibly other whitespace characters in translation phase 3).
-[:zh_CN] 允许在预处理指令中的预处理记号之间（从紧跟指令发起记号之后直到紧跟末尾的
-换行字符之前）出现的空白字符，仅有空格和水平制表（包括在翻译阶段 3 中替换注释或其他
-可能的空白字符的空格）。
-
-[para]
-[:en] The implementation can process and skip sections of source files conditionally
- include other source files, import macros from header units, and replace macros.
-[:zh_CN] 实现可以处理并有条件地处理并跳过源文件中的段落，包含其他源文件，从
-头文件单元导入宏，以及对宏进行替换。
-
-[:en] These capabilities are called [+preprocessing], because conceptually they
-occur before translation of the resulting translation unit.
-[:zh_CN] 这些能力被称为[+预处理]，这是由于在概念上它们发生于对所产生的翻译单元
-进行翻译之前。
+[:zh_CN] 允许在预处理指令中的预处理记号之间（从紧跟指令发起记号之后直到紧跟末尾的换行字符之前）
+出现的空白字符，仅有 [=unicode(0020,space)] 和 [=unicode(0009,character tabulation)]
+（包括在翻译阶段 3 中替换注释或其他可能的空白字符的空格）。
 
 [para]
 [:en] The preprocessing tokens within a preprocessing directive are not subject

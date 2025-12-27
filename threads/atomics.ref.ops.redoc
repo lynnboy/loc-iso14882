@@ -4,7 +4,7 @@
 ]
 
 [%@lib@member required_alignment[!atomic_ref]]
-[%@lib@member required_alignment[!atomic_ref<T*>]]
+[%@lib@member required_alignment[!atomic_ref<[^pointer-type]>]]
 [%@lib@member required_alignment[!atomic_ref<[^integral-type]>]]
 [%@lib@member required_alignment[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -18,24 +18,16 @@ reference, which is at least [`alignof(T)].
 [:zh_CN] 由原子性引用所引用的对象所要求的对齐，至少为 [`alignof(T)]。
 
 [begin:note]
-[:en] Hardware could require an object referenced by an [`atomic_ref] to have
-stricter alignment ([#basic.align]) than other objects of type [`T].
-[:zh_CN] 硬件可能要求由 [`atomic_ref] 所引用的对象具有比 [`T] 类型的其他对象更
-严格的对齐（[#basic.align]）。
-
-[:en] Further, whether operations on an [`atomic_ref] are lock-free could depend
-on the alignment of the referenced object.
-[:zh_CN] 此外，对 [`atomic_ref] 的操作是否是免锁的，可能取决于所引用对象的对齐。
-
-[:en] For example, lock-free operations on [`std::complex<double>] could be
-supported only if aligned to [`2*alignof(double)].
-[:zh_CN] 例如，对 [`std:;complex<double>] 的免锁操作，可能仅在按
-[`2*alignof(double)] 对齐时才被支持。
+[:en] An implementation can choose to define [`atomic_ref<T>::required_alignment]
+to a value greater than [`alignof(T)] in order to ensure that
+operations on all objects of type [`atomic_ref<T>] are lock-free.
+[:zh_CN] 实现可以选择将 [`atomic_ref<T>::required_alignment] 定义为大于 [`alignof(T)] 的值，
+以确保对所有 [`atomic_ref<T>] 类型对象的操作都是免锁的。
 [end:note]
 [div:end]
 
 [%@lib@member is_always_lock_free[!atomic_ref]]
-[%@lib@member is_always_lock_free[!atomic_ref<T*>]]
+[%@lib@member is_always_lock_free[!atomic_ref<[^pointer-type]>]]
 [%@lib@member is_always_lock_free[!atomic_ref<[^integral-type]>]]
 [%@lib@member is_always_lock_free[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -51,7 +43,7 @@ static constexpr bool is_always_lock_free;
 [div:end]
 
 [%@lib@member is_lock_free[!atomic_ref]]
-[%@lib@member is_lock_free[!atomic_ref<T*>]]
+[%@lib@member is_lock_free[!atomic_ref<[^pointer-type]>]]
 [%@lib@member is_lock_free[!atomic_ref<[^integral-type]>]]
 [%@lib@member is_lock_free[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -66,7 +58,7 @@ lock-free, [`false] otherwise.
 [div:end]
 
 [%@lib@ctor atomic_ref]
-[%@lib@ctor atomic_ref<T*>]
+[%@lib@ctor atomic_ref<[^pointer-type]>]
 [%@lib@ctor@raw [`atomic_ref<[^integral-type]>]]
 [%@lib@ctor@raw [`atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -88,7 +80,7 @@ constexpr atomic_ref(T& obj);
 [div:end]
 
 [%@lib@ctor atomic_ref]
-[%@lib@ctor atomic_ref<T*>]
+[%@lib@ctor atomic_ref<[^pointer-type]>]
 [%@lib@ctor@raw [`atomic_ref<[^integral-type]>]]
 [%@lib@ctor@raw [`atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -96,13 +88,34 @@ constexpr atomic_ref(const atomic_ref& ref) noexcept;
 [codeblock:end]
 
 [div:description]
-[para:effects]
+[para:ensures]
+[:en] [`*this] references the object referenced by [`ref].
+[:zh_CN] [`*this] 引用 [`ref] 所引用的对象。
+[div:end]
+
+[codeblock:declaration]
+template<class U>
+  constexpr atomic_ref(const atomic_ref<U>&) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[list]
+[item]
+[:en] [`T] and [`U] are similar types ([#conv.qual]), and
+[:zh_CN] [`T] 和 [`U] 是相似类型（[#conv.qual]），并且
+[item]
+[:en] [`is_convertible_v<U*, T*>] is [`true].
+[:zh_CN] [`is_convertible_v<U*, T*>] 为 [`true]。
+[list:end]
+
+[para:ensures]
 [:en] [`*this] references the object referenced by [`ref].
 [:zh_CN] [`*this] 引用 [`ref] 所引用的对象。
 [div:end]
 
 [%@lib@member store[!atomic_ref]]
-[%@lib@member store[!atomic_ref<T*>]]
+[%@lib@member store[!atomic_ref<[^pointer-type]>]]
 [%@lib@member store[!atomic_ref<[^integral-type]>]]
 [%@lib@member store[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -128,7 +141,7 @@ constexpr void store(value_type desired,
 [div:end]
 
 [%@lib@member operator=[!atomic_ref]]
-[%@lib@member operator=[!atomic_ref<T*>]]
+[%@lib@member operator=[!atomic_ref<[^pointer-type]>]]
 [%@lib@member operator=[!atomic_ref<[^integral-type]>]]
 [%@lib@member operator=[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -150,7 +163,7 @@ return desired;
 [div:end]
 
 [%@lib@member load[!atomic_ref]]
-[%@lib@member load[!atomic_ref<T*>]]
+[%@lib@member load[!atomic_ref<[^pointer-type]>]]
 [%@lib@member load[!atomic_ref<[^integral-type]>]]
 [%@lib@member load[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -172,7 +185,7 @@ constexpr value_type load(memory_order order = memory_order::seq_cst) const noex
 [div:end]
 
 [%@lib@member operator [^type][!atomic_ref]]
-[%@lib@member operator T*[!atomic_ref<T*>]]
+[%@lib@member operator [^pointer-type][!atomic_ref<[^pointer-type]>]]
 [%@lib@member operator [^integral-type][!atomic_ref<[^integral-type]>]]
 [%@lib@member operator [^floating-point-type][!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -186,7 +199,7 @@ constexpr operator value_type() const noexcept;
 [div:end]
 
 [%@lib@member exchange[!atomic_ref]]
-[%@lib@member exchange[!atomic_ref<T*>]]
+[%@lib@member exchange[!atomic_ref<[^pointer-type]>]]
 [%@lib@member exchange[!atomic_ref<[^integral-type]>]]
 [%@lib@member exchange[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -215,11 +228,11 @@ constexpr value_type exchange(value_type desired,
 [div:end]
 
 [%@lib@member compare_exchange_weak[!atomic_ref]]
-[%@lib@member compare_exchange_weak[!atomic_ref<T*>]]
+[%@lib@member compare_exchange_weak[!atomic_ref<[^pointer-type]>]]
 [%@lib@member compare_exchange_weak[!atomic_ref<[^integral-type]>]]
 [%@lib@member compare_exchange_weak[!atomic_ref<[^floating-point-type]>]]
 [%@lib@member compare_exchange_strong[!atomic_ref]]
-[%@lib@member compare_exchange_strong[!atomic_ref<T*>]]
+[%@lib@member compare_exchange_strong[!atomic_ref<[^pointer-type]>]]
 [%@lib@member compare_exchange_strong[!atomic_ref<[^integral-type]>]]
 [%@lib@member compare_exchange_strong[!atomic_ref<[^floating-point-type]>]]
 [codeblock:declaration]
@@ -277,8 +290,7 @@ by [`*ptr] during the atomic comparison.
 
 [:en] If the operation returns [`true], these operations are atomic
 read-modify-write operations ([#intro.races]) on the value referenced by [`*ptr].
-[:zh_CN] 如果该操作返回 [`true]，则这些操作是对由 [`*ptr] 所引用的值的原子性
-读-改-写操作（[#intro.races]）。
+[:zh_CN] 如果该操作返回 [`true]，则这些操作是对由 [`*ptr] 所引用的值的原子性读-改-写操作（[#intro.races]）。
 
 [:en] Otherwise, these operations are atomic load operations on that memory.
 [:zh_CN] 否则，这些操作是对该内存的原子性加载操作。
