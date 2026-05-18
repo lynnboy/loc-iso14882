@@ -1,0 +1,589 @@
+[section#expr.const.general
+    [:en] Core constant expressions
+    [:zh_CN] 核心常量表达式
+]
+
+[para]
+[:en] [%type[!constexpr-unknown representation]]
+A type has [+:adj constexpr-unknown[!representation]] if it
+[:zh_CN] [%类型[!constexpr 未知表示]]
+以下类型具有[+:adj constexpr 未知[!表示]]：
+[list]
+[item]
+[:en@~] is a union,
+[:zh_CN@~] 联合体，
+[item]
+[:en@~] is a pointer or pointer-to-member type,
+[:zh_CN@~] 指针或成员指针类型，
+[item]
+[:en@~] is volatile-qualified,
+[:zh_CN@~] 有 volatile 限定，
+[item]
+[:en@~] is a class type with a non-static data member of reference type, or
+[:zh_CN@~] 带有引用类型非静态数据成员的类类型，或者
+[item]
+[:en@~] has a base class or a non-static member whose type has constexpr-unknown representation.
+[:zh_CN@~] 以具有 constexpr 未知表示的类型为基类或非静态数据成员类型的类型。
+[list:end]
+
+[para]
+[:en] An expression [$E] is a [+:adj core constant[!expression]] unless the
+evaluation of [$E], following the rules of the abstract machine ([#intro.execution]),
+would evaluate one of the following:
+[:zh_CN] 表达式 [$E] 是[+:adj 核心常量[!表达式]]，但根据抽象机器的规则（[#intro.execution]）
+对 [$E] 进行求值中，不能包含下列求值：
+
+[list]
+[item]
+[:en] [`:key this] ([#expr.prim.this]), except
+[:zh_CN] [`:key this]（[#expr.prim.this]），但
+[list]
+[item]
+[:en@~] in a constexpr function ([#dcl.constexpr]) that is being evaluated as part of [$E] or
+[:zh_CN@~] 作为 [$E] 的求值的一部分而求值的 constexpr 函数（[#dcl.constexpr]）中的，或者
+[item]
+[:en@~] when appearing as the [~postfix-expression] of an implicit or explicit
+class member access expression ([#expr.ref]);
+[:zh_CN@~] 作为隐式或显式成员访问表达式（[#expr.ref]）的[~后缀表达式]不算作其中；
+[list:end]
+
+[item]
+[:en] a control flow that passes through a declaration of a block variable ([#basic.scope.block])
+with static ([#basic.stc.static]) or thread ([#basic.stc.thread]) storage duration,
+unless that variable is usable in constant expressions;
+[:zh_CN] 控制流通过具有静态（[#basic.stc.static]）或线程（[#basic.stc.thread]）
+存储期的块变量（[#basic.scope.block]）的声明式，除非该变量可在常量表达式中使用；
+
+[begin:example]
+[codeblock]
+constexpr char test() {
+  static const int x = 5;
+  static constexpr char c[] = "Hello World";
+  return *(c + x);
+}
+static_assert(' ' == test());
+[codeblock:end]
+[end:example]
+
+[item]
+[:en] an invocation of a non-constexpr function;[#:fn]
+[:zh_CN] 进行了非 constexpr 函数的调用[#:fn]；
+
+[note:foot]
+[:en] Overload resolution ([#over.match]) is applied as usual
+[:zh_CN] 照常进行重载决议（[#over.match]）
+[note:end]
+
+[item]
+[:en] an invocation of an undefined constexpr function;
+[:zh_CN] 进行了未定义的 constexpr 函数的调用；
+
+[item]
+[:en] an invocation of an instantiated constexpr function that is not constexpr-suitable;
+[:zh_CN] 调用所实例化的 constexpr 函数但其并不适于 constexpr；
+
+[item]
+[:en] an invocation of a virtual function ([#class.virtual]) for an object whose
+dynamic type is constexpr-unknown;
+[:zh_CN] 为某个动态类型 constexpr 未知的对象调用虚函数（[#class.virtual]）；
+
+[item]
+[:en] an expression that would exceed the implementation-defined limits (see [#implimits]);
+[:zh_CN] 可能超出由实现定义的限制额度的表达式（参见 [#implimits]）；
+
+[item]
+[:en] an operation that would have undefined or erroneous behavior as specified
+in [#intro] through [#[=lastcorechapter]];[#:fn]
+[:zh_CN] 可能具有在本文档从 [#intro] 到 [#[=lastcorechapter]][#:fn]；
+
+[note:foot]
+[:en] This includes, for example, signed integer overflow ([#expr.pre]), certain
+pointer arithmetic ([#expr.add]), division by zero ([#expr.mul]), or certain
+shift operations ([#expr.shift])
+[:zh_CN] 这包括，（例如）有符号整数的溢出（[#expr.pre]），某些指针算术（[#expr.add]），
+被零除（[#expr.mul]），或者某些移位操作（[#expr.shift]）
+[note:end]
+
+[item]
+[:en] an lvalue-to-rvalue conversion unless it is applied to
+[:zh_CN] 左值向右值转换，但排除实施于下列情况的左值
+
+[list]
+[item]
+[:en] a glvalue of type [=cv] [`std::nullptr_t],
+[:zh_CN] [=cv] [`std::nullptr_t] 类型的泛左值，
+
+[item]
+[:en] a non-volatile glvalue that refers to an object that is usable in constant
+expressions, or
+[:zh_CN] 指代某个可被用在常量表达式中的对象的非 volatile 泛左值，或者
+
+[item]
+[:en] a non-volatile glvalue of literal type that refers to a non-volatile object
+whose lifetime began within the evaluation of [$E];
+[:zh_CN] 字面类型的非 volatile 泛左值，指代在 [$E] 的求值中开始其生存期的非 volatile 对象；
+[list:end]
+
+[item]
+[:en] an lvalue-to-rvalue conversion ([#conv.lval]) that is applied to a glvalue
+that refers to a non-active member of a union or a subobject thereof;
+[:zh_CN] 对指代某个联合体的非活跃成员或其子对象的泛左值，所实施的左值向右值转换（[#conv.lval]）；
+
+[item]
+[:en] an lvalue-to-rvalue conversion that is applied to an object with an
+indeterminate value ([#basic.indet]);
+[:zh_CN] 对具有不确定值的对象（[#basic.indet]）实施左值向右值转换；
+
+[item]
+[:en] an invocation of an implicitly-defined copy/move constructor or copy/move
+assignment operator for a union whose active member (if any) is mutable, unless
+the lifetime of the union object began within the evaluation of [$E];
+[:zh_CN] 对其活跃成员（如果有）为 mutable 成员的联合体调用隐式定义的复制/移动
+构造函数或复制/移动赋值运算符，除非该联合体对象的生存期开始于 [$E] 的求值之中；
+
+[item]
+[:en] in a [~lambda-expression], a reference to [`:key this] or to a variable
+with automatic storage duration defined outside that [~lambda-expression], where
+the reference would be an odr-use ([#term.odr.use], [#expr.prim.lambda]);
+[:zh_CN] 在 [~lambda-表达式]中，涉指了 [`:key this] 或者在该 [~lambda-表达式]
+之外定义的具有动态存储期的变量，而该涉指可能是一次 ODR 式使用（[#term.odr.use]，[#expr.prim.lambda]）；
+
+[begin:example]
+[codeblock]
+void g() {
+  const int n = 0;
+  [=] {
+    constexpr int i = n;        // [:en] OK, [`n] is not odr-used here \
+                                [:zh_CN] OK，这里 [`n] 并未被 ODR 式使用
+    constexpr int j = *&n;      // [:en] error: [`&n] would be an odr-use of [`n] \
+                                [:zh_CN] 错误：[`&n] 可能是对 [`n] 的 ODR 式使用
+  };
+}
+[codeblock:end]
+[end:example]
+
+[begin:note]
+[:en] If the odr-use occurs in an invocation of a function call operator of a
+closure type, it no longer refers to [`:key this] or to an enclosing variable
+with automatic storage duration due to the transformation ([#expr.prim.lambda.capture])
+of the [~id-expression] into an access of the corresponding data member.
+[:zh_CN] 如果这次 ODR 式使用发生于某个闭包类型的函数调用运算符的执行中，则它不再
+指代 [`:key this] 或者指代某个外围具有自动存储期的变量了，这是由于[~标识表达式]已被
+变换为其对应的数据成员的访问（[#expr.prim.lambda.capture]）。
+
+[begin:example]
+[codeblock]
+auto monad = [](auto v) { return [=] { return v; }; };
+auto bind = [](auto m) {
+  return [=](auto fvm) { return fvm(m()); };
+};
+
+// [:en] OK to capture objects with automatic storage duration created during constant expression evaluation. \
+[:zh_CN] 俘获在常量表达式的求值过程中创建的具有自动存储期的对象是没问题的。
+static_assert(bind(monad(2))(monad)() == monad(2)());
+[codeblock:end]
+[end:example]
+[end:note]
+
+[item]
+[:en] a conversion from a prvalue [`P] of type [=lq]pointer to [=cv] [`:key void][=rq]
+to a type [=lq][=cv cv1] pointer to [`T][=rq], where [`T] is not
+[=cv cv2] [`:key void], unless [`P] is a null pointer value or points to an
+object whose type is similar to [`T];
+[:zh_CN] 从类型“[=cv] [`:key void] 的指针”的纯右值 [`P] 向类型
+“[`T] 的 [=cv cv1] 指针”的转换，其中 [`T] 并非 [=cv cv2] [`:key void]，但排除
+[`P] 为空指针值或所指向的对象的类型与 [`T] 相似的情况；
+
+[item]
+[:en] a [`:key reinterpret_cast] ([#expr.reinterpret.cast]);
+[:zh_CN] [`:key reinterpret_cast]（[#expr.reinterpret.cast]）；
+
+[item]
+[:en] pointer arithmetic ([#expr.add]) where one (possibly converted) operand
+points to the first element of an array of unknown bound and the other
+(possibly converted) operand is of integral type with non-zero value;
+[:zh_CN] 指针算术（[#expr.add]），其中一个（可能已转换的）操作数指向某个未知边界数组的首元素，
+而另一个（可能已转换的）操作数为非零值的整型；
+
+[item]
+[:en] a modification of an object ([#expr.assign], [#expr.post.incr], [#expr.pre.incr])
+unless it is applied to a non-volatile lvalue of literal type that refers to a
+non-volatile object whose lifetime began within the evaluation of [$E];
+[:zh_CN] 对对象的改动（[#expr.assign]，[#expr.post.incr]，[#expr.pre.incr]），除非实施于
+非 volatile 的字面类型的左值，并且它指代某个生存期开始于 [$E] 的求值中的非 volatile 对象；
+
+[item]
+[:en] an invocation of a destructor ([#class.dtor]) or a function call whose
+[~postfix-expression] names a pseudo-destructor ([#expr.call]), in either case
+for an object whose lifetime did not begin within the evaluation of [$E];
+[:zh_CN] 调用析构函数（[#class.dtor]）或者[~后缀表达式]指名伪析构函数（[#expr.call]）
+的函数调用，任何情况中均针对并非在 [$E] 的求值中开始其生存期的对象；
+
+[item]
+[:en] a [~new-expression] ([#expr.new]), unless
+[:zh_CN] [~new-表达式]（[#expr.new]），除非
+[list]
+[item]
+[:en@~] the selected allocation function is a replaceable global allocation
+function ([#new.delete.single], [#new.delete.array]) and the allocated storage
+is deallocated within the evaluation of [$E], or
+[:zh_CN@~] 所选中的分配函数为可替换的全局分配函数（[#new.delete.single]，[#new.delete.array]），
+并且所分配的存储在 [$E] 的求值之内被回收，或者
+[item]
+[:en@~] the selected allocation function is a non-allocating form ([#new.delete.placement])
+with an allocated type [`T], where
+[:zh_CN@~] 所选中的分配函数是分配类型为 [`T] 的非分配形式（[#new.delete.placement]），其中
+[list]
+[item]
+[:en@~] the placement argument to the [~new-expression] points to an object
+that is transparently replaceable ([#basic.life]) by the object created by the
+[~new-expression] or, if [`T] is an array type, to the first element of such an object, and
+[:zh_CN@~] [~new-表达式]的放置实参指向某个可被此 [~new-表达式]创建的对象透明替换（[#basic.life]）
+的对象，或者当 [`T] 为数组类型时，指向这种对象的首个元素，并且
+[item]
+[:en@~] the placement argument points to storage whose duration began within the
+evaluation of [$E];
+[:zh_CN@~] 放置实参指向在 [$E] 的求值之中开始其持续期的存储；
+[list:end]
+[list:end]
+
+[item]
+[:en] a [~delete-expression] ([#expr.delete]), unless it deallocates a region of
+storage allocated within the evaluation of [$E];
+[:zh_CN] [~delete-表达式]（[#expr.delete]），除非其回收在 [$E] 的求值之中所分配的存储区域；
+
+[item]
+[:en] a call to an instance of [`std::allocator<T>::allocate] ([#allocator.members]),
+unless the allocated storage is deallocated within the evaluation of [$E];
+[:zh_CN] 对 [`std::allocator<T>::allocate]（[#allocator.members]）的某个实例的
+调用，除非所分配的存储在 [$E] 的求值之中被回收；
+
+[item]
+[:en] a call to an instance of [`std::allocator<T>::deallocate] ([#allocator.members]),
+unless it deallocates a region of storage allocated within the evaluation of [$E];
+[:zh_CN] 对 [`std::allocator<T>::deallocate]（[#allocator.members]）的某个实例
+的调用，除非它回收 [$E] 的求值之中所分配的存储区域；
+
+[item]
+[:en] a construction of an exception object, unless the exception object and
+all of its implicit copies created by invocations of
+[`std::current_exception] or [`std::rethrow_exception] ([#propagation])
+are destroyed within the evaluation of [$E];
+[:zh_CN] 异常对象的构造，除非该异常对象和所有由 [`std::current_exception] 或
+[`std::rethrow_exception]（[#propagation]）的调用中所创建的隐含副本都在 [$E] 的求值之中销毁；
+
+[item]
+[:en] a [~throw-expression] ([#expr.throw]) with no operand,
+unless there is a currently handled exception
+whose exception object was constructed within the evaluation of [$E];
+[:zh_CN] 无操作数的 [~抛出表达式]（[#expr.throw]），除非有一个正在处理的异常，
+其异常对象是在 [$E] 的求值之中构造的；
+
+[item]
+[:en] an [~await-expression] ([#expr.await]);
+[:zh_CN] [~等待表达式]（[#expr.await]）；
+
+[item]
+[:en] a [~yield-expression] ([#expr.yield]);
+[:zh_CN] [~产出表达式]（[#expr.yield]）；
+
+[item]
+[:en] a three-way comparison ([#expr.spaceship]), relational ([#expr.rel]),
+or equality ([#expr.eq]) operator where the result is unspecified;
+[:zh_CN] 未指明结果的三路比较（[#expr.spaceship]）、关系（[#expr.rel]）或相等性（[#expr.eq]）运算符；
+
+[item]
+[:en] an equality operator comparing pointers to potentially non-unique objects,
+if the pointer values of the two operands are associated with different evaluations
+([#basic.compound]) and either they can both point to the same offset within
+the same potentially non-unique object or one of them points to an object whose
+type has constexpr-unknown representation;
+[:zh_CN] 对指向潜在非唯一对象的指针进行比较的相等性运算符，若两个运算符的指针值与不同求值关联（[#basic.compound]），
+且要么它们都可指向相同潜在非唯一对象中的相同偏移量，要么其中之一指向具有 constexpr 未知表示
+的类型的对象；
+
+[begin:example]
+[codeblock]
+constexpr const char *f() { return "foo"; }
+
+constexpr bool b1 = +"foo" == "foo";                // [:en] error: non-constant [:zh_CN] 错误：非常量
+constexpr bool b2 = f() == f();                     // [:en] error: non-constant [:zh_CN] 错误：非常量
+constexpr const char *p = f();
+constexpr bool b3 = p == p;                         // [:en] OK, value of [`b3] is [`true] [:zh_CN] OK，[`b3] 的值为 [`true]
+constexpr bool b4 = "xfoo" + 1 == "foo\0y";         // [:en] error: non-constant; string literal [:zh_CN] 错误：非常量；字符串字面量
+                                                    // [:en@~] object could contain [`"xfoo\0y"] [:zh_CN@~] 对象可能包含 [`"xfoo\0y"]
+constexpr bool b5 = "foo" == "bar" + 0;             // [:en] OK, value of [`b5] is [`false] [:zh_CN] OK，[`b5] 的值为 [`false]
+constexpr bool b6 = (const char*)"foo" == "oo";     // [:en] OK, value of [`b6] is [`false]; offsets would [:zh_CN] OK，[`b6] 的值为 [`false]；二者偏移量
+                                                    // [:en] be different in a merged string literal object [:zh_CN] 在合并的字符串字面量对象中可能不同
+
+constexpr std::initializer_list<int *> il1 = { (int *)nullptr };
+constexpr std::initializer_list<unsigned long> il2 = { 0 };
+constexpr bool b7 = il1.begin() == (void *)il2.begin();     // error: non-constant
+[codeblock:end]
+[end:example]
+
+[item]
+[:en] a [`:key dynamic_cast] ([#expr.dynamic.cast]) or [`:key typeid] ([#expr.typeid])
+expression on a glvalue that refers to an object whose dynamic type is constexpr-unknown;
+[:zh_CN] 运用于代表具有 constexpr 未知的动态类型的对象的泛左值上的
+[`:key dynamic_cast]（[#expr.dynamic.cast]）或 [`typeid]（[#expr.typeid]）表达式；
+
+[item]
+[:en] a [`:key dynamic_cast] ([#expr.dynamic.cast]) expression,
+[`typeid] ([#expr.typeid]) expression, or [~new-expression] ([#expr.new]) that
+would throw an exception where no definition of the exception type is reachable;
+[:zh_CN] 可能抛出异常的 [`:key dynamic_cast]（[#expr.dynamic.cast]）表达式，
+[`typeid]（[#expr.typeid]）表达式，或 [~new-表达式]（[#expr.new]），
+且没有可达的异常类型的定义式；
+
+[item]
+[:en] an expression that would produce an injected declaration (see below),
+unless [$E] is the corresponding expression of a [~consteval-block-declaration] ([#dcl.pre]);
+[:zh_CN] 可能产生注入声明式（见下文）的表达式，但 [$E] 不能是
+[~consteval-块声明式]（[#dcl.pre]）的相应表达式。
+
+[item]
+[:en] an [~asm-declaration] ([#dcl.asm]);
+[:zh_CN] [~asm-声明式]（[#dcl.asm]）；
+
+[item]
+[:en] an invocation of the [`:m va_arg] macro ([#cstdarg.syn]);
+[:zh_CN] 对 [`:m va_arg] 宏的调用（[#cstdarg.syn]）；
+
+[item]
+[:en] a non-constant library call ([#defns.nonconst.libcall]); or
+[:zh_CN] 非常量程序库调用（[#defns.nonconst.libcall]）；或者
+
+[item]
+[:en] a [`:key goto] statement ([#stmt.goto]).
+[:zh_CN] [`:key goto] 语句（[#stmt.goto]）。
+
+[begin:note]
+[:en] A [`:key goto] statement introduced by equivalence ([#stmt]) is not in scope.
+[:zh_CN] 以等价形式引入（[#stmt]）的 [`:key goto] 语句并不在作用域中。
+
+[:en] For example, a [`:key while] statement ([#stmt.while]) can be executed
+during constant evaluation.
+[:zh_CN] 例如，可以在常量求值中执行 [`:key while] 语句（[#stmt.while]）。
+[end:note]
+[list:end]
+
+[para]
+[:en] It is [?impldef whether an expression is a core constant expression]
+whether [$E] is a core constant expression if [$E] satisfies the constraints of
+a core constant expression, but evaluation of [$E] has runtime-undefined behavior.
+[:zh_CN] 如果 [$E] 满足对核心常量表达式的约束，但 [$E] 的求值具有运行时未定义行为，
+那么 [$E] 是否是核心常量表达式是[?impldef 表达式是否是核心常量表达式]。
+
+[para]
+[:en] It is unspecified whether [$E] is a core constant expression if [$E] satisfies
+the constraints of a core constant expression, but evaluation of [$E] would evaluate
+[:zh_CN] 如果 [$E] 满足对核心常量表达式的约束，但对 [$E] 的求值可能会求值以下各项，
+那么 [$E] 是否是核心常量表达式是未指明的：
+
+[list]
+[item]
+[:en@~] an operation that has undefined behavior as specified in [#library]
+through [#[=lastlibchapter]], or
+[:zh_CN@~] 某个具有在从 [#library] 到 [#[=lastlibchapter]] 中所述的未定义行为的操作，或者
+[item]
+[:en@~] an invocation of the [`:m va_start] macro ([#cstdarg.syn]).
+[:zh_CN@~] 调用了 [`:m va_start] 宏（[#cstdarg.syn]）。
+[list:end]
+
+[para]
+[begin:example]
+[codeblock]
+int x;                              // [:en] not constant [:zh_CN] 不是常量
+struct A {
+  constexpr A(bool b) : m(b?42:x) { }
+  int m;
+};
+constexpr int v = A(true).m;        // [:en] OK, constructor call initializes [`m] with the value [`42] \
+                                    [:zh_CN] OK，构造函数的调用以 [`42] 初始化了 [`m]
+
+constexpr int w = A(false).m;       // [:en] error: initializer for [`m] is [`x], which is non-constant \
+                                    [:zh_CN] 错误：[`m] 的初始化式为 [`x]，并且不是常量
+
+constexpr int f1(int k) {
+  constexpr int x = k;              // [:en] error: [`x] is not initialized by a constant expression \
+                                    [:zh_CN] 错误：[`x] 不是以常量表达式进行的初始化，
+                                    // [:en@~] because lifetime of [`k] began outside the initializer of [`x] \
+                                    [:zh_CN@~] 因为 [`k] 的生存期开始于 [`x] 的初始化式之外
+  return x;
+}
+constexpr int f2(int k) {
+  int x = k;                        // [:en] OK, not required to be a constant expression \
+                                    [:zh_CN] OK，不需要其为常量表达式
+                                    // [:en@~] because [`x] is not [`:key constexpr] \
+                                    [:zh_CN@~] 因为 [`x] 不是 [`:key constexpr]
+  return x;
+}
+
+constexpr int incr(int &n) {
+  return ++n;
+}
+constexpr int g(int k) {
+  constexpr int x = incr(k);        // [:en] error: [`incr(k)] is not a core constant expression \
+                                    [:zh_CN] 错误：[`incr(k)] 不是核心常量表达式，
+                                    // [:en@~] because lifetime of [`k] began outside the expression [`incr(k)] \
+                                    [:zh_CN@~] 因为 [`k] 的生存期开始于表达式 [`incr(k)] 之外
+  return x;
+}
+constexpr int h(int k) {
+  int x = incr(k);                  // [:en] OK, [`incr(k)] is not required to be a core constant expression \
+                                    [:zh_CN] OK，[`incr(k)] 不需要是核心常量表达式
+  return x;
+}
+constexpr int y = h(1);             // [:en] OK, initializes [`y] with the value [`2] \
+                                    [:zh_CN] OK，以值 [`2] 初始化 [`y]
+                                    // [:en@~] [`h(1)] is a core constant expression because \
+                                    [:zh_CN@~] [`h(1)] 是核心常量表达式，因为
+                                    // [:en@~] the lifetime of [`k] begins inside [`h(1)] \
+                                    [:zh_CN@~] [`k] 的生存期开始于 [`h(1)] 之内
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] For the purposes of determining whether an expression [$E] is a core constant
+expression, the evaluation of the body of a member function of [`std::allocator<T>]
+as defined in [#allocator.members], is ignored.
+[:zh_CN] 在确定某个表达式 [$E] 是否是核心常量表达式时，忽略对 [#allocator.members]
+中所定义的 [`std::allocator<T>] 的成员函数的函数体的求值。
+
+[para]
+[:en] For the purposes of determining whether [$E] is a core constant expression,
+the evaluation of a call to a trivial copy/move constructor or copy/move assignment
+operator of a union is considered to copy/move the active member of the union, if any.
+[:zh_CN] 在确定 [$E] 是否是核心常量表达式时，对联合体调用平凡的复制/移动构造函数或
+复制/移动赋值运算符的求值被当做对该联合体的活跃成员进行复制/移动（如果有）。
+
+[begin:note]
+[:en] The copy/move of the active member is trivial.
+[:zh_CN] 活跃成员的复制/移动是平凡操作。
+[end:note]
+
+[para]
+[:en] For the purposes of determining whether [$E] is a core constant expression,
+the evaluation of an [~id-expression] that names a structured binding
+[`v] ([#dcl.struct.bind]) has the following semantics:
+[:zh_CN] 为确定 [$E] 是否是核心常量表达式，对指明结构化绑定 [`v] 的[~标识表达式]
+（[#dcl.struct.bind]）的求值具有如下语义：
+
+[list]
+[item]
+[:en] If [`v] is an lvalue referring to the object bound to an invented
+reference [`r], the behavior is as if [`r] were nominated.
+[:zh_CN] 如果 [`v] 是指代绑定到虚构引用 [`r] 的对象的左值，则其行为如同指名的是 [`r]。
+[item]
+[:en] Otherwise, if [`v] names an array element or class member, the behavior is
+that of evaluating [`[$e]`[[$i]`]] or [`[$e].[$m]], respectively, where [$e] is
+the name of the variable initialized from the initializer of the structured
+binding declaration, and [$i] is the index of the element referred to by [`v] or
+[$m] is the name of the member referred to by [`v], respectively.
+[:zh_CN] 否则，如果 [`v] 指名的事数组元素或者类成员，则其行为分别为求值 [`[$e]`[[$i]`]]
+或 [`[$e].[$m]] 的行为，其中 [$e] 是以结构化绑定声明式的初始化式所初始化的变量的名字，
+而 [$i] 是 [`v] 所指代的元素的索引，或者 [$m] 是 [`v] 所指代的成员的名字。
+[list:end]
+
+[begin:example]
+[codeblock]
+#include <tuple>
+struct S {
+  mutable int m;
+  constexpr S(int m): m(m) {}
+  virtual int g() const;
+};
+void f(std::tuple<S&> t) {
+  auto [r] = t;
+  static_assert(r.g() >= 0);            // [:en] error: dynamic type is constexpr-unknown \
+                                        [:zh_CN] 错误：动态类型 constexpr 未知
+  constexpr auto [m] = S(1);
+  static_assert(m == 1);                // [:en] error: lvalue-to-rvalue conversion on mutable \
+                                        [:zh_CN] 错误：对 mutable 子对象 [`e.m] 实施左值向右值转换，
+                                        // [:en] subobject [`e.m], where [`e] is a constexpr object of type [`S] \
+                                        [:zh_CN] 其中 [`e] 是 [`S] 类型的 constepr 对象
+  using A = int[2];
+  constexpr auto [v0, v1] = A{2, 3};
+  static_assert(v0 + v1 == 5);          // [:en] OK, equivalent to [`e`[0`] + e`[1`]] where [`e] is a constexpr array \
+                                        [:zh_CN] OK，等价于 [`e`[0`] + e`[1`]]，其中 [`e] 为 constexpr 数组
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] During the evaluation of an expression [$E] as a core constant expression,
+all [~id-expression]s, [~splice-expression]s, and uses of [`*[`:key this]] that
+refer to an object or reference whose lifetime did not begin within the evaluation
+of [$E] are treated as referring to a specific instance of that object or
+reference whose lifetime and that of all subobjects (including all union members)
+includes the entire constant evaluation.
+[:zh_CN] 将表达式 [$E] 作为核心常量表达式的求值过程中，所有[~标识表达式]、
+[~拼接表达式]和对 [`*[`:key this]] 的使用，若其所代表的对象或引用的生存期并非
+开始于 [$E] 的求值之内，则均被当做代表该对象或引用的一个特定实例，其生存期和其
+所有子对象（包括所有联合体成员）的生存期均包含整个常量求值。
+
+[:en] For such an object that is not usable in constant expressions, the dynamic
+type of the object is [+constexpr-unknown].
+[:zh_CN] 不能在常量表达式中使用的这种对象，其动态类型是 [+constexpr 未知]的。
+
+[:en] For such a reference that is not usable in constant expressions, the
+reference is treated as binding to an unspecified object of the referenced type
+whose lifetime and that of all subobjects includes the entire constant
+evaluation and whose dynamic type is constexpr-unknown.
+[:zh_CN] 不能在常量表达式中使用的这种引用，被当作绑定到某个被引用类型的一个特定对象，
+其生存期和所有子对象的生存期均包含整个常量求值，且其动态类型是 constexpr 未知的。
+
+[begin:example]
+[codeblock]
+template <typename T, size_t N>
+constexpr size_t array_size(T (&)[N]) {
+  return N;
+}
+
+void use_array(int const (&gold_medal_mel)[2]) {
+  constexpr auto gold = array_size(gold_medal_mel);     // OK
+}
+
+constexpr auto olympic_mile() {
+  const int ledecky = 1500;
+  return []{ return ledecky; };
+}
+static_assert(olympic_mile()() == 1500);                // OK
+
+struct Swim {
+  constexpr int phelps() { return 28; }
+  virtual constexpr int lochte() { return 12; }
+  int coughlin = 12;
+};
+
+constexpr int how_many(Swim& swam) {
+  Swim* p = &swam;
+  return (p + 1 - 1)->phelps();
+}
+
+void splash(Swim& swam) {
+  static_assert(swam.phelps() == 28);           // OK
+  static_assert((&swam)->phelps() == 28);       // OK
+
+  Swim* pswam = &swam;
+  static_assert(pswam->phelps() == 28);         // [:en] error: lvalue-to-rvalue conversion on a pointer [:zh_CN] 错误：对不能用与常量表达式的指针
+                                                // [:en@~] not usable in constant expressions [:zh_CN] 进行左值向右值转换
+
+  static_assert(how_many(swam) == 28);          // OK
+  static_assert(Swim().lochte() == 12);         // OK
+
+  static_assert(swam.lochte() == 12);           // [:en] error: invoking virtual function on reference [:zh_CN] 错误：在具有 constexpr 未知动态类型的引用上
+                                                // [:en@~] with constexpr-unknown dynamic type [:zh_CN@~] 调用虚函数
+
+  static_assert(swam.coughlin == 12);           // [:en] error: lvalue-to-rvalue conversion on an object [:zh_CN] 错误：对不能用与常量表达式的对象
+                                                // [:en@~] not usable in constant expressions [:zh_CN] 进行左值向右值转换
+}
+
+extern Swim dc;
+extern Swim& trident;
+
+constexpr auto& sandeno   = typeid(dc);         // [:en] OK, can only be [`typeid(Swim)] [:zh_CN] OK，只能是 [`typeid(Swim)]
+constexpr auto& gallagher = typeid(trident);    // [:en] error: constexpr-unknown dynamic type [:zh_CN] 错误：constexpr 未知的动态类型
+[codeblock:end]
+[end:example]

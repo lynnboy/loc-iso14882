@@ -1,0 +1,63 @@
+[section#exec.domain.indeterminate
+    [`execution::indeterminate_domain]
+]
+
+[para]
+[%@lib indeterminate_domain]
+[%@lib@ctor indeterminate_domain]
+[codeblock:synopsis]
+namespace std::execution {
+  template<class... Domains>
+  struct indeterminate_domain {
+    indeterminate_domain() = default;
+    constexpr indeterminate_domain(auto&&) noexcept {}
+
+    template<class Tag, [[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable Env>
+      static constexpr decltype(auto) transform_sender(Tag, Sndr&& sndr, const Env& env)
+        noexcept([[redoc("[=seebelow]")]]);
+  };
+}
+[codeblock:end]
+
+[%@lib@member transform_sender[!indeterminate_domain]]
+[codeblock:declaration]
+template<class Tag, [[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable Env>
+  static constexpr decltype(auto) transform_sender(Tag, Sndr&& sndr, const Env& env)
+    noexcept([[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] For each type [`D] in [`Domains...], the expression
+[:zh_CN] 对于 [`Domains...] 中的每个类型 [`D]，表达式
+[codeblock]
+D().transform_sender(Tag(), std::forward<Sndr>(sndr), env)
+[codeblock:end]
+[:en@~] is either ill-formed or has the same decayed type as
+[`default_domain().transform_sender(Tag(), std::forward<Sndr>(sndr), env)].
+[:zh_CN] 要么非良构，要么且具有与
+[`default_domain().transform_sender(Tag(), std::forward<Sndr>(sndr), env)] 相同的退化类型。
+
+[para:returns]
+[:en] [`default_domain().transform_sender(Tag(), std::forward<Sndr>(sndr), env)].
+[:zh_CN] [`default_domain().transform_sender(Tag(), std::forward<Sndr>(sndr), env)]。
+
+[para:remarks]
+[:en] For a pack of types [`Ds],
+[:zh_CN] 对于类型包组 [`Ds]，
+[codeblock]
+common_type_t<indeterminate_domain<Domains...>, indeterminate_domain<Ds...>>
+[codeblock:end]
+[:en@~] is [`indeterminate_domain<Us...>] where [`Us] is a pack that contains
+each type in [`Domains..., Ds...] except with duplicate types removed.
+[:zh_CN@~] 是 [`indeterminate_domain<Us...>]，其中 [`Us] 是一个包含
+[`Domains..., Ds...] 中的每个类型但去除重复类型的包组。
+
+[:en] For a type [`D] that is not a specialization of [`indeterminate_domain],
+[`common_type_t<indeterminate_domain<Domains...>, D>] is [`D] if [`Domains] is
+an empty pack, and
+[`common_type_t<indeterminate_domain<Domains...>, indeterminate_domain<D>>] otherwise.
+[:zh_CN] 对于并非 [`indeterminate_domain] 的特例的类型 [`D]，当 [`Domains] 是空包组时，
+[`common_type_t<indeterminate_domain<Domains...>, D>] 是 [`D]；否则是
+[`common_type_t<indeterminate_domain<Domains...>, indeterminate_domain<D>]。
+[div:end]

@@ -51,7 +51,7 @@ template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("`:c>")]]random_access_it
          [[redoc("`:c>")]]random_access_iterator O, [[redoc("`:c>")]]sized_sentinel_for<O> OutS, class Comp = ranges::less,
          class Proj1 = identity, class Proj2 = identity>
   requires [[redoc("`:c>")]]mergeable<I1, I2, O, Comp, Proj1, Proj2>
-  ranges::set_difference_result<I1, O>
+  ranges::set_difference_truncated_result<I1, I2, O>
     ranges::set_difference(Ep&& exec, I1 first1, S1 last1,
                            I2 first2, S2 last2, O result, OutS result_last,
                            Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {});
@@ -59,7 +59,8 @@ template<[[redoc("*:c>")]]execution-policy Ep, [[redoc("*:c>")]]sized-random-acc
          [[redoc("*:c>")]]sized-random-access-range OutR, class Comp = ranges::less,
          class Proj1 = identity, class Proj2 = identity>
   requires [[redoc("`:c>")]]mergeable<iterator_t<R1>, iterator_t<R2>, iterator_t<OutR>, Comp, Proj1, Proj2>
-  ranges::set_difference_result<borrowed_iterator_t<R1>, borrowed_iterator_t<OutR>>
+  ranges::set_difference_truncated_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>,
+                                          borrowed_iterator_t<OutR>>
     ranges::set_difference(Ep&& exec, R1&& r1, R2&& r2, OutR&& result_r, Comp comp = {},
                            Proj1 proj1 = {}, Proj2 proj2 = {});
 [codeblock:end]
@@ -111,6 +112,15 @@ included in the sorted difference, in order.
 [=range(first2,last2)] 包含 [$n] 个与其等价的元素，则有序差集中依序包含
 [=range(first1,last1)] 中的最后 [$\max(m - n, 0)] 个元素。
 
+[:en] Of those equivalent elements,
+the first [$\min(m, n)] elements in both ranges are considered [+:skipped].
+[:zh_CN] 在这些等价元素中，两个范围中前 [$\min(m, n)] 个元素被视为[+:跳过]。
+
+[:en] An element from the second range is also considered skipped
+if it compares less than the [$\min(N + 1, M)^\text{th}] element
+of the sorted difference.
+[:zh_CN] 如果第二个范围中的元素与有序差集中第 [$\min(N + 1, M)] 个元素比较小，也被视为跳过。
+
 [:en] Copies the first [$N] elements of the sorted difference
 to the range [=range(result,result + [$N])].
 [:zh_CN] 将有序差集的前 [$N] 个元素复制到范围 [=range(result,result + [$N])] 中。
@@ -121,22 +131,30 @@ to the range [=range(result,result + [$N])].
 [:en] [`result_last] for the overloads in namespace [`std].
 [:zh_CN] 命名空间 [`std] 中的各重载返回 [`result_last]。
 [item]
-[:en] [`{last1, result + [$N]}] for the overloads in namespace [`ranges],
-if [$N] is equal to [$M].
-[:zh_CN] 命名空间 [`ranges] 中的各重载，当 [$N] 等于 [$M] 时，返回 [`{last1, result + [$N]}]。
+[:en] [`{last1, result + [$N]}] for the non-parallel overloads in namespace [`ranges].
+[:zh_CN] 命名空间 [`ranges] 中的各非并行重载返回 [`{last1, result + [$N]}]。
 [item]
-[:en] Otherwise, [`{j1, result_last}] for the overloads in namespace [`ranges],
-where the iterator [`j1] points to the position of the element in [=range(first1,last1)]
-corresponding to the [$(N + 1)^\text(th)] element of the sorted difference.
-[:zh_CN] 否则，命名空间 [`ranges] 中的各重载返回 [`{j1, result_last}]， 其中迭代器
-[`j1] 指向 [=range(first1,last1)] 对应于有序差集中第 [$(N + 1)] 个元素的元素位置。
+[:en] For the parallel algorithm overloads in namespace [`ranges]:
+[:zh_CN] 命名空间 [`ranges] 中的并行算法重载：
+ [list]
+ [item]
+[:en] [`{last1, first2 + [$B], result + [$N]}], if [$N] is equal to [$M],
+where [$B] is the number of skipped elements in [=range(first2,last2)].
+[:zh_CN] 如果 [$N] 等于 [$M]，则返回 [`{last1, first2 + [$B], result + [$N]}]，其中
+[$B] 是 [=range(first2,last2)] 中被跳过的元素个数。
+ [item]
+[:en] Otherwise, [`{first1 + [$A], first2 + [$B], result_last}],
+where [$A] and [$B] are the numbers of copied or skipped elements
+in [=range(first1,last1)] and [=range(first2,last2)], respectively.
+[:zh_CN] 否则，返回 [`{first1 + [$A], first2 + [$B], result_last}]，其中 [$A] 和 [$B]
+分别是 [=range(first1,last1)] 和 [=range(first2,last2)] 中被复制或跳过的元素个数。
+ [list:end]
 [list:end]
 
 [para:complexity]
 [:en] At most [`2 * ((last1 - first1) + (last2 - first2)) - 1] comparisons and
 applications of each projection.
-[:zh_CN] 最多进行 [`2 * ((last1 - first1) + (last2 - first2)) - 1] 次比较和每种
-投射的运用。
+[:zh_CN] 最多进行 [`2 * ((last1 - first1) + (last2 - first2)) - 1] 次比较和每种投射的运用。
 
 [para:remarks]
 [:en] Stable ([#algorithm.stable]).

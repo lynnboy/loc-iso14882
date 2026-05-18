@@ -1,13 +1,11 @@
-[section#exec.sysctxrepl.recvproxy
+[section#exec.parschedrepl.recvproxy
     [:en] Receiver proxies
     [:zh_CN] 接收器代理
 ]
 
 [codeblock:synopsis]
-namespace std::execution::system_context_replaceability {
+namespace std::execution::parallel_scheduler_replacement {
   struct [[redoc("`:lib>")]]receiver_proxy {
-    virtual ~receiver_proxy() = default;
-
   protected:
     virtual bool [[redoc("*>")]]query-env([[redoc("[=unspec]")]]) noexcept = 0;   // [=expos]
 
@@ -17,7 +15,7 @@ namespace std::execution::system_context_replaceability {
     virtual void set_stopped() noexcept = 0;
 
     template<class P, [[redoc("*:c>")]]class-type Query>
-      optional<P> try_query(Query q) noexcept;
+      optional<P> try_query(Query q) const noexcept;
   };
 
   struct [[redoc("`:c>")]]bulk_item_receiver_proxy : receiver_proxy {
@@ -42,7 +40,7 @@ that will also receive notifications from implementations of
 
 [codeblock:declaration]
 template<class P, [[redoc("*:c>")]]class-type Query>
-  optional<P> [[redoc("`:lib>")]]try_query(Query q) noexcept;
+  optional<P> [[redoc("`:lib>")]]try_query(Query q) const noexcept;
 [codeblock:end]
 
 [div:description]
@@ -65,14 +63,18 @@ template<class P, [[redoc("*:c>")]]class-type Query>
 of supported result types for [`Query]; or
 [:zh_CN@~] [`P] 不是某个由实现定义的受支持的 [`Query] 的结果类型集合的成员；或者
 [item]
-[:en@~] the expression [`q(env)] is not well-formed or does not have type [=cv] [`P],
-[:zh_CN@~] 表达式 [`q(env)] 非良构，或者不具有 [=cv] [`P] 类型，
+[:en@~] the expression [`q(env)] is not well-formed,
+[:zh_CN@~] 表达式 [`q(env)] 非良构，
 [list:end]
 [:en@~] then returns [`nullopt].
 [:zh_CN@~] 则返回 [`nullopt]。
 
-[:en] Otherwise, returns [`q(env)].
-[:zh_CN] 否则，返回 [`q(env)]。
+[:en] Otherwise, if [`q(env)] has type [=cv] [`P], then returns [`q(env)].
+[:zh_CN] 否则，若 [`q(env)] 类型为 [=cv] [`P]，则返回 [`q(env)]。
+
+[:en] Otherwise, returns an [?impldef return value of [`receiver_proxy::try_query]]
+value of type [`optional<P>].
+[:zh_CN] 否则，返回一个[?impldef [`receiver_proxy::try_query] 的返回值] [`optional<P>] 类型的值。
 
 [para:remarks]
 [:en] [`get_stop_token_t] is in the implementation-defined set of supported queries,
@@ -80,4 +82,14 @@ and [`inplace_stop_token] is a member of the implementation-defined set of
 supported result types for [`get_stop_token_t].
 [:zh_CN] [`get_stop_token_t] 属于由实现定义的受支持查询集合，并且 [`inplace_stop_token]
 是由实现定义的受支持的 [`get_stop_token_t] 的结果类型集合的成员。
+
+[para:recommended]
+[:en] If [`P] is [`inplace_stop_token] and [`T] is a type other than [`inplace_stop_token]
+that models [`:c stoppable_token], [`try_query] should return an object of type [`inplace_stop_token]
+such that until one of [`set_value], [`set_error] or [`set_stopped] is called on [`*this],
+all calls to [`try_query] return equivalent [`inplace_stop_token] objects.
+[:zh_CN] 如果 [`P] 为 [`inplace_stop_token] 且 [`T] 为除 [`inplace_stop_token] 之外
+的构成了 [`:c stoppable_token] 的类型，那么 [`try_query] 应当返回一个 [`inplace_stop_token]
+类型的对象，使得直到在 [`*this] 上调用 [`set_value]、[`set_error] 或 [`set_stopped]
+之一前，所有对 [`try_query] 的调用都返回等价的 [`inplace_stop_token] 对象。
 [div:end]

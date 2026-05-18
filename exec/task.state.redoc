@@ -9,7 +9,7 @@ namespace std::execution {
   template<[[redoc("`:c>")]]receiver Rcvr>
   class task<T, Environment>::[[redoc("*>")]]state {           // [=expos]
   public:
-    using operation_state_concept = operation_state_t;
+    using operation_state_concept = operation_state_tag;
 
     template<class R>
       [[redoc("*>")]]state(coroutine_handle<promise_type> h, R&& rr);
@@ -18,12 +18,17 @@ namespace std::execution {
 
     void start() & noexcept;
 
-  private:
+    stop_token_type [[redoc("*>")]]get-stop-token();           // [=expos]
+
+private:
     using [[redoc("*>")]]own-env-t = [[redoc("[=seebelow]")]];                // [=expos]
     coroutine_handle<promise_type> [[redoc("*>")]]handle;      // [=expos]
     remove_cvref_t<Rcvr>           [[redoc("*>")]]rcvr;        // [=expos]
+    optional<stop_source_type>     [[redoc("*>")]]source;      // [=expos]
     [[redoc("*>")]]own-env-t                      [[redoc("*>")]]own-env;     // [=expos]
     Environment                    [[redoc("*>")]]environment; // [=expos]
+    optional<T>                    [[redoc("*>")]]result;      // [=expos]; [:en] present only if [`is_void_v<T>] is [`false] [:zh_CN] 仅当 [`is_void_v<T>] 为 [`false] 时存在
+    exception_ptr                  [[redoc("*>")]]error;       // [=expos]
   };
 }
 [codeblock:end]
@@ -109,36 +114,49 @@ with [`*this] as follows:
 [:zh_CN] [`[*RCVR]([^prom])] 为 [*rcvr]。
 [item]
 [:en] [`[*SCHED]([^prom])] is the object initialized with
-[`scheduler_type(get_scheduler(get_env([*rcvr])))]
-if that expression is valid and [`scheduler_type()] otherwise.
-[:zh_CN] 若 [`scheduler_type(get_scheduler(get_env([*rcvr])))] 有效，则
-[`[*SCHED]([^prom])] 为以该表达式，否则为以 [`scheduler_type()] 初始化的对象。
+[`start_scheduler_type(get_start_scheduler(get_env([*rcvr])))]
+if that expression is valid and [`start_scheduler_type()] otherwise.
+[:zh_CN] 若 [`start_scheduler_type(get_start_scheduler(get_env([*rcvr])))] 有效，则
+[`[*SCHED]([^prom])] 为以该表达式，否则为以 [`start_scheduler_type()] 初始化的对象。
 
 [:en] If neither of these expressions is valid, the program is ill-formed.
 [:zh_CN] 如果这些表达式均无效，则程序非良构。
 [list:end]
 
-[:en] Let [`[^st]] be [`get_stop_token(get_env([*rcvr]))].
-[:zh_CN] 令 [`[^st]] 为 [`get_stop_token(get_env([*rcvr]))]。
+[:en] Finally, invokes [`[*handle].resume()].
+[:zh_CN] 最后，调用 [`[*handle].resume()]。
+[div:end]
 
-[:en] Initializes [`[^prom].[*token]] and [`[^prom].[*source]] such that
-[:zh_CN] 初始化 [`[^prom].[*token]] 和 [`[^prom].[*source]]，使得
+[%@lib@member [*get-stop-token][!task::[*state]]]
+[codeblock:declaration]
+stop_token_type [[redoc("*>")]]get-stop-token();           // [=expos]
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If
+[`[`:c same_as]<decltype(declval<stop_source_type>().get_token()), decltype(get_stop_token(get_env([*rcvr])))>]
+is [`true], returns [`get_stop_token(get_env([*rcvr]))].
+[:zh_CN] 如果
+[`[`:c same_as]<decltype(declval<stop_source_type>().get_token()), decltype(get_stop_token(get_env([*rcvr])))>]
+为 [`true]，则返回 [`get_stop_token(get_env([*rcvr]))]。
+
+[:en] Otherwise, if [`[*source].has_value()] is [`false],
+initializes the contained value of [*source] such that
+[:zh_CN] 否则，如果 [`[*source].has_value()] 为 [`false]，则初始化 [*source] 的包含值，使得
 [list]
 [item]
-[:en@~] [`[^prom].[*token].stop_requested()] returns [`[^st].stop_requested()];
-[:zh_CN@~] [`[^prom].[*token].stop_requested()] 返回 [`[^st].stop_requested()]；
+[:en] [`[*source]->stop_requested()] returns
+[`get_stop_token(get_env([*rcvr]))->stop_requested()]; and
+[:zh_CN] [`[*source]->stop_requested()] 返回
+[`get_stop_token(get_env([*rcvr]))->stop_requested()]；以及
 [item]
-[:en@~] [`[^prom].[*token].stop_possible()] returns [`[^st].stop_possible()]; and
-[:zh_CN@~] [`[^prom].[*token].stop_possible()] 返回 [`[^st].stop_possible()]；并且
-[item]
-[:en@~] for types [`Fn] and [`Init] such that both [`[`:c invocable]<Fn>] and
-[`[`:c constructible_from]<Fn, Init>] are modeled, [`stop_token_type::callback_type<Fn>]
-models [`[*:c stoppable-callback-for]<Fn, stop_token_type, Init>].
-[:zh_CN@~] 对于同时构成 [`[`:c invocable]<Fn>] 和 [`[`:c constructible_from]<Fn, Init>]
-的类型 [`Fn] 和 [`Init]，[`stop_token_type::callback_type<Fn>] 构成
-[`[*:c stoppable-callback-for]<Fn, stop_token_type, Init>]。
+[:en] [`[*source]->stop_possible()] returns
+[`get_stop_token(get_env([*rcvr]))->stop_possible()].
+[:zh_CN] [`[*source]->stop_possible()] 返回
+[`get_stop_token(get_env([*rcvr]))->stop_possible()]。
 [list:end]
 
-[:en] After that invokes [`[*handle].resume()].
-[:zh_CN] 之后调用 [`[*handle].resume()]。
+[:en] Finally, returns [`[*source]->get_token()].
+[:zh_CN] 最后，返回 [`[*source]->get_token()]。
 [div:end]

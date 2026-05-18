@@ -199,11 +199,9 @@ namespace std {
     constexpr void pop_back();
 
     template<class... Args>
-      constexpr pointer try_emplace_back(Args&&... args);
-    constexpr pointer try_push_back(const T& x);
-    constexpr pointer try_push_back(T&& x);
-    template<[[redoc("*:c>")]]container-compatible-range<T> R>
-      constexpr ranges::borrowed_iterator_t<R> try_append_range(R&& rg);
+      constexpr optional<reference> try_emplace_back(Args&&... args);
+    constexpr optional<reference> try_push_back(const T& x);
+    constexpr optional<reference> try_push_back(T&& x);
 
     template<class... Args>
       constexpr reference unchecked_emplace_back(Args&&... args);
@@ -232,8 +230,13 @@ namespace std {
 
     friend constexpr bool operator==(const inplace_vector& x,
                                      const inplace_vector& y);
-    friend constexpr [[redoc("*>")]]synth-three-way-result<T>
-      operator<=>(const inplace_vector& x, const inplace_vector& y);
+    friend constexpr auto
+      operator<=>(const inplace_vector& x, const inplace_vector& y)
+        requires requires (const T t) { [[redoc("*>")]]synth-three-way(t, t); }
+      {
+        return lexicographical_compare_three_way(x.begin(), x.end(), y.begin(), y.end(),
+                                                 [[redoc("*>")]]synth-three-way);
+      }
     friend constexpr void swap(inplace_vector& x, inplace_vector& y)
       noexcept(N == 0 || (is_nothrow_swappable_v<T> &&
                           is_nothrow_move_constructible_v<T>))

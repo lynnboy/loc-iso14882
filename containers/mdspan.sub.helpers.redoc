@@ -11,13 +11,23 @@ of elements [`p...`[[$j]`]] for [$0 \le j < i] whose types are not collapsing sl
 [$0 \le j < i] 范围内类型不是折叠切片类型的元素数量 [`p...`[[$j]`]]。
 
 [codeblock:synopsis]
-  concept [[redoc("*:c@def>")]]is-strided-slice = [[redoc("[=seebelow]")]];
+  concept [[redoc("*:c@def>")]]is-extent-slice = [[redoc("[=seebelow]")]];
 [codeblock:end]
 
 [div:description]
-[:en] The concept [`[*:c is-strided-slice]<T>] is satisfied and modeled if and only
-if [`T] is a specialization of [`strided_slice].
-[:zh_CN] 当且仅当 [`T] 是 [`strided_slice] 的特例时，概念 [`[*:c is-strided-slice]<T>] 得以满足并构成。
+[:en] The concept [`[*:c is-extent-slice]<T>] is satisfied and modeled if and only
+if [`T] is a specialization of [`extent_slice].
+[:zh_CN] 当且仅当 [`T] 是 [`extent_slice] 的特例时，概念 [`[*:c is-extent-slice]<T>] 得以满足并构成。
+[div:end]
+
+[codeblock:synopsis]
+  concept [[redoc("*:c@def>")]]is-range-slice = [[redoc("[=seebelow]")]];
+[codeblock:end]
+
+[div:description]
+[:en] The concept [`[*:c is-range-slice]<T>] is satisfied and modeled if and only
+if [`T] is a specialization of [`range_slice].
+[:zh_CN] 当且仅当 [`T] 是 [`range_slice] 的特例时，概念 [`[*:c is-range-slice]<T>] 得以满足并构成。
 [div:end]
 
 [%@lib [*canonical-index]]
@@ -50,6 +60,56 @@ template<class IndexType, class S>
 [list:end]
 [div:end]
 
+[codeblock:synopsis]
+template<class IndexType, class OffsetType, class SpanType, class... StrideTypes>
+  constexpr auto [[redoc("*>")]]canonical-range-slice(OffsetType offset, SpanType span, StrideTypes... strides);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let
+[:zh_CN] 令
+[list]
+[item]
+[:en@~] [`StrideType] denote [`constant_wrapper<IndexType(1)>]
+if [`StrideTypes] is an empty pack or
+[`SpanType] denotes [`constant_wrapper<IndexType(0)>], otherwise [`StrideTypes...`[0`]];
+[:zh_CN@~] 如果 [`StrideTypes] 是空包组或者 [`SpanType] 表示 [`constant_wrapper<IndexType(0)>]，
+则 [`StrideType] 表示 [`constant_wrapper<IndexType(1)>]，否则表示 [`StrideTypes...`[0`]]；
+[item]
+[:en@~] [`stride] be [`StrideType()] if [`StrideType]
+is a specialization of [`constant_wrapper], otherwise
+[`IndexType(1)] if [`span == 0] is [`true], otherwise [`strides...`[0`]];
+[:zh_CN@~] 如果 [`StrideType] 是 [`constant_wrapper] 的特例，则 [`stride] 为 [`StrideType()]，
+否则如果 [`span == 0] 是 [`true]，则为 [`IndexType(1)]，否则为 [`strides...`[0`]]；
+[item]
+[:en@~] [*extent-value] be [`1 + (span - 1) / stride] if [`span != 0] is [`true],
+and [`0] otherwise; and
+[:zh_CN@~] 如果 [`span != 0] 是 [`true]，则 [*extent-value] 为 [`1 + (span - 1) / stride]，
+否则为 [`0]；以及
+[item]
+[:en@~] let [`extent] be [`cw<IndexType([*extent-value])>] if both [`SpanType]
+and [`StrideType] are specializations of [`constant_wrapper], and
+[`IndexType([*extent-value])] otherwise.
+[:zh_CN@~] 如果 [`SpanType] 和 [`StrideType] 都是 [`constant_wrapper] 的特例，
+则令 [`extent] 为 [`cw<IndexType([*extent-value])>]，否则为 [`IndexType([*extent-value])]。
+[list:end]
+
+[para:mandates]
+[:en] [`sizeof...(StrideTypes) <= 1] is [`true], and if [`StrideType] is
+a specialization of [`constant_wrapper], then [`StrideType::value > 0] is [`true].
+[:zh_CN] [`sizeof...(StrideTypes) <= 1] 为 [`true]，并且如果 [`StrideType] 是
+[`constant_wrapper] 的特例，则 [`StrideType::value > 0] 为 [`true]。
+
+[para:expects]
+[:en] [`stride > 0] is [`true].
+[:zh_CN] [`stride > 0] 为 [`true]。
+
+[para:returns]
+[:en] [`extent_slice{.offset = offset, .extent = extent, .stride = stride}].
+[:zh_CN] [`extent_slice{.offset = offset, .extent = extent, .stride = stride}]。
+[div:end]
+
 [%@lib [*canonical-slice]]
 [codeblock:synopsis]
 template<class IndexType, class S>
@@ -69,31 +129,26 @@ if constexpr (is_convertible_v<S, full_extent_t>) {
   return static_cast<full_extent_t>(std::move(s));
 } else if constexpr (is_convertible_v<S, IndexType>) {
   return [[redoc("*>")]]canonical-slice<IndexType>(std::move(s));
-} else if constexpr ([[redoc("*:c>")]]is-strided-slice<S>) {
-  auto c_extent = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s.extent));
-  auto c_offset = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s.offset));
-  if constexpr (is_same_v<decltype(c_extent), constant_wrapper<IndexType(0)>>) {
-    return strided_slice{
-      .offset = c_offset,
-      .extent = c_extent,
-      .stride = cw<IndexType(1)>
-    };
-  } else {
-    return strided_slice{
-      .offset = c_offset,
-      .extent = c_extent,
-      .stride = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s.stride))
-    };
-  }
+} else if constexpr ([[redoc("*:c>")]]is-extent-slice<S>) {
+  return extent_slice{
+    .offset = [[redoc("*>")]]canonical-index<IndexType>(std::move(s.extent)),
+    .extent = [[redoc("*>")]]canonical-index<IndexType>(std::move(s.offset)),
+    .stride = [[redoc("*>")]]canonical-index<IndexType>(std::move(s.stride))
+  };
+} else if constexpr ([[redoc("*:c>")]]is-range-slice<S>) {
+  auto c_first = [[redoc("*>")]]canonical-index<IndexType>(std::move(s.first));
+  auto c_last  = [[redoc("*>")]]canonical-index<IndexType>(std::move(s.last));
+  return [[redoc("*>")]]canonical-slice-range<IndexType>(
+    c_first,
+    [[redoc("*>")]]canonical-index<IndexType>(c_last - c_first),
+    [[redoc("*>")]]canonical-index<IndexType>(std::move(s.stride)));
 } else {
   auto [s_first, s_last] = std::move(s);
   auto c_first = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s_first));
   auto c_last  = [[redoc("*>")]]canonical-slice<IndexType>(std::move(s_last));
-  return strided_slice{
-    .offset = c_first,
-    .extent = [[redoc("*>")]]canonical-slice<IndexType>(c_last - c_first),
-    .stride = cw<IndexType(1)>
-  };
+  return [[redoc("*>")]]canonical-slice-range<IndexType>(
+    c_first,
+    [[redoc("*>")]]canonical-index<IndexType>(c_last - c_first));
 }
 [codeblock:end]
 [div:end]

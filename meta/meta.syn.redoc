@@ -28,7 +28,7 @@ namespace std {
   template<ranges::[[redoc("`:c>")]]input_range R>
     consteval const ranges::range_value_t<R>* define_static_string(R&& r);
   template<ranges::[[redoc("`:c>")]]input_range R>
-    consteval span<const ranges::range_value_t<R>> define_static_array(R&& r);
+    consteval span<const ranges::range_value_t<R>， [[redoc("[=seebelow]")]]> define_static_array(R&& r);
   template<class T>
     consteval const remove_cvref_t<T>* define_static_object(T&& r);
 }
@@ -130,7 +130,7 @@ namespace std::meta {
   consteval bool is_function_parameter(info r);
   consteval bool is_explicit_object_parameter(info r);
   consteval bool has_default_argument(info r);
-  consteval bool has_ellipsis_parameter(info r);
+  consteval bool is_vararg_function(info r);
 
   consteval bool is_template(info r);
   consteval bool is_function_template(info r);
@@ -179,6 +179,12 @@ namespace std::meta {
   consteval bool has_inaccessible_bases(info r, access_context ctx);
   consteval bool has_inaccessible_subobjects(info r, access_context ctx);
 
+  // [:en] [#meta.reflection.scope], scope identification \
+  [:zh_CN] [#meta.reflection.scope]，作用域识别
+  consteval info current_function();
+  consteval info current_class();
+  consteval info current_namespace();
+
   // [:en] [#meta.reflection.member.queries], reflection member queries \
   [:zh_CN] [#meta.reflection.member.queries]，反射成员查询
   consteval vector<info> members_of(info r, access_context ctx);
@@ -204,7 +210,7 @@ namespace std::meta {
   // [:en] [#meta.reflection.extract], value extraction \
   [:zh_CN] [#meta.reflection.extract]，值的提取
   template<class T>
-    consteval T extract(info);
+    consteval T extract(info r);
 
   // [:en] [#meta.reflection.substitute], reflection substitution \
   [:zh_CN] [#meta.reflection.substitute]，反射代换
@@ -231,7 +237,7 @@ namespace std::meta {
   consteval info data_member_spec(info type, data_member_options options);
   consteval bool is_data_member_spec(info r);
   template<[[redoc("`:c>")]]reflection_range R = initializer_list<info>>
-    consteval info define_aggregate(info type_class, R&&);
+    consteval info define_aggregate(info type_class, R&& mdescrs);
 
   // [:en] associated with [#meta.unary.cat], primary type categories \
   [:zh_CN] 与 [#meta.unary.cat] 相关，基本类型分类
@@ -272,7 +278,7 @@ namespace std::meta {
   consteval bool is_abstract_type(info type);
   consteval bool is_final_type(info type);
   consteval bool is_aggregate_type(info type);
-  consteval bool is_consteval_only_type(info type);
+  consteval bool is_structural_type(info type);
   consteval bool is_signed_type(info type);
   consteval bool is_unsigned_type(info type);
   consteval bool is_bounded_array_type(info type);
@@ -400,6 +406,9 @@ namespace std::meta {
 
   consteval size_t tuple_size(info type);
   consteval info tuple_element(size_t index, info type);
+  consteval bool is_applicable_type(info fn, info tuple);
+  consteval bool is_nothrow_applicable_type(info fn, info tuple);
+  consteval info apply_result(info fn, info tuple);
 
   consteval size_t variant_size(info type);
   consteval info variant_alternative(size_t index, info type);
@@ -413,6 +422,15 @@ namespace std::meta {
 function template, specified in this header is a designated addressable function ([#namespace.std]).
 [:zh_CN] 除非另有规定，否则此头文件中规定的每个函数，以及任何函数模板的每个特例，
 都代表的是可取地址函数（[#namespace.std]）。
+
+[para]
+[:en] When a function or function template specialization [$F] specified in this
+header throws a [`meta::exception] [$E], [`[$E].from()] is a reflection
+representing [$F] and [`[$E].where()] is a [`source_location]
+representing from where the call to [$F] originated.
+[:zh_CN] 若此头文件中指定的函数或函数模板特例 [$F] 抛出了一个 [`meta::exception] [$E]，
+则 [`[$E].from()] 是表示 [$F] 的反射，且 [`[$E].where()] 是表示发起对 [$F] 调用之处
+的 [`source_location]。
 
 [para]
 [:en] The behavior of any function specified in namespace [`std::meta] is
@@ -452,9 +470,18 @@ static_assert(size_of(^^X<int>) == sizeof(int));    // [:en] instantiates [`X<in
 
 [para]
 [:en] Any function in namespace [`std::meta] whose return type is [`string_view] or
-[`u8string_view] returns an object [*V] such that [`[*V].data()`[[*V].size()]] equals [`'\0'].
+[`u8string_view] returns an object [`V] such that [`V.data()`[V.size()`]] equals [`'\0'].
 [:zh_CN] 命名空间 [`std::meta] 中的任何返回类型为 [`string_view] 或 [`u8string_view]
-的函数，所返回对象 [*V] 都满足 [`[*V].data()`[[*V].size()]] 等于 [`'\0']。
+的函数，所返回对象 [`V] 都满足 [`V.data()`[V.size()`]] 等于 [`'\0']。
+
+[:en] Each element of the range [$[`V.data()] + [=crange(0,[`V.size()])]]
+is a potentially non-unique object with static storage duration that
+is usable in constant expressions ([#intro.object], [#expr.const]);
+a pointer to such an element is not suitable for use as
+a template argument for a constant template parameter of pointer type ([#temp.arg.nontype]).
+[:zh_CN] 范围 [$[`V.data()] + [=crange(0,[`V.size()])]] 的每个元素都是可被用在
+常量表达式的具有静态存储期的潜在非唯一对象（[#intro.object]，[#expr.const]）；
+指向这种元素的指针不适于用作指针类型的常量模板形参的模板实参（[#temp.arg.nontype]）。
 
 [begin:example]
 [codeblock]

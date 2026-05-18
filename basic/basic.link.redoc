@@ -93,8 +93,7 @@ an unnamed namespace has internal linkage.
 
 [:en] The name of an entity that belongs to a namespace scope, that has not been
 given internal linkage above and that is the name of,
-[:zh_CN] 属于某个命名空间作用域的实体的名字，尚未被以上述方式给定内部连接，
-若它是下列各项之一的名字：
+[:zh_CN] 属于某个命名空间作用域的实体的名字，尚未被以上述方式给定内部连接，若它是下列各项之一的名字：
 
 [list]
 [item]
@@ -110,8 +109,7 @@ given internal linkage above and that is the name of,
 a named class ([#class.pre]), or an unnamed class defined in a typedef declaration
 in which the class has the typedef name for linkage purposes ([#dcl.typedef]); or
 [:zh_CN@~] [%类[!～的连接]]
-具名类（[#class.pre]），或定义于 typedef 声明式中的无名类，其具有用于连接的
-typedef 名（[#dcl.typedef]）；或者
+具名类（[#class.pre]），或定义于 typedef 声明式中的无名类，其具有用于连接的 typedef 名（[#dcl.typedef]）；或者
 
 [item]
 [:en@~] [%enumeration[!linkage of]]
@@ -231,12 +229,9 @@ neither is a name-independent declaration, and either
 underlying entity, or
 [:zh_CN@~] 它们都声明具有相同底层实体的类型别名或命名空间别名，或者
 [item]
-[:en@~] they both declare names with module linkage and are attached to the same
-module, or
-[:zh_CN@~] 它们都声明具有模块连接且附属于相同模块的名字，或者
-[item]
-[:en@~] they both declare names with external linkage.
-[:zh_CN@~] 它们都声明具有外部连接的名字。
+[:en@~] they both declare names with module or external linkage and are attached
+to the same module.
+[:zh_CN@~] 它们都声明具有模块或外部连接且附属于相同模块的名字。
 [list:end]
 
 [begin:note]
@@ -258,10 +253,11 @@ entity as [$D] if it appeared in [$U], the program is ill-formed.
 [end:note]
 
 [para]
-[:en] If two declarations of an entity are attached to different modules, the
-program is ill-formed; no diagnostic is required if neither is reachable from the other.
-[:zh_CN] 如果某个实体的两个声明式附属于不同模块，则程序非良构；如果没有任何一个
-从另一个可达则无须诊断。
+[begin:note]
+[:en] If two declarations correspond but are attached to different modules, the
+program is ill-formed if one precedes the other ([#basic.scope.scope]).
+[:zh_CN] 如果两个声明式相对应但附属于不同的模块，则如果其中一个先于另一个出现，程序非良构（[#basic.scope.scope]）。
+[end:note]
 
 [begin:example]
 [:en] [`"decls.h"]:
@@ -279,8 +275,8 @@ module;
 export module M;
 export using ::f;   // [:en] OK, does not declare an entity, exports #1 \
                     [:zh_CN] OK，并不声明实体，导出了 #1
-int g();            // [:en] error: matches #2, but attached to [`M] \
-                    [:zh_CN] 错误：匹配 #2，但不附属于 [`M]
+int g();            // [:en] error: corresponds to #2, but attached to [`M] \
+                    [:zh_CN] 错误：对应于 #2，但不附属于 [`M]
 export int h();     // #3
 export int k();     // #4
 [codeblock:end]
@@ -289,8 +285,8 @@ export int k();     // #4
 [:zh_CN] 另一个翻译单元：
 [codeblock]
 import M;
-static int h();     // [:en] error: matches #3 [:zh_CN] 错误：匹配 #3
-int k();            // [:en] error: matches #4 [:zh_CN] 错误：匹配 #4
+static int h();     // [:en] error: conflicts with #3 [:zh_CN] 错误：与 #3 冲突
+int k();            // [:en] error: conflicts with #4 [:zh_CN] 错误：与 #4 冲突
 [codeblock:end]
 [end:example]
 
@@ -353,13 +349,12 @@ to be one with an equivalent [~template-head] and [~defining-type-id].
 [:zh_CN] 如果其中一个将 [$E] 声明为概念，则另一个应当同样。
 [list:end]
 
-[:en] Types are compared after all adjustments of types (during which typedefs
-([#dcl.typedef]) are replaced by their definitions); declarations for an array
+[:en] Types are compared after all adjustments of types (during which type aliases
+([#dcl.typedef]) are replaced by the types they denote); declarations for an array
 object can specify array types that differ by the presence or absence of
 a major array bound ([#dcl.array]).
-[:zh_CN] 在全部类型调整（其中 typedef（[#dcl.typedef]）都被其定义所取代）之后
-进行类型比较；数组对象的声明式可以指定因带有或不带有主数组边界（[#dcl.array]）
-而相异的数组类型。
+[:zh_CN] 在全部类型调整（其中的类型别名（[#dcl.typedef]）都被其所代表的类型取代）之后
+进行类型比较；数组对象的声明式可以指定因带有或不带有主数组边界（[#dcl.array]）而相异的数组类型。
 
 [:en] No diagnostic is required if neither declaration is reachable from the other.
 [:zh_CN] 如果没有任何一个声明式从另一个可达则无须诊断。
@@ -396,10 +391,10 @@ namespace h {}          // [:en] error: same entity as #2, but not a function \
 respectively, represents or designates [$E],
 [:zh_CN] [$D] 包含表示或指定 [$E] 的[~反射表达式]或[~拼接说明符]，
 [item]
-[:en] [$D] is an injected declaration ([#expr.const]) whose characteristic sequence
-contains a reflection that represents a data member description
+[:en] [$D] is an injected declaration ([#expr.const.reflect]) whose characteristic
+sequence contains a reflection that represents a data member description
 ([$T], [$N], [$A], [$W], [$\mathit{NUA}]) ([#class.mem.general]) for which [$T] is [$E],
-[:zh_CN] [$D] 是一个注入声明（[#expr.const]），其特征序列包含一个表示数据成员描述
+[:zh_CN] [$D] 是一个注入声明（[#expr.const.reflect]），其特征序列包含一个表示数据成员描述
 （([$T]，[$N]，[$A]，[$W]，[$\mathit{NUA}])（[#class.mem.general]）的反射，[$T] 是 [$E]，
 [item]
 [:en] [$E] is not a function or function template and [$D] contains an
@@ -532,9 +527,9 @@ for which either [$D] or [$B] is TU-local, or
 [:zh_CN@~] 直接基类关系 [$(D, B)]（[#class.derived.general]），
 其中 [$D] 或 [$B] 是翻译单元局部的，或者
 [item]
-[:en@~] a data member description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general])
+[:en@~] a data member description [$(T, N, A, W, \mathit{NUA}, \mathit{ANN})] ([#class.mem.general])
 for which [$T] is TU-local.
-[:zh_CN@~] 数据成员描述 [$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]），
+[:zh_CN@~] 数据成员描述 [$(T, N, A, W, \mathit{NUA}, \mathit{ANN})]（[#class.mem.general]），
 其中 [$T] 是翻译单元局部的。
 [list:end]
 [list:end]

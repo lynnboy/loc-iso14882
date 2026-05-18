@@ -1,0 +1,218 @@
+[section#expr.const.const
+    [:en] Constant expressions
+    [:zh_CN] 常量表达式
+]
+
+[para]
+[:en] A [+:adj constant[!expression]] is either
+[:zh_CN] [+:adj 常量[!表达式]]是
+[list]
+[item]
+[:en@~] a glvalue core constant expression [$E] for which
+[:zh_CN@~] 泛左值核心常量表达式 [$E]，使得
+ [list]
+ [item]
+[:en@~] [$E] refers to a non-immediate function,
+[:zh_CN@~] [$E] 指代的是非直接函数，
+ [item]
+[:en@~] [$E] designates an object [`o], and if the complete object of [`o] is of
+consteval-only type then so is [$E],
+[:zh_CN@~] [$E] 指名某个对象 [`o]，并且若 [`o] 的完整对象具有仅 consteval 类型则 [$E] 亦如此，
+[begin:example]
+[codeblock]
+struct Base { };
+struct Derived : Base { std::meta::info r; };
+
+consteval const Base& fn(const Derived& derived) { return derived; }
+
+constexpr Derived obj{.r=^^::};     // OK
+constexpr const Derived& d = obj;   // OK
+constexpr const Base& b = fn(obj);  // [:en] error: not a constant expression because [`Derived] [:zh_CN] 错误：由于 [`Derived] 是仅 consteval 类型
+                                    // [:en@~] is a consteval-only type but [`Base] is not. [:zh_CN@~] 但 [`Base] 不是，所以并非常量表达式
+[codeblock:end]
+[end:example]
+ [list:end]
+[:en@~] or
+[:zh_CN@~] 或者是
+[item]
+[:en@~] a prvalue core constant expression whose result object ([#basic.lval])
+(if any) satisfies the following constraints:
+[:zh_CN] 纯右值核心常量表达式，其结果对象（[#basic.lval]）（如果有）满足如下约束条件：
+
+ [list]
+ [item]
+[:en] each constituent reference refers to an object or a non-immediate function,
+[:zh_CN] 每个成分引用都指代对象或非直接函数，
+
+ [item]
+[:en] no constituent value of scalar type is an indeterminate or erroneous value ([#basic.indet]),
+[:zh_CN] 没有标量类型成分值具有不确定或错误值（[#basic.indet]），
+
+ [item]
+[:en] no constituent value of pointer type is a pointer to an immediate function
+or an invalid pointer value ([#basic.compound]),
+[:zh_CN] 没有指针类型的成分值指向直接函数的指针或无效指针值（[#basic.compound]），
+
+ [item]
+[:en] no constituent value of pointer-to-member type designates an immediate function, and
+[:zh_CN] 没有成员指针类型的成分值指代直接函数，并且
+
+ [item]
+[:en] unless the value is of consteval-only type,
+[:zh_CN] 除非值具有仅 consteval 类型，否则
+
+  [list]
+  [item]
+[:en] no constituent value of pointer-to-member type points to
+a direct member of a consteval-only class type,
+[:zh_CN] 没有成员指针类型的成分值指向仅 consteval 类类型的直接成员，
+
+  [item]
+[:en] no constituent value of pointer type points to or past an object
+whose complete object is of consteval-only type, and
+[:zh_CN] 没有指针类型的成分值指向的对象的完整对象具有仅 consteval 类型，或指向其之后，并且
+  [item]
+[:en] no constituent reference refers to an object
+whose complete object is of consteval-only type.
+[:zh_CN] 没有成分引用指代的对象的完整对象具有仅 consteval 类型。
+  [list:end]
+ [list:end]
+[list:end]
+
+[begin:note]
+[:en] A glvalue core constant expression that either refers to or points to an
+unspecified object is not a constant expression.
+[:zh_CN] 指代或指向未指明对象的泛左值核心常量表达式不是常量表达式。
+[end:note]
+
+[begin:example]
+[codeblock]
+consteval int f() { return 42; }
+consteval auto g() { return f; }
+consteval int h(int (*p)() = g()) { return p(); }
+constexpr int r = h();                          // OK
+constexpr auto e = g();                         // [:en] error: a pointer to an immediate function is \
+                                                [:zh_CN] 错误：指向直接函数的指针不能
+                                                // [:en@~] not a permitted result of a constant expression \
+                                                [:zh_CN@~] 作为常量表达式的结果
+
+struct S {
+  int x;
+  constexpr S() {}
+};
+int i() {
+  constexpr S s;                                // [:en] error: [`s.x] has erroneous value [:zh_CN] 错误：[`s.x] 具有错误值
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] An [+:adj integral constant[!expression]] is an expression of integral or
+unscoped enumeration type, implicitly converted to a prvalue, where the
+converted expression is a core constant expression.
+[:zh_CN] [+:adj 整型常量[!表达式]]是整型或无作用域枚举类型的表达式，被隐式转换为
+纯右值，其中的转换后的表达式是核心常量表达式。
+
+[begin:note]
+[:en] Such expressions can be used as bit-field lengths ([#class.bit]), as
+enumerator initializers if the underlying type is not fixed ([#dcl.enum]), and
+as alignments ([#dcl.align]).
+[:zh_CN] 此种表达式可用作位字段的长度（[#class.bit]），底层类型并未固定的枚举符的
+初始化式（[#dcl.enum]），以及对齐（[#dcl.align]）。
+[end:note]
+
+[para]
+[:en] If an expression of literal class type is used in a context where an
+integral constant expression is required, then that expression is contextually
+implicitly converted ([#conv]) to an integral or unscoped enumeration type and
+the selected conversion function shall be [`:key constexpr].
+[:zh_CN] 如果字面类类型的表达式用在需要整型常量表达式的语境中，则该表达式被按语境
+隐式转换（[#conv]）为某种整型或无作用域枚举类型，且所选择的转换函数应当为
+[`:key constexpr]。
+
+[begin:example]
+[codeblock]
+struct A {
+  constexpr A(int i) : val(i) { }
+  constexpr operator int() const { return val; }
+  constexpr operator long() const { return 42; }
+private:
+  int val;
+};
+constexpr A a = alignof(int);
+alignas(a) int n;               // [:en] error: ambiguous conversion [:zh_CN] 错误：有歧义的转换
+struct B { int n : a; };        // [:en] error: ambiguous conversion [:zh_CN] 错误：有歧义的转换
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] A [+:adj converted constant[!expression]] of type [`T] is an expression,
+implicitly converted to type [`T], where the converted expression is a constant
+expression and the implicit conversion sequence contains only
+[:zh_CN] 类型 [`T] 的[+:adj 经转换的常量[!表达式]]是被隐式转换为类型 [`T] 的表达式，
+其中的转换后的表达式是常量表达式，并且隐式转换序列中只包含
+
+[list]
+[item]
+[:en@~] user-defined conversions,
+[:zh_CN@~] 用户定义转换，
+[item]
+[:en@~] lvalue-to-rvalue conversions ([#conv.lval]),
+[:zh_CN@~] 左值向右值转换（[#conv.lval]]），
+[item]
+[:en@~] array-to-pointer conversions ([#conv.array]),
+[:zh_CN@~] 数组向指针转换（[#conv.array]），
+[item]
+[:en@~] function-to-pointer conversions ([#conv.func]),
+[:zh_CN@~] 函数向指针转换（[#conv.func]），
+[item]
+[:en@~] qualification conversions ([#conv.qual]),
+[:zh_CN@~] 限定转换（[#conv.qual]），
+[item]
+[:en@~] integral promotions ([#conv.prom]),
+[:zh_CN@~] 整型提升（[#conv.prom]），
+[item]
+[:en@~] integral conversions ([#conv.integral]) other than narrowing conversions ([#dcl.init.list]),
+[:zh_CN@~] 除了窄化转换（[#dcl.init.list]）之外的整型转换（[#conv.integral]），
+[item]
+[:en@~] floating-point promotions ([#conv.fpprom]),
+[:zh_CN@~] 浮点提升（[#conv.fpprom]），
+[item]
+[:en@~] floating-point conversions ([#conv.double]) where the source value can
+be represented exactly in the destination type,
+[:zh_CN@~] 源值可以被目标类型精确表示的浮点转换（[#conv.double]），
+[item]
+[:en@~] null pointer conversions ([#conv.ptr]) from [`std::nullptr_t], and
+[:zh_CN@~] 从 [`std::nullptr_t] 进行的空指针转换（[#conv.ptr]），
+[item]
+[:en@~] null member pointer conversions ([#conv.mem]) from [`std::nullptr_t],
+[:zh_CN@~] 从 [`std::nullptr_t] 进行的空成员指针转换（[#conv.mem]），以及
+[item]
+[:en@~] function pointer conversions ([#conv.fctptr]),
+[:zh_CN@~] 函数指针转换（[#conv.fctptr]），
+[list:end]
+
+[:en@~] and where the reference binding (if any) binds directly.
+[:zh_CN@~] 并且其中的引用绑定（如果有）是直接绑定。
+
+[begin:note]
+[:en] Such expressions can be used in [`:key new] expressions ([#expr.new]), as
+case expressions ([#stmt.switch]), as enumerator initializers if the underlying
+type is fixed ([#dcl.enum]), as array bounds ([#dcl.array]), as constant template
+arguments ([#temp.arg]), and as the constant expression of a [~splice-specifier] ([#basic.splice]).
+[:zh_CN] 此种表达式可用在 [`:key new] 表达式中（[#expr.new]），用作 case 表达式（[#stmt.switch]），
+用作底层类型已固定的枚举符的初始化式（[#dcl.enum]），用作数组边界（[#dcl.array]），
+用作常量模板实参（[#temp.arg]），以及用作[~拼接说明符]的常量表达式（[#basic.splice]）。
+[end:note]
+
+[para]
+[:en][%contextually converted constant expression of type [`bool][%conversion[!contextual]]]
+[%conversion[!contextual to constant expression of type [`bool]]]
+A [+:% contextually converted constant expression of type [`bool]] is an
+expression, contextually converted to [`:key bool] ([#conv]), where the
+converted expression is a constant expression and the conversion sequence
+contains only the conversions above.
+[:zh_CN][%按语境转换为类型 [`bool] 的常量表达式 [%转换[!按语境～]]]
+[%转换[!按语境～为类型 [`bool] 的常量表达式]]
+[+:% 按语境转换为类型 [`bool] 的常量表达式]，是按语境转换为 [`:key bool]（[#conv]）
+的表达式，所转换的表达式是常量表达式，且其转换序列中仅包含上述转换。

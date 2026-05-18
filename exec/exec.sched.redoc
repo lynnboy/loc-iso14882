@@ -17,13 +17,11 @@
 namespace std::execution {
   template<class Sch>
     concept [[redoc("`:c@def>")]]scheduler =
-      [[redoc("`:c>")]]derived_from<typename remove_cvref_t<Sch>::scheduler_concept, scheduler_t> &&
+      [[redoc("`:c>")]]derived_from<typename remove_cvref_t<Sch>::scheduler_concept, scheduler_tag> &&
       [[redoc("*:c>")]]queryable<Sch> &&
       requires(Sch&& sch) {
         { schedule(std::forward<Sch>(sch)) } -> [[redoc("`:c>")]]sender;
-        { auto(get_completion_scheduler<set_value_t>(
-            get_env(schedule(std::forward<Sch>(sch))))) }
-              -> [[redoc("`:c>")]]same_as<remove_cvref_t<Sch>>;
+        { get_forward_progress_guarantee(sch) } -> [[redoc("`:c>")]]same_as<forward_progress_guarantee>;
       } &&
       [[redoc("`:c>")]]equality_comparable<remove_cvref_t<Sch>> &&
       [[redoc("`:c>")]]copyable<remove_cvref_t<Sch>>;
@@ -59,21 +57,52 @@ the same associated execution resource.
 和 [`sch2] 共享相同的关联执行资源时，[`sch1 == sch2] 应当返回 [`true]。
 
 [para]
-[:en] For a given scheduler expression [`sch], the expression
-[`get_completion_scheduler<set_value_t>(get_env(schedule(sch)))]
-shall compare equal to [`sch].
-[:zh_CN] 对于给定调度器表达式 [`sch]，表达式
-[`get_completion_scheduler<set_value_t>(get_env(schedule(sch)))] 应当等于 [`sch]。
+[:en] For a given scheduler expression [`sch], if the expression
+[`get_completion_scheduler<set_value_t>(get_env(schedule(sch)))] is well-formed,
+it shall compare equal to [`sch].
+[:zh_CN] 对于给定调度器表达式 [`sch]，如果表达式
+[`get_completion_scheduler<set_value_t>(get_env(schedule(sch)))] 良构，则应当等于 [`sch]。
 
 [para]
-[:en] For a given scheduler expression [`sch], if the expression
-[`get_domain(sch)] is well-formed, then the expression
-[`get_domain(get_env(schedule(sch)))] is also well-formed and has the same type.
-[:zh_CN] 对于给定调度器表达式 [`sch]，如果表达式 [`get_domain(sch)] 良构，那么
-[`get_domain(get_env(schedule(sch)))] 也良构并具有相同类型。
+[:en] For a given scheduler expression [`sch], type [`T], and
+pack of subexpressions [`envs], the following expressions are either both ill-formed, or
+both well-formed with the same type:
+[:zh_CN] 对于给定调度器表达式 [`sch]、类型 [`T] 和子表达式包组 [`envs]，以下表达式
+要么都非良构，要么都良构并具有相同类型：
+[list]
+[item] [`get_completion_domain<T>(sch, envs...)]
+[item] [`get_completion_domain<T>(get_env(schedule(sch)), envs...)]
+[list:end]
+
+[:en] Likewise, the following expressions are either both ill-formed, or
+both well-formed with the same type and value:
+[:zh_CN] 同样地，以下表达式要么都非良构，要么都良构并具有相同类型和值：
+[list]
+[item] [`get_completion_scheduler<T>(sch, envs...)]
+[item] [`get_completion_scheduler<T>(get_env(schedule(sch)), envs...)]
+[list:end]
 
 [para]
 [:en] A scheduler type[=']s destructor shall not block pending completion of
 any receivers connected to the sender objects returned from [`schedule].
 [:zh_CN] 调度器类型的析构函数不能阻塞待处理的与 [`schedule] 返回的发送器对象相连接的
 任何接收器的完成。
+
+[para]
+[:en] The exposition-only [*:c infallible-scheduler] concept defines the
+requirements of a scheduler type whose [`schedule] asynchronous operation
+can only complete with [`set_value] unless stop can be requested:
+[:zh_CN] 仅用于阐释的 [*:c infallible-scheduler] 概念定义了调度器类型的要求，
+其 [`schedule] 异步操作只能以 [`set_value] 完成，除非可以请求停止：
+[codeblock]
+template<class Sch, class Env>
+  concept [[redoc("*:c@def>")]]infallible-scheduler =
+    [[redoc("`:c>")]]scheduler<Sch> &&
+    ([[redoc("`:c>")]]same_as<completion_signatures<set_value_t()>,
+             completion_signatures_of_t<decltype(schedule(declval<Sch>())), Env>> ||
+     (![[redoc("`:c>")]]unstoppable_token<stop_token_of_t<Env>> &&
+      ([[redoc("`:c>")]]same_as<completion_signatures<set_value_t(), set_stopped_t()>,
+               completion_signatures_of_t<decltype(schedule(declval<Sch>())), Env>> ||
+       [[redoc("`:c>")]]same_as<completion_signatures<set_stopped_t(), set_value_t()>,
+               completion_signatures_of_t<decltype(schedule(declval<Sch>())), Env>>)));
+[codeblock:end]

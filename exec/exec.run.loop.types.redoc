@@ -32,6 +32,14 @@ is not potentially-throwing if [*sch] is not potentially-throwing.
 [:zh_CN] 表达式 [`schedule([*sch])] 的类型为 [*run-loop-sender]，且当 [*sch]
 并非潜在抛出时也非潜在抛出的。
 
+[para]
+[:en] For type [*set-tag] other than [`set_error_t], the expression
+[`get_completion_scheduler<[*set-tag]>(get_env(schedule([*sch]))) == [*sch]]
+evaluates to [`true].
+[:zh_CN] 对于 [`set_error_t] 以外的类型 [*set-tag]，表达式
+[`get_completion_scheduler<[*set-tag]>(get_env(schedule([*sch]))) == [*sch]]
+的求值结果为 [`true]。
+
 [codeblock:declaration]
 class [[redoc("*>")]]run-loop-sender;
 [codeblock:end]
@@ -40,11 +48,18 @@ class [[redoc("*>")]]run-loop-sender;
 [:en] [*run-loop-sender] is an exposition-only type that satisfies [`:c sender].
 [:zh_CN] [*run-loop-sender] 是一种满足 [`:c sender] 的仅用于阐释的类型。
 
-[:en] [`completion_signatures_of_t<[*run-loop-sender]>] is
-[:zh_CN] [`completion_signatures_of_t<[*run-loop-sender]>] 为
-[codeblock]
-completion_signatures<set_value_t(), set_error_t(exception_ptr), set_stopped_t()>
-[codeblock:end]
+[:en] Let [`E] be the type of an environment.
+[:zh_CN] 令 [`E] 为环境的类型。
+
+[:en] If [`unstoppable_token<stop_token_of_t<E>>] is [`true], then
+[`completion_signatures_of_t<[*run-loop-sender], E>] is
+[`completion_signatures<set_value_t()>].
+[:zh_CN] 如果 [`unstoppable_token<stop_token_of_t<E>>] 为 [`true]，则
+[`completion_signatures_of_t<[*run-loop-sender], E>] 为
+[`completion_signatures<set_value_t()>]。
+
+[:en] Otherwise, it is [`completion_signatures_of_t<set_value_t(), set_stopped_t()>].
+[:zh_CN] 否则，它为 [`completion_signatures_of_t<set_value_t(), set_stopped_t()>]。
 
 [para]
 [:en] An instance of [*run-loop-sender] remains valid
@@ -53,10 +68,10 @@ until the end of the lifetime of its associated [`run_loop] instance.
 
 [para]
 [:en] Let [*sndr] be an expression of type [*run-loop-sender], let [*rcvr] be an
-expression such that [`[`:c receiver_of]<decltype(([*rcvr])), CS>] is [`true]
+expression such that [`[*:c receiver-of]<decltype(([*rcvr])), CS>] is [`true]
 where [`CS] is the [`completion_signatures] specialization above.
 [:zh_CN] 令 [*sndr] 为 [*run-loop-sender] 类型的表达式，令 [`rcvr] 为使得
-[`[`:c receiver_of]<decltype(([*rcvr])), CS>] 为 [`true] 的表达式，其中 [`CS]
+[`[*:c receiver-of]<decltype(([*rcvr])), CS>] 为 [`true] 的表达式，其中 [`CS]
 为上述的 [`completion_signatures] 特例。
 
 [:en] Let [`C] be either [`set_value_t] or [`set_stopped_t].
@@ -127,10 +142,6 @@ if (get_stop_token([[redoc("*>")]]REC([[redoc("$>")]]o)).stop_requested()) {
 [:en] The expression [`start([$o])] is equivalent to:
 [:zh_CN] 表达式 [`start([$o])] 等价于：
 [codeblock]
-try {
-  [[redoc("$>")]]o.[[redoc("*>")]]loop->[[redoc("*>")]]push-back(addressof([[redoc("$>")]]o));
-} catch(...) {
-  set_error(std::move([[redoc("*>")]]REC([[redoc("$>")]]o)), current_exception());
-}
+[[redoc("$>")]]o.[[redoc("*>")]]loop->[[redoc("*>")]]push-back(addressof([[redoc("$>")]]o));
 [codeblock:end]
 [list:end]

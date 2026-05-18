@@ -3,47 +3,89 @@
 ]
 
 [para]
-[:en] [`get_completion_scheduler<[*completion-tag]>] obtains the completion
-scheduler associated with a completion tag from a sender[=']s attributes.
-[:zh_CN] [`get_completion_scheduler<[*completion-tag]>] 获得于发送器属性中的
-完成标签关联的完成调度器。
-
-[para]
 [:en] The name [`get_completion_scheduler] denotes a query object template.
 [:zh_CN] 名字 [`get_completion_scheduler] 代表一个查询对象模板。
 
-[:en] For a subexpression [`q], the expression
-[`get_completion_scheduler<[*completion-tag]>(q)]
-is ill-formed if [*completion-tag] is not one of
-[`set_value_t], [`set_error_t], or [`set_stopped_t].
-[:zh_CN] 对于子表达式 [`q]，如果 [*completion-tag] 不是
-[`set_value_t]、[`set_error_t] 或 [`set_stopped_t] 之一，那么表达式
-[`get_completion_scheduler<[*completion-tag]>(q)] 非良构。
-
-[:en] Otherwise, [`get_completion_scheduler<[*completion-tag]>(q)]
-is expression-equivalent to
-[:zh_CN] 否则，[`get_completion_scheduler<[*completion-tag]>(q)] 按表达式等价于
-
-[codeblock]
-[[redoc("*>")]]MANDATE-NOTHROW([[redoc("*>")]]AS-CONST(q).query(get_completion_scheduler<[[redoc("*>")]]completion-tag>))
-[codeblock:end]
-
-[para:mandates:~]
-[:en] If the expression above is well-formed, its type satisfies [`:c scheduler].
-[:zh_CN] 如果以上表达式良构，则其类型满足 [`:c scheduler]。
-
 [para]
 [:en] Let [*completion-fn] be a completion function ([#exec.async.ops]);
-let [*completion-tag] be the associated completion tag of [*completion-fn];
-let [`args] be a pack of subexpressions; and let [`sndr] be a subexpression
-such that [`[`:c sender]<decltype((sndr))>] is [`true] and
-[`get_completion_scheduler<[*completion-tag]>(get_env(sndr))]
+let [*completion-fn-tag] be the associated completion tag of [*completion-fn];
+let [`args] and [`envs] be packs of subexpressions; and
+let [`sndr] be a subexpression such that [`[`:c sender]<decltype((sndr))>] is [`true] and
+[`get_completion_scheduler<[*completion-fn-tag]>(get_env(sndr), envs...)]
 is well-formed and denotes a scheduler [`sch].
 [:zh_CN] 令 [*completion-fn] 为一个完成函数（[#exec.async.ops]）；
-令 [*completion-tag] 为 [*completion-fn] 的关联完成标签；令 [`args] 为子表达式的包组；
-以及令 [`sndr] 为使得 [`[`:c sender]<decltype((sndr))>] 为 [`true]，并使得
-[`get_completion_scheduler<[*completion-tag]>(get_env(sndr))] 良构且代表调度器 [`sch]。
+令 [*completion-fn-tag] 为 [*completion-fn] 的关联完成标签；
+令 [`args] 和 [`envs] 为子表达式的包组；并令 [`sndr] 为子表达式，使得
+[`[`:c sender]<decltype((sndr))>] 为 [`true]，并使得
+[`get_completion_scheduler<[*completion-fn-tag]>(get_env(sndr), envs...)]
+良构且代表调度器 [`sch]。
 
+[para]
+[:en] [`get_completion_scheduler<[*completion-fn-tag]>] obtains the completion
+scheduler associated with a completion tag from a sender[=']s attributes.
+[:zh_CN] [`get_completion_scheduler<[*completion-fn-tag]>] 获得于发送器属性中的
+完成标签关联的完成调度器。
+
+[para]
+[:en] For subexpression [`sch1] and pack [`envs], let [`sch2] be
+[`[*TRY-QUERY](sch1, get_completion_scheduler<set_value_t>, envs...)] and
+let [`[*RECURSE-QUERY](sch1, envs...)] be expression-equivalent to [`sch1]
+if [`sch2] is ill-formed or if [`sch1] and [`sch2] have the same type and compare equal;
+otherwise, [`[*RECURSE-QUERY](sch2, envs...)].
+[:zh_CN] 对于子表达式 [`sch1] 和包组 [`envs]，令 [`sch2] 为
+[`[*TRY-QUERY](sch1, get_completion_scheduler<set_value_t>, envs...)]，并且
+如果 [`sch2] 非良构或者 [`sch1] 和 [`sch2] 具有相同类型且比较相等，则令
+[`[*RECURSE-QUERY](sch1, envs...)] 按表达式等价于 [`sch1]；否则
+按表达式等价于 [`[*RECURSE-QUERY](sch2, envs...)]。
+
+[para]
+[:en] For a subexpression [`q] and pack [`envs], the expression
+[`get_completion_scheduler<[*completion-fn-tag]>(q, envs...)]
+is ill-formed if [*completion-fn-tag] is not one of
+[`set_value_t], [`set_error_t], or [`set_stopped_t].
+[:zh_CN] 对于子表达式 [`q] 和包组 [`envs]，如果 [*completion-fn-tag] 不是
+[`set_value_t]、[`set_error_t] 或 [`set_stopped_t] 之一，那么表达式
+[`get_completion_scheduler<[*completion-fn-tag]>(q, envs...)] 非良构。
+
+[:en] Otherwise, the expression is expression-equivalent to:
+[:zh_CN] 否则，该表达式按表达式等价于：
+[list]
+[item]
+[codeblock]
+[[redoc("*>")]]MANDATE-NOTHROW([[redoc("*>")]]RECURSE-QUERY(
+  [[redoc("*>")]]TRY-QUERY(q, get_completion_scheduler<[[redoc("*>")]]completion-fn-tag>, envs...), envs...))
+[codeblock:end]
+[:en@~] if that expression is well-formed, except that [`envs...] is evaluated only once.
+[:zh_CN@~] 如果该表达式良构，但 [`envs...] 只求值一次。
+[item]
+[:en] Otherwise, [`auto(q)] if the type of [`q] satisfies [`:c scheduler] and
+[`envs] is not an empty pack, except that [`envs...] is evaluated.
+[:zh_CN] 否则，如果 [`q] 的类型满足 [`:c scheduler] 并且 [`envs] 不是空包组，
+则为 [`auto(q)]，但 [`envs...] 被求值。
+[item]
+[:en] Otherwise, [`get_completion_scheduler<[*completion-fn-tag]>(q, envs...)] is ill-formed.
+[:zh_CN] 否则，表达式 [`get_completion_scheduler<[*completion-fn-tag]>(q, envs...)] 非良构。
+[list:end]
+
+[para:mandates:~]
+[:en] If [`get_completion_scheduler<[*completion-fn-tag]>(q, envs...)]
+is well-formed, its type satisfies [`:c scheduler].
+[:zh_CN] 如果 [`get_completion_scheduler<[*completion-fn-tag]>(q, envs...)] 良构，
+则其类型满足 [`:c scheduler]。
+
+[para]
+[:en] For a type [`Tag], subexpression [`sndr], and pack [`envs], let [`CS] be
+[`completion_signatures_of_t<decay_t<decltype((sndr))>, decltype((envs))...>].
+[:zh_CN] 对于类型 [`Tag]、子表达式 [`sndr] 和包组 [`envs]，令 [`CS] 为
+[`completion_signatures_of_t<decay_t<decltype((sndr))>, decltype((envs))...>]。
+
+[:en] If both [`get_completion_scheduler<Tag>(get_env(sndr), envs...)] and
+[`CS] are well-formed and [`CS().[*count-of](Tag()) == 0] is [`true],
+the program is ill-formed.
+[:zh_CN] 如果 [`get_completion_scheduler<Tag>(get_env(sndr), envs...)] 和
+[`CS] 都良构，并且 [`CS().[*count-of](Tag()) == 0] 为 [`true]，则程序非良构。
+
+[para]
 [:en] If an asynchronous operation created by connecting [`sndr] with a receiver
 [`rcvr] causes the evaluation of [`[*completion-fn](rcvr, args...)],
 the behavior is undefined unless the evaluation happens on an execution agent
@@ -53,7 +95,7 @@ that belongs to [`sch][=']s associated execution resource.
 的执行代理中，否则其行为未定义。
 
 [para]
-[:en] The expression [`forwarding_query(get_completion_scheduler<[*completion-tag]>)]
+[:en] The expression [`forwarding_query(get_completion_scheduler<[*completion-fn-tag]>)]
 is a core constant expression and has value [`true].
-[:zh_CN] 表达式 [`forwarding_query(get_completion_scheduler<[*completion-tag]>)]
+[:zh_CN] 表达式 [`forwarding_query(get_completion_scheduler<[*completion-fn-tag]>)]
 是核心常量表达式且值为 [`true]。

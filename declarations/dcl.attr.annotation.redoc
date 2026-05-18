@@ -6,10 +6,50 @@
 ]
 
 [para]
-[:en] An annotation may be applied to a [~base-specifier] or to any declaration of
-a type, type alias, variable, function, namespace, enumerator, or non-static data member.
+[:en] An annotation may be applied to a [~base-specifier] or to a declaration [$D] of
+a type, type alias, variable, function, namespace, enumerator, or non-static data member, unless
 [:zh_CN] 标注可以应用于[~基说明符]，或应用于类型、类型别名、变量、函数、命名空间、
-枚举符或非静态数据成员的任何声明式。
+枚举符或非静态数据成员的声明式 [$D]，除非
+[list]
+[item]
+[:en@~] the host scope of [$X] differs from its target scope or
+[:zh_CN@~] [$X] 的宿主作用域与其目标作用域不同，或
+[item]
+[:en@~] [$X] is a non-defining friend declaration,
+[:zh_CN@~] [$X] 是一个非定义的友元声明式，
+[list:end]
+[:en@~] where [$X] is
+[:zh_CN@~] 其中 [$X]
+[list]
+[item]
+[:en@~] [$D'] if [$D] is a function parameter declaration in
+a function declarator ([#dcl.fct]) of a function declaration [$D'] and
+[:zh_CN@~] 当 [$D] 是函数声明式 [$D'] 的函数声明符 ([#dcl.fct]) 中的一个形参声明式时为 [$D']，
+[item]
+[:en@~] [$D] otherwise.
+[:zh_CN@~] 否则为 [$D]。
+[list:end]
+
+[begin:note]
+[:en] An annotation on a [~parameter-declaration] in a function definition
+applies to both the function parameter and the variable.
+[:zh_CN] 函数定义式中[~形参声明式]上的标注同时适用于函数形参和变量。
+
+[begin:example]
+[codeblock]
+void f([[=1]] int x);
+void f([[=2]] int y) {
+  constexpr auto rp = parameters_of(^^f)[0];
+  constexpr auto ry = variable_of(rp);
+  static_assert(ry == ^^y);
+
+  static_assert(annotations_of(rp).size() == 2);    // [:en] both [``[1, 2`]] [:zh_CN] 包含 [``[1, 2`]]
+  static_assert(annotations_of(ry).size() == 1);    // [:en] just [``[2`]] [:zh_CN] 只有 [``[2`]]
+  static_assert(annotations_of(rp)[1] == annotations_of(ry)[0]);
+}
+[codeblock:end]
+[end:example]
+[end:note]
 
 [para]
 [:en] Let [$E] be the expression [`std::meta::reflect_constant([~constant-expression])].
@@ -20,12 +60,8 @@ the result of [$E] is the [+:adj underlying[!constant]] of the annotation.
 [:zh_CN] [$E] 应当是常量表达式；[$E] 的结果是该标注的[+:adj 底层[!常量]]。
 
 [para]
-[:en] Each [~annotation] produces a unique annotation.
-[:zh_CN] 每个[~标注]都会生成一个唯一的标注。
-
-[para]
-[:en] Substituting into an [~annotation] is not in the immediate context.
-[:zh_CN] [~标注]中的代换不在其直接语境中进行。
+[:en] Each [~annotation] or instantiation thereof produces a unique annotation.
+[:zh_CN] 每个[~标注]或其实例化都会产生一个唯一的标注。
 
 [begin:example]
 [codeblock]
@@ -40,6 +76,17 @@ void g [[=4, =2]] ();
 [:en] These can be queried with metafunctions such as [`std::meta::annotations_of] ([#meta.reflection.annotation]).
 [:zh_CN] 这些可以通过元函数进行查询，例如 [`std::meta::annotations_of] ([#meta.reflection.annotation])。
 [end:example]
+
+[begin:example]
+[codeblock]
+template<int> int x [[=1]];
+static_assert(annotations_of(^^x<0>) != annotations_of(^^x<1>));    // OK
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] Substituting into an [~annotation] is not in the immediate context.
+[:zh_CN] [~标注]中的代换不在其直接语境中进行。
 
 [begin:example]
 [codeblock]

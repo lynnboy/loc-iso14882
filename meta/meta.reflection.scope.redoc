@@ -1,0 +1,216 @@
+[section#meta.reflection.scope
+    [:en] Scope identification
+    [:zh_CN] 作用域识别
+]
+
+[para]
+[:en] The functions in this subclause retrieve information
+about where in the program they are invoked.
+[:zh_CN] 本子条款中的各函数获取有关其在程序中的何处被调用的信息。
+
+[para]
+[:en] None of the functions in this subclause is an addressable function ([#namespace.std]).
+[:zh_CN] 本子条款中的函数都不是可取地址的函数（[#namespace.std]）。
+
+[para]
+[:en] Given a program point [$P], let [`[*eval-point]([$P])] be the following program point:
+[:zh_CN] 给定一个程序位置 [$P]，令 [`[*eval-point]([$P])] 为以下程序位置：
+
+[list]
+[item]
+[:en] If a potentially-evaluated subexpression ([#intro.execution]) of a default
+member initializer [$I] for a member of class [$C] ([#class.mem.general]) appears
+at [$P], then a point determined as follows:
+[:zh_CN] 如果 [$P] 处出现某个类 [$C] 的成员的默认成员初始化式（[#class.mem.general]）
+的某个潜在求值子表达式（[#intro.execution]），则按如下确定位置：
+
+ [list]
+ [item]
+[:en] If an aggregate initialization is using [$I], [`[*eval-point]([$Q])],
+where [$Q] is the point at which that aggregate initialization appears.
+[:zh_CN] 如果一个聚合初始化使用了 [$I]，则为 [`[*eval-point]([$Q])]，其中 [$Q]
+为出现该聚合初始化的位置。
+
+ [item]
+[:en] Otherwise, if an initialization by an inherited constructor ([#class.inhctor.init])
+is using [$I], a point whose immediate scope is the class scope corresponding to [$C].
+[:zh_CN] 否则，如果一个继承构造函数进行的初始化（[#class.inhctor.init]）使用了 [$I]，
+则为一个以对应于 [$C] 的类作用域为其直接作用域的位置。
+
+ [item]
+[:en] Otherwise, a point whose immediate scope is the function parameter scope
+corresponding to the constructor definition that is using [$I].
+[:zh_CN] 否则，为一个以对应于使用了 [$I] 的构造函数定义式的函数形参作用域为其直接作用域的位置。
+ [list:end]
+
+[item]
+[:en] Otherwise, if a potentially-evaluated subexpression of a default argument ([#dcl.fct.default])
+appears at [$P], [`[*eval-point]([$Q])], where [$Q] is the point at which the
+invocation of the function ([#expr.call]) using that default argument appears.
+[:zh_CN] 否则，如果 [$P] 处出现某个默认实参（[#dcl.fct.default]）的潜在求值子表达式，则为
+[`[*eval-point]([$Q])]，其中 [$Q] 为使用该默认实参的函数调用（[#expr.call]）出现的位置。
+
+[item]
+[:en] Otherwise, if the immediate scope of [$P] is a function parameter scope
+introduced by a declaration [$D], and [$P] appears either before the locus of [$D]
+or within the trailing [~requires-clause] of [$D], a point whose immediate scope
+is the innermost scope enclosing the locus of [$D] that is not a template parameter scope.
+[:zh_CN] 否则，如果 [$P] 的直接作用域是由声明式 [$D] 所引入的函数形参作用域，
+并且 [$P] 出现于 [$D] 的位点之前或者 [$D] 的尾部 [~requires-子句]之内，则为
+以包围 [$D] 的位点的最内层并非模板形参作用域的作用域为直接作用域的位置。
+
+[item]
+[:en] Otherwise, if the immediate scope of [$P] is a function parameter scope
+introduced by a [~lambda-expression] [$L] whose [~lambda-introducer] appears at
+point [$Q], and [$P] appears either within the [~trailing-return-type]
+or the trailing [~requires-clause] of [$L], [`[*eval-point]([$Q])].
+[:zh_CN] 否则，如果 [$P] 的直接作用域是由 [~lambda-表达式] [$L] 所引入的
+函数形参作用域，其 [~lambda-引导符]出现于位置 [$Q]，并且 [$P] 出现于 [$L] 的
+[~尾部返回类型]或者尾部 [~requires-子句]之内，则为 [`[*eval-point]([$Q])]。
+
+[item]
+[:en] Otherwise, if the innermost non-block scope enclosing [$P] is the function
+parameter scope introduced by a [~consteval-block-declaration] ([#dcl.pre]),
+a point whose immediate scope is that inhabited by the outermost
+[~consteval-block-declaration] [$D] containing [$P] such that each scope (if any)
+that intervenes between [$P] and the function parameter scope introduced by [$D] is either
+[:zh_CN] 否则，如果包围 [$P] 的最内层非块作用域是由 [~consteval-块声明式]（[#dcl.pre]）
+所引入的函数形参作用域，则为以包含 [$P] 的最外层 [~consteval-块声明式] [$D]
+所居的作用域为直接作用域的位置，使得介入 [$P] 和 [$D] 所引入的函数形参作用域之间
+的每个作用域（如果有）均为：
+ [list]
+ [item]
+[:en@~] a block scope or
+[:zh_CN@~] 块作用域，或者
+ [item]
+[:en@~] a function parameter scope or lambda scope introduced by a
+[~consteval-block-declaration].
+[:zh_CN@~] 由某条 [~consteval-块声明式] 引入的函数形参作用域或 lambda 作用域。
+ [list:end]
+
+[item]
+[:en] Otherwise, [$P].
+[:zh_CN] 否则，为 [$P]。
+[list:end]
+
+[para]
+[:en] Given a scope [$S], let [`[*ctx-scope]([$S])] be the following scope:
+[:zh_CN] 给定作用域 [$S]，令 [`[*ctx-scope]([$S])] 为以下作用域：
+
+[list]
+[item]
+[:en] If [$S] is a class scope or namespace scope, [$S].
+[:zh_CN] 如果 [$S] 是类作用域或命名空间作用域，则为 [$S]。
+
+[item]
+[:en] Otherwise, if [$S] is a function parameter scope introduced by the
+declaration of a function, [$S].
+[:zh_CN] 否则，如果 [$S] 是由某个函数的声明式所引入的函数形参作用域，则为 [$S]。
+
+[item]
+[:en] Otherwise, if [$S] is a lambda scope introduced by a [~lambda-expression] [$L],
+the function parameter scope corresponding to the call operator of the closure type of [$L].
+[:zh_CN] 否则，如果 [$S] 是 [~lambda-表达式] [$L] 所引入的 lambda 作用域，则为
+[$L] 的闭包类型的调用运算符的对应函数形参作用域。
+
+[item]
+[:en] Otherwise, [`[*ctx-scope]([S'])], where [$S'] is the parent scope of [$S].
+[:zh_CN] 否则，为 [`[*ctx-scope]([S'])]，其中 [$S'] 是 [$S] 的父作用域。
+[list:end]
+
+[para]
+[:en] Let [`[*CURRENT-SCOPE]([$P])] for a point [$P] be
+a reflection representing the function, class, or namespace
+whose corresponding function parameter scope, class scope, or
+namespace scope, respectively, is [`[*ctx-scope]([$S])],
+where [$S] is the immediate scope of [`[*eval-point]([$P])].
+[:zh_CN] 令 [`[*CURRENT-SCOPE]([$P])] 对于某个位置点 [$P] 为表示函数、类或命名空间的反射，
+其相应函数形参作用域、类作用域或命名空间作用域分别为 [`[*ctx-scope]([$S])]，
+其中 [$S] 为 [`[*eval-point]([$P])] 的直接作用域。
+
+[%@lib current_function]
+[codeblock:declaration]
+consteval info current_function();
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] An invocation of [`current_function] that appears at a program point [$P]
+is value-dependent ([#temp.dep.constexpr]) if [`[*eval-point]([$P])]
+is enclosed by a scope corresponding to a templated entity.
+[:zh_CN] 出现于程序点位 [$P] 的 [`current_function] 的调用，当 [`[*eval-point]([$P])]
+被对用于某个模板化实体的作用域所包围时，是值待决的（[#temp.dep.constexpr]）。
+
+[para]
+[:en] Let [$S] be [`[*CURRENT-SCOPE]([$P])], where [$P] is the point at which
+the invocation of [`current_function] lexically appears.
+[:zh_CN] 令 [$S] 为 [`[*CURRENT-SCOPE]([$P])]，其中 [$P] 是词法上出现对
+[`current_function] 的调用之处。
+
+[para:returns]
+[:en] [$S].
+[:zh_CN] [$S]。
+
+[para:throws]
+[:en] [`meta::exception] unless [$S] represents a function.
+[:zh_CN] [`meta::exception]，除非 [$S] 表示函数。
+[div:end]
+
+[%@lib current_class]
+[codeblock:declaration]
+consteval info current_class();
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] An invocation of [`current_class] that appears at a program point [$P]
+is value-dependent ([#temp.dep.constexpr]) if [`[*eval-point]([$P])]
+is enclosed by a scope corresponding to a templated entity.
+[:zh_CN] 出现于程序点位 [$P] 的 [`current_class] 的调用，当 [`[*eval-point]([$P])]
+被对用于某个模板化实体的作用域所包围时，是值待决的（[#temp.dep.constexpr]）。
+
+[para]
+[:en] Let [$S] be [`[*CURRENT-SCOPE]([$P])] where [$P] is the point at which
+the invocation of [`current_class] lexically appears.
+[:zh_CN] 令 [$S] 为 [`[*CURRENT-SCOPE]([$P])]，其中 [$P] 是词法上出现对
+[`current_class] 的调用之处。
+
+[para:returns]
+[:en] [$S] if [$S] represents a class.
+[:zh_CN] 当 [$S] 表示类时返回 [$S]。
+
+[:en] Otherwise, [`parent_of([$S])].
+[:zh_CN] 否则，返回 [`parent_of([$S])]。
+
+[para:throws]
+[:en] [`meta::exception] unless [$S] represents either a class or a member function.
+[:zh_CN] [`meta::exception]，除非 [$S] 表示类或成员函数函数。
+[div:end]
+
+[%@lib current_namespace]
+[codeblock:declaration]
+consteval info current_namespace();
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] An invocation of [`current_namespace] that appears at a program point [$P]
+is value-dependent ([#temp.dep.constexpr]) if [`[*eval-point]([$P])]
+is enclosed by a scope corresponding to a templated entity.
+[:zh_CN] 出现于程序点位 [$P] 的 [`current_namespace] 的调用，当 [`[*eval-point]([$P])]
+被对用于某个模板化实体的作用域所包围时，是值待决的（[#temp.dep.constexpr]）。
+
+[para]
+[:en] Let [$S] be [`[*CURRENT-SCOPE]([$P])] where [$P] is the point at which
+the invocation of [`current_namespace] lexically appears.
+[:zh_CN] 令 [$S] 为 [`[*CURRENT-SCOPE]([$P])]，其中 [$P] 是词法上出现对
+[`current_namespace] 的调用之处。
+
+[para:returns]
+[:en] [$S] if [$S] represents a namespace.
+[:zh_CN] 当 [$S] 表示命名空间时返回 [$S]。
+
+[:en] Otherwise, a reflection representing the nearest enclosing namespace
+of the entity represented by [$S].
+[:zh_CN] 否则，返回表示 [$S] 所表示实体的最内层外围命名空间的反射。
+[div:end]

@@ -5,32 +5,63 @@
 [%@lib transform_sender]
 [codeblock:declaration]
 namespace std::execution {
-  template<class Domain, [[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable... Env>
-      requires (sizeof...(Env) <= 1)
-    constexpr [[redoc("`:c>")]]sender decltype(auto) transform_sender(Domain dom, Sndr&& sndr, const Env&... env)
+  template<[[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable Env>
+    constexpr decltype(auto) transform_sender(Sndr&& sndr, const Env& env)
       noexcept([[redoc("[=seebelow]")]]);
 }
 [codeblock:end]
 
 [div:description]
 [para]
-[:en] Let [*transformed-sndr] be the expression
+[:en] For a subexpression [`s], let [*start-domain] be [`D()] where [`D] is the
+decayed type of [`get_domain(env)] if that expression is well-formed, and
+[`default_domain] otherwise.
+[:zh_CN] 对于子表达式 [`s]，令 [*start-domain] 为 [`D()]，其中如果表达式
+[`get_domain(env)] 良构，则 [`D] 是该表达式的退化类型；否为 [`default_domain]。
+
+[para]
+[:en] Let [`[*completion-domain](s)] be [`D()] where [`D] is the decayed type of
+[`get_completion_domain<>(get_env(s), env)] if that is well-formed;
+otherwise, [`D] is [`default_domain].
+[:zh_CN] 令 [`[*completion-domain](s)] 为 [`D()]，其中如果表达式
+[`get_completion_domain<>(get_env(s), env)] 良构，则 [`D] 是该表达式的退化类型；否则为
+[`default_domain]。
+
+[para]
+[:en] Let [`[*transformed-sndr](dom, tag, s)] be the expression
 [:zh_CN] 若表达式
 [codeblock]
-dom.transform_sender(std::forward<Sndr>(sndr), env...)
+dom.transform_sender(tag, s, env)
 [codeblock:end]
 [:en@~] if that expression is well-formed; otherwise,
-[:zh_CN] 良构，则令 [*transformed-sndr] 为该表达式；否则令其为
+[:zh_CN] 良构，则令 [`[*transformed-sndr](dom, tag, s)] 为该表达式；否则令其为
 [codeblock]
-default_domain().transform_sender(std::forward<Sndr>(sndr), env...)
+default_domain().transform_sender(tag, s, env)
 [codeblock:end]
 
-[:en] Let [*final-sndr] be the expression [*transformed-sndr]
-if [*transformed-sndr] and [*sndr] have the same type ignoring cv-qualifiers;
-otherwise, it is the expression [`transform_sender(dom, [*transformed-sndr], env...)].
-[:zh_CN] 如果忽略 cv 限定符表达式 [*transformed-sndr] 和 [*sndr] 具有相同类型，则
-令 [*final-sndr] 为表达式 [*transformed-sndr]；否则，令其为表达式
-[`transform_sender(dom, [*transformed-sndr], env...)]。
+[:en] Let [`[*transform-recurse](dom, tag, s)] be the expression
+[`[*transformed-sndr](dom, tag, s)] if [`[*transformed-sndr](dom, tag, s)] and [`s]
+have the same type ignoring cv-qualifiers; otherwise, it is
+the expression [`[*transform-recurse](dom2, tag, s2)], where
+[`s2] is [`[*transformed-sender](dom, tag, s)] and
+[`dom2] is [*start-domain] if [`tag] is [`start], and
+[`[*completion-domain](s2)] otherwise.
+[:zh_CN] 令 [`[*transform-recurse](dom, tag, s)] 为表达式
+[`[*transformed-sndr](dom, tag, s)]，如果表达式 [`[*transformed-sndr](dom, tag, s)]
+和 [`s] 忽略 cv 限定符具有相同类型；否则，令其为表达式 [`[*transform-recurse](dom2, tag, s2)]，
+其中 [`s2] 为 [`[*transformed-sender](dom, tag, s)]，而 [`dom2] 当 [`tag] 为
+[`start] 时为 [*start-domain]，否则为 [`[*completion-domain](s2)]。
+
+[:en] Let [*tmp-sndr] be the expression
+[:zh_CN] 令 [*tmp-sndr] 为表达式
+[codeblock]
+[[redoc("*>")]]transform-recurse([[redoc("*>")]]completion-domain(sndr), set_value, sndr)
+[codeblock:end]
+[:en@~] and let [*final-sndr] be the expression
+[:zh_CN@~] 并令 [*final-sndr] 为表达式
+[codeblock]
+[[redoc("*>")]]transform-recurse([[redoc("*>")]]start-domain, start, [[redoc("*>")]]tmp-sndr)
+[codeblock:end]
 
 [para:returns]
 [:en] [*final-sndr].

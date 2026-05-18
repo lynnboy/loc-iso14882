@@ -12,14 +12,12 @@
 
 [:en] For subexpressions [`sndr] and [`rcvr], let [`Sndr] be [`decltype((sndr))]
 and [`Rcvr] be [`decltype((rcvr))], let [`new_sndr] be the expression
+[`transform_sender(sndr, get_env(rcvr))] and let [`DS] and [`DR] be
+[`decay_t<decltype((new_sndr))>] and [`decay_t<Rcvr>], respectively.
 [:zh_CN] 对于子表达式 [`sndr] 和 [`rcvr]，令 [`Sndr] 为 [`decltype((sndr))]，
 [`Rcvr] 为 [`decltype((rcvr))]，令 [`new_sndr] 为表达式
-[codeblock]
-transform_sender(decltype([[redoc("*>")]]get-domain-late(sndr, get_env(rcvr))){}, sndr, get_env(rcvr))
-[codeblock:end]
-
-[:en@~] and let [`DS] and [`DR] be [`decay_t<decltype((new_sndr))>] and [`decay_t<Rcvr>], respectively.
-[:zh_CN] 并令 [`DS] 和 [`DR] 分别为 [`decay_t<decltype((new_sndr))>] 和 [`decay_t<Rcvr>]。
+[`transform_sender(sndr, get_env(rcvr))]，并令 [`DS] 和 [`DR] 分别为
+[`decay_t<decltype((new_sndr))>] 和 [`decay_t<Rcvr>]。
 
 [para]
 [:en] Let [*connect-awaitable-promise] be the following exposition-only class:
@@ -63,7 +61,7 @@ namespace std::execution {
 [codeblock:synopsis]
 namespace std::execution {
   struct [[redoc("*>")]]operation-state-task {                              // [=expos]
-    using operation_state_concept = operation_state_t;
+    using operation_state_concept = operation_state_tag;
     using promise_type = [[redoc("*>")]]connect-awaitable-promise;
 
     explicit [[redoc("*>")]]operation-state-task(coroutine_handle<> h) noexcept : coro(h) {}
@@ -110,7 +108,7 @@ namespace std::execution {
     return awaiter{fn};
   }
 
-  [[redoc("*>")]]operation-state-task [[redoc("*>")]]connect-awaitable[[redoc("*>")]](DS sndr, DR rcvr) requires [[redoc("`:c>")]]receiver_of<DR, Sigs> {
+  [[redoc("*>")]]operation-state-task [[redoc("*>")]]connect-awaitable[[redoc("*>")]](DS sndr, DR rcvr) requires [[redoc("*:c>")]]receiver-of<DR, Sigs> {
     exception_ptr ep;
     try {
       if constexpr ([[redoc("`:c>")]]same_as<V, void>) {
@@ -178,5 +176,5 @@ context of the environment, such as within [`get_completion_signatures].
 [:zh_CN] 以下各项为 [`true]：
 [list]
 [item] [`[`:c sender_in]<Sndr, env_of_t<Rcvr>>]
-[item] [`[`:c receiver_of]<Rcvr, completion_signatures_of_t<Sndr, env_of_t<Rcvr>>>]
+[item] [`[*:c receiver-of]<Rcvr, completion_signatures_of_t<Sndr, env_of_t<Rcvr>>>]
 [list:end]

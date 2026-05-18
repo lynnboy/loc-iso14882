@@ -1,0 +1,143 @@
+[section#expr.const.defns
+    [:en] Further definitions
+    [:zh_CN] 更多定义
+]
+
+[para]
+[:en] An expression or conversion is [+manifestly constant-evaluated] if it is
+[:zh_CN] 符合以下情况的表达式或转换是[+显然常量求值的]：
+
+[list]
+[item]
+[:en@~] a [~constant-expression], or
+[:zh_CN@~] [~常量表达式]，或
+[item]
+[:en@~] the condition of a constexpr if statement ([#stmt.if]), or
+[:zh_CN@~] [`constexpr if] 语句的条件（[#stmt.if]），或
+[item]
+[:en@~] the expression corresponding to a [~consteval-block-declaration] ([#dcl.pre]), or
+[:zh_CN@~] 对应于 [~consteval-块声明式]的表达式（[#dcl.pre]），或
+[item]
+[:en@~] an immediate invocation, or
+[:zh_CN@~] 直接调用，或
+[item]
+[:en@~] the result of substitution into an atomic constraint expression
+to determine whether it is satisfied ([#temp.constr.atomic]), or
+[:zh_CN@~] 向原子约束表达式中进行代换以确定其是否被满足（[#temp.constr.atomic]）的结果，或
+[item]
+[:en@~] the initializer of a variable that is usable in constant expressions or
+has constant initialization ([#basic.start.static]).[#:fn]
+[:zh_CN@~] 可被用在常量表达式中，或具有常量初始化的变量的初始化式（[#basic.start.static]）[#:fn]。
+
+[note:foot]
+[:en] Testing this condition can involve a notional evaluation of its initializer,
+with evaluations of contract assertions using the ignore evaluation semantic
+([#basic.contract.eval]), as described above.
+[:zh_CN] 如上所述，这个条件的测试可以涉及对其初始化式进行概念性求值，其中的
+契约断言评估使用忽略评估语义（[#basic.contract.eval]）。
+[note:end]
+
+[begin:example]
+[codeblock]
+template<bool> struct X {};
+X<std::is_constant_evaluated()> x;                      // [:en] type [`X<true>] [:zh_CN] 类型 [`X<true>]
+int y;
+const int a = std::is_constant_evaluated() ? y : 1;     // [:en] dynamic initialization to 1 [:zh_CN] 动态初始化为 1
+double z[a];                                            // [:en] error: [`a] is not usable [:zh_CN] 错误：[`a] 不能被用在
+                                                        // [:en@~] in constant expressions [:zh_CN@~] 常量表达式值中
+const int b = std::is_constant_evaluated() ? 2 : y;     // [:en] static initialization to 2 [:zh_CN] 静态初始化为 2
+int c = y + (std::is_constant_evaluated() ? 2 : y);     // [:en] dynamic initialization to [`y+y] [:zh_CN] 动态初始化为 [`y+y]
+
+constexpr int f() {
+  const int n = std::is_constant_evaluated() ? 13 : 17; // [:en] [`n] is 13 [:zh_CN] [`n] 为 13
+  int m = std::is_constant_evaluated() ? 13 : 17;       // [:en] [`m] can be 13 or 17 (see below) [:zh_CN] [`m] 可为 13 或 17（见下文）
+  char arr[n] = {};                                     // char[13]
+  return m + sizeof(arr);
+}
+int p = f();                                            // [:en] [`m] is 13; initialized to 26 [:zh_CN] [`m] 为 13；初始化为 26
+int q = p + f();                                        // [:en] [`m] is 17 for this call; initialized to 56 [:zh_CN] [`m] 在本次调用中为 17；初始化为 56
+[codeblock:end]
+[end:example]
+[list:end]
+
+[begin:note]
+[:en] Except for a [~static_assert-message], a manifestly constant-evaluated
+expression is evaluated even in an unevaluated operand ([#term.unevaluated.operand]).
+[:zh_CN] 除了 [~static_assert-消息]，显然常量求值表达式即便在免求值操作数中仍被求值（[#term.unevaluated.operand]）。
+[end:note]
+
+[para]
+[:en] [%expression[!potentially constant evaluated]]
+An expression or conversion is [+potentially constant evaluated] if it is:
+[:zh_CN] [%表达式[!潜在常量求值]]
+如下情况下表达式或转换被[+潜在常量求值]：
+
+[list]
+[item]
+[:en] a manifestly constant-evaluated expression,
+[:zh_CN] 显然常量求值表达式，
+
+[item]
+[:en] a potentially evaluated expression ([#basic.def.odr]),
+[:zh_CN] 潜在求值表达式（[#basic.def.odr]），
+
+[item]
+[:en] an immediate subexpression of a [~braced-init-list],[#:fn]
+[:zh_CN] [~花括号初始化列表]的直接子表达式[#:fn]，
+
+[note:foot]
+[:en] In some cases, constant evaluation is needed to determine whether a
+narrowing conversion is performed ([#dcl.init.list]).
+[:zh_CN] 某些情况下，为确定是否会实施窄化转换需要进行常量求值（[#dcl.init.list]）。
+[note:end]
+
+[item]
+[:en] an expression of the form [`&] [~cast-expression] that occurs within a
+templated entity,[#:fn] or
+[:zh_CN] 在模板化的实体中出现的形式为“[`&] [~转型表达式]”的表达式[#:fn]，或者
+
+[note:foot]
+[:en] In some cases, constant evaluation is needed to determine whether such an
+expression is value-dependent ([#temp.dep.constexpr]).
+[:zh_CN] 某些情况下，为确定这种表达式是否是值待决的需要进行常量求值（[#temp.dep.constexpr]）。
+[note:end]
+
+[item]
+[:en] a potentially-evaluated subexpression ([#intro.execution]) of one of the above.
+[:zh_CN] 以上各项之一的潜在求值子表达式（[#intro.execution]）。
+[list:end]
+
+[:en] [%function[!needed for constant evaluation]] [%variable[!needed for constant evaluation]]
+A function or variable is [+needed for constant evaluation] if it is:
+[:zh_CN] [%函数[!常量求值所需的]] [%变量[!常量求值所需的]]
+以下情况下函数或变量是[+常量求值所需的]：
+
+[list]
+[item]
+[:en] a constexpr function that is named by an expression ([#basic.def.odr])
+that is potentially constant evaluated, or
+[:zh_CN] 被潜在常量求值的表达式所指名（[#basic.def.odr]）的 constexpr 函数，或者
+
+[item]
+[:en] a potentially-constant variable named by a potentially constant evaluated expression.
+[:zh_CN] 被潜在常量求值表达式所指名的潜在常量变量。
+[list:end]
+
+[para]
+[:en] An object [`a] is said to have [+:adj constant[!destruction]] if
+[:zh_CN] 以下情况下，称对象 [`a] 具有[+:adj 常量[!销毁]]：
+
+[list]
+[item]
+[:en] it is not of class type nor (possibly multidimensional) array thereof, or
+[:zh_CN] 它不为类类型或其（可能多维的）数组，或者
+[item]
+[:en] it is of class type or (possibly multidimensional) array thereof, that
+class type has a constexpr destructor ([#dcl.constexpr]), and for a hypothetical
+expression [$E] whose only effect is to destroy [`a], [$E] would be a
+core constant expression if the lifetime of [`a] and its non-mutable subobjects
+(but not its mutable subobjects) were considered to start within [$E].
+[:zh_CN] 它为类类型或其（可能多维的）数组，此类类型具有 constexpr 析构函数（[#dcl.constexpr]），
+并且对于仅有效果为销毁 [`a] 的虚构的表达式 [$E]，如果 [`a] 及其非 mutable 子对象
+（但不包括其 mutable 子对象）的生存期被当做开始于 [$E] 之内，则 [$E] 可为核心常量表达式。
+[list:end]

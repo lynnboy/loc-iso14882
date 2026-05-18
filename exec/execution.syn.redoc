@@ -77,19 +77,25 @@ namespace std::execution {
   [:zh_CN] [#exec.queries]，查询
   struct [[redoc("`:lib")]]get_domain_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]get_scheduler_t { [[redoc("[=unspec]")]] };
+  struct [[redoc("`:lib")]]get_start_scheduler_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]get_delegation_scheduler_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]get_forward_progress_guarantee_t { [[redoc("[=unspec]")]] };
   template<class CPO>
     struct [[redoc("`:lib")]]get_completion_scheduler_t { [[redoc("[=unspec]")]] };
+  template<class CPO = void>
+    struct [[redoc("`:lib")]]get_completion_domain_t { [[redoc("[=unspec]")]] };
   struct get_await_completion_adaptor_t { [[redoc("[=unspec]")]] };
 
   inline constexpr get_domain_t [[redoc("`:lib")]]get_domain{};
   inline constexpr get_scheduler_t [[redoc("`:lib")]]get_scheduler{};
+  inline constexpr get_start_scheduler_t [[redoc("`:lib")]]get_start_scheduler{};
   inline constexpr get_delegation_scheduler_t [[redoc("`:lib")]]get_delegation_scheduler{};
   enum class forward_progress_guarantee;
   inline constexpr get_forward_progress_guarantee_t [[redoc("`:lib")]]get_forward_progress_guarantee{};
   template<class CPO>
     constexpr get_completion_scheduler_t<CPO> [[redoc("`:lib")]]get_completion_scheduler{};
+  template<class CPO = void>
+    constexpr get_completion_domain_t<CPO> [[redoc("`:lib")]]get_completion_domain{};
   inline constexpr get_await_completion_adaptor_t get_await_completion_adaptor{};
 
   struct [[redoc("`:lib")]]get_env_t { [[redoc("[=unspec]")]] };
@@ -98,26 +104,34 @@ namespace std::execution {
   template<class T>
     using [[redoc("`:lib")]]env_of_t = decltype(get_env(declval<T>()));
 
+  // [:en] [#exec.domain.indeterminate], execution domains \
+  [:zh_CN] [#exec.domain.indeterminate]，执行域
+  template<class... Domains>
+    struct indeterminate_domain;
+
   // [:en] [#exec.domain.default], execution domains \
   [:zh_CN] [#exec.domain.default]，执行域
   struct default_domain;
 
   // [:en] [#exec.sched], schedulers \
   [:zh_CN] [#exec.sched]，调度器
-  struct [[redoc("`:lib")]]scheduler_t {};
+  struct [[redoc("`:lib")]]scheduler_tag {};
 
   template<class Sch>
     concept [[redoc("`:c>")]]scheduler = [[redoc("[=seebelow]")]];
 
   // [:en] [#exec.recv], receivers \
   [:zh_CN] [#exec.recv]，接收器
-  struct [[redoc("`:lib")]]receiver_t {};
+  struct [[redoc("`:lib")]]receiver_tag {};
 
   template<class Rcvr>
     concept [[redoc("`:c>")]]receiver = [[redoc("[=seebelow]")]];
 
   template<class Rcvr, class Completions>
-    concept [[redoc("`:c>")]]receiver_of = [[redoc("[=seebelow]")]];
+    concept [[redoc("*:c>")]]receiver-of = [[redoc("[=seebelow]")]];
+
+  template<class Rcvr, class ChildOp>
+    concept [[redoc("`:c>")]]inlinable_receiver = [[redoc("[=seebelow]")]];
 
   struct [[redoc("`:lib")]]set_value_t { [[redoc("[=unspec]")]] };
   struct [[redoc("`:lib")]]set_error_t { [[redoc("[=unspec]")]] };
@@ -129,7 +143,7 @@ namespace std::execution {
 
   // [:en] [#exec.opstate], operation states \
   [:zh_CN] [#exec.opstate]，操作状态
-  struct [[redoc("`:lib")]]operation_state_t {};
+  struct [[redoc("`:lib")]]operation_state_tag {};
 
   template<class O>
     concept [[redoc("`:c>")]]operation_state = [[redoc("[=seebelow]")]];
@@ -139,7 +153,7 @@ namespace std::execution {
 
   // [:en] [#exec.snd], senders \
   [:zh_CN] [#exec.snd]，发送器
-  struct [[redoc("`:lib")]]sender_t {};
+  struct [[redoc("`:lib")]]sender_tag {};
 
   template<class Sndr>
     inline constexpr bool enable_sender = [[redoc("[=seebelow]")]];
@@ -154,7 +168,7 @@ namespace std::execution {
     concept [[redoc("`:c>")]]dependent_sender = [[redoc("[=seebelow]")]];
 
   template<class Sndr, class Rcvr>
-    concept [[redoc("`:c>")]]sender_to = [[redoc("[=seebelow]")]];
+    concept [[redoc("*:c>")]]sender-to = [[redoc("[=seebelow]")]];
 
   template<class... Ts>
     struct [[redoc("*>")]]type-list;                                           // [=expos]
@@ -184,23 +198,16 @@ namespace std::execution {
     using [[redoc("*>")]]single-sender-value-type = [[redoc("[=seebelow]")]];                 // [=expos]
 
   template<class Sndr, class... Env>
-    concept [[redoc("*:c>")]]single-sender = [[redoc("[=seebelow]")]]; // [=expos]
+    concept [[redoc("*:c>")]]single-sender = [[redoc("[=seebelow]")]];                          // [=expos]
 
   template<[[redoc("`:c>")]]sender Sndr>
     using tag_of_t = [[redoc("[=seebelow]")]];
 
   // [:en] [#exec.snd.transform], sender transformations \
   [:zh_CN] [#exec.snd.transform]，发送器变换
-  template<class Domain, [[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable... Env>
-      requires (sizeof...(Env) <= 1)
-    constexpr [[redoc("`:c>")]]sender decltype(auto) transform_sender(
-      Domain dom, Sndr&& sndr, const Env&... env) noexcept([[redoc("[=seebelow]")]]);
-
-  // [:en] [#exec.snd.transform.env], environment transformations \
-  [:zh_CN] [#exec.snd.transform.env]，环境变换
-  template<class Domain, [[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable Env>
-    constexpr [[redoc("*:c>")]]queryable decltype(auto) transform_env(
-      Domain dom, Sndr&& sndr, Env&& env) noexcept;
+  template<[[redoc("`:c>")]]sender Sndr, [[redoc("*:c>")]]queryable Env>
+    constexpr decltype(auto) transform_sender(Sndr&& sndr,
+      const Env& env) noexcept([[redoc("[=seebelow]")]]);
 
   // [:en] [#exec.snd.apply], sender algorithm application \
   [:zh_CN] [#exec.snd.apply]，应用发送器算法
@@ -345,9 +352,10 @@ namespace std::execution {
   template<[[redoc("*:c>")]]class-type Promise>
     struct with_awaitable_senders;
 
-  // [:en] [#exec.affine.on], coroutine utility [`affine_on] \
-  [:zh_CN] [#exec.affine.on]，协程工具 [`affine_on]
-  inline constexpr affine_on_t [[redoc("`:lib")]]affine_on{};
+  // [:en] [#exec.affine], coroutine utility [`affine] \
+  [:zh_CN] [#exec.affine]，协程工具 [`affine]
+  struct [[redoc("`:lib>")]]affine_t { [[redoc("[=unspec]")]] };
+  inline constexpr affine_t [[redoc("`:lib")]]affine_on{};
 
   // [:en] [#exec.inline.scheduler], inline scheduler \
   [:zh_CN] [#exec.inline.scheduler]，内联调度器
@@ -364,14 +372,6 @@ namespace std::execution {
   };
   template<class E>
     with_error(E) -> with_error<E>;
-
-  template<[[redoc("`:c>")]]scheduler Sch>
-  struct change_coroutine_scheduler {
-    using type = remove_cvref_t<Sch>;
-    type scheduler;
-  };
-  template<[[redoc("`:c>")]]scheduler Sch>
-    change_coroutine_scheduler(Sch) -> change_coroutine_scheduler<Sch>;
 
   // [:en] [#exec.task], class template [`task] \
   [:zh_CN] [#exec.task]，类模板 [`task]
@@ -398,9 +398,9 @@ namespace std::execution {
   class [[redoc("`:lib")]]parallel_scheduler;
   parallel_scheduler get_parallel_scheduler();
 
-  // [:en] [#exec.sysctxrepl], namespace [`system_context_replaceability] \
-  [:zh_CN] [#exec.sysctxrepl]，命名空间 [`system_context_replaceability]
-  namespace [[redoc("`:lib")]]system_context_replaceability {
+  // [:en] [#exec.parschedrepl], namespace [`parallel_scheduler_replacement] \
+  [:zh_CN] [#exec.parschedrepl]，命名空间 [`parallel_scheduler_replacement]
+  namespace [[redoc("`:lib")]]parallel_scheduler_replacement {
     struct receiver_proxy;
     struct bulk_item_receiver_proxy;
     struct parallel_scheduler_backend;

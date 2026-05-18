@@ -24,11 +24,9 @@ whose types model [`:c sender].
 [:en] The names [`when_all] and [`when_all_with_variant] denote customization point objects.
 [:zh_CN] 名字 [`when_all] 和 [`when_all_with_variant] 都代表定制化点对象。
 
-[:en] Let [`sndrs] be a pack of subexpressions, let [`Sndrs] be a pack of the
-types [`decltype((sndrs))...], and let [`CD] be
-the type [`common_type_t<decltype([*get-domain-early](sndrs))...>].
-[:zh_CN] 令 [`sndrs] 为子表达式的包组，令 [`Sndrs] 为类型包组 [`decltype((sndrs))...]，
-并令 [`CD] 为类型 [`common_type_t<decltype([*get-domain-early](sndrs))...>]。
+[:en] Let [`sndrs] be a pack of subexpressions and let [`Sndrs] be a pack of the
+types [`decltype((sndrs))...].
+[:zh_CN] 令 [`sndrs] 为子表达式的包组，并令 [`Sndrs] 为类型包组 [`decltype((sndrs))...]。
 
 [:en] Let [`CD2] be [`CD] if [`CD] is well-formed, and [`default_domain] otherwise.
 [:zh_CN] 令 [`CD2] 当 [`CD] 良构时为 [`CD]；否则为 [`default_domain]。
@@ -47,11 +45,9 @@ are ill-formed if any of the following is [`true]:
 [list:end]
 
 [para]
-[:en] The expression [`when_all(sndrs...)] is expression-equivalent to:
-[:zh_CN] 否则，表达式 [`when_all(sndrs...)] 按表达式等价于：
-[codeblock]
-transform_sender(CD2(), [[redoc("*>")]]make-sender(when_all, {}, sndrs...))
-[codeblock:end]
+[:en] The expression [`when_all(sndrs...)] is expression-equivalent to
+[`[*make-sender](when_all, {}, sndrs...)].
+[:zh_CN] 否则，表达式 [`when_all(sndrs...)] 按表达式等价于 [`[*make-sender](when_all, {}, sndrs...)]。
 
 [para]
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.expos]) is
@@ -62,7 +58,6 @@ specialized for [`when_all_t] as follows:
 namespace std::execution {
   template<>
   struct [[redoc("*>")]]impls-for<when_all_t> : [[redoc("*>")]]default-impls {
-    static constexpr auto [[redoc("*>")]]get-attrs = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]get-env = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
     static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];
@@ -132,28 +127,6 @@ auto fn = []<class Child>() {
   [[redoc("*>")]]decay-copyable-result-datums(cs); // [?see [#exec.snd.expos]]
 };
 (fn.template operator()<[[redoc("*>")]]child-type<Sndr, Is>>(), ...);
-[codeblock:end]
-
-[para:throws]
-[:en] Any exception thrown as a result of evaluating the [=Effects], or an exception
-of type [`[^unspecified-exception]] ([#exec.snd.general]) when [`CD] is ill-formed.
-[:zh_CN] 任何因求值 [=Effects] 而抛出的异常，或者当 [`CD] 非良构时抛出的
-[`[^unspecified-exception]]（[#exec.snd.general]）类型的异常。
-[div:end]
-
-[para]
-[:en] The member [`[*impls-for]<when_all_t>::[*get-attrs]] is initialized with
-a callable object equivalent to the following lambda expression:
-[:zh_CN] 成员 [`[*impls-for]<when_all_t>::[*get-attrs]] 以等价于如下 lambda 表达式
-的可调用对象初始化：
-[codeblock]
-[](auto&&, auto&&... child) noexcept {
-  if constexpr ([[redoc("`:c>")]]same_as<CD, default_domain>) {
-    return env<>();
-  } else {
-    return [[redoc("*>")]]MAKE-ENV(get_domain, CD());
-  }
-}
 [codeblock:end]
 
 [para]
@@ -366,20 +339,19 @@ is potentially throwing; otherwise, [`o.emplace(as...)].
 [:zh_CN@~] 否则，等价于 [`o.emplace(as...)]。
 
 [para]
-[:en] The expression [`when_all_with_variant(sndrs...)] is expression-equivalent to:
-[:zh_CN] 表达式 [`when_all_with_variant(sndrs...)] 按表达式等价于：
-[codeblock]
-transform_sender(CD2(), [[redoc("*>")]]make-sender(when_all_with_variant, {}, sndrs...));
-[codeblock:end]
+[:en] The expression [`when_all_with_variant(sndrs...)] is expression-equivalent to
+[`[*make-sender](when_all_with_variant, {}, sndrs...)].
+[:zh_CN] 表达式 [`when_all_with_variant(sndrs...)] 按表达式等价于
+[`[*make-sender](when_all_with_variant, {}, sndrs...)]。
 
 [para]
 [:en] Given subexpressions [`sndr] and [`env], if
 [`[*:c sender-for]<decltype((sndr)), when_all_with_variant_t>] is [`false],
-then the expression [`when_all_with_variant.transform_sender(sndr, env)]
+then the expression [`when_all_with_variant.transform_sender(set_value, sndr, env)]
 is ill-formed; otherwise, it is equivalent to:
 [:zh_CN] 给定子表达式 [`sndr] 和 [`env]，如果
 [`[*:c sender-for]<decltype((sndr)), when_all_with_variant_t>] 为 [`false]，
-那么表达式 [`when_all_with_variant.transform_sender(sndr, env)] 非良构；否则它等价于：
+那么表达式 [`when_all_with_variant.transform_sender(set_value, sndr, env)] 非良构；否则它等价于：
 [codeblock]
 auto&& [_, _, ...child] = sndr;
 return when_all(into_variant(std::forward_like<decltype((sndr))>(child))...);

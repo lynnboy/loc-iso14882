@@ -1,0 +1,93 @@
+[section#exec.get.compl.domain
+    [`execution::get_completion_domain]
+]
+
+[para]
+[:en] [`get_completion_domain<[*completion-tag]>] obtains the completion domain
+associated with a completion tag from a sender[=']s attributes.
+[:zh_CN] [`get_completion_domain<[*completion-tag]>] 获得与发送器属性中的完成标签关联的完成域。
+
+[para]
+[:en] The name [`get_completion_domain] denotes a query object template.
+[:zh_CN] 名字 [`get_completion_domain] 代表一个查询对象模板。
+
+[:en] For a subexpression [`attrs] and pack [`envs], the expression
+[`get_completion_domain<[*completion-tag]>(attrs, envs...)]
+is ill-formed if [*completion-tag] is not one of
+[`void], [`set_value_t], [`set_error_t], or [`set_stopped_t].
+[:zh_CN] 对于子表达式 [`attrs] 和包组 [`envs]，如果 [*completion-tag] 不是
+[`void]、[`set_value_t]、[`set_error_t] 或 [`set_stopped_t] 之一，那么表达式
+[`get_completion_domain<[*completion-tag]>(attrs, envs...)] 非良构。
+
+[:en] Otherwise, the expression is expression-equivalent to [`[*MANDATE-NOTHROW](D())],
+where [`D] is:
+[:zh_CN] 否则，该表达式按表达式等价于 [`[*MANDATE-NOTHROW](D())]，其中 [`D]：
+[list]
+[item]
+[:en] The type of [`[*TRY-QUERY](attrs, get_completion_domain<[*completion-tag]>, envs...)]
+if that expression is well-formed.
+[:zh_CN] 如果表达式 [`[*TRY-QUERY](attrs, get_completion_domain<[*completion-tag]>, envs...)]
+良构，则为该表达式的类型。
+[item]
+[:en] Otherwise, the type of [`get_completion_domain<set_value_t>(attrs, envs...)]
+if [*completion-tag] is [`void].
+[:zh_CN] 否则，如果 [*completion-tag] 是 [`void]，则为表达式
+[`get_completion_domain<set_value_t>(attrs, envs...)] 的类型。
+[item]
+[:en] Otherwise, the type of
+[:zh_CN] 否则，如果表达式
+[codeblock]
+[[redoc("*>")]]TRY-QUERY(get_completion_scheduler<[[redoc("*>")]]completion-tag>(attrs, envs...),
+          get_completion_domain<set_value_t>, envs...)
+[codeblock:end]
+[:en@~] if that expression is well-formed.
+[:zh_CN] 良构，则为该表达式的类型。
+[item]
+[:en] Otherwise, [`default_domain] if [`[`:c scheduler]<decltype((attr))>] is [`true]
+and [`envs] is not an empty pack.
+[:zh_CN] 否则，如果 [`[`:c scheduler]<decltype((attr))>] 是 [`true] 且 [`envs]
+不是空包组，则为 [`default_domain]。
+[item]
+[:en] Otherwise, [`get_completion_domain<[*completion-tag]>(attrs, envs...)] is ill-formed.
+[:zh_CN] 否则，[`get_completion_domain<[*completion-tag]>(attrs, envs...)] 非良构。
+[list:end]
+
+[para]
+[:en] For a type [`Tag], subexpression [`sndr], and pack [`envs], let [`CS] be
+[`completion_signatures_of_t<decay_t<decltype((sndr))>, decltype((envs))...>].
+[:zh_CN] 对于类型 [`Tag]、子表达式 [`sndr] 和包组 [`envs]，令 [`CS] 为
+[`completion_signatures_of_t<decay_t<decltype((sndr))>, decltype((envs))...>]。
+
+[:en] If both [`get_completion_domain<Tag>(get_env(sndr), envs...)] and
+[`CS] are well-formed and [`CS().[*count-of](Tag()) == 0] is [`true],
+the program is ill-formed.
+[:zh_CN] 如果 [`get_completion_domain<Tag>(get_env(sndr), envs...)] 和
+[`CS] 都良构，并且 [`CS().[*count-of](Tag()) == 0] 为 [`true]，则程序非良构。
+
+[para]
+[:en] Let [*completion-fn] be a completion function ([#exec.async.ops]);
+let [*completion-tag] be the associated completion tag of [*completion-fn];
+let [`args] and [`envs] be packs of subexpressions; and
+let [`sndr] be a subexpression such that [`[`:c sender]<decltype((sndr))>] is [`true]
+and [`get_completion_domain<[*completion-tag]>(get_env(sndr), envs...)]
+is well-formed and denotes a domain tag [`D].
+[:zh_CN] 令 [*completion-fn] 为一个完成函数（[#exec.async.ops]）；
+令 [*completion-tag] 为 [*completion-fn] 的关联完成标签；
+令 [`args] 和 [`envs] 为子表达式的包组；并令 [`sndr] 为子表达式，使得
+[`[`:c sender]<decltype((sndr))>] 为 [`true]，并使得
+[`get_completion_domain<[*completion-fn-tag]>(get_env(sndr), envs...)]
+良构且代表域标签 [`D]。
+
+[:en] If an asynchronous operation created by connecting [`sndr] with a receiver [`rcvr]
+causes the evaluation of [`[*completion-fn](rcvr, args...)], the behavior is undefined
+unless the evaluation happens on an execution agent of an execution resource
+whose associated execution domain tag is [`D].
+[:zh_CN] 如果通过将 [`sndr] 与接收器 [`rcvr] 连接创建的异步操作导致求值
+[`[*completion-fn](rcvr, args...)]，那么除非此求值发生在一个关联的执行域标签是 [`D]
+的执行资源的执行代理上，否则其行为未定义。
+
+[para]
+[:en] The expression [`forwarding_query(get_completion_domain<[*completion-tag]>)]
+is a core constant expression and has value [`true].
+[:zh_CN] 表达式 [`forwarding_query(get_completion_domain<[*completion-tag]>)]
+是核心常量表达式且值为 [`true]。

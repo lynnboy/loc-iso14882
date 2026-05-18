@@ -12,10 +12,9 @@ namespace std::execution {
       class [[redoc("*>")]]state;                              // [=expos]
 
   public:
-    using sender_concept = sender_t;
-    using completion_signatures = [[redoc("[=seebelow]")]];
+    using sender_concept = sender_tag;
     using allocator_type = [[redoc("[=seebelow]")]];
-    using scheduler_type = [[redoc("[=seebelow]")]];
+    using start_scheduler_type = [[redoc("[=seebelow]")]];
     using stop_source_type = [[redoc("[=seebelow]")]];
     using stop_token_type = decltype(declval<stop_source_type>().get_token());
     using error_types = [[redoc("[=seebelow]")]];
@@ -25,6 +24,9 @@ namespace std::execution {
 
     task(task&&) noexcept;
     ~task();
+
+    template<class Self, class... Env>
+      static consteval auto get_completion_signatures();
 
     template<[[redoc("`:c>")]]receiver Rcvr>
       [[redoc("*>")]]state<Rcvr> connect(Rcvr&& rcvr) &&;
@@ -57,10 +59,10 @@ is valid and denotes a type, [`allocator<byte>] otherwise.
 [`allocator_type] 为此名字，否则为 [`allocator<byte>]。
 
 [item]
-[:en] [`scheduler_type] is [`Environment::scheduler_type] if that [~qualified-id]
-is valid and denotes a type, [`task_scheduler] otherwise.
-[:zh_CN] 若[~限定标识] [`Environment::scheduler_type] 有效且代表类型，则
-[`scheduler_type] 为此名字，否则为 [`task_scheduler]。
+[:en] [`start_scheduler_type] is [`Environment::start_scheduler_type] if that
+[~qualified-id] is valid and denotes a type, [`task_scheduler] otherwise.
+[:zh_CN] 若[~限定标识] [`Environment::start_scheduler_type] 有效且代表类型，则
+[`start_scheduler_type] 为此名字，否则为 [`task_scheduler]。
 
 [item]
 [:en] [`stop_source_type] is [`Environment::stop_source_type] if that [~qualified-id]
@@ -83,23 +85,9 @@ contain an element which is not of the form [`set_error_t(E)] for some type [`E]
 的模板实参包含某个不具有（对于某个类型 [`E]）[`set_error_t(E)] 形式的元素，那么程序非良构。
 
 [para]
-[:en] The type alias [`completion_signatures] is a specialization of
-[`execution::completion_signatures] with the template arguments (in unspecified order):
-[:zh_CN] 类型别名 [`completion_signatures] 是 [`execution::completion_signatures]
-的特例，具有以下模板实参（顺序未指明）：
-[list]
-[item]
-[:en@~] [`set_value_t()] if [`T] is [`void], and [`set_value_t(T)] otherwise;
-[:zh_CN@~] 若 [`T] 是 [`void] 则有 [`set_value_t()]，否则有 [`set_value_t(T)]；
-[item]
-[:en@~] template arguments of the specialization of
-[`execution::completion_signatures] denoted by [`error_types]; and
-[:zh_CN@~] [`error_types] 代表的 [`execution::completion_signatures] 特例的模板实参；以及
-[item]
-[:en@~] [`set_stopped_t()].
-[:zh_CN@~] [`set_stopped_t()]。
-[list:end]
-
-[para]
-[:en] [`allocator_type] shall meet the [^:oc Allocator] requirements.
-[:zh_CN] [`allocator_type] 应当满足 [^:oc Allocator] 的规定。
+[:en] [`allocator_type] shall meet the [^:oc Allocator] requirements,
+[`scheduler_type] shall model [`:c scheduler], and
+[`stop_source_type] shall model [*:c stoppable-source].
+[:zh_CN] [`allocator_type] 应当满足 [^:oc Allocator] 的规定，
+[`scheduler_type] 应当构成 [`:c scheduler]，而
+[`stop_source_type] 应当构成 [*:c stoppable-source]。

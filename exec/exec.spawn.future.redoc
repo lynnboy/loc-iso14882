@@ -38,6 +38,19 @@ the expression [`spawn_future(sndr, token, env)] is ill-formed.
 表达式 [`spawn_future(sndr, token, env)] 非良构。
 
 [para]
+[:en] Let [*try-cancelable] be the exposition-only class:
+[:zh_CN] 令 [*try-cancelable] 为仅用于阐释的类：
+
+[%@lib execution::[*try-cancelable]]
+[codeblock:synopsis]
+namespace std::execution {
+  struct [[redoc("*>")]]try-cancelable {                                           // [=expos]
+    virtual void [[redoc("*>")]]try-cancel() noexcept = 0;                         // [=expos]
+  };
+}
+[codeblock:end]
+
+[para]
 [:en] Let [*spawn-future-state-base] be the exposition-only class template:
 [:zh_CN] 令 [`spawn-future-state-base] 为仅用于阐释的类模板：
 
@@ -48,7 +61,8 @@ namespace std::execution {
   struct [[redoc("*>")]]spawn-future-state-base;                                   // [=expos]
 
   template<class... Sigs>
-  struct [[redoc("*>")]]spawn-future-state-base<completion_signatures<Sigs...>> {  // [=expos]
+  struct [[redoc("*>")]]spawn-future-state-base<completion_signatures<Sigs...>>    // [=expos]
+    : [[redoc("*>")]]try-cancelable {
     using [[redoc("*>")]]variant-t = [[redoc("[=seebelow]")]];                                    // [=expos]
     [[redoc("*>")]]variant-t [[redoc("*>")]]result;                                               // [=expos]
     virtual void [[redoc("*>")]]complete() noexcept = 0;                           // [=expos]
@@ -96,7 +110,7 @@ except with duplicate types removed.
 namespace std::execution {
   template<class Completions>
   struct [[redoc("*>")]]spawn-future-receiver {                                // [=expos]
-    using receiver_concept = receiver_t;
+    using receiver_concept = receiver_tag;
 
     [[redoc("*>")]]spawn-future-state-base<Completions>* [[redoc("*>")]]state;                // [=expos]
 
@@ -188,6 +202,11 @@ namespace std::execution {
     void [[redoc("*>")]]complete() noexcept override;                                      // [=expos]
     void [[redoc("*>")]]consume([[redoc("`:c>")]]receiver auto& rcvr) noexcept;                             // [=expos]
     void [[redoc("*>")]]abandon() noexcept;                                                // [=expos]
+    void [[redoc("*>")]]try-cancel() noexcept override {                                   // [=expos]
+      [[redoc("*>")]]ssource.request_stop();
+      [[redoc("*>")]]try-set-stopped();
+    }
+    void [[redoc("*>")]]try-set-stopped() noexcept;                                        // [=expos]
 
   private:
     using [[redoc("*>")]]assoc-t =                                                         // [=expos]
@@ -209,9 +228,9 @@ namespace std::execution {
 
 [para]
 [:en] For purposes of determining the existence of a data race, [*complete],
-[*consume], and [*abandon] behave as atomic operations ([#intro.multithread]).
-[:zh_CN] 为了确定数据竞争的存在，将 [*complete]、[*consume] 和 [*abandon] 的行为
-当做如同原子操作（[#intro.multithread]）。
+[*consume], [*try-set-stopped], and [*abandon] behave as atomic operations ([#intro.multithread]).
+[:zh_CN] 为了确定数据竞争的存在，将 [*complete]、[*consume]、[*try-set-stopped] 和
+[*abandon] 的行为当做如同原子操作（[#intro.multithread]）。
 
 [:en] These operations on a single object of a type that is a specialization of
 [*spawn-future-state] appear to occur in a single total order.
@@ -228,15 +247,17 @@ void [[redoc("*>")]]complete() noexcept;
 [list]
 [item]
 [:en] No effects if this invocation of [*complete] happens before
-an invocation of [*consume] or [*abandon] on [`*this];
-[:zh_CN] 如果对 [*complete] 的本次调用发生早于对 [`*this] 的 [*consume] 或
-[*abandon] 的调用，则没有效果。
+an invocation of [*consume], [*try-set-stopped], or [*abandon] on [`*this];
+[:zh_CN] 如果对 [*complete] 的本次调用发生早于对 [`*this] 的 [*consume]、
+[*try-set-stopped] 或 [*abandon] 的调用，则没有效果。
 [item]
 [:en@~] otherwise, if an invocation of [*consume] on [`*this] happens before
-this invocation of [*complete] then there is a receiver, [`rcvr], registered and
-that receiver is completed as if by [`[*consume](rcvr)];
+this invocation of [*complete] and no invocation of [*try-set-stopped] on [`*this]
+happened before this invocation of [`complete] then there is a receiver, [`rcvr],
+registered and that receiver is deregistered and completed as if by [`[*consume](rcvr)];
 [:zh_CN@~] 否则，如果对 [`*this] 的 [*consume] 的某次调用发生早于 [*complete] 的本次调用，
-那么有一个接收器 [`rcvr] 被注册，并且该接收器如同以 [`[*consume](rcvr)] 完成；
+并且对 [`*this] 的 [*try-set-stopped] 的任何调用都没有发生早于对 [`complete] 的本次调用，
+那么有一个接收器 [`rcvr] 被注册，并且该接收器如同以 [`[*consume](rcvr)] 取消注册并完成；
 [item]
 [:en@~] otherwise, [*destroy] is invoked.
 [:zh_CN@~] 否则，调用 [*destroy]。
@@ -253,14 +274,25 @@ void [[redoc("*>")]]consume([[redoc("`:c>")]]receiver auto& rcvr) noexcept;
 [list]
 [item]
 [:en] If this invocation of [*consume] happens before an invocation of [*complete]
-on [`*this] then [`rcvr] is registered to be completed when
+on [`*this] and no invocation of [*try-set-stopped] on [`*this] happened before
+this invocation of [*consume] then [`rcvr] is registered to be completed when
 [*complete] is subsequently invoked on [`*this];
 [:zh_CN] 如果对 [*consume] 的本次调用发生早于对 [`*this] 的 [*complete] 的某次调用，
+并且对 [`*this] 的 [*try-set-stopped] 的任何调用都没有发生早于对 [*consume] 的本次调用，
 那么 [`rcvr] 被注册为当随后对 [`*this] 的 [*complete] 调用时完成。
 
 [item]
-[:en@~] otherwise, [`rcvr] is completed as if by:
-[:zh_CN@~] 否则，[`rcvr] 通过以下方式完成：
+[:en] otherwise, if this invocation of [*consume] happens after an invocation of
+[*try-set-stopped] on [`*this] and no invocation of [*complete] on [`*this]
+happened before this invocation of [*consume] then [`rcvr] is completed as if
+by [`set_stopped(std::move(rcvr))];
+[:zh_CN] 否则，如果对 [*consume] 的本次调用发生晚于对 [`*this] 的 [*try-set-stopped]
+的某次调用，并且对 [`*this] 的 [*complete] 的任何调用都没有发生早于对 [*consume] 的本次调用，
+那么 [`rcvr] 如同通过 [`set_stopped(std::move(rcvr))] 完成；
+
+[item]
+[:en] otherwise, [`rcvr] is completed as if by:
+[:zh_CN] 否则，[`rcvr] 通过以下方式完成：
 [codeblock]
 std::move(this->[[redoc("*>")]]result).visit(
   [&rcvr](auto&& tuple) noexcept {
@@ -270,7 +302,33 @@ std::move(this->[[redoc("*>")]]result).visit(
       }, std::move(tuple));
     }
   });
+[[redoc("*>")]]destroy();
 [codeblock:end]
+[list:end]
+[div:end]
+
+[%@lib@member [*try-set-stopped][!execution::[*spawn-future-state]]]
+[codeblock:declaration]
+void [[redoc("*>")]]try-set-stopped() noexcept;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[list]
+[item]
+[:en] If an invocation of [*consume] on [`*this] happens before this invocation
+of [*try-set-stopped] and no invocation of [*complete] on [`*this] happened before
+this invocation of [*try-set-stopped] then there is a receiver, [`rcvr],
+registered and that receiver is deregistered and completed as if by
+[`set_stopped(std::move(rcvr)), [*destroy]()];
+[:zh_CN] 如果对 [`*this] 的 [*consume] 的某次调用发生早于 [*try-set-stopped] 的本次调用，
+并且对 [`*this] 的 [*complete] 的任何调用都没有发生早于对 [*try-set-stopped] 的本次调用，
+那么有一个接收器 [`rcvr] 被注册，并且该接收器如同以
+[`set_stopped(std::move(rcvr)), [*destroy]()] 取消注册并完成；
+
+[item]
+[:en@~] otherwise, no effects.
+[:zh_CN@~] 否则，没有效果。
 [list:end]
 [div:end]
 
@@ -317,6 +375,88 @@ bool associated = std::move(this->[[redoc("*>")]]associated);
 [div:end]
 
 [para]
+[:en] Let [*future-operation] be the exposition-only class template:
+[:zh_CN] 令 [*future-operation] 为仅用于阐释的类模板：
+
+[codeblock:synopsis]
+namespace std::execution {
+  template<class StatePtr, class Rcvr>
+  struct [[redoc("*>")]]future-operation {                                     // [=expos]
+    struct [[redoc("*>")]]callback {                                           // [=expos]
+      [[redoc("*>")]]try-cancelable* [[redoc("*>")]]state;                                    // [=expos]
+
+      void operator()() noexcept {
+        [[redoc("*>")]]state->[[redoc("*>")]]try-cancel();
+      };
+    };
+
+    using [[redoc("*>")]]stop-token-t =                                        // [=expos]
+      stop_token_of_t<env_of_t<Rcvr>>;
+
+    using [[redoc("*>")]]stop-callback-t =                                     // [=expos]
+      stop_callback_for_t<[[redoc("*>")]]stop-token-t, [[redoc("*>")]]callback>;
+
+    struct [[redoc("*>")]]rcvr-t {                                             // [=expos]
+      using receiver_concept = receiver_tag;
+      [[redoc("*>")]]future-operation* [[redoc("*>")]]op;                                     // [=expos]
+
+      template<class... T>
+      void set_value(T&&... ts) && noexcept {
+        [[redoc("*>")]]op->[[redoc("*>")]]set-complete<set_value_t>(std::forward<T>(ts)...);
+      }
+
+      template<class E>
+      void set_error(E&& e) && noexcept {
+        [[redoc("*>")]]op->[[redoc("*>")]]set-complete<set_error_t>(std::forward<E>(e));
+      }
+
+      void set_stopped() && noexcept {
+        [[redoc("*>")]]op->[[redoc("*>")]]set-complete<set_stopped_t>();
+      }
+
+      env_of_t<Rcvr> get_env() const noexcept {
+        return execution::get_env([[redoc("*>")]]op->[[redoc("*>")]]rcvr);
+      }
+    };
+
+    Rcvr [[redoc("*>")]]rcvr;                                                  // [=expos]
+    StatePtr [[redoc("*>")]]state;                                             // [=expos]
+    [[redoc("*>")]]rcvr-t [[redoc("*>")]]inner;                                               // [=expos]
+    optional<[[redoc("*>")]]stop-callback-t> [[redoc("*>")]]stopCallback;                     // [=expos]
+
+
+    [[redoc("*>")]]future-operation(StatePtr state, Rcvr rcvr) noexcept        // [=expos]
+      : [[redoc("*>")]]rcvr(std::move(rcvr)), [[redoc("*>")]]state(std::move(state)), [[redoc("*>")]]inner(this)
+    {}
+
+    [[redoc("*>")]]future-operation([[redoc("*>")]]future-operation&&) = delete;
+
+    void @\exposid{run}@() & noexcept {                                     // [=expos]
+      constexpr bool nothrow =
+        is_nothrow_constructible_v<[[redoc("*>")]]stop-callback-t, [[redoc("*>")]]stop-token-t, [[redoc("*>")]]callback>;
+      try {
+        [[redoc("*>")]]stopCallback.emplace(get_stop_token([[redoc("*>")]]rcvr), [[redoc("*>")]]callback([[redoc("*>")]]state.get()));
+      }
+      catch (...) {
+        if constexpr (!nothrow) {
+          set_error(std::move([[redoc("*>")]]rcvr), current_exception());
+          return;
+        }
+      }
+
+      [[redoc("*>")]]state.release()->[[redoc("*>")]]consume([[redoc("*>")]]inner);
+    }
+
+    template<class CPO, class... T>
+    void [[redoc("*>")]]set-complete(T&&... ts) noexcept {                     // [=expos]
+      [[redoc("*>")]]stopCallback.reset();
+      CPO{}(std::move([[redoc("*>")]]rcvr), std::forward<T>(ts)...);
+    }
+  };
+}
+[codeblock:end]
+
+[para]
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.expos])
 is specialized for [`spawn_future_t] as follows:
 [:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [`spawn_future_t] 进行如下特化：
@@ -327,6 +467,7 @@ namespace std::execution {
   template<>
   struct [[redoc("*>")]]impls-for<spawn_future_t> : [[redoc("*>")]]default-impls {
     static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];                    // [=expos]
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];                // [=expos]
   };
 }
 [codeblock:end]
@@ -337,8 +478,21 @@ is initialized with a callable object equivalent to the following lambda:
 [:zh_CN] 成员 [`[*impls-for]<spawn_future_t>::[*start]] 以等价于以下 lambda 的
 可调用对象初始化：
 [codeblock]
-[](auto& state, auto& rcvr) noexcept -> void {
-  state->[[redoc("*>")]]consume(rcvr);
+[](auto& state, auto&) noexcept -> void {
+  state.[[redoc("*>")]]run();
+}
+[codeblock:end]
+
+[para]
+[:en] The member [`[*impls-for]<spawn_future_t>::[*get-state]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<spawn_future_t>::[*get-state]] 以等价于以下 lambda 的
+可调用对象初始化：
+[codeblock]
+[]<class Sndr, class Rcvr>(Sndr sndr, Rcvr& rcvr) noexcept {
+  auto& [_, data] = sndr;
+  using state_ptr = remove_cvref_t<decltype(data)>;
+  return [[redoc("*>")]]future-operation<state_ptr, Rcvr>(std::move(data), std::move(rcvr));
 }
 [codeblock:end]
 

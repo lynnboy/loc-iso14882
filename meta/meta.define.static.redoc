@@ -54,34 +54,51 @@ template<ranges::[[redoc("`:c>")]]input_range R>
 
 [div:description]
 [para]
-[:en] Let [`T] be [`ranges::range_value_t<R>] and [$[`[^e]]_i] be [`static_cast<T>(*[$[`[^it]]_i])],
-where [$[`[^it]]_i] is an iterator to the [$i^\text{th}] element of [`r].
-[:zh_CN] 令 [`T] 为 [`ranges::range_value_t<R>]，[$[`[^e]]_i] 为 [`static_cast<T>(*[$[`[^it]]_i])]，
-其中 [$[`[^it]]_i] 为指向 [`r] 的第 [$i] 个元素的迭代器。
+[:en] Let [`U] be [`ranges::range_value_t<R>] and [`T] be [`remove_all_extents_t<U>].
+[:zh_CN] 令 [`U] 为 [`ranges::range_value_t<R>]，并令 [`T] 为 [`remove_all_extents_t<U>]。
 
 [para:mandates]
+[list]
+[item]
 [:en] [`T] is a structural type ([#temp.param]),
-[`is_constructible_v<T, ranges::range_reference_t<R>>] is [`true], and
-[`T] satisfies [`:c copy_constructible].
 [:zh_CN] [`T] 是结构化类型（[#temp.param]），
-[`is_constructible_v<T, ranges::range_reference_t<R>>] 为 [`true]，并且
-[`T] 符合 [`:c copy_constructible]。
+[item]
+[:en] [`T] satisfies [`:c copy_constructible], and
+[:zh_CN] [`T] 符合 [`:c copy_constructible]，以及
+[item]
+[:en] if [`U] is not an array type, then
+[`is_constructible_v<T, ranges::range_reference_t<R>>] is [`true].
+[:zh_CN] 若 [`U] 不是数组类型，则
+[`is_constructible_v<T, ranges::range_reference_t<R>>] 为 [`true]。
+[list:end]
 
 [para]
 [:en] Let [$V] be the pack of values of type [`info] of the same size as [`r],
-where the [$i^\text{th}] element is [`reflect_constant([$[`[^e]]_i])].
+where the [$i^\text{th}] element is
 [:zh_CN] 令 [$V] 为大小与 [`r] 相同的 [`info] 类型的值的包组，其中第 [$i] 个元素
-为 [`reflect_constant([$[`[^e]]_i])]。
+[list]
+[item]
+[:en@~] [`reflect_constant_array(*[$[`[^it]]_i])] if [`U] is an array type,
+[:zh_CN@~] 若 [`U] 是数组类型，则为 [`reflect_constant_array(*[$[`[^it]]_i])]，
+[item]
+[:en@~] [`reflect_constant(static_cast<T>(*[$[`[^it]]_i]))] otherwise,
+[:zh_CN@~] 否则为 [`reflect_constant(static_cast<T>(*[$[`[^it]]_i]))]，
+[list]
+[:en@~] and [$[`[^it]]_i] is an iterator to the [$i^\text{th}] element of [`r].
+[:zh_CN@~] 而 [$[`[^it]]_i] 为指向 [`r] 的第 [$i] 个元素的迭代器。
 
 [para]
 [:en] Let [$P] be
 [:zh_CN] 令 [$P] 为：
 [list]
 [item]
-[:en] the template parameter object ([#temp.param]) of type [`const T`[sizeof...([$V])`]]
-initialized with [`{`[:[$V]:`]...}] if [`sizeof...([$V]) > 0] is [`true], otherwise
-[:zh_CN] 如果 [`sizeof...([$V]) > 0] 为 [`true]，则为以 [`{`[:[$V]:`]...}]
-初始化的 [`const T`[sizeof...([$V])`]] 类型的模板形参对象（[#temp.param]），否则
+[:en] the template parameter object ([#temp.param]) of type [`const T`[sizeof...([$V])`]],
+such that [`[$P]`[[$I]`]] is template-argument-equivalent ([#temp.type])
+to the object represented by [`[$V]...`[[$I]`]] for all [$I] in the range
+[=range(0,sizeof...([$V]))] if [`sizeof...([$V]) > 0] is [`true], otherwise
+[:zh_CN] 如果 [`sizeof...([$V]) > 0] 为 [`true]，则为 [`const T`[sizeof...([$V])`]]
+类型的模板形参对象（[#temp.param]），使得对于范围 [=range(0,sizeof...([$V]))] 中的所有 [$I]，
+[`[$P]`[[$I]`]] 按模板实参等价（[#temp.type]）于 [`[$V]...`[[$I]`]] 表示的对象，否则
 [item]
 [:en] the template parameter object of type [`const array<T, 0>] initialized with [`{}].
 [:zh_CN] 为以 [`{}] 初始化的 [`const array<T, 0>] 类型的模板形参对象。
@@ -92,15 +109,28 @@ initialized with [`{`[:[$V]:`]...}] if [`sizeof...([$V]) > 0] is [`true], otherw
 [:zh_CN] [`^^[$P]]。
 
 [para:throws]
-[:en] Any exception thrown by the evaluation of any [$[`[^e]]_i], or [`meta::exception]
-if evaluation of any [`reflect_constant([$[`[^e]]_i])] would exit via an exception.
-[:zh_CN] 任何 [$[`[^e]]_i] 的求值所抛出的异常，或当任何 [`reflect_constant([$[`[^e]]_i])]
-的求值会以异常退出时抛出 [`meta::exception]。
+[:en] Any of
+[:zh_CN] 以下任何之一：
+[list]
+[item]
+[:en@~] an exception thrown by any operation on [`r] or
+on iterators and sentinels referring to [`r],
+[:zh_CN@~] 在 [`r] 上的或者指代 [`r] 的迭代器和哨位上进行的任何操作所抛出的异常，
+[item]
+[:en@~] an exception thrown by the evaluation of any argument of
+[`reflect_constant] or by any evaluation of [`reflect_constant_array], or
+[:zh_CN@~] 由 [`reflect_constant] 的任何实参的求值，或由 [`reflect_constant_array]
+的任何求值所抛出的异常，或者
+[item]
+[:en@~] [`meta::exception] if any invocation of [`reflect_constant]
+would exit via an exception.
+[:zh_CN@~] 如果 [`reflect_constant] 的任何调用因异常退出，则抛出 [`meta::exception]。
+[list:end]
 
 [para]
 [begin:note]
-[:en] [$P] is a potentially non-unique object ([#intro.object]).
-[:zh_CN] [$P] 是潜在非独有对象（[#intro.object]）。
+[:en] When [`r] is not empty, [$P] is a potentially non-unique object ([#intro.object]).
+[:zh_CN] 当 [`r] 非空时，[$P] 是潜在非独有对象（[#intro.object]）。
 [end:note]
 [div:end]
 
@@ -122,7 +152,7 @@ return meta::extract<const ranges::range_value_t<R>*>(meta::reflect_constant_str
 [%@lib define_static_array]
 [codeblock:declaration]
 template<ranges::[[redoc("`:c>")]]input_range R>
-  consteval span<const ranges::range_value_t<R>> define_static_array(R&& r);
+  consteval span<const ranges::range_value_t<R>, [[redoc("[=seebelow]")]]> define_static_array(R&& r);
 [codeblock:end]
 
 [div:description]
@@ -133,11 +163,19 @@ template<ranges::[[redoc("`:c>")]]input_range R>
 using T = ranges::range_value_t<R>;
 meta::info array = meta::reflect_constant_array(r);
 if (meta::is_array_type(meta::type_of(array))) {
-  return span<const T>(meta::extract<const T*>(array), meta::extent(meta::type_of(array)));
+  return span<const T, [[redoc("[=seebelow]")]]>(meta::extract<const T*>(array),
+                                  meta::extent(meta::type_of(array)));
 } else {
-  return span<const T>();
+  return span<const T, [[redoc("[=seebelow]")]]>(static_cast<const T*>(nullptr), 0);
 }
 [codeblock:end]
+
+[para:remarks]
+[:en] If [`ranges::size(r)] is a constant expression,
+the second template argument of the returned [`span] type
+is [`static_cast<size_t>(ranges::size(r))]; otherwise, it is [`dynamic_extent].
+[:zh_CN] 如果 [`ranges::size(r)] 是常量表达式，那么所返回的 [`span] 类型的第二个模板实参
+为 [`static_cast<size_t>(ranges::size(r))]；否则，为 [`dynamic_extent]。
 [div:end]
 
 [%@lib define_static_object]
@@ -152,8 +190,12 @@ template<class T>
 [:zh_CN] 等价于：
 [codeblock]
 using U = remove_cvref_t<T>;
-if constexpr (meta::is_class_type(^^U)) {
-  return addressof(meta::extract<const U&>(meta::reflect_constant(std::forward<T>(t))));
+if constexpr (meta::is_class_type(^^U) || meta::is_union_type(^^U)) {
+  return addressof(meta::extract<const U&>(
+                     meta::reflect_constant(std::forward<T>(t))));
+} else if constexpr (meta::is_array_type(^^U)) {
+  return addressof(meta::extract<const U&>(
+                     meta::reflect_constant_array(std::forward<T>(t))));
 } else {
   return define_static_array(span(addressof(t), 1)).data();
 }

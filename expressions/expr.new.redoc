@@ -157,10 +157,10 @@ the associated array type.
 
 [para]
 [:en] Every [~constant-expression] in a [~noptr-new-declarator] shall be a
-converted constant expression ([#expr.const]) of type [`std::size_t] and its
+converted constant expression ([#expr.const.const]) of type [`std::size_t] and its
 value shall be greater than zero.
 [:zh_CN] [~非指针-new-声明符]中的每个[~常量表达式]都应当是 [`std::size_t] 类型
-的经转换常量表达式（[#expr.const]）且其值应当大于零。
+的经转换常量表达式（[#expr.const.const]）且其值应当大于零。
 
 [begin:example]
 [:en] Given the definition [`int n = 42], [`new float`[n`]`[5`]] is well-formed
@@ -238,7 +238,7 @@ exceeds the number of elements to initialize.
 
 [list]
 [item]
-[:en] if the [~expression] is a potentially-evaluated core constant expression,
+[:en] if the [~expression] is a potentially evaluated core constant expression,
 the program is ill-formed;
 [:zh_CN] 当该[~表达式]是个潜在求值的核心常量表达式时，程序非良构；
 [item]
@@ -267,7 +267,7 @@ to allocate an array with no elements.
 [para]
 [:en] If the allocated type is an array, the [~new-initializer] is a [~braced-init-list]
 or a parenthesized [~expression-list], and the [~expression] is
-potentially-evaluated and not a core constant expression, the semantic constraints
+potentially evaluated and not a core constant expression, the semantic constraints
 of initializing a hypothetical element of the array are checked as follows:
 [:zh_CN] 如果被分配类型为数组，[~new-初始化式]为[~花括号初始化列表]或带括号的[~表达式列表]，
 且该[~表达式]潜在求值且并非核心常量表达式，则按如下进行对虚构的数组元素进行初始化的语义约束的检查：
@@ -389,8 +389,8 @@ provided by extending the allocation of another [~new-expression].
 
 [para]
 [:en] During an evaluation of a constant expression, a call to a replaceable
-allocation function is always omitted ([#expr.const]).
-[:zh_CN] 对常量表达式进行求值过程中，总是省略对可替换分配函数的调用。
+allocation function is always omitted ([#expr.const.core]).
+[:zh_CN] 对常量表达式进行求值过程中，总是省略对可替换分配函数的调用（[#expr.const.core]）。
 
 [para]
 [:en] The implementation may extend the allocation of a [~new-expression] [`e1]
@@ -594,11 +594,11 @@ library function [`operator new`[`](std::size_t, void*)].
 [begin:note]
 [:en] Unless an allocation function has a non-throwing exception specification ([#except.spec]),
 it indicates failure to allocate storage by throwing a [%[`bad_alloc]] [%@lib bad_alloc]
-[`std::bad_alloc] exception ([#basic.stc.dynamic.allocation], [#except], [#bad.alloc]);
+[`std::bad_alloc] exception ([#basic.stc.dynamic.allocation], [#except.throw], [#bad.alloc]);
 it returns a non-null pointer otherwise.
 [:zh_CN] 除非分配函数被声明为带有无抛出异常说明（[#except.spec]），否则在分配存储
 失败时将通过抛出 [%[`bad_alloc]] [%@lib bad_alloc] [`std::bad_alloc] 异常
-（[#basic.stc.dynamic.allocation]，[#except]，[#bad.alloc]）来表明分配存储失败；
+（[#basic.stc.dynamic.allocation]，[#except.throw]，[#bad.alloc]）来表明分配存储失败；
 反之则返回非空指针。
 
 [:en] If the allocation function has a non-throwing exception specification, it
@@ -707,32 +707,63 @@ looked up by searching for it in the global scope.
 [:zh_CN] 否则，或若未找到任何东西，则通过在全局作用域中搜索回收函数的名字来查找它。
 
 [para]
-[:en] A declaration of a placement deallocation function matches the declaration
-of a placement allocation function if it has the same number of parameters and,
-after parameter transformations ([#dcl.fct]), all parameter types except the
-first are identical.
-[:zh_CN] 若放置式回收函数的声明式与放置式分配函数的声明式形参数量相同，且在形参变换
-（[#dcl.fct]）之后，除第一个形参之外的所有形参的类型都一致，则它们相匹配。
-
-[:en] If the lookup finds a single matching deallocation function, that function
-will be called; otherwise, no deallocation function will be called.
-[:zh_CN] 若在查找过程中找到了单个匹配的回收函数，则调用该函数；否则，不调用回收函数。
-
-[:en] If the lookup finds a usual deallocation function and that function,
-considered as a placement deallocation function, would have been selected as a
-match for the allocation function, the program is ill-formed.
-[:zh_CN] 若在查找过程中找到了常规回收函数，且当此函数被看作放置式回收函数时，与分配函数
-相匹配并且将会被选取，则程序非良构。
-
 [:en] For a non-placement allocation function, the normal deallocation function
 lookup is used to find the matching deallocation function ([#expr.delete]).
 [:zh_CN] 对于非放置式分配函数，使用普通的回收函数查找规则来查找其匹配的回收函数（[#expr.delete]）。
+
+[:en] For a placement allocation function, the selection process is described below.
+[:zh_CN] 对于放置式分配函数，选择过程如下文所述。
 
 [:en] In any case, the matching deallocation function (if any) shall be
 non-deleted and accessible from the point where the [~new-expression] appears.
 [:zh_CN] 任何情况下，匹配的回收函数（如果有）应当未被弃置，且应当可从
 [~new-表达式]出现之处访问。
 
+[para]
+[:en] For a placement allocation function,
+the matching deallocation function is selected as follows:
+[:zh_CN] 对于放置式分配函数，按如下过程选择匹配的回收函数：
+
+[list]
+[item]
+[:en] Each candidate that is a function template is replaced by
+the function template specializations (if any)
+generated using template argument deduction ([#temp.over], [#temp.deduct.call])
+with arguments as specified below.
+[:zh_CN] 将每个为函数模板的候选替换为函数模板特例（如果有），它是以下文指定的实参利用
+模板实参推断（[#temp.over]，[#temp.deduct.call]）生成的。
+
+[item]
+[:en] Each candidate whose parameter-type-list is not identical to
+that of the allocation function, ignoring their respective first parameters,
+is removed from the set of candidates.
+[:zh_CN] 将每个具有与分配函数不同的形参类型列表（忽略它们相应的首个形参）的候选，从候选集合移除。
+
+[item]
+[:en] Each candidate whose associated constraints (if any)
+are not satisfied ([#temp.constr.constr]) is removed from the set of candidates.
+[:zh_CN] 将每个未能满足关联约束（如果有）（[#temp.constr.constr]）的候选，从候选集合移除。
+
+[item]
+[:en] If exactly one function remains, that function is selected.
+[:zh_CN] 如果恰好剩余一个函数，则选中该函数。
+
+[item]
+[:en] Otherwise, no deallocation function is selected.
+[:zh_CN] 否则，不选中任何回收函数。
+[list:end]
+
+[:en] If a usual deallocation function is selected, the program is ill-formed.
+[:zh_CN] 如果选中了常规回收函数，则程序非良构。
+
+[begin:note]
+[:en] A deallocation function with an additional trailing parameter
+compared to the allocation function is never matched,
+even if a default argument is provided.
+[:zh_CN] 带有与分配函数相比额外尾部形参的回收函数，永远不会匹配，即使提供默认实参也是如此。
+[end:note]
+
+[para]
 [begin:example]
 [codeblock]
 struct S {
@@ -745,6 +776,57 @@ struct S {
 
 S* p = new (0) S;   // [:en] error: non-placement deallocation function matches [:zh_CN] 错误：非放置式回收函数与
                     // [:en@~] placement allocation function [:zh_CN@~] 放置式分配函数相匹配
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[codeblock]
+struct A {};
+struct T { T(); };
+
+void* operator new(std::size_t s, A& al);       // #1
+
+template<int = 0>
+void operator delete(void* p, A& al);           // #2
+
+A al;
+T* p = new (al) T;                              // [:en] OK, uses #1 and #2. [:zh_CN] OK，使用 #1 和 #2。
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[codeblock]
+template<int I>
+struct A {};
+struct T { T(); };
+
+void* operator new(std::size_t s, A<0>& al);    // #1
+
+template<int I>
+void operator delete(void* p, A<I>& al);
+void operator delete(void* p, A<0>& al);
+
+A<0> al;
+T* p = new (al) T;      // [:en] OK, uses #1. [:zh_CN] OK，使用 #1. \
+                        [:en] No deallocation function is selected (two candidates remain). \
+                        [:zh_CN] 未选中任何回收函数（剩余两个候选）。
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[codeblock]
+template<int I>
+struct A {};
+struct T { T(); };
+
+void* operator new(std::size_t s, A<0>& al);    // #1
+
+template<int I> requires (I > 0)
+void operator delete(void* p, A<I>& al);
+void operator delete(void* p, A<0>& al);        // #2
+
+A<0> al;
+T* p = new (al) T;                              // [:en] OK, uses #1 and #2. [:zh_CN] OK，使用 #1 和 #2。
 [codeblock:end]
 [end:example]
 

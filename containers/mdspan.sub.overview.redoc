@@ -30,11 +30,18 @@ if at least one of the following holds:
 [:zh_CN] [`is_convertible_v<[$S], IndexType>] 为 [`true]；
 
 [item]
-[:en] [$S] is a specialization of [`strided_slice] and
+[:en] [$S] is a specialization of [`extent_slice] and
 [`is_convertible_v<[$X], IndexType>] is [`true] for [$X] denoting
-[`[$S]::offset_type], [`[$S]::extent_type], and [`[$S]::stride_type]; or
-[:zh_CN] [$S] 是 [`strided_slice] 的特例，并且 [`is_convertible_v<[$X], IndexType>] 对于
-代表 [`[$S]::offset_type]、[`[$S]::extent_type] 和 [`[$S]::stride_type] 的 [$X] 都为 [`true]；或者
+[`[$S]::offset_type], [`[$S]::extent_type], and [`[$S]::stride_type];
+[:zh_CN] [$S] 是 [`extent_slice] 的特例，并且 [`is_convertible_v<[$X], IndexType>] 对于
+代表 [`[$S]::offset_type]、[`[$S]::extent_type] 和 [`[$S]::stride_type] 的 [$X] 都为 [`true]；
+
+[item]
+[:en] [$S] is a specialization of [`range_slice] and
+[`is_convertible_v<[$X], IndexType>] is [`true] for [$X] denoting type of
+[`[$S]::first], [`[$S]::last], and [`[$S]::stride] members; or
+[:zh_CN] [$S] 是 [`range_slice] 的特例，并且 [`is_convertible_v<[$X], IndexType>] 对于
+代表成员 [`[$S]::first]、[`[$S]::last] 和 [`[$S]::stride] 的类型的 [$X] 都为 [`true]；或者
 
 [item]
 [:en] all of the following hold:
@@ -79,8 +86,8 @@ if exactly one of the following is [`true]:
 [:zh_CN] [$S] 是对 [`IndexType] 的规范 [`submdspan] 索引类型；或者
 
 [item]
-[:en] [$S] is a specialization of [`strided_slice] where all of the following hold:
-[:zh_CN] [$S] 是 [`strided_slice] 的特例，并且以下各项均成立：
+[:en] [$S] is a specialization of [`extent_slice] where all of the following hold:
+[:zh_CN] [$S] 是 [`extent_slice] 的特例，并且以下各项均成立：
  [list]
  [item]
 [:en] [`S::offset_type], [`S::extent_type], and [`S::stride_type] are
@@ -97,8 +104,8 @@ of [`constant_wrapper], then [`[$S]::stride_type::value] is greater than zero.
 
 [para]
 [:en] A type [`S] is a [+:adj collapsing[!slice type]] if it is
-neither [`full_extent_t] nor a specialization of [`strided_slice].
-[:zh_CN] 如果类型 [`S] 既不是 [`full_extent_t]，也不是 [`strided_slice] 的特例，
+neither [`full_extent_t] nor a specialization of [`extent_slice].
+[:zh_CN] 如果类型 [`S] 既不是 [`full_extent_t]，也不是 [`extent_slice] 的特例，
 则它是[+:adj 折叠[!分片类型]]。
 [begin:note]
 [:en] Each collapsing slice type in [`submdspan_mapping][=s] parameter pack
@@ -112,9 +119,9 @@ of slice specifier types reduces the rank of the result of [`submdspan_mapping] 
 [:zh_CN] 如果类型 [`S] 满足下列条件，则它是[+:adj 单位跨步[!分片类型]]:
 [list]
 [item]
-[:en] [`S] is a specialization of [`strided_slice] where [`S::stride_type] is a
+[:en] [`S] is a specialization of [`extent_slice] where [`S::stride_type] is a
 specialization of [`constant_wrapper] and [`S::stride_type::value] is equal to 1, or
-[:zh_CN] [`S] 是 [`strided_slice] 的特例，且 [`S::stride_type] 是
+[:zh_CN] [`S] 是 [`extent_slice] 的特例，且 [`S::stride_type] 是
 [`constant_wrapper] 的特例，并且 [`S::stride_type::value] 等于 1；或者
 [item]
 [:en] [`S] denotes [`full_extent_t].
@@ -136,13 +143,18 @@ the [+[`submdspan] slice range of [`s] for the [$k^\text{th}] extent of [`e]
 [:en] [=range([$0],e.extent([$k]))] if [`S] is [`full_extent_t];
 [:zh_CN] 如果 [`S] 为 [`full_extent_t]，则为 [=range([$0],e.extent([$k]))]；
 [item]
-[:en] [=range(E::index_type(s.offset),E::index_type(s.offset + s.extent))],
-if [`S] is a specialization of [`strided_slice]; otherwise
-[:zh_CN] 如果 [`S] 是 [`strided_slice] 的特例，则为
-[=range(E::index_type(s.offset),E::index_type(s.offset + s.extent))]；否则为
+[:en] [=range(E::index_type(s.offset),E::index_type(s.offset))], if [`S] is a
+specialization of [`extent_slice] and [`E::index_type(s.extent)] is zero; otherwise
+[:zh_CN] 如果 [`S] 是 [`extent_slice] 的特例且 [`E::index_type(s.extent)] 为零，则为
+[=range(E::index_type(s.offset),E::index_type(s.offset))]；否则
+[item]
+[:en] [=range(E::index_type(s.offset),E::index_type(s.offset + 1 + (s.extent - 1) * s.stri)],
+if [`S] is a specialization of [`extent_slice]; otherwise
+[:zh_CN] 如果 [`S] 是 [`extent_slice] 的特例，则为
+[=range(E::index_type(s.offset),E::index_type(s.offset + 1 + (s.extent - 1) * s.stri)]；否则
 [item]
 [:en] [=range(E::index_type(s),[$[`E::index_type(s)] + 1])].
-[:zh_CN] 为 [=range(E::index_type(s),[$[`E::index_type(s)] + 1])]
+[:zh_CN] 为 [=range(E::index_type(s),[$[`E::index_type(s)] + 1])]。
 [list:end]
 
 [para]
@@ -158,25 +170,40 @@ if [`S] is a canonical slice type for [`E::index_type], and for [$x] equal to
 
 [list]
 [item]
-[:en] if [`S] is a specialization of [`strided_slice]:
-[:zh_CN] 如果 [`S] 是 [`strided_slice] 的特例：
+[:en] if [`S] is a specialization of [`extent_slice], then
+[:zh_CN] 如果 [`S] 是 [`extent_slice] 的特例，那么
  [list]
  [item]
-[:en] if [`S::offset_type] is a specialization of [`constant_wrapper],
-then [`S::offset_type::value] is less than or equal to [$x];
-[:zh_CN] 如果 [`S::offset_type] 是 [`constant_wrapper] 的特例，
-则 [`S::offset_type::value] 小于或等于 [$x]；
+[:en@~] [$o] is less than or equal to [$x];
+[:zh_CN@~] [$o] 小于或等于 [$x]；
  [item]
-[:en] if [`S::extent_type] is a specialization of [`constant_wrapper],
-then [`S::extent_type::value] is less than or equal to [$x]; and
-[:zh_CN] 如果 [`S::extent_type] 是 [`constant_wrapper] 的特例，
-则 [`S::extent_type::value] 小于或等于 [$x]；
+[:en@~] [$e] is less than or equal to [$x];
+[:zh_CN@~] [$e] 小于或等于 [$x]；
  [item]
-[:en] if both [`S::offset_type] and [`S::extent_type] are specializations of
-[`constant_wrapper], then [`S::offset_type::value + S::extent_type::value]
-is less than or equal to [$x]; or
-[:zh_CN] 如果 [`S::offset_type] 和 [`S::extent_type] 都是 [`constant_wrapper] 的特例，
-则 [`S::offset_type::value + S::extent_type::value] 小于或等于 [$x]；或者
+[:en@~] if [$e] is greater than one, then [$t] is greater than zero,
+[:zh_CN@~] 如果 [$e] 大于一，则 [$t] 大于零，
+ [item]
+[:en@~] if [$e] is greater than zero, then [$o + 1 + (e - 1) * t] is less than or euqal to [$x],
+[:zh_CN@~] 如果 [$e] 大于零，则 [$o + 1 + (e - 1) * t] 小于或等于 [$x]，
+ [list:end]
+[:en@~] where
+[:zh_CN@~] 其中
+ [list]
+ [item]
+[:en@~] [$o] is the value of [`S::offset_type::value] if [`S::offset_type] is
+a specialization of [`constant_wrapper] and [`0] otherwise,
+[:zh_CN@~] 当 [`S::offset_type] 是 [`constant_wrapper] 的特例时，[$o] 为
+[`S::offset_type::value] 的值，否则为 [`0]，
+ [item]
+[:en@~] [$e] is the value of [`S::extent_type::value] if [`S::extent_type] is
+a specialization of [`constant_wrapper] and [`0] otherwise,
+[:zh_CN@~] 当 [`S::extent_type] 是 [`constant_wrapper] 的特例时，[$e] 为
+[`S::extent_type::value] 的值，否则为 [`0]，
+ [item]
+[:en@~] [$t] is the value of [`S::stride_type::value] if [`S::stride_type] is
+a specialization of [`constant_wrapper] and [`1] otherwise; and
+[:zh_CN@~] 当 [`S::stride_type] 是 [`constant_wrapper] 的特例时，[$t] 为
+[`S::stride_type::value] 的值，否则为 [`1]；以及
  [list:end]
 [item]
 [:en] if [$S] is a specialization of [`constant_wrapper], then [`S::value] is less than [$x].
@@ -200,14 +227,14 @@ an object [`s] of type [`S], [`s] is a [+valid [`submdspan] slice for the [$k^\t
 for the [$k^\text{th}] extent of [`e]; and
 [:zh_CN] [`e] 的第 [$k] 个区间包含 [`s] 对 [`e] 的第 [$k] 个尺度的 [`submdspan] 分片范围；并且
 [item]
-[:en] if [`S] is a specialization of [`strided_slice], then:
-[:zh_CN] 如果 [`S] 是 [`strided_slice] 的特例，则：
+[:en] if [`S] is a specialization of [`extent_slice], then:
+[:zh_CN] 如果 [`S] 是 [`extent_slice] 的特例，则：
  [list]
  [item]
 [:en@~] [`s.extent] is greater than or equal to zero, and
 [:zh_CN@~] [`s.extent] 大于或等于零；并且
  [item]
-[:en@~] either [`s.extent] equals zero or [`s.stride] is greater than zero.
-[:zh_CN@~] 要么 [`s.extent] 等于零，要么 [`s.stride] 大于零。
+[:en@~] either [`s.extent] is less than two or [`s.stride] is greater than zero.
+[:zh_CN@~] 要么 [`s.extent] 小于二，要么 [`s.stride] 大于零。
  [list:end]
 [list:end]

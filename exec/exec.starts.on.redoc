@@ -21,48 +21,31 @@ satisfy [`:c scheduler], or [`decltype((sndr))] does not satisfy [`:c sender],
 [`starts_on(sch, sndr)] 非良构。
 
 [para]
-[:en] Otherwise, the expression [`starts_on(sch, sndr)] is expression-equivalent to:
-[:zh_CN] 否则，表达式 [`starts_on(sch, sndr)] 按表达式等价于：
-[codeblock]
-transform_sender(
-  [[redoc("*>")]]query-with-default(get_domain, sch, default_domain()),
-  [[redoc("*>")]]make-sender(starts_on, sch, sndr))
-[codeblock:end]
-[:en@~] except that [`sch] is evaluated only once.
-[:zh_CN@~] 但 [`sch] 仅被求值一次。
+[:en] Otherwise, the expression [`starts_on(sch, sndr)] is expression-equivalent to
+[`[*make-sender](starts_on, sch, sndr)].
+[:zh_CN] 否则，表达式 [`starts_on(sch, sndr)] 按表达式等价于
+[`[*make-sender](starts_on, sch, sndr)]。
 
 [para]
 [:en] Let [`out_sndr] and [`env] be subexpressions such that [`OutSndr] is
 [`decltype((out_sndr))].
 [:zh_CN] 令 [`out_sndr] 和 [`env] 为子表达式，使得 [`OutSndr] 为 [`decltype((out_sndr))]。
 
-[:en] If [`[*:c sender-for]<OutSndr, starts_on_t>] is [`false],
-then the expressions [`starts_on.transform_env(out_sndr, env)] and
-[`starts_on.transform_sender(out_sndr, env)] are ill-formed; otherwise
+[:en] If [`[*:c sender-for]<OutSndr, starts_on_t>] is [`false], then the expression
+[`starts_on.transform_sender(set_value, out_sndr, env)] is ill-formed; otherwise
+[`starts_on.transform_sender(set_value, out_sndr, env)] is equivalent to:
 [:zh_CN] 如果 [`[*:c sender-for]<OutSndr, starts_on_t>] 为 [`false]，那么表达式
-[`starts_on.transform_env(out_sndr, env)] 和
-[`starts_on.transform_sender(out_sndr, env)] 都非良构；否则
-[list]
-[item]
-[:en@~] [`starts_on.transform_env(out_sndr, env)] is equivalent to:
-[:zh_CN@~] [`starts_on.transform_env(out_sndr, env)] 等价于：
-[codeblock]
-auto&& [_, sch, _] = out_sndr;
-return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ENV(sch), [[redoc("*>")]]FWD-ENV(env));
-[codeblock:end]
-[item]
-[:en@~] [`starts_on.transform_sender(out_sndr, env)] is equivalent to:
-[:zh_CN@~] [`starts_on.transform_sender(out_sndr, env)] 等价于：
+[`starts_on.transform_sender(set_value, out_sndr, env)] 非良构；否则
+[`starts_on.transform_sender(set_value, out_sndr, env)] 等价于：
 [codeblock]
 auto&& [_, sch, sndr] = out_sndr;
 return let_value(
-  schedule(sch),
+  continues_on(just(), sch),
   [sndr = std::forward_like<OutSndr>(sndr)]() mutable
     noexcept(is_nothrow_move_constructible_v<decay_t<OutSndr>>) {
     return std::move(sndr);
   });
 [codeblock:end]
-[list:end]
 
 [para]
 [:en] Let [`out_sndr] be a subexpression denoting a sender returned from

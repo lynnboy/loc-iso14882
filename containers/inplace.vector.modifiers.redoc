@@ -80,9 +80,9 @@ element.
 [%@lib@member try_push_back[!inplace_vector]]
 [codeblock:declaration]
 template<class... Args>
-  constexpr pointer try_emplace_back(Args&&... args);
-constexpr pointer try_push_back(const T& x);
-constexpr pointer try_push_back(T&& x);
+  constexpr optional<reference> try_emplace_back(Args&&... args);
+constexpr optional<reference> try_push_back(const T& x);
+constexpr optional<reference> try_push_back(T&& x);
 [codeblock:end]
 
 [div:description]
@@ -102,8 +102,7 @@ constexpr pointer try_push_back(T&& x);
 [list:end]
 
 [para:expects]
-[:en] [`value_type] is [^:oc EmplaceConstructible] into [`inplace_vector] from
-[`vals...].
+[:en] [`value_type] is [^:oc EmplaceConstructible] into [`inplace_vector] from [`vals...].
 [:zh_CN] [`value_type] 为从 [`vals...] 向 [`inplace_vector] 中
 [^:oc EmplaceConstructible]。
 
@@ -117,14 +116,13 @@ direct-non-list-initialized with [`vals...].
 [:zh_CN] 否则，没有效果。
 
 [para:returns]
-[:en] [`:key nullptr] if [`size() == capacity()] is [`true], otherwise
-[`addressof(back())].
-[:zh_CN] 若 [`size() == capacity()] 为 [`true] 则返回 [`:key nullptr]，否则返回
-[`addressof(back())]。
+[:en] [`:key nullopt] if [`size() == capacity()] is [`true], otherwise
+[`optional<reference>(in_place, back())].
+[:zh_CN] 若 [`size() == capacity()] 为 [`true] 则返回 [`:key nullopt]，否则返回
+[`optional<reference>(in_place, back())]。
 
 [para:throws]
-[:en] Nothing unless an exception is thrown by the initialization of the inserted
-element.
+[:en] Nothing unless an exception is thrown by the initialization of the inserted element.
 [:zh_CN] 除非所插入元素的初始化抛出了异常，否则不抛出。
 
 [para:complexity]
@@ -134,51 +132,6 @@ element.
 [para:remarks]
 [:en] If an exception is thrown, there are no effects on [`*this].
 [:zh_CN] 如果抛出了异常，则对 [`*this] 没有效果。
-[div:end]
-
-[%@lib@member try_append_range[!inplace_vector]]
-[codeblock:declaration]
-template<[[redoc("*:c>")]]container-compatible-range<T> R>
-  constexpr ranges::borrowed_iterator_t<R> try_append_range(R&& rg);
-[codeblock:end]
-
-[div:description]
-[para:expects]
-[:en] [`value_type] is [^:oc EmplaceConstructible] into [`inplace_vector] from
-[`*ranges::begin(rg)].
-[:zh_CN] [`value_type] 为从 [`*ranges::begin(rg)] 向 [`inplace_vector] 中
-[^:oc EmplaceConstructible]。
-
-[para:effects]
-[:en] Appends copies of initial elements in [`rg] before [`end()],
-until all elements are inserted or [`size() == capacity()] is [`true].
-[:zh_CN] 在 [`end()] 前追加 [`rg] 中开头各元素的副本，直至插入了所有元素或者
-[`size() == capacity()] 为 [`true]。
-
-[:en] Each iterator in the range [`rg] is dereferenced at most once.
-[:zh_CN] 范围 [`rg] 中的每个迭代器最多被解引用一次。
-
-[para:returns]
-[:en] The first iterator in the range [=countedrange(ranges::end(rg),n)] that was not
-inserted into [`*this], where [`n] is the number of elements in [`rg].
-[:zh_CN] 范围 [=countedrange(ranges::end(rg),n)] 中第一个未插入到 [`*this] 的迭代器，
-其中 [`n] 为 [`rg] 中的元素数量。
-
-[para:complexity]
-[:en] Linear in the number of elements inserted.
-[:zh_CN] 对于所插入的元素数量为线性。
-
-[para:remarks]
-[:en] Let [$n] be the value of [`size()] prior to this call.
-[:zh_CN] 令 [$n] 为 [`size()] 在此调用前的值。
-
-[:en] If an exception is thrown after the insertion of [$k] elements, then
-[`size()] equals [$n + k], elements in the range [`begin() + [=range(0,[$n])]]
-are not modified, and elements in the range [`begin() + [=range([$n],[$n + k])]]
-correspond to the inserted elements.
-[:zh_CN] 如果插入了 [$k] 个元素后抛出了异常，则 [`size()] 等于 [$n + k]，不修改范围
-[`begin() + [=range(0,[$n])]] 中的元素，并且范围 [`begin() + [=range([$n],[$n + k])]]
-中的各元素对应于所插入的各元素。
 [div:end]
 
 [%@lib@member unchecked_emplace_back[!inplace_vector]]
@@ -238,4 +191,27 @@ number of times equal to the number of elements in the vector after the erased
 elements.
 [:zh_CN] 对 [`T] 的析构函数的调用次数等于所清除的元素的数量，但对 [`T] 的移动
 赋值运算符的调用次数等于 [`vector] 中所清除的元素后面的元素数量。
+[div:end]
+
+[%@lib@member swap[!inplace_vector]]
+[codeblock:declaration]
+constexpr void swap(inplace_vector& x) noexcept(
+  N == 0 || (is_nothrow_swappable_v<T> && is_nothrow_move_constructible_v<T>));
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`T] meets the [^:oc MoveConstructible] requirements.
+[:zh_CN] [`T] 满足 [^:oc MoveConstructible] 要求。
+
+[:en] Let [$M] be [`min(size(), x.size())].
+[:zh_CN] 令 [$M] 为 [`min(size(), x.size())]。
+
+[:en] For each non-negative integer [$n < M], [`(*this)`[[$n]`]] is swappable
+with [`x`[[$n]`]] ([#swappable.requirements]).
+[:zh_CN] 对于每个非负整数 [$n < M]，[`(*this)`[[$n]`]] 与 [`x`[[$n]`]] 可交换（[#swappable.requirements]）。
+
+[para:effects]
+[:en] Exchanges the contents of [`*this] and [`x].
+[:zh_CN] 交换 [`*this] 和 [`x] 的内容。
 [div:end]

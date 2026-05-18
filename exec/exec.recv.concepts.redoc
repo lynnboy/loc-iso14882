@@ -10,11 +10,11 @@
 [:en] The [`:c receiver] concept defines the requirements for a receiver type ([#exec.async.ops]).
 [:zh_CN] [`:c receiver] 概念定义针对接收器类型的要求（[#exec.async.ops]）。
 
-[:en] The [`:c receiver_of] concept defines the requirements for a receiver type
-that is usable as the first argument of a set of completion operations
+[:en] The exposition-only concept [`:c receiver-of] defines the requirements for
+a receiver type that is usable as the first argument of a set of completion operations
 corresponding to a set of completion signatures.
-[:zh_CN] [`:c receiver_of] 概念定义对可用作对应于某完成签名集合的完成操作集合的
-第一个实参的接收器类型的要求。
+[:zh_CN] 仅用于阐释的概念 [`:c receiver-of] 定义对可用作对应于某完成签名集合的
+完成操作集合的第一个实参的接收器类型的要求。
 
 [:en] The [`get_env] customization point object is used to access
 a receiver[=']s associated environment.
@@ -24,7 +24,7 @@ a receiver[=']s associated environment.
 namespace std::execution {
   template<class Rcvr>
     concept [[redoc("`:c@def>")]]receiver =
-      [[redoc("`:c>")]]derived_from<typename remove_cvref_t<Rcvr>::receiver_concept, receiver_t> &&
+      [[redoc("`:c>")]]derived_from<typename remove_cvref_t<Rcvr>::receiver_concept, receiver_tag> &&
       requires(const remove_cvref_t<Rcvr>& rcvr) {
         { get_env(rcvr) } -> [[redoc("*:c>")]]queryable;
       } &&
@@ -33,7 +33,7 @@ namespace std::execution {
       is_nothrow_move_constructible_v<remove_cvref_t<Rcvr>>;    // [:en@~] no-throw-movable [:zh_CN@~] 可无抛出移动的
 
   template<class Signature, class Rcvr>
-    concept [[redoc("*:c@def>")]]valid-completion-for =                 // [=expos]
+    concept [[redoc("*:c@def>")]]valid-completion-for =                              // [=expos]
       requires (Signature* sig) {
         []<class Tag, class... Args>(Tag(*)(Args...))
             requires [[redoc("*:c>"")]]callable<Tag, remove_cvref_t<Rcvr>, Args...>
@@ -41,14 +41,14 @@ namespace std::execution {
       };
 
   template<class Rcvr, class Completions>
-    concept [[redoc("*:c@def>")]]has-completions =                      // [=expos]
+    concept [[redoc("*:c@def>")]]has-completions =                                   // [=expos]
       requires (Completions* completions) {
         []<[[redoc("*:c>"")]]valid-completion-for<Rcvr>...Sigs>(completion_signatures<Sigs...>*)
         {}(completions);
       };
 
   template<class Rcvr, class Completions>
-    concept [[redoc("`:c@def>")]]receiver_of =
+    concept [[redoc("*:c@def>")]]receiver-of =                                       // [=expos]
       [[redoc("`:c>")]]receiver<Rcvr> && [[redoc("*:c>")]]has-completions<Rcvr, Completions>;
 }
 [codeblock:end]
@@ -81,3 +81,122 @@ provided by the type of [`rcvr], the implementation of [`op_state] cannot use
 must be destroyed before the invocation of the completion operation.
 [:zh_CN] 这也意味着，[`token] 上注册的任何停止回调，都必须在完成操作的调用之前销毁。
 [end:note]
+
+[para]
+[codeblock:synopsis]
+namespace std::execution {
+  template<class Rcvr, class ChildOp>
+    concept [[redoc("`:c@def>")]]inlinable_receiver = [[redoc("`:c>")]]receiver<Rcvr> &&
+      requires (ChildOp* child) {
+        { remove_cvref_t<Rcvr>::make_receiver_for(child) } noexcept
+          -> [[redoc("`:c>")]]same_as<remove_cvref_t<Rcvr>>;
+      };
+}
+[codeblock:end]
+
+[:en] The [`:c inlinable_receiver] concept defines the requirements for a receiver
+that can be reconstructed on demand from a pointer to the operation state object
+created when the receiver was connected to a sender.
+[:zh_CN] [`:c inlinable_receiver] 概念定义对接收器的要求，接收器可以根据连接到发送器时
+创建的操作状态对象的指针按需重新构造。
+
+[:en] Given a receiver object [`rcvr] of type [`Rcvr] which was connected to
+a sender producing an operation state object [`op] of type [`Op],
+[`Rcvr] models [`[`:c inlinable_receiver]<Op>] only if the expression
+[`Rcvr::make_receiver_for(addressof(op))] evaluates to a receiver
+that is equal to [`rcvr] ([#concepts.equality]).
+[:zh_CN] 给定 [`Rcvr] 类型的接收器对象 [`rcvr]，它已连接到某个发送器并产生类型为 [`Op] 的
+操作状态对象 [`op]，只有当表达式 [`Rcvr::make_receiver_for(addressof(op))] 求值为
+与 [`rcvr] 相等的接收器（[#concepts.equality]）时，[`Rcvr] 才构成 [`[`:c inlinable_receiver]<Op>]。
+
+[begin:note]
+[:en] Such a receiver does not need to be stored as a data member of [`op]
+as it can be recreated on demand.
+[:zh_CN] 这样的接收器不需要作为 [`op] 的数据成员存储，因为它可以按需重新创建。
+[end:note]
+
+[:en] [`ChildOp] may be an incomplete type.
+[:zh_CN] [`ChildOp] 可以是不完整类型。
+
+[para]
+[:en] Given objects [$O_0, \dotsc, O_n], [$O_n] is [+:adj transitively[!constructed]] from [$O_0] if
+[:zh_CN] 给定对象 [$O_0, \dotsc, O_n]，如果满足以下条件，则 [$O_n] 是从 [$O_0] [+:adj 传递[!构造]]的：
+[list]
+[item]
+[:en@~] [`remove_cvref_t<decltype([$O_n])>] denotes the same type as
+[`remove_cvref_t<decltype([$O_0])>] and
+[:zh_CN@~] [`remove_cvref_t<decltype([$O_n])>] 代表与 [`remove_cvref_t<decltype([$O_0])>] 相同的类型，并且
+[item]
+[:en@~] either
+[:zh_CN@~] 要么
+ [list]
+ [item]
+[:en@~] [$O_1] was initialized by decay-copying a reference to [$O_0], or
+[:zh_CN@~] [$O_1] 是通过退化复制一个到 [$O_0] 的引用来初始化的，或者
+ [item]
+[:en@~] [$n > 1] and [$O_{n-1}] is transitively constructed from [$O_0] and
+[$O_n] was initialized from a non-const, non-volatile rvalue reference to [$O_{n-1}].
+[:zh_CN@~] [$n > 1] 并且 [$O_{n-1}] 是从 [$O_0] 传递构造的，并且 [$O_n] 是通过一个
+非 const、非 volatile 的到 [$O_{n-1}] 的右值引用来初始化的。
+ [list:end]
+[list:end]
+
+[para]
+[:en] Let [$E] be some well-formed expression [`connect(sndr, rcvr)].
+[:zh_CN] 令 [$E] 为某个良构表达式 [`connect(sndr, rcvr)]。
+
+[:en] [$E] [+inlines the receiver] [`rcvr] if the lifetimes of all objects
+transitively constructed from [`rcvr] during the evaluation of [$E]
+end within the evaluation of [$E].
+[:zh_CN] 如果在 [$E] 的求值过程中，从 [`rcvr] 传递构造的所有对象的生命周期
+都在 [$E] 的求值过程中结束，则 [$E] [+内联接收器] [`rcvr]。
+
+[begin:note]
+[:en] This means such an expression does not store the receiver in the operation state.
+[:zh_CN] 这意味着这样的表达式不在操作状态中存储接收器。
+[end:note]
+
+[para]
+[:en] Let [$E] be some well-formed expression [`connect(sndr, rcvr)] where
+[:zh_CN] 令 [$E] 为某个良构表达式 [`connect(sndr, rcvr)]，其中
+[list]
+[item]
+[:en@~] [`sndr] denotes a sender type defined by this document and
+[:zh_CN@~] [`sndr] 代表某个由本文档定义的发送器类型，而
+[item]
+[:en@~] [$E] inlines the receiver [`rcvr].
+[:zh_CN@~] [$E] 内联接收器 [`rcvr]。
+[list:end]
+
+[:en] Then, let [`op] be the result of the evaluation of [$E], and
+wherever the specification of the operation associated with [`op] contains a glvalue
+which would denote an object transitively constructed from [`rcvr],
+that glvalue instead denotes the result of applying
+the temporary materialization conversion to the expression
+[`remove_cvref_t<decltype(rcvr)>::make_receiver_for(addressof(op))].
+[:zh_CN] 从而，令 [`op] 为 [$E] 的求值结果，并且在与 [`op] 相关联的操作的规范中，
+包含任何表示从 [`rcvr] 传递构造的对象的泛左值，则该泛左值改为表示对表达式
+[`remove_cvref_t<decltype(rcvr)>::make_receiver_for(addressof(op))]
+实施临时对象实质化转换的结果。
+
+[para]
+[:en] Let [`StdRcvr] be a receiver type defined by this document.
+[:zh_CN] 令 [`StdRcvr] 为本文档定义的某个接收器类型。
+
+[:en] Given some operation state type [`Op], it is unspecified
+whether [`StdRcvr] models [`[`:c inlinable_receiver]<Op>].
+[:zh_CN] 给定某个操作状态类型 [`Op]，未指明 [`StdRcvr] 是否构成 [`[`:c inlinable_receiver]<Op>]。
+
+[para]
+[:en] Let [`StdOp] be some operation state type defined by this document,
+and let [`Sndr] and [`Rcvr] be types such that
+[`is_same_v<connect_result_t<Sndr, Rcvr>, StdOp>] is [`true].
+[:zh_CN] 令 [`StdOp] 为本文档定义的某个操作状态类型，并且令 [`Sndr] 和 [`Rcvr] 是使得
+[`is_same_v<connect_result_t<Sndr, Rcvr>, StdOp>] 为 [`true] 的类型。
+
+[:en] If [`Rcvr] models [`[`:c inlinable_receiver]<StdOp>]
+then it is implementation-defined whether, given an object [`rcvr] of type [`Rcvr],
+the [`connect] operation which produces an object of type [`StdOp]
+inlines the receiver [`rcvr].
+[:zh_CN] 如果 [`Rcvr] 构成 [`[`:c inlinable_receiver]<StdOp>]，给定某个 [`Rcvr] 类型的
+对象 [`rcvr]，产生类型为 [`StdOp] 的对象的 [`connect] 操作是否内联接收器 [`rcvr] 是由实现定义的。

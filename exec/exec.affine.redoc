@@ -1,0 +1,108 @@
+[section#exec.affine
+    [`execution::affine]
+]
+
+[para]
+[:en] [`affine] adapts a sender into one that completes on the receiver[=']s scheduler.
+[:zh_CN] [`affine] 将发送器适配为在接收器的调度器上完成的发送器。
+
+[:en] If the algorithm determines that the adapted sender already completes
+on the correct scheduler it can avoid any scheduling operation.
+[:zh_CN] 如果算法确定适配的发送器已经在正确的调度器上完成，则可以避免任何调度操作。
+
+[para]
+[:en] The name [`affine] denotes a pipeable sender adaptor object.
+[:zh_CN] 名字 [`affine] 代表一个可连管道的发送器适配器对象。
+
+[:en] For a subexpression [`sndr], if [`decltype((sndr))] does not satisfy [`:c sender],
+[`affine(sndr)] is ill-formed.
+[:zh_CN] 对于子表达式 [`sndr]，如果 [`decltype((sndr))] 不符合 [`:c sender]，那么
+[`affine(sndr)] 非良构。
+
+[para]
+[:en] Otherwise, the expression [`affine(sndr)] is expression-equivalent to
+[`[*make-sender](affine, env<>(), sndr)].
+[:zh_CN] 否则，表达式 [`affine(sndr)] 按表达式等价于 [`[*make-sender](affine, env<>(), sndr)]。
+
+[para]
+[:en] For a subexpression [`sch] whose type models [`:c scheduler],
+let [`[*UNSTOPPABLE-SCHEDULER](sch)] be an expression [`e]
+whose type models [`:c scheduler] such that:
+[:zh_CN] 对于类型构成 [`:c scheduler] 的子表达式 [`sch]，令 [`[*UNSTOPPABLE-SCHEDULER](sch)]
+为一个表达式 [`e]，其类型构成 [`:c scheduler]，使得：
+[list]
+[item]
+[:en@~] [`schedule(e)] is expression-equivalent to [`unstoppable(schedule(sch))].
+[:zh_CN@~] [`schedule(e)] 按表达式等价于 [`unstoppable(schedule(sch))]。
+[item]
+[:en] For any query object [`q] and pack of subexpressions [`args...],
+[`e.query(q, args...)] is expression-equivalent to [`sch.query(q, args...)].
+[:zh_CN] 对于任意查询对象 [`q] 和子表达式包组 [`args...]，[`e.query(q, args...)]
+按表达式等价于 [`sch.query(q, args...)]。
+[item]
+[:en] The expression [`e == [*UNSTOPPABLE-SCHEDULER](other)]
+is expression-equivalent to [`sch == other].
+[:zh_CN] 表达式 [`e == [*UNSTOPPABLE-SCHEDULER](other)] 按表达式等价于 [`sch == other]。
+[list:end]
+
+[para]
+[:en] Let [`sndr] and [`ev] be subexpressions such that [`Sndr] is [`decltype((sndr))].
+[:zh_CN] 令 [`sndr] 和 [`ev] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`[*:c sender-for]<Sndr, affine_t>] is [`false], then the expression
+[`affine.transform_sender(sndr, ev)] is ill-formed; otherwise, it is equal to:
+[:zh_CN] 如果 [`[*:c sender-for]<Sndr, affine_t>] 为 [`false]，则表达式
+[`affine.transform_sender(sndr, ev)] 非良构；否则，它等于：
+
+[codeblock]
+auto& [_, _, child] = sndr;
+if constexpr (requires { std::forward_like<Sndr>(child).affine(); }) {
+  return std::forward_like<Sndr>(child).affine();
+} else {
+  return continues_on(std::forward_like<Sndr>(child),
+                      [[redoc("*>")]]UNSTOPPABLE-SCHEDULER(get_start_scheduler(ev)));
+}
+[codeblock:end]
+
+[para:recommended]
+[:en] Implementations should provide [`affine] member functions
+for senders that are known to resume on the scheduler where they were started.
+[:zh_CN] 实现应该为那些已知在它们被启动的调度器上恢复的发送器提供 [`affine] 成员函数。
+
+[:en] Example senders for which that is the case are
+[`just], [`just_error], [`just_stopped], [`read_env], and [`write_env].
+[:zh_CN] 例如，符合此情况的发送器有 [`just]、[`just_error]、[`just_stopped]、[`read_env] 和 [`write_env]。
+
+[para]
+[:en] Let [`[^out_sndr]] be a subexpression denoting a sender
+returned from [`affine(sndr)] or one equal to such,
+and let [`[^OutSndr]] be the type [`decltype(([^out_sndr]))].
+[:zh_CN] 令 [`[^out_sndr]] 为代表从 [`affine(sndr)] 返回的或与之相等的发送器
+的子表达式，并令 [`[^OutSndr]] 为类型 [`decltype(([^out_sndr]))]。
+
+[:en] Let [`[^out_rcvr]] be a subexpression denoting a receiver that has an
+environment of type [`Env].
+[:zh_CN] 令 [`[^out_rcvr]] 为代表具有类型 [`Env] 的环境的接收器的子表达式。
+
+[:en] If [`get_start_scheduler(get_env([^out_rcvr]))] is ill-formed or
+does not satisfy [`[*:c infallible-scheduler]<Env>], then evaluation of
+the expression [`get_completion_signatures<[^OutSndr], Env>()] exits with an exception.
+[:zh_CN] 如果 [`get_start_scheduler(get_env([^out_rcvr]))] 非良构或不满足
+[`[*:c infallible-scheduler]<Env>]，则求值表达式
+[`get_completion_signatures<[^OutSndr], Env>()] 将以异常退出。
+
+[:en] Let [`[^op]] be an lvalue referring to the operation state that
+results from connecting [`[^out_sndr]] to [`[^out_rcvr]].
+[:zh_CN] 令 [`[^op]] 为一个左值，指代将 [`[^out_sndr]] 连接到 [`[^out_rcvr]] 所得的操作状态。
+
+[:en] Calling [`start([^op])] will start [`sndr] on the current execution agent
+and execute completion operations on [`[^out_rcvr]]
+on an execution agent of the execution resource associated with [`[^sch]].
+[:zh_CN] 调用 [`start([^op])] 将在当前执行代理中启动 [`sndr]，
+并在与 [`[^sch]] 关联的执行资源的某个执行代理中执行 [`[^out_rcvr]] 上的完成操作。
+
+[:en] If the current execution resource is the same as the execution
+resource associated with [`[^sch]], the completion operation on
+[`[^out_rcvr]] may be called before [`start([^op])] completes.
+[:zh_CN] 如果当前执行资源与 [`[^sch]] 关联的执行资源相同，
+则 [`[^out_rcvr]] 上的完成操作可能在 [`start([^op])] 完成之前被调用。

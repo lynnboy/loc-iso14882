@@ -51,10 +51,10 @@ non-static data member, or unnamed bit-field, then the type of what is represent
 
  [list]
  [item]
-[:en] If [$E] is defined by a declaration [$D] that precedes a point [$P] in the
-evaluation context and [$P] does not occur within an [~enum-specifier] of [$D],
+[:en] If [$E] is defined by a declaration [$D] that is reachable from a point [$P]
+in the evaluation context and [$P] does not occur within an [~enum-specifier] of [$D],
 then a reflection of [$E].
-[:zh_CN] 如果 [$E] 是由求值语境中某个位置 [$P] 之前的某条声明式 [$D] 所声明，且 [$P]
+[:zh_CN] 如果 [$E] 是由从求值语境中某个位置 [$P] 可达的某条声明式 [$D] 所声明，且 [$P]
 并非出现于 [$D] 的[~枚举说明符]之内，则返回 [$E] 的反射。
 
  [item]
@@ -69,9 +69,9 @@ then a reflection of [$B].
 [:zh_CN] 否则，如果 [`r] 代表一个直接基类关系 [$(D, B)]，则返回 [$B] 的反射。
 
 [item]
-[:en] Otherwise, for a data member description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general]),
+[:en] Otherwise, for a data member description [$(T, N, A, W, \mathit{NUA}, \mathit{ANN})] ([#class.mem.general]),
 a reflection of the type [$T].
-[:zh_CN] 否则，对于数据成员描述 [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general])，
+[:zh_CN] 否则，对于数据成员描述 [$(T, N, A, W, \mathit{NUA}, \mathit{ANN})] ([#class.mem.general])，
 返回类型 [$T] 的反射。
 [list:end]
 
@@ -116,8 +116,8 @@ and if that variable is a reference [$R], then either
 [:zh_CN@~] 声明或者指代这种对象的变量，且当该变量是引用 [$R] 时，则
  [list]
  [item]
-[:en@~] [$R] is usable in constant expressions ([#expr.const]), or
-[:zh_CN@~] [$R] 可用在常量表达式中（[#expr.const]），或者
+[:en@~] [$R] is usable in constant expressions ([#expr.const.init]), or
+[:zh_CN@~] [$R] 可用在常量表达式中（[#expr.const.init]），或者
  [item]
 [:en@~] the lifetime of [$R] began within the core constant expression
 currently under evaluation.
@@ -179,20 +179,24 @@ constexpr int y = 0;
 
 static_assert(^^x != ^^y);                      // [:en] OK, [`x] and [`y] are different variables, [:zh_CN] OK，[`x] 和 [`y] 是不同变量，
                                                 // [:en@~] so their reflections compare different [:zh_CN@~] 因而它们的反射比较为不同
-static_assert(constant_of(^^x) ==
-              constant_of(^^y));                // [:en] OK, both [`constant_of(^^x)] and [:zh_CN] OK，[`constant_of(^^x)] 和
-                                                // [:en@~] [`constant_of(^^y)] represent the value [`0] [:zh_CN@~] [`constant_of(^^y)] 表示值 [`0]
-static_assert(constant_of(^^x) ==
-              reflect_constant(0));             // [:en] OK, likewise [:zh_CN] OK，类似
+
+static_assert(constant_of(^^x) ==               // [:en] OK, both [`constant_of(^^x)] and [:zh_CN] OK，[`constant_of(^^x)] 和
+              constant_of(^^y));                // [:en@~] [`constant_of(^^y)] represent the value [`0] [:zh_CN@~] [`constant_of(^^y)] 表示值 [`0]
+
+static_assert(constant_of(^^x) ==               // [:en] OK, likewise [:zh_CN] OK，类似
+              reflect_constant(0));
 
 struct S { int m; };
 constexpr S s {42};
+
 static_assert(is_object(constant_of(^^s)) &&
               is_object(reflect_object(s)));
-static_assert(constant_of(^^s) !=       // [:en] OK, template parameter object that is template-argument- [:zh_CN] OK，按模板实参等价于 [`s] 的
-              reflect_object(s));       // [:en@~] equivalent to [`s] is a different object than [`s] [:zh_CN@~] 模板形参对象，是与 [`s] 不同的对象
+static_assert(constant_of(^^s) !=               // [:en] OK, template parameter object that is  [:zh_CN] OK，按模板实参等价于 [`s] 的
+              reflect_object(s));               // [:en@~] template-argument-equivalent to [`s] [:zh_CN@~] 模板形参对象，
+                                                // [:en@~] is a different object than [`s] [:zh_CN@~] 是与 [`s] 不同的对象
+
 static_assert(constant_of(^^s) ==
-              constant_of(reflect_object(s)));  // OK
+              constant_of(reflect_object(s)));
 
 consteval info fn() {
   constexpr int x = 42;
@@ -367,10 +371,11 @@ consteval bool is_bit_field(info r);
 [div:description]
 [para:returns]
 [:en] [`true] if [`r] represents a bit-field, or if [`r] represents a data member
-description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general])
+description [$(T, N, A, W, \mathit{NUA}, \mathit{ANN})] ([#class.mem.general])
 for which [$W] is not [$\bot].
 [:zh_CN] 如果 [`r] 表示一个位字段，或者如果 [`r] 表示一个数据成员描述
-[$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]），其中 [$W] 不是 [$\bot]，则返回 [`true]。
+[$(T, N, A, W, \mathit{NUA}, \mathit{ANN})]（[#class.mem.general]）
+（其中 [$W] 不是 [$\bot]），则返回 [`true]。
 
 [:en] Otherwise, [`false].
 [:zh_CN] 否则，返回 [`false]。
@@ -408,9 +413,9 @@ consteval bool is_volatile(info r);
 [:zh_CN] 否则，令 [$T] 为 [`dealias(r)]。
 
 [para:returns]
-[:en] [`true] if [`T] represents a const or volatile type, respectively,
+[:en] [`true] if [$T] represents a const or volatile type, respectively,
 or a const- or volatile-qualified function type, respectively.
-[:zh_CN] 如果 [`T] 分别代表一个 const 或 volatile 类型，或者分别代表一个
+[:zh_CN] 如果 [$T] 分别代表一个 const 或 volatile 类型，或者分别代表一个
 const 或 volatile 限定的函数类型，则返回 [`true]。
 
 [:en] Otherwise, [`false].
@@ -749,19 +754,19 @@ consteval bool has_default_argument(info r);
 [list]
 [item]
 [:en] If [$F] is a specialization of a templated function [$T], then [`true] if
-there exists a declaration [$D] of [$T] that precedes some point in the
+there exists a declaration [$D] of [$T] that is reachable from a point in the
 evaluation context and [$D] specifies a default argument for the parameter of
 [$T] corresponding to [$P].
-[:zh_CN] 如果 [$F] 是某个模板化函数 [$T] 的特例，那么若存在求值语境中的某点之前的 [$T]
+[:zh_CN] 如果 [$F] 是某个模板化函数 [$T] 的特例，那么若存在从求值语境中某点可达的 [$T]
 的声明式 [$D]，并且 [$D] 为 [$T] 的对应于 [$P] 的形参指定了默认实参，则返回 [`true]。
 
 [:en] Otherwise, [`false].
 [:zh_CN] 否则，返回 [`false]。
 
 [item]
-[:en] Otherwise, if there exists a declaration [$D] of [$F] that precedes some point
-in the evaluation context and [$D] specifies a default argument for [$P], then [`true].
-[:zh_CN] 否则，如果存在求值语境中的某点之前的 [$F] 的声明式 [$D]，并且 [$D] 为 [$P]
+[:en] Otherwise, if there exists a declaration [$D] of [$F] that is reachable from
+a point in the evaluation context and [$D] specifies a default argument for [$P], then [`true].
+[:zh_CN] 否则，如果存在从求值语境中某点可达的 [$F] 的声明式 [$D]，并且 [$D] 为 [$P]
 指定了默认实参，则返回 [`true]。
 [list:end]
 
@@ -769,16 +774,16 @@ in the evaluation context and [$D] specifies a default argument for [$P], then [
 [:zh_CN] 否则，返回 [`false]。
 [div:end]
 
-[%@lib has_ellipsis_parameter]
+[%@lib is_vararg_function]
 [codeblock:declaration]
-consteval bool has_ellipsis_parameter(info r);
+consteval bool is_vararg_function(info r);
 [codeblock:end]
 
 [div:description]
 [para:returns]
 [:en] [`true] if [`r] represents a function or function type
-that has an ellipsis in its parameter-type-list ([#dcl.fct]).
-[:zh_CN] 如果 [`r] 表示一个形参类型列表中带有省略号的函数或函数模板（[#dcl.fct]），则返回 [`true]。
+that is a vararg function ([#dcl.fct]).
+[:zh_CN] 如果 [`r] 表示的函数或函数模板是变参函数（[#dcl.fct]），则返回 [`true]。
 
 [:en] Otherwise, [`false].
 [:zh_CN] 否则，返回 [`false]。

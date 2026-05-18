@@ -17,9 +17,9 @@ equal to the result ([#concepts.equality]), and let [`Sndr] be [`decltype((sndr)
 并令 [`Sndr] 为 [`decltype((sndr))]。
 
 [:en] Let [`rcvr] be a receiver of type [`Rcvr] with associated environment
-[`env] of type [`Env] such that [`[`:c sender_to]<Sndr, Rcvr>] is [`true].
+[`env] of type [`Env] such that [`[*:c sender-to]<Sndr, Rcvr>] is [`true].
 [:zh_CN] 令 [`rcvr] 为 [`Rcvr] 类型的接收器，带有 [`Env] 类型的关联环境 [`env]，
-使得 [`[`:c sender_to]<Sndr, Rcvr>] 为 [`true]。
+使得 [`[*:c sender-to]<Sndr, Rcvr>] 为 [`true]。
 
 [:en] For the default implementation of the algorithm that produced [`sndr],
 connecting [`sndr] to [`rcvr] and starting the resulting operation state ([#exec.async.ops])
@@ -29,6 +29,7 @@ completion operations whose first argument is a subexpression equal to [`rcvr].
 操作状态（[#exec.async.ops]）必然导致潜在求值（[#basic.def.odr]）一组完成操作，
 其第一个实参是等于 [`rcvr] 的子表达式。
 
+[para]
 [:en] Let [`Sigs] be a pack of completion signatures corresponding to
 this set of completion operations, and let [`CS] be the type of the expression
 [`get_completion_signatures<Sndr, Env>()].
@@ -45,6 +46,74 @@ expression [`get_completion_signatures<Sndr>()] is well-formed and its type is [
 [:zh_CN] 如果 [`Sigs] 中的类型都不依赖于类型 [`Env]，则表达式
 [`get_completion_signatures<Sndr>()] 是良构的，其类型为 [`CS]。
 
+[para]
+[:en] Each completion operation can potentially be evaluated on one of several
+different execution agents as determined by the semantics of the algorithm,
+the environment of the receiver, and the completions of any child senders.
+[:zh_CN] 每个完成操作都有可能根据算法的语义、接收器的环境以及任何子发送器的完成，
+在几个不同的执行代理之一上求值。
+
+[:en] For a completion tag [`T], let [$[`Ds]_{[`T]}] be a pack comprised of the
+set of domain tags associated with the execution agents that could potentially
+evaluate any of the operation's completions with tag [`T].
+[:zh_CN] 对于完成标签 [`T]，令 [$[`Ds]_{[`T]}] 为一个包组，由与可能求值任何标签为 [`T]
+的操作的完成相关联的执行代理的域标签集合组成。
+
+[:en] If there are no potentially evaluated completion operations with tag type [`T],
+then [`get_completion_domain<T>(get_env(sndr), env)] is ill-formed; otherwise,
+it has type [`[*COMMON-DOMAIN]<[$[`Ds]_{[`T]}]...>] ([#exec.snd.expos]).
+[:zh_CN] 如果没有标签类型为 [`T] 的潜在求值完成操作，则表达式
+[`get_completion_domain<T>(get_env(sndr), env)] 是不良构的；否则，它的类型是
+[`[*COMMON-DOMAIN]<[$[`Ds]_{[`T]}]...>]（[#exec.snd.expos]）。
+
+[begin:example]
+[:en] Let [`sndr2] be the sender [`then(sndr, fn)].
+[:zh_CN] 令 [`sndr2] 为发送器 [`then(sndr, fn)]。
+
+[:en] [`sndr2] has the same [`set_value] completion domain tag as [`sndr],
+but if [`fn][=']s evaluation is potentially throwing,
+[`sndr][=']s [`set_error] completion domain tag would be
+the [*COMMON-DOMAIN] of [`sndr][=']s value and error completion domain tags,
+in accordance with the semantics of the [`then] algorithm ([#exec.then]).
+[:zh_CN] [`sndr2] 具有与 [`sndr] 相同的 [`set_value] 完成域标签，但如果 [`fn] 的
+求值是潜在抛出的，则 [`sndr] 的 [`set_error] 完成域标签将是 [`sndr] 的值和错误完成域标签
+的 [*COMMON-DOMAIN]，符合 [`then] 算法的语义（[#exec.then]）。
+[end:example]
+
+[para]
+[:en] If [`sndr] can determine that all of its completion operations with tag [`T]
+happen on execution agents associated with a particular scheduler [`sch]
+(as determined by the semantics of the algorithm, the environment of the receiver,
+and the completion schedulers of any child senders),
+then [`get_completion_scheduler<T>(get_env(sndr), env)]
+is well-formed and has the type and value of [`sch]; otherwise, it is ill-formed.
+[:zh_CN] 如果 [`sndr] 能够确定其所有标签为 [`T] 的完成操作都发生在与某个特定调度器 [`sch]
+相关联的执行代理上（由算法的语义、接收器的环境以及任何子发送器的完成调度器确定），则表达式
+[`get_completion_scheduler<T>(get_env(sndr), env)] 良构并具有 [`sch] 的类型和值；否则，它非良构。
+
+[begin:example]
+[:en] Let [`sndr2] be the sender from the example above.
+[:zh_CN] 令 [`sndr2] 为上面示例中的发送器。
+
+[:en] The [`set_value] completion scheduler of [`sndr2] is
+the [`set_value] completion scheduler of [`sndr], if any.
+[:zh_CN] [`sndr2] 的 [`set_value] 完成调度器是 [`sndr] 的 [`set_value] 完成调度器（如果有）。
+
+[:en] But [`sndr2] can only report a [`set_error] completion scheduler
+when invocations of [`fn] are not potentially throwing or
+when [`sndr] has no [`set_error] completions.
+[:zh_CN] 但是，只有当 [`fn] 的调用不是潜在抛出的或者当 [`sndr] 没有 [`set_error] 完成时，
+[`sndr2] 才能报告 [`set_error] 完成调度器。
+
+[:en] When [`fn] can throw, [`sndr2] could complete with [`set_error] either
+by forwarding an error completion from [`sndr] or
+by completing with the exception thrown by [`fn], which would happen on
+an agent associated with [`sndr][=']s [`set_value] completion scheduler.
+[:zh_CN] 当 [`fn] 可以抛出时，[`sndr2] 可以通过转发 [`sndr] 的错误完成或者通过 [`fn]
+抛出的异常来完成 [`set_error]，这将发生在与 [`sndr] 的 [`set_value] 完成调度器相关联的代理上。
+[end:example]
+
+[para]
 [:en] If a user-provided implementation of the algorithm that produced [`sndr]
 is selected instead of the default:
 [:zh_CN] 如果为产生 [`sndr] 的算法选择了用户提供实现而非缺省实现，那么：

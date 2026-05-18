@@ -3,71 +3,192 @@
 ]
 
 [para]
-[:en] [`continues_on] adapts a sender into one that completes on the specified scheduler.
-[:zh_CN] [`continues_on] 将一个发送器适配为一个在指定调度器上完成的发送器。
+[:en] [`continues_on] schedules work dependent on the completion of a sender
+onto a scheduler[=']s associated execution resource.
+[:zh_CN] [`continues_on] 把依赖于某个发送器之完成的工作调度到某个调度器的关联执行资源之上。
 
 [para]
-[:en] The name [`continues_on] denotes a pipeable sender adaptor object.
-[:zh_CN] 名字 [`continues_on] 代表一个可连管道的发送器适配器对象。
+[:en] The name [`continues_on] denotes a customization point object.
+[:zh_CN] 名字 [`continues_on] 代表一个定制化点对象。
 
-[:en] For subexpressions [`sch] and [`sndr], if [`decltype((sch))] does not
-satisfy [`:c scheduler], or [`decltype((sndr))] does not satisfy [`:c sender],
-[`continues_on(sndr, sch)] is ill-formed.
-[:zh_CN] 对于子表达式 [`sch] 和 [`sndr]，如果 [`decltype((sch))] 不满足
-[`:c scheduler] 或者 [`decltype((sndr))] 不满足 [`:c sender]，那么
-[`continues_on(sndr, sch)] 非良构。
+[:en] For some subexpressions [`sch] and [`sndr], let [`Sch] be [`decltype((sch))]
+and [`Sndr] be [`decltype((sndr))].
+[:zh_CN] 对于子表达式 [`sch] 和 [`sndr]，令 [`Sch] 为 [`decltype((sch))]，并令
+[`Sndr] 为 [`decltype((sndr))]。
+
+[:en] If [`Sch] does not satisfy [`:c scheduler], or [`Sndr] does not satisfy
+[`:c sender], [`continues_on(sndr, sch)] is ill-formed.
+[:zh_CN] 如果 [`Sch] 不满足 [`:c scheduler]，或者 [`Sndr] 不满足 [`:c sender]，
+那么 [`continues_on(sndr, sch)] 非良构。
 
 [para]
-[:en] Otherwise, the expression [`continues_on(sndr, sch)] is expression-equivalent to:
-[:zh_CN] 否则，表达式 [`continues_on(sndr, sch)] 按表达式等价于：
-[codeblock]
-transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender(continues_on, sch, sndr))
-[codeblock:end]
-[:en@~] except that [`sndr] is evaluated only once.
-[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+[:en] Otherwise, the expression [`continues_on(sndr, sch)] is expression-equivalent
+to [`[*make-sender](continues_on, sch, schedule_from(sndr))].
+[:zh_CN] 否则，表达式 [`continues_on(sndr, sch)] 按表达式等价于
+[`[*make-sender](continues_on, sch, schedule_from(sndr))]。
 
 [para]
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.expos]) is
 specialized for [`continues_on_t] as follows:
 [:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [`continues_on_t] 进行如下特化：
+[%@lib [*impls-for]<continues_on_t>]
 [codeblock]
 namespace std::execution {
   template<>
   struct [[redoc("*>")]]impls-for<continues_on_t> : [[redoc("*>")]]default-impls {
-    static constexpr auto [[redoc("*>")]]get-attrs =
-      [](const auto& data, const auto& child) noexcept -> decltype(auto) {
-        return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ATTRS(data), [[redoc("*>")]]FWD-ENV(get_env(child)));
-      };
+    static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+
+    template<class Sndr, class... Env>
+      static consteval void [[redoc("*>")]]check-types();
   };
 }
 [codeblock:end]
 
 [para]
-[:en] Let [`sndr] and [`env] be subexpressions such that [`Sndr] is [`decltype((sndr))].
-[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，使得 [`Sndr] 为 [`decltype((sndr))]。
-
-[:en] If [`[*:c sender-for]<Sndr, continues_on_t>] is [`false], then the expression
-[`continues_on.transform_sender(sndr, env)] is ill-formed; otherwise, it is equal to:
-[:zh_CN] 如果 [`[*:c sender-for]<Sndr, continues_on_t>] 为 [`false]，那么表达式
-[`continues_on.transform_sender(sndr, env)] 非良构；否则，它等于：
+[:en] The member [`[*impls-for]<continues_on_t>::[*get-state]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<continues_on_t>::[*get-state]] 以等价于如下 lambda
+的可调用对象初始化：
 [codeblock]
-auto [_, data, child] = sndr;
-return schedule_from(std::move(data), std::move(child));
+[]<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) noexcept([[redoc("[=seebelow]")]])
+    requires [[redoc("`:c>"")]]sender_in<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(env_of_t<Rcvr>)> {
+  auto& [_, sch, child] = sndr;
+
+  using sched_t = decltype(auto(sch));
+  using variant_t = [[redoc("[=seebelow]")]];
+  using receiver_t = [[redoc("[=seebelow]")]];
+  using operation_t = connect_result_t<schedule_result_t<sched_t>, receiver_t>;
+  constexpr bool nothrow = noexcept(connect(schedule(sch), receiver_t{nullptr}));
+
+  struct [[redoc("*>")]]state-type {
+    Rcvr& [[redoc("*>")]]rcvr;                 // [=expos]
+    variant_t [[redoc("*>")]]async-result;     // [=expos]
+    operation_t [[redoc("*>")]]op-state;       // [=expos]
+
+    explicit [[redoc("*>")]]state-type(sched_t sch, Rcvr& rcvr) noexcept(nothrow)
+      : [[redoc("*>")]]rcvr(rcvr), [[redoc("*>")]]op-state(connect(schedule(sch), receiver_t{this})) {}
+  };
+
+  return [[redoc("*>")]]state-type{sch, rcvr};
+}
 [codeblock:end]
 
-[begin:note]
-[:en] This causes the [`continues_on(sndr, sch)] sender to become
-[`schedule_from(sch, sndr)] when it is connected with a receiver
-whose execution domain does not customize [`continues_on].
-[:zh_CN] 这会造成 [`continues_on(sndr, sch)] 发送器，当与执行域并未定制化
-[`continues_on] 的接收器连接后，将变为 [`schedule_from(sch, sndr)]。
-[end:note]
+[%@lib@member [*check-types][![*impls-for]<schedule_from_t>]]
+[codeblock:declaration]
+template<class Sndr, class... Env>
+  static consteval void [[redoc("*>")]]check-types();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+get_completion_signatures<schedule_result_t<[[redoc("*>")]]data-type<Sndr>>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+auto cs = get_completion_signatures<[[redoc("*>")]]child-type<Sndr>, [[redoc("*>")]]FWD-ENV-T(Env)...>();
+[[redoc("*>")]]decay-copyable-result-datums(cs);   // [?see [#exec.snd.expos]]
+[codeblock:end]
+[div:end]
+
+[para]
+[:en] Objects of the local class [*state-type] can be used to initialize a structured binding.
+[:zh_CN] 局部类 [*state-type] 的对象可用于初始化结构化绑定。
+
+[para]
+[:en] Let [`Sigs] be a pack of the arguments to the [`completion_signatures] specialization
+named by [`completion_signatures_of_t<[*child-type]<Sndr>, [*FWD-ENV-T](env_of_t<Rcvr>)>].
+[:zh_CN] 令 [`Sigs] 为
+[`completion_signatures_of_t<[*child-type]<Sndr>, [*FWD-ENV-T](env_of_t<Rcvr>)>]
+所指名的 [`completion_signatures] 的特例的实参包组。
+
+[:en] Let [*as-tuple] be an alias template such that [`[*as-tuple]<Tag(Args...)>]
+denotes the type [`[*decayed-tuple]<Tag, Args...>], and let
+[*is-nothrow-decay-copy-sig] be a variable template such that
+[`auto([*is-nothrow-decay-copy-sig]<Tag(Args...)>)] is a constant expression of
+type [`bool] and equal to [`(is_nothrow_constructible_v<decay_t<Args>, Args> && ...)].
+[:zh_CN] 令 [*as-tuple] 使得 [`[*as-tuple]<Tag(Args...)>] 代表类型
+[`[*decayed-tuple]<Tag, Args...>] 的别名模板，并令 [*is-nothrow-decay-copy-sig]
+为使得 [`auto([*is-nothrow-decay-copy-sig]<Tag(Args...)>)] 是 [`bool] 类型的
+常量表达式的变量模板，并且等于 [`(is_nothrow_constructible_v<decay_t<Args>, Args> && ...)]。
+
+[:en] Then [`variant_t] denotes the type
+[`variant<monostate, [*as-tuple]<Sigs>..., [*error-completion]...>],
+except with duplicate types removed.
+[:zh_CN] 然后，[`variant_t] 代表类型
+[`variant<monostate, [*as-tuple]<Sigs>..., [*error-completion]...>]，但从中移除重复类型。
+
+[para]
+[:en] [`receiver_t] is an alias for the following exposition-only class:
+[:zh_CN] [`receiver_t] 是如下仅用于阐释的类的别名：
+
+[codeblock:synopsis]
+namespace std::execution {
+  struct [[redoc("*>")]]receiver-type {
+    using receiver_concept = receiver_tag;
+    [[redoc("*>")]]state-type* [[redoc("*>")]]state;          // [=expos]
+
+    void set_value() && noexcept {
+      visit(
+        [this]<class Tuple>(Tuple& result) noexcept -> void {
+          if constexpr (![[redoc("`:c>")]]same_as<monostate, Tuple>) {
+            auto& [tag, ...args] = result;
+            tag(std::move([[redoc("*>")]]state->[[redoc("*>")]]rcvr), std::move(args)...);
+          }
+        },
+        [[redoc("*>")]]state->[[redoc("*>")]]async-result);
+    }
+
+    template<class Error>
+    void set_error(Error&& err) && noexcept {
+      execution::set_error(std::move([[redoc("*>")]]state->[[redoc("*>")]]rcvr), std::forward<Error>(err));
+    }
+
+    void set_stopped() && noexcept {
+      execution::set_stopped(std::move([[redoc("*>")]]state->[[redoc("*>")]]rcvr));
+    }
+
+    decltype(auto) get_env() const noexcept {
+      return [[redoc("*>")]]FWD-ENV(execution::get_env([[redoc("*>")]]state->[[redoc("*>")]]rcvr));
+    }
+  };
+}
+[codeblock:end]
+
+[para]
+[:en] The expression in the [`noexcept] clause of the lambda is [`true] if the construction
+of the returned [*state-type] object is not potentially throwing; otherwise, [`false].
+[:zh_CN] lambda 的 [`noexcept] 子句中的表达式，当所返回的 [*state-type] 对象的构造
+并非潜在抛出时为 [`true]；否则为 [`false]。
+
+[para]
+[:en] The member [`[*impls-for]<continues_on_t>::[*complete]]
+is initialized with a callable object equivalent to the following lambda:
+[:zh_CN] 成员 [`[*impls-for]<continues_on_t>::[*complete]] 以等价于如下 lambda
+的可调用对象初始化：
+
+[codeblock]
+[]<class Tag, class... Args>(auto, auto& state, auto& rcvr, Tag, Args&&... args) noexcept
+    -> void {
+  using result_t = [[redoc("*>")]]decayed-tuple<Tag, Args...>;
+  constexpr bool nothrow = (is_nothrow_constructible_v<decay_t<Args>, Args> && ...);
+
+  try {
+    state.[[redoc("*>")]]async-result.template emplace<result_t>(Tag(), std::forward<Args>(args)...);
+  } catch (...) {
+    if constexpr (!nothrow)
+      state.[[redoc("*>")]]async-result.template emplace<tuple<set_error_t,
+                                                exception_ptr>>(set_error, current_exception());
+  }
+  start(state.[[redoc("*>")]]op-state);
+};
+[codeblock:end]
 
 [para]
 [:en] Let [`out_sndr] be a subexpression denoting a sender returned from
-[`continues_on(sndr, sch)] or one equal to such, and let [`OutSndr] be the type
-[`decltype((out_sndr))].
-[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`continues_on(sndr, sch)] 返回的发送器
+[`continues_on_t(sndr, sch)] or one equal to such, and let [`OutSndr] be the
+type [`decltype((out_sndr))].
+[:zh_CN] 令 [`out_sndr] 为子表达式，代表从 [`continues_on_t(sndr, sch)] 返回的发送器
 或等于它的发送器，并令 [`OutSndr] 为类型 [`decltype((out_sndr))]。
 
 [:en] Let [`out_rcvr] be a subexpression denoting a receiver that has an

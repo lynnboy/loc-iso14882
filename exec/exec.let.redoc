@@ -20,12 +20,17 @@ user-specified callable, which returns a new sender that is connected and starte
 [:en] Let the expression [*let-cpo] be one of [`let_value], [`let_error], or [`let_stopped].
 [:zh_CN] 令表达式 [*let-cpo] 为 [`let_value]，[`let_error] 或 [`let_stopped] 之一。
 
-[:en] For a subexpression [`sndr], let [`[*let-env](sndr)] be
+[:en] Let [*let-tag] denote a unique, empty class type for each of
+[`let_value], [`let_error], and [`let_stopped].
+[:zh_CN] 令 [*let-tag] 代表一个唯一的空类类型，分别对应于 [`let_value]，[`let_error] 和 [`let_stopped]。
+
+[:en] For subexpressions [`sndr] and [`env], let [`[*let-env](sndr, env)] be
 expression-equivalent to the first well-formed expression below:
-[:zh_CN] 对于子表达式 [`sndr]，令 [`[*let-env](sndr)] 按表达式等价于下列中第一个良构表达式：
+[:zh_CN] 对于子表达式 [`sndr] 和 [`env]，令 [`[*let-env](sndr, env)] 按表达式等价于
+下列中第一个良构表达式：
 [list]
-[item] [`[*SCHED-ENV](get_completion_scheduler<[*decayed-typeof]<[*set-cpo]>>(get_env(sndr)))]
-[item] [`[*MAKE-ENV](get_domain, get_domain(get_env(sndr)))]
+[item] [`[*SCHED-ENV](get_completion_scheduler<[*decayed-typeof]<[*set-cpo]>>(get_env(sndr), [*FWD-ENV](env)))]
+[item] [`[*MAKE-ENV](get_domain, get_completion_domain<[*decayed-typeof]<[*set-cpo]>>(get_env(sndr), [*FWD-ENV](env)))]
 [item] [`(void(sndr), env<>{})]
 [list:end]
 
@@ -45,28 +50,42 @@ does not satisfy [*:c movable-value], the expression [`[*let-cpo](sndr, f)] is i
 [:zh_CN] 如果 [`F] 不满足 [`:c invocable]，那么表达式 [`let_stopped(sndr, f)] 非良构。
 
 [para]
-[:en] Otherwise, the expression [`[*let-cpo](sndr, f)] is expression-equivalent to:
-[:zh_CN] 否则，表达式 [`[*let-cpo](sndr, f)] 按表达式等价于：
+[:en] Otherwise, the expression [`[*let-cpo](sndr, f)] is expression-equivalent to
+[`[*make-sender]([*let-cpo], f, sndr)].
+[:zh_CN] 否则，表达式 [`[*let-cpo](sndr, f)] 按表达式等价于 [`[*make-sender]([*let-cpo], f, sndr)]。
+
+[para]
+[:en] Let [*let-data] denote the following exposition-only class template:
+[:zh_CN] 令 [*let-data] 代表以下仅用于阐释的类模板：
 [codeblock]
-transform_sender([[redoc("*>")]]get-domain-early(sndr), [[redoc("*>")]]make-sender([[redoc("*>")]]let-cpo, f, sndr))
+template<class Sndr, class Fn>
+struct [[redoc("*>")]]let-data {
+  Sndr [[redoc("*>")]]sndr;    // [=expos]
+  Fn [[redoc("*>")]]fn;        // [=expos]
+};
 [codeblock:end]
-[:en@~] except that [`sndr] is evaluated only once.
-[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+
+[para]
+[:en] Then let the expression [`[*let-cpo].transform_sender(s, es...)]
+be expression-equivalent to:
+[:zh_CN] 然后令表达式 [`[*let-cpo].transform_sender(s, es...)] 按表达式等价于：
+[codeblock]
+[[redoc("*>")]]make-sender([[redoc("*>")]]let-tag{}, [[redoc("*>")]]let-data{s.template [[redoc("*>")]]get<2>(), s.template [[redoc("*>")]]get<1>()})
+[codeblock:end]
+[:en@~] except that [`s] is evaluated only once.
+[:zh_CN@~] 但 [`s] 仅被求值一次。
 
 [para]
 [:en] The exposition-only class template [*impls-for] ([#exec.snd.expos]) is
-specialized for [*let-cpo] as follows:
-[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [*let-cpo] 进行如下特化：
+specialized for [*let-tag] as follows:
+[:zh_CN] 仅用于阐释的类模板 [*impls-for]（[#exec.snd.expos]）针对 [*let-tag] 进行如下特化：
 [%@lib [*impls-for]<[*decayed-typeof]<[*let-cpo]>>]
 [codeblock:synopsis]
 namespace std::execution {
-  template<class State, class Rcvr, class... Args>
-  void [[redoc("*>")]]let-bind(State& state, Rcvr& rcvr, Args&&... args);      // [=expos]
-
   template<>
-  struct [[redoc("*>")]]impls-for<[[redoc("*>")]]decayed-typeof<[[redoc("*>")]]let-cpo>> : [[redoc("*>")]]default-impls {
+  struct [[redoc("*>")]]impls-for<[[redoc("*>")]]let-tag> : [[redoc("*>")]]default-impls {
     static constexpr auto [[redoc("*>")]]get-state = [[redoc("[=seebelow]")]];
-    static constexpr auto [[redoc("*>")]]complete = [[redoc("[=seebelow]")]];
+    static constexpr auto [[redoc("*>")]]start = [[redoc("[=seebelow]")]];
 
     template<class Sndr, class... Env>
       static consteval void [[redoc("*>")]]check-types();
@@ -81,7 +100,7 @@ namespace std::execution {
 namespace std::execution {
   template<class Rcvr, class Env>
   struct [[redoc("*>")]]receiver2 {
-    using receiver_concept = receiver_t;
+    using receiver_concept = receiver_tag;
 
     template<class... Args>
     void set_value(Args&&... args) && noexcept {
@@ -114,14 +133,15 @@ namespace std::execution {
 [:en@~] [`decltype(e)] models [*:c queryable] and
 [:zh_CN@~] [`decltype(e)] 构成 [*:c queryable] 并且
 [item]
-[:en@~] given a query object [`q], the expression [`e.query(q)]
-is expression-equivalent to [`[*env].query(q)] if that expression is valid;
-otherwise, if the type of [`q] satisfies [*:c forwarding-query],
-[`e.query(q)] is expression-equivalent to [`get_env([*rcvr]).query(q)];
-otherwise, [`e.query(q)] is ill-formed.
-[:zh_CN@~] 给定查询对象 [`q]，如果表达式 [`e.query(q)] 有效，那么该表达式按表达式等价于
-[`[*env].query(q)]；否则，如果 [`q] 的类型符合 [*:c forwarding-query]，那么
-[`e.query(q)] 按表达式等价于 [`get_env([*rcvr]).query(q)]；否则，[`e.query(q)] 非良构。
+[:en@~] given a query object [`q] and a pack of subexpressions [`args], the expression
+[`e.query(q, args...)] is expression-equivalent to [`[*env].query(q, args...)]
+if that expression is valid; otherwise, if the type of [`q] satisfies
+[*:c forwarding-query], [`e.query(q, args...)] is expression-equivalent to
+[`get_env([*rcvr]).query(q, args...)]; otherwise, [`e.query(q, args...)] is ill-formed.
+[:zh_CN@~] 给定查询对象 [`q] 和子表达式包组 [`args]，如果表达式 [`e.query(q, args...)] 有效，
+那么该表达式按表达式等价于 [`[*env].query(q, args...)]；否则，如果 [`q] 的类型符合
+[*:c forwarding-query]，那么 [`e.query(q, args...)] 按表达式等价于
+[`get_env([*rcvr]).query(q, args...)]；否则，[`e.query(q, args...)] 非良构。
 [list:end]
 
 [%@lib@member [*check-types][![*impls-for]<[*decayed-typeof]<[*let-cpo]>>]]
@@ -151,9 +171,88 @@ cs.[[redoc("*>")]]for-each([[redoc("*>")]]overload-set(fn, [](auto){}));
 [item] [`[^sender]<invoke_result_t<LetFn, decay_t<Ts>&...>>]
 [item] [`sizeof...(Env) == 0 || [^sender_in]<invoke_result_t<LetFn, decay_t<Ts>&...>, [^env-t]...>]
 [list:end]
-[:en@~] where [`[^env-t]] is the pack [`decltype([*let-cpo].transform_env(declval<Sndr>(), declval<Env>()))].
-[:zh_CN@~] 其中 [`[^env-t]] 是包组 [`decltype([*let-cpo].transform_env(declval<Sndr>(), declval<Env>()))]。
+[:en@~] where [`[^env-t]] is the pack
+[`decltype([*JOIN-ENV]([*let-env](declval<[*child-type]<Sndr>>(), declval<Env>()), [*FWD-ENV](declval<Env>())))].
+[:zh_CN@~] 其中 [`[^env-t]] 是包组
+[`decltype([*JOIN-ENV]([*let-env](declval<[*child-type]<Sndr>>(), declval<Env>()), [*FWD-ENV](declval<Env>())))]。
 [div:end]
+
+[para]
+[:en] Let [*let-state] denote the following exposition-only class template:
+[:zh_CN] 令 [*let-state] 代表以下仅用于阐释的类模板：
+
+[codeblock:synopsis]
+template<class Cpo, class Sndr, class Fn, class Rcvr, class ArgsVariant, class OpsVariant>
+struct [[redoc("*>")]]let-state {
+  using [[redoc("*>")]]env_t = decltype([[redoc("*>")]]let-env(declval<Sndr>()), get_env(declval<Rcvr&>()));  // [=expos]
+  Fn [[redoc("*>")]]fn;                                                                        // [=expos]
+  env_t [[redoc("*>")]]env;                                                                    // [=expos]
+  ArgsVariant [[redoc("*>")]]args;                                                             // [=expos]
+  OpsVariant [[redoc("*>")]]ops;                                                               // [=expos]
+
+  template<class Tag, class... Ts>
+  constexpr void [[redoc("*>")]]impl(Rcvr& rcvr, Tag tag, Ts&&... ts) noexcept // [=expos]
+  {
+    using args_t = [[redoc("*>")]]decayed-tuple<Ts...>;
+    using receiver_type = [[redoc("*>")]]receiver2<Rcvr, env_t>;
+    using sender_type = apply_result_t<Fn, args_t&>;
+    if constexpr (is_same_v<Tag, Cpo>) {
+      try {
+        auto& tuple = [[redoc("*>")]]args.template emplace<args_t>(std::forward<Ts>(ts)...);
+        [[redoc("*>")]]ops.template emplace<monostate>();
+        auto&& sndr = apply(std::move([[redoc("*>")]]fn), tuple);
+        using op_t = connect_result_t<sender_type, receiver_type>;
+        auto mkop2 = [&] {
+          return connect(std::forward<sender_type>(sndr),
+          receiver_type{[[redoc("*>")]]rcvr, [[redoc("*>")]]env});
+        };
+        auto& op = [[redoc("*>")]]ops.template emplace<op_t>([[redoc("*>")]]emplace-from{mkop2});
+        start(op);
+      } catch (...) {
+        constexpr bool nothrow =
+          is_nothrow_constructible_v<args_t, Ts...> &&
+          is_nothrow_applicable_v<Fn, args_t&> &&
+          noexcept(connect(declval<sender_type>(), receiver_type{[[redoc("*>")]]rcvr, [[redoc("*>")]]env}));
+        if constexpr (!nothrow) {
+          set_error(std::move([[redoc("*>")]]rcvr), current_exception());
+        }
+      }
+    } else {
+      tag(std::move([[redoc("*>")]]rcvr), std::forward<Ts>(ts)...);
+    }
+  }
+
+  struct [[redoc("*>")]]receiver {     // [=expos]
+    [[redoc("*>")]]let-state& state;   // [=expos]
+    Rcvr& [[redoc("*>")]]rcvr;         // [=expos]
+
+    using receiver_concept = receiver_tag;
+
+    template<class... Args>
+    constexpr void set_value(Args&&... args) noexcept {
+      [[redoc("*>")]]state.[[redoc("*>")]]impl([[redoc("*>")]]rcvr, execution::set_value, std::forward<Args>(args)...);
+    }
+    template<class... Args>
+    constexpr void set_error(Args&&... args) noexcept {
+      [[redoc("*>")]]state.[[redoc("*>")]]impl([[redoc("*>")]]rcvr, execution::set_error, std::forward<Args>(args)...);
+    }
+    template<class... Args>
+    constexpr void set_stopped(Args&&... args) noexcept {
+      [[redoc("*>")]]state.[[redoc("*>")]]impl([[redoc("*>")]]rcvr, execution::set_stopped, std::forward<Args>(args)...);
+    }
+
+    constexpr env_of_t<const Rcvr&> get_env() const noexcept {
+      return execution::get_env([[redoc("*>")]]rcvr);
+    }
+  };
+
+  using [[redoc("*>")]]op_t = connect_result_t<Sndr, [[redoc("*>")]]receiver>;                                // [=expos]
+
+  constexpr [[redoc("*>")]]let-state(Sndr&& sndr, Fn fn, Rcvr& rcvr)                           // [=expos]
+    : [[redoc("*>")]]fn(std::move(fn)), [[redoc("*>")]]env([[redoc("*>")]]let-env(sndr), get_env(rcvr)),
+      [[redoc("*>")]]ops(in_place_type<[[redoc("*>")]]op_t>, std::forward<Sndr>(sndr), [[redoc("*>")]]receiver{*this, rcvr}) {}
+};
+[codeblock:end]
 
 [para]
 [:en] [`[*impls-for]<[*decayed-typeof]<[*let-cpo]>>::[*get-state]]
@@ -162,20 +261,14 @@ is initialized with a callable object equivalent to the following:
 以下 lambda 的可调用对象初始化：
 [codeblock]
 []<class Sndr, class Rcvr>(Sndr&& sndr, Rcvr& rcvr) requires [[redoc("[=seebelow]"")]] {
-  auto& [_, fn, child] = sndr;
+  auto& [child, fn] = data;
+  using child_t = decltype(std::forward_like<Sndr>(child));
   using fn_t = decay_t<decltype(fn)>;
-  using env_t = decltype([[redoc("*>")]]let-env(child));
   using args_variant_t = [[redoc("[=seebelow]")]];
-  using ops2_variant_t = [[redoc("[=seebelow]")]];
-
-  struct [[redoc("*>")]]state-type {
-    fn_t [[redoc("*>")]]fn;                    // [=expos]
-    env_t [[redoc("*>")]]env;                  // [=expos]
-    args_variant_t [[redoc("*>")]]args;        // [=expos]
-    ops2_variant_t [[redoc("*>")]]ops2;        // [=expos]
-  };
-  return [[redoc("*>")]]state-type{[[redoc("*>")]]allocator-aware-forward(std::forward_like<Sndr>(fn), rcvr),
-                    [[redoc("*>")]]let-env(child), {}, {}};
+  using ops_variant_t = [[redoc("[=seebelow]")]];
+  using state_t = [[redoc("*>")]]let-state<[[redoc("*>")]]decayed-typeof<[[redoc("*>")]]set-cpo>, child_t, fn_t, Rcvr,
+                            args_variant_t, ops_variant_t>;
+  return state_t(std::forward_like<Sndr>(child), std::forward_like<Sndr>(fn), [[redoc("*>")]]rcvr);
 }
 [codeblock:end]
 
@@ -206,10 +299,12 @@ that [`[*as-sndr2]<Tag(Args...)>] denotes the type [`[*call-result-t]<F, decay_t
 [:zh_CN] 给定类型 [`Tag] 和包组 [`Args]，令 [*as-sndr2] 为一个别名模板，使得
 [`[*as-sndr2]<Tag(Args...)>] 代表类型 [`[*call-result-t]<F, decay_t<Args>&...>]。
 
-[:en] Then [`ops2_variant_t] denotes the type
-[:zh_CN] 然后令 [`ops2_variant_t] 代表类型
+[:en] Then [`ops_variant_t] denotes the type
+[:zh_CN] 然后令 [`ops_variant_t] 代表类型
 [codeblock]
-variant<monostate, connect_result_t<[[redoc("*>")]]as-sndr2<LetSigs>, [[redoc("*>")]]receiver2<Rcvr, env_t>>...>
+variant<monostate,
+        connect_result_t<child_t, [[redoc("*>")]]let-state::[[redoc("*>")]]receiver>,
+        connect_result_t<[[redoc("*>")]]as-sndr2<LetSigs>, [[redoc("*>")]]receiver2<Rcvr, env_t>>...>
 [codeblock:end]
 [:en@~] except with duplicate types removed.
 [:zh_CN@~] 但移除其中的重复类型。
@@ -221,49 +316,13 @@ if and only if the types [`args_variant_t] and [`ops2_variant_t] are well-formed
 [`ops2_variant_t] 良构时得以满足。
 
 [para]
-[:en] The exposition-only function template [*let-bind] has effects equivalent to:
-[:zh_CN] 仅用于阐释的函数模板 [*let-bind] 的效果等价于：
-[codeblock]
-using args_t = [[redoc("*>")]]decayed-tuple<Args...>;
-auto mkop2 = [&] {
-  return connect(
-    apply(std::move(state.fn),
-          state.args.template emplace<args_t>(std::forward<Args>(args)...)),
-    [[redoc("*>")]]receiver2{rcvr, std::move(state.env)});
-};
-start(state.ops2.template emplace<decltype(mkop2())>([[redoc("*>")]]emplace-from{mkop2}));
-[codeblock:end]
-
-[para]
-[:en] [`[*impls-for]<[*decayed-typeof]<let-cpo>>::[*complete]]
+[:en] [`[*impls-for]<[*let-tag]>::[*start]]
 is initialized with a callable object equivalent to the following:
-[:zh_CN] [`[*impls-for]<[*decayed-typeof]<let-cpo>>::[*complete]] 以等价于以下
-lambda 的可调用对象初始化：
+[:zh_CN] [`[*impls-for]<[*let-cpo]>::[*start]] 以等价于以下 lambda 的可调用对象初始化：
 [codeblock]
-[]<class Tag, class... Args>
-  (auto, auto& state, auto& rcvr, Tag, Args&&... args) noexcept -> void {
-    if constexpr ([[redoc("`:c>")]]same_as<Tag, [[redoc("*>")]]decayed-typeof<[[redoc("*>")]]set-cpo>>) {
-      [[redoc("*>")]]TRY-EVAL(rcvr, [[redoc("*>")]]let-bind(state, rcvr, std::forward<Args>(args)...));
-    } else {
-      Tag()(std::move(rcvr), std::forward<Args>(args)...);
-    }
-  }
-[codeblock:end]
-
-[para]
-[:en] Let [`sndr] and [`env] be subexpressions, and let [`Sndr] be [`decltype((sndr))].
-[:zh_CN] 令 [`sndr] 和 [`env] 为子表达式，并令 [`Sndr] 为 [`decltype((sndr))]。
-
-[:en] If [`[*:c sender-for]<Sndr, [*decayed-typeof]<[*let-cpo]>>] is [`false],
-then the expression [`[*let-cpo].transform_env(sndr, env)] is ill-formed.
-[:zh_CN] 如果 [`[*:c sender-for]<Sndr, [*decayed-typeof]<[*let-cpo]>>] 为 [`false]，
-则表达式 [`[*let-cpo].transform_env(sndr, env)] 非良构。
-
-[:en] Otherwise, it is equal to:
-[:zh_CN] 否则，它等于：
-[codeblock]
-auto& [_, _, child] = sndr;
-return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]let-env(child), [[redoc("*>")]]FWD-ENV(env));
+[]<class State, class Rcvr>(State& state, Rcvr&) noexcept {
+  start(get<typename State::[[redoc("*>")]]op_t>(state.[[redoc("*>")]]ops));
+}
 [codeblock:end]
 
 [para]

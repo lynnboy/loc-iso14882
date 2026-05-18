@@ -24,6 +24,7 @@ namespace std::meta {
     optional<int> alignment;
     optional<int> bit_width;
     bool no_unique_address = false;
+    vector<info> annotations;
   };
 }
 [codeblock:end]
@@ -82,8 +83,10 @@ consteval info data_member_spec(info type, data_member_options options);
 
 [div:description]
 [para:returns]
-[:en] A reflection of a data member description [$(T, N, A, W, \mathit{NUA})] ([#class.mem.general]) where
-[:zh_CN] 某个数据成员描述 [$(T, N, A, W, \mathit{NUA})]（[#class.mem.general]）的反射，其中
+[:en] A reflection of a data member description
+[$(T, N, A, W, \mathit{NUA}, \mathit{ANN})] ([#class.mem.general]) where
+[:zh_CN] 某个数据成员描述
+[$(T, N, A, W, \mathit{NUA}, \mathit{ANN})]（[#class.mem.general]）的反射，其中
 [list]
 [item]
 [:en] [$T] is the type represented by [`dealias(type)],
@@ -99,12 +102,16 @@ if [`options.alignment] does not contain a value,
 不含值时为 [$\bot]，
 [item]
 [:en] [$W] is either the value held by [`options.bit_width] or [$\bot] if
-[`options.bit_width] does not contain a value, and
+[`options.bit_width] does not contain a value,
 [:zh_CN] [$W] 为 [`options.bit_width] 所持有的值，或当 [`options.bit_width]
-不含值时为 [$\bot]，而
+不含值时为 [$\bot]，
 [item]
-[:en] [$\mathit{NUA}] is the value held by [`options.no_unique_address].
-[:zh_CN] [$\mathit{NUA}] 是 [`options.no_unique_address] 所持有的值。
+[:en] [$\mathit{NUA}] is the value held by [`options.no_unique_address], and
+[:zh_CN] [$\mathit{NUA}] 是 [`options.no_unique_address] 所持有的值，而
+[item]
+[:en] [$\mathit{ANN}] is the sequence of values [`constant_of(r)]
+for each [`r] in [`options.annotations].
+[:zh_CN] [$\mathit{ANN}] 是对于 [`options.annotations] 中每个 [`r] 的 [`constant_of(r)] 值的序列。
 [list:end]
 
 [begin:note]
@@ -156,8 +163,9 @@ ordinary literal encoding;
 [end:note]
 
 [item]
-[:en] if [`options.name] does not contain a value, then [`options.bit_width] contains a value;
-[:zh_CN] 当 [`options.name] 不含值时，[`options.bit_width] 含有值；
+[:en] if [`options.name] does not contain a value, then [`options.bit_width]
+contains a value and [`options.annotations] is empty;
+[:zh_CN] 当 [`options.name] 不含值时，[`options.bit_width] 含有值且 [`options.annotations] 为空；
 
 [item]
 [:en] if [`options.bit_width] contains a value [$V], then
@@ -178,12 +186,23 @@ ordinary literal encoding;
  [item]
 [:en@~] if [$V] equals [`0], then [`options.name] does not contain a value; and
 [:zh_CN@~] 若 [$V] 等于 [`0]，则 [`options.name] 不含有值；以及
+ [item]
+[:en@~] if [`options.name] does not contain a value, then
+[`is_const(type) || is_volatile(type)] is [`false]; and
+[:zh_CN@~] 若 [`options.name] 不含有值，则 [`is_const(type) || is_volatile(type)] 为 [`false]；以及
  [list:end]
 
 [item]
 [:en] if [`options.alignment] contains a value, it is an alignment value ([#basic.align])
-not less than [`alignment_of(type)].
-[:zh_CN] 当 [`options.alignment] 含有值时，它是不小于 [`alignment_of(type)] 的对齐值（[#basic.align]）。
+not less than [`alignment_of(type)]; and
+[:zh_CN] 当 [`options.alignment] 含有值时，它是不小于 [`alignment_of(type)] 的对齐值（[#basic.align]）；以及
+
+[item]
+[:en] for every reflection [`r] in [`options.annotations], [`[*has-type](r)] is [`true],
+[`type_of(r)] represents a non-array object type, and
+evaluation of [`constant_of(r)] does not exit via an exception.
+[:zh_CN] 对于 [`options.annotations] 中的每个反射 [`r]，[`[*has-type](r)] 均为 [`true]，
+[`type_of(r)] 均表示非数组对象类型，且 [`constant_of(r)] 的求值均不会以异常退出。
 [list:end]
 [div:end]
 
@@ -212,10 +231,11 @@ template<[[redoc("`:c>")]]reflection_range R = initializer_list<info>>
 and [$r_K] be the [$K^\text{th}] reflection value in [`mdescrs].
 [:zh_CN] 令 [$C] 为 [`class_type] 表示的类型，并令 [$r_K] 为 [`mdescrs] 中的第 [$K] 个反射值。
 
-[:en] For every [$r_K] in [`mdescrs], let [$(T_K, N_K, A_K, W_K, \mathit{NUA}_K)] be
+[:en] For every [$r_K] in [`mdescrs], let
+[$(T_K, N_K, A_K, W_K, \mathit{NUA}_K), \mathit{ANN}_K] be
 the corresponding data member description represented by [$r_K].
 [:zh_CN] 对于 [`mdescrs] 中的每个 [$r_K]，令
-[$(T_K, N_K, A_K, W_K, \mathit{NUA}_K)] 为 [$r_K] 所表示的对应数据成员描述。
+[$(T_K, N_K, A_K, W_K, \mathit{NUA}_K), \mathit{ANN}_K] 为 [$r_K] 所表示的对应数据成员描述。
 
 [para:constantwhen]
 [list]
@@ -265,9 +285,9 @@ if [$N_K] is not [$\bot] and [$N_L] is not [$\bot], then either:
 [list:end]
 
 [para:effects]
-[:en] Produces an injected declaration [$D] ([#expr.const])
+[:en] Produces an injected declaration [$D] ([#expr.const.reflect])
 that defines [$C] and has properties as follows:
-[:zh_CN] 阐释一个定义 [$C] 的注入声明式 [$D]（[#expr.const]），并具有下性质：
+[:zh_CN] 阐释一个定义 [$C] 的注入声明式 [$D]（[#expr.const.reflect]），并具有下性质：
 
 [list]
 [item]
@@ -280,9 +300,9 @@ currently under evaluation.
 [:zh_CN] [$D] 的位点紧跟当前求值的核心常量表达式之后。
 
 [item]
-[:en] The characteristic sequence of [$D] ([#expr.const])
+[:en] The characteristic sequence of [$D] ([#expr.const.reflect])
 is the sequence of reflection values [$r_K].
-[:zh_CN] [$D] 的特性序列（[#expr.const]）为反射值 [$r_K] 的序列。
+[:zh_CN] [$D] 的特性序列（[#expr.const.reflect]）为反射值 [$r_K] 的序列。
 
 [item]
 [:en] If [$C] is a specialization of a templated class [$T],
@@ -326,6 +346,12 @@ if and only if [$\mathit{NUA}_K] is [`true].
 
 [:en] Otherwise, [$M_K] has no [~alignment-specifier].
 [:zh_CN] 否则，[$M_K] 没有[~对齐说明符]。
+
+ [item]
+[:en] For every reflection [`r] in [$\mathit{ANN}_K], [$M_K] has an annotation
+whose underlying constant ([#dcl.attr.annotation]) is [`r].
+[:zh_CN] 对于 [$\mathit{ANN}_K] 中的每个反射 [`r]，[$M_K] 均带有一个底层常量为 [`r]
+的标注（[#dcl.attr.annotation]）。
  [list:end]
 
 [item]

@@ -51,16 +51,9 @@ pipeable sender adaptor closure object.
 
 [para]
 [:en] Otherwise, if [`decltype((sndr))] satisfies [`:c sender], the expression
-[`on(sndr, sch)] is expression-equivalent to:
+[`on(sndr, sch)] is expression-equivalent to [`[*make-sender](on, sch, sndr)].
 [:zh_CN] 否则，如果 [`decltype((sndr))] 满足 [`:c sender]，表达式 [`on(sndr, sch)]
-按表达式等价于：
-[codeblock]
-transform_sender(
-  [[redoc("*>")]]query-with-default(get_domain, sch, default_domain()),
-  [[redoc("*>")]]make-sender(on, sch, sndr))
-[codeblock:end]
-[:en@~] except that [`sch] is evaluated only once.
-[:zh_CN@~] 但 [`sch] 仅被求值一次。
+按表达式等价于 [`[*make-sender](on, sch, sndr)]。
 
 [para]
 [:en] For subexpressions [`sndr], [`sch], and [`closure], if
@@ -77,15 +70,10 @@ transform_sender(
 [:zh_CN] [`closure] 不是可连管道的发送器适配器闭包对象（[#exec.adapt.obj]），
 [list:end]
 [:en@~] the expression [`on(sndr, sch, closure)] is ill-formed;
-otherwise, it is expression-equivalent to:
-[:zh_CN@~] 表达式 [`on(sndr, sch, closure)] 非良构；否则它等价于：
-[codeblock]
-transform_sender(
-  [[redoc("*>")]]get-domain-early(sndr),
-  [[redoc("*>")]]make-sender(on, [[redoc("*>")]]product-type{sch, closure}, sndr))
-[codeblock:end]
-[:en@~] except that [`sndr] is evaluated only once.
-[:zh_CN@~] 但 [`sndr] 仅被求值一次。
+otherwise, it is expression-equivalent to
+[`[*make-sender](on, [*product-type]{sch, closure}, sndr)].
+[:zh_CN@~] 表达式 [`on(sndr, sch, closure)] 非良构；否则它按表达式等价于
+[`[*make-sender](on, [*product-type]{sch, closure}, sndr)]。
 
 [para]
 [:en] Let [`out_sndr] and [`env] be subexpressions, let [`OutSndr] be
@@ -93,65 +81,29 @@ transform_sender(
 [:zh_CN] 令 [`out_sndr] 和 [`env] 为子表达式，令 [`OutSndr] 为
 [`decltype((out_sndr))]，并令 [`Env] 为 [`decltype((env))]。
 
-[:en] If [`[*:c sender-for]<OutSndr, on_t>] is [`false], then the expressions
-[`on.transform_env(out_sndr, env)] and [`on.transform_sender(out_sndr, env)] are ill-formed.
+[:en] If [`[*:c sender-for]<OutSndr, on_t>] is [`false], then the expression
+[`on.transform_sender(set_value, out_sndr, env)] is ill-formed.
 [:zh_CN] 如果 [`[*:c sender-for]<OutSndr, on_t>] 为 [`false]，则表达式
-[`on.transform_env(out_sndr, env)] 和 [`on.transform_sender(out_sndr, env)] 都非良构。
+[`on.transform_sender(set_value, out_sndr, env)] 非良构。
 
 [para]
-[:en] Otherwise:
-[:zh_CN] 否则：
-
-[:en] Let [*not-a-scheduler] be an unspecified empty class type.
-[:zh_CN] 令 [*not-a-scheduler] 为某个未指明的空类类型。
-
-[para]
-[:en] The expression [`on.transform_env(out_sndr, env)] has effects equivalent to:
-[:zh_CN] 表达式 [`on.transform_env(out_sndr, env)] 的效果等价于：
-[codeblock]
-auto&& [_, data, _] = out_sndr;
-if constexpr ([[redoc("`:c>")]]scheduler<decltype(data)>) {
-  return [[redoc("*>")]]JOIN-ENV([[redoc("*>")]]SCHED-ENV(std::forward_like<OutSndr>(data)), [[redoc("*>")]]FWD-ENV(std::forward<Env>(env)));
-} else {
-  return std::forward<Env>(env);
-}
-[codeblock:end]
-
-[para]
-[:en] The expression [`on.transform_sender(out_sndr, env)] has effects equivalent to:
-[:zh_CN] 表达式 [`on.transform_sender(out_sndr, env)] 的效果等价于：
+[:en] Otherwise, the expression [`on.transform_sender(set_value, out_sndr, env)]
+has effects equivalent to:
+[:zh_CN] 否则，表达式 [`on.transform_sender(out_sndr, env)] 的效果等价于：
 [codeblock]
 auto&& [_, data, child] = out_sndr;
 if constexpr ([[redoc("`:c>")]]scheduler<decltype(data)>) {
-  auto orig_sch =
-    [[redoc("*>")]]query-with-default(get_scheduler, env, [[redoc("*>")]]not-a-scheduler());
-
-  if constexpr ([[redoc("`:c>")]]same_as<decltype(orig_sch), [[redoc("*>")]]not-a-scheduler>) {
-    return [[redoc("*>")]]not-a-sender{};
-  } else {
-    return continues_on(
-      starts_on(std::forward_like<OutSndr>(data), std::forward_like<OutSndr>(child)),
-      std::move(orig_sch));
-  }
+  auto orig_sch = [[redoc("*>")]]call-with-default(get_start_scheduler, [[redoc("*>")]]not-a-scheduler(), env);
+  return continues_on(
+    starts_on(std::forward_like<OutSndr>(data), std::forward_like<OutSndr>(child)),
+    std::move(orig_sch));
 } else {
   auto& [sch, closure] = data;
-  auto orig_sch = [[redoc("*>")]]query-with-default(
-    get_completion_scheduler<set_value_t>,
-    get_env(child),
-    [[redoc("*>")]]query-with-default(get_scheduler, env, [[redoc("*>")]]not-a-scheduler()));
-
-  if constexpr ([[redoc("`:c>")]]same_as<decltype(orig_sch), [[redoc("*>")]]not-a-scheduler>) {
-    return [[redoc("*>")]]not-a-sender{};
-  } else {
-    return write_env(
-      continues_on(
-        std::forward_like<OutSndr>(closure)(
-          continues_on(
-            write_env(std::forward_like<OutSndr>(child), [[redoc("*>")]]SCHED-ENV(orig_sch)),
-            sch)),
-        orig_sch),
-      [[redoc("*>")]]SCHED-ENV(sch));
-  }
+  auto orig_sch = [[redoc("*>")]]call-with-default(
+    get_completion_scheduler<set_value_t>, [[redoc("*>")]]not-a-scheduler(), get_env(child), env);
+  return continues_on(
+    std::forward_like<OutSndr>(closure)(continues_on(std::forward_like<OutSndr>(child), sch)),
+    orig_sch);
 }
 [codeblock:end]
 
@@ -174,8 +126,8 @@ connecting [`out_sndr] with [`out_rcvr].
 [:zh_CN] 调用 [`start(op)] 应当
 [list]
 [item]
-[:en] remember the current scheduler, [`get_scheduler(get_env(rcvr))];
-[:zh_CN] 记录当前调度器，[`get_scheduler(get_env(rcvr))]；
+[:en] remember the current scheduler, which is obtained by [`get_start_scheduler(get_env(rcvr))];
+[:zh_CN] 记录由 [`get_start_scheduler(get_env(rcvr))] 获取的当前调度器；
 [item]
 [:en] start [`sndr] on an execution agent belonging to
 [`sch][=']s associated execution resource;
@@ -214,13 +166,10 @@ connecting [`out_sndr] with [`out_rcvr].
 [:zh_CN] 调用 [`start(op)] 应当
 [list]
 [item]
-[:en@~] remember the current scheduler, which is the first of the following
-expressions that is well-formed:
-[:zh_CN@~] 记录当前调度器，它是下列中第一个良构的表达式：
-[list]
-[item] [`get_completion_scheduler<set_value_t>(get_env(sndr))]
-[item] [`get_scheduler(get_env(rcvr))];
-[list:end]
+[:en@~] remember the current scheduler, which is
+[`get_completion_scheduler<set_value_t>(get_env(sndr), get_env(out_rcvr))];
+[:zh_CN@~] 记录当前调度器，即
+[`get_completion_scheduler<set_value_t>(get_env(sndr), get_env(out_rcvr))]：
 [item]
 [:en] start [`sndr] on the current execution agent;
 [:zh_CN] 在当前执行代理上启动 [`sndr]；

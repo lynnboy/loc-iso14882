@@ -1,0 +1,241 @@
+[section#expr.const.init
+    [:en] Constant initialization
+    [:zh_CN] 常量初始化
+]
+
+[para]
+[:en] The constituent values and constituent references of a variable [`x]
+are defined as follows:
+[:zh_CN] 变量 [`x] 的成分值和成分引用定义如下：
+[list]
+[item]
+[:en] If [`x] declares an object, the constituent values and references of that
+object ([#intro.object]) are constituent values and references of [`x].
+[:zh_CN] 若 [`x] 声明的是对象，则该对象的成分值和引用（[#intro.object]）就是 [`x] 的成分值和引用。
+[item]
+[:en] If [`x] declares a reference, that reference is a constituent reference of [`x].
+[:zh_CN] 如果 [`x] 声明的是引用，则该引用是 [`x] 的成分引用。
+[list:end]
+
+[:en] For any constituent reference [`r] of a variable [`x], if [`r] is bound to
+a temporary object or subobject thereof whose lifetime is extended to that of [`r],
+the constituent values and references of that temporary object
+are also constituent values and references of [`x], recursively.
+[:zh_CN] 对于变量 [`x] 的任何成分引用 [`r]，如果 [`r] 绑定到了临时对象或其子对象
+且其生存期超出 [`r] 的生存期，则该临时对象的成分值和引用也是 [`x] 的成分值和引用，递归适用。
+
+[para]
+[:en] An object [$o] is [+constexpr-referenceable] from a point [$P] if
+[:zh_CN] 以下情况下，对象 [$o] 从位置 [$P] [+可 constexpr 引用]：
+
+[list]
+[item]
+[:en] [$o] has static storage duration, or
+[:zh_CN] [$o] 具有静态存储期，或者
+
+[item]
+[:en] [$o] has automatic storage duration, and, letting [`v] denote
+[:zh_CN] [$o] 具有自动存储期，以及，令 [`v] 代表
+[list]
+[item]
+[:en@~] the variable corresponding to [$o][=']s complete object or
+[:zh_CN@~] 对应于 [$o] 的完整对象的变量或
+[item]
+[:en@~] the variable to whose lifetime that of [$o] is extended,
+[:zh_CN] [$o] 扩展了其生存期的变量，
+[list:end]
+[:en@~] the smallest scope enclosing [`v] and the smallest scope enclosing [$P]
+that are neither
+[:zh_CN@~] 包围 [`v] 的最小作用域和包围 [$P] 的并非
+[list]
+[item]
+[:en@~] block scopes nor
+[:zh_CN@~] 块作用域或
+[item]
+[:en@~] function parameter scopes associated with a [~requirement-parameter-list]
+[:zh_CN@~] 与某个[~要求形参列表]关联的函数形参作用域
+[list:end]
+[:en@~] are the same function parameter scope.
+[:zh_CN@~] 的最小作用域是同一个函数形参作用域。
+[list:end]
+
+[begin:example]
+[codeblock]
+struct A {
+  int m;
+  const int& r;
+};
+void f() {
+  static int sx;
+  thread_local int tx;                  // [:en] [`tx] is never constexpr-referenceable [:zh_CN] [`tx] 从不是可 constexpr 引用的
+  int ax;
+  A aa = {1, 2};
+  static A sa = {3, 4};
+  // [:en] The objects [`sx], [`ax], and [`aa.m], [`sa.m], and the temporaries to which [`aa.r] and [`sa.r] are bound, are constexpr-referenceable. \
+  [:zh_CN] 对象 [`sx]、[`ax] 和 [`aa.m]、[`sa.m]，以及 [`aa.r] 和 [`sa.r] 所绑定的临时对象，都可 constexpr 引用
+  auto lambda = [] {
+    int ay;
+    // [:en] The objects [`sx], [`sa.m], and [`ay] (but not [`ax] or [`aa]), and the \
+    [:zh_CN] 对象 [`sx]、[`sa.m] 和 [`ay]（但并非 [`ax] 或 [`aa]），以及
+    // [:en@~] temporary to which [`sa.r] is bound, are constexpr-referenceable. \
+    [:zh_CN@~] [`sa.r] 所绑定的临时对象，可 constexpr 引用。
+  };
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] An object or reference [`x] is [+constexpr-representable] at a point [$P] if,
+for each constituent value of [`x] that points to or past an object [$o],
+and for each constituent reference of [`x] that refers to an object [$o],
+[$o] is constexpr-referenceable from [$P].
+[:zh_CN] 如果对象或引用 [`x] 的每个指向或越过某个对象 [$o] 的成分值，以及 [`x]
+的每个指代某个对象 [$o] 的成分引用，[$o] 都从 [$P] 可 constexpr 引用，
+则 [`x] 在 [$P] 处[+可 constexpr 表示]。
+
+[para]
+[:en] [%contract evaluation semantics[!ignore]]
+A variable [`v] is [+constant-initializable] if
+[:zh_CN] [%契约评估语义[!忽略]]
+满足以下条件时，变量 [`v] [+可常量初始化]：
+
+[list]
+[item]
+[:en] the full-expression of its initialization is a constant expression when
+interpreted as a [~constant-expression] with all contract assertions
+using the ignore evaluation semantic ([#basic.contract.eval]),
+[:zh_CN] 其初始化的全表达式，当作为[~常量表达式]解释，且对所有契约断言使用忽略
+评估语义（[#basic.contract.eval]）时，是常量表达式，
+
+[begin:note]
+[:en] In the course of this determination, [`std::is_constant_evaluated()] ([#meta.const.eval])
+has the value [`:key true].
+[:zh_CN] 在此判断过程中，[`std::is_constant_evaluated()]（[#meta.const.eval]）的值为 [`:key true]。
+[end:note]
+
+[begin:note]
+[:en] Furthermore, if the initialization is manifestly constant-evaluated,
+its evaluation during translation can still evaluate contract assertions
+with other evaluation semantics, resulting in a diagnostic or ill-formed program
+if a contract violation occurs.
+[:zh_CN] 此外，如果其初始化是显然常量求值的，则其在翻译中的求值仍可以其他评估语义评估各契约断言，
+并于发生契约违例时导致诊断或者非良构的程序。
+[end:note]
+
+[item]
+[:en] immediately after the initializing declaration of [`v], the object or
+reference [`x] declared by [`v] is constexpr-representable, and
+[:zh_CN] 紧接 [`v] 的初始化声明式之后，[`v] 所声明的对象或引用 [`x] 即可 constexpr 表示，并且
+
+[item]
+[:en] if [`x] has static or thread storage duration, [`x] is
+constexpr-representable at the nearest point whose immediate scope is a
+namespace scope that follows the initializing declaration of [`v].
+[:zh_CN] 如果 [`x] 具有静态或线程存储期，则在 [`v] 的初始化声明式之后的以
+命名空间作用域为直接作用域的最近位置，[`x] 可 constexpr 表示。
+[list:end]
+
+[para]
+[:en] A constant-initializable variable is [+constant-initialized] if either it
+has an initializer or its type is const-default-constructible ([#dcl.init.general]).
+[:zh_CN] 如果可常量初始化的变量要么具有初始化式要么其类型可 const 默认构造（[#dcl.init.general]），
+那么它[+被常量初始]。
+
+[begin:example]
+[codeblock]
+void f() {
+  int ax = 0;                   // [:en] [`ax] is constant-initialized [:zh_CN] [`ax] 被常量初始化
+  thread_local int tx = 0;      // [:en] [`tx] is constant-initialized [:zh_CN] [`tx] 被常量初始化
+  static int sx;                // [:en] [`sx] is not constant-initialized [:zh_CN] [`sx] 未被常量初始化
+  static int& rss = sx;         // [:en] [`rss] is constant-initialized [:zh_CN] [`rss] 被常量初始化
+  static int& rst = tx;         // [:en] [`rst] is not constant-initialized [:zh_CN] [`rst] 未被常量初始化
+  static int& rsa = ax;         // [:en] [`rsa] is not constant-initialized [:zh_CN] [`rsa] 未被常量初始化
+  thread_local int& rts = sx;   // [:en] [`rts] is constant-initialized [:zh_CN] [`rts] 被常量初始化
+  thread_local int& rtt = tx;   // [:en] [`rtt] is not constant-initialized [:zh_CN] [`rtt] 未被常量初始化
+  thread_local int& rta = ax;   // [:en] [`rta] is not constant-initialized [:zh_CN] [`rta] 未被常量初始化
+  int& ras = sx;                // [:en] [`ras] is constant-initialized [:zh_CN] [`ras] 被常量初始化
+  int& rat = tx;                // [:en] [`rat] is not constant-initialized [:zh_CN] [`rat] 未被常量初始化
+  int& raa = ax;                // [:en] [`raa] is constant-initialized [:zh_CN] [`raa] 被常量初始化
+}
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] A variable is [+potentially-constant] if it is constexpr or it has
+reference or non-volatile const-qualified integral or enumeration type.
+[:zh_CN] 如果变量是 constexpr 变量，或者它具有引用或非 volatile 的 const 限定的
+整型或枚举类型，则它是[+潜在常量]。
+
+[para]
+[:en] A variable [$V] is [+usable in constant expressions
+[%usable in constant expressions[!variable]]] at a point [$P] if [$V]
+is constant-initialized and potentially-constant, [$V][=']s initializating declaration
+[$D] is reachable from [$P] and
+[:zh_CN] 如果变量 [$V] 是以常量初始化的潜在常量，[$V] 的初始化声明式 [$D] 从某点 [$P] 处可达，
+且符合以下情况，则 [$V] 在 [$P] 点[+可被用在常量表达式之中[%可被用在常量表达式之中[!变量]]]。
+
+[list]
+[item]
+[:en@~] [$V] is constexpr,
+[:zh_CN@~] [$V] 为 constexpr，
+[item]
+[:en@~] [$V] is not initialized to a TU-local value, or
+[:zh_CN@~] [$V] 并非以翻译单元局部的值所初始化，或
+[item]
+[:en@~] [$P] is in the same translation unit as [$D].
+[:zh_CN@~] [$P] 与 [$D] 处于相同翻译单元中。
+[list:end]
+
+[para]
+[:en] An object or reference is [+potentially usable in constant expressions]
+at point [$P] if it is
+[:zh_CN] 以下情况下，对象或引用在位置 [$P] [+潜在可被用在常量表达式之中]：
+
+[list]
+[item]
+[:en@~] the object or reference declared by a variable that is usable in
+constant expressions at [$P],
+[:zh_CN@~] 它是在 [$P] 处可被用在常量表达式之中的变量所声明的对象或引用，
+[item]
+[:en@~] a temporary object of non-volatile const-qualified literal type whose
+lifetime is extended ([#class.temporary]) to that of a variable that is usable
+in constant expressions at [$P],
+[:zh_CN@~] 非 volatile 且 const 限定的字面量类型的临时对象，并且其生存期已扩展
+（[#class.temporary]）到某个在 [$P] 处可在常量表达式中使用的变量的生存期，
+[item]
+[:en@~] a template parameter object ([#temp.param]),
+[:zh_CN@~] 模板形参对象（[#temp.param]），
+[item]
+[:en@~] a string literal object ([#lex.string]),
+[:zh_CN@~] 字符串字面量对象（[#lex.string]），
+[item]
+[:en@~] a non-mutable subobject of any of the above, or
+[:zh_CN@~] 以上任一的非 mutable 子对象，或
+[item]
+[:en@~] a reference member of any of the above.
+[:zh_CN@~] 以上任一的引用成员。
+[list:end]
+
+[para]
+[:en] An object or reference is [+usable in constant expressions
+[%usable in constant expressions[!object or reference]]] at point [$P]
+if it is an object or reference that is potentially usable in constant
+expressions at [$P] and is constexpr-representable at [$P].
+[:zh_CN] 如果对象或引用是在位置 [$P] 潜在可被用在常量表达式之中且在 [$P] 可 constexpr
+表示，那么它[+可被用在常量表达式之中[%可被用在常量表达式之中[!对象或引用]]]。
+
+[begin:example]
+[codeblock]
+struct A {
+  int* const & r;
+};
+void f(int x) {
+  constexpr A a = {&x};
+  static_assert(a.r == &x);             // OK
+  [&] {
+    static_assert(a.r != nullptr);      // [:en] error: [`a.r] is not usable in constant expressions at this point \
+                                        [:zh_CN] 错误：[`a.r] 在此处不可被用在常量表达式之中
+  }();
+}
+[codeblock:end]
+[end:example]
