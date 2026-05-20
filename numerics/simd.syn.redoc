@@ -46,6 +46,12 @@ namespace std::simd {
       const basic_vec<T, Abi>& x, const typename basic_vec<T, Abi>::mask_type& mask,
       BinaryOperation binary_op = {}, type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
 
+  template<class T, class BinaryOperation = plus<>>
+    constexpr T reduce(const T&, BinaryOperation = {});
+  template<class T, class BinaryOperation = plus<>>
+    constexpr T reduce(const T& x, [[redoc("`:c>")]]same_as<bool> auto mask, BinaryOperation binary_op = {},
+                       type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
+
   template<class T, class Abi>
     constexpr T reduce_min(const basic_vec<T, Abi>&) noexcept;
   template<class T, class Abi>
@@ -56,6 +62,11 @@ namespace std::simd {
   template<class T, class Abi>
     constexpr T reduce_max(const basic_vec<T, Abi>&,
                            const typename basic_vec<T, Abi>::mask_type&) noexcept;
+
+  template<class T> constexpr T reduce_min(const T&) noexcept;
+  template<class T> constexpr T reduce_min(const T&, [[redoc("`:c>")]]same_as<bool> auto) noexcept;
+  template<class T> constexpr T reduce_max(const T&) noexcept;
+  template<class T> constexpr T reduce_max(const T&, [[redoc("`:c>")]]same_as<bool> auto) noexcept;
 
   // [:en] [#simd.loadstore], load and store functions \
   [:zh_CN] [#simd.loadstore]，加载与存储函数
@@ -151,35 +162,35 @@ namespace std::simd {
 
   template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-vec-type V, class IdxMap>
     constexpr resize_t<N, V> permute(const V& v, IdxMap&& idxmap);
-  template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-mask-type M, class IdxMap>
-    constexpr resize_t<N, M> permute(const M& v, IdxMap&& idxmap);
+  template<[[redoc("*>")]]simd-size-type N = [[redoc("[=seebelow]")]], [[redoc("*:c>")]]simd-mask-type V, class IdxMap>
+    constexpr resize_t<N, V> permute(const V& v, IdxMap&& idxmap);
 
   // [:en] [#simd.permute.dynamic], dynamic permute \
   [:zh_CN] [#simd.permute.dynamic]，动态排列
   template<[[redoc("*:c>")]]simd-vec-type V, [[redoc("*:c>")]]simd-integral I>
     constexpr resize_t<I::size(), V> permute(const V& v, const I& indices);
-  template<[[redoc("*:c>")]]simd-mask-type M, [[redoc("*:c>")]]simd-integral I>
-    constexpr resize_t<I::size(), M> permute(const M& v, const I& indices);
+  template<[[redoc("*:c>")]]simd-mask-type V, [[redoc("*:c>")]]simd-integral I>
+    constexpr resize_t<I::size(), V> permute(const V& v, const I& indices);
 
   // [:en] [#simd.permute.mask], mask permute \
   [:zh_CN] [#simd.permute.mask]，掩模排列
   template<[[redoc("*:c>")]]simd-vec-type V>
     constexpr V compress(const V& v, const typename V::mask_type& selector);
-  template<[[redoc("*:c>")]]simd-mask-type M>
-    constexpr M compress(const M& v, const type_identity_t<M>& selector);
+  template<[[redoc("*:c>")]]simd-mask-type V>
+    constexpr V compress(const V& v, const type_identity_t<V>& selector);
   template<[[redoc("*:c>")]]simd-vec-type V>
     constexpr V compress(const V& v, const typename V::mask_type& selector,
                          const typename V::value_type& fill_value);
   template<[[redoc("*:c>")]]simd-mask-type M>
-    constexpr M compress(const M& v, const type_identity_t<M>& selector,
-                         const typename M::value_type& fill_value);
+    constexpr V compress(const V& v, const type_identity_t<V>& selector,
+                         const typename V::value_type& fill_value);
 
   template<[[redoc("*:c>")]]simd-vec-type V>
     constexpr V expand(const V& v, const typename V::mask_type& selector,
                        const V& original = {});
-  template<[[redoc("*:c>")]]simd-mask-type M>
-    constexpr M expand(const M& v, const type_identity_t<M>& selector,
-                       const M& original = {});
+  template<[[redoc("*:c>")]]simd-mask-type V>
+    constexpr V expand(const V& v, const type_identity_t<V>& selector,
+                       const V& original = {});
 
   // [:en] [#simd.permute.memory], memory permute \
   [:zh_CN] [#simd.permute.memory]，内存排列
@@ -230,12 +241,11 @@ namespace std::simd {
     constexpr auto chunk(const basic_mask<Bytes, Abi>& x) noexcept;
 
   template<class T, class... Abis>
-    constexpr basic_vec<T, [[redoc("*>")]]deduce-abi-t<T, (basic_vec<T, Abis>::size() + ...)>>
-      cat(const basic_vec<T, Abis>&...) noexcept;
+    constexpr resize_t<(basic_vec<T, Abis>::size() + ...),
+      basic_vec<T, Abis...[0]>> cat(const basic_vec<T, Abis>&...) noexcept;
   template<size_t Bytes, class... Abis>
-    constexpr basic_mask<Bytes, [[redoc("*>")]]deduce-abi-t<[[redoc("*>")]]integer-from<Bytes>,
-                              (basic_mask<Bytes, Abis>::size() + ...)>>
-      cat(const basic_mask<Bytes, Abis>&...) noexcept;
+    constexpr resize_t<(basic_mask<Bytes, Abis>::size() + ...),
+      basic_mask<Bytes, Abis...[0]>> cat(const basic_mask<Bytes, Abis>&...) noexcept;
 
   // [:en] [#simd.alg], algorithms \
   [:zh_CN] [#simd.alg]，算法
@@ -265,8 +275,12 @@ namespace std::simd {
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> acos(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> asin(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> atan(const V& x);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> atan2(const V0& y, const V1& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> atan2(const V& y, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> atan2(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> atan2(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> cos(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> sin(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> tan(const V& x);
@@ -302,14 +316,37 @@ namespace std::simd {
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> cbrt(const V& x);
   template<[[redoc("`:c>")]]signed_integral T, class Abi>
     constexpr basic_vec<T, Abi> abs(const basic_vec<T, Abi>& j);
-  template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> abs(const V& j);
+  template<c V> constexpr [[redoc("*>")]]deduced-vec-t<V> abs(const V& j);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> fabs(const V& x);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> hypot(const V0& x, const V1& y);
-  template<class V0, class V1, class V2>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1, V2> hypot(const V0& x, const V1& y, const V2& z);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> pow(const V0& x, const V1& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const V& x, const V& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const V& x, const V& y, const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const [[redoc("*>")]]deduced-vec-t<V>& x, const [[redoc("*>")]]deduced-vec-t<V>& y,
+                                     const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y,
+                                     const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> hypot(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y,
+                                     const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> pow(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> pow(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> pow(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> sqrt(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> erf(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V> constexpr [[redoc("*>")]]deduced-vec-t<V> erfc(const V& x);
@@ -331,28 +368,92 @@ namespace std::simd {
     constexpr rebind_t<long long int, [[redoc("*>")]]deduced-vec-t<V>> llround(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V>
     constexpr [[redoc("*>")]]deduced-vec-t<V> trunc(const V& x);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fmod(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> remainder(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1>
-      remquo(const V0& x, const V1& y, rebind_t<int, [[redoc("*>")]]math-common-simd-t<V0, V1>>* quo);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> copysign(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> nextafter(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fdim(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fmax(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1> fmin(const V0& x, const V1& y);
-  template<class V0, class V1, class V2>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1, V2> fma(const V0& x, const V1& y, const V2& z);
-  template<class V0, class V1, class V2>
-    constexpr [[redoc("*>")]]math-common-simd-t<V0, V1, V2>
-      lerp(const V0& a, const V1& b, const V2& t) noexcept;
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmod(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmod(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmod(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> remainder(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> remainder(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> remainder(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V>
+      remquo(const V& x, const V& y, rebind_t<int, [[redoc("*>")]]deduced-vec-t<V>>* quo);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V>
+      remquo(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y, rebind_t<int, [[redoc("*>")]]deduced-vec-t<V>>* quo);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V>
+      remquo(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y, rebind_t<int, [[redoc("*>")]]deduced-vec-t<V>>* quo);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> copysign(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> copysign(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> copysign(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> nextafter(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> nextafter(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> nextafter(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fdim(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fdim(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fdim(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmax(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmax(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmax(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmin(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmin(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fmin(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const V& x, const V& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const V& x, const V& y, const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const [[redoc("*>")]]deduced-vec-t<V>& x, const [[redoc("*>")]]deduced-vec-t<V>& y,
+                                   const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y,
+                                   const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> fma(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y,
+                                   const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V>
+      lerp(const V& a, const V& b, const V& t) noexcept;
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> lerp(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> lerp(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y, const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> lerp(const V& x, const V& y, const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> lerp(const [[redoc("*>")]]deduced-vec-t<V>& x, const [[redoc("*>")]]deduced-vec-t<V>& y,
+                                    const V& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> lerp(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y,
+                                    const [[redoc("*>")]]deduced-vec-t<V>& z);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr [[redoc("*>")]]deduced-vec-t<V> lerp(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y,
+                                    const [[redoc("*>")]]deduced-vec-t<V>& z);
   template<[[redoc("*:c>")]]math-floating-point V>
     constexpr rebind_t<int, [[redoc("*>")]]deduced-vec-t<V>> fpclassify(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V>
@@ -365,50 +466,133 @@ namespace std::simd {
     constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type isnormal(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V>
     constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type signbit(const V& x);
-  template<class V0, class V1>
-    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
-      isgreater(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
-      isgreaterequal(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
-      isless(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
-      islessequal(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
-      islessgreater(const V0& x, const V1& y);
-  template<class V0, class V1>
-    constexpr typename [[redoc("*>")]]math-common-simd-t<V0, V1>::mask_type
-      isunordered(const V0& x, const V1& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isgreater(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isgreater(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isgreater(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isgreaterequal(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isgreaterequal(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isgreaterequal(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isless(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isless(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isless(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      islessequal(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      islessequal(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      islessequal(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      islessgreater(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      islessgreater(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      islessgreater(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isunordered(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isunordered(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    constexpr typename [[redoc("*>")]]deduced-vec-t<V>::mask_type
+      isunordered(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
   template<[[redoc("*:c>")]]math-floating-point V>
     [[redoc("*>")]]deduced-vec-t<V> assoc_laguerre(const rebind_t<unsigned, [[redoc("*>")]]deduced-vec-t<V>>& n,
                                     const rebind_t<unsigned, [[redoc("*>")]]deduced-vec-t<V>>& m, const V& x);
   template<[[redoc("*:c>")]]math-floating-point V>
     [[redoc("*>")]]deduced-vec-t<V> assoc_legendre(const rebind_t<unsigned, [[redoc("*>")]]deduced-vec-t<V>>& l,
                                     const rebind_t<unsigned, [[redoc("*>")]]deduced-vec-t<V>>& m, const V& x);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> beta(const V0& x, const V1& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> beta(const V& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> beta(const [[redoc("*>")]]deduced-vec-t<V>& x, const V& y);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> beta(const V& x, const [[redoc("*>")]]deduced-vec-t<V>& y);
   template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-vec-t<V> comp_ellint_1(const V& k);
   template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-vec-t<V> comp_ellint_2(const V& k);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> comp_ellint_3(const V0& k, const V1& nu);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_bessel_i(const V0& nu, const V1& x);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_bessel_j(const V0& nu, const V1& x);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_bessel_k(const V0& nu, const V1& x);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> cyl_neumann(const V0& nu, const V1& x);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> ellint_1(const V0& k, const V1& phi);
-  template<class V0, class V1>
-    [[redoc("*>")]]math-common-simd-t<V0, V1> ellint_2(const V0& k, const V1& phi);
-  template<class V0, class V1, class V2>
-    [[redoc("*>")]]math-common-simd-t<V0, V1, V2> ellint_3(const V0& k, const V1& nu, const V2& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> comp_ellint_3(const V& k, const V& nu);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> comp_ellint_3(const [[redoc("*>")]]deduced-vec-t<V>& k, const V& nu);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> comp_ellint_3(const V& k, const [[redoc("*>")]]deduced-vec-t<V>& nu);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_i(const V& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_i(const [[redoc("*>")]]deduced-vec-t<V>& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_i(const V& nu, const [[redoc("*>")]]deduced-vec-t<V>& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_j(const V& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_j(const [[redoc("*>")]]deduced-vec-t<V>& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_j(const V& nu, const [[redoc("*>")]]deduced-vec-t<V>& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_k(const V& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_k(const [[redoc("*>")]]deduced-vec-t<V>& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_bessel_k(const V& nu, const [[redoc("*>")]]deduced-vec-t<V>& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_neumann(const V& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_neumann(const [[redoc("*>")]]deduced-vec-t<V>& nu, const V& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> cyl_neumann(const V& nu, const [[redoc("*>")]]deduced-vec-t<V>& x);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_1(const V& k, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_1(const [[redoc("*>")]]deduced-vec-t<V>& k, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_1(const V& k, const [[redoc("*>")]]deduced-vec-t<V>& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_2(const V& k, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_2(const [[redoc("*>")]]deduced-vec-t<V>& k, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_2(const V& k, const [[redoc("*>")]]deduced-vec-t<V>& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const V& k, const V& nu, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const [[redoc("*>")]]deduced-vec-t<V>& k, const V& nu, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const V& k, const [[redoc("*>")]]deduced-vec-t<V>& nu, const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const V& k, const V& nu, const [[redoc("*>")]]deduced-vec-t<V>& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const [[redoc("*>")]]deduced-vec-t<V>& k, const [[redoc("*>")]]deduced-vec-t<V>& nu,
+                              const V& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const [[redoc("*>")]]deduced-vec-t<V>& k, const V& nu,
+                              const [[redoc("*>")]]deduced-vec-t<V>& phi);
+  template<[[redoc("*:c>")]]math-floating-point V>
+    [[redoc("*>")]]deduced-vec-t<V> ellint_3(const V& k, const [[redoc("*>")]]deduced-vec-t<V>& nu,
+                              const [[redoc("*>")]]deduced-vec-t<V>& phi);
   template<[[redoc("*:c>")]]math-floating-point V> [[redoc("*>")]]deduced-vec-t<V> expint(const V& x);
   template<[[redoc("*:c>")]]math-floating-point V>
     [[redoc("*>")]]deduced-vec-t<V> hermite(const rebind_t<unsigned, [[redoc("*>")]]deduced-vec-t<V>>& n, const V& x);
@@ -510,9 +694,9 @@ namespace std::simd {
 
   // [:en] [#simd.mask.class], class template [`basic_mask] \
   [:zh_CN] [#simd.mask.class]，类模板 [`basic_mask]
-  template<size_t Bytes, class Abi = [[redoc("*:c>")]]native-abi<[[redoc("*:c>")]]integer-from<Bytes>>> class basic_mask;
+  template<size_t Bytes, class Abi> class basic_mask;
   template<class T, [[redoc("*:c>")]]simd-size-type N = [[redoc("*:c>")]]simd-size-v<T, [[redoc("*:c>")]]native-abi<T>>>
-    using [[redoc("[%@lib@member mask[!simd]]")]]mask = basic_mask<sizeof(T), [[redoc("*:c>")]]deduce-abi-t<T, N>>;
+    using [[redoc("[%@lib@member mask[!simd]]")]]mask = vec<T, N>::mask_type;
 
   // [:en] [#simd.mask.reductions], reductions \
   [:zh_CN] [#simd.mask.reductions]，归约

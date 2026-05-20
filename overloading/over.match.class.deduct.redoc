@@ -254,6 +254,24 @@ J j = { "ghi" };    // [:en] error: cannot bind reference to array of [`unsigned
 [end:example]
 
 [para]
+[:en] When resolving a placeholder for a deduced class type
+where the [~template-name] designates a type template template parameter [`P],
+the type template template argument for [`P] shall be a deducible template.
+[:zh_CN] 在解析推断类类型的占位符时，如果[~模板名]指示的是类型模板模板形参 [`P]，
+则用于 [`P] 的类型模板模板实参应当是可推断的模板。
+
+[:en] Let [`A] be an alias template whose template parameter list is that of [`P]
+and whose [~defining-type-id] is a [~simple-template-id]
+whose [~template-name] designates the type template template argument and
+whose [~template-argument-list] is the template argument list of [`P].
+[:zh_CN] 令 [`A] 是一个别名模板，其模板形参列表与 [`P] 相同，且其[~定义类型标识]是一个
+[~简单模板标识]，其[~模板名]指示该类型模板模板实参，而其[~模板实参列表]为 [`P] 的模板实参列表。
+
+[:en] The alias template [`A] is then used
+instead of the original [~template-name] to resolve the placeholder.
+[:zh_CN] 随后将使用别名模板 [`A] 代替原来的[~模板名]来解析该占位符。
+
+[para]
 [:en] When resolving a placeholder for a deduced class type ([#dcl.type.simple])
 where the [~template-name] or [~splice-type-specifier] designates an
 alias template [`A], the [~defining-type-id] of [`A] must be of the form
@@ -556,5 +574,24 @@ template<std::[[redoc("`:c>")]]integral W, class U>
   requires deduces_A<C<W *, std::type_identity_t<U>>> &&
     deduces_B<C<W *, std::type_identity_t<U>>>
   auto f2_prime_for_B(W *, U) -> C<W *, std::type_identity_t<U>>;
+[codeblock:end]
+[end:example]
+
+[para]
+[begin:example]
+[codeblock]
+template<typename ... Ts>
+struct Y {
+  Y();
+  Y(Ts ...);
+};
+template<template<typename T = char> class X>
+void f() {
+  X x;          // [:en] OK, deduces [`Y<char>] [:zh_CN] OK，推断 [`Y<char>]
+  X x0{};       // [:en] OK, deduces [`Y<char>] [:zh_CN] OK，推断 [`Y<char>]
+  X x1{1};      // [:en] OK, deduces [`Y<int>] [:zh_CN] OK，推断 [`Y<int>]
+  X x2{1, 2};   // [:en] error: cannot deduce [`X<T>] from [`Y<int, int>] [:zh_CN] 错误：无法从 [`Y<int, int>] 推断 [`X<T>]
+}
+template void f<Y>();
 [codeblock:end]
 [end:example]

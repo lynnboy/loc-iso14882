@@ -48,6 +48,8 @@ namespace std::ranges {
 
     constexpr auto size() requires ([[redoc("`:c>")]]sized_range<Views> &&...);
     constexpr auto size() const requires ([[redoc("`:c>")]]sized_range<const Views> &&...);
+    constexpr auto reserve_hint() requires ([[redoc("`:c>")]]approximately_sized_range<Views> && ...);
+    constexpr auto reserve_hint() const requires ([[redoc("`:c>")]]approximately_sized_range<const Views> && ...);
   };
 
   template<class... R>
@@ -155,7 +157,7 @@ constexpr explicit concat_view(Views... views);
 [:zh_CN] 以 [`std::move(views)...] 初始化 [*views_]。
 [div:end]
 
-[%@lib@member concat[!begin]]
+[%@lib@member begin[!concat_view]]
 [codeblock:declaration]
 constexpr [[redoc("*>")]]iterator<false> begin() requires (!([[redoc("*:c>")]]simple-view<Views> && ...));
 constexpr [[redoc("*>")]]iterator<true> begin() const
@@ -176,7 +178,7 @@ return it;
 [codeblock:end]
 [div:end]
 
-[%@lib@member concat[!end]]
+[%@lib@member end[!concat_view]]
 [codeblock:declaration]
 constexpr auto end() requires (!([[redoc("*:c>")]]simple-view<Views> && ...));
 constexpr auto end() const
@@ -202,7 +204,7 @@ if constexpr ([[redoc("*:c>")]]all-forward<[[redoc("*>")]]is-const, Views...> &&
 [codeblock:end]
 [div:end]
 
-[%@lib@member concat[!size]]
+[%@lib@member size[!concat_view]]
 [codeblock:declaration]
 constexpr auto size() requires ([[redoc("`:c>")]]sized_range<Views> &&...);
 constexpr auto size() const requires ([[redoc("`:c>")]]sized_range<const Views> &&...);
@@ -219,5 +221,25 @@ return apply(
     return (CT(sizes) + ...);
   },
   [[redoc("*>")]]tuple-transform(ranges::size, [[redoc("*>")]]views_));
+[codeblock:end]
+[div:end]
+
+[%@lib@member reserve_hint[!concat_view]]
+[codeblock:declaration]
+constexpr auto reserve_hint() requires ([[redoc("`:c>")]]approximately_sized_range<Views> && ...);
+constexpr auto reserve_hint() const requires ([[redoc("`:c>")]]approximately_sized_range<const Views> && ...);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Equivalent to:
+[:zh_CN] 等价于：
+[codeblock]
+return apply(
+  [](auto... sizes) {
+    using CT = [[redoc("*>")]]make-unsigned-like-t<common_type_t<decltype(sizes)...>>;
+    return (CT(sizes) + ...);
+  },
+  [[redoc("*>")]]tuple-transform(ranges::reserve_hint, [[redoc("*>")]]views_));
 [codeblock:end]
 [div:end]

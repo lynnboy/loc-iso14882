@@ -17,11 +17,11 @@ namespace std::ranges {
 
     // [:en] [#range.filter.iterator], class [`filter_view::[*iterator]] \
     [:zh_CN] [#range.filter.iterator]，类 [`filter_view::[*iterator]]
-    class [[redoc("*>")]]iterator;                              // [=expos]
+    template<bool> class [[redoc("*>")]]iterator;              // [=expos]
 
     // [:en] [#range.filter.sentinel], class [`filter_view::[*sentinel]] \
     [:zh_CN] [#range.filter.sentinel]，类 [`filter_view::[*sentinel]]
-    class [[redoc("*>")]]sentinel;                              // [=expos]
+    template<bool> class [[redoc("*>")]]sentinel;              // [=expos]
 
   public:
     filter_view() requires [[redoc("`:c>")]]default_initializable<V> && [[redoc("`:c>")]]default_initializable<Pred> = default;
@@ -32,12 +32,21 @@ namespace std::ranges {
 
     constexpr const Pred& pred() const;
 
-    constexpr [[redoc("*>")]]iterator begin();
+    constexpr [[redoc("*>")]]iterator<false> begin();
+    constexpr [[redoc("*>")]]iterator<true> begin() const
+      requires ([[redoc("`:c>")]]input_range<const V> && ![[redoc("`:c>")]]forward_range<const V> &&
+                [[redoc("`:c>")]]indirect_unary_predicate<const Pred, iterator_t<const V>>);
+
     constexpr auto end() {
       if constexpr ([[redoc("`:c>")]]common_range<V>)
-        return [[redoc("*>")]]iterator{*this, ranges::end([[redoc("*>")]]base_)};
+        return [[redoc("*>")]]iterator<false>{*this, ranges::end([[redoc("*>")]]base_)};
       else
-        return [[redoc("*>")]]sentinel{*this};
+        return [[redoc("*>")]]sentinel<false>{*this};
+    }
+    constexpr [[redoc("*>")]]sentinel<true> end() const
+      requires ([[redoc("`:c>")]]input_range<const V> && ![[redoc("`:c>")]]forward_range<const V> &&
+                [[redoc("`:c>")]]indirect_unary_predicate<const Pred, iterator_t<const V>>) {
+      return [[redoc("*>")]]sentinel<true>{*this};
     }
   };
 
@@ -71,7 +80,7 @@ constexpr const Pred& pred() const;
 
 [%@lib@member begin[!filter_view]]
 [codeblock:declaration]
-constexpr [[redoc("*>")]]iterator begin();
+constexpr [[redoc("*>")]]iterator<false> begin();
 [codeblock:end]
 
 [div:description]
@@ -90,4 +99,26 @@ function caches the result within the [`filter_view] for use on subsequent calls
 [:zh_CN] 为了在 [`filter_view] 构成 [`:c forward_range] 时提供由 [`:c range]
 概念所规定的均摊常量时间复杂度，这个函数在 [`filter_view] 之内将其结果进行缓存，
 并在随后的调用中使用之。
+[div:end]
+
+[%@lib@member begin[!filter_view]]
+[codeblock:declaration]
+constexpr [[redoc("*>")]]iterator<true> begin() const
+  requires ([[redoc("`:c>")]]input_range<const V> && ![[redoc("`:c>")]]forward_range<const V> &&
+            [[redoc("`:c>")]]indirect_unary_predicate<const Pred, iterator_t<const V>>);
+[codeblock:end]
+
+[div:description]
+[para:expects]
+[:en] [`[*pred_].has_value()] is [`true].
+[:zh_CN] [`[*pred_].has_value()] 为 [`true]。
+
+[para:returns]
+[:en] [`{*this, ranges::find_if([*base_], ref(*[*pred_]))}].
+[:zh_CN] [`{*this, ranges::find_if([*base_], ref(*[*pred_]))}]。
+
+[begin:note]
+[:en] This function does not cache the result within the [`filter_view].
+[:zh_CN] 此函数不会在 [`filter_view] 中缓存其结果。
+[end:note]
 [div:end]

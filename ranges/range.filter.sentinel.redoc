@@ -1,6 +1,6 @@
 [section#range.filter.sentinel
-    [:en] Class [`filter_view::[*sentinel]]
-    [:zh_CN] 类 [`filter_view::[*sentinel]]
+    [:en] Class template [`filter_view::[*sentinel]]
+    [:zh_CN] 类模板 [`filter_view::[*sentinel]]
 ]
 
 [%@lib filter_view::[*sentinel]]
@@ -9,24 +9,43 @@
 namespace std::ranges {
   template<[[redoc("`:c>")]]input_range V, [[redoc("`:c>")]]indirect_unary_predicate<iterator_t<V>> Pred>
     requires [[redoc("`:c>")]]view<V> && is_object_v<Pred>
+  template<bool Const>
   class filter_view<V, Pred>::[[redoc("*>")]]sentinel {
   private:
-    sentinel_t<V> [[redoc("*>")]]end_ = sentinel_t<V>();       // [=expos]
+    using [[redoc("*>")]]Base = [[redoc("*>")]]maybe-const<Const, V>;                         // [=expos]
+    sentinel_t<[[redoc("*>")]]Base> [[redoc("*>")]]end_ = sentinel_t<[[redoc("*>")]]Base>();                 // [=expos]
+    constexpr explicit [[redoc("*>")]]sentinel([[redoc("*>")]]Parent& parent);                // \expos
 
   public:
     [[redoc("*>")]]sentinel() = default;
     constexpr explicit [[redoc("*>")]]sentinel(filter_view& parent);
+    constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> other)
+      requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
 
-    constexpr sentinel_t<V> base() const;
+    constexpr sentinel_t<[[redoc("*>")]]Base> base() const;
 
-    friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]sentinel& y);
+    template<bool OtherConst>
+      requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const<OtherConst, V>>>
+      friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
   };
 }
 [codeblock:end]
 
 [%@lib@ctor filter_view::[*sentinel]]
 [codeblock:declaration]
-constexpr explicit [[redoc("*>")]]sentinel(filter_view& parent);
+constexpr [[redoc("*>")]]sentinel([[redoc("*>")]]sentinel<!Const> other)
+  requires Const && [[redoc("`:c>")]]convertible_to<sentinel_t<V>, sentinel_t<[[redoc("*>")]]Base>>;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Initializes [*end_] with [`std::move(other.[*end_])].
+[:zh_CN] 以 [`std::move(other.[*end_])] 初始化 [*end_]。
+[div:end]
+
+[%@lib@ctor filter_view::[*sentinel]]
+[codeblock:declaration]
+constexpr explicit [[redoc("*>")]]sentinel([[redoc("*>")]]Parent& parent);
 [codeblock:end]
 
 [div:description]
@@ -37,7 +56,7 @@ constexpr explicit [[redoc("*>")]]sentinel(filter_view& parent);
 
 [%@lib@member base[!filter_view::[*sentinel]]]
 [codeblock:declaration]
-constexpr sentinel_t<V> base() const;
+constexpr sentinel_t<[[redoc("*>")]]Base> base() const;
 [codeblock:end]
 
 [div:description]
@@ -48,7 +67,9 @@ constexpr sentinel_t<V> base() const;
 
 [%@lib@member operator==[!filter_view::[*sentinel]]]
 [codeblock:declaration]
-friend constexpr bool operator==(const [[redoc("*>")]]iterator& x, const [[redoc("*>")]]sentinel& y);
+template<bool OtherConst>
+  requires [[redoc("`:c>")]]sentinel_for<sentinel_t<[[redoc("*>")]]Base>, iterator_t<[[redoc("*>")]]maybe-const <OtherConst, V>>>
+  friend constexpr bool operator==(const [[redoc("*>")]]iterator<OtherConst>& x, const [[redoc("*>")]]sentinel& y);
 [codeblock:end]
 
 [div:description]

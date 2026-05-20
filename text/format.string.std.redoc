@@ -445,21 +445,36 @@ is not a constant subexpression if the locale-specific form is specified.
 [list]
 [item]
 [:en] For integral types, the locale-specific form causes the context[=']s
-locale to be used to insert the appropriate digit group separator characters.
-[:zh_CN] 对于整型类型，地域特定形式导致使用其语境的地域来插入适当的数字分组分隔字符。
+locale to be used to insert the appropriate digit group separator characters
+as if obtained with [`numpunct<charT>::grouping] and [`numpunct<charT>::thousands_sep].
+
+[:zh_CN] 对于整型类型，地域特定形式导致使用其语境的地域来插入
+如同以 [`numpunct<charT>::grouping] 和 [`numpunct<charT>::thousands_sep] 获得的
+适当的数字分组分隔字符。
 
 [item]
 [:en] For floating-point types, the locale-specific form causes the context[=']s
-locale to be used to insert the appropriate digit group and radix separator characters.
-[:zh_CN] 对于浮点类型，地域特定形式导致使用其语境的地域来插入适当的数字分组和基数分隔字符。
+locale to be used to insert the appropriate digit group and radix separator characters
+as if obtained with [`numpunct<charT>::grouping], [`numpunct<charT>::thousands_sep], and
+[`numpunct<charT>::decimal_point].
+[:zh_CN] 对于浮点类型，地域特定形式导致使用其语境的地域来插入
+如同以 [`numpunct<charT>::grouping]、[`numpunct<charT>::thousands_sep] 和
+[`numpunct<charT>::decimal_point] 获得的适当的数字分组和基数分隔字符。
 
 [item]
 [:en] For the textual representation of [`bool], the locale-specific form causes
 the context[=']s locale to be used to insert the appropriate string as if
-obtained with [`numpunct::truename] or [`numpunct::falsename].
+obtained with [`numpunct<charT>::truename] or [`numpunct<charT>::falsename].
 [:zh_CN] 对于 [`bool] 的文本表示，地域特定形式导致使用其语境的地域来插入如同以
-[`numpunct::truename] 或 [`numpunct::falsename] 所获得的适当字符串。
+[`numpunct<charT>::truename] 或 [`numpunct<charT>::falsename] 所获得的适当字符串。
 [list:end]
+
+[:en] If the string literal encoding is a Unicode encoding form and
+the locale is among an implementation-defined set of locales,
+each replacement that depends on the locale is performed as if
+the replacement character sequence is converted to the string literal encoding.
+[:zh_CN] 如果字符串字面量编码是某种 Unicode 编码形式，且地域属于一个由实现定义的地域集合，
+则每个依赖于地域的替换都将按照如同替换字符序列被转换到字符串字面量编码的方式来执行。
 
 [para]
 [:en] The [~@fmt type] determines how the data should be presented.
@@ -497,9 +512,11 @@ the [`to_chars] output and [`value] be the formatting argument value.
 [:zh_CN] 此种情况下，令 [=range(first,last)] 为大小足以持有 [`to_chars] 的输出的范围，
 而 [`value] 为所格式化的实参值。
 
-[:en] Formatting is done as if by calling [`to_chars] as specified and copying
-the output through the output iterator of the format context.
-[:zh_CN] 格式化如同通过按规定调用 [`to_chars] 并通过格式化语境的输出迭代器复制其输出而完成的。
+[:en] Formatting is done as if by calling [`to_chars] as specified, transcoding
+the [`to_chars] output to the wide literal encoding if [`charT] is [`wchar_t],
+and copying the output through the output iterator of the format context.
+[:zh_CN] 格式化如同通过按规定调用 [`to_chars]，若 [`charT] 为 [`wchar_t] 则将
+[`to_chars] 输出转码为宽字面量编码，并通过格式化语境的输出迭代器复制其输出而完成的。
 
 [begin:note]
 [:en] Additional padding and adjustments are performed prior to copying the
@@ -515,16 +532,11 @@ output through the output iterator as specified by the format specifiers.
 
 [begin:example]
 [codeblock]
-string s0 = format("{}", 42);                           // [:en] value of [`s0] is [`"42"] \
-                                                        [:zh_CN] [`s0] 的值为 [`"42"]
-string s1 = format("{0:b} {0:d} {0:o} {0:x}", 42);      // [:en] value of [`s1] is [`"101010 42 52 2a"] \
-                                                        [:zh_CN] [`s1] 的值为 [`"101010 42 52 2a"]
-string s2 = format("{0:#x} {0:#X}", 42);                // [:en] value of [`s2] is [`"0x2a 0X2A"] \
-                                                        [:zh_CN] [`s2] 的值为 [`"0x2a 0X2A"]
-string s3 = format("{:L}", 1234);                       // [:en] value of [`s3] can be [`"1,234"] \
-                                                        [:zh_CN] [`s3] 的值可以为 [`"1,234"]
-                                                        // [:en@~] (depending on the locale) \
-                                                        [:zh_CN@~] （取决于地域）
+string s0 = format("{}", 42);                           // [:en] value of [`s0] is [`"42"] [:zh_CN] [`s0] 的值为 [`"42"]
+string s1 = format("{0:b} {0:d} {0:o} {0:x}", 42);      // [:en] value of [`s1] is [`"101010 42 52 2a"] [:zh_CN] [`s1] 的值为 [`"101010 42 52 2a"]
+string s2 = format("{0:#x} {0:#X}", 42);                // [:en] value of [`s2] is [`"0x2a 0X2A"] [:zh_CN] [`s2] 的值为 [`"0x2a 0X2A"]
+string s3 = format("{:L}", 1234);                       // [:en] value of [`s3] can be [`"1,234"] [:zh_CN] [`s3] 的值可以为 [`"1,234"]
+                                                        // [:en@~] (depending on the locale) [:zh_CN@~] （取决于地域）
 [codeblock:end]
 [end:example]
 
@@ -773,8 +785,8 @@ are specified in [#:tab#format.type.ptr].
 
 [|] [:en] none, [`p]
     [:zh_CN] 无，[`p]
-[|] [:en] If [`uintptr_t] is defined,
-    [:zh_CN] 若定义了 [`uintptr_t]，则为
+[|] [:en] If [`uintptr_t] is declared,
+    [:zh_CN] 若声明了 [`uintptr_t]，则为
 [codeblock]
 to_chars(first, last, reinterpret_cast<uintptr_t>(value), 16)
 [codeblock:end]

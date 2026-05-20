@@ -208,8 +208,8 @@ that were deduced or obtained from default arguments are substituted.
 [para]
 [:en] [%deduction[!deduction substitution loci]]
 The [+deduction substitution loci] are
-[:zh_CN] [%推断[!推断代换位置]]
-[+推断代换位置]为
+[:zh_CN] [%推断[!推断代换位点]]
+[+推断代换位点]为
 [list]
 [item]
 [:en@~] the function type outside of the [~noexcept-specifier],
@@ -227,7 +227,7 @@ The [+deduction substitution loci] are
 
 [:en] The substitution occurs in all types and expressions that are used in the
 deduction substitution loci.
-[:zh_CN] 这种代换发生在推断代换位置中所使用的所有类型和表达式上。
+[:zh_CN] 这种代换发生在推断代换位点中所使用的所有类型和表达式上。
 
 [:en] The expressions include not only constant expressions such as those that
 appear in array bounds or as constant template arguments but also general
@@ -297,29 +297,54 @@ diagnostic required, if written in the same context using the substituted argume
 
 [:en] Invalid types and expressions can result in a deduction failure
 only in the immediate context of the deduction substitution loci.
-[:zh_CN] 仅在推断代换位置的直接语境中，无效的类型和表达式可以导致推断失败。
+[:zh_CN] 仅在推断代换位点的直接语境中，无效的类型和表达式可以导致推断失败。
+
+[:en] The [+:adj immediate[!context]] of a deduction substitution locus
+is that deduction substitution locus,
+excluding bodies of [~lambda-expression]s and separately instantiated constructs.
+[:zh_CN] 推断代换位点的[+:adj 直接[!语境]]就是该推断代换位点，排除 [~lambda-表达式]
+的函数体和单独实例化语言构造。
+
+[begin:example]
+[codeblock]
+template<typename T>
+T* fun(T&& v);  // [:en] #1: the deduction substitution locus is the function type \
+                [:zh_CN] #1：推断代换位点为函数类型
+                // [:en@~] [=lq]function of (rvalue reference to [`T]) returning pointer to [`T][=rq] \
+                [:zh_CN@~] “返回 [`T] 的指针的 ([`T] 的右值引用) 函数”
+
+void fun(...);  // #2
+
+void test()
+{
+  int i;
+  fun(i);       // [:en] selects #2 (forming the type [=lq]pointer to reference to [`int][=rq] fails in #1) \
+                [:zh_CN] 选中 #2（#1 中构成类型“[`int] 的引用的指针”时失败）
+}
+[codeblock:end]
+[end:example]
+
+[begin:note]
+[:en] Separately instantiated constructs are excluded from the immediate contexts
+even if they are instantiated at the same time.
+[:zh_CN] 即使单独实例化语言构造是同时实例化的，也将它们排除出直接语境。
+[end:note]
 
 [begin:note]
 [:en] The substitution into types and expressions can result in effects such as
-the instantiation of class template specializations and/or function template
-specializations, the generation of implicitly-defined functions, etc.
-[:zh_CN] 向类型和表达式进行的代换可能会产生各种效果，比如类模板特例和/或函数模板
-特例的实例化，生成隐式定义的函数，等等。
+the instantiation of template specializations, the generation of
+implicitly-defined functions, etc.
+[:zh_CN] 向类型和表达式进行的代换可能会产生各种效果，比如模板特例的实例化，生成隐式定义的函数，等等。
 
-[:en] Such effects are not in the [=lq]immediate context[=rq] and can result in
+[:en] Such effects are not in the immediate context and can result in
 the program being ill-formed.
-[:zh_CN] 这些效果并非处于“直接语境”中，并且可能导致程序非良构。
+[:zh_CN] 这些效果并非处于直接语境中，并且可能导致程序非良构。
 [end:note]
 
 [para]
-[:en] When substituting into a [~lambda-expression], substitution into its body
-is not in the immediate context.
-[:zh_CN] 当向 [~lambda-表达式]中进行代换时，其函数体中的代换并不在直接语境中进行。
-
 [begin:note]
-[:en] The intent is to avoid requiring implementations to deal with substitution
-failure involving arbitrary statements.
-[:zh_CN] 其目的是避免要求实现处理涉及任意语句的代换错误。
+[:en] No [~statement] is ever in the immediate context of a deduction substitution locus.
+[:zh_CN] 任何[~语句]都不会处于推断代换位点的直接语境中。
 
 [begin:example]
 [codeblock]

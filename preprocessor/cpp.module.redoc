@@ -8,7 +8,7 @@
 
 [syntax]
 [rule pp-module [:zh_CN] 预处理模块 ]
-    [| [`:opt:key export] [`:key module] [~:opt pp-tokens] [`;] new-line ]
+    [| [`:opt:key export] [`:key module] [~:opt pp-tokens] new-line ]
 [rule:end]
 [syntax:end]
 
@@ -18,9 +18,8 @@
 [syntax:explanation]
 [~pp-module-name] [~:opt pp-module-partition] [~:opt pp-tokens]
 [syntax:end]
-[:en@~] where the [~pp-tokens] (if any) shall not begin with a [`(]
-preprocessing token and the grammar non-terminals are defined as:
-[:zh_CN] 其中的[~预处理记号序列]（如果有）不能以预处理记号 [`(] 开头，而各个文法非终结符定义如下：
+[:en@~] where the grammar non-terminals are defined as:
+[:zh_CN] 其中各个文法非终结符定义如下：
 
 [syntax:explanation]
 [rule pp-module-name [:zh_CN] 预处理模块名 ]
@@ -29,16 +28,17 @@ preprocessing token and the grammar non-terminals are defined as:
 [rule pp-module-partition [:zh_CN] 预处理模块分区 ]
     [| [`:] [~:opt pp-module-name-qualifier] identifier ]
 [rule:end]
-[rule pp-module-name-qualifier [:zh_CN] 预处理模块名限定 ]
+[rule pp-module-name-qualifier [:zh_CN] 预处理模块名限定符 ]
     [| identifier [`.] ]
     [| pp-module-name-qualifier identifier [`.] ]
 [rule:end]
 [syntax:end]
 
 [:en] No [~identifier] in the [~pp-module-name] or [~pp-module-partition]
-shall currently be defined as an object-like macro.
-[:zh_CN] [~预处理模块名]或[~预处理模块分区]中的[~标识符]都不能当前被定义为
-对象式宏。
+shall currently be defined as an object-like macro or followed by [`(] as the
+next preprocessing token at the start of phase 4 of translation ([#lex.phases]).
+[:zh_CN] [~预处理模块名]或[~预处理模块分区]中的[~标识符]都不能当前被定义为对象式宏
+或者在翻译阶段 4（[#lex.phases]）开始时后面跟随的下一个预处理记号是 [`(]。
 
 [para]
 [:en] Any preprocessing tokens after the [`module] preprocessing token in the
@@ -61,3 +61,83 @@ by the [~module-keyword] and [~export-keyword] preprocessing tokens respectively
 [:en] This makes the line no longer a directive so it is not removed at the end of phase 4.
 [:zh_CN] 这使代码行不再是一条指令，因而不会在阶段 4 末尾被移除。
 [end:note]
+
+[:en] After this replacement, the preprocessing tokens that constituted the
+directive are a [~text-line] and are processed as normal text.
+[:zh_CN] 这项替换后，构成指令的预处理记号是一个[~文本行]并按普通文本处理。
+
+[begin:note]
+[:en] No macro expansion is possible for the [~pp-module-name] and [~pp-module-partition].
+[:zh_CN] 宏展开不可能为[~预处理模块名]和[~预处理模块分区]。
+[end:note]
+
+[:en] After such processing, there shall be a [`;] or [``[] preprocessing token
+following the [~pp-module-name] and optional [~pp-module-partition].
+[:zh_CN] 经过这些处理后，[~预处理模块名]和可选的[~预处理模块分区]之后应当跟着
+预处理记号 [`;] 或 [``[]。
+
+[para]
+[begin:example]
+[:en] Importable header [`"common.h"]:
+[:zh_CN] 可导入头文件 [`"common.h"]：
+[codeblock]
+#define DOT_BAR .bar
+#define MOD_ATTR [[vendor::shiny_module]]
+[codeblock:end]
+
+[para:~]
+[:en] Translation unit [`#1]:
+[:zh_CN] 翻译单元 [`#1]：
+[codeblock]
+module;
+#include "common.h"
+
+export module foo DOT_BAR;      // [:en] error: expansion of [`DOT_BAR;] does not begin with [`;] or [``[] \
+                                [:zh_CN] 错误：[`DOT_BAR;] 的展开并不以 [`;] 或 [``[] 开头
+[codeblock:end]
+
+[para:~]
+[:en] Translation unit [`#2]:
+[:zh_CN] 翻译单元 [`#2]：
+[codeblock]
+module;
+#include "common.h"
+
+export module M MOD_ATTR ;      // OK
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+export module a
+.b;                             // [:en] error: preprocessing token after [~pp-module-name] is not [`;] or [``[] \
+                                [:zh_CN] 错误：[~预处理模块名]之后的预处理记号不是 [`;] 或 [``[]
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+export module M [[
+attr1,
+attr2 ]] ;                      // OK
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+export module M
+[[ attr1,
+attr2 ]] ;                      // OK
+[codeblock:end]
+[end:example]
+
+[para:~]
+[begin:example]
+[codeblock]
+export module M; int
+n;                              // OK
+[codeblock:end]
+[end:example]

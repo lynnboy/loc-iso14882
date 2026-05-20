@@ -260,7 +260,8 @@ Original   |中文   |章节    |定义
 |-|-|-|-|
 *statement*                 |*语句*         | [stmt.pre]    | *带标号语句* \|<br> *属性说明符序列*__?__ *表达式语句* \|<br> *属性说明符序列*__?__ *复合语句* \|<br> *属性说明符序列*__?__ *选择语句* \|<br> *属性说明符序列*__?__ *循环语句* \|<br> *属性说明符序列*__?__ *展开语句* \|<br> *属性说明符序列*__?__ *跳转语句* \|<br> *属性说明符序列*__?__ *断言语句* \|<br> *声明语句* \|<br> *属性说明符序列*__?__ *try-块*
 *init-statement*            |*初始化语句*   | [stmt.pre]    | *表达式语句* \| *简单声明式* \| *别名声明式*
-*condition*                 |*条件*         | [stmt.pre]    | *表达式* \|<br> *属性说明符序列*__?__ *声明说明符序列* *声明符* *花括号或等号初始化式*\|<br> *结构化绑定声明式* *初始化式*
+*condition*                 |*条件*         | [stmt.pre]    | *表达式* \| *条件声明式*
+*condition-declaration*     |*条件声明式*   | [stmt.pre]    | *属性说明符序列*__?__ *声明说明符序列* *声明符* *花括号或等号初始化式*\|<br> *结构化绑定声明式* *初始化式*
 *for-range-declaration*     |*for-范围声明式*| [stmt.pre]   | *属性说明符序列*__?__ *声明说明符序列* *声明符* \|<br> *结构化绑定声明式*
 *for-range-initializer*     |*for-范围初始化式*| [stmt.pre] | *表达式或花括号初始化列表*
 *label*                     |*标号*         | [stmt.label]  | *属性说明符序列*__?__ (*标识符* \| `case` *常量表达式* \| `default` ) `:`
@@ -536,7 +537,10 @@ Original   |中文   |章节    |定义
 *has-include-expression*    |*包含查询表达式*| [cpp.cond]   | `__has_include` `(` ( *头文件名* \| *头文件名记号序列* ) `)`
 *has-embed-expression*      |*嵌入查询表达式*| [cpp.cond]   | `__has_embed` `(` ( *头文件名* \| *头文件名记号序列* ) *预处理平衡记号序列*__?__ `)`
 *has-attribute-expression*  |*属性查询表达式*| [cpp.cond]   | `__has_cpp_attribute` `(` *预处理记号序列* `)`
-*pp-module*                 |*预处理模块指令*| [cpp.module] | `export`__?__ `module` *预处理记号序列*__?__ `;` *换行*
+*pp-module*                 |*预处理模块指令*| [cpp.module] | `export`__?__ `module` *预处理记号序列*__?__ *换行*
+*pp-module-name*            |*预处理模块名* | [cpp.module]  | *预处理模块名限定符*__?__ *标识符*
+*pp-module-partition*       |*预处理模块分区* | [cpp.module] | `:` *预处理模块名限定符*__?__ *标识符*
+*pp-module-name-qualifier*  |*预处理模块名限定符*| [cpp.module] | *标识符* `.` \| *预处理模块名限定符* *标识符* `.`
 *pp-import*                 |*预处理导入指令*| [cpp.import] | `export`__?__ `import` ( *头文件名* \| *头文件名记号序列* ) *预处理记号序列*__?__ `;` *换行* \|<br> `export`__?__ `import` *预处理记号序列* `;` *换行*
 *va-opt-replacement*        |*va-可选替代*  | [cpp.subst]   | `__VA_OPT__` `(` *预处理记号序列*__?__ `)`
 *line-directive*            |*行指令*       | [cpp.line]    | `#` `line` *预处理记号序列* *换行*
@@ -1293,6 +1297,7 @@ IEEE, Institute of Electrical and Electronic    |IEEE，电气与电子工程师
 if statement                            |if 语句
 ignore                                  |忽略       |契约评估语义之一。不求值谓词
 ill-formed                              |非良构的   |语法或语义无效的代码
+immediate context                       |直接语境
 immediate-escalating expression         |直接性扩散表达式
 immediate function                      |直接函数       |以`consteval`修饰的函数
 immediate function context              |直接函数语境   |直接函数的作用域，或consteval if作用域中
@@ -1952,6 +1957,7 @@ sender                                  |发送器 |异步操作的工厂
 sender adaptor                          |发送器适配器
 sender consumer                         |发送器消耗方
 sender factory                          |发送器工厂
+separately instantiated construct       |单独实例化语言构造|函数模板：默认实参、noexcept、契约
 sequence                                |序列   |容器的一种
 sequenced after                         |按顺序晚于 SeqA
 sequenced before                        |按顺序早于 SeqB    |线程内顺序性：全表达式，运算符结果值早于操作数值，函数实参和函数后缀表达式早于函数体，等待表达式处的切换

@@ -48,8 +48,8 @@ be determined as specified in [#stmt.ranged].
 
 [item]
 [:en] argument-dependent lookups for [`begin(E)] and for [`end(E)]
-each find at least one function or function template.
-[:zh_CN] 针对 [`begin(E)] 和 [`end(E)] 进行的实参依赖查找各自找到至少一个函数或函数模板。
+each find at least one viable candidate ([#over.match.viable]).
+[:zh_CN] 针对 [`begin(E)] 和 [`end(E)] 进行的实参依赖查找各自找到至少一个可行候选（[#over.match.viable]）。
 [list:end]
 
 [para]
@@ -108,9 +108,8 @@ together with the compound-statement of [$S], as follows:
 [codeblock]
 {
   [[redoc("~>")]]init-statement
-  constexpr auto&& [[redoc("*>")]]range = [[redoc("~>")]]expansion-initializer;
-  constexpr auto [[redoc("*>")]]begin = [[redoc("*>")]]begin-expr;            // [?see [#stmt.ranged]]
-  constexpr auto [[redoc("*>")]]end = [[redoc("*>")]]end-expr;                // [?see [#stmt.ranged]]
+  [[redoc("`:opt>")]]constexpr decltype(auto) [[redoc("*>")]]range = ([[redoc("~>")]]expansion-initializer);
+  [[redoc("`:opt>")]]constexpr auto [[redoc("*>")]]begin = [[redoc("*>")]]begin-expr;         // [?see [#stmt.ranged]]
 
   [[redoc("[$S_0]")]]
   [[redoc("[$\vdots]")]]
@@ -122,7 +121,9 @@ together with the compound-statement of [$S], as follows:
 [codeblock]
 [] consteval {
   std::ptrdiff_t result = 0;
-  for (auto i = [[redoc("*>")]]begin; i != [[redoc("*>")]]end; ++i), ++result;
+  auto b = [[redoc("*>")]]begin-expr;
+  auto e = [[redoc("*>")]]end-expr;
+  for (; b != e; ++b) ++result;
   return result;                                // [:en] distance from [*begin] to [*end] [:zh_CN] 从 [*begin] 到 [*end] 的距离
 }()
 [codeblock:end]
@@ -130,23 +131,24 @@ together with the compound-statement of [$S], as follows:
 [:zh_CN@~] 的求值结果，而 [$S_i] 为
 [codeblock]
 {
-  constexpr auto [[redoc("*>")]]iter = [[redoc("*>")]]begin + decltype(begin - begin){[[redoc("^>")]]i};
+  [[redoc("`:opt>")]]constexpr auto [[redoc("*>")]]iter = [[redoc("*>")]]begin + decltype(begin - begin){[[redoc("^>")]]i};
   [[redoc("~>")]]for-range-declaration = *[[redoc("*>")]]iter;
   [[redoc("~>")]]compound-statement
 }
 [codeblock:end]
 
-[:en] The variables [*range], [*begin], [*end], and [*iter] are defined for exposition only.
-[:zh_CN] 变量 [*range]、[*begin]、[*end] 和 [*iter] 仅为阐释而定义。
+[:en] The variables [*range], [*begin], and [*iter] are defined for exposition only.
+[:zh_CN] 变量 [*range]、[*begin] 和 [*iter] 仅为阐释而定义。
+
+[:en] The keyword [`:key constexpr] is present in the declarations of [*range],
+[*begin], and [*iter] if and only if [`:key constexpr] is one of the
+[~decl-specifier]s of the [~decl-specifier-seq] of the [~for-range-declaration].
+[:zh_CN] 当且仅当 [`:key constexpr] 是 [~for-范围声明式]的[~声明说明符序列]的
+[~声明说明符]之一时，[`*range]、[*begin] 和 [*iter] 的声明式中出现关键词 [`:key constexpr]。
 
 [:en] The identifier [`[^i]] is considered to be a prvalue of type [`std::ptrdiff_t];
 the program is ill-formed if [`[^i]] is not representable as such a value.
 [:zh_CN] 标识符 [`[^i]] 被当作 [`std::ptrdiff_t] 类型的纯右值；若 [`[^i]] 不能表示为这种值则程序非良构。
-
-[begin:note]
-[:en] The instantiation is ill-formed if [*range] is not a constant expression ([#expr.const]).
-[:zh_CN] 如果 [*range] 不是常量表达式（[#expr.const]），则此实例化非良构。
-[end:note]
 
 [item]
 [:en] Otherwise, [$S] is a destructuring expansion statement and, if [$N] is [$0], [$S] is equivalent to:
@@ -173,16 +175,22 @@ of the [~expansion-initializer] and [$S_i] is
 [:zh_CN@~] 其中 [$N] 为[~展开初始化式]的类型的结构化绑定大小，而 [$S_i] 为
 [codeblock]
 {
-  [[redoc("~>")]]for-range-declaration = [[redoc("[$u_i]")]];
+  [[redoc("~>")]]for-range-declaration = [[redoc("[$v_i]")]];
   [[redoc("~>")]]compound-statement
 }
 [codeblock:end]
 
-[:en] The keyword [`:key constexpr] is present in the declaration
+[:en] If the [~expansion-initializer] is an lvalue, then [$v_{i}] is [$u_{i}];
+otherwise, [$v_{i}] is [`static_cast<decltype([$u_{i}])&&>([$u_{i}])].
+[:zh_CN] 如果[~展开初始化式]是左值，那么 [$v_{i}] 为 [$u_{i}]；否则，
+[$v_{i}] 为 [`static_cast<decltype([$u_{i}])&&>([$u_{i}])]。
+
+[:en] The keyword [`:key constexpr] is present in the [~structured-binding-declaration]
 of [$u_0, u_1, \dotsc, u_{N-1}] if and only if [`:key constexpr] is one of the
 [~decl-specifier]s of the [~decl-specifier-seq] of the [~for-range-declaration].
 [:zh_CN] 当且仅当关键词 [`:key constexpr] 是 [~for-范围声明式]的[~声明说明符序列]
-中的[~声明说明符]之一时，[`:key constexpr] 在 [$u_0, u_1, \dotsc, u_{N-1}] 的声明式中出现。
+中的[~声明说明符]之一时，[`:key constexpr] 在 [$u_0, u_1, \dotsc, u_{N-1}] 的
+[~结构化绑定声明式]中出现。
 [list:end]
 
 [para]

@@ -132,6 +132,12 @@ def impldef(_1):
 def impldefplain(_1):
     return index[impldefindex].add(_1) + text("implementation-defined")
 
+def lang_split(_1):
+    return [_1]
+@applyTo(['?ref#{_ref}'])
+def ref(_ref, _1):
+    return ' '.join(f'{lang}[=comma_sep][#{_ref}] {content}' for (lang, content) in lang_split(_1))
+
 # appearance
 @applyTo(['`'], at=['%', '% !'])
 def idxcode(_1:str): return {'key': _1, text: tcode(_1)}

@@ -102,6 +102,68 @@ where [$k_0, \ldots, k_n] are the selected indices of [`mask].
 [list:end]
 [div:end]
 
+[codeblock:declaration]
+template<class T, class BinaryOperation = plus<>>
+  constexpr T reduce(const T& x, BinaryOperation binary_op = {});
+template<class T, class BinaryOperation = plus<>>
+  constexpr T reduce(const T& x, [[redoc("`:c>")]]same_as<bool> auto mask, BinaryOperation binary_op = {},
+                     type_identity_t<T> identity_element = [[redoc("[=seebelow]")]]);
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`mask] be [`true] for the overload with no [`mask] parameter.
+[:zh_CN] 令 [`mask] 对于没有 [`mask] 形参的重载为 [`true]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`T] is vectorizable.
+[:zh_CN] [`T] 可向量化。
+[item]
+[:en] [`BinaryOperation] models [`[*:c reduction-binary-operation]<T>].
+[:zh_CN] [`BinaryOperation] 构成 [`[*:c reduction-binary-operation]<T>]。
+[item]
+[:en] An argument for [`identity_element] is provided for the invocation,
+unless [`BinaryOperation] is one of [`plus<>], [`multiplies<>], [`bit_and<>],
+[`bit_or<>], or [`bit_xor<>].
+[:zh_CN] 若 [`BinaryOperation] 不是 [`plus<>]、[`multiplies<>]、[`bit_and<>]、
+[`bit_or<>] 或 [`bit_xor<>] 之一，则调用时提供了一个用于 [`identity_element] 的实参。
+[list:end]
+
+[para:returns]
+[:en] If [`mask] is [`false], returns [`identity_element].
+[:zh_CN] 若 [`mask] 为 [`false]，则返回 [`identity_element]。
+
+[:en] Otherwise, returns [`x].
+[:zh_CN] 否则，返回 [`x]。
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+
+[para:remarks]
+[:en] The default argument for [`identity_element] is equal to
+[:zh_CN] 用于 [`identity_element] 的缺省实参
+[list]
+[item]
+[:en@~] [`T()] if [`BinaryOperation] is [`plus<>],
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`plus<>] 时等于 [`T()]，
+[item]
+[:en@~] [`T(1)] if [`BinaryOperation] is [`multiplies<>],
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`multiplies<>] 时等于 [`T(1)]，
+[item]
+[:en@~] [`T(~T())] if [`BinaryOperation] is [`bit_and<>],
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`bit_and<>] 时等于 [`T(~T())]，
+[item]
+[:en@~] [`T()] if [`BinaryOperation] is [`bit_or<>], or
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`bit_or<>] 时等于 [`T()]，或者
+[item]
+[:en@~] [`T()] if [`BinaryOperation] is [`bit_xor<>].
+[:zh_CN@~] 当 [`BinaryOperation] 为 [`bit_xor<>] 时等于 [`T()]，
+[list:end]
+[div:end]
+
 [%@lib@member reduce_min[!simd]]
 [codeblock:declaration]
 template<class T, class Abi> constexpr T reduce_min(const basic_vec<T, Abi>& x) noexcept;
@@ -178,4 +240,36 @@ template<class T, class Abi>
 [`x`[[$j]`] < x`[[$i]`]] is [`false] for all selected indices [$i] of [`mask].
 [:zh_CN] 否则，返回某个选中元素 [`x`[[$j]`]] 的值，其中对于 [`mask] 的所有选中索引 [$i]，
 [`x`[[$j]`] < x`[[$i]`]] 均为 [`false]。
+[div:end]
+
+[codeblock]
+template<class T> constexpr T reduce_min(const T& x) noexcept;
+template<class T> constexpr T reduce_min(const T& x, [[redoc("`:c>")]]same_as<bool> auto mask) noexcept;
+template<class T> constexpr T reduce_max(const T& x) noexcept;
+template<class T> constexpr T reduce_max(const T& x, [[redoc("`:c>")]]same_as<bool> auto mask) noexcept;
+[codeblock:end]
+
+[div:description]
+[para]
+[:en] Let [`mask] be [`true] for the overloads with no [`mask] parameter.
+[:zh_CN] 令 [`mask] 对于没有 [`mask] 形参的重载为 [`true]。
+
+[para:constraints]
+[list]
+[item]
+[:en] [`T] is vectorizable.
+[:zh_CN] [`T] 可向量化。
+[item]
+[:en] [`T] models [`totally_ordered].
+[:zh_CN] [`T] 构成 [`totally_ordered]。
+[list:end]
+
+[para:returns]
+[:en] If [`mask] is [`false], returns [`numeric_limits<T>::max()] for
+[`reduce_min] and [`numeric_limits<T>::lowest()] for [`reduce_max].
+[:zh_CN] 如果 [`mask] 为 [`false]，则 [`reduce_min] 返回 [`numeric_limits<T>::max()]
+而 [`reduce_max] 返回 [`numeric_limits<T>::lowest()]。
+
+[:en] Otherwise, returns [`x].
+[:zh_CN] 否则，返回 [`x]。
 [div:end]
