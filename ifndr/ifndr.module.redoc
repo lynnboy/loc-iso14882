@@ -1,0 +1,107 @@
+[section#ifndr.module
+    [:en] [#module]: Modules
+    [:zh_CN] [#module]: 模块
+]
+
+[?ifndrdescription#module.unit.reserved.identifiers]
+
+[para]
+[:en] Specifying a [~module-name] beginning with an identifier consisting of [`std]
+followed by zero or more digits, or containing a reserved identifier ([#lex.token])
+in a [~module-declaration] is ill-formed, no diagnostic required.
+[:zh_CN] 将[~模块名]指定为以 [`std] 开头、后跟零个或多个数字构成的标识符，或者在
+[~模块声明式]中包含保留标识符（[#lex.token]），是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+module std;             // [:en] IFNDR, [`std] is not allowed at the beginning \
+                        [:zh_CN] IFNDR, [`std] 不允许位于开头
+module module;          // [:en] IFNDR, [`module] is a reserved identifier \
+                        [:zh_CN] IFNDR, [`module] 是一个保留标识符
+module std0;            // [:en] IFNDR, [`std] followed by digits is not allowed at the beginning \
+                        [:zh_CN] IFNDR, [`std] 后跟数字不允许位于开头
+export module _Test;    // [:en] IFNDR, [`_Test] is a reserved identifier \
+                        [:zh_CN] IFNDR, [`_Test] 是一个保留标识符
+export module te__st;   // [:en] IFNDR, [`te__st] is a reserved identifier \
+                        [:zh_CN] IFNDR, [`te__st] 是一个保留标识符
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#module.unit.named.module.no.partition]
+
+[para]
+[:en] Having multiple primary module interface units for a named module
+is ill-formed, no diagnostic required.
+[:zh_CN] 对于一个具名模块，具有多个主模块接口单元是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+module A;
+export import :Internals;       // [:en] IFNDR, module partition not allowed [:zh_CN] IFNDR, 不允许模块分区
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#module.unit.unexported.module.partition]
+
+[para]
+[:en] If a module partition of a module that is a module interface unit
+but is not directly or indirectly exported by the primary module interface unit ([#module.import]),
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果一个模块的模块分区是一个模块接口单元，但没有被主模块接口单元直接或间接导出（[#module.import]），
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+export module M;    // [:en] primary module interface unit [:zh_CN] 主模块接口单元
+export import :A;
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+export module M:A;  // [:en] OK, directly exported by [`M] [:zh_CN] OK，直接由 [`M] 导出
+export import :B;
+[codeblock:end]
+
+[:en] Translation unit #3
+[:zh_CN] 翻译单元 #3
+[codeblock]
+export module M:B;  // [:en] OK, indirectly exported by [`M] [:zh_CN] OK，间接由 [`M] 导出
+[codeblock:end]
+
+[:en] Translation unit #4
+[:zh_CN] 翻译单元 #4
+[codeblock]
+export module M:C;  // [:en] IFNDR, not directly or indirectly exported by [`M] \
+                    [:zh_CN] IFNDR，并未直接或间接由 [`M] 导出
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#module.private.frag.other.module.units]
+
+[para]
+[:en] If a module has a private module fragment and there is another module unit
+of that module, the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果一个模块具有私有模块片段，并且该模块还有另一个模块单元，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+export module M;
+module :private;    // [:en] private module fragment [:zh_CN] 私有模块片段
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+module M:A;         // [:en] IFNDR, partition of [`M] with private module fragment \
+                    [:zh_CN] IFNDR，[`M] 的私有模块片段分区
+[codeblock:end]
+[end:example]

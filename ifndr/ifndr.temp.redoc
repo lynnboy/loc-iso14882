@@ -1,0 +1,404 @@
+[section#ifndr.temp
+    [:en] [#temp]: Templates
+    [:zh_CN] [#temp]: 模板
+]
+
+[?ifndrdescription#temp.pre.reach.def]
+
+[para]
+[:en] A definition of a function template, member function of a class template,
+variable template, or static data member of a class template
+that is not reachable from the end of every definition domain ([#basic.def.odr])
+in which it is implicitly instantiated ([#temp.inst])
+and whose corresponding specialization is not explicitly instantiated ([#temp.explicit])
+in some translation unit is ill-formed, no diagnostic required.
+[:zh_CN] 函数模板、类模板的成员函数、变量模板或类模板的静态数据成员的定义式，
+如果并非在其隐式实例化（[#temp.inst]）的每个定义域（[#basic.def.odr]）结束处可达，
+并且其对应的特例并未在某个翻译单元中被显式实例化（[#temp.explicit]），则该定义式非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Source file [`"a.h"]
+[:zh_CN] 源文件 [`"a.h"]
+[codeblock]
+template <typename T>
+void f();
+[codeblock:end]
+
+[:en] Source file [`"a.cpp"]
+[:zh_CN] 源文件 [`"a.cpp"]
+[codeblock]
+#include "a.h"
+int main() {
+    f<int>();   // [:en] IFNDR, function template implicitly instantiated but not reachable definition \
+                [:zh_CN] IFNDR，函数模板被隐式实例化但定义式不可达
+}
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.arg.template.sat.constraints]
+
+[para]
+[:en] Any partial specializations ([#temp.spec.partial])
+associated with the primary template are considered when a specialization
+based on the template template-parameter is instantiated.
+[:zh_CN] 与主模板相关联的任何部分特化式（[#temp.spec.partial]），在基于模板模板形参的特例
+被实例化时都会被考虑。
+
+[:en] If a specialization is not reachable from the point of instantiation,
+and it would have been selected had it been reachable,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果一个特化式在实例化点不可达，而如果它可达则会被选中，则该程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template<class T> struct A {
+  int x;
+};
+
+template<template<class U> class V> struct C {
+  V<int> y;
+  V<int*> z;
+};
+
+C<A> c;
+
+// [:en] IFNDR, specialization is not reachable from point of instantiation above and it would have \
+[:zh_CN] IFNDR，特化式在上面的实例化点不可达，
+// [:en@~] been selected if it had [:zh_CN@~] 而如果它可达则会被选中
+template<class T> struct A<T*> {
+  long x;
+};
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.constr.atomic.equiv.but.not.equiv]
+
+[para]
+[:en] If the validity or meaning of the program depends on whether two
+atomic constraints are equivalent, and they are functionally equivalent
+but not equivalent, the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果程序的有效性或含义取决于两个原子约束是否等价，而它们在功能上是等价的但并不等价，
+则程序非良构，无需诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template <int N> concept Add1 = true;
+template <unsigned N> void f2()
+requires Add1<2 * N>;
+template <unsigned N> int f2()
+requires Add1<N * 2> && true;
+void h2() {
+f2<0>();        // [:en] IFNDR, requires determination of subsumption between atomic constraints \
+                [:zh_CN] IFNDR，需要确定它们在功能上是等价的但并不等价的
+                // [:en@~] that are functionally equivalent but not equivalent \
+                [:zh_CN@~] 原子约束之间的包含关系
+}
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.constr.atomic.sat.result.diff]
+
+[para]
+[:en] If, at different points in the program, the satisfaction result is different
+for identical atomic constraints and template arguments,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果在程序的不同位置上，对于相同的原子约束和模板实参，所得的满足结果不同，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template<class T>
+concept Complete = sizeof(T) == sizeof(T);
+
+struct A;
+static_assert(!Complete<A>);    // #1
+struct A {};
+static_assert(Complete<A>);     // [:en] IFNDR, satisfaction result differs from point #1 \
+                                [:zh_CN] IFNDR，满足结果与位置 #1 的不同
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.constr.normal.invalid]
+
+[para]
+[:en] If during constraint normalization
+any such substitution results in an invalid type or expression,
+the program is ill-formed, no diagnostic is required.
+[:zh_CN] 如果在约束规范化过程中，任何这样的代换导致了无效的类型或表达式，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template<typename T> concept A = T::value || true;
+template<typename U> concept B = A<U*>;
+template<typename V> concept C = B<V&>;         // [:en] IFNDR, it would form the invalid type [`V&*] [:zh_CN] IFNDR，它会在形参映射中
+                                                // [:en@~] in the parameter mapping [:zh_CN@~] 形成无效的类型 [`V&*]
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.spec.partial.general.partial.reachable]
+
+[para]
+[:en] If a partial specialization is not reachable from a use of a
+template specialization that would make use of that partial specialization
+as the result of an implicit or explicit instantiation,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果一个部分特化式在使用一个模板特例时不可达，而该模板特例会在隐式或显式实例化的
+结果中使用该部分特化式，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template<typename T> class X{
+public:
+  void foo(){};
+};
+
+template class X<void *>;       // [:en] IFNDR, explicit instantiation and partial specialization is not reachable \
+                                [:zh_CN] IFNDR，显式实例化式和部分特化式不可达
+
+template<typename T> class X<T*>{
+public:
+  void baz();
+};
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.over.link.equiv.not.equiv]
+
+[para]
+[:en] If the validity or meaning of the program depends on whether two constructs
+are equivalent, and they are functionally equivalent but not equivalent,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果程序的有效性或含义取决于两个语言构造是否等价，而它们在功能上等价但并不等价，
+则程序非良构，无需诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template <int I>
+struct A{};
+
+// [:en] IFNDR, the following declarations are functionally equivalent but not equivalent \
+[:zh_CN] IFNDR，下列声明式在功能上等价但并不等价
+template <int I> void f(A<I>, A<I+10>);
+template <int I> void f(A<I>, A<I+1+2+3+4>);
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.res.general.default.but.not.found]
+
+[para]
+[:en] If the validity or meaning of the program would be changed by considering
+a default argument or default template argument introduced in a declaration
+that is reachable from the point of instantiation of a specialization ([#temp.point])
+but is not found by lookup for the specialization,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果程序的有效性或含义会因为考虑在一个声明式中引入的默认实参或默认模板实参而改变，
+该声明式在某个特例的实例化点（[#temp.point]）可达，但在该特例的查找中未找到它，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+void f(long);           // #1
+void f(int, int);       // #2
+template<typename T> void g(T t) { f(t); }
+void f(int, int = 0);   // #3
+void h() { g(0); }      // [:en] IFNDR, selects #3 here but selects #1 using lookup for [`g<int>] \
+                        [:zh_CN] IFNDR，在此处选择 #3，但在 [`g<int>] 的查找中选择 #1
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.point.diff.pt.diff.meaning]
+
+[para]
+[:en] A specialization for a class template has
+at most one point of instantiation within a translation unit.
+[:zh_CN] 类模板的一个特例在一个翻译单元中最多有一个实例化点。
+
+[:en] A specialization for any template
+may have points of instantiation in multiple translation units.
+[:zh_CN] 任意模板的一个特例可能在多个翻译单元中有实例化点。
+
+[:en] If two different points of instantiation give a template specialization
+different meanings according to the one-definition rule ([#basic.def.odr]),
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果两个不同的实例化点根据单一定义规则（[#basic.def.odr]）给一个模板特例不同的含义，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Source file [`"a.h"]
+[:zh_CN] 源文件 [`"a.h"]
+[codeblock]
+#include <type_traits>
+
+template <typename T, typename Enabler = void>
+struct is_complete : std::false_type {};
+
+template <typename T>
+struct is_complete<T, std::void_t<decltype(sizeof(T) != 0)>> : std::true_type {};
+[codeblock:end]
+
+[:en] Source file [`"a.cpp"]
+[:zh_CN] 源文件 [`"a.cpp"]
+[codeblock]
+#include "a.h"
+struct X;
+static_assert(!is_complete<X>::value);  // [:en] IFNDR, different specialization selected in [`"b.cpp"] \
+                                        [:zh_CN] IFNDR，在 [`"b.cpp"] 中选择了不同的特例
+[codeblock:end]
+
+[:en] Source file [`"b.cpp"]
+[:zh_CN] 源文件 [`"b.cpp"]
+[codeblock]
+#include "a.h"
+struct X { };
+static_assert(is_complete<X>::value);   // [:en] IFNDR, different specialization selected in [`"a.cpp"] \
+                                        [:zh_CN] IFNDR，在 [`"a.cpp"] 中选择了不同的特例
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.dep.candidate.different.lookup.different]
+
+[para]
+[:en] If considering all function declarations with external linkage
+in the associated namespaces in all translations would make a dependent call ([#temp.dep])
+ill-formed or find a better match, the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果考虑所有翻译单元中的关联命名空间中具有外部连接的所有函数声明式，会使一个
+待决调用（[#temp.dep]）非良构或找到更好的匹配，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+namespace A {
+  struct S {};
+  void f(S&, long x, int y);    // #3
+  void g(S&, int x);            // #4
+}
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+namespace A {
+  struct S {};
+  void f(S&, int x, long y);    // #5
+  void g(S&, long x);           // #6
+}
+template <typename T>
+void h(T& t)
+{
+  f(t, 1, 1);   // [:en] Selects #5 in [`h<A::S>], would be ambiguous call if all declarations were considered. \
+                [:zh_CN] 在 [`h<A::S>] 中选择 #5，考虑所有声明式时会有歧义。
+  g(t, 1);      // [:en] Selects #6 in [`h<A::S>], would select #4 if all declarations were considered. \
+                [:zh_CN] 在 [`h<A::S>] 中选择 #6，考虑所有声明式时会选择 #4。
+}
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.explicit.decl.implicit.inst]
+
+[para]
+[:en] If an entity that is the subject of an explicit instantiation declaration
+and that is also used in a way that would otherwise cause an implicit instantiation ([#temp.inst])
+in the translation unit is not the subject of
+an explicit instantiation definition somewhere in the program
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果某个实体是显式实例化声明式的主题，并且在翻译单元中以其他方式会导致隐式实例化（[#temp.inst]）
+的方式被使用，但该实体并非程序中某处显式实例化定义式的主题，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+extern template class std::vector<int>;     // [:en] explicit instantiation declaration [:zh_CN] 显式实例化声明式
+
+int main() {
+  std::cout << std::vector<int>().size();   // [:en] IFNDR, implicit instantiation but no explicit [:zh_CN] IFNDR，隐式实例化，
+                                            // [:en@~] instantiation definition [:zh_CN@~] 但没有显式实例化定义式
+}
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.expl.spec.unreachable.declaration]
+
+[para]
+[:en] If an implicit instantiation of a template would occur
+and there is an unreachable explicit specialization
+that would have matched, the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果将进行某个模板的隐式实例化，并且存在一个本可匹配但不可达的显式特化式，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Souce file [`"a.h"]
+[:zh_CN] 源文件 [`"a.h"]
+[codeblock]
+template <typename T> struct S {};
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+#include "a.h"
+template <> struct S<int> { int oops; };    // \#1
+[codeblock:end]
+
+[:en] Translation unit #3
+[:zh_CN] 翻译单元 #3
+[codeblock]
+#include "a.h"
+S<int> s;       // [:en] IFNDR, #1 is not reachable but would have matched \
+                [:zh_CN] IFNDR，#1 不可达但本可以匹配
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.expl.spec.missing.definition]
+
+[para]
+[:en] If an explicit specialization of a template is declared but there is
+no definition provided for that specialization,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果已经声明了模板的某个显式特例，但未提供该特例的定义式，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template <typename T> int f(T&&) { return 0; }
+template <> int f<int>(int&&);
+int j = f(1);   // [:en] IFNDR, odr-use of [`f<int>] with no definition \
+                [:zh_CN] IFNDR，ODR 式使用没有定义式的 [`f<int>]
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#temp.deduct.general.diff.order]
+
+[para]
+[:en] If substitution into different declarations of the same function template
+would cause template instantiations to occur in a different order or not at all,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果向同一函数模板的不同声明式中进行的代换会导致模板实例化以不同顺序发生或根本不发生，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+template <class T> struct A { using X = typename T::X; };
+template <class T> typename T::X h(typename A<T>::X);           // #1
+template <class T> auto h(typename A<T>::X) -> typename T::X;   // [:en] redeclaration #2 [:zh_CN] 重复声明 #2
+template <class T> void h(...) { }
+
+void x() {
+  h<int>(0);    // [:en] Substituting into #1 forms an invalid type from [`T::X] and does \
+                [:zh_CN] 向 #1 中的代换从 [`T::X] 形成了一个无效类型，
+                // [:en@~] not attempt to instantiate [`A]. [:zh_CN@~] 且不会尝试实例化 [`A]
+                // [:en] Substituting into #2 instantiates [`A<T>], which is ill-formed. \
+                [:zh_CN] 向 #2 中的代换实例化了 [`A<T>]，它非良构。
+}
+[codeblock:end]
+[end:example]

@@ -1,0 +1,240 @@
+[section#ifndr.dcl
+    [:en] [#dcl]: Declarations
+    [:zh_CN] [#dcl]: 声明式
+]
+
+[?ifndrdescription#dcl.constinit.specifier.not.reachable]
+
+[para]
+[:en] If the initializing declaration of a variable without the [`constinit] specifier
+has the [`constinit] specifier applied to declarations that are not reachable from
+that initializing declaration, the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果一个没有 [`constinit] 说明符的变量的初始化声明式，对从该初始化声明式
+不可达的声明式应用了 [`constinit] 说明符，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+int x = 5;  // [:en] initializing declaration of [`x] [:zh_CN] [`x] 的初始化声明式
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+extern constinit int x;     // [:en] IFNDR, not reachable from initializing declaration of [`x] \
+                            [:zh_CN] IFNDR, 从 [`x] 的初始化声明式不可达
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.inline.missing.on.definition]
+
+[para]
+[:en] If a function or variable with external or module linkage is declared inline
+but there is no inline declaration reachable from the end of some definition domain
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果具有外部或模块连接的函数或变量被声明为内联，但不存在从某个定义域的末尾可达的
+内联声明式，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+inline int f();
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+int f() { return 17; }
+    // [:en] IFNDR, end of definition domain but no inline declaration of [`f] is reachable \
+    [:zh_CN] IFNDR, 定义域的末尾，但没有可达的 [`f] 的内联声明式
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.fct.default.inline.same.defaults]
+
+[para]
+[:en] If the accumulated set of default arguments for a given inline function
+with definitions in multiple translation units is different at the end
+of different translation units, the program is ill-formed, no diagnostic required.
+[:zh_CN] 在多个翻译单元中有定义式的给定内联函数，如果累积的默认实参集合在不同翻译单元的末尾不同，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+inline int f(int x,     int y = 2);
+inline int f(int x = 1, int y);
+  // [:en] IFNDR, default arguments of [`f] are [`1] and [`2] \
+  [:zh_CN] IFNDR, [`f] 的默认实参是 [`1] 和 [`2]
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+inline int f(int x = 3, int y = 4);
+  // [:en] IFNDR, default arguments of [`f] are [`3] and [`4] \
+  [:zh_CN] IFNDR, [`f] 的默认实参是 [`3] 和 [`4]
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.contract.func.mismatched.contract.specifiers]
+
+[para]
+[:en] If two different first declarations of a function
+(which must therefore not be reachable from one another)
+do not have equivalent function contract specifiers
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果某个函数的两个不同的首个声明式（因而必然从彼此不可达）不具有等价的函数契约说明符，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+int f(int x) pre(x >= 0);       // [:en] IFNDR, [`pre] present, not present in the other first declaration of [`f] \
+                                [:zh_CN] IFNDR，[`pre] 存在，在 [`f] 的另一个首个声明式中不存在
+int g(int x) pre(x == 0);       // [:en] IFNDR, [`pre] differs from the other first declaration of [`g] \
+                                [:zh_CN] IFNDR，[`pre] 不同于 [`g] 的另一个首个声明式
+int h(int x) pre(x <= 0);       // [:en] OK, [`pre] equivalent to [`pre] on the other first declaration of [`h] \
+                                [:zh_CN] OK，[`pre] 等价于 [`h] 的另一个首个声明式上的 [`pre]
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+int f(int x);                   // [:en] IFNDR, [`pre] not present, present in the other first declaration of [`f] \
+                                [:zh_CN] IFNDR，[`pre] 不存在，在 [`f] 的另一个首个声明式中存在
+int g(int x) pre(x != 0);       // [:en] IFNDR, [`pre] differs from the other first declaration of [`g] \
+                                [:zh_CN] IFNDR，[`pre] 不同于 [`g] 的另一个首个声明式
+int h(int y) pre(y <= 0);       // [:en] OK, [`pre] equivalent to [`pre] on the other first declaration of [`h] \
+                                [:zh_CN] OK，[`pre] 等价于 [`h] 的另一个首个声明式上的 [`pre]
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.fct.def.replace.bad.replacement]
+
+[para]
+[:en] A declaration of a replaceable function that is inline,
+not attached to the global module, does not have [=Cpp] language linkage,
+does not have the required return type, or is not a valid redeclaration of the
+corresponding declaration in a standard library header (if there is one)
+then the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果一个可替换函数的声明式是内联的，未附加到全局模块，没有 [=Cpp] 语言连接，
+没有所需的返回类型，或者不是标准库头文件中相应声明式的有效重声明（如果有的话），则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+extern "C"  // [:en] IFNDR, wrong language linkage [:zh_CN] IFNDR, 错误的语言连接
+inline      // [:en] IFNDR, inline [:zh_CN] IFNDR, 内联
+int         // [:en] IFNDR, wrong return type [:zh_CN] IFNDR, 错误的返回类型
+handle_contract_violation(const std::contracts::contract_violation&) {}
+
+void* operator new(decltype(sizeof(0))) noexcept;   // [:en] IFNDR, mismatched exception specification to [:zh_CN] IFNDR, 异常说明与
+                                                    // [:en@~] declaration in [`<new>] [:zh_CN@~] [`<new>] 中的声明式不匹配
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.link.mismatched.language.linkage]
+
+[para]
+[:en] If two declarations of an entity do not have the same language linkage
+and neither is reachable from the other the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果某个实体的两个声明式不具有相同的语言连接，并且任何一个都无法从另一个可达，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+extern "C" { void f(); }[[redoc()]]
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+extern "C++" { void f(); }[[redoc()]]  // [:en] IFNDR, different language linkage [:zh_CN] IFNDR, 不同的语言连接
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.align.diff.translation.units]
+
+[para]
+[:en] No diagnostic is required if declarations of an entity have different
+[~alignment-specifier]s in different translation units.
+[:zh_CN] 如果某个实体的声明式在不同翻译单元中具有不同的[~对齐说明符]，则无需诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+struct S { int x; } s, *p = &s;
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+struct alignas(16) S;   // [:en] IFNDR, definition of [`S] lacks alignment [:zh_CN] IFNDR, [`S] 的定义式缺少对齐说明符
+extern S* p;
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.attr.indet.mismatched.declarations]
+
+[para]
+[:en] If two first declarations of a function declare a function parameter with
+mismatched uses of the [`indeterminate] attribute,
+the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果某个函数的两个首个声明式以不匹配的 [`indeterminate] 属性用法声明一个函数形参，
+则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+int h(int x [[indeterminate]]); // [:en] IFNDR, mismatched [``[`[indeterminate`]`]] to other first declaration of [`h] \
+                                [:zh_CN] IFNDR, 与 [`h] 的另一个首个声明式的 [``[`[indeterminate`]`]] 不匹配
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+int h(int x);                   // [:en] IFNDR, mismatched [``[`[indeterminate`]`]] to other first declaration of [`h] \
+                                [:zh_CN] IFNDR, 与 [`h] 的另一个首个声明式的 [``[`[indeterminate`]`]] 不匹配
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#dcl.attr.noreturn.trans.unit.mismatch]
+
+[para]
+[:en] No diagnostic is required if a function is declared
+in one translation unit with the [`noreturn] attribute
+but has declarations in other translation units without the attribute.
+[:zh_CN] 如果某个函数在一个翻译单元中使用 [`noreturn] 属性声明，但在其他翻译单元中具有
+没有该属性的声明式，则无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+[[noreturn]] void f() {}
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+void f();           // [:en] IFNDR, declared without [`noreturn] attribute \
+                    [:zh_CN] IFNDR，声明为没有 [`noreturn] 属性
+[codeblock:end]
+[end:example]

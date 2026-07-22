@@ -1,0 +1,298 @@
+[section#ifndr.basic
+    [:en] [#basic]: Basics
+    [:zh_CN] [#basic]: 基本概念
+]
+
+[?ifndrdescription#basic.link.consistent.types]
+
+[para]
+[:en] Having multiple declarations of the same entity with different kinds
+when those declarations are not reachable from one another
+is ill-formed, no diagnostic required.
+[:zh_CN] 当同一实体的多个声明式具有不同的种类，并且这些声明式彼此不可达时，非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Module interface of [`M]
+[:zh_CN] [`M] 的模块接口
+[codeblock]
+void g();                       // #1
+void h();                       // #2
+template <typename T> int j;    // #3
+[codeblock:end]
+
+[:en] Module interface of [`N]
+[:zh_CN] [`N] 的模块接口
+[codeblock]
+int g();                        // [:en] same entity as #1, different type \
+                                [:zh_CN] 与 #1 是同一实体，但类型不同
+namespace h {}                  // [:en] same entity as #2, not both namespaces \
+                                [:zh_CN] 与 #2 是同一实体，但并非都是命名空间
+template <int X> int j;         // [:en] same entity as #3, non-equivalent template heads \
+                                [:zh_CN] 与 #3 是同一实体，但模板头不等价
+[codeblock:end]
+
+[:en] Other translation unit
+[:zh_CN] 其他翻译单元
+[codeblock]
+import M;
+import N;
+    // [:en] IFNDR due to the mismatched pairs above \
+    [:zh_CN] 由于上述几对不匹配，IFNDR
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.def.odr.minimum.one.def]
+
+[para]
+[:en] Not having a definition for a function or variable that is odr-used from
+a non-discarded statement ([#stmt.if]) is ill-formed, no diagnostic required.
+[:zh_CN] 从非弃用语句 ([#stmt.if]) ODR 式使用的函数或变量没有定义式是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+auto f() {
+  struct A {};
+  return A{};
+}
+decltype(f()) g();
+auto x = g();   // [:en] IFNDR, function [`g] is used but not defined in this translation unit, and cannot \
+                [:zh_CN] IFNDR, 函数 [`g] 被使用但在此翻译单元中没有定义，并且
+                // [:en@~] be defined in any other translation unit because its type does not have linkage \
+                [:zh_CN@~] 不能由于其类型没有连接，因此无法在任何其他翻译单元中定义
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.def.odr.injected.match]
+
+[para]
+[:en] Defining a definable item [`D] with an injected declaration ([#expr.const.reflect])
+in one translation unit and a definition in a different translation unit
+when [`D] is not attached to a named module or neither definition is reachable
+from the other is ill-formed, no diagnostic required.
+[:zh_CN] 在一个翻译单元中使用注入声明式 ([#expr.const.reflect]) 定义可定义项 [`D]，
+而在不同的翻译单元中提供定义式，当 [`D] 未附加到具名模块，或者两个定义式都不可从另一个
+定义式访问时，是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+struct S;
+consteval { std::meta::define_aggregate(^^S, {}); }     // #1
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+struct S {};    // [:en] IFNDR, definition here, injected declaration at #1 \
+                [:zh_CN] IFNDR, 此处为定义式，在 #1 处有注入声明式
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.def.odr.maximum.one.def]
+
+[para]
+[:en] If there are definitions in different translation units of a non-inline
+non-templated function or variable that are not attached to a named module or
+are not reachable from one another, the program is ill-formed, no diagnostic required.
+[:zh_CN] 如果在不同的翻译单元中有非内联非模板函数或变量的定义式，这些定义式未附加到具名模块，
+或者彼此不可达，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+export module M:A;  // [:en] module partition [:zh_CN] 模块分区
+void f() {}         // #1
+void g() {}         // #2
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+export module M:B;  // [:en] module partition [:zh_CN] 模块分区
+void f() {}         // [:en] IFNDR, #1 not reachable [:zh_CN] IFNDR, #1 不可达
+[codeblock:end]
+
+[:en] Translation unit #3
+[:zh_CN] 翻译单元 #3
+[codeblock]
+export module M;    // [:en] primary module interface unit [:zh_CN] 主模块接口单元
+export import :A;
+void g();           // [:en] error: #2 is reachable [:zh_CN] 错误: #2 可达
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.def.odr.definition.matches]
+
+[para]
+[:en] If there are definitions in different translation units of a definable item [`D] where
+[:zh_CN] 如果在不同的翻译单元中有可定义项 [`D] 的定义式，并且
+[list]
+[item]
+[:en@~] [`D] is not defined by an injected declaration ([#expr.const.reflect]),
+[:zh_CN@~] [`D] 不是由注入声明式 ([#expr.const.reflect]) 定义的，
+[item]
+[:en@~] [`D] is not an inline or templated function or variable, and
+[:zh_CN@~] [`D] 不是内联或模板化的函数或变量，并且
+[item]
+[:en@~] [`D] is not attached to a named module or the declarations are not
+reachable from one another,
+[:zh_CN@~] [`D] 未附加到具名模块，或者这些声明式彼此不可达，
+[list:end]
+[:en@~] that do not satisfy the matching rules described in [#basic.def.odr],
+the program is ill-formed, no diagnostic required.
+[:zh_CN@~] 如果这些定义式不满足 [#basic.def.odr] 中描述的匹配规则，则程序非良构，无须诊断。
+
+[para]
+[begin:example]
+[:en] Translation unit #1
+[:zh_CN] 翻译单元 #1
+[codeblock]
+inline void f() {}          // #1
+inline void g() {}          // #2
+inline void h() {[]{}();}   // #3
+namespace { int i = 0; }
+inline void j() {++i;}      // #4
+[codeblock:end]
+
+[:en] Translation unit #2
+[:zh_CN] 翻译单元 #2
+[codeblock]
+inline void f() {}          // [:en] OK, same as #1 [:zh_CN] OK, 与 #1 相同
+inline void g() {;}         // [:en] IFNDR, different sequence of tokens than #2 \
+                            [:zh_CN] IFNDR, 与 #2 的记号序列不同
+inline void h() {[]{}();}   // [:en] IFNDR, closure has different type than #3 \
+                            [:zh_CN] IFNDR, 与 #3 的闭包类型不同
+namespace { int i = 0; }
+inline void j() {++i; }     // [:en] IFNDR, [`i] refers to different entity than in #4 \
+                            [:zh_CN] IFNDR, [`i] 指代与 #4 中不同的实体
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.def.odr.unnamed.enum.same.type]
+
+[para]
+[:en] Having multiple unnamed enumeration definitions in the same scope
+that have the same first enumerator name and do not have typedef names for
+linkage purposes ([#dcl.enum]) that are not the same enumeration is ill-formed,
+no diagnostic required.
+[:zh_CN] 在同一作用域中具有多个无名枚举定义式，它们具有相同的第一个枚举符名称，并且没有
+用于连接目的的 typedef 名 ([#dcl.enum])，但不是同一个枚举，这是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[:en] Source file [`"a.h"]
+[:zh_CN] 源文件 [`"a.h"]
+[codeblock]
+enum { a };
+[codeblock:end]
+
+[:en] Source file [`"b.h"]
+[:zh_CN] 源文件 [`"b.h"]
+[codeblock]
+enum { a, b };
+[codeblock:end]
+
+[:en] Source file [`"main.cpp"]
+[:zh_CN] 源文件 [`"main.cpp"]
+[codeblock]
+import "a.h";
+import "b.h";
+auto n = decltype(a)::b;        // [:en] IFNDR, more than one unnamed enum definition reachable at \
+                                [:zh_CN] IFNDR, 在此处有多个无名枚举定义式可达，
+                                // [:en@~] this point but their types are not the same \
+                                [:zh_CN@~] 但它们的类型不同
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.contract.vastart.contract.predicate]
+
+[para]
+[:en] The use of [`va_start] ([#cstdarg.syn]) within the predicate of a
+contract assertion is ill-formed, no diagnostic required.
+[:zh_CN] 在契约断言的谓词中使用 [`va_start] ([#cstdarg.syn]) 是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+void f(...)
+{
+  va_list args;
+  contract_assert((va_start(const_cast<decltype(args)>(args)), true))   // IFNDR
+}
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#basic.contract.handler.replacing.nonreplaceable]
+
+[para]
+[:en] On platforms where the contract-violation handler is not replaceable ([#dcl.fct.def.replace])
+a function declaration which could be such a replacement function
+is ill-formed, no diagnostic required.
+[:zh_CN] 在契约违例处理器不可替换 ([#dcl.fct.def.replace]) 的平台上，可能是此类替换函数
+的函数声明式是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+#include <contracts>
+void handle_contract_violation(const std::contracts::contract_violation& violation);
+    // [:en] IFNDR, if contract-violation handler is not replaceable \
+    [:zh_CN] IFNDR, 如果契约违例处理器不可替换
+[codeblock:end]
+[end:example]
+
+[?ifndrdescription#class.member.lookup.name.refers.diff.decl]
+
+[para]
+[:en] A name [$N] used in a class [$S] referring to a different declaration when
+resolved in its context than when re-evaluated in the completed scope of [$S]
+is ill-formed, no diagnostic required.
+[:zh_CN] 在类 [$S] 中使用的名称 [$N]，在其语境中解析时涉指的声明式，与当其在 [$S] 的
+完整作用域中重新评估时涉指的声明式不同，这是非良构的，无须诊断。
+
+[para]
+[begin:example]
+[codeblock]
+struct foo {};
+
+struct bar {
+  foo *m_foo;
+
+  foo *foo() {
+    return m_foo;
+  } // [:en] IFNDR, [`foo] now refers to member function [`foo()] while previously referred to [`struct] [`foo] \
+    // [:zh_CN] IFNDR, [`foo] 现在指代成员函数 [`foo()]，而之前指代 [`struct] [`foo]
+};
+[codeblock:end]
+[end:example]
+
+[begin:example]
+[codeblock]
+struct B {
+  static int f();
+};
+
+struct D : public B {
+  using B::f;
+  int g(decltype(f()) x) {
+    return 0;
+  } // [:en] IFNDR, [`decltype(f())] will refer to [`B::f()] here but if \
+    [:zh_CN] IFNDR, [`decltype(f())] 在此处将指代 [`B::f()]，但如果
+    // [:en@~] moved to the end of [`D] it would refer to [`D::f()] \
+    [:zh_CN@~] 移动到 [`D] 的末尾，它将指代 [`D::f()]
+  static float f();
+};
+
+int main() {
+  D d;
+
+  return d.g(0);
+}
+[codeblock:end]
+[end:example]
