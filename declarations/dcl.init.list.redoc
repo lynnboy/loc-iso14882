@@ -133,11 +133,11 @@ defined as follows:
 [:zh_CN] 如果[~花括号初始化列表]包含一个[~定名初始化式列表]且 [`T] 并非引用类型，则 [`T]
 应当为一个聚合类。
 
-[:en] The ordered [~identifier]s in the [~designator]s of the
-[~designated-initializer-list] shall form a subsequence of the ordered
-[~identifier]s in the direct non-static data members of [`T].
-[:zh_CN] [~定名初始化式列表]的各[~定名符]中有序的[~标识符]，应当构成 [`T] 的
-直接非静态数据成员的有序的[~标识符]的子序列。
+[:en] The associated elements of the non-static data members
+designated by the ordered [~identifier]s in the [~designator]s of the
+[~designated-initializer-list] shall be in non-decreasing element order.
+[:zh_CN] [~定名初始化式列表]的各[~定名符]中有序的[~标识符]所指定的各非静态数据成员
+的关联元素，应当按非降序元素顺序排列。
 
 [:en] Aggregate initialization is performed ([#dcl.init.aggr]).
 [:zh_CN] 实施聚合初始化式（[#dcl.init.aggr]）。
@@ -147,8 +147,22 @@ defined as follows:
 struct A { int x; int y; int z; };
 A a{.y = 2, .x = 1};                // [:en] error: designator order does not match declaration order \
                                     [:zh_CN] 错误：定名符的顺序与声明顺序不匹配
-A b{.x = 1, .z = 2};                // [:en] OK, [`b.y] initialized to [`0] \
-                                    [:zh_CN] OK，[`b.y] 被初始化为 [`0]
+A b{.x = 1, .z = 2};                // [:en] OK, [`b.y] initialized to [`0] [:zh_CN] OK，[`b.y] 被初始化为 [`0]
+
+struct B : A { int q; };
+B e{.x = 1, .q = 3};                // [:en] OK, [`e.y] and [`e.z] initialized to [`0] [:zh_CN] OK，[`e.y] 和 [`e.z] 初始化为 [`0]
+B f{.q = 3, .x = 1};                // [:en] error: designator order does not match declaration order \
+                                    [:zh_CN] 错误：定名符的顺序与声明顺序不匹配
+
+struct C { int p; int x; };
+struct D : A, C { };
+D g{.y=1, .p=2};                    // OK
+D h{.x=2};                          // [:en] error: ambiguous lookup for [`x] [:zh_CN] 错误：[`x] 的查找有歧义
+
+struct NonAggr { int na; NonAggr(int); };
+struct E : NonAggr { int e; };
+E i{.na=1, .e=2};                   // [:en] error: the lookup set for [`na] finds [`NonAggr], [:zh_CN] 错误：[`na] 的查找集合找到了 [`NonAggr]，
+                                    // [:en@~] which is not an aggregate base of [`E] [:zh_CN@~] 它并非 [`E] 的聚合基类型
 [codeblock:end]
 [end:example]
 
@@ -156,8 +170,7 @@ A b{.x = 1, .z = 2};                // [:en] OK, [`b.y] initialized to [`0] \
 [:en] If [`T] is an aggregate class and the initializer list has a single
 element of type [=cv cv1] [`U], where [`U] is [`T] or a class derived from [`T],
 the object is initialized from that element (by copy-initialization for
-copy-list-initialization, or by direct-initialization for
-direct-list-initialization).
+copy-list-initialization, or by direct-initialization for direct-list-initialization).
 [:zh_CN] 如果 [`T] 为聚合类类型，且初始化式列表包含单个 [=cv cv1] [`U] 类型的
 元素，其中 [`U] 是 [`T] 或派生自 [`T] 的类，则对象被以该元素进行初始化（对于
 复制列表初始化则进行复制初始化，而对于直接列表初始化则进行直接初始化）。
@@ -170,8 +183,7 @@ initialization is performed as described in that subclause.
 [~字符串字面量]（[#dcl.init.string]），则对象根据本子条款所述进行初始化。
 
 [item]
-[:en] Otherwise, if [`T] is an aggregate, aggregate initialization is performed
-([#dcl.init.aggr]).
+[:en] Otherwise, if [`T] is an aggregate, aggregate initialization is performed ([#dcl.init.aggr]).
 [:zh_CN] 否则，若 [`T] 是聚合，则实施聚合初始化（[#dcl.init.aggr]）。
 
 [para:~]
@@ -413,6 +425,13 @@ comma-separated list of the [~initializer-list].
 [:zh_CN] 就是说，给定的[~初始化式子句]所关联的每个值计算和副作用，都按顺序早于
 [~初始化式列表]的逗号分隔列表中，跟在其后面的[~初始化式子句]所关联的任何值计算和副作用。
 
+[:en] If the [~initializer-clause]s of the [~initializer-list]
+are interpreted as arguments of a constructor call ([#over.match.list]),
+any default arguments used are evaluated in the order as if
+an [~initializer-clause] were present for the corresponding parameter.
+[:zh_CN] 如果[~初始化式列表]的各[~初始化式子句]被判读为一次构造函数调用的实参（[#over.match.list]），
+其所使用的任何默认实参的求值顺序如同[~初始化式子句]在对应的形参处提供一样。
+
 [begin:note]
 [:en] This evaluation ordering holds regardless of the semantics of the initialization;
 for example, it applies when the elements of the [~initializer-list] are
@@ -421,6 +440,23 @@ no sequencing constraints on the arguments of a call.
 [:zh_CN] 这个求值顺序与初始化的语义无关；例如，当[~初始化式列表]中的元素被解释为构造函数
 调用的实参时这也同样适用，即使一般来说调用中的实参之间并没有顺序约束。
 [end:note]
+
+[begin:example]
+[codeblock]
+#include <iostream>
+struct I {
+  I(int x) { std::cout << x; }
+};
+struct S {
+  S(I, I = 2) {}
+};
+int main() {
+  S(1, 2); std::cout << '\n';   // [:en] unspecified order; prints [`12] or [`21] [:zh_CN] 未指明顺序；打印 [`12] 或 [`21]
+  S{1, 2}; std::cout << '\n';   // [:en] prints [`12] [:zh_CN] 打印 [`12]
+  S{1};                         // [:en] prints [`12] [:zh_CN] 打印 [`12]
+}
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] An object of type [`std::initializer_list<E>] is constructed from an
@@ -441,8 +477,7 @@ constructed to refer to that array.
 [begin:note]
 [:en] A constructor or conversion function selected for the copy needs to be
 accessible ([#class.access]) in the context of the initializer list.
-[:zh_CN] 所选择用于复制的构造函数或转换函数，需要在初始化式列表的语境中是
-可访问的（[#class.access]）。
+[:zh_CN] 所选择用于复制的构造函数或转换函数，需要在初始化式列表的语境中是可访问的（[#class.access]）。
 [end:note]
 
 [:en] If a narrowing conversion is required to initialize any of the elements,
@@ -603,8 +638,7 @@ const int z = 99;
 char c1 = x;                    // [:en] OK, though it potentially narrows (in this case, it does narrow) \
                                 [:zh_CN] OK，虽然它可能被窄化（这时它确实被窄化了）
 char c2{x};                     // [:en] error: potentially narrow [:zh_CN] 错误，可能被窄化
-char c3{y};                     // [:en] error: narrows (assuming [`char] is 8 bits) \
-                                [:zh_CN] 错误：窄化（假设 [`char] 是 8 位）
+char c3{y};                     // [:en] error: narrows (assuming [`char] is 8 bits) [:zh_CN] 错误：窄化（假设 [`char] 是 8 位）
 char c4{z};                     // [:en] OK, no narrowing needed [:zh_CN] OK，不需要进行窄化
 unsigned char uc1 = {5};        // [:en] OK, no narrowing needed [:zh_CN] OK，不需要进行窄化
 unsigned char uc2 = {-1};       // [:en] error: narrows [:zh_CN] 错误：窄化
@@ -613,8 +647,7 @@ signed int si1 =
   { (unsigned int)-1 };         // [:en] error: narrows [:zh_CN] 错误：窄化
 int ii = {2.0};                 // [:en] error: narrows [:zh_CN] 错误：窄化
 float f1 { x };                 // [:en] error: potentially narrow [:zh_CN] 错误，可能被窄化
-float f2 { 7 };                 // [:en] OK, 7 can be exactly represented as a [`float] \
-                                [:zh_CN] OK，7 可以被 [`float] 精确表示出来
+float f2 { 7 };                 // [:en] OK, 7 can be exactly represented as a [`float] [:zh_CN] OK，7 可以被 [`float] 精确表示出来
 bool b = {"meow"};              // [:en] error: narrows [:zh_CN] 错误，被窄化
 int f(int);
 int a[] = { 2, f(2), f(2.0) };  // [:en] OK, the [`double]-to-[`int] conversion is not at the top level \

@@ -1,0 +1,125 @@
+[section#syserr.fmt
+    [:en] Formatting
+    [:zh_CN] 格式化
+]
+
+[para]
+[%@lib formatter]
+[codeblock:synopsis]
+template<class charT>
+struct formatter<error_code, charT> {
+  constexpr void set_debug_format();
+
+  constexpr typename basic_format_parse_context<charT>::iterator
+    parse(basic_format_parse_context<charT>& ctx);
+
+  template<class Out>
+    typename basic_format_context<Out, charT>::iterator
+      format(const error_code& ec, basic_format_context<Out, charT>& ctx) const;
+};
+[codeblock:end]
+
+[%@lib@member set_debug_format[!formatter]]
+[codeblock:declaration]
+constexpr void set_debug_format();
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Modifies the state of the [`formatter] to be as if the
+[~@fmt error-code-format-spec] parsed by the
+last call to [`parse] contained the [`?] option.
+[:zh_CN] 将 [`formatter] 的状态修改为如同 [`parse] 的最后一次调用所解析的
+[~@fmt 错误码格式说明]包含 [`?] 选项。
+[div:end]
+
+[%@lib@member parse[!formatter]]
+[codeblock:declaration]
+constexpr typename basic_format_parse_context<charT>::iterator
+  parse(basic_format_parse_context<charT>& ctx);
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] Parses the format specifier as an [~@fmt error-code-format-spec]
+and stores the parsed specifiers in [`*this].
+[:zh_CN] 将格式说明符作为[~@fmt 错误码格式说明]解析并将解析的说明符存储在 [`*this] 中。
+
+[:en] The syntax of format specifications is
+[:zh_CN] 格式说明符的语法是
+[syntax:explanation]
+[rule@fmt error-code-format-spec [:zh_CN] 错误码格式说明 ]
+    [| [~:opt fill-and-align] [~:opt width] [`:opt ?] [`:opt s] ]
+[rule:end]
+[syntax:end]
+[:en@~] where the productions [~@fmt fill-and-align] and [~@fmt width]
+are described in [#format.string].
+[:zh_CN@~] 其中产生式[~@fmt 填充与对齐]和[~@fmt 宽度]在 [#format.string] 中描述。
+
+[para:returns]
+[:en] An iterator past the end of the [~@fmt error-code-format-spec].
+[:zh_CN] 指向[~@fmt 错误码格式说明]尾后的迭代器。
+[div:end]
+
+[%@lib@member format[!formatter]]
+[codeblock:declaration]
+template<class Out>
+  typename basic_format_context<Out, charT>::iterator
+    format(const error_code& ec, basic_format_context<Out, charT>& ctx) const;
+[codeblock:end]
+
+[div:description]
+[para:effects]
+[:en] If the [`s] option is used, then:
+[:zh_CN] 如果使用了 [`s] 选项，则：
+[list]
+[item]
+[:en] If [`charT] is [`char] and the ordinary literal encoding is UTF-8,
+then let [`msg] be [`ec.message()] transcoded to UTF-8 with maximal subparts of
+ill-formed subsequences substituted with [=unicode(fffd,replacement character)]
+per the Unicode Standard, Chapter 3.9 [&:ucode fffd] Substitution in Conversion.
+[:zh_CN] 如果 [`charT] 为 [`char] 并且普通字面编码是 UTF-8，则令 [`msg] 为
+[`ec.message()] 转码为 UTF-8，并用 [=unicode(fffd,replacement character)] 替换
+非良构子序列的最大子部分，遵循《Unicode 标准》第 3.9 章“转换中的 [&:ucode fffd] 替换”。
+[item]
+[:en] Otherwise, let [`msg] be [`ec.message()] transcoded to an
+[?impldef encoding of a error message during formatting] encoding.
+[:zh_CN] 否则，令 [`msg] 为 [`ec.message()] 转码为[?impldef 格式化中错误消息的编码]编码。
+[list:end]
+
+[:en] Otherwise, let [`msg] be [`format("{}:{}", ec.category().name(), ec.value())].
+[:zh_CN] 否则，令 [`msg] 为 [`format("{}:{}", ec.category().name(), ec.value())]。
+
+[:en] If the [`?] option is used then [`msg] is formatted as an escaped string ([#format.string.escaped]).
+[:zh_CN] 如果使用了 [`?] 选项，则 [`msg] 被格式化为经转义字符串 ([#format.string.escaped])。
+
+[:en] Writes [`msg] into [`ctx.out()], adjusted according to the [~@fmt error-code-format-spec].
+[:zh_CN] 将 [`msg] 写入 [`ctx.out()]，并根据[~@fmt 错误码格式说明]进行调整。
+
+[para:returns]
+[:en] An iterator past the end of the output range.
+[:zh_CN] 指向输出范围尾后的迭代器。
+[div:end]
+
+[%@lib@member equivalent[!formatter]]
+[codeblock:declaration]
+virtual bool equivalent(const error_code& code, int condition) const noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`*this == code.category() && code.value() == condition].
+[:zh_CN] [`*this == code.category() && code.value() == condition]。
+[div:end]
+
+[%@lib@member message[!error_category]]
+[codeblock:declaration]
+virtual string message(int ev) const = 0;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] A string of multibyte characters in the execution character set
+that describes the error condition denoted by [`ev].
+[:zh_CN] 描述 [`ev] 所代表的错误条件的执行字符集的多字节字符串。
+[div:end]

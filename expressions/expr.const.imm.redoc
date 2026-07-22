@@ -13,8 +13,9 @@ is potentially evaluated and either:
 an immediate function,
 [:zh_CN@~] 其最内层外围非块作用域是某个直接函数的函数形参作用域，
 [item]
-[:en@~] it is a subexpression of a manifestly constant-evaluated expression or conversion, or
-[:zh_CN@~] 它是显然常量求值的表达式或转换的子表达式，或者
+[:en@~] it is a subexpression of a manifestly constant-evaluated expression or
+conversion ([#expr.const.defns]), or
+[:zh_CN@~] 它是显然常量求值的表达式或转换的子表达式（[#expr.const.defns]），或者
 [item]
 [:en@~] its enclosing statement is enclosed ([#stmt.pre]) by the
 [~compound-statement] of a consteval if statement ([#stmt.if]).
@@ -34,32 +35,40 @@ that has a subexpression that is an immediate-escalating expression.
 则它是一次直接调用。
 
 [para]
-[:en]
-[%@defn expression[!immediate-escalating]]
-[%@defn conversion[!immediate-escalating]]
+[:en] [%@defn expression[!immediate-escalating]] [%@defn conversion[!immediate-escalating]]
 [%@defn immediate-escalating[!expression][%expression[!immediate-escalating]]]
 [%@defn immediate-escalating[!conversion][%conversion[!immediate-escalating]]]
 A potentially evaluated expression or conversion is [+immediate-escalating] if
 it is neither initially in an immediate function context nor a
 subexpression of an immediate invocation, and
-[:zh_CN]
-[%@defn 表达式[!直接性扩散]]
-[%@defn 转换[!直接性扩散]]
+[:zh_CN] [%@defn 表达式[!直接性扩散]] [%@defn 转换[!直接性扩散]]
 [%@defn 直接性扩散[!表达式][%表达式[!直接性扩散]]]
 [%@defn 直接性扩散[!转换][%转换[!直接性扩散]]]
 如果潜在求值的表达式或转换即不是起初处于直接函数语境中，也不是直接调用的子表达式，
 且其为以下之一，则它是[+直接性扩散]的：
 [list]
 [item]
-[:en] it is an [~id-expression] or [~splice-expression] that designates an
-immediate function,
-[:zh_CN] 它是指名某个直接函数的[~标识表达式]或[~拼接表达式]，
+[:en] it is an immediate constant expression or
+[:zh_CN] 它是直接常量表达式，或者
+[begin:example]
+[codeblock]
+consteval std::meta::info refl() { return ^^int; }
+template <auto F> constexpr void ex() { auto x = F(); }
+auto p = &ex<refl>;             // [:en] error: immediate function because [`F()] [:zh_CN] 错误：直接函数，
+                                // [:en@~] is an immediate constant expression [:zh_CN@~] 因为 [`F()] 是直接常量表达式
+[codeblock:end]
+[end:example]
 [item]
-[:en] it is an immediate invocation that is not a constant expression, or
-[:zh_CN] 它是并非常量表达式的直接调用，或者
-[item]
-[:en] it is of consteval-only type ([#basic.types.general]).
-[:zh_CN] 它具有仅 consteval 类型（[#basic.types.general]）。
+[:en] it is an immediate invocation that is not a constant expression.
+[:zh_CN] 它是并非常量表达式的直接调用。
+[begin:example]
+[codeblock]
+consteval int id(int x) { return x; }
+template <auto F> constexpr auto apply_to(int i) { return F(i); }
+auto p = &apply_to<id>;         // [:en] error: immediate function because [`F(i)] [:zh_CN] 错误：直接函数，
+                                // [:en@~] is not a constant expression [:zh_CN@~] 因为 [`F(i)] 不是常量表达式
+[codeblock:end]
+[end:example]
 [list:end]
 
 [para]
@@ -87,28 +96,18 @@ immediate-escalating function.
 [:zh_CN] 直接性扩散表达式只能出现于直接性扩散函数之中。
 
 [para]
-[:en] An [+:adj immediate[!function]] is a function that is
+[:en] An [+:adj immediate[!function]] is a function that is either
 [:zh_CN] [+:adj 直接[!函数]]是符合以下条件的函数：
 [list]
 [item]
-[:en] declared with the [`:key consteval] specifier,
-[:zh_CN] 以 [`:key consteval] 声明，
+[:en] declared with the [`:key consteval] specifier, or
+[:zh_CN] 以 [`:key consteval] 声明，或者
 [item]
-[:en] an immediate-escalating function whose type is consteval-only ([#basic.types.general]), or
-[:zh_CN] 具有仅 consteval 类型（[#basic.types.general]）的直接性扩散函数，或者
-[item]
-[:en] an immediate-escalating function [`[^F]] whose function body contains either
-[:zh_CN] 直接性扩散函数 [`[^F]]，其函数体包含：
- [list]
- [item]
-[:en@~] an immediate-escalating expression or
-[:zh_CN@~] 某个直接性扩散表达式，或者
- [item]
-[:en@~] a definition of a non-constexpr variable with consteval-only type
-[:zh_CN@~] 某个具有仅 consteval 类型的非 constexpr 变量的定义式，
- [list:end]
-[:en@~] whose innermost enclosing non-block scope is [`[^F]][=']s function parameter scope.
-[:zh_CN] 且其最内层外围非块作用域是 [`[^F]] 的函数形参作用域。
+[:en] an immediate-escalating function [`[^F]] whose function body contains
+an immediate-escalating expression whose innermost enclosing non-block scope
+is [`[^F]][=']s function parameter scope.
+[:zh_CN] 直接性扩散函数 [`[^F]]，其函数体包含某个直接性扩散表达式，其最内层外围
+非块作用域是 [`[^F]] 的函数形参作用域。
 
 [begin:note@tail]
 [:en] Default member initializers used to initialize a base or member subobject

@@ -69,22 +69,82 @@ in [#expr.compound]; see [#over.match.oper], [#over.built].
 其操作之前，对操作数实施这些转换；参见 [#over.match.oper]，[#over.built]。
 
 [para]
-[:en]
-[%exception[!arithmetic]]
-[%exception[!undefined arithmetic]]
-[%overflow[!undefined]]
-[%zero[!division by undefined]]
-[%zero[!remainder undefined]]
-If during the evaluation of an expression, the result is not mathematically defined
-or not in the range of representable values for its type, the behavior is undefined.
-[:zh_CN]
-[%异常[!算术～]]
-[%异常[!未定义的算术～]]
-[%溢出[!未定义的]]
-[%零[!未定义的除以～]]
-[%零[!未定义的余数]]
-对表达式进行求值时，如果其结果在数学上无定义，或不在其类型的可表示的值的范围内，
-则其行为是未定义的。
+[:en] [%exception[!arithmetic]] [%exception[!undefined arithmetic]]
+[%overflow[!undefined]] [%zero[!division by undefined]] [%zero[!remainder undefined]]
+An [+:adj arithmetic[!expression]] is
+[:zh_CN] [%异常[!算术～]] [%异常[!未定义的算术～]]
+[%溢出[!未定义的]] [%零[!未定义的除以～]] [%零[!未定义的余数]]
+[+:adj 算术[!表达式]]是
+[list]
+[item]
+[:en@~] a unary plus or minus ([#expr.unary.op]),
+[:zh_CN@~] 一元加或减（[#expr.unary.op]），
+[item]
+[:en@~] an addition ([#expr.add]),
+[:zh_CN@~] 加法（[#expr.add]），
+[item]
+[:en@~] a subtraction ([#expr.sub]), or
+[:zh_CN@~] 减法（[#expr.sub]），或
+[item]
+[:en@~] a multiplication, division, or remainder ([#expr.mul])
+[:zh_CN@~] 乘法、除法或取余（[#expr.mul]）
+[list:end]
+[:en@~] expression where every (possibly converted) operand is of arithmetic type.
+[:zh_CN@~] 表达式，其中每个（可能经转换的）操作数都是算术类型。
+
+[begin:note]
+[:en] There exist non-arithmetic expressions such as compound assignment ([#expr.assign])
+which are defined in terms of arithmetic expressions.
+[:zh_CN] 也存在非算术表达式，如复合赋值（[#expr.assign]），它们是以算术表达式为基础定义的。
+[end:note]
+
+[:en] The behavior of evaluating an arithmetic expression is undefined[?ubdef#expr.expr.eval]
+if the mathematical result is neither
+[:zh_CN] 如果算术表达式的数学结果不是以下之一，则其求值行为是未定义的[?ubdef#expr.expr.eval]：
+[list]
+[item]
+[:en@~] in the range of representable values for its type nor
+[:zh_CN@~] 处于其类型的可表示值范围内，或者
+[item]
+[:en@~] a negative infinity, positive infinity, or NaN that is among the values of the type.
+[:zh_CN@~] 其类型的值中包含的负无穷、正无穷或 NaN。
+[list:end]
+
+[begin:note]
+[:en] If the operands are of a type that adheres to [=IsoFloatUndated],
+division by zero is the only case where an arithmetic expression has undefined behavior ([#expr.mul]).
+[:zh_CN] 如果操作数的类型遵循 [=IsoFloatUndated]，则除以零是算术表达式
+具有未定义行为的唯一情况（[#expr.mul]）。
+
+[:en] However, some well-defined arithmetic expressions are not core constant expressions ([#expr.const.core]).
+[:zh_CN] 然而，一些定义良好的算术表达式并不是核心常量表达式（[#expr.const.core]）。
+
+[begin:example]
+[:en] The following example assumes that [`std::float32_t] is supported ([#basic.extended.fp]).
+[:zh_CN] 下例假设支持 [`std::float32_t]（[#basic.extended.fp]）。
+[codeblock]
+constexpr std::float32_t min = std::numeric_limits<std::float32_t>::min();          // OK
+constexpr std::float32_t max = std::numeric_limits<std::float32_t>::max();          // OK
+constexpr std::float32_t inf = std::numeric_limits<std::float32_t>::infinity();     // OK
+constexpr std::float32_t nan = std::numeric_limits<std::float32_t>::quiet_NaN();    // OK
+
+// [:en] Furthermore, if arithmetic expressions with operands of type [`std::float32_t] \
+[:zh_CN] 此外，如果操作数类型为 [`std::float32_t] 的算术表达式
+// [:en@~] behave as specified in ISO/IEC 60559 for binary32: \
+[:zh_CN@~] 的表现遵循 ISO/IEC 60559 对 binary32 的规定：
+constexpr std::float32_t inf2 = inf * 2;    // [:en] OK, also positive infinity [:zh_CN] OK, 也是正无穷
+constexpr std::float32_t zero = min / max;  // [:en] OK, result cannot be represented, and is rounded to zero \
+                                            [:zh_CN] OK, 结果无法表示，且被舍入为零
+constexpr std::float32_t oflo = max * 2;    // [:en] error: non-finite result but operands are finite ([#expr.const.core]) \
+                                            [:zh_CN] 错误: 非有限结果但操作数是有限的 ([#expr.const.core])
+constexpr std::float32_t nan2 = nan * 2;    // OK, propagating a NaN
+constexpr std::float32_t udef = inf * 0;    // [:en] error: result is NaN but neither operand is NaN ([#expr.const.core]) \
+                                            [:zh_CN] 错误: 结果是 NaN 但没有一个操作数是 NaN ([#expr.const.core])
+constexpr std::float32_t div0 = max / 0;    // [:en] error: division by zero is undefined ([#expr.mul], [#expr.const.core]) \
+                                            [:zh_CN] 错误: 除以零是未定义的 ([#expr.mul], [#expr.const.core])
+[codeblock:end]
+[end:example]
+[end:note]
 
 [begin:note]
 [:en] [%overflow]

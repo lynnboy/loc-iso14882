@@ -81,6 +81,60 @@ expression of the class member access ([#expr.ref], [#basic.life]).
 类成员访问），则函数调用销毁由类成员访问的对象表达式所代表的标量类型的对象（[#expr.ref]，[#basic.life]）。
 
 [para]
+[:en] The precondition assertions of a function call are, in order:
+[:zh_CN] 函数调用的前条件断言按顺序为：
+[list]
+[item]
+[:en@~] if the [~postfix-expression] is a (possibly implicit)
+class member access expression and the call is a virtual function call,
+the precondition assertions ([#dcl.contract.func]) of the statically chosen function;
+[:zh_CN@~] 如果[~后缀表达式]是（可能隐式的）类成员访问表达式，且该调用是虚函数调用，
+则为静态选中的函数的前条件断言（[#dcl.contract.func]）；
+[item]
+[:en@~] the precondition assertions of the function actually called.
+[:zh_CN@~] 被实际调用的函数的前条件断言。
+[list:end]
+
+[:en] The postcondition assertions of a function call are, in order:
+[:zh_CN] 函数调用的后条件断言按顺序为：
+[list]
+[item]
+[:en@~] the postcondition assertions of the function actually called;
+[:zh_CN@~] 被实际调用的函数的后条件断言；
+[item]
+[:en@~] if the [~postfix-expression] is a (possibly implicit)
+class member access expression and the call is a virtual function call,
+the postcondition assertions of the statically chosen function.
+[:zh_CN@~] 如果[~后缀表达式]是（可能隐式的）类成员访问表达式，且该调用是虚函数调用，
+则为静态选中的函数的后条件断言。
+[list:end]
+
+[begin:example]
+[codeblock]
+struct X1 { virtual void f()         pre(a) post(b) {} };
+struct X2 { virtual void f()         pre(c) post(d) {} };
+struct Y : X1    { void f() override pre(e) post(f) {} };
+struct Z : Y, X2 { void f() override pre(g) post(h) {} };
+
+void t() {
+  Z z;
+  z.f();                        // [:en] asserts g, h [:zh_CN] 断言 g, h
+  static_cast<Y*>(&z)->f();     // [:en] asserts e, g, h, f [:zh_CN] 断言 e, g, h, f
+
+  X1& x1ref = z;
+  X2& x2ref = z;
+  x1ref.f();                    // [:en] asserts a, g, h, b [:zh_CN] 断言 a, g, h, b
+  x2ref.f();                    // [:en] asserts c, g, h, d [:zh_CN] 断言 c, g, h, d
+  x1ref.X1::f();                // [:en] asserts a, b [:zh_CN] 断言 a, b
+  x1ref.[:^^X1::f:]();          // [:en] asserts a, g, h, b [:zh_CN] 断言 a, g, h, b
+
+  void (X1::*pmf)() = &X1::f;
+  (x1ref.*pmf)();               // [:en] asserts g, h [:zh_CN] 断言 g, h
+}
+[codeblock:end]
+[end:example]
+
+[para]
 [:en] A type [$[`T]_\text{call}] is [+call-compatible] with a function type
 [$[`T]_\text{func}] if [$[`T]_\text{call}] is the same type as [$[`T]_\text{func}]
 or if the type [=lq]pointer to [$[`T]_\text{func}][=rq] can be converted to type
@@ -92,9 +146,9 @@ or if the type [=lq]pointer to [$[`T]_\text{func}][=rq] can be converted to type
 
 [:en] Calling a function through an expression whose function type is not
 call-compatible with the type of the called function[=']s definition results in
-undefined behavior.
+undefined behavior [?ubdef#expr.call.different.type].
 [:zh_CN] 通过具有与被调用函数的定义式的类型并非调用兼容的类型的表达式调用函数，
-将导致未定义行为。
+将导致未定义行为[?ubdef#expr.call.different.type]。
 
 [begin:note]
 [:en] This requirement allows the case when the expression has the type of a
@@ -108,10 +162,10 @@ exception specification, and the function types are otherwise the same.
 [:en] [%function argument[%argument]] [%function parameter[%parameter]] [%initialization[!parameter]]
 When a function is called, each parameter ([#dcl.fct]) is initialized
 ([#dcl.init], [#class.copy.ctor]) with its corresponding argument, and each
-precondition assertion of the function is evaluated ([#dcl.contract.func]).
+precondition assertion of the function call is evaluated ([#dcl.contract.func]).
 [:zh_CN] [%函数实参[%实参]] [%函数形参[%形参]] [%初始化[!形参的～]]
 当调用函数时，每个形参（[#dcl.fct]）都由其所对应的实参来初始化（[#dcl.init]，[#class.copy.ctor]）,
-并评估函数的每条前条件断言（[#dcl.contract.func]）。
+并评估函数调用的每条前条件断言（[#dcl.contract.func]）。
 
 [:en] If the function is an explicit object member function and there is an
 implied object argument ([#over.call.func]), the list of provided arguments is
@@ -191,12 +245,12 @@ a handler that can handle the exception is not considered.
 [:en] [%evaluation[!order of argument]]
 [%evaluation[!unspecified order of function call]]
 [%evaluation[!unspecified order of argument]]
-The [~postfix-expression] is sequenced before each [~expression] in the
+The [~postfix-expression] is sequenced before each [~initializer-clause] in the
 [~expression-list] and any default argument.
 [:zh_CN] [%求值[!实参的～顺序]]
 [%求值[!未指明的函数调用的～顺序]]
 [%求值[!未指明的实参的～顺序]]
-[~后缀表达式]按顺序早于[~表达式列表]中的每个[~表达式]和任何默认实参。
+[~后缀表达式]按顺序早于[~表达式列表]中的每个[~初始化式子句]和任何默认实参。
 
 [:en] The initialization of a parameter or, if the implementation introduces any
 temporary objects to hold the values of function parameters ([#class.temporary]),
@@ -208,8 +262,8 @@ of any other parameter.
 与任何其他形参的初始化之间是未定顺序的。
 
 [:en] These evaluations are sequenced before the evaluation of the precondition
-assertions of the function, which are evaluated in sequence ([#dcl.contract.func]).
-[:zh_CN] 这些求值按顺序早于函数的前条件断言的评估，这些断言是按顺序求值的（[#dcl.contract.func]）。
+assertions of the function call, which are evaluated in sequence ([#dcl.contract.func]).
+[:zh_CN] 这些求值按顺序早于函数调用的前条件断言的评估，这些断言是按顺序求值的（[#dcl.contract.func]）。
 
 [:en] For any temporaries introduced to hold the values of function parameters,
 the initialization of the parameter objects from those temporaries
@@ -271,8 +325,8 @@ converted to the return type of the statically chosen function.
 
 [para]
 [:en] When the called function exits normally ([#stmt.return], [#expr.await]),
-all postcondition assertions of the function are evaluated in sequence ([#dcl.contract.func]).
-[:zh_CN] 当被调函数正常退出（[#stmt.return]，[#expr.await]）时，按顺序评估函数的
+all postcondition assertions of the function call are evaluated in sequence ([#dcl.contract.func]).
+[:zh_CN] 当被调函数正常退出（[#stmt.return]，[#expr.await]）时，按顺序评估函数调用的
 所有后条件断言（[#dcl.contract.func]）。
 
 [:en] If the implementation introduces any temporary objects to hold the result

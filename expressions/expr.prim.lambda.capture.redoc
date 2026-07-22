@@ -41,8 +41,7 @@
 [para]
 [:en] The body of a [~lambda-expression] may refer to local entities of
 enclosing scopes by capturing those entities, as described below.
-[:zh_CN] [~lambda-表达式]的函数体可通过对外围作用域中的局部实体进行俘获而涉指这些实体，
-如下所述。
+[:zh_CN] [~lambda-表达式]的函数体可通过对外围作用域中的局部实体进行俘获而涉指这些实体，如下所述。
 
 [para]
 [:en] If a [~lambda-capture] includes a [~capture-default] that is [`&], no
@@ -411,9 +410,6 @@ captured entity is not [`*[`:key this]], or
 declared in the closure type.
 [:zh_CN] 对于每个复制俘获的实体，在闭包类型中都声明了一个无名的非静态数据成员。
 
-[:en] The declaration order of these members is unspecified.
-[:zh_CN] 这些成员的声明顺序是未指明的。
-
 [:en] The type of such a data member is the referenced type if the entity is a
 reference to an object, an lvalue reference to the referenced function type if
 the entity is a reference to a function, or the type of the corresponding
@@ -554,27 +550,49 @@ std::cout << a << b << c;
 [end:example]
 
 [para]
-[:en] The entities that are captured
-by copy are used to direct-initialize each corresponding non-static data member
-of the resulting closure object, and the non-static data members corresponding to
-the [~init-capture]s are initialized as indicated by the corresponding
+[:en] The non-static data members in the closure type are declared in an unspecified order,
+except that the members introduced for explicit captures are declared in an order
+consistent with that of those captures.
+[:zh_CN] 闭包类型中的非静态数据成员是以未指明的顺序声明的，除了为显式俘获引入的
+成员是以与这些俘获一致的顺序声明的。
+
+[para]
+[:en] The entities that are captured by copy are used to direct-initialize each
+corresponding non-static data member of the resulting closure object.
+[:zh_CN] 用其所复制俘获的各实体对所产生的闭包对象中的每个对应非静态数据成员进行直接初始化。
+
+[:en] The non-static data members corresponding to the [~init-capture]s and
+the (reference) variables declared by [~init-capture]s without corresponding
+non-static data members are initialized as indicated by the corresponding
 [~initializer] (which may be copy- or direct-initialization).
-[:zh_CN] 用其所复制俘获的各实体对所产生的闭包对象中的
-每个对应非静态数据成员进行直接初始化，而对应于[~带初始化俘获符]的非静态数据成员由其
-对应[~初始化式]所初始化（可能为复制初始化或者直接初始化）。
+[:zh_CN] 对应于[~带初始化俘获符]的非静态数据成员和[~带初始化俘获符]所声明的
+没有对应非静态数据成员的（引用）变量，由其对应[~初始化式]所初始化
+（可能为复制初始化或者直接初始化）。
 
 [:en] (For array members, the array elements are direct-initialized in
 increasing subscript order.)
 [:zh_CN] （对于数组成员，以下标增长顺序对数组成员进行直接初始化。）
 
-[:en] These initializations are performed when the [~lambda-expression] is evaluated
-and in the (unspecified) order in which the non-static data members are declared.
-[:zh_CN] 这些初始化，是在求值 [~lambda-表达式]时，以非静态数据成员的（未指明的）声明顺序进行的。
+[:en] These initializations are performed when the [~lambda-expression] is evaluated,
+in an order consistent with the (partially unspecified) order in which the
+non-static data members are declared and with the order of explicit captures.
+[:zh_CN] 这些初始化在[~lambda-表达式]被求值时进行，其顺序与非静态数据成员的
+（部分未指明的）声明顺序以及各显式俘获的顺序一致。
 
 [begin:note]
 [:en] This ensures that the destructions will occur in the reverse order of the constructions.
 [:zh_CN] 这保证了其析构将以其构造的相反顺序发生。
 [end:note]
+
+[begin:example]
+[codeblock]
+void f(std::vector<int> &&v) {
+  [size = v.size(), own = std::move(v)] {};
+}
+[codeblock:end]
+[:en] Since [`size] is initialized before [`own], it contains the original size of [`v].
+[:zh_CN] 由于 [`size] 在 [`own] 之前被初始化，它包含了 [`v] 的原始大小。
+[end:example]
 
 [para]
 [begin:note]

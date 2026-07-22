@@ -4,79 +4,96 @@
 ]
 
 [para]
-[:en] A [+:adj constant[!expression]] is either
-[:zh_CN] [+:adj 常量[!表达式]]是
+[:en] A [+:adj consteval-only[!value]] is either
+[:zh_CN] [+:adj 仅 consteval[!值]]是
 [list]
 [item]
-[:en@~] a glvalue core constant expression [$E] for which
-[:zh_CN@~] 泛左值核心常量表达式 [$E]，使得
- [list]
- [item]
-[:en@~] [$E] refers to a non-immediate function,
-[:zh_CN@~] [$E] 指代的是非直接函数，
- [item]
-[:en@~] [$E] designates an object [`o], and if the complete object of [`o] is of
-consteval-only type then so is [$E],
-[:zh_CN@~] [$E] 指名某个对象 [`o]，并且若 [`o] 的完整对象具有仅 consteval 类型则 [$E] 亦如此，
+[:en@~] a reflection value ([#basic.fundamental]) that is not the null reflection value or
+[:zh_CN@~] 并非空反射值的反射值（[#basic.fundamental]），或者
+[item]
+[:en@~] a pointer or pointer-to-member that points to an immediate function
+or to or past the end of an immediate object.
+[:zh_CN@~] 指向直接函数或指向直接对象或其尾后的指针或成员指针。
+[list:end]
+
+[para]
+[:en] An object is an [+:adj immediate[!object]] if its complete object has
+[:zh_CN] 如果对象的完整对象具有以下各项，则它是[+:adj 直接[!对象]]：
+[list]
+[item]
+[:en@~] a constituent value that is consteval-only or
+[:zh_CN@~] 某个仅 consteval 的成分值，或者
+[item]
+[:en@~] a constituent reference that refers to an immediate object or immediate function.
+[:zh_CN@~] 指代某个直接对象或直接函数的成分引用。
+[list:end]
+
+[para]
+[:en] Every immediate object shall be
+[:zh_CN] 每个直接对象都应当是
+[list]
+[item]
+[:en@~] the object associated with a constexpr variable or a subobject thereof,
+[:zh_CN@~] 与某个 constexpr 变量或其子对象关联的对象，
+[item]
+[:en@~] a template parameter object ([#temp.param]) or a subject thereof, or
+[:zh_CN@~] 模板形参对象（[#temp.param]）或其子对象，或者
+[item]
+[:en@~] an object whose lifetime begins and ends
+during the evaluation of a core constant expression.
+[:zh_CN@~] 生存期开始并结束与某个核心常量表达式的求值期间的对象。
+[list:end]
+
 [begin:example]
 [codeblock]
-struct Base { };
-struct Derived : Base { std::meta::info r; };
+consteval int plus1(int x) { return x + 1; }
+template <auto V> struct C {};
 
-consteval const Base& fn(const Derived& derived) { return derived; }
+auto a = plus1;                 // [:en] error: immediate object not associated with constexpr variable \
+                                [:zh_CN] 错误：直接对象未和 constexpr 变量关联
+constexpr auto b = plus1;       // OK
+auto c = C<plus1>();            // OK
 
-constexpr Derived obj{.r=^^::};     // OK
-constexpr const Derived& d = obj;   // OK
-constexpr const Base& b = fn(obj);  // [:en] error: not a constant expression because [`Derived] [:zh_CN] 错误：由于 [`Derived] 是仅 consteval 类型
-                                    // [:en@~] is a consteval-only type but [`Base] is not. [:zh_CN@~] 但 [`Base] 不是，所以并非常量表达式
+auto d = ^^int;                 // [:en] error: immediate object not associated with constexpr variable \
+                                [:zh_CN] 错误：直接对象未和 constexpr 变量关联
+auto e = C<^^char>();           // OK
 [codeblock:end]
 [end:example]
- [list:end]
-[:en@~] or
-[:zh_CN@~] 或者是
+
+[:en] Each expression [$E] that odr-uses a variable that declares or refers to
+an immediate object shall be in an immediate function context;
+a diagnostic is required only if either
+[:zh_CN] 每个 ODR 式使用某个声明或涉指了直接对象的变量的表达式 [$E]，都应当位于
+直接函数语境之中；仅当
+[list]
 [item]
-[:en@~] a prvalue core constant expression whose result object ([#basic.lval])
-(if any) satisfies the following constraints:
-[:zh_CN] 纯右值核心常量表达式，其结果对象（[#basic.lval]）（如果有）满足如下约束条件：
+[:en@~] the innermost declaration that contains [$E] or
+[:zh_CN@~] 包含 [$E] 的最内层声明式，或者
+[item]
+[:en@~] the defining declaration of the variable
+[:zh_CN@~] 该变量的定义声明式
+[list:end]
+[:en@~] is reachable from the other.
+[:zh_CN@~] 之间互为可达时，需要予以诊断。
 
- [list]
- [item]
-[:en] each constituent reference refers to an object or a non-immediate function,
-[:zh_CN] 每个成分引用都指代对象或非直接函数，
+[para]
+[:en] A core constant expression is a [+:adj constant[!expression]]
+unless it is a prvalue whose result object ([#basic.lval])
+has a constituent value that is an invalid pointer value ([#basic.compound])
+or is indeterminate or erroneous ([#basic.indet]).
+[:zh_CN] 核心常量表达式就是[+:adj 常量[!表达式]]，除非它是一个纯右值，且其结果对象（[#basic.lval]）
+具有某个成分值是无效指针值（[#basic.compound]）或者为不确定值或是错误值（[#basic.indet]）。
 
- [item]
-[:en] no constituent value of scalar type is an indeterminate or erroneous value ([#basic.indet]),
-[:zh_CN] 没有标量类型成分值具有不确定或错误值（[#basic.indet]），
-
- [item]
-[:en] no constituent value of pointer type is a pointer to an immediate function
-or an invalid pointer value ([#basic.compound]),
-[:zh_CN] 没有指针类型的成分值指向直接函数的指针或无效指针值（[#basic.compound]），
-
- [item]
-[:en] no constituent value of pointer-to-member type designates an immediate function, and
-[:zh_CN] 没有成员指针类型的成分值指代直接函数，并且
-
- [item]
-[:en] unless the value is of consteval-only type,
-[:zh_CN] 除非值具有仅 consteval 类型，否则
-
-  [list]
-  [item]
-[:en] no constituent value of pointer-to-member type points to
-a direct member of a consteval-only class type,
-[:zh_CN] 没有成员指针类型的成分值指向仅 consteval 类类型的直接成员，
-
-  [item]
-[:en] no constituent value of pointer type points to or past an object
-whose complete object is of consteval-only type, and
-[:zh_CN] 没有指针类型的成分值指向的对象的完整对象具有仅 consteval 类型，或指向其之后，并且
-  [item]
-[:en] no constituent reference refers to an object
-whose complete object is of consteval-only type.
-[:zh_CN] 没有成分引用指代的对象的完整对象具有仅 consteval 类型。
-  [list:end]
- [list:end]
+[para]
+[:en] A constant expression is an [+:adj immediate[!constant[!expression]]] if it is either
+[:zh_CN] 如果常量表达式是以下之一，则它是[+:adj 直接[!常量[!表达式]]]：
+[list]
+[item]
+[:en@~] a glvalue that refers to an immediate object or an immediate function, or
+[:zh_CN@~] 指代某个直接对象或某个直接函数的泛左值，或者
+[item]
+[:en@~] a prvalue whose result object (if any) is an immediate object.
+[:zh_CN] 结果对象（如果有）为直接对象的纯右值。
 [list:end]
 
 [begin:note]

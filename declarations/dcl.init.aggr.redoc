@@ -56,6 +56,47 @@ anonymous union, in declaration order.
 [list:end]
 
 [para]
+[:en] The [+:adj associated[!element]] of a member [`M] of an aggregate [`T] is:
+[:zh_CN] 聚合 [`T] 的元素 [`M] 的[+:adj 关联[!元素]]为：
+
+[list]
+[item]
+[:en@~] [`M] if [`M] is an element of [`T];
+[:zh_CN@~] 若 [`M] 是 [`T] 的元素则为 [`M]；
+[item]
+[:en@~] otherwise, the element of [`T] that contains [`M].
+[:zh_CN@~] 否则，为 [`T] 中包含 [`M] 的元素。
+[list:end]
+
+[begin:example]
+[codeblock]
+struct A {
+  int a1;
+  union {
+    int a2;
+    char a3;
+  };
+};
+
+struct B : A {
+  int b1;
+  union {
+    double b2;
+  };
+};
+[codeblock:end]
+
+[:en] The associated element of each of the members [`A::a1], [`A::a2], and [`A::a3] of [`B] is [`A].
+[:zh_CN] [`B] 的成员 [`A::a1]、[`A::a2] 和 [`A::a3] 各自的关联元素均为 [`A]。
+
+[:en] The associated element of the member [`B::b1] of [`B] is itself.
+[:zh_CN] [`B] 的成员 [`B::b1] 的关联元素为其自己。
+
+[:en] The associated element of the member [`B::b2] of [`B] is the anonymous union containing it.
+[:zh_CN] [`B] 的成员 [`B::b2] 的关联元素为包含它的匿名联合体。
+[end:example]
+
+[para]
 [:en] When an aggregate is initialized by an initializer list as specified in
 [#dcl.init.list], the elements of the initializer list are taken as initializers
 for the members of the aggregate.
@@ -69,23 +110,84 @@ of the aggregate are determined as follows:
 [list]
 [item]
 [:en] If the initializer list is a brace-enclosed [~designated-initializer-list],
-the aggregate shall be of class type, the [~identifier] in each [~designator]
-shall name a direct non-static data member of the class, and the explicitly
-initialized elements of the aggregate are the elements that are, or contain, those members.
-[:zh_CN] 如果初始化式列表是一个被花括号包围的[~定名初始化式列表]，则聚合应当是
-类类型，各个[~定名符]中的[~标识符]应当指名该类的一个直接非静态数据成员，而该聚合
-显式初始化的元素就是（或包含）这些成员。
+the aggregate shall be of class type [`C].
+[:zh_CN] 如果初始化式列表是一个被花括号包围的[~定名初始化式列表]，则聚合应当是类类型 [`C]。
+
+[:en] For each [~designator] within the [~designated-only-initializer-list]
+of the [~designated-initializer-list], the lookup set for the [~identifier]
+in [`C] ([#class.member.lookup]) shall comprise
+[:zh_CN] 对于[~定名初始化式列表]的[~仅定名初始化式列表]中的每个[~定名符]，
+针对 [`C] 中[~标识符]的查找集合应当包含
+ [list]
+ [item]
+[:en] a declaration set consisting of a single non-static data member and
+[:zh_CN] 由单个非静态数据成员构成的声明式集合，或者
+ [item]
+[:en] a subobject set containing only one subobject, whose type shall be an aggregate base of [`C].
+[:zh_CN] 仅包含一个子对象的子对象集合，该子对象的类型应当为 [`C] 的某个聚合基类型。
+
+[:en] An aggregate [`B] is an [+:adj aggregate[!base]] of a class [`D]
+if it is [`D] or a direct base class of an aggregate base of [`D].
+[:zh_CN] 如果聚合 [`B] 是类 [`D] 或 [`D] 的某个聚合基类型的直接基类，则它是 [`D]
+的[+:adj 聚合[!基类型]]。
+ [list:end]
+
+[:en] That non-static data member is [+designated[%designate[!aggregate element]]] by the [~identifier].
+[:zh_CN] 这个非静态数据成员由此[~标识符][+指定[%指定[!聚合元素]]]。
+
+[:en] Each [~initializer-clause] of the [~initializer-list], if any,
+shall appertain (see below) to a (direct) base class subobject of [`C].
+[:zh_CN] [~初始化式列表]的每个[~初始化式子句]（如果有），应当属于 [~C] 的（直接）
+基类子对象（见下文）。
+
+[:en] The explicitly initialized elements of the aggregate include
+the associated elements of each member [`M] of [`C] for which [`M] is
+designated by an [~identifier] in a [~designated-initializer-clause].
+[:zh_CN] 聚合的显式初始化元素包括 [`C] 的每个成员 [`M] 的关联元素，
+其中 [`M] 被[~定名初始化式子句]中的[~标识符]所指定。
+
 [item]
-[:en] If the initializer list is a brace-enclosed [~initializer-list], the explicitly
-initialized elements of the aggregate are those for which an element of the
-initializer list appertains to the aggregate element or to a subobject thereof (see below).
-[:zh_CN] 如果初始化式列表是一个被花括号包围的[~初始化式列表]，则该聚合显式初始化
-的元素，为初始化式列表中有元素属于它或其子对象的那些聚合元素（见下文）。
+[:en] If the [~braced-init-list] has an [~initializer-list] (possibly within
+a [~designated-initializer-list]), the explicitly initialized elements of the
+aggregate include those for which an element of the initializer list appertains
+to the aggregate element or to a subobject thereof (see below).
+[:zh_CN] 如果[~花括号初始化列表]带有一个[~初始化式列表]（可能位于[~定名初始化式列表]中），
+则该聚合显式初始化的元素，包括初始化式列表中有元素属于它或其子对象的那些聚合元素（见下文）。
+
 [item]
-[:en] Otherwise, the initializer list must be [`{}], and there are no explicitly
-initialized elements.
-[:zh_CN] 否则，初始化式列表必然为 [`{}]，且没有显式初始化的元素。
+[:en] No other elements of the aggregate are explicitly initialized.
+[:zh_CN] 没有其他聚合元素被显式初始化。
+
+[begin:note]
+[:en] The initializer [`{}] does not explicitly initialize any elements of the aggregate.
+[:zh_CN] 初始化式 [`{}] 并不显式初始化聚合的任何元素。
+[end:note]
 [list:end]
+
+[:en] If any element of the aggregate is explicitly initialized per both an
+[~initializer-list] and a [~designated-only-initializer-list], the program is ill-formed.
+[:zh_CN] 如果有任何聚合元素同时被某个[~初始化式列表]和某个[~仅定名初始化式列表]
+所显式测试，则程序非良构。
+
+[begin:example]
+[codeblock]
+struct A { int a1, a2; };
+struct B : A { int b; };
+struct C : A { int a1; };
+
+A v0 = A{1, .a2=2};             // [:en] error: [~initializer-clause] appertains to non-static data member \
+                                [:zh_CN] 错误：[~初始化式子句]术语非静态数据成员
+B v1 = B{.a1=1, .b=2};          // [:en] the explicitly initialized elements are [&:norm `[[`A], [`B::b]`]] \
+                                [:zh_CN] 显式初始化元素为 [&:norm `[[`A], [`B::b]`]]
+B v2 = B{.a1=1, .a2=2, .b=3};   // [:en] the explicitly initialized elements are [&:norm `[[`A], [`B::b]`]] \
+                                [:zh_CN] 显式初始化元素为 [&:norm `[[`A], [`B::b]`]]
+B v3 = B{A{1, 2}, .b=3};        // [:en] the explicitly initialized elements are [&:norm `[[`A], [`B::b]`]] \
+                                [:zh_CN] 显式初始化元素为 [&:norm `[[`A], [`B::b]`]]
+B v4 = B{A{}, .a2=1, .b=3};     // [:en] error: [`A] initialized two different ways [:zh_CN] 错误：[`A] 由两种途径初始化
+C v5 = C{.a1=4};                // [:en] the explicitly initialized elements are [&:norm `[[`C::a1]`]] \
+                                [:zh_CN] 显式初始化元素为 [&:norm `[[`C::a1]`]]
+[codeblock:end]
+[end:example]
 
 [para]
 [:en] For each explicitly initialized element:
@@ -93,13 +195,13 @@ initialized elements.
 
 [list]
 [item]
-[:en] If the element is an anonymous union member and the initializer list is a
-brace-enclosed [~designated-initializer-list], the element is initialized by the
-[~braced-init-list] [`{ ][^D][` }], where [^D] is the
-[~designated-initializer-clause] naming a member of the anonymous union member.
-[:zh_CN] 如果该元素是一个匿名联合体成员且初始化式列表是一个被花括号包围的
-[~定名初始化式列表]，则该元素以[~花括号初始化列表] [`{ ][^D][` }] 来初始化，其中
-[^D] 为指名匿名联合体成员的一个成员的[~定名初始化式子句]。
+[:en] If the element is an anonymous union member and is explicitly initialized
+per a [~designated-only-initializer-list], the element is initialized by the
+[~braced-init-list] [`{ ][^D][` }], where [^D] is the [~designated-initializer-clause]
+whose associated element is the anonymous union member.
+[:zh_CN] 如果该元素是一个匿名联合体成员且由[~仅定名初始化式列表]所显式初始化，
+则该元素以[~花括号初始化列表] [`{ ][^D][` }] 来初始化，其中
+[^D] 为[~定名初始化式子句]中关联元素是该匿名联合体成员的那个。
 
 [:en] There shall be only one such [~designated-initializer-clause].
 [:zh_CN] 应当只有一个这样的[~定名初始化式子句]。
@@ -120,11 +222,17 @@ struct C {
 [end:example]
 
 [item]
-[:en] Otherwise, if the initializer list is a brace-enclosed
-[~designated-initializer-list], the element is initialized with the
-[~brace-or-equal-initializer] of the corresponding [~designated-initializer-clause].
-[:zh_CN] 否则，如果初始化式列表是被花括号包围的[~定名初始化式列表]，则该元素以
-对应的[~定名初始化式子句]的[~花括号或等号初始化式]进行初始化。
+[:en] Otherwise, if the element is explicitly initialized per a
+[~designated-only-initializer-list], then:
+[:zh_CN] 否则，如果该元素由[~仅定名初始化式列表]所显式初始化，则：
+
+ [list]
+ [item]
+[:en] If the element is a (direct) non-static data member, then the element is
+initialized with the [~brace-or-equal-initializer] of the corresponding
+[~designated-initializer-clause].
+[:zh_CN] 如果该元素是（直接）非静态数据成员，则该元素以对应的[~定名初始化式子句]
+的[~花括号或等号初始化式]进行初始化。
 
 [:en] If that initializer is of the form [`= ][~assignment-expression] and a
 narrowing conversion ([#dcl.init.list]) is required to convert the expression,
@@ -138,9 +246,32 @@ direct-initialization is performed.
 [:zh_CN] 初始化式的形式决定进行的是复制初始化还是直接初始化。
 [end:note]
 
+ [item]
+[:en] Otherwise, the element is a base class subobject [$B], and is copy-initialized
+from a brace-enclosed [~designated-initializer-list] consisting of all of the
+[~designated-initializer-clause]s whose associated element is [$B], in order.
+[:zh_CN] 否则，该元素为直接基类子对象 [$B]，且由花括号包围的[~定名初始化式列表]
+进行复制初始化，它由以 [$B] 为关联元素的全部[~定名初始化式子句]按顺序组成。
+ [list:end]
+
+[begin:example]
+[codeblock]
+struct A { int a; };
+struct B : A { int b; };
+struct C : B { int c; };
+
+// [:en] the [`A] element is initialized from [`{.a=1}] [:zh_CN] 元素 [`A] 由 [`{.a=1}] 初始化
+B x = B{.a=1};
+
+// [:en] the [`B] element is initialized from [`{.a=2, .b=3}] [:zh_CN] 元素 [`B] 由 [`{.a=2, .b=3}] 初始化
+// [:en@~] which leads to its [`A] element being initialized from [`{.a=2}] [:zh_CN@~] 这导致其元素 [`A] 由 [`{.a=2}] 初始化
+C y = C{.a=2, .b=3, .c=4};
+[codeblock:end]
+[end:example]
+
 [item]
-[:en] Otherwise, the initializer list is a brace-enclosed [~initializer-list].
-[:zh_CN] 否则，初始化式列表是被花括号包围的[~初始化式列表].
+[:en] Otherwise, element is explicitly initialized per an [~initializer-list].
+[:zh_CN] 否则，该元素由一个[~初始化式列表]所显式初始化。
 
 [:en] If an [~initializer-clause] appertains to the aggregate element,
 then the aggregate element is copy-initialized from the [~initializer-clause].
@@ -419,10 +550,10 @@ array) and leaves the rest zero.
 [end:example]
 
 [para]
-[:en] Each [~initializer-clause] in a brace-enclosed [~initializer-list] is said
+[:en] Each [~initializer-clause] in a [~braced-init-list] is said
 to [+appertain] to an element of the aggregate being initialized or to an
 element of one of its subaggregates.
-[:zh_CN] 花括号包围的[~初始化式列表]中的各个[~初始化式子句]，称其[+属于]被初始化
+[:zh_CN] [~花括号初始化列表]中的各个[~初始化式子句]被称为[+属于]被初始化
 的聚合的某个元素或其子聚合之一的某个元素。
 
 [:en] Considering the sequence of [~initializer-clause]s, and the sequence of

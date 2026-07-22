@@ -100,8 +100,10 @@ constexpr std::meta::info r2 = ^^D::S;  // [:en] OK, result [`C::S] not found th
 
 [item]
 [:en] Otherwise, if lookup finds a namespace alias ([#namespace.alias]),
-[$R] represents that namespace alias.
-[:zh_CN] 否则，如果查找找到了命名空间别名（[#namespace.alias]），那么 [$R] 表示这个命名空间别名。
+all declarations found by name lookup shall have the same target scope, and
+[$R] represents the namespace alias.
+[:zh_CN] 否则，如果查找找到了命名空间别名（[#namespace.alias]），那么名字查找所
+找到的所有声明式都应当具有相同的目标作用域，且 [$R] 表示这个命名空间别名。
 
 [item]
 [:en] Otherwise, if lookup finds a namespace ([#basic.namespace]),
@@ -153,11 +155,33 @@ alias template, [$R] represents that template.
 [list:end]
 
 [item]
-[:en] Otherwise, if lookup finds a type alias [$A], [$R] represents the underlying
-entity of [$A] if [$A] was introduced by the declaration of a template parameter;
-otherwise, [$R] represents [$A].
-[:zh_CN] 否则，如果查找找到了类型别名 [$A]，那么当 [$A] 是由模板形参的声明式所
-引入时，[$R] 表示 [$A] 的底层实体，否则 [$R] 表示 [$A]。
+[:en] Otherwise, if lookup finds a type alias:
+[:zh_CN] 否则，如果查找找到了类型别名：
+ [list]
+ [item]
+[:en] If any declaration found by name lookup is of a template parameter [$T],
+[$R] represents the underlying entity of [$T].
+[:zh_CN] 如果名字查找所找到的任何声明式是某个模板形参 [$T] 的，那么 [$R] 就表示 [$T] 的底层实体。
+ [item]
+[:en] Otherwise, all declarations found by name lookup shall have the same
+target scope, and [$R] represents the type alias.
+[:zh_CN] 否则，名字查找所找到的所有声明式都应具有相同的目标作用域，而 [$R] 表示此类型别名。
+ [list:end]
+
+[begin:example]
+[codeblock]
+namespace A {
+  using T = int;
+}
+namespace B {
+  using T = int;
+}
+using namespace A;
+using namespace B;
+auto r = ^^T;           // [:en] error: lookup finds type aliases with different target scopes \
+                        [:zh_CN] 错误：查找找到了具有不同目标作用域的类型别名
+[codeblock:end]
+[end:example]
 
 [item]
 [:en] Otherwise, if lookup finds a class or an enumeration, [$R] represents the denoted type.
@@ -225,10 +249,13 @@ between the point at which [$E] was introduced and [$R],
 
 [item]
 [:en] Otherwise, if the [~id-expression] denotes an overload set [$S],
-overload resolution for the expression [`&S] with no target
-shall select a unique function ([#over.over]); [$R] represents that function.
-[:zh_CN] 否则，如果[~标识表达式]代表重载集合 [$S]，那么针对表达式 [`&S] 进行的
-没有目标的重载决议应当选中唯一函数（[#over.over]）；[$R] 即表示该函数。
+the expression [`&[~id-expression]] shall be well-formed
+when considered as an unevaluated operand,
+except that the function [$F] selected as described in [#over.over]
+may be deleted ([#dcl.fct.def.delete]); [$R] represents [$F].
+[:zh_CN] 否则，如果[~标识表达式]代表重载集合 [$S]，那么表达式 [`&[~id标识表达式]]
+被当做免求值操作数时应当良构，但按 [#over.over] 所述选中的函数 [$F] 可以是弃置的（[#dcl.fct.def.delete]）；
+[$R] 表示 [$F]。
 
 [item]
 [:en] Otherwise, if the [~id-expression] denotes a variable, structured binding,
