@@ -1,0 +1,64 @@
+[section#diff.cpp26.dcl
+    [:en] [#dcl]: declarations
+    [:zh_CN] [#dcl]：声明
+]
+
+[para:diff] [#dcl.init]
+[?change]
+[:en] Support for designated initialization of base classes of aggregates.
+[:zh_CN] 支持聚合体基类的定名初始化。
+
+[?rationale]
+[:en] New functionality.
+[:zh_CN] 新功能。
+
+[?effect]
+[:en] Some valid [=CppXXVI] code may fail to compile.
+[:zh_CN] 一些有效的 [=CppXXVI] 代码可能无法编译。
+
+[begin:example]
+[codeblock]
+struct A { int a; };
+struct B : A { int b; };
+
+void f(A);              // #1
+void f(B);              // #2
+
+void g() {
+  f({.a=1});            // [:en] ambiguous between #1 and #2; previously called #1 \
+                        [:zh_CN] 在 #1 和 #2 之间歧义；之前调用了 #1
+}
+[codeblock:end]
+[end:example]
+
+[para:diff] [#dcl.fct.def.default]
+[?change]
+[:en] It is no longer valid for explicitly defaulted assignment operators to have a
+[~cv-qualifier-seq] or [`&&] [~ref-qualifier], or
+for an explicitly defaulted move assignment operator to have a parameter of type
+[=lq]reference to [`T][=rq] where [`T] is cv-qualified.
+[:zh_CN] 显式预置的赋值运算符若具有 [~cv-限定符序列]或 [`&&] [~引用限定符] 则不再合法，
+或者显式预置的移动赋值运算符具有类型为“[`T] 的引用”的形参，其中 [`T] 有 cv 限定，不再合法。
+
+[?rationale]
+[:en] Removal of rarely-used and confusing feature.
+[:zh_CN] 删除很少使用且令人困惑的特性。
+
+[?effect]
+[:en] A valid [=CppXXVI] program which uses these features on an explicitly
+defaulted assignment operator is ill-formed.
+[:zh_CN] 在显式预置的赋值运算符上使用这些特性的有效 [=CppXXVI] 程序是非良构的。
+
+[begin:example]
+[codeblock]
+struct S {
+  S& operator=(const S&) && = default;          // [:en] ill-formed; previously well-formed [:zh_CN] 非良构；之前是良构
+};
+struct T {
+  T& operator=(const T&) const = default;       // [:en] ill-formed; previously well-formed but deleted [:zh_CN] 非良构；之前是良构但被弃置
+};
+struct U {
+  U& operator=(const U&&) = default;            // [:en] ill-formed; previously well-formed but deleted [:zh_CN] 非良构；之前是良构但被弃置
+};
+[codeblock:end]
+[end:example]
