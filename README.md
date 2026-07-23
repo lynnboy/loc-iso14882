@@ -1745,6 +1745,7 @@ pointer arithmetic                      |指针算术
 pointer conversion                      |指针转换 PtrC  |转换类别的标准转换。空指针转换，cv T*->cv void*（地址不变），cv D*->cv B*（地址调整）
 pointer declarator                      |指针声明符
 pointer literal                         |指针字面量     |`nullptr`，类型为`std::nullptr_t`
+pointer tagging                         |指针标记
 pointer-to-member                       |成员指针       |数据成员指针，成员函数指针
 pointer-to-member conversion            |成员指针转换 MPtrC |转换类别的标准转换。空成员指针转换，cv T(B::*)->cv T(D::*)
 pointer-to-member declarator            |成员指针声明符

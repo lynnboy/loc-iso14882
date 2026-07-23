@@ -12,6 +12,14 @@ uninitialized memory buffers ([#pointer.traits][=-][#specialized.addressof] and 
 容器和其他模板类型的内存，以及销毁对象，以及用于在未初始化内存缓冲区中构造多个对象的
 几个类型和函数模板（[#pointer.traits] 至 [#specialized.addressof]，和 [#specialized.algorithms]）。
 
+[:en] The header also defines class template [`pointer_tag_pair]
+to support storing additional information in unused bits of pointers.
+[:zh_CN] 该头文件还定义了类模板 [`pointer_tag_pair]，以支持在指针的未使用位中存储额外信息。
+
+[:en] Selection of the bits is implementation-defined, and the size of the
+pointer wrapping object is the same as the size of the original pointer.
+[:zh_CN] 位的选择是由实现定义的，且指针包装对象的大小与原指针的大小相同。
+
 [:en] The header also defines the templates [`unique_ptr], [`shared_ptr],
 [`weak_ptr], [`out_ptr_t], [`inout_ptr_t], and various function templates that
 operate on objects of these types ([#smartptr]).
@@ -520,6 +528,46 @@ namespace std {
         I destroy_n(Ep&& exec, I first, iter_difference_t<I> n);            // [=freestanding-deleted],
                                                                             // [?see [#algorithms.parallel.overloads]]
   }
+
+  // [:en] [#ptrtag], pointer tagging \
+  [:zh_CN] [#ptrtag]，指针标记
+  inline constexpr unsigned max_pointer_bits_available = @\seebelownc@;                 // [=freestanding]
+  constexpr unsigned pointer_bits_available(size_t alignment);                      // [=freestanding]
+
+  template<class T>
+    constexpr unsigned [[redoc("*>")]]bits-available = pointer_bits_available(alignof(T));     // [=expos]
+
+  template<class U> using [[redoc("*>")]]element-of = pointer_traits<U>::element_type;         // [=expos]
+
+  template<class Ptr, unsigned BitsRequested = [[redoc("*>")]]bits-available<[[redoc("*>")]]element-of<Ptr>>,
+           class TagT = unsigned>
+    class pointer_tag_pair;                                                         // [=freestanding]
+
+  template<class Ptr, unsigned BitsRequested, class TagT>
+    struct tuple_size<pointer_tag_pair<Ptr, BitsRequested, TagT>>                   // [=freestanding]
+      : integral_constant<size_t, 2> { };
+
+  template<class Ptr, unsigned BitsRequested, class TagT>
+    struct tuple_element<0, pointer_tag_pair<Ptr, BitsRequested, TagT>> {           // [=freestanding]
+      using type = Ptr;
+    };
+  template<class Ptr, unsigned BitsRequested, class TagT>
+    struct tuple_element<1, pointer_tag_pair<Ptr, BitsRequested, TagT>> {           // [=freestanding]
+      using type = TagT;
+    };
+
+  template<class Ptr, unsigned BitsRequested, class TagT>
+    struct tuple_element<0, const pointer_tag_pair<Ptr, BitsRequested, TagT>> {     // [=freestanding]
+      using type = Ptr;
+    };
+  template<class Ptr, unsigned BitsRequested, class TagT>
+    struct tuple_element<1, const pointer_tag_pair<Ptr, BitsRequested, TagT>> {     // [=freestanding]
+      using type = TagT;
+    };
+
+  template<class Ptr, unsigned BitsRequested, class TagT>
+    constexpr tuple_element_t<I, pointer_tag_pair<Ptr, BitsRequested, TagT>>        // [=freestanding]
+      get(pointer_tag_pair<Ptr, BitsRequested, TagT> p) noexcept;
 
   // [:en] [#unique.ptr], class template [`unique_ptr] \
   [:zh_CN] [#unique.ptr]，类模板 [`unique_ptr]

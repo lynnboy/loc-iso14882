@@ -328,10 +328,10 @@ def seeabove(): return UNSP(text('see above'))
 def seeref(refid:str): return UNSP(text(f'see[=nbsp]{ref(refid)}'))
 def unspecuniqtype(): return UNSP(text('unspecified unique type'))
 
-@applyTo(['?ifndrdef'])
-def ifndrdef(): return ""
-@applyTo(['?ubdef'])
-def ubdef(): return ""
+@applyTo(['?ifndr', '?ifndr@desc'])
+def ifndr(): return ""
+@applyTo(['?ub', '?ub@desc'])
+def ub(): return ""
 
 def reflexpr(_1): return f'^^{_1}'
 

@@ -1,0 +1,122 @@
+[section#over.inc.default
+    [:en] Defaulted function
+    [:zh_CN] 预置函数
+]
+
+[para]
+[:en] A defaulted postfix increment or decrement operator function
+for a type [`C] shall be a non-template function that
+[:zh_CN] 针对类型 [`C] 的预置的后缀增量或减量运算符函数，应当是非目标函数，且
+
+[list]
+[item]
+[:en] has a first parameter of type [=lq]reference to [`C][=rq] or
+a first parameter of type [=lq]reference to volatile [`C][=rq], where the
+implicit object parameter (if any) is considered to be the first parameter,
+[:zh_CN] 带有类型为“[`C] 的引用”的首个形参，或者类型为“volatile [`C] 的引用”
+的首个形参，其中将隐式对象形参（如果有）当做其首个形参，
+
+[item]
+[:en] is defined as defaulted in [`C] or in a context where [`C] is complete, and
+[:zh_CN] 在 [`C] 中，或在 [`C] 完整的语境中，它被定义为预置的，并且
+
+[item]
+[:en] has a declared return type of [`C].
+[:zh_CN] 以 [`C] 为声明的返回类型。
+[list:end]
+
+[begin:note]
+[:en] A postfix increment or decrement operator always has a parameter of type [`int] ([#over.inc.general]).
+[:zh_CN] 后缀增量或减量运算符总是带有一个 [`int] 类型的形参（[#over.inc.general]）。
+[end:note]
+
+[:en] Name lookups and access checks in the implicit definition ([#dcl.fct.def.default])
+of a defaulted postfix increment or decrement operator function
+are performed from a context equivalent to its [~function-body].
+[:zh_CN] 预置的后缀增量或减量运算符函数的隐式定义式（[#dcl.fct.def.default]）中
+进行的名字查找和访问检查，是从某个等价于其[~函数体]的语境进行的。
+
+[:en] A definition of a postfix increment or decrement operator as defaulted
+that appears in a class shall be the first declaration of that function.
+[:zh_CN] 出现于类之内的后缀增量或减量运算符被预置的定义式，应当为该函数的首个声明式。
+
+[begin:example]
+[codeblock]
+struct S;
+S operator++(S&, int) = default;        // [:en] error: [`S] is not complete [:zh_CN] 错误：[`S] 不完整
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] A defaulted postfix increment or decrement operator function
+for a type [`C] is defined as deleted if
+[:zh_CN] 以下情况下，针对类型 [`C] 的预置的后缀增量或减量运算符函数被定义为弃置：
+
+[list]
+[item]
+[:en] [`C] is a class type for which overload resolution ([#over.match]),
+as applied to direct-initialization of a variable of type [`C]
+from an lvalue of type [`C], does not result in a usable candidate,
+[:zh_CN] [`C] 是一个类类型，对它进行从 [`C] 类型的左值对 [`C] 类型变量的直接初始化
+所实施的重载决议（[#over.match]），未能得到可用的候选，
+
+[item]
+[:en] [`C] has a destructor that is deleted or inaccessible
+from the context of the [~function-body], or
+[:zh_CN] [`C] 有一个弃置或从[~函数体]的语境中不可访问的析构函数，或者
+
+[item]
+[:en] for an lvalue [`c] of type [`C], overload resolution as applied to
+[`++c] for a postfix increment operator function or
+[`--c] for a postfix decrement operator function does not result in a usable candidate.
+[:zh_CN] 对于 [`C] 类型的左值 [`c]，对 [`++c] 为后缀增量运算符函数，或者
+对 [`--c] 为后缀减量运算符函数进行的重载决议，未能得到可用的候选。
+[list:end]
+
+[para]
+[:en] The implicit definition of a defaulted postfix increment or decrement
+operator function [`F] that is not defined as deleted for a type [`C] is equivalent to
+[:zh_CN] 并未定义为弃置的对于 [`C] 类型的预置后缀增量或减量运算符函数的隐式定义式，
+对于后缀增量运算符函数，等价于
+[codeblock]
+C [[redoc("*>")]]tmp(c);
+++c;
+return [[redoc("*>")]]tmp;
+[codeblock:end]
+[:en@~] for a postfix increment operator function, or
+[:zh_CN@~] 而对于后缀减量运算符函数，等价于
+[codeblock]
+C [[redoc("*>")]]tmp(c);
+--c;
+return [[redoc("*>")]]tmp;
+[codeblock:end]
+[:en@~] for a postfix decrement operator function, where [*tmp] is a variable
+defined for exposition only, and [`c] is an lvalue that denotes [`*this]
+if [`F] is an implicit object member function, or the first parameter of [`F] otherwise.
+[:zh_CN@~] 其中 [*tmp] 是仅用于阐释而定义的变量，而 [`c] 为一个左值，当 [`F] 是
+一个隐式对象成员函数时代表 [`*this]，否则代表 [`F] 的首个形参。
+
+[para]
+[begin:example]
+[codeblock]
+struct S{
+  S(const S&) = default;
+  S& operator++() { return *this; }
+};
+S operator++(S, int) = default;         // [:en] error: incorrect parameter type [:zh_CN] 错误：错误的形参类型
+
+struct T{
+  T operator++(int) = default;          // [:en] OK, defined as deleted [:zh_CN] OK，定义为弃置
+};
+
+enum class E1 {};
+E1 operator++(E1&, int) = default;      // [:en] OK, defined as deleted; built-in [`operator++] \
+                                        [:zh_CN] OK，定义为弃置；枚举类型
+                                        // [:en@~] does not exist for enumeration types \
+                                        [:zh_CN@~] 不存在内建 [`operator++]
+
+enum E2 {};
+E2& operator++(E2& e);
+E2 operator++(E2&, int) = default;      // [:en] OK, not deleted [:zh_CN] OK，未被弃置
+[codeblock:end]
+[end:example]

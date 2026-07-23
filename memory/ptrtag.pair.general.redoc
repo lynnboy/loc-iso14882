@@ -1,0 +1,123 @@
+[section#ptrtag.pair.general
+    [:en] General
+    [:zh_CN] 概述
+]
+
+[para]
+[:en] The class template [`pointer_tag_pair] provides a type to store an
+object pointer together with a tag value.
+[:zh_CN] 类模板 [`pointer_tag_pair] 提供了一种类型，用于将对象指针与标签值一同存储。
+
+[%@lib pointer_tag_pair]
+[codeblock:synopsis]
+namespace std {
+  template<class U, class PtrT, unsigned BitsRequested, size_t Alignment = alignof(U)>
+    concept [[redoc("*:c@def>")]]tagging-compatible-pointee =                        // [=expos]
+      [[redoc("`:c>")]]convertible_to<U*, PtrT> &&
+      pointer_bits_available(Alignment) >= BitsRequested &&
+      (is_void_v<[[redoc("*>")]]element-of<PtrT>> ||
+       is_scalar_v<[[redoc("*>")]]element-of<PtrT>> ||
+       is_union_v<[[redoc("*>")]]element-of<PtrT>> ||
+       is_pointer_interconvertible_base_of_v<[[redoc("*>")]]element-of<PtrT>, U>);
+
+  template<class TagT>
+    constexpr unsigned [[redoc("*>")]]tag-bit-width(TagT value) noexcept;      // [=expos]
+
+  template<class Ptr, unsigned BitsRequested = [[redoc("*>")]]bits-available<[[redoc("*>")]]element-of<Ptr>>,
+           class TagT = unsigned>
+  class pointer_tag_pair {                                      // [=freestanding]
+  public:
+    using pointer_type        = Ptr;
+    using element_type        = pointer_traits<Ptr>::element_type;
+    using tagged_pointer_type = [[redoc("[=seebelow]")]];
+    using tag_type            = TagT;
+    static constexpr unsigned bits_requested = BitsRequested;
+
+    // [:en] [#ptrtag.pair.cons], constructors [:zh_CN] [#ptrtag.pair.cons]，构造函数
+    constexpr pointer_tag_pair() noexcept;
+
+    template<[[redoc("*:c>")]]tagging-compatible-pointee<pointer_type, bits_requested> U>
+      constexpr pointer_tag_pair(U* p, tag_type t);
+    constexpr pointer_tag_pair(nullptr_t p, tag_type t);
+
+    // [:en] [#ptrtag.pair.overalign], support for overaligned pointers [:zh_CN] [#ptrtag.pair.overalign]，对过量对齐指针的支持
+    template<size_t PromisedAlignment,
+             [[redoc("*:c>")]]tagging-compatible-pointee<pointer_type, bits_requested, PromisedAlignment> U>
+      static constexpr pointer_tag_pair from_overaligned(U* p, tag_type t);
+
+    // [:en] [#ptrtag.pair.tagops], tagged pointer operations [:zh_CN] [#ptrtag.pair.tagops]，带标记指针操作
+    tagged_pointer_type tagged_pointer() const noexcept;
+    static pointer_tag_pair from_tagged(tagged_pointer_type p) noexcept;
+
+    // [:en] [#ptrtag.pair.accessors], accessors [:zh_CN] [#ptrtag.pair.accessors]，访问器
+    constexpr pointer_type pointer() const noexcept;
+    constexpr tag_type tag() const noexcept;
+
+    // [:en] [#ptrtag.pair.swap], swap [:zh_CN] [#ptrtag.pair.swap]，交换
+    constexpr void swap(pointer_tag_pair& o) noexcept;
+
+    // [:en] [#ptrtag.pair.comp], comparisons [:zh_CN] [#ptrtag.pair.comp]，比较
+    friend constexpr [[redoc("[=seebelow]")]] operator<=>(pointer_tag_pair lhs, pointer_tag_pair rhs)
+      noexcept requires [[redoc("`:c>")]]three_way_comparable<tag_type>;
+    friend constexpr bool operator==(pointer_tag_pair, pointer_tag_pair)
+      noexcept requires [[redoc("`:c>")]]equality_comparable<tag_type>;
+  };
+
+  template<class Ptr>
+    pointer_tag_pair(Ptr*)
+      -> pointer_tag_pair<Ptr*>;
+  template<class Ptr, class TagT>
+    pointer_tag_pair(Ptr*, TagT tag)
+      -> pointer_tag_pair<Ptr*, [[redoc("*>")]]bits-available<[[redoc("*>")]]element-of<Ptr>>, TagT>;
+}
+[codeblock:end]
+
+[para]
+[:en] An object of class [`pointer_tag_pair<Ptr, BitsRequested, TagT>]
+represents a pair of pointer value of type [`Ptr] and tag value of type [`TagT].
+[:zh_CN] [`pointer_tag_pair<Ptr, BitsRequested, TagT>] 类的对象表示
+由 [`Ptr] 类型的指针值和 [`TagT] 类型的标签值组成的对偶。
+
+[para]
+[:en] Each specialization [`PT] of [`pointer_tag_pair] is a trivially copyable type
+that models [`:c copyable] such that [`sizeof(PT)] is equal to [`sizeof(Ptr)] and
+[`alignof(PT)] is equal to [`alignof(Ptr)].
+[:zh_CN] [`pointer_tag_pair] 的每个特例 [`PT] 都是一个满足 [`:c copyable] 概念
+的可平凡复制类型，使得 [`sizeof(PT)] 等于 [`sizeof(Ptr)] 且 [`alignof(PT)] 等于 [`alignof(Ptr)]。
+
+[para:mandates]
+[list]
+[item]
+[:en] [`is_same_v<remove_cvref_t<Ptr>, Ptr>] is [`true].
+[:zh_CN] [`is_same_v<remove_cvref_t<Ptr>, Ptr>] 为 [`true]。
+[item]
+[:en] [`is_same_v<remove_cvref_t<TagT>, TagT>] is [`true].
+[:zh_CN] [`is_same_v<remove_cvref_t<TagT>, TagT>] 为 [`true]。
+[item]
+[:en] [`is_pointer_v<Ptr> && !is_function_v<remove_pointer_t<Ptr>>] is [`true].
+[:zh_CN] [`is_pointer_v<Ptr> && !is_function_v<remove_pointer_t<Ptr>>] 为 [`true]。
+[item]
+[:en] [`is_unsigned_v<UT>] is [`true], where [`UT] is [`underlying_type_t<TagT>]
+if [`TagT] is an enumeration type, and [`TagT] otherwise.
+[:zh_CN] [`is_unsigned_v<UT>] 为 [`true], 其中当 [`TagT] 是枚举类型时 [`UT] 为
+[`underlying_type_t<TagT>]，否则为 [`TagT]。
+[item]
+[:en] [`sizeof(TagT) <= sizeof(void*)] is [`true].
+[:zh_CN] [`sizeof(TagT) <= sizeof(void*)] 为 [`true]。
+[item]
+[:en] [`BitsRequested <= max_pointer_bits_available] is [`true].
+[:zh_CN] [`BitsRequested <= max_pointer_bits_available] 为 [`true]。
+[list:end]
+
+[%@lib [*tag-bit-width]]
+[codeblock:declaration]
+template<class T> constexpr unsigned [[redoc("*>")]]tag-bit-width(T v) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:returns]
+[:en] [`static_cast<unsigned>(bit_width(to_underlying(v)))] if [`is_enum_v<T>] is [`true],
+otherwise [`static_cast<unsigned>(bit_width(v))].
+[:zh_CN] 当 [`is_enum_v<T>] 为 [`true] 时返回 [`static_cast<unsigned>(bit_width(to_underlying(v)))]，
+否则返回 [`static_cast<unsigned>(bit_width(v))]。
+[div:end]
