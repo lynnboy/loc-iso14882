@@ -101,16 +101,31 @@ if present, just as in normal text.
 divided by [`:m CHAR_BIT].
 [:zh_CN] 令[+实现资源计数]为实现资源宽度除以 [`:m CHAR_BIT]。
 
+[:en] Every resource has a [+resource-offset], which is
+[:zh_CN] 每个资源有一个[+资源偏移量]，这是
+[list]
+[item]
+[:en@~] the value as computed from the optionally-provided [`offset]
+[~embed-parameter] ([#cpp.embed.param.offset]), if present;
+[:zh_CN@~] 如果出现可选提供的[~嵌入参数] [`offset]（[#cpp.embed.param.offset]）则为由其计算的值；
+[item]
+[:en@~] otherwise, [`0].
+[:zh_CN@~] 否则，为 [`0]。
+[list:end]
+
 [:en] Every resource also has a [+resource-count], which is
 [:zh_CN] 每个资源还有一个[+资源计数]，这是
 [list]
 [item]
-[:en@~] the value as computed from the optionally-provided [`limit]
-[~embed-parameter] ([#cpp.embed.param.limit]), if present;
-[:zh_CN@~] 如果出现可选提供的[~嵌入参数] [`limit]（[#cpp.embed.param.limit]）则为由其计算的值；
+[:en@~] the value [$\max(\min(\text{limit-value}, \text{implementation-resource-count} - \text{resource-offset}), 0)]
+if the [`limit] [~embed-parameter] ([#cpp.embed.param.limit]) is present,
+where the value computed from the [`limit] [~embed-parameter] is [+limit-value];
+[:zh_CN@~] 如果出现[~嵌入参数] [`limit]（[#cpp.embed.param.limit]）则为值
+[$\max(\min(\text{极限值}, \text{实现资源计数} - \text{资源偏移量}), 0)]，其中从
+[~嵌入参数] [`limit] 计算所得的值为[+极限值]；
 [item]
-[:en@~] otherwise, the implementation-resource-count.
-[:zh_CN@~] 否则，为实现资源计数。
+[:en@~] otherwise, the value [$\max(\text{implementation-resource-count} - \text{resource-offset}, 0)].
+[:zh_CN@~] 否则，为值 [$\max(\text{实现资源计数} - \text{资源偏移量}, 0)]。
 [list:end]
 
 [:en] A resource is empty if the resource-count is zero.
@@ -132,14 +147,16 @@ literals of type [`int], unless otherwise modified by embed parameters ([#cpp.em
 [`int] 类型的整数字面量的逗号分隔列表。
 
 [para]
-[:en] The integer literals in the comma-separated list correspond to
-resource-count consecutive calls to [`std::fgetc] ([#cstdio.syn])
-from the resource, as a binary file.
-[:zh_CN] 逗号分隔列表中的整数字面量对应于，将资源作为二进制文件连续进行
-资源计数次的 [`std::fgetc]（[#cstdio.syn]）。
+[:en] First, resource-offset calls to [`std::fgetc]
+from the resource as a binary file have their result discarded and ignored.
+[:zh_CN] 首先，将资源作为二进制文件，进行“资源偏移量”次对 [`std::fgetc] 的调用，结果被丢弃且忽略。
 
-[:en] If any call to [`std::fgetc] returns [`EOF], the program is ill-formed.
-[:zh_CN] 如果任何一次调用 [`std::fgetc] 返回了 [`EOF]，则程序非良构。
+[:en] Next, resource-count consecutive calls to [`std::fgetc]
+produce the elements of the comma-separated list of integer literals, in order.
+[:zh_CN] 然后，连续进行“资源计数次”的 [`std::fgetc] 调用，依次产生逗号分隔的整数字面量列表中的各个元素。
+
+[:en] If any of the resource-count calls to [`std::fgetc] returns [`EOF], the program is ill-formed.
+[:zh_CN] 如果“资源计数”次 [`std::fgetc] 调用中任何一次返回了 [`EOF]，则程序非良构。
 
 [para:recommended]
 [:en] The value of each integer literal should closely represent
