@@ -1,0 +1,155 @@
+[section#bit.permute
+    [:en] Permutation
+    [:zh_CN] 排列
+]
+
+[para]
+[:en] In the following descriptions,
+[:zh_CN] 在以下描述中，
+[list]
+[item]
+[:en@~] let [$N] denote the value of [`numeric_limits<T>::digits],
+[:zh_CN@~] 令 [$N] 代表 [`numeric_limits<T>::digits] 的值，
+[item]
+[:en@~] let [$\alpha_n] denote the value of the [$n^\text{th}] least significant bit
+in the base-2 representation of an integer [$\alpha],
+so that [$\alpha] equals [$\sum_{n=0}^{N-1} \alpha_n 2^n], and
+[:zh_CN@~] 令 [$\alpha_n] 代表某个整数 [$\alpha] 的二进制表示中的第 [$n] 个
+最低有效位的值，其中 [$\alpha] 等于 [$\sum_{n=0}^{N-1} \alpha_n 2^n]，以及
+[item]
+[:en@~] let [$\sigma(\alpha, n) = \sum_{k=0}^{n-1} \alpha_k]
+be the count of one-bits among the lowest [$n] bits of [$\alpha].
+[:zh_CN@~] 令 [$\sigma(\alpha, n) = \sum_{k=0}^{n-1} \alpha_k] 为 [$\alpha]
+的最低 [$n] 位中值为一的位的个数。
+[list:end]
+
+[%@lib bit_reverse]
+[codeblock:declaration]
+template<class T>
+  constexpr T bit_reverse(T x) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] is an unsigned integer type ([#basic.fundamental]).
+[:zh_CN] [`T] 是无符号整数类型（[#basic.fundamental]）。
+
+[para:returns]
+[:en] [$\mathsf{reverse}(x)], where [$\mathsf{reverse}] is given by
+[#:eq#bit.permute.reverse], and [$x] is [`x].
+[:zh_CN] [$\mathsf{reverse}(x)]，其中 [$\mathsf{reverse}] 由
+[#:eq#bit.permute.reverse] 给出，而 [$x] 为 [`x]。
+
+[math:eq#bit.permute.reverse]
+\mathsf{reverse}(x) = \sum_{n=0}^{N-1} x_n \, 2^{N-n-1}
+[math:end]
+
+[para]
+[begin:note]
+[:en] [`bit_reverse(bit_reverse(x))] equals [`x].
+[:zh_CN] [`bit_reverse(bit_reverse(x))] 等于 [`x]。
+[end:note]
+[div:end]
+
+[%@lib bit_repeat]
+[codeblock:declaration]
+template<class T>
+  constexpr T bit_repeat(T x, int l);
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] is an unsigned integer type ([#basic.fundamental]).
+[:zh_CN] [`T] 是无符号整数类型（[#basic.fundamental]）。
+
+[para:expects]
+[:en] [`l] is greater than zero.
+[:zh_CN] [`l] 大于零。
+
+[para:returns]
+[:en] [$\mathsf{repeat}(x, l)], where [$\mathsf{repeat}] is given by
+[#:eq#bit.permute.repeat], [$x] is [`x], and [$l] is [`l].
+[:zh_CN] [$\mathsf{repeat}(x, l)]，其中 [$\mathsf{repeat}] 由
+[#:eq#bit.permute.repeat] 给出，[$x] 为 [`x]，而 [$l] 为 [`l]。
+
+[math:eq#bit.permute.repeat]
+\mathsf{repeat}(x, l) = \sum_{n=0}^{N-1} x_{(n \bmod l)} \, 2^n
+[math:end]
+
+[para:throws]
+[:en] Nothing.
+[:zh_CN] 无。
+
+[para:remarks]
+[:en] A function call expression that violates the precondition in the [=expects]
+element is not a core constant expression ([#expr.const.core]).
+[:zh_CN] 违反 [=expects] 要素中的前条件的函数调用表达式，不是核心常量表达式（[#expr.const.core]）。
+
+[para]
+[begin:example]
+[:en] [`bit_repeat(uint32_t{0xc}, 4)] equals [`0xcccccccc].
+[:zh_CN] [`bit_repeat(uint32_t{0xc}, 4)] 等于 [`0xcccccccc]。
+[end:example]
+[div:end]
+
+[%@lib bit_compress]
+[codeblock:declaration]
+template<class T>
+  constexpr T bit_compress(T x, T m) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] is an unsigned integer type ([#basic.fundamental]).
+[:zh_CN] [`T] 是无符号整数类型（[#basic.fundamental]）。
+
+[para:returns]
+[:en] [$\mathsf{compress}(x, m)], where [$\mathsf{compress}] is given by
+[#:eq#bit.permute.compress], [$x] is [`x], and [$m] is [`m].
+[:zh_CN] [$\mathsf{compress}(x, m)]，其中 [$\mathsf{compress}] 由
+[#:eq#bit.permute.compress] 给出，[$x] 为 [`x]，而 [$m] 为 [`m]。
+
+[math:eq#bit.permute.compress]
+\mathsf{compress}(x, m) =
+  \sum_{n=0}^{N-1} m_n x_n \, 2^{\sigma(m, n)}
+[math:end]
+
+[para]
+[begin:example]
+[:en] [`bit_compress(0b[^ABCD], 0b0101)] equals [`0b00[^BD]] for any bits
+[`[^A]], [`[^B]], [`[^C]], and [`[^D]].
+[:zh_CN] 对于任意位 [`[^A]]、[`[^B]]、[`[^C]] 和 [`[^D]]，
+[`bit_compress(0b[^ABCD], 0b0101)] 等于 [`0b00[^BD]]。
+[end:example]
+[div:end]
+
+[%@lib bit_expand]
+[codeblock:declaration]
+template<class T>
+  constexpr T bit_expand(T x, T m) noexcept;
+[codeblock:end]
+
+[div:description]
+[para:constraints]
+[:en] [`T] is an unsigned integer type ([#basic.fundamental]).
+[:zh_CN] [`T] 是无符号整数类型（[#basic.fundamental]）。
+
+[para:returns]
+[:en] [$\mathsf{expand}(x, m)], where [$\mathsf{expand}] is given by
+[#:eq#bit.permute.expand], [$x] is [`x], and [$m] is [`m].
+[:zh_CN] [$\mathsf{expand}(x, m)]，其中 [$\mathsf{expand}] 由
+[#:eq#bit.permute.expand] 给出，[$x] 为 [`x]，而 [$m] 为 [`m]。
+
+[math:eq#bit.permute.expand]
+\mathsf{expand}(x, m) =
+  \sum_{n=0}^{N-1} m_n \, x_{\sigma(m, n)} \, 2^n
+[math:end]
+
+[para]
+[begin:example]
+[:en] [`bit_expand(0b[^ABCD], 0b0101)] equals [`0b0[^C]0[^D]] for any bits
+[`[^A]], [`[^B]], [`[^C]], and [`[^D]].
+[:zh_CN] 对于任意位 [`[^A]]、[`[^B]]、[`[^C]] 和 [`[^D]]，
+[`bit_expand(0b[^ABCD], 0b0101)] 等于 [`0b0[^C]0[^D]]。
+[end:example]
+[div:end]

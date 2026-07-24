@@ -68,7 +68,7 @@ glossary = {
 # \rSecindex{general}{#1}
 # \rSecindex{library}{#1}
 
-@applyTo(['#', '#:tab', '#:fig', '#:note'])
+@applyTo(['#', '#:tab', '#:fig', '#:note', '#:eq'])
 def ref(refid, **kw): #instruction, args, refid, content, context
     return '__link__0'
 

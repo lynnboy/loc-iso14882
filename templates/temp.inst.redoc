@@ -253,9 +253,9 @@ affect the semantics of the program if the variable or function is needed for
 constant evaluation by an expression ([#expr.const.defns]), even if constant
 evaluation of the expression is not required or if constant expression
 evaluation does not use the definition.
-[:zh_CN] 如果变量或函数被某个表达式的常量求值所需要（[#expr.const.defns]），则认为该变量
-或函数的定义存在与否会影响程序的语义，即使该表达式的常量求值并不是必要的，或常量表达式
-求值并未使用该定义时也是如此。
+[:zh_CN] 如果变量或函数被某个表达式的常量求值所需要（[#expr.const.defns]），
+则认为该变量或函数的定义存在与否会影响程序的语义，即使该表达式的常量求值并不是必要的，
+或常量表达式求值并未使用该定义时也是如此。
 
 [begin:example]
 [codeblock]
@@ -272,6 +272,31 @@ void x() {
                     // [:en@~] list-initialization of [`int] from [`int] cannot be narrowing \
                     [:zh_CN@~] 进行的列表初始化式并不会窄化，也会实例化 [`f<int>]
 }
+[codeblock:end]
+[end:example]
+
+[para]
+[:en] Similarly, the existence of a definition of a variable or function
+is considered to affect the semantics of the program if the instantiation is
+necessary to determine the type of an expression in the program,
+even if the variable or function is not odr-used ([#basic.def.odr]).
+[:zh_CN] 类似地，如果实例化对于确定程序中某个表达式的类型是必要的，则认为变量
+或函数的定义存在与否会影响程序的语义，即使该表达式的常量并未被 ODR 式使用（[#expr.const.defns]）
+时也是如此。
+
+[begin:example]
+[codeblock]
+template<typename T> struct X {
+  static inline int arr[] = {1, 2, T::error};
+};
+decltype(+X<int>::arr) r;   // [:en] error: definition of [`X<int>::arr] is instantiated to complete its type \
+                            [:zh_CN] 错误：[`X<int>::arr] 的定义式被实例化以使其类型完整
+
+template<typename T> struct X2 {
+  static inline int arr[3] = {1, 2, T::error};
+};
+decltype(+X2<int>::arr) r2; // [:en] OK, type of [`arr] is complete and [`arr] is not odr-used \
+                            [:zh_CN] OK，[`arr] 的类型完整，且 [`arr] 未被 ODR 式使用
 [codeblock:end]
 [end:example]
 
@@ -435,8 +460,8 @@ quantity that specifies the limit on the total depth of recursive instantiations
 [:zh_CN] 一个[?impldef 模板实例化的最大递归深度]数量，指定了递归进行的实例化的总深度的
 限度（[#implimits]），其中可能会涉及多于一个模板。
 
-[:en] The result of an infinite recursion in instantiation is undefined.
-[:zh_CN] 无限递归的实例化的结果是未定义的。
+[:en] The result of an infinite recursion in instantiation is undefined[?ub#temp.inst.inf.recursion].
+[:zh_CN] 无限递归的实例化的结果是未定义的[?ub#temp.inst.inf.recursion]。
 [begin:example]
 
 [codeblock]

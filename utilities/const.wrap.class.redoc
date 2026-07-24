@@ -5,23 +5,6 @@
 
 [codeblock:synopsis]
 namespace std {
-  template<class T>
-  struct [[redoc("*>")]]cw-fixed-value {                                               // [=expos]
-    using [[redoc("*>")]]type = T;                                                     // [=expos]
-    constexpr [[redoc("*>")]]cw-fixed-value([[redoc("*>")]]type v) noexcept : [[redoc("*>")]]data(v) {}
-    T [[redoc("*>")]]data;                                                             // [=expos]
-  };
-
-  template<class T, size_t Extent>
-  struct [[redoc("*>")]]cw-fixed-value<T[Extent]> {                                    // [=expos]
-    using [[redoc("*>")]]type = T[Extent];                                             // [=expos]
-    constexpr [[redoc("*>")]]cw-fixed-value(T (&arr)[Extent]) noexcept;
-    T [[redoc("*>")]]data[Extent];                                                     // [=expos]
-  };
-
-  template<class T, size_t Extent>
-    [[redoc("*>")]]cw-fixed-value(T (&)[Extent]) -> [[redoc("*>")]]cw-fixed-value<T[Extent]>;         // [=expos]
-
   struct [[redoc("*>")]]cw-operators {                                                 // [=expos]
     // [:en] unary operators [:zh_CN] 一元运算符
     template<[[redoc("*:c>")]]constexpr-param T>
@@ -165,11 +148,11 @@ namespace std {
         -> constant_wrapper<(T::value >>= R::value)> { return {}; }
   };
 
-  template<[[redoc("*>")]]cw-fixed-value X, class>
+  template<auto X, class T = decltype(X)>
   struct [[redoc("`:lib>")]]constant_wrapper : [[redoc("*>")]]cw-operators {
-    static constexpr const auto & value = X.[[redoc("*>")]]data;
+    static constexpr decltype(auto) value = (X);
     using type = constant_wrapper;
-    using value_type = decltype(X)::[[redoc("*>")]]type;
+    using value_type = decltype(X);
 
     template<[[redoc("*:c>")]]constexpr-param R>
       constexpr auto operator=(R) const noexcept
@@ -199,12 +182,17 @@ passed as arguments to constexpr functions to be used in constant expressions.
 能够用于常量表达式中。
 
 [para]
+[:en] If a specialization of [`constant_wrapper] is instantiated with a type [`T]
+such that [`is_same_v<T, value_type>] is [`false], the program is ill-formed.
+[:zh_CN] 如果以某个类型 [`T] 实例化 [`constant_wrapper] 的特例，并有
+[`is_same_v<T, value_type>] 为 [`false]，则程序非良构。
+
 [begin:note]
-[:en] The unnamed second template parameter to [`constant_wrapper] is present
+[:en] The second template parameter to [`constant_wrapper] is present
 to aid argument-dependent lookup ([#basic.lookup.argdep]) in finding overloads
 for which [`constant_wrapper][=']s wrapped value is a suitable argument,
 but for which the [`constant_wrapper] itself is not.
-[:zh_CN] [`constant_wrapper] 的无名的第二个模板形参的存在是为了帮助实参依赖查找（[#basic.lookup.argdep]）
+[:zh_CN] [`constant_wrapper] 的第二个模板形参的存在是为了帮助实参依赖查找（[#basic.lookup.argdep]）
 找到这种重载，对于它们，[`constant_wrapper] 所包装的值是合适的实参，
 但 [`constant_wrapper] 本身并不合适。
 [end:note]
@@ -240,16 +228,6 @@ but for which the [`constant_wrapper] itself is not.
   }
 [codeblock:end]
 [end:example]
-
-[codeblock:declaration]
-constexpr [[redoc("*>")]]cw-fixed-value(T (&arr)[Extent]) noexcept;
-[codeblock:end]
-
-[div:description]
-[para:effects]
-[:en] Initialize elements of [*data] with corresponding elements of [`arr].
-[:zh_CN] 以 [`arr] 的对应元素初始化 [*data] 的各元素。
-[div:end]
 
 [%@lib@member operator()[!constant_wrapper]]
 [codeblock:declaration]

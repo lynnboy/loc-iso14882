@@ -20,36 +20,76 @@ thread() noexcept;
 
 [%@lib@ctor thread]
 [codeblock:declaration]
-template<class F, class... Args> explicit thread(F&& f, Args&&... args);
+template<class... Args> explicit thread(Args&&... args);
 [codeblock:end]
 
 [div:description]
 [para:constraints]
-[:en] [`remove_cvref_t<F>] is not the same type as [`thread].
-[:zh_CN] [`remove_cvref_t<F>] 与 [`thread] 不是相同的类型。
+[list]
+[item]
+[:en] [`Args] is not an empty pack, and
+[:zh_CN] [`Args] 不是空包组，且
+[item]
+[:en] [`remove_cvref_t<Args...`[0`]>] is not the same type as [`thread].
+[:zh_CN] [`remove_cvref_t<Args...`[0`]>] 与 [`thread] 不是相同的类型。
+[list:end]
+
+[para]
+[:en] Let [$i] be the smallest value such that [`decay_t<Args...`[[$i]`]>]
+is not a thread attribute type, if such a value exists.
+[:zh_CN] 令 [$i] 为使得 [`decay_t<Args...`[[$i]`]>] 不是线程属性类型的最小值，如果存在。
+
+[:en] Then the following notation is used:
+[:zh_CN] 使用以下记法：
+[list]
+[item]
+[:en] Let [`F] be [`Args...`[[$i]`]].
+[:zh_CN] 令 [`F] 为 [`Args...`[[$i]`]]。
+[item]
+[:en] Let [`f] be [`args...`[[$i]`]].
+[:zh_CN] 令 [`f] 为 [`args...`[[$i]`]]。
+[item]
+[:en] Let [`Attrs] be a pack of the types [`Args...`[[$j]`]] for each [$j] such that [$0 \leq j < i].
+[:zh_CN] 令 [`Attrs] 为类型 [`Args...`[[$j]`]] 的包组，包括满足 [$0 \leq j < i] 的每个 [$j]。
+[item]
+[:en] Let [`attrs] be a pack of the expressions [`args...`[[$j]`]] for each [$j] such that [$0 \leq j < i].
+[:zh_CN] 令 [`attrs] 为表达式 [`args...`[[$j]`]] 的包组，包括满足 [$0 \leq j < i] 的每个 [$j]。
+[item]
+[:en] Let [`FArgs] be a pack of the types [`Args...`[[$j]`]] for each [$j]
+such that [$i < j < [`sizeof...(args)]].
+[:zh_CN] 令 [`FArgs] 为类型 [`Args...`[[$j]`]] 的包组，包括满足
+[$i < j < [`sizeof...(args)]] 的每个 [$j]。
+[item]
+[:en] Let [`fargs] be a pack of the expressions [`args...`[[$j]`]] for each [$j]
+such that [$i < j < [`sizeof...(args)]].
+[:zh_CN] 令 [`fargs] 为表达式 [`args...`[[$j]`]] 的包组，包括满足
+[$i < j < [`sizeof...(args)]] 的每个 [$j]。
+[list:end]
 
 [para:mandates]
-[:en] The following are all [`true]:
-[:zh_CN] 以下各项均为 [`true]：
+[:en] The value [$i] exists, and the following are all [`true]:
+[:zh_CN] 存在 [$i]，且以下各项均为 [`true]：
 [list]
 [item]
 [:en@~] [`is_constructible_v<decay_t<F>, F>],
 [:zh_CN@~] [`is_constructible_v<decay_t<F>, F>]，
 [item]
-[:en@~] [`(is_constructible_v<decay_t<Args>, Args> && ...)], and
-[:zh_CN@~] [`(is_constructible_v<decay_t<Args>, Args> && ...)]，以及
+[:en@~] [`(is_constructible_v<decay_t<FArgs>, FArgs> && ...)],
+[:zh_CN@~] [`(is_constructible_v<decay_t<FArgs>, FArgs> && ...)]，
 [item]
-[:en@~] [`is_invocable_v<decay_t<F>, decay_t<Args>...>].
-[:zh_CN@~] [`is_invocable_v<decay_t<F>, decay_t<Args>...>]。
+[:en@~] [`is_invocable_v<decay_t<F>, decay_t<FArgs>...>], and
+[:zh_CN@~] [`is_invocable_v<decay_t<F>, decay_t<FArgs>...>]，以及
+[item]
+[:en@~] no type is present more than once in the pack [`remove_cvref_t<Attrs>].
+[:zh_CN@~] 包组 [`remove_cvref_t<Attrs>] 中没有出现多次的类型。
 [list:end]
 
 [para:effects]
 [:en] The new thread of execution executes
 [:zh_CN] 新的执行线程执行
 [codeblock]
-invoke(auto(std::forward<F>(f)),                // [:en] for [`invoke], see [#func.invoke] \
-                                                [:zh_CN] 对于 [`invoke]，参见 [#func.invoke]
-       auto(std::forward<Args>(args))...)
+invoke(auto(std::forward<F>(f)),                // [:en] for [`invoke], see [#func.invoke] [:zh_CN] 对于 [`invoke]，参见 [#func.invoke]
+       auto(std::forward<FArgs>(fargs))...)
 [codeblock:end]
 [:en@~] with the values produced by [`auto] being materialized ([#conv.rval]) in
 the constructing thread.
@@ -67,8 +107,12 @@ copy of [`f] will be thrown in the constructing thread, not the new thread.
 
 [:en] If the invocation of [`invoke] terminates with an uncaught exception,
 [`terminate] is invoked ([#except.terminate]).
-[:zh_CN] 如果对 [`invoke] 的调用以未捕获的异常终止，则调用 [`terminate]
-（[#except.terminate]）。
+[:zh_CN] 如果对 [`invoke] 的调用以未捕获的异常终止，则调用 [`terminate]（[#except.terminate]）。
+
+[begin:note]
+[:en] The parameters [`attrs...] can affect the behavior of the new thread ([#thread.attributes]).
+[:zh_CN] 形参 [`attrs...] 可以影响新线程的行为（[#thread.attributes]）。
+[end:note]
 
 [para:sync]
 [:en] The completion of the invocation of the constructor synchronizes with the
