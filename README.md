@@ -530,7 +530,7 @@ Original   |中文   |章节    |定义
 *pp-tokens*                 |*预处理记号序列*| [cpp.pre]    | *预处理记号*__\+__
 *embed-parameter-seq*       |*嵌入参数序列* | [cpp.pre]     | *嵌入参数*__\+__
 *embed-parameter*           |*嵌入参数*     | [cpp.pre]     | *嵌入标准参数* \| *嵌入带前缀参数*
-*embed-standard-parameter*  |*嵌入标准参数* | [cpp.pre]    | ( `limit` \| `prefix` \| `suffix` \| `if_empty` ) `(` *预处理平衡记号序列* `)`
+*embed-standard-parameter*  |*嵌入标准参数* | [cpp.pre]    | ( `limit` \| `offset` \| `prefix` \| `suffix` \| `if_empty` ) `(` *预处理平衡记号序列* `)`
 *embed-prefixed-parameter*  |*嵌入带前缀参数*| [cpp.pre]  | *标识符* [`::] *标识符* ( `(` *预处理平衡记号序列* `)` )__?__
 *pp-balanced-token-seq*     |*预处理平衡记号序列*| [cpp.pre] | *预处理平衡记号*__\+__
 *pp-balanced-token*         |*预处理平衡记号*| [cpp.pre]    | `(` *预处理平衡记号序列*__?__ `)` \| `[` *预处理平衡记号序列*__?__ `]` \| `{` *预处理平衡记号序列*__?__ `}` \|<br> *预处理记号* - \[`()[]{}`\]
@@ -1443,6 +1443,7 @@ library                                 |程序库
 lifetime                                |生存期
 likelihood                              |似然性 |`likely`或`unlikely`属性，执行路径的执行概率较高或较低
 `likely`                                |`likely` 属性  |属性，无参数，用于标号或语句，标明执行路径似然性
+limit-value                             |极限值
 line                                    |行，文本行
 linear algebra value type               |线性代数值类型
 link                                    |连接   |将已翻译实体收集并组合成程序映像<br>文件系统对文件和文件名的关联
@@ -1918,6 +1919,7 @@ reserved block                          |保留块     |不包含元素的蜂巢
 reserved function                       |保留函数
 reserved identifier                     |保留标识符 |`__` 开头或 `_[A-Z]` 开头的任何标识符，以及 `_` 开头的全局命名空间成员
 resource-count                          |资源计数   |嵌入资源的数值计数，参数控制或默认为实现资源计数
+resource-offset                         |资源偏移量
 restriction                             |限制，要求
 result binding                          |结果绑定   |后条件断言中的结果名
 resumer                                 |恢复方     |调用协程句柄的恢复成员函数的函数
